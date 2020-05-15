@@ -310,7 +310,7 @@ public interface MemorySegment extends AutoCloseable {
     MemorySegment fill(byte value);
 
     /**
-     * Perform bulk copy from given source segment to this segment. More specifically, the bytes at
+     * Performs a bulk copy from given source segment to this segment. More specifically, the bytes at
      * offset {@code 0} through {@code src.byteSize() - 1} in the source segment are copied into this segment
      * at offset {@code 0} through {@code src.byteSize() - 1}.
      * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
@@ -318,8 +318,8 @@ public interface MemorySegment extends AutoCloseable {
      * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
      * this segment at offset {@code 0} through {@code src.byteSize() - 1}.
      * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment does not overlap with
-     * this segment, but it instead refers to an overlapping regions of the same backing storage using different addresses.
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
      * For example, this may occur if the same file is {@link MemorySegment#mapFromPath mapped} to two segments.
      *
      * @param src the source segment.
