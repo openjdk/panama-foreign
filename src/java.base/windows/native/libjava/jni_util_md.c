@@ -38,7 +38,7 @@ void* getProcessHandle() {
 
 /*
  * Windows doesn't have an RTLD_DEFAULT equivalent, so in stead we have to
- * iterate over all the modules loaded by the process to implement the 
+ * iterate over all the modules loaded by the process to implement the
  * default library behaviour.
  */
 void* findEntryInProcess(const char* name) {
@@ -56,7 +56,7 @@ void* findEntryInProcess(const char* name) {
                 return proc;
             }
         }
-    } 
+    }
 
     return NULL;
 }
