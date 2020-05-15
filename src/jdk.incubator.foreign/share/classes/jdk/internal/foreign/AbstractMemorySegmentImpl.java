@@ -123,6 +123,17 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return this;
     }
 
+    public void copyFrom(MemorySegment src) {
+        long size = src.byteSize();
+        ((AbstractMemorySegmentImpl)src).checkRange(0, size, true);
+        checkRange(0, size, false);
+        long offsetSrc = ((AbstractMemorySegmentImpl) src).min();
+        long offsetDst = min();
+        Object baseSrc = ((AbstractMemorySegmentImpl) src).base();
+        Object baseDst = base();
+        UNSAFE.copyMemory(baseSrc, offsetSrc, baseDst, offsetDst, size);
+    }
+
     @Override
     @ForceInline
     public final MemoryAddress baseAddress() {
@@ -228,7 +239,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         checkIntSize("byte[]");
         byte[] arr = new byte[(int)length];
         MemorySegment arrSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(baseAddress(), arrSegment.baseAddress(), length);
+        arrSegment.copyFrom(this);
         return arr;
     }
 
