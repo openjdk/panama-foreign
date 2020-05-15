@@ -67,7 +67,7 @@ public class BindingInterpreter {
                     MemorySegment operand = (MemorySegment) stack.pop();
                     assert operand.byteSize() == binding.size() : "operand size mismatch";
                     MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
-                    MemoryAddress.copy(operand.baseAddress(), copy.baseAddress(), binding.size());
+                    copy.copyFrom(operand.asSlice(0, binding.size()));
                     buffers.add(copy);
                     stack.push(copy);
                 }
@@ -106,7 +106,7 @@ public class BindingInterpreter {
                     MemoryAddress operand = (MemoryAddress) stack.pop();
                     operand = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), binding.size());
                     MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
-                    MemoryAddress.copy(operand, copy.baseAddress(), binding.size());
+                    copy.copyFrom(operand.segment().asSlice(0, binding.size()));
                     stack.push(copy); // leaked
                 }
                 case ALLOC_BUFFER -> {
