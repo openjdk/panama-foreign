@@ -30,33 +30,34 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
-final class MemoryHandleUnsignedIntFromLong {
+final class MemoryHandleLongToUnsignedByte {
     private static final MethodHandle TO_TARGET;
     private static final MethodHandle FROM_TARGET;
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedIntFromLong.class, "intValue",
-                    MethodType.methodType(int.class, long.class));
-            FROM_TARGET = MethodHandles.lookup().findStatic(Integer.class, "toUnsignedLong",
-                    MethodType.methodType(long.class, int.class));
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleLongToUnsignedByte.class, "byteValue",
+                    MethodType.methodType(byte.class, long.class));
+            FROM_TARGET = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedLong",
+                    MethodType.methodType(long.class, byte.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    private MemoryHandleUnsignedIntFromLong() { } // no instances
+    private MemoryHandleLongToUnsignedByte() { } // no instances
 
     static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());
         return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
     }
 
-    private static int intValue(long value) {
-        return (int) value;
+    private static byte byteValue(long value) {
+        // checkValue() // throw if greater than FF Byte.MAX_VALUE
+        return (byte) value;
     }
 
-    private static final Class<?> CARRIER_TYPE = int.class;
+    private static final Class<?> CARRIER_TYPE = byte.class;
 
     private static void checkCarrierType(Class<?> carrier) {
         if (carrier != CARRIER_TYPE)

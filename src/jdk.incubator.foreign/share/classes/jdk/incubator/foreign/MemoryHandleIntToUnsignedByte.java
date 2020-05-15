@@ -30,30 +30,29 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
-final class MemoryHandleUnsignedByteFromLong {
+final class MemoryHandleIntToUnsignedByte {
     private static final MethodHandle TO_TARGET;
     private static final MethodHandle FROM_TARGET;
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedByteFromLong.class, "byteValue",
-                    MethodType.methodType(byte.class, long.class));
-            FROM_TARGET = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedLong",
-                    MethodType.methodType(long.class, byte.class));
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleIntToUnsignedByte.class, "byteValue",
+                    MethodType.methodType(byte.class, int.class));
+            FROM_TARGET = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedInt",
+                    MethodType.methodType(int.class, byte.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    private MemoryHandleUnsignedByteFromLong() { } // no instances
+    private MemoryHandleIntToUnsignedByte() { } // no instances
 
     static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());
         return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
     }
 
-    private static byte byteValue(long value) {
-        // checkValue() // throw if greater than FF Byte.MAX_VALUE
+    private static byte byteValue(int value) {
         return (byte) value;
     }
 

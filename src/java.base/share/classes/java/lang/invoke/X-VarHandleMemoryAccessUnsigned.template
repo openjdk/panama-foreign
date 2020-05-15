@@ -30,13 +30,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
-final class MemoryHandleUnsignedShortFromInt {
+final class MemoryHandleIntToUnsignedShort {
     private static final MethodHandle TO_TARGET;
     private static final MethodHandle FROM_TARGET;
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedShortFromInt.class, "shortValue",
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleIntToUnsignedShort.class, "shortValue",
                     MethodType.methodType(short.class, int.class));
             FROM_TARGET = MethodHandles.lookup().findStatic(Short.class, "toUnsignedInt",
                     MethodType.methodType(int.class, short.class));
@@ -45,7 +45,7 @@ final class MemoryHandleUnsignedShortFromInt {
         }
     }
 
-    private MemoryHandleUnsignedShortFromInt() { } // no instances
+    private MemoryHandleIntToUnsignedShort() { } // no instances
 
     static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());

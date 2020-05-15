@@ -30,29 +30,29 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
-final class MemoryHandleUnsignedShortFromInt {
+final class MemoryHandleLongToUnsignedShort {
     private static final MethodHandle TO_TARGET;
     private static final MethodHandle FROM_TARGET;
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleUnsignedShortFromInt.class, "shortValue",
-                    MethodType.methodType(short.class, int.class));
-            FROM_TARGET = MethodHandles.lookup().findStatic(Short.class, "toUnsignedInt",
-                    MethodType.methodType(int.class, short.class));
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleLongToUnsignedShort.class, "shortValue",
+                    MethodType.methodType(short.class, long.class));
+            FROM_TARGET = MethodHandles.lookup().findStatic(Short.class, "toUnsignedLong",
+                    MethodType.methodType(long.class, short.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    private MemoryHandleUnsignedShortFromInt() { } // no instances
+    private MemoryHandleLongToUnsignedShort() { } // no instances
 
     static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());
         return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
     }
 
-    private static short shortValue(int value) {
+    private static short shortValue(long value) {
         return (short) value;
     }
 
@@ -63,6 +63,3 @@ final class MemoryHandleUnsignedShortFromInt {
             throw new InternalError("expected %s carrier, but got %s".formatted(CARRIER_TYPE, carrier));
     }
 }
-
-// MemoryHandleUnsignedShortFromInt
-// MemoryHandleIntToUnsignedShort

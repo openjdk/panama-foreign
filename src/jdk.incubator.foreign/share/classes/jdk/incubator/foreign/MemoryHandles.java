@@ -317,81 +317,69 @@ public final class MemoryHandles {
         }
     }
 
-    private static int numberOfBits(Class<?> type) {
-        if (type == byte.class)
-            return Byte.SIZE;
-        else if (type == short.class)
-            return Short.SIZE;
-        else if (type == int.class)
-            return Integer.SIZE;
-        else if (type == long.class)
-            return Long.SIZE;
-        else
-            throw new InternalError("unknown " + type);
-    }
-
     /**
-     * Adapts a target var handle by narrowing incoming values and widening outgoing values, to the given type.
+     * Adapts a target var handle by narrowing incoming values and widening
+     * outgoing values, from and to the given type, respectively.
      * <p>
-     * The returned var handle can be used to conveniently treat unsigned primitive types as if they were a
-     * wider signed primitive type. For example, it is often convenient to model an <i>unsigned short</i> as
-     * a Java {@code int} to avoid dealing with negative values, which would be the case if modeled as a Java
-     * {@code short}. The returned var handle converts to and from wider primitive types, to a more narrow
+     * The returned var handle can be used to conveniently treat unsigned
+     * primitive types as if they were a wider signed primitive type. For
+     * example, it is often convenient to model an <i>unsigned short</i> as a
+     * Java {@code int} to avoid dealing with negative values, which would be
+     * the case if modeled as a Java {@code short}. The returned var handle
+     * converts to and from wider primitive types, to a more narrow possibly
      * unsigned primitive type.
      * <p>
-     * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var handle, the incoming value
-     * (of type {@code fromType}) is converted by a <i>narrowing primitive conversion</i> and then passed
-     * to the {@code target} var handle. A narrowing primitive conversion may lose information about the
-     * overall magnitude of a numeric value.
-     * Conversely, when calling e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the
-     * returned value obtained from the {@code target} var handle is converted by a <i>widening primitive
-     * conversion</i> before being returned to the caller. A widening primitive conversion does not lose
-     * information about the overall magnitude of a numeric value.
+     * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var
+     * handle, the incoming value (of type {@code adaptedType}) is converted by a
+     * <i>narrowing primitive conversion</i> and then passed to the {@code
+     * target} var handle. A narrowing primitive conversion may lose information
+     * about the overall magnitude of a numeric value. Conversely, when calling
+     * e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the
+     * returned value obtained from the {@code target} var handle is converted
+     * by a <i>widening primitive conversion</i> before being returned to the
+     * caller. A widening primitive conversion does not lose information about
+     * the overall magnitude of a numeric value.
      * <p>
-     * The returned var handle will feature the variable type {@code fromType}, and the same access
-     * coordinates, the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}, and
-     * the same atomic access guarantees, as those featured by the {@code target} var handle.
+     * The returned var handle will feature the variable type {@code adaptedType},
+     * and the same access coordinates, the same access modes (see {@link
+     * java.lang.invoke.VarHandle.AccessMode}, and the same atomic access
+     * guarantees, as those featured by the {@code target} var handle.
      *
-     * @param target
-     * @param fromType
-     * @throws IllegalArgumentException if the carrier type of {@code varHandle} is not one of
-     * {@code byte} or {@code short} or {@code int}.
-     * @throws NullPointerException if either of {@code target} or {@code fromType} is null
-     * @return
+     * @param target the memory access var handle to be adapted
+     * @param adaptedType the adapted type
+     * @returns the adapted var handle.
+     * @throws IllegalArgumentException if the carrier type of {@code target}
+     * is not one of {@code byte}, {@code short}, or {@code int}; if {@code
+     * adaptedType} is not one of {@code short}, {@code int}, or {@code long};
+     * if the bitwidth of the {@code adaptedType} is not greater than that of
+     * the {@code target} carrier type
+     * @throws NullPointerException if either of {@code target} or {@code
+     * adaptedType} is null
+     *
      * @jls 5.1.2 Widening Primitive Conversion
      * @jls 5.1.3 Narrowing Primitive Conversion
      */
-    public static VarHandle asUnsigned(VarHandle target, final Class<?> fromType) {
+    public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
         Objects.requireNonNull(target);
-        Objects.requireNonNull(fromType);
+        Objects.requireNonNull(adaptedType);
         final Class<?> carrier = target.varType();
-        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
-            throw new IllegalArgumentException("Unsupported carrier type: " + carrier.getName());
-        }
-        if (!(fromType == short.class || fromType == int.class || fromType == long.class)) {
-            throw new IllegalArgumentException("Unsupported target type " + fromType.getName());
-        }
+        checkWidenable(carrier);
+        checkNarrowable(adaptedType);
+        checkCarrierWiderThanTarget(carrier, adaptedType);
 
-        if (!(numberOfBits(fromType) > numberOfBits(carrier)))
-            throw new IllegalArgumentException("fromType (%s) bits not greater than carrier type (%s) bits".formatted(fromType, carrier));
-
-        if (carrier == byte.class) {
-            if (fromType == int.class) {
-                return MemoryHandleUnsignedByteFromInt.varHandle(target);
-            } else if (fromType == long.class) {
-                return MemoryHandleUnsignedByteFromLong.varHandle(target);
-            }
-        } else if (carrier == short.class) {
-            if (fromType == int.class) {
-                return MemoryHandleUnsignedShortFromInt.varHandle(target);
-            } else if (fromType == long.class) {
-                return MemoryHandleUnsignedShortFromLong.varHandle(target);
-            }
-        } else if (carrier == int.class) {
-            return MemoryHandleUnsignedIntFromLong.varHandle(target);
+        if (adaptedType == int.class && carrier == byte.class) {
+            return MemoryHandleIntToUnsignedByte.varHandle(target);
+        } else if (adaptedType == int.class && carrier == short.class) {
+            return MemoryHandleIntToUnsignedShort.varHandle(target);
+        } else if (adaptedType == long.class && carrier == byte.class) {
+            return MemoryHandleLongToUnsignedByte.varHandle(target);
+        } else if (adaptedType == long.class && carrier == short.class) {
+            return MemoryHandleLongToUnsignedShort.varHandle(target);
+        } else if (adaptedType == long.class && carrier == int.class) {
+            return MemoryHandleLongToUnsignedInt.varHandle(target);
+        } else {
+            throw new InternalError("should not reach here");
         }
-
-        return null;
     }
 
     /**
@@ -611,7 +599,22 @@ public final class MemoryHandles {
     }
 
     private static void checkWidenable(Class<?> carrier) {
+        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
+            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
+        }
+    }
 
+    private static void checkNarrowable(Class<?> type) {
+        if (!(type == short.class || type == int.class || type == long.class)) {
+            throw new IllegalArgumentException("Not narrowable " + type.getSimpleName());
+        }
+    }
+
+    private static void checkCarrierWiderThanTarget(Class<?> carrier, Class<?> target) {
+        if (Wrapper.forPrimitiveType(target).bitWidth() <= Wrapper.forPrimitiveType(carrier).bitWidth()) {
+            throw new IllegalArgumentException(
+                    "Illegal target " + target.getSimpleName() + " bitwidth not greater than carrier" + carrier);
+        }
     }
 
     private static MemoryAddress longToAddress(long value) {
