@@ -23,7 +23,7 @@
 
 #include "test8244938.h"
 
-struct Point point = { 44, { 567, 33 } };
-struct Point func(void) {
+static struct Point point = { 44, { 567, 33 } };
+EXPORT struct Point func(void) {
     return point;
 }

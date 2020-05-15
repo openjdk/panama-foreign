@@ -40,7 +40,7 @@ struct Point {
   struct Point2D point2d;
 };
 
-struct Point func(void);
+EXPORT struct Point func(void);
 
 #ifdef __cplusplus
 }
