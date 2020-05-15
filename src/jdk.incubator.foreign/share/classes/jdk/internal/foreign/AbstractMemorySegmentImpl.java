@@ -122,14 +122,13 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public void copyFrom(MemorySegment src) {
-        long size = src.byteSize();
-        ((AbstractMemorySegmentImpl)src).checkRange(0, size, true);
-        checkRange(0, size, false);
-        long offsetSrc = ((AbstractMemorySegmentImpl) src).min();
-        long offsetDst = min();
-        Object baseSrc = ((AbstractMemorySegmentImpl) src).base();
-        Object baseDst = base();
-        UNSAFE.copyMemory(baseSrc, offsetSrc, baseDst, offsetDst, size);
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkRange(0, size, true);
+        that.checkRange(0, size, false);
+        UNSAFE.copyMemory(
+                that.base(), that.min(),
+                base(), min(), size);
     }
 
     @Override
