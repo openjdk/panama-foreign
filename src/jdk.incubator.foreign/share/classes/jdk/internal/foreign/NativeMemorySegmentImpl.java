@@ -105,7 +105,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
-        MemoryScope scope = MemoryScope.createUnchecked(attachment, cleanup, owner);
+        MemoryScope scope = MemoryScope.createUnchecked(owner, attachment, cleanup);
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
     }
 }

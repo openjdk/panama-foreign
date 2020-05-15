@@ -48,7 +48,7 @@ import java.util.concurrent.locks.StampedLock;
  * A child scope can be {@link #close() closed} at any time, but root scope can only
  * be closed after all its children have been closed, at which time any associated
  * cleanup action is executed (the associated memory segment is freed).
- * Besides thread-confined checked scopes, {@linkplain #createUnchecked(Object, Runnable, Thread)}
+ * Besides thread-confined checked scopes, {@linkplain #createUnchecked(Thread, Object, Runnable)}
  * method may be used passing {@code null} as the "owner" thread to create an
  * unchecked scope that doesn't check for thread-confinement or temporal bounds.
  */
@@ -81,13 +81,13 @@ abstract class MemoryScope {
      * that all methods may be called in any thread and that {@link #checkValidState()}
      * does not check for temporal bounds.
      *
-     * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
      * @param owner         the desired owner thread. If {@code owner == null},
      *                      the returned scope is <em>not</em> thread-confined and not checked.
+     * @param ref           an optional reference to an instance that needs to be kept reachable
+     * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
      * @return a root MemoryScope
      */
-    static MemoryScope createUnchecked(Object ref, Runnable cleanupAction, Thread owner) {
+    static MemoryScope createUnchecked(Thread owner, Object ref, Runnable cleanupAction) {
         return new Root(owner, ref, cleanupAction);
     }
 
@@ -123,7 +123,7 @@ abstract class MemoryScope {
 
     /**
      * Closes this scope, executing any cleanup action if this is the root scope.
-     * This method may only be called in "owner" thread of this scope unless the
+     * This method may only be called in the "owner" thread of this scope unless the
      * scope is a root scope with no owner thread - i.e. is not checked.
      *
      * @throws IllegalStateException if this scope is already closed or if this is
@@ -135,17 +135,17 @@ abstract class MemoryScope {
 
     /**
      * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * If this is a root scope, new root scope is returned, this root scope is closed but
-     * eventual cleanup action is not executed yet - it is inherited by duped scope.
-     * If this is a child scope, new child scope is returned.
-     * This method may only be called in "owner" thread of this scope unless the
+     * If this is a root scope, a new root scope is returned; this root scope is closed, but
+     * without executing the cleanup action, which is instead transferred to the duped scope.
+     * If this is a child scope, a new child scope is returned.
+     * This method may only be called in the "owner" thread of this scope unless the
      * scope is a root scope with no owner thread - i.e. is not checked.
      * The returned instance may be published unsafely to and used in any thread,
      * but methods that explicitly state that they may only be called in "owner" thread,
      * must strictly be called in given new "owner" thread
      * or else IllegalStateException is thrown.
      *
-     * @param owner new owner thread of the returned MemoryScope
+     * @param newOwner new owner thread of the returned MemoryScope
      * @return a duplicate of this scope
      * @throws NullPointerException  if given owner thread is null
      * @throws IllegalStateException if this scope is already closed or if this is
@@ -153,7 +153,7 @@ abstract class MemoryScope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract MemoryScope dup(Thread owner);
+    abstract MemoryScope dup(Thread newOwner);
 
     /**
      * Returns "owner" thread of this scope.
@@ -246,19 +246,24 @@ abstract class MemoryScope {
         }
 
         @Override
-        MemoryScope dup(Thread owner) {
-            Objects.requireNonNull(owner, "owner");
-            return closeOrDup(owner);
+        MemoryScope dup(Thread newOwner) {
+            Objects.requireNonNull(newOwner, "newOwner");
+            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
+            var duped = new Root(newOwner, ref, cleanupAction);
+            justClose();
+            return duped;
         }
 
         @Override
         void close() {
-            closeOrDup(null);
+            justClose();
+            if (cleanupAction != null) {
+                cleanupAction.run();
+            }
         }
 
-        private MemoryScope closeOrDup(Thread newOwner) {
-            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
-            var duped = newOwner == null ? null : new Root(newOwner, ref, cleanupAction);
+        @ForceInline
+        private void justClose() {
             // enter critical section - no acquires are possible past this point
             long stamp = lock.writeLock();
             try {
@@ -272,16 +277,6 @@ abstract class MemoryScope {
             } finally {
                 // leave critical section
                 lock.unlockWrite(stamp);
-            }
-
-            // do close or dup
-            if (duped == null) {
-                if (cleanupAction != null) {
-                    cleanupAction.run();
-                }
-                return null;
-            } else {
-                return duped;
             }
         }
 
