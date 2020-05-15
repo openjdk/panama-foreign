@@ -46,7 +46,7 @@ public class Test8245003 {
         addr = special_pt3d$ADDR();
         assertEquals(addr.segment().byteSize(), CPoint3D.sizeof());
         assertEquals(CPoint3D.z$get(addr), 35);
-        var pointAddr = CPoint3D.p$ADDR(addr);
+        var pointAddr = CPoint3D.p$addr(addr);
         assertEquals(pointAddr.segment().byteSize(), CPoint.sizeof());
         assertEquals(CPoint.x$get(pointAddr), 43);
         assertEquals(CPoint.y$get(pointAddr), 45);
@@ -67,7 +67,7 @@ public class Test8245003 {
         addr = foo$ADDR();
         assertEquals(addr.segment().byteSize(), CFoo.sizeof());
         assertEquals(CFoo.count$get(addr), 37);
-        var greeting = CFoo.greeting$ADDR(addr);
+        var greeting = CFoo.greeting$addr(addr);
         byte[] barr = Cchar.toJavaArray(greeting.segment());
         assertEquals(new String(barr), "hello");
     }

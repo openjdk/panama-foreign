@@ -41,7 +41,7 @@ public class Test8244938 {
          assertEquals(seg.byteSize(), CPoint.sizeof());
          var addr = seg.baseAddress();
          assertEquals(CPoint.k$get(addr), 44);
-         var point2dAddr = CPoint.point2d$ADDR(addr);
+         var point2dAddr = CPoint.point2d$addr(addr);
          assertEquals(CPoint2D.i$get(point2dAddr), 567);
          assertEquals(CPoint2D.j$get(point2dAddr), 33);
     }
