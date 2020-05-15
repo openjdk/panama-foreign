@@ -115,7 +115,7 @@ abstract class JavaSourceBuilder {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs));
     }
 
-    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout) {
+    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         emitForwardGetter(constantHelper.addAddress(javaName, nativeName, layout));
     }
 
@@ -146,20 +146,6 @@ abstract class JavaSourceBuilder {
         indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
         sb.append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(" + vhParam + ", x);\n");
-        decrAlign();
-        indent();
-        sb.append("}\n");
-        decrAlign();
-    }
-
-    public void addAddressOf(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        DirectMethodHandleDesc desc = constantHelper.addAddress(javaName, nativeName, layout);
-        incrAlign();
-        indent();
-        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addressof() {\n");
-        incrAlign();
-        indent();
-        sb.append("return " + getCallString(desc) + ";\n");
         decrAlign();
         indent();
         sb.append("}\n");
