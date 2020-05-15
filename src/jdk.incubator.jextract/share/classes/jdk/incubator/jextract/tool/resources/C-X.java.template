@@ -25,7 +25,7 @@ public class C-X {
 
     private static void copy(MemoryAddress addr, ${CARRIER}[] arr) {
         var heapSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(heapSegment.baseAddress(), addr, arr.length * sizeof());
+        addr.segment().copyFrom(heapSegment);
     }
 
     public static ${CARRIER} get(MemoryAddress addr) {
@@ -91,7 +91,7 @@ public class C-X {
             throw new UnsupportedOperationException("segment cannot contain integral number of elements");
         }
         ${CARRIER}[] array = new ${CARRIER}[(int) (segSize / elemSize)];
-        MemoryAddress.copy(seg.baseAddress(), MemorySegment.ofArray(array).baseAddress(), array.length * elemSize);
+        MemorySegment.ofArray(array).copyFrom(seg);
         return array;
     }
 }
