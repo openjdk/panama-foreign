@@ -112,10 +112,10 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addAddressOf(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addressof(MemoryAddress addr) {\n");
+        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addr(MemoryAddress addr) {\n");
         incrAlign();
         indent();
         sb.append("return addr.segment().asSlice(");

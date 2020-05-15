@@ -369,7 +369,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (parent != null) { //struct field
             MemoryLayout parentLayout = parentLayout(parent);
             if (isSegment) {
-                structBuilder.addAddressOf(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+                structBuilder.addAddressGetter(fieldName, tree.name(), treeLayout, parentLayout);
             } else {
                 structBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
                 structBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
@@ -377,11 +377,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         } else {
             if (isSegment) {
-                builder.addAddressOf(fieldName, tree.name(), treeLayout, clazz, null);
+                builder.addAddressGetter(fieldName, tree.name(), treeLayout, null);
             } else {
                 builder.addLayoutGetter(fieldName, layout);
                 builder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
-                builder.addAddressGetter(fieldName, tree.name(), treeLayout);
+                builder.addAddressGetter(fieldName, tree.name(), treeLayout, null);
                 builder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
                 builder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
             }
