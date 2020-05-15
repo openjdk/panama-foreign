@@ -321,6 +321,7 @@ public class TestSegments {
         final static List<String> CONFINED_NAMES = List.of(
                 "close",
                 "fill",
+                "copyFrom",
                 "toByteArray",
                 "withOwnerThread"
         );
