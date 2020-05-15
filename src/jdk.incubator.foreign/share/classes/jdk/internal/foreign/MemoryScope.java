@@ -49,8 +49,11 @@ import java.util.concurrent.locks.StampedLock;
  * be closed after all its children have been closed, at which time any associated
  * cleanup action is executed (the associated memory segment is freed).
  * Besides thread-confined checked scopes, {@linkplain #createUnchecked(Thread, Object, Runnable)}
- * method may be used passing {@code null} as the "owner" thread to create an
- * unchecked scope that doesn't check for thread-confinement or temporal bounds.
+ * method may be used passing {@code null} as the "owner" thread to create a
+ * scope that doesn't check for thread-confinement while its temporal bounds are
+ * enforced reliably only under condition that thread that closes the scope is also
+ * the single thread performing the checked access or there is an external synchronization
+ * in place that prevents concurrent access and closing of the scope.
  */
 abstract class MemoryScope {
 
@@ -184,12 +187,10 @@ abstract class MemoryScope {
      */
     @ForceInline
     final void checkValidState() {
-        if (owner != null) {
-            if (owner != Thread.currentThread()) {
-                throw new IllegalStateException("Attempted access outside owning thread");
-            }
-            checkAliveConfined(this);
+        if (owner != null && owner != Thread.currentThread()) {
+            throw new IllegalStateException("Attempted access outside owning thread");
         }
+        checkAliveConfined(this);
     }
 
     /**
