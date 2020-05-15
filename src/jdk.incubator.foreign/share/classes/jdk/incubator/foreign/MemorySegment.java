@@ -31,6 +31,7 @@ import java.nio.ByteBuffer;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
+import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
@@ -307,6 +308,29 @@ public interface MemorySegment extends AutoCloseable {
      * @throws UnsupportedOperationException if this segment does not support the {@link #WRITE} access mode
      */
     MemorySegment fill(byte value);
+
+    /**
+     * Perform bulk copy from given source segment to this segment. More specifically, the bytes at
+     * offset {@code 0} through {@code src.byteSize() - 1} in the source segment are copied into this segment
+     * at offset {@code 0} through {@code src.byteSize() - 1}.
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code 0} through {@code src.byteSize() - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * this segment at offset {@code 0} through {@code src.byteSize() - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment does not overlap with
+     * this segment, but it instead refers to an overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@link MemorySegment#mapFromPath mapped} to two segments.
+     *
+     * @param src the source segment.
+     * @throws IndexOutOfBoundsException if {src.byteSize() > this.byteSize()}.
+     * @throws IllegalStateException if either the source segment or this segment have been already closed,
+     * or if access occurs from a thread other than the thread owning either segment.
+     * @throws UnsupportedOperationException if either the source segment or this segment do not feature required access modes;
+     * more specifically, {@code src} should feature at least the {@link MemorySegment#READ} access mode,
+     * while this segment should feature at least the {@link MemorySegment#WRITE} access mode.
+     */
+    void copyFrom(MemorySegment src);
 
     /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
