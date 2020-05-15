@@ -36,7 +36,6 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This class defines several factory methods for constructing and combining memory access var handles.
@@ -319,10 +318,10 @@ public final class MemoryHandles {
 
     /**
      * Adapts a target var handle by narrowing incoming values and widening
-     * outgoing values, from and to the given type, respectively.
+     * outgoing values, to and from the given type, respectively.
      * <p>
      * The returned var handle can be used to conveniently treat unsigned
-     * primitive types as if they were a wider signed primitive type. For
+     * primitive data types as if they were a wider signed primitive type. For
      * example, it is often convenient to model an <i>unsigned short</i> as a
      * Java {@code int} to avoid dealing with negative values, which would be
      * the case if modeled as a Java {@code short}. The returned var handle
@@ -350,9 +349,9 @@ public final class MemoryHandles {
      * @returns the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code target}
      * is not one of {@code byte}, {@code short}, or {@code int}; if {@code
-     * adaptedType} is not one of {@code short}, {@code int}, or {@code long};
-     * if the bitwidth of the {@code adaptedType} is not greater than that of
-     * the {@code target} carrier type
+     * adaptedType} is not one of {@code int}, or {@code long}; if the bitwidth
+     * of the {@code adaptedType} is not greater than that of the {@code target}
+     * carrier type
      * @throws NullPointerException if either of {@code target} or {@code
      * adaptedType} is null
      *
@@ -360,26 +359,7 @@ public final class MemoryHandles {
      * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(adaptedType);
-        final Class<?> carrier = target.varType();
-        checkWidenable(carrier);
-        checkNarrowable(adaptedType);
-        checkCarrierWiderThanTarget(carrier, adaptedType);
-
-        if (adaptedType == int.class && carrier == byte.class) {
-            return MemoryHandleIntToUnsignedByte.varHandle(target);
-        } else if (adaptedType == int.class && carrier == short.class) {
-            return MemoryHandleIntToUnsignedShort.varHandle(target);
-        } else if (adaptedType == long.class && carrier == byte.class) {
-            return MemoryHandleLongToUnsignedByte.varHandle(target);
-        } else if (adaptedType == long.class && carrier == short.class) {
-            return MemoryHandleLongToUnsignedShort.varHandle(target);
-        } else if (adaptedType == long.class && carrier == int.class) {
-            return MemoryHandleLongToUnsignedInt.varHandle(target);
-        } else {
-            throw new InternalError("should not reach here");
-        }
+        return JLI.asUnsigned(target, adaptedType);
     }
 
     /**
@@ -596,25 +576,6 @@ public final class MemoryHandles {
     private static long carrierSize(Class<?> carrier) {
         long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
         return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
-    }
-
-    private static void checkWidenable(Class<?> carrier) {
-        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    private static void checkNarrowable(Class<?> type) {
-        if (!(type == short.class || type == int.class || type == long.class)) {
-            throw new IllegalArgumentException("Not narrowable " + type.getSimpleName());
-        }
-    }
-
-    private static void checkCarrierWiderThanTarget(Class<?> carrier, Class<?> target) {
-        if (Wrapper.forPrimitiveType(target).bitWidth() <= Wrapper.forPrimitiveType(carrier).bitWidth()) {
-            throw new IllegalArgumentException(
-                    "Illegal target " + target.getSimpleName() + " bitwidth not greater than carrier" + carrier);
-        }
     }
 
     private static MemoryAddress longToAddress(long value) {

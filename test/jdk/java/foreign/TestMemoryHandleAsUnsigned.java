@@ -216,28 +216,48 @@ public class TestMemoryHandleAsUnsigned {
 
     static final Class<IllegalArgumentException> IAE = IllegalArgumentException.class;
 
-    static VarHandle withCarrier(Class<?> carrier) {
-        return MemoryHandles.varHandle(carrier, BIG_ENDIAN);
+    static void assertIllegalArgumentExceptionIllegalCarrier(Class<?> carrier, Class<?> adaptedType) {
+        var vh = MemoryHandles.varHandle(carrier, BIG_ENDIAN);
+        var exception = expectThrows(IAE, () -> MemoryHandles.asUnsigned(vh, adaptedType));
+        var msg = exception.getMessage();
+        assertTrue(msg.contains("illegal carrier"), "Expected \"illegal carrier\" in:[" + msg +"]");
     }
+
+    static void assertIllegalArgumentExceptionIllegalAdapter(Class<?> carrier, Class<?> adaptedType) {
+        var vh = MemoryHandles.varHandle(carrier, BIG_ENDIAN);
+        var exception = expectThrows(IAE, () -> MemoryHandles.asUnsigned(vh, adaptedType));
+        var msg = exception.getMessage();
+        assertTrue(msg.contains("illegal adapter type"), "Expected \"illegal adapter type\" in:[" + msg +"]");
+    }
+
+    static void assertIllegalArgumentExceptionIsNotWiderThan(Class<?> carrier, Class<?> adaptedType) {
+        var vh = MemoryHandles.varHandle(carrier, BIG_ENDIAN);
+        var exception = expectThrows(IAE, () -> MemoryHandles.asUnsigned(vh, adaptedType));
+        var msg = exception.getMessage();
+        assertTrue(msg.contains("is not wider than"), "Expected \"is not wider than\" in:[" + msg +"]");
+    }
+
     @Test
     public void testIllegalArgumentException() {
-        //
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(char.class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(double.class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(float.class), int.class));
-        // TODO ...
+        assertIllegalArgumentExceptionIllegalCarrier(char.class,   long.class);
+        assertIllegalArgumentExceptionIllegalCarrier(double.class, long.class);
+        assertIllegalArgumentExceptionIllegalCarrier(float.class,  long.class);
+        assertIllegalArgumentExceptionIllegalCarrier(long.class,   long.class);
 
-        // array types
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(byte[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(char[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(short[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(int[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(long[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(double[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(float[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(Object[].class), int.class));
-        assertThrows(IAE, () -> MemoryHandles.asUnsigned(withCarrier(Integer[].class), int.class));
-        // TODO: other cases ...
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, void.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, byte.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, short.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, char.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, double.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, float.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, Object.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, Integer.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, Long.class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, long[].class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, int[].class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, Integer[].class);
+        assertIllegalArgumentExceptionIllegalAdapter(byte.class, Long[].class);
+
+        assertIllegalArgumentExceptionIsNotWiderThan(int.class, int.class);
     }
-
 }

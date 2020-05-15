@@ -23,40 +23,35 @@
  *  questions.
  *
  */
-package jdk.incubator.foreign;
+package java.lang.invoke;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
-
-final class MemoryHandleLongToUnsignedShort {
+final class MemoryHandle$AdapterType$ToUnsigned$CarrierType$ {
     private static final MethodHandle TO_TARGET;
     private static final MethodHandle FROM_TARGET;
 
     static {
         try {
-            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandleLongToUnsignedShort.class, "shortValue",
-                    MethodType.methodType(short.class, long.class));
-            FROM_TARGET = MethodHandles.lookup().findStatic(Short.class, "toUnsignedLong",
-                    MethodType.methodType(long.class, short.class));
+            TO_TARGET = MethodHandles.lookup().findStatic(MemoryHandle$AdapterType$ToUnsigned$CarrierType$.class, "$carrierType$Value",
+                    MethodType.methodType($carrierType$.class, $adapterType$.class));
+            FROM_TARGET = MethodHandles.lookup().findStatic($BoxCarrierType$.class, "toUnsigned$AdapterType$",
+                    MethodType.methodType($adapterType$.class, $carrierType$.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    private MemoryHandleLongToUnsignedShort() { } // no instances
+    private MemoryHandle$AdapterType$ToUnsigned$CarrierType$() { } // no instances
 
     static VarHandle varHandle(VarHandle target) {
         checkCarrierType(target.varType());
-        return MemoryHandles.filterValue(target, TO_TARGET, FROM_TARGET);
+        return VarHandles.filterValue(target, TO_TARGET, FROM_TARGET);
     }
 
-    private static short shortValue(long value) {
-        return (short) value;
+    private static $carrierType$ $carrierType$Value($adapterType$ value) {
+        return ($carrierType$) value;
     }
 
-    private static final Class<?> CARRIER_TYPE = short.class;
+    private static final Class<?> CARRIER_TYPE = $carrierType$.class;
 
     private static void checkCarrierType(Class<?> carrier) {
         if (carrier != CARRIER_TYPE)

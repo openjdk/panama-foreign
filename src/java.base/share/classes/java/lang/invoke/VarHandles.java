@@ -337,6 +337,48 @@ final class VarHandles {
         }
     }
 
+    private static void checkWidenable(Class<?> carrier) {
+        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
+            throw newIllegalArgumentException("illegal carrier", carrier.getSimpleName());
+        }
+    }
+
+    private static void checkNarrowable(Class<?> type) {
+        if (!(type == int.class || type == long.class)) {
+            throw newIllegalArgumentException("illegal adapter type", type.getSimpleName());
+        }
+    }
+
+    private static void checkTargetWiderThanCarrier(Class<?> carrier, Class<?> target) {
+        if (Wrapper.forPrimitiveType(target).bitWidth() <= Wrapper.forPrimitiveType(carrier).bitWidth()) {
+            throw newIllegalArgumentException(
+                    target.getSimpleName() + " is not wider than " + carrier.getSimpleName());
+        }
+    }
+
+    public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
+        Objects.requireNonNull(target);
+        Objects.requireNonNull(adaptedType);
+        final Class<?> carrier = target.varType();
+        checkWidenable(carrier);
+        checkNarrowable(adaptedType);
+        checkTargetWiderThanCarrier(carrier, adaptedType);
+
+        if (adaptedType == int.class && carrier == byte.class) {
+            return MemoryHandleIntToUnsignedByte.varHandle(target);
+        } else if (adaptedType == int.class && carrier == short.class) {
+            return MemoryHandleIntToUnsignedShort.varHandle(target);
+        } else if (adaptedType == long.class && carrier == byte.class) {
+            return MemoryHandleLongToUnsignedByte.varHandle(target);
+        } else if (adaptedType == long.class && carrier == short.class) {
+            return MemoryHandleLongToUnsignedShort.varHandle(target);
+        } else if (adaptedType == long.class && carrier == int.class) {
+            return MemoryHandleLongToUnsignedInt.varHandle(target);
+        } else {
+            throw new InternalError("should not reach here");
+        }
+    }
+
     private static VarHandle maybeAdapt(VarHandle target) {
         if (!VAR_HANDLE_IDENTITY_ADAPT) return target;
         target = filterValue(target,
