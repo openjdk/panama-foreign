@@ -23,11 +23,6 @@ public class C-X {
     private static final VarHandle handle = LAYOUT.varHandle(CARRIER);
     private static final VarHandle arrayHandle = arrayHandle(LAYOUT, CARRIER);
 
-    private static void copy(MemoryAddress addr, ${CARRIER}[] arr) {
-        var heapSegment = MemorySegment.ofArray(arr);
-        MemoryAddress.copy(heapSegment.baseAddress(), addr, arr.length * sizeof());
-    }
-
     public static ${CARRIER} get(MemoryAddress addr) {
         return (${CARRIER}) handle.get(addr);
     }
@@ -69,14 +64,14 @@ public class C-X {
     public static MemorySegment allocateArray(${CARRIER}[] arr) {
         var arrLayout = MemoryLayout.ofSequence(arr.length, LAYOUT);
         var seg = MemorySegment.allocateNative(arrLayout);
-        copy(seg.baseAddress(), arr);
+        seg.copyFrom(MemorySegment.ofArray(arr));
         return seg;
     }
 
     public static MemoryAddress allocateArray(${CARRIER}[] arr, NativeAllocationScope scope) {
         var arrLayout = MemoryLayout.ofSequence(arr.length, LAYOUT);
         var addr = scope.allocate(arrLayout);
-        copy(addr, arr);
+        addr.segment().copyFrom(MemorySegment.ofArray(arr));
         return addr;
     }
 
@@ -91,7 +86,7 @@ public class C-X {
             throw new UnsupportedOperationException("segment cannot contain integral number of elements");
         }
         ${CARRIER}[] array = new ${CARRIER}[(int) (segSize / elemSize)];
-        MemoryAddress.copy(seg.baseAddress(), MemorySegment.ofArray(array).baseAddress(), array.length * elemSize);
+        MemorySegment.ofArray(array).copyFrom(seg);
         return array;
     }
 }
