@@ -180,9 +180,8 @@ public class SharedUtils {
     }
 
     private static MemoryAddress bufferCopy(MemoryAddress dest, MemorySegment buffer) {
-        MemoryAddress.copy(buffer.baseAddress(),
-                MemoryAddressImpl.ofLongUnchecked(dest.toRawLongValue(), buffer.byteSize()),
-                buffer.byteSize());
+        MemoryAddressImpl.ofLongUnchecked(dest.toRawLongValue(), buffer.byteSize())
+                .segment().copyFrom(buffer);
         return dest;
     }
 
