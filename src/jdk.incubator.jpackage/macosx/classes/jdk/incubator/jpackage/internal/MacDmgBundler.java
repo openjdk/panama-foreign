@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 import static jdk.incubator.jpackage.internal.MacAppImageBuilder.ICON_ICNS;
+import static jdk.incubator.jpackage.internal.MacAppImageBuilder.MAC_CF_BUNDLE_IDENTIFIER;
 import static jdk.incubator.jpackage.internal.OverridableResource.createResource;
 
 import static jdk.incubator.jpackage.internal.StandardBundlerParam.*;
@@ -116,8 +117,8 @@ public class MacDmgBundler extends MacBaseInstallerBundler {
         data.put("DEPLOY_VOLUME_PATH", volumePath.toString());
         data.put("DEPLOY_APPLICATION_NAME", APP_NAME.fetchFrom(params));
 
-        data.put("DEPLOY_INSTALL_LOCATION", "(path to applications folder)");
-        data.put("DEPLOY_INSTALL_NAME", "Applications");
+        data.put("DEPLOY_INSTALL_LOCATION", MAC_INSTALL_DIR.fetchFrom(params));
+        data.put("DEPLOY_INSTALL_NAME", MAC_INSTALL_DIR.fetchFrom(params));
 
         createResource(DEFAULT_DMG_SETUP_SCRIPT, params)
                 .setCategory(I18N.getString("resource.dmg-setup-script"))
@@ -309,18 +310,28 @@ public class MacDmgBundler extends MacBaseInstallerBundler {
 
         File mountedRoot = new File(imagesRoot.getAbsolutePath(),
                     APP_NAME.fetchFrom(params));
-
         try {
-            // volume icon
-            File volumeIconFile = new File(mountedRoot, ".VolumeIcon.icns");
-            IOUtils.copyFile(getConfig_VolumeIcon(params),
-                    volumeIconFile);
-
             // background image
             File bgdir = new File(mountedRoot, BACKGROUND_IMAGE_FOLDER);
             bgdir.mkdirs();
             IOUtils.copyFile(getConfig_VolumeBackground(params),
                     new File(bgdir, BACKGROUND_IMAGE));
+
+            // We will not consider setting background image and creating link
+            // to install-dir in DMG as critical error, since it can fail in
+            // headless enviroment.
+            try {
+                pb = new ProcessBuilder("osascript",
+                        getConfig_VolumeScript(params).getAbsolutePath());
+                IOUtils.exec(pb);
+            } catch (IOException ex) {
+                Log.verbose(ex);
+            }
+
+            // volume icon
+            File volumeIconFile = new File(mountedRoot, ".VolumeIcon.icns");
+            IOUtils.copyFile(getConfig_VolumeIcon(params),
+                    volumeIconFile);
 
             // Indicate that we want a custom icon
             // NB: attributes of the root directory are ignored
@@ -355,16 +366,6 @@ public class MacDmgBundler extends MacBaseInstallerBundler {
                 Log.verbose(I18N.getString("message.setfile.dmg"));
             }
 
-            // We will not consider setting background image and creating link to
-            // /Application folder in DMG as critical error, since it can fail in
-            // headless enviroment.
-            try {
-                pb = new ProcessBuilder("osascript",
-                        getConfig_VolumeScript(params).getAbsolutePath());
-                IOUtils.exec(pb);
-            } catch (IOException ex) {
-                Log.verbose(ex);
-            }
         } finally {
             // Detach the temporary image
             pb = new ProcessBuilder(
@@ -492,5 +493,4 @@ public class MacDmgBundler extends MacBaseInstallerBundler {
     public boolean isDefault() {
         return true;
     }
-
 }
