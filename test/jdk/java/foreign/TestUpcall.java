@@ -33,13 +33,14 @@
  * @run testng/othervm -Dforeign.restricted=permit TestUpcall
  */
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -49,7 +50,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -57,14 +57,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.SystemABI.C_POINTER;
+import static jdk.incubator.foreign.CSupport.C_POINTER;
 import static org.testng.Assert.assertEquals;
 
 
 public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
-    static SystemABI abi = SystemABI.getSystemABI();
+    static ForeignLinker abi = CSupport.getSystemLinker();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;

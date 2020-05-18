@@ -26,11 +26,11 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.foreign.MemoryAddressProxy;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -107,11 +107,11 @@ public final class Utils {
     }
 
     public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
-        SystemABI abi = SharedUtils.getSystemABI();
+        ForeignLinker abi = SharedUtils.getSystemLinker();
         return switch (abi.name()) {
-            case SystemABI.SysV.NAME -> sysv;
-            case SystemABI.Win64.NAME -> win64;
-            case SystemABI.AArch64.NAME -> aarch64;
+            case CSupport.SysV.NAME -> sysv;
+            case CSupport.Win64.NAME -> win64;
+            case CSupport.AArch64.NAME -> aarch64;
             default -> throw new ExceptionInInitializerError("Unexpected ABI: " + abi.name());
         };
     }

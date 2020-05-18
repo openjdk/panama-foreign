@@ -51,6 +51,8 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -58,16 +60,15 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.SystemABI;
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.SystemABI.*;
+import static jdk.incubator.foreign.CSupport.*;
 import static org.testng.Assert.*;
 
 @Test
 public class StdLibTest extends NativeTestHelper {
 
-    final static SystemABI abi = SystemABI.getSystemABI();
+    final static ForeignLinker abi = CSupport.getSystemLinker();
 
     final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
     final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());

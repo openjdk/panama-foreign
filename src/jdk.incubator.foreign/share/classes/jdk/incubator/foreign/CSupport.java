@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -27,132 +27,79 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.UpcallStubs;
-import jdk.internal.foreign.abi.aarch64.AArch64ABI;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
-import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.nio.ByteOrder;
-import java.util.Optional;
 
 /**
- * This class models a system application binary interface (ABI).
- *
- * Instances of this class can be obtained by calling {@link SystemABI#getSystemABI()}
+ * A set of utilities for working with libraries using the C language/ABI
  */
-public interface SystemABI {
+public class CSupport {
     /**
-     * The name of the SysV ABI
+     * Obtain a linker that uses the de facto C ABI of the current system to do it's linking.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @return a linker for this system.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
+     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    String ABI_SYSV = "SysV";
-
-    /**
-     * The name of the Windows ABI
-     */
-    String ABI_WINDOWS = "Windows";
-
-    /**
-     * The name of the AArch64 ABI
-     */
-    String ABI_AARCH64 = "AArch64";
-
-    /**
-     * memory layout attribute key for abi native type
-     */
-    String NATIVE_TYPE = "abi/native-type";
-
-    /**
-     * Obtain a method handle which can be used to call a given native function.
-     *
-     * @param symbol downcall symbol.
-     * @param type the method type.
-     * @param function the function descriptor.
-     * @return the downcall method handle.
-     */
-    MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function);
-
-    /**
-     * Allocates a native stub segment which contains executable code to upcall into a given method handle.
-     * As such, the base address of the returned stub segment can be passed to other foreign functions
-     * (as a function pointer). The returned segment is <em>not</em> thread-confined, and it only features
-     * the {@link MemorySegment#CLOSE} access mode. When the returned segment is closed,
-     * the corresponding native stub will be deallocated.
-     *
-     * @param target the target method handle.
-     * @param function the function descriptor.
-     * @return the native stub segment.
-     */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
-
-    /**
-     * Returns the name of this ABI.
-     *
-     * @return the name
-     */
-    String name();
+    public static ForeignLinker getSystemLinker() {
+        Utils.checkRestrictedAccess("CSupport.getSystemLinker");
+        return SharedUtils.getSystemLinker();
+    }
 
     /**
      * The {@code _Bool} native type.
      */
-    ValueLayout C_BOOL = Utils.pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
-
+    public static final ValueLayout C_BOOL = Utils.pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
     /**
      * The {@code char} native type.
      */
-    ValueLayout C_CHAR = Utils.pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
-
+    public static final ValueLayout C_CHAR = Utils.pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
     /**
      * The {@code short} native type.
      */
-    ValueLayout C_SHORT = Utils.pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
-
+    public static final ValueLayout C_SHORT = Utils.pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
     /**
      * The {@code int} native type.
      */
-    ValueLayout C_INT = Utils.pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
-
+    public static final ValueLayout C_INT = Utils.pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
     /**
      * The {@code long} native type.
      */
-    ValueLayout C_LONG = Utils.pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
-
+    public static final ValueLayout C_LONG = Utils.pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
     /**
      * The {@code long long} native type.
      */
-    ValueLayout C_LONGLONG = Utils.pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
-
+    public static final ValueLayout C_LONGLONG = Utils.pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
     /**
      * The {@code float} native type.
      */
-    ValueLayout C_FLOAT = Utils.pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
-
+    public static final ValueLayout C_FLOAT = Utils.pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
     /**
      * The {@code double} native type.
      */
-    ValueLayout C_DOUBLE = Utils.pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
-
+    public static final ValueLayout C_DOUBLE = Utils.pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
     /**
      * The {@code long double} native type.
      */
-    ValueLayout C_LONGDOUBLE = Utils.pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
-
+    public static final ValueLayout C_LONGDOUBLE = Utils.pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
     /**
      * The {@code T*} native type.
      */
-    ValueLayout C_POINTER = Utils.pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
+    public static final ValueLayout C_POINTER = Utils.pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.
      */
-    final class SysV {
+    public static final class SysV {
         private SysV() {
             //just the one
         }
 
         /**
-         * The name of the SysV ABI
+         * The name of the SysV linker ({@see ForeignLinker#name})
          */
         public static final String NAME = "SysV";
 
@@ -236,14 +183,14 @@ public interface SystemABI {
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 Windows ABI.
      */
-    final class Win64 {
+    public static final class Win64 {
 
         private Win64() {
             //just the one
         }
 
         /**
-         * The name of the Windows ABI
+         * The name of the Windows linker ({@see ForeignLinker#name})
          */
         public final static String NAME = "Windows";
 
@@ -325,14 +272,14 @@ public interface SystemABI {
     /**
      * This class defines layout constants modelling standard primitive types supported by the AArch64 ABI.
      */
-    final class AArch64 {
+    public static final class AArch64 {
 
         private AArch64() {
             //just the one
         }
 
         /**
-         * The name of the AArch64 ABI
+         * The name of the AArch64 linker ({@see ForeignLinker#name})
          */
         public final static String NAME = "AArch64";
 
@@ -403,20 +350,5 @@ public interface SystemABI {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
-    }
-
-    /**
-     * Obtain an instance of the system ABI.
-     * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     * @return system ABI.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
-     */
-    static SystemABI getSystemABI() {
-        Utils.checkRestrictedAccess("SystemABI.getSystemABI");
-        return SharedUtils.getSystemABI();
     }
 }

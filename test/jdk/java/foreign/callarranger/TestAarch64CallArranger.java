@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.SystemABI.AArch64.*;
+import static jdk.incubator.foreign.CSupport.AArch64.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static org.testng.Assert.assertEquals;

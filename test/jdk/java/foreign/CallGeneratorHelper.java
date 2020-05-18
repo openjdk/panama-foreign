@@ -38,7 +38,7 @@ import java.util.stream.IntStream;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.SystemABI.*;
+import static jdk.incubator.foreign.CSupport.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {

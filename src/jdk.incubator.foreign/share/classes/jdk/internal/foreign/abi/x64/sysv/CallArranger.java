@@ -31,7 +31,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -54,11 +53,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_INTEGER_ARGUMENT_REGISTERS;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64ABI.argumentClassFor;
+import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_INTEGER_ARGUMENT_REGISTERS;
+import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_VECTOR_ARGUMENT_REGISTERS;
+import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.argumentClassFor;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses the ProgrammableInvoker API, namely CallingSequenceBuilder2
@@ -93,7 +93,7 @@ public class CallArranger {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
-        SharedUtils.checkFunctionTypes(mt, cDesc, SysVx64ABI.ADDRESS_SIZE);
+        SharedUtils.checkFunctionTypes(mt, cDesc, SysVx64Linker.ADDRESS_SIZE);
 
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 
@@ -103,7 +103,7 @@ public class CallArranger {
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
             Class<?> carrier = MemoryAddress.class;
-            MemoryLayout layout = SystemABI.SysV.C_POINTER;
+            MemoryLayout layout = SysV.C_POINTER;
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -119,7 +119,7 @@ public class CallArranger {
 
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
-            csb.addArgumentBindings(long.class, SystemABI.SysV.C_LONG,
+            csb.addArgumentBindings(long.class, SysV.C_LONG,
                     List.of(move(rax, long.class)));
         }
 
@@ -212,7 +212,7 @@ public class CallArranger {
         private int maxRegisterArguments(int type) {
             return type == StorageClasses.INTEGER ?
                     MAX_INTEGER_ARGUMENT_REGISTERS :
-                    SysVx64ABI.MAX_VECTOR_ARGUMENT_REGISTERS;
+                    SysVx64Linker.MAX_VECTOR_ARGUMENT_REGISTERS;
         }
 
         VMStorage stackAlloc() {
@@ -427,7 +427,7 @@ public class CallArranger {
         if (type.byteSize() > 8) {
             throw new IllegalStateException("");
         }
-        ArgumentClassImpl clazz = SysVx64ABI.argumentClassFor(type)
+        ArgumentClassImpl clazz = SysVx64Linker.argumentClassFor(type)
                 .orElseThrow(() -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
         return clazz;
     }

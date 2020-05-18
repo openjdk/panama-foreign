@@ -25,28 +25,30 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.abi.*;
+import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+
+import static jdk.incubator.foreign.CSupport.*;
 
 /**
  * ABI implementation based on ARM document "Procedure Call Standard for
  * the ARM 64-bit Architecture".
  */
-public class AArch64ABI implements SystemABI {
-    private static AArch64ABI instance;
+public class AArch64Linker implements ForeignLinker {
+    private static AArch64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
 
-    public static AArch64ABI getInstance() {
+    public static AArch64Linker getInstance() {
         if (instance == null) {
-            instance = new AArch64ABI();
+            instance = new AArch64Linker();
         }
         return instance;
     }
