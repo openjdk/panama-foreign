@@ -37,6 +37,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class defines several factory methods for constructing and combining memory access var handles.
@@ -133,6 +134,17 @@ public final class MemoryHandles {
     private static final MethodHandle ADD_OFFSET;
     private static final MethodHandle ADD_STRIDE;
 
+    private static final MethodHandle INT_TO_BYTE;
+    private static final MethodHandle BYTE_TO_UNSIGNED_INT;
+    private static final MethodHandle INT_TO_SHORT;
+    private static final MethodHandle SHORT_TO_UNSIGNED_INT;
+    private static final MethodHandle LONG_TO_BYTE;
+    private static final MethodHandle BYTE_TO_UNSIGNED_LONG;
+    private static final MethodHandle LONG_TO_SHORT;
+    private static final MethodHandle SHORT_TO_UNSIGNED_LONG;
+    private static final MethodHandle LONG_TO_INT;
+    private static final MethodHandle INT_TO_UNSIGNED_LONG;
+
     static {
         try {
             LONG_TO_ADDRESS = MethodHandles.lookup().findStatic(MemoryHandles.class, "longToAddress",
@@ -144,6 +156,27 @@ public final class MemoryHandles {
 
             ADD_STRIDE = MethodHandles.lookup().findStatic(MemoryHandles.class, "addStride",
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class, long.class, long.class));
+
+            INT_TO_BYTE = MethodHandles.explicitCastArguments(MethodHandles.identity(byte.class),
+                    MethodType.methodType(byte.class, int.class));
+            BYTE_TO_UNSIGNED_INT = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedInt",
+                    MethodType.methodType(int.class, byte.class));
+            INT_TO_SHORT = MethodHandles.explicitCastArguments(MethodHandles.identity(short.class),
+                    MethodType.methodType(short.class, int.class));
+            SHORT_TO_UNSIGNED_INT = MethodHandles.lookup().findStatic(Short.class, "toUnsignedInt",
+                    MethodType.methodType(int.class, short.class));
+            LONG_TO_BYTE = MethodHandles.explicitCastArguments(MethodHandles.identity(byte.class),
+                    MethodType.methodType(byte.class, long.class));
+            BYTE_TO_UNSIGNED_LONG = MethodHandles.lookup().findStatic(Byte.class, "toUnsignedLong",
+                    MethodType.methodType(long.class, byte.class));
+            LONG_TO_SHORT = MethodHandles.explicitCastArguments(MethodHandles.identity(short.class),
+                    MethodType.methodType(short.class, long.class));
+            SHORT_TO_UNSIGNED_LONG = MethodHandles.lookup().findStatic(Short.class, "toUnsignedLong",
+                    MethodType.methodType(long.class, short.class));
+            LONG_TO_INT = MethodHandles.explicitCastArguments(MethodHandles.identity(int.class),
+                    MethodType.methodType(int.class, long.class));
+            INT_TO_UNSIGNED_LONG = MethodHandles.lookup().findStatic(Integer.class, "toUnsignedLong",
+                    MethodType.methodType(long.class, int.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -361,7 +394,26 @@ public final class MemoryHandles {
      * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
-        return UnsignedAdapters.asUnsigned(target, adaptedType);
+        Objects.requireNonNull(target);
+        Objects.requireNonNull(adaptedType);
+        final Class<?> carrier = target.varType();
+        checkWidenable(carrier);
+        checkNarrowable(adaptedType);
+        checkTargetWiderThanCarrier(carrier, adaptedType);
+
+        if (adaptedType == int.class && carrier == byte.class) {
+            return filterValue(target, INT_TO_BYTE, BYTE_TO_UNSIGNED_INT);
+        } else if (adaptedType == int.class && carrier == short.class) {
+            return filterValue(target, INT_TO_SHORT, SHORT_TO_UNSIGNED_INT);
+        } else if (adaptedType == long.class && carrier == byte.class) {
+            return filterValue(target, LONG_TO_BYTE, BYTE_TO_UNSIGNED_LONG);
+        } else if (adaptedType == long.class && carrier == short.class) {
+            return filterValue(target, LONG_TO_SHORT, SHORT_TO_UNSIGNED_LONG);
+        } else if (adaptedType == long.class && carrier == int.class) {
+            return filterValue(target, LONG_TO_INT, INT_TO_UNSIGNED_LONG);
+        } else {
+            throw new InternalError("should not reach here");
+        }
     }
 
     /**
@@ -578,6 +630,25 @@ public final class MemoryHandles {
     private static long carrierSize(Class<?> carrier) {
         long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
         return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
+    }
+
+    private static void checkWidenable(Class<?> carrier) {
+        if (!(carrier == byte.class || carrier == short.class || carrier == int.class)) {
+            throw new IllegalArgumentException("illegal carrier:" + carrier.getSimpleName());
+        }
+    }
+
+    private static void checkNarrowable(Class<?> type) {
+        if (!(type == int.class || type == long.class)) {
+            throw new IllegalArgumentException("illegal adapter type: " + type.getSimpleName());
+        }
+    }
+
+    private static void checkTargetWiderThanCarrier(Class<?> carrier, Class<?> target) {
+        if (Wrapper.forPrimitiveType(target).bitWidth() <= Wrapper.forPrimitiveType(carrier).bitWidth()) {
+            throw new IllegalArgumentException(
+                    target.getSimpleName() + " is not wider than: " + carrier.getSimpleName());
+        }
     }
 
     private static MemoryAddress longToAddress(long value) {
