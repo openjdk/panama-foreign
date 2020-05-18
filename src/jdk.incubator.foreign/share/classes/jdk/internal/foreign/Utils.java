@@ -26,7 +26,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.C;
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -109,9 +109,9 @@ public final class Utils {
     public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
         ForeignLinker abi = SharedUtils.getSystemLinker();
         return switch (abi.name()) {
-            case C.SysV.NAME -> sysv;
-            case C.Win64.NAME -> win64;
-            case C.AArch64.NAME -> aarch64;
+            case CSupport.SysV.NAME -> sysv;
+            case CSupport.Win64.NAME -> win64;
+            case CSupport.AArch64.NAME -> aarch64;
             default -> throw new ExceptionInInitializerError("Unexpected ABI: " + abi.name());
         };
     }

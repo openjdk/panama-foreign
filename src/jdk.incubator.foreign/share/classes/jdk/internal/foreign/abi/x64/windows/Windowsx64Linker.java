@@ -34,7 +34,7 @@ import jdk.internal.foreign.abi.UpcallStubs;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6

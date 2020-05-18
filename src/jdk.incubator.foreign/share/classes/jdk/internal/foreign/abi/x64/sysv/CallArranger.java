@@ -53,7 +53,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_INTEGER_ARGUMENT_REGISTERS;

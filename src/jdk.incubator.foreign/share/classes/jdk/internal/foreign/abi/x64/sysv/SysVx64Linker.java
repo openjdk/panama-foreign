@@ -35,7 +35,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Optional;
 
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6

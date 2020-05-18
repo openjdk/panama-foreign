@@ -32,7 +32,7 @@ import java.lang.invoke.MethodType;
  * This class can be used to link native functions as a {@link MethodHandle}, or to link Java
  * methods as a native function pointer (modelled as a {@link MemorySegment}).
  *
- * Instances of this interface can be obtained for instance by calling {@link C#getSystemLinker()}
+ * Instances of this interface can be obtained for instance by calling {@link CSupport#getSystemLinker()}
  */
 public interface ForeignLinker {
     /**

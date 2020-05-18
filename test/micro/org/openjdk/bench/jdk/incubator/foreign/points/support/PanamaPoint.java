@@ -22,7 +22,7 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign.points.support;
 
-import jdk.incubator.foreign.C;
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -34,7 +34,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 
 public class PanamaPoint implements AutoCloseable {
@@ -51,7 +51,7 @@ public class PanamaPoint implements AutoCloseable {
 
     static {
         try {
-            ForeignLinker abi = C.getSystemLinker();
+            ForeignLinker abi = CSupport.getSystemLinker();
             LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
             MH_distance = abi.downcallHandle(
                 lookup.lookup("distance"),

@@ -46,7 +46,7 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 
 /**

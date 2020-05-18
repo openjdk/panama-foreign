@@ -46,8 +46,8 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
-import static jdk.incubator.foreign.C.*;
-import static jdk.incubator.foreign.C.Win64.VARARGS_ATTRIBUTE_NAME;
+import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CSupport.Win64.VARARGS_ATTRIBUTE_NAME;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 
 /**

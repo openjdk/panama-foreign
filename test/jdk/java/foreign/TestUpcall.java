@@ -33,7 +33,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestUpcall
  */
 
-import jdk.incubator.foreign.C;
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
@@ -57,14 +57,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.C.C_POINTER;
+import static jdk.incubator.foreign.CSupport.C_POINTER;
 import static org.testng.Assert.assertEquals;
 
 
 public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
-    static ForeignLinker abi = C.getSystemLinker();
+    static ForeignLinker abi = CSupport.getSystemLinker();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;

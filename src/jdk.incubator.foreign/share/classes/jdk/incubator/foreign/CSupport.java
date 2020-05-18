@@ -33,7 +33,7 @@ import java.nio.ByteOrder;
 /**
  * A set of utilities for working with libraries using the C language/ABI
  */
-public class C {
+public class CSupport {
     /**
      * Obtain a linker that uses the de facto C ABI of the current system to do it's linking.
      * <p>
@@ -45,7 +45,7 @@ public class C {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     public static ForeignLinker getSystemLinker() {
-        Utils.checkRestrictedAccess("C.getSystemLinker");
+        Utils.checkRestrictedAccess("CSupport.getSystemLinker");
         return SharedUtils.getSystemLinker();
     }
 

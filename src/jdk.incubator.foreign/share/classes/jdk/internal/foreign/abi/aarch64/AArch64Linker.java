@@ -35,7 +35,7 @@ import jdk.internal.foreign.abi.UpcallStubs;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.C.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 /**
  * ABI implementation based on ARM document "Procedure Call Standard for
