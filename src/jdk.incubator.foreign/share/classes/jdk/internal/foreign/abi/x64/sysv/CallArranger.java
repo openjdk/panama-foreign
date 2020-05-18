@@ -30,9 +30,6 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -50,15 +47,12 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static jdk.incubator.foreign.CSupport.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_INTEGER_ARGUMENT_REGISTERS;
 import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.MAX_VECTOR_ARGUMENT_REGISTERS;
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.argumentClassFor;
 
 /**
  * For the SysV x64 C ABI specifically, this class uses the ProgrammableInvoker API, namely CallingSequenceBuilder2
@@ -152,50 +146,8 @@ public class CallArranger {
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
         return returnLayout
                 .filter(GroupLayout.class::isInstance)
-                .filter(g -> classifyLayout(g).inMemory())
+                .filter(g -> TypeClass.classifyLayout(g).inMemory())
                 .isPresent();
-    }
-
-    static class TypeClass {
-        enum Kind {
-            STRUCT,
-            POINTER,
-            INTEGER,
-            FLOAT
-        }
-
-        private final Kind kind;
-        private final List<ArgumentClassImpl> classes;
-
-        private TypeClass(Kind kind, List<ArgumentClassImpl> classes) {
-            this.kind = kind;
-            this.classes = classes;
-        }
-
-        public static TypeClass ofValue(ValueLayout layout) {
-            final Kind kind;
-            ArgumentClassImpl argClass = classifyValueType(layout);
-            switch (argClass) {
-                case POINTER: kind = Kind.POINTER; break;
-                case INTEGER: kind = Kind.INTEGER; break;
-                case SSE: kind = Kind.FLOAT; break;
-                default:
-                    throw new IllegalStateException();
-            }
-            return new TypeClass(kind, List.of(argClass));
-        }
-
-        public static TypeClass ofStruct(GroupLayout layout) {
-            return new TypeClass(Kind.STRUCT, classifyStructType(layout));
-        }
-
-        boolean inMemory() {
-            return classes.stream().anyMatch(c -> c == ArgumentClassImpl.MEMORY);
-        }
-
-        long numClasses(ArgumentClassImpl clazz) {
-            return classes.stream().filter(c -> c == clazz).count();
-        }
     }
 
     static class StorageCalculator {
@@ -238,15 +190,14 @@ public class CallArranger {
             if (typeClass.inMemory()) {
                 return typeClass.classes.stream().map(c -> stackAlloc()).toArray(VMStorage[]::new);
             }
-            long nIntegerReg = typeClass.numClasses(ArgumentClassImpl.INTEGER) +
-                          typeClass.numClasses(ArgumentClassImpl.POINTER);
+            long nIntegerReg = typeClass.nIntegerRegs();
 
             if (this.nIntegerReg + nIntegerReg > MAX_INTEGER_ARGUMENT_REGISTERS) {
                 //not enough registers - pass on stack
                 return typeClass.classes.stream().map(c -> stackAlloc()).toArray(VMStorage[]::new);
             }
 
-            long nVectorReg = typeClass.numClasses(ArgumentClassImpl.SSE);
+            long nVectorReg = typeClass.nVectorRegs();
 
             if (this.nVectorReg + nVectorReg > MAX_VECTOR_ARGUMENT_REGISTERS) {
                 //not enough registers - pass on stack
@@ -305,9 +256,9 @@ public class CallArranger {
 
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyLayout(layout);
+            TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
-            switch (argumentClass.kind) {
+            switch (argumentClass.kind()) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;
                     VMStorage[] regs = storageCalculator.structStorages(argumentClass);
@@ -357,9 +308,9 @@ public class CallArranger {
 
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyLayout(layout);
+            TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
-            switch (argumentClass.kind) {
+            switch (argumentClass.kind()) {
                 case STRUCT: {
                     assert carrier == MemorySegment.class;
                     bindings.allocate(layout);
@@ -400,155 +351,4 @@ public class CallArranger {
         }
     }
 
-    // layout classification
-
-    // The AVX 512 enlightened ABI says "eight eightbytes"
-    // Although AMD64 0.99.6 states 4 eightbytes
-    private static final int MAX_AGGREGATE_REGS_SIZE = 8;
-
-    private static final ArrayList<ArgumentClassImpl> COMPLEX_X87_CLASSES;
-
-    static {
-        COMPLEX_X87_CLASSES = new ArrayList<>();
-        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87);
-        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87UP);
-        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87);
-        COMPLEX_X87_CLASSES.add(ArgumentClassImpl.X87UP);
-    }
-
-    private static List<ArgumentClassImpl> createMemoryClassArray(long size) {
-        return IntStream.range(0, (int)size)
-                .mapToObj(i -> ArgumentClassImpl.MEMORY)
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    // TODO: handle '__int128' and 'long double'
-    private static ArgumentClassImpl classifyValueType(ValueLayout type) {
-        if (type.byteSize() > 8) {
-            throw new IllegalStateException("");
-        }
-        ArgumentClassImpl clazz = SysVx64Linker.argumentClassFor(type)
-                .orElseThrow(() -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-        return clazz;
-    }
-
-    // TODO: handle zero length arrays
-    private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        if (argumentClassFor(type)
-                .filter(argClass -> argClass == ArgumentClassImpl.COMPLEX_X87)
-                .isPresent()) {
-            return COMPLEX_X87_CLASSES;
-        }
-
-        List<ArgumentClassImpl>[] eightbytes = groupByEightBytes(type);
-        long nWords = eightbytes.length;
-        if (nWords > MAX_AGGREGATE_REGS_SIZE) {
-            return createMemoryClassArray(nWords);
-        }
-
-        ArrayList<ArgumentClassImpl> classes = new ArrayList<>();
-
-        for (int idx = 0; idx < nWords; idx++) {
-            List<ArgumentClassImpl> subclasses = eightbytes[idx];
-            ArgumentClassImpl result = subclasses.stream()
-                    .reduce(ArgumentClassImpl.NO_CLASS, ArgumentClassImpl::merge);
-            classes.add(result);
-        }
-
-        for (int i = 0; i < classes.size(); i++) {
-            ArgumentClassImpl c = classes.get(i);
-
-            if (c == ArgumentClassImpl.MEMORY) {
-                // if any of the eightbytes was passed in memory, pass the whole thing in memory
-                return createMemoryClassArray(classes.size());
-            }
-
-            if (c == ArgumentClassImpl.X87UP) {
-                if (i == 0) {
-                    throw new IllegalArgumentException("Unexpected leading X87UP class");
-                }
-
-                if (classes.get(i - 1) != ArgumentClassImpl.X87) {
-                    return createMemoryClassArray(classes.size());
-                }
-            }
-        }
-
-        if (classes.size() > 2) {
-            if (classes.get(0) != ArgumentClassImpl.SSE) {
-                return createMemoryClassArray(classes.size());
-            }
-
-            for (int i = 1; i < classes.size(); i++) {
-                if (classes.get(i) != ArgumentClassImpl.SSEUP) {
-                    return createMemoryClassArray(classes.size());
-                }
-            }
-        }
-
-        return classes;
-    }
-
-    private static TypeClass classifyLayout(MemoryLayout type) {
-        try {
-            if (type instanceof ValueLayout) {
-                return TypeClass.ofValue((ValueLayout)type);
-            } else if (type instanceof GroupLayout) {
-                return TypeClass.ofStruct((GroupLayout)type);
-            } else {
-                throw new IllegalArgumentException("Unhandled type " + type);
-            }
-        } catch (UnsupportedOperationException e) {
-            System.err.println("Failed to classify layout: " + type);
-            throw e;
-        }
-    }
-
-    private static List<ArgumentClassImpl>[] groupByEightBytes(GroupLayout group) {
-        long offset = 0L;
-        int nEightbytes = (int)Utils.alignUp(group.byteSize(), 8) / 8;
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        List<ArgumentClassImpl>[] groups = new List[nEightbytes];
-        for (MemoryLayout l : group.memberLayouts()) {
-            groupByEightBytes(l, offset, groups);
-            if (group.isStruct()) {
-                offset += l.byteSize();
-            }
-        }
-        return groups;
-    }
-
-    private static void groupByEightBytes(MemoryLayout l, long offset, List<ArgumentClassImpl>[] groups) {
-        if (l instanceof GroupLayout) {
-            GroupLayout group = (GroupLayout)l;
-            for (MemoryLayout m : group.memberLayouts()) {
-                groupByEightBytes(m, offset, groups);
-                if (group.isStruct()) {
-                    offset += m.byteSize();
-                }
-            }
-        } else if (l.isPadding()) {
-            return;
-        } else if (l instanceof SequenceLayout) {
-            SequenceLayout seq = (SequenceLayout)l;
-            MemoryLayout elem = seq.elementLayout();
-            for (long i = 0 ; i < seq.elementCount().getAsLong() ; i++) {
-                groupByEightBytes(elem, offset, groups);
-                offset += elem.byteSize();
-            }
-        } else if (l instanceof ValueLayout) {
-            List<ArgumentClassImpl> layouts = groups[(int)offset / 8];
-            if (layouts == null) {
-                layouts = new ArrayList<>();
-                groups[(int)offset / 8] = layouts;
-            }
-            // if the aggregate contains unaligned fields, it has class MEMORY
-            ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
-                    classifyValueType((ValueLayout)l) :
-                    ArgumentClassImpl.MEMORY;
-            layouts.add(argumentClass);
-        } else {
-            throw new IllegalStateException("Unexpected layout: " + l);
-        }
-    }
 }

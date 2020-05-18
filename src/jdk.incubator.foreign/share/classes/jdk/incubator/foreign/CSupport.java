@@ -29,6 +29,7 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.nio.ByteOrder;
+import java.util.function.Consumer;
 
 /**
  * A set of utilities for working with libraries using the C language/ABI
@@ -47,6 +48,44 @@ public class CSupport {
     public static ForeignLinker getSystemLinker() {
         Utils.checkRestrictedAccess("CSupport.getSystemLinker");
         return SharedUtils.getSystemLinker();
+    }
+
+    public static VaList newVaList(Consumer<VaList.Builder> actions) {
+        return SharedUtils.newVaList(actions);
+    }
+
+    public interface VaList extends AutoCloseable /* permits */ {
+        Reader reader(int num);
+        boolean isAlive();
+        void close();
+
+        /**
+         * Reader interface used to read values from a va_list
+         *
+         * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
+         * arguments to variadic calls are erased by way of 'default argument promotions',
+         * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
+         * and which erases all {@code float} arguments to {@code double}.
+         *
+         * As such, this reader interface only supports reading {@code int}, {@code double},
+         * and any other type that fits into a {@code long} (when given it's layout).
+         */
+        interface Reader {
+            int readInt(MemoryLayout layout);
+            long readLong(MemoryLayout layout);
+            double readDouble(MemoryLayout layout);
+            MemoryAddress readPointer(MemoryLayout layout);
+            MemorySegment readStructOrUnion(MemoryLayout layout);
+            void skip(MemoryLayout...layouts);
+        }
+
+        interface Builder {
+            Builder intArg(MemoryLayout layout, int value);
+            Builder longArg(MemoryLayout layout, long value);
+            Builder doubleArg(MemoryLayout layout, double value);
+            Builder memoryAddressArg(MemoryLayout layout, MemoryAddress value);
+            Builder memorySegmentArg(MemoryLayout layout, MemorySegment value);
+        }
     }
 
     /**
@@ -89,6 +128,11 @@ public class CSupport {
      * The {@code T*} native type.
      */
     public static final ValueLayout C_POINTER = Utils.pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
+
+    /**
+     * The {@code va_list} native type.
+     */
+    public static final MemoryLayout C_VA_LIST = Utils.pick(SysV.C_VA_LIST, Win64.C_VA_LIST, null);
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.
@@ -178,6 +222,11 @@ public class CSupport {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+
+        /**
+         * The {@code va_list} native type, as it is passed to a function.
+         */
+        public static final MemoryLayout C_VA_LIST = SysV.C_POINTER;
     }
 
     /**
@@ -263,6 +312,11 @@ public class CSupport {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+
+        /**
+         * The {@code va_list} native type, as it is passed to a function.
+         */
+        public static final MemoryLayout C_VA_LIST = Win64.C_POINTER;
 
         public static ValueLayout asVarArg(ValueLayout l) {
             return l.withAttribute(VARARGS_ATTRIBUTE_NAME, "true");

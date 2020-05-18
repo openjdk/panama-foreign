@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
@@ -32,7 +33,9 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.function.Consumer;
 
 import static jdk.incubator.foreign.CSupport.*;
 
@@ -52,6 +55,21 @@ public class Windowsx64Linker implements ForeignLinker {
 
     static final long ADDRESS_SIZE = 64; // bits
 
+    private static final MethodHandle MH_unboxVaList;
+    private static final MethodHandle MH_boxVaList;
+
+    static {
+        try {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MH_unboxVaList = lookup.findStatic(Windowsx64Linker.class, "unboxVaList",
+                MethodType.methodType(MemoryAddress.class, CSupport.VaList.class));
+            MH_boxVaList = lookup.findStatic(Windowsx64Linker.class, "boxVaList",
+                MethodType.methodType(VaList.class, MemoryAddress.class));
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     public static Windowsx64Linker getInstance() {
         if (instance == null) {
             instance = new Windowsx64Linker();
@@ -59,13 +77,51 @@ public class Windowsx64Linker implements ForeignLinker {
         return instance;
     }
 
+    public static VaList newVaList(Consumer<VaList.Builder> actions) {
+        WinVaList.Builder builder = WinVaList.builder();
+        actions.accept(builder);
+        return builder.build();
+    }
+
+    private static MethodType convertVaListCarriers(MethodType mt) {
+        Class<?>[] params = new Class<?>[mt.parameterCount()];
+        for (int i = 0; i < params.length; i++) {
+            Class<?> pType = mt.parameterType(i);
+            params[i] = ((pType == CSupport.VaList.class) ? WinVaList.CARRIER : pType);
+        }
+        return MethodType.methodType(mt.returnType(), params);
+    }
+
+    private static MethodHandle unxboxVaLists(MethodType type, MethodHandle handle) {
+        for (int i = 0; i < type.parameterCount(); i++) {
+            if (type.parameterType(i) == VaList.class) {
+               handle = MethodHandles.filterArguments(handle, i, MH_unboxVaList);
+            }
+        }
+        return handle;
+    }
+
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        return CallArranger.arrangeDowncall(symbol, type, function);
+        MethodType llMt = convertVaListCarriers(type);
+        MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
+        handle = unxboxVaLists(type, handle);
+        return handle;
+    }
+
+    private static MethodHandle boxVaLists(MethodHandle handle) {
+        MethodType type = handle.type();
+        for (int i = 0; i < type.parameterCount(); i++) {
+            if (type.parameterType(i) == VaList.class) {
+               handle = MethodHandles.filterArguments(handle, i, MH_boxVaList);
+            }
+        }
+        return handle;
     }
 
     @Override
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
+        target = boxVaLists(target);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
@@ -76,5 +132,13 @@ public class Windowsx64Linker implements ForeignLinker {
 
     static Win64.ArgumentClass argumentClassFor(MemoryLayout layout) {
         return (Win64.ArgumentClass)layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get();
+    }
+
+    private static MemoryAddress unboxVaList(CSupport.VaList list) {
+        return ((WinVaList) list).getSegment().baseAddress();
+    }
+
+    private static CSupport.VaList boxVaList(MemoryAddress ma) {
+        return new WinVaList(MemorySegment.ofNativeRestricted(ma, Long.MAX_VALUE, Thread.currentThread(), null, null));
     }
 }
