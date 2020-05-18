@@ -28,19 +28,16 @@
 
 package jdk.internal.clang.libclang;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.jextract.Type;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
-
-import static jdk.internal.jextract.impl.LayoutUtils.*;
 
 public final class Index_h {
 
@@ -62,8 +59,8 @@ public final class Index_h {
     public static final int CXError_InvalidArguments = (int)3L;
     public static final int CXError_ASTReadError = (int)4L;
     public static final MemoryLayout CXString$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("data"),
-        SystemABI.C_INT.withName("private_flags"),
+        CSupport.C_POINTER.withName("data"),
+        CSupport.C_INT.withName("private_flags"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXString$private_flags = CXString$LAYOUT.varHandle(int.class, PathElement.groupElement("private_flags"));
@@ -74,8 +71,8 @@ public final class Index_h {
         CXString$private_flags.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXStringSet$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("Strings"),
-        SystemABI.C_INT.withName("Count"),
+        CSupport.C_POINTER.withName("Strings"),
+        CSupport.C_INT.withName("Count"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXStringSet$Count = CXStringSet$LAYOUT.varHandle(int.class, PathElement.groupElement("Count"));
@@ -88,10 +85,10 @@ public final class Index_h {
     public static final MethodHandle clang_getCString = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCString",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("private_flags"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("private_flags"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -108,8 +105,8 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("private_flags"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("private_flags"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -125,7 +122,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeStringSet",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeStringSet (MemoryAddress set) {
@@ -138,7 +135,7 @@ public final class Index_h {
     public static final MethodHandle clang_getBuildSessionTimestamp = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getBuildSessionTimestamp",
         "()J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG)
+        FunctionDescriptor.of(CSupport.C_LONGLONG)
     );
     public static final long clang_getBuildSessionTimestamp () {
         try {
@@ -150,8 +147,8 @@ public final class Index_h {
     public static final MethodHandle clang_VirtualFileOverlay_create = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_VirtualFileOverlay_create",
         "(I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_VirtualFileOverlay_create (int options) {
@@ -164,10 +161,10 @@ public final class Index_h {
     public static final MethodHandle clang_VirtualFileOverlay_addFileMapping = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_VirtualFileOverlay_addFileMapping",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_VirtualFileOverlay_addFileMapping (MemoryAddress x0, MemoryAddress virtualPath, MemoryAddress realPath) {
@@ -180,9 +177,9 @@ public final class Index_h {
     public static final MethodHandle clang_VirtualFileOverlay_setCaseSensitivity = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_VirtualFileOverlay_setCaseSensitivity",
         "(Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_VirtualFileOverlay_setCaseSensitivity (MemoryAddress x0, int caseSensitive) {
@@ -195,11 +192,11 @@ public final class Index_h {
     public static final MethodHandle clang_VirtualFileOverlay_writeToBuffer = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_VirtualFileOverlay_writeToBuffer",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_VirtualFileOverlay_writeToBuffer (MemoryAddress x0, int options, MemoryAddress out_buffer_ptr, MemoryAddress out_buffer_size) {
@@ -213,7 +210,7 @@ public final class Index_h {
         LIBRARIES, "clang_free",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_free (MemoryAddress buffer) {
@@ -227,7 +224,7 @@ public final class Index_h {
         LIBRARIES, "clang_VirtualFileOverlay_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_VirtualFileOverlay_dispose (MemoryAddress x0) {
@@ -240,8 +237,8 @@ public final class Index_h {
     public static final MethodHandle clang_ModuleMapDescriptor_create = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_ModuleMapDescriptor_create",
         "(I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_ModuleMapDescriptor_create (int options) {
@@ -254,9 +251,9 @@ public final class Index_h {
     public static final MethodHandle clang_ModuleMapDescriptor_setFrameworkModuleName = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_ModuleMapDescriptor_setFrameworkModuleName",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_ModuleMapDescriptor_setFrameworkModuleName (MemoryAddress x0, MemoryAddress name) {
@@ -269,9 +266,9 @@ public final class Index_h {
     public static final MethodHandle clang_ModuleMapDescriptor_setUmbrellaHeader = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_ModuleMapDescriptor_setUmbrellaHeader",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_ModuleMapDescriptor_setUmbrellaHeader (MemoryAddress x0, MemoryAddress name) {
@@ -284,11 +281,11 @@ public final class Index_h {
     public static final MethodHandle clang_ModuleMapDescriptor_writeToBuffer = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_ModuleMapDescriptor_writeToBuffer",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_ModuleMapDescriptor_writeToBuffer (MemoryAddress x0, int options, MemoryAddress out_buffer_ptr, MemoryAddress out_buffer_size) {
@@ -302,7 +299,7 @@ public final class Index_h {
         LIBRARIES, "clang_ModuleMapDescriptor_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_ModuleMapDescriptor_dispose (MemoryAddress x0) {
@@ -313,9 +310,9 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXUnsavedFile$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("Filename"),
-        SystemABI.C_POINTER.withName("Contents"),
-        SystemABI.C_LONGLONG.withName("Length")
+        CSupport.C_POINTER.withName("Filename"),
+        CSupport.C_POINTER.withName("Contents"),
+        CSupport.C_LONGLONG.withName("Length")
     ).withName("CXUnsavedFile");
     public static final VarHandle CXUnsavedFile$Length = CXUnsavedFile$LAYOUT.varHandle(long.class, PathElement.groupElement("Length"));
     public static final long CXUnsavedFile$Length$get(MemorySegment seg) {
@@ -329,9 +326,9 @@ public final class Index_h {
     public static final int CXAvailability_NotAvailable = (int)2L;
     public static final int CXAvailability_NotAccessible = (int)3L;
     public static final MemoryLayout CXVersion$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("Major"),
-        SystemABI.C_INT.withName("Minor"),
-        SystemABI.C_INT.withName("Subminor")
+        CSupport.C_INT.withName("Major"),
+        CSupport.C_INT.withName("Minor"),
+        CSupport.C_INT.withName("Subminor")
     ).withName("CXVersion");
     public static final VarHandle CXVersion$Major = CXVersion$LAYOUT.varHandle(int.class, PathElement.groupElement("Major"));
     public static final int CXVersion$Major$get(MemorySegment seg) {
@@ -367,9 +364,9 @@ public final class Index_h {
     public static final MethodHandle clang_createIndex = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_createIndex",
         "(II)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_createIndex (int excludeDeclarationsFromPCH, int displayDiagnostics) {
@@ -383,7 +380,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeIndex",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeIndex (MemoryAddress index) {
@@ -401,8 +398,8 @@ public final class Index_h {
         LIBRARIES, "clang_CXIndex_setGlobalOptions",
         "(Ljdk/incubator/foreign/MemoryAddress;I)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final void clang_CXIndex_setGlobalOptions (MemoryAddress x0, int options) {
@@ -415,8 +412,8 @@ public final class Index_h {
     public static final MethodHandle clang_CXIndex_getGlobalOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXIndex_getGlobalOptions",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_CXIndex_getGlobalOptions (MemoryAddress x0) {
@@ -430,8 +427,8 @@ public final class Index_h {
         LIBRARIES, "clang_CXIndex_setInvocationEmissionPathOption",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_CXIndex_setInvocationEmissionPathOption (MemoryAddress x0, MemoryAddress Path) {
@@ -445,11 +442,11 @@ public final class Index_h {
         LIBRARIES, "clang_getFileName",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getFileName (MemoryAddress SFile) {
@@ -462,8 +459,8 @@ public final class Index_h {
     public static final MethodHandle clang_getFileTime = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFileTime",
         "(Ljdk/incubator/foreign/MemoryAddress;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
+            CSupport.C_POINTER
         )
     );
     public static final long clang_getFileTime (MemoryAddress SFile) {
@@ -474,14 +471,14 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXFileUniqueID$LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(3, SystemABI.C_LONGLONG).withName("data")
+        MemoryLayout.ofSequence(3, CSupport.C_LONGLONG).withName("data")
     );
     public static final MethodHandle clang_getFileUniqueID = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFileUniqueID",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getFileUniqueID (MemoryAddress file, MemoryAddress outID) {
@@ -494,9 +491,9 @@ public final class Index_h {
     public static final MethodHandle clang_isFileMultipleIncludeGuarded = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isFileMultipleIncludeGuarded",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_isFileMultipleIncludeGuarded (MemoryAddress tu, MemoryAddress file) {
@@ -509,9 +506,9 @@ public final class Index_h {
     public static final MethodHandle clang_getFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFile",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getFile (MemoryAddress tu, MemoryAddress file_name) {
@@ -524,10 +521,10 @@ public final class Index_h {
     public static final MethodHandle clang_getFileContents = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFileContents",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getFileContents (MemoryAddress tu, MemoryAddress file, MemoryAddress size) {
@@ -540,9 +537,9 @@ public final class Index_h {
     public static final MethodHandle clang_File_isEqual = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_File_isEqual",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_File_isEqual (MemoryAddress file1, MemoryAddress file2) {
@@ -556,11 +553,11 @@ public final class Index_h {
         LIBRARIES, "clang_File_tryGetRealPathName",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_File_tryGetRealPathName (MemoryAddress file) {
@@ -571,8 +568,8 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXSourceLocation$LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-        SystemABI.C_INT.withName("int_data"),
+        MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+        CSupport.C_INT.withName("int_data"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXSourceLocation$int_data = CXSourceLocation$LAYOUT.varHandle(int.class, PathElement.groupElement("int_data"));
@@ -583,9 +580,9 @@ public final class Index_h {
         CXSourceLocation$int_data.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXSourceRange$LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-        SystemABI.C_INT.withName("begin_int_data"),
-        SystemABI.C_INT.withName("end_int_data")
+        MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+        CSupport.C_INT.withName("begin_int_data"),
+        CSupport.C_INT.withName("end_int_data")
     );
     public static final VarHandle CXSourceRange$begin_int_data = CXSourceRange$LAYOUT.varHandle(int.class, PathElement.groupElement("begin_int_data"));
     public static final int CXSourceRange$begin_int_data$get(MemorySegment seg) {
@@ -605,8 +602,8 @@ public final class Index_h {
         LIBRARIES, "clang_getNullLocation",
         "()Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ))
     );
@@ -620,15 +617,15 @@ public final class Index_h {
     public static final MethodHandle clang_equalLocations = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_equalLocations",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -644,14 +641,14 @@ public final class Index_h {
         LIBRARIES, "clang_getLocation",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getLocation (MemoryAddress tu, MemoryAddress file, int line, int column) {
@@ -665,13 +662,13 @@ public final class Index_h {
         LIBRARIES, "clang_getLocationForOffset",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getLocationForOffset (MemoryAddress tu, MemoryAddress file, int offset) {
@@ -684,10 +681,10 @@ public final class Index_h {
     public static final MethodHandle clang_Location_isInSystemHeader = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Location_isInSystemHeader",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -702,10 +699,10 @@ public final class Index_h {
     public static final MethodHandle clang_Location_isFromMainFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Location_isFromMainFile",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -721,9 +718,9 @@ public final class Index_h {
         LIBRARIES, "clang_getNullRange",
         "()Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ))
     );
     public static final MemorySegment clang_getNullRange () {
@@ -737,18 +734,18 @@ public final class Index_h {
         LIBRARIES, "clang_getRange",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -763,16 +760,16 @@ public final class Index_h {
     public static final MethodHandle clang_equalRanges = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_equalRanges",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             )
         )
     );
@@ -786,11 +783,11 @@ public final class Index_h {
     public static final MethodHandle clang_Range_isNull = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Range_isNull",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             )
         )
     );
@@ -806,14 +803,14 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getExpansionLocation (MemorySegment location, MemoryAddress file, MemoryAddress line, MemoryAddress column, MemoryAddress offset) {
@@ -828,13 +825,13 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getPresumedLocation (MemorySegment location, MemoryAddress filename, MemoryAddress line, MemoryAddress column) {
@@ -849,14 +846,14 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getInstantiationLocation (MemorySegment location, MemoryAddress file, MemoryAddress line, MemoryAddress column, MemoryAddress offset) {
@@ -871,14 +868,14 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getSpellingLocation (MemorySegment location, MemoryAddress file, MemoryAddress line, MemoryAddress column, MemoryAddress offset) {
@@ -893,14 +890,14 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getFileLocation (MemorySegment location, MemoryAddress file, MemoryAddress line, MemoryAddress column, MemoryAddress offset) {
@@ -914,14 +911,14 @@ public final class Index_h {
         LIBRARIES, "clang_getRangeStart",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             )
         )
     );
@@ -936,14 +933,14 @@ public final class Index_h {
         LIBRARIES, "clang_getRangeEnd",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             )
         )
     );
@@ -955,9 +952,9 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXSourceRangeList$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("count"),
+        CSupport.C_INT.withName("count"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("ranges")
+        CSupport.C_POINTER.withName("ranges")
     );
     public static final VarHandle CXSourceRangeList$count = CXSourceRangeList$LAYOUT.varHandle(int.class, PathElement.groupElement("count"));
     public static final int CXSourceRangeList$count$get(MemorySegment seg) {
@@ -969,9 +966,9 @@ public final class Index_h {
     public static final MethodHandle clang_getSkippedRanges = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getSkippedRanges",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getSkippedRanges (MemoryAddress tu, MemoryAddress file) {
@@ -984,8 +981,8 @@ public final class Index_h {
     public static final MethodHandle clang_getAllSkippedRanges = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getAllSkippedRanges",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getAllSkippedRanges (MemoryAddress tu) {
@@ -999,7 +996,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeSourceRangeList",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeSourceRangeList (MemoryAddress ranges) {
@@ -1017,8 +1014,8 @@ public final class Index_h {
     public static final MethodHandle clang_getNumDiagnosticsInSet = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumDiagnosticsInSet",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getNumDiagnosticsInSet (MemoryAddress Diags) {
@@ -1031,9 +1028,9 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticInSet = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticInSet",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_getDiagnosticInSet (MemoryAddress Diags, int Index) {
@@ -1050,10 +1047,10 @@ public final class Index_h {
     public static final MethodHandle clang_loadDiagnostics = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_loadDiagnostics",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_loadDiagnostics (MemoryAddress file, MemoryAddress error, MemoryAddress errorString) {
@@ -1067,7 +1064,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeDiagnosticSet",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeDiagnosticSet (MemoryAddress Diags) {
@@ -1080,8 +1077,8 @@ public final class Index_h {
     public static final MethodHandle clang_getChildDiagnostics = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getChildDiagnostics",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getChildDiagnostics (MemoryAddress D) {
@@ -1094,8 +1091,8 @@ public final class Index_h {
     public static final MethodHandle clang_getNumDiagnostics = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumDiagnostics",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getNumDiagnostics (MemoryAddress Unit) {
@@ -1108,9 +1105,9 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnostic = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnostic",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_getDiagnostic (MemoryAddress Unit, int Index) {
@@ -1123,8 +1120,8 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticSetFromTU = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticSetFromTU",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getDiagnosticSetFromTU (MemoryAddress Unit) {
@@ -1138,7 +1135,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeDiagnostic",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeDiagnostic (MemoryAddress Diagnostic) {
@@ -1158,12 +1155,12 @@ public final class Index_h {
         LIBRARIES, "clang_formatDiagnostic",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_formatDiagnostic (MemoryAddress Diagnostic, int Options) {
@@ -1176,7 +1173,7 @@ public final class Index_h {
     public static final MethodHandle clang_defaultDiagnosticDisplayOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_defaultDiagnosticDisplayOptions",
         "()I",
-        FunctionDescriptor.of(SystemABI.C_INT)
+        FunctionDescriptor.of(CSupport.C_INT)
     );
     public static final int clang_defaultDiagnosticDisplayOptions () {
         try {
@@ -1188,8 +1185,8 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticSeverity = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticSeverity",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getDiagnosticSeverity (MemoryAddress x0) {
@@ -1203,11 +1200,11 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticLocation",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getDiagnosticLocation (MemoryAddress x0) {
@@ -1221,11 +1218,11 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticSpelling",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getDiagnosticSpelling (MemoryAddress x0) {
@@ -1239,12 +1236,12 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticOption",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getDiagnosticOption (MemoryAddress Diag, MemoryAddress Disable) {
@@ -1257,8 +1254,8 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticCategory = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticCategory",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getDiagnosticCategory (MemoryAddress x0) {
@@ -1272,11 +1269,11 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticCategoryName",
         "(I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getDiagnosticCategoryName (int Category) {
@@ -1290,11 +1287,11 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticCategoryText",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getDiagnosticCategoryText (MemoryAddress x0) {
@@ -1307,8 +1304,8 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticNumRanges = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticNumRanges",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getDiagnosticNumRanges (MemoryAddress x0) {
@@ -1322,12 +1319,12 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticRange",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getDiagnosticRange (MemoryAddress Diagnostic, int Range) {
@@ -1340,8 +1337,8 @@ public final class Index_h {
     public static final MethodHandle clang_getDiagnosticNumFixIts = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getDiagnosticNumFixIts",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getDiagnosticNumFixIts (MemoryAddress Diagnostic) {
@@ -1355,13 +1352,13 @@ public final class Index_h {
         LIBRARIES, "clang_getDiagnosticFixIt",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getDiagnosticFixIt (MemoryAddress Diagnostic, int FixIt, MemoryAddress ReplacementRange) {
@@ -1375,11 +1372,11 @@ public final class Index_h {
         LIBRARIES, "clang_getTranslationUnitSpelling",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getTranslationUnitSpelling (MemoryAddress CTUnit) {
@@ -1392,13 +1389,13 @@ public final class Index_h {
     public static final MethodHandle clang_createTranslationUnitFromSourceFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_createTranslationUnitFromSourceFile",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_createTranslationUnitFromSourceFile (MemoryAddress CIdx, MemoryAddress source_filename, int num_clang_command_line_args, MemoryAddress clang_command_line_args, int num_unsaved_files, MemoryAddress unsaved_files) {
@@ -1411,9 +1408,9 @@ public final class Index_h {
     public static final MethodHandle clang_createTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_createTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_createTranslationUnit (MemoryAddress CIdx, MemoryAddress ast_filename) {
@@ -1426,10 +1423,10 @@ public final class Index_h {
     public static final MethodHandle clang_createTranslationUnit2 = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_createTranslationUnit2",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_createTranslationUnit2 (MemoryAddress CIdx, MemoryAddress ast_filename, MemoryAddress out_TU) {
@@ -1458,7 +1455,7 @@ public final class Index_h {
     public static final MethodHandle clang_defaultEditingTranslationUnitOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_defaultEditingTranslationUnitOptions",
         "()I",
-        FunctionDescriptor.of(SystemABI.C_INT)
+        FunctionDescriptor.of(CSupport.C_INT)
     );
     public static final int clang_defaultEditingTranslationUnitOptions () {
         try {
@@ -1470,14 +1467,14 @@ public final class Index_h {
     public static final MethodHandle clang_parseTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_parseTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_parseTranslationUnit (MemoryAddress CIdx, MemoryAddress source_filename, MemoryAddress command_line_args, int num_command_line_args, MemoryAddress unsaved_files, int num_unsaved_files, int options) {
@@ -1490,15 +1487,15 @@ public final class Index_h {
     public static final MethodHandle clang_parseTranslationUnit2 = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_parseTranslationUnit2",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_parseTranslationUnit2 (MemoryAddress CIdx, MemoryAddress source_filename, MemoryAddress command_line_args, int num_command_line_args, MemoryAddress unsaved_files, int num_unsaved_files, int options, MemoryAddress out_TU) {
@@ -1511,15 +1508,15 @@ public final class Index_h {
     public static final MethodHandle clang_parseTranslationUnit2FullArgv = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_parseTranslationUnit2FullArgv",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_parseTranslationUnit2FullArgv (MemoryAddress CIdx, MemoryAddress source_filename, MemoryAddress command_line_args, int num_command_line_args, MemoryAddress unsaved_files, int num_unsaved_files, int options, MemoryAddress out_TU) {
@@ -1533,8 +1530,8 @@ public final class Index_h {
     public static final MethodHandle clang_defaultSaveOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_defaultSaveOptions",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_defaultSaveOptions (MemoryAddress TU) {
@@ -1551,10 +1548,10 @@ public final class Index_h {
     public static final MethodHandle clang_saveTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_saveTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_saveTranslationUnit (MemoryAddress TU, MemoryAddress FileName, int options) {
@@ -1567,8 +1564,8 @@ public final class Index_h {
     public static final MethodHandle clang_suspendTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_suspendTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_suspendTranslationUnit (MemoryAddress x0) {
@@ -1582,7 +1579,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeTranslationUnit (MemoryAddress x0) {
@@ -1596,8 +1593,8 @@ public final class Index_h {
     public static final MethodHandle clang_defaultReparseOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_defaultReparseOptions",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_defaultReparseOptions (MemoryAddress TU) {
@@ -1610,11 +1607,11 @@ public final class Index_h {
     public static final MethodHandle clang_reparseTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_reparseTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_reparseTranslationUnit (MemoryAddress TU, int num_unsaved_files, MemoryAddress unsaved_files, int options) {
@@ -1645,8 +1642,8 @@ public final class Index_h {
     public static final MethodHandle clang_getTUResourceUsageName = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getTUResourceUsageName",
         "(I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_getTUResourceUsageName (int kind) {
@@ -1657,9 +1654,9 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXTUResourceUsageEntry$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
+        CSupport.C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_LONGLONG.withName("amount")
+        CSupport.C_LONGLONG.withName("amount")
     ).withName("CXTUResourceUsageEntry");
     public static final VarHandle CXTUResourceUsageEntry$kind = CXTUResourceUsageEntry$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXTUResourceUsageEntry$kind$get(MemorySegment seg) {
@@ -1676,10 +1673,10 @@ public final class Index_h {
         CXTUResourceUsageEntry$amount.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXTUResourceUsage$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("data"),
-        SystemABI.C_INT.withName("numEntries"),
+        CSupport.C_POINTER.withName("data"),
+        CSupport.C_INT.withName("numEntries"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("entries")
+        CSupport.C_POINTER.withName("entries")
     ).withName("CXTUResourceUsage");
     public static final VarHandle CXTUResourceUsage$numEntries = CXTUResourceUsage$LAYOUT.varHandle(int.class, PathElement.groupElement("numEntries"));
     public static final int CXTUResourceUsage$numEntries$get(MemorySegment seg) {
@@ -1692,12 +1689,12 @@ public final class Index_h {
         LIBRARIES, "clang_getCXTUResourceUsage",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("numEntries"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("numEntries"),
             MemoryLayout.ofPaddingBits(32),
-            SystemABI.C_POINTER.withName("entries")
+            CSupport.C_POINTER.withName("entries")
         ).withName("CXTUResourceUsage"),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getCXTUResourceUsage (MemoryAddress TU) {
@@ -1712,10 +1709,10 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("numEntries"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("numEntries"),
                 MemoryLayout.ofPaddingBits(32),
-                SystemABI.C_POINTER.withName("entries")
+                CSupport.C_POINTER.withName("entries")
             ).withName("CXTUResourceUsage")
         )
     );
@@ -1729,8 +1726,8 @@ public final class Index_h {
     public static final MethodHandle clang_getTranslationUnitTargetInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getTranslationUnitTargetInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getTranslationUnitTargetInfo (MemoryAddress CTUnit) {
@@ -1744,7 +1741,7 @@ public final class Index_h {
         LIBRARIES, "clang_TargetInfo_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_TargetInfo_dispose (MemoryAddress Info) {
@@ -1758,11 +1755,11 @@ public final class Index_h {
         LIBRARIES, "clang_TargetInfo_getTriple",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_TargetInfo_getTriple (MemoryAddress Info) {
@@ -1775,8 +1772,8 @@ public final class Index_h {
     public static final MethodHandle clang_TargetInfo_getPointerWidth = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_TargetInfo_getPointerWidth",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_TargetInfo_getPointerWidth (MemoryAddress Info) {
@@ -2042,9 +2039,9 @@ public final class Index_h {
     public static final int CXCursor_LastExtraDecl = (int)603L;
     public static final int CXCursor_OverloadCandidate = (int)700L;
     public static final MemoryLayout CXCursor$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
-        SystemABI.C_INT.withName("xdata"),
-        MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+        CSupport.C_INT.withName("kind"),
+        CSupport.C_INT.withName("xdata"),
+        MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
     );
     public static final VarHandle CXCursor$kind = CXCursor$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXCursor$kind$get(MemorySegment seg) {
@@ -2064,9 +2061,9 @@ public final class Index_h {
         LIBRARIES, "clang_getNullCursor",
         "()Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ))
     );
     public static final MemorySegment clang_getNullCursor () {
@@ -2080,11 +2077,11 @@ public final class Index_h {
         LIBRARIES, "clang_getTranslationUnitCursor",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getTranslationUnitCursor (MemoryAddress x0) {
@@ -2097,16 +2094,16 @@ public final class Index_h {
     public static final MethodHandle clang_equalCursors = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_equalCursors",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2120,11 +2117,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isNull = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isNull",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2138,11 +2135,11 @@ public final class Index_h {
     public static final MethodHandle clang_hashCursor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_hashCursor",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2156,11 +2153,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorKind",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2174,8 +2171,8 @@ public final class Index_h {
     public static final MethodHandle clang_isDeclaration = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isDeclaration",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isDeclaration (int x0) {
@@ -2188,11 +2185,11 @@ public final class Index_h {
     public static final MethodHandle clang_isInvalidDeclaration = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isInvalidDeclaration",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2206,8 +2203,8 @@ public final class Index_h {
     public static final MethodHandle clang_isReference = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isReference",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isReference (int x0) {
@@ -2220,8 +2217,8 @@ public final class Index_h {
     public static final MethodHandle clang_isExpression = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isExpression",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isExpression (int x0) {
@@ -2234,8 +2231,8 @@ public final class Index_h {
     public static final MethodHandle clang_isStatement = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isStatement",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isStatement (int x0) {
@@ -2248,8 +2245,8 @@ public final class Index_h {
     public static final MethodHandle clang_isAttribute = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isAttribute",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isAttribute (int x0) {
@@ -2262,11 +2259,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_hasAttrs = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_hasAttrs",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2280,8 +2277,8 @@ public final class Index_h {
     public static final MethodHandle clang_isInvalid = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isInvalid",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isInvalid (int x0) {
@@ -2294,8 +2291,8 @@ public final class Index_h {
     public static final MethodHandle clang_isTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isTranslationUnit",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isTranslationUnit (int x0) {
@@ -2308,8 +2305,8 @@ public final class Index_h {
     public static final MethodHandle clang_isPreprocessing = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isPreprocessing",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isPreprocessing (int x0) {
@@ -2322,8 +2319,8 @@ public final class Index_h {
     public static final MethodHandle clang_isUnexposed = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isUnexposed",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_isUnexposed (int x0) {
@@ -2341,11 +2338,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorLinkage = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorLinkage",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2363,11 +2360,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorVisibility = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorVisibility",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2381,11 +2378,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorAvailability = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorAvailability",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2398,29 +2395,29 @@ public final class Index_h {
     }
     public static final MemoryLayout CXPlatformAvailability$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("Platform"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("Major"),
-            SystemABI.C_INT.withName("Minor"),
-            SystemABI.C_INT.withName("Subminor")
+            CSupport.C_INT.withName("Major"),
+            CSupport.C_INT.withName("Minor"),
+            CSupport.C_INT.withName("Subminor")
         ).withName("Introduced"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("Major"),
-            SystemABI.C_INT.withName("Minor"),
-            SystemABI.C_INT.withName("Subminor")
+            CSupport.C_INT.withName("Major"),
+            CSupport.C_INT.withName("Minor"),
+            CSupport.C_INT.withName("Subminor")
         ).withName("Deprecated"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("Major"),
-            SystemABI.C_INT.withName("Minor"),
-            SystemABI.C_INT.withName("Subminor")
+            CSupport.C_INT.withName("Major"),
+            CSupport.C_INT.withName("Minor"),
+            CSupport.C_INT.withName("Subminor")
         ).withName("Obsoleted"),
-        SystemABI.C_INT.withName("Unavailable"),
+        CSupport.C_INT.withName("Unavailable"),
         MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("Message")
     ).withName("CXPlatformAvailability");
@@ -2434,18 +2431,18 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorPlatformAvailability = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorPlatformAvailability",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_getCursorPlatformAvailability (MemorySegment cursor, MemoryAddress always_deprecated, MemoryAddress deprecated_message, MemoryAddress always_unavailable, MemoryAddress unavailable_message, MemoryAddress availability, int availability_size) {
@@ -2459,7 +2456,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeCXPlatformAvailability",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeCXPlatformAvailability (MemoryAddress availability) {
@@ -2476,11 +2473,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorLanguage = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorLanguage",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2497,11 +2494,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorTLSKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorTLSKind",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2515,11 +2512,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getTranslationUnit",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2533,7 +2530,7 @@ public final class Index_h {
     public static final MethodHandle clang_createCXCursorSet = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_createCXCursorSet",
         "()Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER)
+        FunctionDescriptor.of(CSupport.C_POINTER)
     );
     public static final MemoryAddress clang_createCXCursorSet () {
         try {
@@ -2546,7 +2543,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeCXCursorSet",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeCXCursorSet (MemoryAddress cset) {
@@ -2559,12 +2556,12 @@ public final class Index_h {
     public static final MethodHandle clang_CXCursorSet_contains = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXCursorSet_contains",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2578,12 +2575,12 @@ public final class Index_h {
     public static final MethodHandle clang_CXCursorSet_insert = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXCursorSet_insert",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2598,14 +2595,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorSemanticParent",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2620,14 +2617,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorLexicalParent",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2643,12 +2640,12 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getOverriddenCursors (MemorySegment cursor, MemoryAddress overridden, MemoryAddress num_overridden) {
@@ -2662,7 +2659,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeOverriddenCursors",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeOverriddenCursors (MemoryAddress overridden) {
@@ -2675,11 +2672,11 @@ public final class Index_h {
     public static final MethodHandle clang_getIncludedFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getIncludedFile",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2694,14 +2691,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursor",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -2717,14 +2714,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorLocation",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2739,14 +2736,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorExtent",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2896,9 +2893,9 @@ public final class Index_h {
     public static final int CXCallingConv_Invalid = (int)100L;
     public static final int CXCallingConv_Unexposed = (int)200L;
     public static final MemoryLayout CXType$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
+        CSupport.C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32),
-        MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+        MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
     );
     public static final VarHandle CXType$kind = CXType$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXType$kind$get(MemorySegment seg) {
@@ -2911,14 +2908,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2933,14 +2930,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTypeSpelling",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2955,14 +2952,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTypedefDeclUnderlyingType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2977,14 +2974,14 @@ public final class Index_h {
         LIBRARIES, "clang_getEnumDeclIntegerType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -2998,11 +2995,11 @@ public final class Index_h {
     public static final MethodHandle clang_getEnumConstantDeclValue = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getEnumConstantDeclValue",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3016,11 +3013,11 @@ public final class Index_h {
     public static final MethodHandle clang_getEnumConstantDeclUnsignedValue = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getEnumConstantDeclUnsignedValue",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3034,11 +3031,11 @@ public final class Index_h {
     public static final MethodHandle clang_getFieldDeclBitWidth = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFieldDeclBitWidth",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3052,11 +3049,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getNumArguments = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getNumArguments",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3071,16 +3068,16 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getArgument",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Cursor_getArgument (MemorySegment C, int i) {
@@ -3103,11 +3100,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getNumTemplateArguments = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getNumTemplateArguments",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3121,13 +3118,13 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getTemplateArgumentKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getTemplateArgumentKind",
         "(Ljdk/incubator/foreign/MemorySegment;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final int clang_Cursor_getTemplateArgumentKind (MemorySegment C, int I) {
@@ -3141,16 +3138,16 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getTemplateArgumentType",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Cursor_getTemplateArgumentType (MemorySegment C, int I) {
@@ -3163,13 +3160,13 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getTemplateArgumentValue = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getTemplateArgumentValue",
         "(Ljdk/incubator/foreign/MemorySegment;I)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final long clang_Cursor_getTemplateArgumentValue (MemorySegment C, int I) {
@@ -3182,13 +3179,13 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getTemplateArgumentUnsignedValue = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getTemplateArgumentUnsignedValue",
         "(Ljdk/incubator/foreign/MemorySegment;I)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final long clang_Cursor_getTemplateArgumentUnsignedValue (MemorySegment C, int I) {
@@ -3201,16 +3198,16 @@ public final class Index_h {
     public static final MethodHandle clang_equalTypes = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_equalTypes",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3225,14 +3222,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCanonicalType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3246,11 +3243,11 @@ public final class Index_h {
     public static final MethodHandle clang_isConstQualifiedType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isConstQualifiedType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3264,11 +3261,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isMacroFunctionLike = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isMacroFunctionLike",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3282,11 +3279,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isMacroBuiltin = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isMacroBuiltin",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3300,11 +3297,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isFunctionInlined = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isFunctionInlined",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3318,11 +3315,11 @@ public final class Index_h {
     public static final MethodHandle clang_isVolatileQualifiedType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isVolatileQualifiedType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3336,11 +3333,11 @@ public final class Index_h {
     public static final MethodHandle clang_isRestrictQualifiedType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isRestrictQualifiedType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3354,11 +3351,11 @@ public final class Index_h {
     public static final MethodHandle clang_getAddressSpace = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getAddressSpace",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3373,14 +3370,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTypedefName",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3395,14 +3392,14 @@ public final class Index_h {
         LIBRARIES, "clang_getPointeeType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3417,14 +3414,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTypeDeclaration",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3439,14 +3436,14 @@ public final class Index_h {
         LIBRARIES, "clang_getDeclObjCTypeEncoding",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3461,14 +3458,14 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getObjCEncoding",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3483,11 +3480,11 @@ public final class Index_h {
         LIBRARIES, "clang_getTypeKindSpelling",
         "(I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getTypeKindSpelling (int K) {
@@ -3500,11 +3497,11 @@ public final class Index_h {
     public static final MethodHandle clang_getFunctionTypeCallingConv = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getFunctionTypeCallingConv",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3519,14 +3516,14 @@ public final class Index_h {
         LIBRARIES, "clang_getResultType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3540,11 +3537,11 @@ public final class Index_h {
     public static final MethodHandle clang_getExceptionSpecificationType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getExceptionSpecificationType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3558,11 +3555,11 @@ public final class Index_h {
     public static final MethodHandle clang_getNumArgTypes = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumArgTypes",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3577,16 +3574,16 @@ public final class Index_h {
         LIBRARIES, "clang_getArgType",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getArgType (MemorySegment T, int i) {
@@ -3600,14 +3597,14 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getObjCObjectBaseType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3621,11 +3618,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getNumObjCProtocolRefs = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getNumObjCProtocolRefs",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3640,16 +3637,16 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getObjCProtocolDecl",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Type_getObjCProtocolDecl (MemorySegment T, int i) {
@@ -3662,11 +3659,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getNumObjCTypeArgs = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getNumObjCTypeArgs",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3681,16 +3678,16 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getObjCTypeArg",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Type_getObjCTypeArg (MemorySegment T, int i) {
@@ -3703,11 +3700,11 @@ public final class Index_h {
     public static final MethodHandle clang_isFunctionTypeVariadic = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isFunctionTypeVariadic",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3722,14 +3719,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorResultType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3743,11 +3740,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorExceptionSpecificationType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorExceptionSpecificationType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3761,11 +3758,11 @@ public final class Index_h {
     public static final MethodHandle clang_isPODType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isPODType",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3780,14 +3777,14 @@ public final class Index_h {
         LIBRARIES, "clang_getElementType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3801,11 +3798,11 @@ public final class Index_h {
     public static final MethodHandle clang_getNumElements = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumElements",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3820,14 +3817,14 @@ public final class Index_h {
         LIBRARIES, "clang_getArrayElementType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3841,11 +3838,11 @@ public final class Index_h {
     public static final MethodHandle clang_getArraySize = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getArraySize",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3860,14 +3857,14 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getNamedType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3881,11 +3878,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_isTransparentTagTypedef = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_isTransparentTagTypedef",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3903,11 +3900,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getNullability = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getNullability",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3927,11 +3924,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getAlignOf = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getAlignOf",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3946,14 +3943,14 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getClassType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3967,11 +3964,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getSizeOf = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getSizeOf",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -3985,13 +3982,13 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getOffsetOf = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getOffsetOf",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final long clang_Type_getOffsetOf (MemorySegment T, MemoryAddress S) {
@@ -4005,14 +4002,14 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getModifiedType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4026,11 +4023,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getOffsetOfField = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getOffsetOfField",
         "(Ljdk/incubator/foreign/MemorySegment;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4044,11 +4041,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isAnonymous = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isAnonymous",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4062,11 +4059,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isAnonymousRecordDecl = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isAnonymousRecordDecl",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4080,11 +4077,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isInlineNamespace = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isInlineNamespace",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4101,11 +4098,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getNumTemplateArguments = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getNumTemplateArguments",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4120,16 +4117,16 @@ public final class Index_h {
         LIBRARIES, "clang_Type_getTemplateArgumentAsType",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Type_getTemplateArgumentAsType (MemorySegment T, int i) {
@@ -4142,11 +4139,11 @@ public final class Index_h {
     public static final MethodHandle clang_Type_getCXXRefQualifier = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_getCXXRefQualifier",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4160,11 +4157,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isBitField = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isBitField",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4178,11 +4175,11 @@ public final class Index_h {
     public static final MethodHandle clang_isVirtualBase = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isVirtualBase",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4200,11 +4197,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCXXAccessSpecifier = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCXXAccessSpecifier",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4226,11 +4223,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getStorageClass = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getStorageClass",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4244,11 +4241,11 @@ public final class Index_h {
     public static final MethodHandle clang_getNumOverloadedDecls = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumOverloadedDecls",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4263,16 +4260,16 @@ public final class Index_h {
         LIBRARIES, "clang_getOverloadedDecl",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getOverloadedDecl (MemorySegment cursor, int index) {
@@ -4286,14 +4283,14 @@ public final class Index_h {
         LIBRARIES, "clang_getIBOutletCollectionType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4310,14 +4307,14 @@ public final class Index_h {
     public static final MethodHandle clang_visitChildren = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_visitChildren",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_visitChildren (MemorySegment parent, MemoryAddress visitor, MemoryAddress client_data) {
@@ -4327,18 +4324,18 @@ public final class Index_h {
             throw new AssertionError(ex);
         }
     }
-    private static final FunctionDescriptor clang_visitChildren$visitor$DESC = FunctionDescriptor.of(SystemABI.C_INT,
+    private static final FunctionDescriptor clang_visitChildren$visitor$DESC = FunctionDescriptor.of(CSupport.C_INT,
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
-        SystemABI.C_POINTER
+        CSupport.C_POINTER
     );
     public interface clang_visitChildren$visitor {
         int apply(MemorySegment x0, MemorySegment x1, MemoryAddress x2);
@@ -4350,14 +4347,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorUSR",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4372,11 +4369,11 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCClass",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_constructUSR_ObjCClass (MemoryAddress class_name) {
@@ -4390,12 +4387,12 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCCategory",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_constructUSR_ObjCCategory (MemoryAddress class_name, MemoryAddress category_name) {
@@ -4409,11 +4406,11 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCProtocol",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_constructUSR_ObjCProtocol (MemoryAddress protocol_name) {
@@ -4427,14 +4424,14 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCIvar",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("private_flags"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("private_flags"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -4450,15 +4447,15 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCMethod",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("private_flags"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("private_flags"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -4474,14 +4471,14 @@ public final class Index_h {
         LIBRARIES, "clang_constructUSR_ObjCProperty",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("data"),
-                SystemABI.C_INT.withName("private_flags"),
+                CSupport.C_POINTER.withName("data"),
+                CSupport.C_INT.withName("private_flags"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -4497,14 +4494,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorSpelling",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4519,17 +4516,17 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getSpellingNameRange",
         "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT,
-            SystemABI.C_INT
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_Cursor_getSpellingNameRange (MemorySegment x0, int pieceIndex, int options) {
@@ -4569,9 +4566,9 @@ public final class Index_h {
     public static final MethodHandle clang_PrintingPolicy_getProperty = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_PrintingPolicy_getProperty",
         "(Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_PrintingPolicy_getProperty (MemoryAddress Policy, int Property) {
@@ -4585,9 +4582,9 @@ public final class Index_h {
         LIBRARIES, "clang_PrintingPolicy_setProperty",
         "(Ljdk/incubator/foreign/MemoryAddress;II)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final void clang_PrintingPolicy_setProperty (MemoryAddress Policy, int Property, int Value) {
@@ -4600,11 +4597,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorPrintingPolicy = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorPrintingPolicy",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4619,7 +4616,7 @@ public final class Index_h {
         LIBRARIES, "clang_PrintingPolicy_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_PrintingPolicy_dispose (MemoryAddress Policy) {
@@ -4633,16 +4630,16 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorPrettyPrinted",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getCursorPrettyPrinted (MemorySegment Cursor, MemoryAddress Policy) {
@@ -4656,14 +4653,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorDisplayName",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4678,14 +4675,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorReferenced",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4700,14 +4697,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorDefinition",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4721,11 +4718,11 @@ public final class Index_h {
     public static final MethodHandle clang_isCursorDefinition = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_isCursorDefinition",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4740,14 +4737,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCanonicalCursor",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4761,11 +4758,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getObjCSelectorIndex = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getObjCSelectorIndex",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4779,11 +4776,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isDynamicCall = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isDynamicCall",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4798,14 +4795,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getReceiverType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
+            CSupport.C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4833,13 +4830,13 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getObjCPropertyAttributes = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getObjCPropertyAttributes",
         "(Ljdk/incubator/foreign/MemorySegment;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final int clang_Cursor_getObjCPropertyAttributes (MemorySegment C, int reserved) {
@@ -4853,14 +4850,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getObjCPropertyGetterName",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4875,14 +4872,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getObjCPropertySetterName",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4903,11 +4900,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getObjCDeclQualifiers = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getObjCDeclQualifiers",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4921,11 +4918,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isObjCOptional = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isObjCOptional",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4939,11 +4936,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isVariadic = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isVariadic",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -4957,15 +4954,15 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_isExternalSymbol = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_isExternalSymbol",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_Cursor_isExternalSymbol (MemorySegment C, MemoryAddress language, MemoryAddress definedIn, MemoryAddress isGenerated) {
@@ -4979,14 +4976,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getCommentRange",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5001,14 +4998,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getRawCommentText",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5023,14 +5020,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getBriefCommentText",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5045,14 +5042,14 @@ public final class Index_h {
         LIBRARIES, "clang_Cursor_getMangling",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5066,11 +5063,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getCXXManglings = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getCXXManglings",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5084,11 +5081,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getObjCManglings = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getObjCManglings",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5102,11 +5099,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_getModule = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_getModule",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5120,9 +5117,9 @@ public final class Index_h {
     public static final MethodHandle clang_getModuleForFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getModuleForFile",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getModuleForFile (MemoryAddress x0, MemoryAddress x1) {
@@ -5135,8 +5132,8 @@ public final class Index_h {
     public static final MethodHandle clang_Module_getASTFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Module_getASTFile",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_Module_getASTFile (MemoryAddress Module) {
@@ -5149,8 +5146,8 @@ public final class Index_h {
     public static final MethodHandle clang_Module_getParent = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Module_getParent",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_Module_getParent (MemoryAddress Module) {
@@ -5164,11 +5161,11 @@ public final class Index_h {
         LIBRARIES, "clang_Module_getName",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_Module_getName (MemoryAddress Module) {
@@ -5182,11 +5179,11 @@ public final class Index_h {
         LIBRARIES, "clang_Module_getFullName",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_Module_getFullName (MemoryAddress Module) {
@@ -5199,8 +5196,8 @@ public final class Index_h {
     public static final MethodHandle clang_Module_isSystem = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Module_isSystem",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_Module_isSystem (MemoryAddress Module) {
@@ -5213,9 +5210,9 @@ public final class Index_h {
     public static final MethodHandle clang_Module_getNumTopLevelHeaders = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Module_getNumTopLevelHeaders",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_Module_getNumTopLevelHeaders (MemoryAddress x0, MemoryAddress Module) {
@@ -5228,10 +5225,10 @@ public final class Index_h {
     public static final MethodHandle clang_Module_getTopLevelHeader = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Module_getTopLevelHeader",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_Module_getTopLevelHeader (MemoryAddress x0, MemoryAddress Module, int Index) {
@@ -5244,11 +5241,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXConstructor_isConvertingConstructor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXConstructor_isConvertingConstructor",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5262,11 +5259,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXConstructor_isCopyConstructor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXConstructor_isCopyConstructor",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5280,11 +5277,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXConstructor_isDefaultConstructor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXConstructor_isDefaultConstructor",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5298,11 +5295,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXConstructor_isMoveConstructor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXConstructor_isMoveConstructor",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5316,11 +5313,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXField_isMutable = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXField_isMutable",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5334,11 +5331,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXMethod_isDefaulted = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXMethod_isDefaulted",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5352,11 +5349,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXMethod_isPureVirtual = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXMethod_isPureVirtual",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5370,11 +5367,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXMethod_isStatic = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXMethod_isStatic",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5388,11 +5385,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXMethod_isVirtual = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXMethod_isVirtual",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5406,11 +5403,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXRecord_isAbstract = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXRecord_isAbstract",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5424,11 +5421,11 @@ public final class Index_h {
     public static final MethodHandle clang_EnumDecl_isScoped = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EnumDecl_isScoped",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5442,11 +5439,11 @@ public final class Index_h {
     public static final MethodHandle clang_CXXMethod_isConst = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_CXXMethod_isConst",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5460,11 +5457,11 @@ public final class Index_h {
     public static final MethodHandle clang_getTemplateCursorKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getTemplateCursorKind",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5479,14 +5476,14 @@ public final class Index_h {
         LIBRARIES, "clang_getSpecializedCursorTemplate",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5501,17 +5498,17 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorReferenceNameRange",
         "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_INT,
-            SystemABI.C_INT
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getCursorReferenceNameRange (MemorySegment C, int NameFlags, int PieceIndex) {
@@ -5530,17 +5527,17 @@ public final class Index_h {
     public static final int CXToken_Literal = (int)3L;
     public static final int CXToken_Comment = (int)4L;
     public static final MemoryLayout CXToken$LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(4, SystemABI.C_INT).withName("int_data"),
-        SystemABI.C_POINTER.withName("ptr_data")
+        MemoryLayout.ofSequence(4, CSupport.C_INT).withName("int_data"),
+        CSupport.C_POINTER.withName("ptr_data")
     );
     public static final MethodHandle clang_getToken = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getToken",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -5555,10 +5552,10 @@ public final class Index_h {
     public static final MethodHandle clang_getTokenKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getTokenKind",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, SystemABI.C_INT).withName("int_data"),
-                SystemABI.C_POINTER.withName("ptr_data")
+                MemoryLayout.ofSequence(4, CSupport.C_INT).withName("int_data"),
+                CSupport.C_POINTER.withName("ptr_data")
             )
         )
     );
@@ -5573,14 +5570,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTokenSpelling",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, SystemABI.C_INT).withName("int_data"),
-                SystemABI.C_POINTER.withName("ptr_data")
+                MemoryLayout.ofSequence(4, CSupport.C_INT).withName("int_data"),
+                CSupport.C_POINTER.withName("ptr_data")
             )
         )
     );
@@ -5595,14 +5592,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTokenLocation",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, SystemABI.C_INT).withName("int_data"),
-                SystemABI.C_POINTER.withName("ptr_data")
+                MemoryLayout.ofSequence(4, CSupport.C_INT).withName("int_data"),
+                CSupport.C_POINTER.withName("ptr_data")
             )
         )
     );
@@ -5617,14 +5614,14 @@ public final class Index_h {
         LIBRARIES, "clang_getTokenExtent",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("begin_int_data"),
-            SystemABI.C_INT.withName("end_int_data")
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("begin_int_data"),
+            CSupport.C_INT.withName("end_int_data")
         ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, SystemABI.C_INT).withName("int_data"),
-                SystemABI.C_POINTER.withName("ptr_data")
+                MemoryLayout.ofSequence(4, CSupport.C_INT).withName("int_data"),
+                CSupport.C_POINTER.withName("ptr_data")
             )
         )
     );
@@ -5639,14 +5636,14 @@ public final class Index_h {
         LIBRARIES, "clang_tokenize",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("begin_int_data"),
-                SystemABI.C_INT.withName("end_int_data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("begin_int_data"),
+                CSupport.C_INT.withName("end_int_data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_tokenize (MemoryAddress TU, MemorySegment Range, MemoryAddress Tokens, MemoryAddress NumTokens) {
@@ -5660,10 +5657,10 @@ public final class Index_h {
         LIBRARIES, "clang_annotateTokens",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_annotateTokens (MemoryAddress TU, MemoryAddress Tokens, int NumTokens, MemoryAddress Cursors) {
@@ -5677,9 +5674,9 @@ public final class Index_h {
         LIBRARIES, "clang_disposeTokens",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final void clang_disposeTokens (MemoryAddress TU, MemoryAddress Tokens, int NumTokens) {
@@ -5693,11 +5690,11 @@ public final class Index_h {
         LIBRARIES, "clang_getCursorKindSpelling",
         "(I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getCursorKindSpelling (int Kind) {
@@ -5712,16 +5709,16 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getDefinitionSpellingAndExtent (MemorySegment x0, MemoryAddress startBuf, MemoryAddress endBuf, MemoryAddress startLine, MemoryAddress startColumn, MemoryAddress endLine, MemoryAddress endColumn) {
@@ -5747,9 +5744,9 @@ public final class Index_h {
         LIBRARIES, "clang_executeOnThread",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final void clang_executeOnThread (MemoryAddress fn, MemoryAddress user_data, int stack_size) {
@@ -5760,7 +5757,7 @@ public final class Index_h {
         }
     }
     private static final FunctionDescriptor clang_executeOnThread$fn$DESC = FunctionDescriptor.ofVoid(
-        SystemABI.C_POINTER
+        CSupport.C_POINTER
     );
     public interface clang_executeOnThread$fn {
         void apply(MemoryAddress x0);
@@ -5769,9 +5766,9 @@ public final class Index_h {
         return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, clang_executeOnThread$fn$DESC, "(Ljdk/incubator/foreign/MemoryAddress;)V");
     }
     public static final MemoryLayout CXCompletionResult$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("CursorKind"),
+        CSupport.C_INT.withName("CursorKind"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("CompletionString")
+        CSupport.C_POINTER.withName("CompletionString")
     );
     public static final VarHandle CXCompletionResult$CursorKind = CXCompletionResult$LAYOUT.varHandle(int.class, PathElement.groupElement("CursorKind"));
     public static final int CXCompletionResult$CursorKind$get(MemorySegment seg) {
@@ -5804,9 +5801,9 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionChunkKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionChunkKind",
         "(Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_getCompletionChunkKind (MemoryAddress completion_string, int chunk_number) {
@@ -5820,12 +5817,12 @@ public final class Index_h {
         LIBRARIES, "clang_getCompletionChunkText",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getCompletionChunkText (MemoryAddress completion_string, int chunk_number) {
@@ -5838,9 +5835,9 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionChunkCompletionString = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionChunkCompletionString",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_getCompletionChunkCompletionString (MemoryAddress completion_string, int chunk_number) {
@@ -5853,8 +5850,8 @@ public final class Index_h {
     public static final MethodHandle clang_getNumCompletionChunks = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNumCompletionChunks",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getNumCompletionChunks (MemoryAddress completion_string) {
@@ -5867,8 +5864,8 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionPriority = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionPriority",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getCompletionPriority (MemoryAddress completion_string) {
@@ -5881,8 +5878,8 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionAvailability = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionAvailability",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getCompletionAvailability (MemoryAddress completion_string) {
@@ -5895,8 +5892,8 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionNumAnnotations = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionNumAnnotations",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_getCompletionNumAnnotations (MemoryAddress completion_string) {
@@ -5910,12 +5907,12 @@ public final class Index_h {
         LIBRARIES, "clang_getCompletionAnnotation",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemorySegment clang_getCompletionAnnotation (MemoryAddress completion_string, int annotation_number) {
@@ -5929,12 +5926,12 @@ public final class Index_h {
         LIBRARIES, "clang_getCompletionParent",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getCompletionParent (MemoryAddress completion_string, MemoryAddress kind) {
@@ -5948,11 +5945,11 @@ public final class Index_h {
         LIBRARIES, "clang_getCompletionBriefComment",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getCompletionBriefComment (MemoryAddress completion_string) {
@@ -5965,11 +5962,11 @@ public final class Index_h {
     public static final MethodHandle clang_getCursorCompletionString = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorCompletionString",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -5981,8 +5978,8 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXCodeCompleteResults$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("Results"),
-        SystemABI.C_INT.withName("NumResults"),
+        CSupport.C_POINTER.withName("Results"),
+        CSupport.C_INT.withName("NumResults"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXCodeCompleteResults$NumResults = CXCodeCompleteResults$LAYOUT.varHandle(int.class, PathElement.groupElement("NumResults"));
@@ -5995,9 +5992,9 @@ public final class Index_h {
     public static final MethodHandle clang_getCompletionNumFixIts = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionNumFixIts",
         "(Ljdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_getCompletionNumFixIts (MemoryAddress results, int completion_index) {
@@ -6011,14 +6008,14 @@ public final class Index_h {
         LIBRARIES, "clang_getCompletionFixIt",
         "(Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_getCompletionFixIt (MemoryAddress results, int completion_index, int fixit_index, MemoryAddress replacement_range) {
@@ -6061,7 +6058,7 @@ public final class Index_h {
     public static final MethodHandle clang_defaultCodeCompleteOptions = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_defaultCodeCompleteOptions",
         "()I",
-        FunctionDescriptor.of(SystemABI.C_INT)
+        FunctionDescriptor.of(CSupport.C_INT)
     );
     public static final int clang_defaultCodeCompleteOptions () {
         try {
@@ -6073,14 +6070,14 @@ public final class Index_h {
     public static final MethodHandle clang_codeCompleteAt = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_codeCompleteAt",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_codeCompleteAt (MemoryAddress TU, MemoryAddress complete_filename, int complete_line, int complete_column, MemoryAddress unsaved_files, int num_unsaved_files, int options) {
@@ -6094,8 +6091,8 @@ public final class Index_h {
         LIBRARIES, "clang_sortCodeCompletionResults",
         "(Ljdk/incubator/foreign/MemoryAddress;I)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final void clang_sortCodeCompletionResults (MemoryAddress Results, int NumResults) {
@@ -6109,7 +6106,7 @@ public final class Index_h {
         LIBRARIES, "clang_disposeCodeCompleteResults",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_disposeCodeCompleteResults (MemoryAddress Results) {
@@ -6122,8 +6119,8 @@ public final class Index_h {
     public static final MethodHandle clang_codeCompleteGetNumDiagnostics = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_codeCompleteGetNumDiagnostics",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_codeCompleteGetNumDiagnostics (MemoryAddress Results) {
@@ -6136,9 +6133,9 @@ public final class Index_h {
     public static final MethodHandle clang_codeCompleteGetDiagnostic = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_codeCompleteGetDiagnostic",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_codeCompleteGetDiagnostic (MemoryAddress Results, int Index) {
@@ -6151,8 +6148,8 @@ public final class Index_h {
     public static final MethodHandle clang_codeCompleteGetContexts = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_codeCompleteGetContexts",
         "(Ljdk/incubator/foreign/MemoryAddress;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
+            CSupport.C_POINTER
         )
     );
     public static final long clang_codeCompleteGetContexts (MemoryAddress Results) {
@@ -6165,9 +6162,9 @@ public final class Index_h {
     public static final MethodHandle clang_codeCompleteGetContainerKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_codeCompleteGetContainerKind",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_codeCompleteGetContainerKind (MemoryAddress Results, MemoryAddress IsIncomplete) {
@@ -6181,11 +6178,11 @@ public final class Index_h {
         LIBRARIES, "clang_codeCompleteGetContainerUSR",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_codeCompleteGetContainerUSR (MemoryAddress Results) {
@@ -6199,11 +6196,11 @@ public final class Index_h {
         LIBRARIES, "clang_codeCompleteGetObjCSelector",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ),
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final MemorySegment clang_codeCompleteGetObjCSelector (MemoryAddress Results) {
@@ -6217,8 +6214,8 @@ public final class Index_h {
         LIBRARIES, "clang_getClangVersion",
         "()Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            SystemABI.C_POINTER.withName("data"),
-            SystemABI.C_INT.withName("private_flags"),
+            CSupport.C_POINTER.withName("data"),
+            CSupport.C_INT.withName("private_flags"),
             MemoryLayout.ofPaddingBits(32)
         ))
     );
@@ -6233,7 +6230,7 @@ public final class Index_h {
         LIBRARIES, "clang_toggleCrashRecovery",
         "(I)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_INT
+            CSupport.C_INT
         )
     );
     public static final void clang_toggleCrashRecovery (int isEnabled) {
@@ -6247,9 +6244,9 @@ public final class Index_h {
         LIBRARIES, "clang_getInclusions",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_getInclusions (MemoryAddress tu, MemoryAddress visitor, MemoryAddress client_data) {
@@ -6260,10 +6257,10 @@ public final class Index_h {
         }
     }
     private static final FunctionDescriptor clang_getInclusions$visitor$DESC = FunctionDescriptor.ofVoid(
-        SystemABI.C_POINTER,
-        SystemABI.C_POINTER,
-        SystemABI.C_INT,
-        SystemABI.C_POINTER
+        CSupport.C_POINTER,
+        CSupport.C_POINTER,
+        CSupport.C_INT,
+        CSupport.C_POINTER
     );
     public interface clang_getInclusions$visitor {
         void apply(MemoryAddress x0, MemoryAddress x1, int x2, MemoryAddress x3);
@@ -6281,11 +6278,11 @@ public final class Index_h {
     public static final MethodHandle clang_Cursor_Evaluate = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Cursor_Evaluate",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             )
         )
     );
@@ -6299,8 +6296,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getKind",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_EvalResult_getKind (MemoryAddress E) {
@@ -6313,8 +6310,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getAsInt = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getAsInt",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_EvalResult_getAsInt (MemoryAddress E) {
@@ -6327,8 +6324,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getAsLongLong = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getAsLongLong",
         "(Ljdk/incubator/foreign/MemoryAddress;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
+            CSupport.C_POINTER
         )
     );
     public static final long clang_EvalResult_getAsLongLong (MemoryAddress E) {
@@ -6341,8 +6338,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_isUnsignedInt = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_isUnsignedInt",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_EvalResult_isUnsignedInt (MemoryAddress E) {
@@ -6355,8 +6352,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getAsUnsigned = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getAsUnsigned",
         "(Ljdk/incubator/foreign/MemoryAddress;)J",
-        FunctionDescriptor.of(SystemABI.C_LONGLONG,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_LONGLONG,
+            CSupport.C_POINTER
         )
     );
     public static final long clang_EvalResult_getAsUnsigned (MemoryAddress E) {
@@ -6369,8 +6366,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getAsDouble = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getAsDouble",
         "(Ljdk/incubator/foreign/MemoryAddress;)D",
-        FunctionDescriptor.of(SystemABI.C_DOUBLE,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_DOUBLE,
+            CSupport.C_POINTER
         )
     );
     public static final double clang_EvalResult_getAsDouble (MemoryAddress E) {
@@ -6383,8 +6380,8 @@ public final class Index_h {
     public static final MethodHandle clang_EvalResult_getAsStr = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_EvalResult_getAsStr",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_EvalResult_getAsStr (MemoryAddress E) {
@@ -6398,7 +6395,7 @@ public final class Index_h {
         LIBRARIES, "clang_EvalResult_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_EvalResult_dispose (MemoryAddress E) {
@@ -6411,8 +6408,8 @@ public final class Index_h {
     public static final MethodHandle clang_getRemappings = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getRemappings",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_getRemappings (MemoryAddress path) {
@@ -6425,9 +6422,9 @@ public final class Index_h {
     public static final MethodHandle clang_getRemappingsFromFileList = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getRemappingsFromFileList",
         "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final MemoryAddress clang_getRemappingsFromFileList (MemoryAddress filePaths, int numFiles) {
@@ -6440,8 +6437,8 @@ public final class Index_h {
     public static final MethodHandle clang_remap_getNumFiles = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_remap_getNumFiles",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_remap_getNumFiles (MemoryAddress x0) {
@@ -6455,10 +6452,10 @@ public final class Index_h {
         LIBRARIES, "clang_remap_getFilenames",
         "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_remap_getFilenames (MemoryAddress x0, int index, MemoryAddress original, MemoryAddress transformed) {
@@ -6472,7 +6469,7 @@ public final class Index_h {
         LIBRARIES, "clang_remap_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_remap_dispose (MemoryAddress x0) {
@@ -6485,8 +6482,8 @@ public final class Index_h {
     public static final int CXVisit_Break = (int)0L;
     public static final int CXVisit_Continue = (int)1L;
     public static final MemoryLayout CXCursorAndRangeVisitor$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("context"),
-        SystemABI.C_POINTER.withName("visit")
+        CSupport.C_POINTER.withName("context"),
+        CSupport.C_POINTER.withName("visit")
     ).withName("CXCursorAndRangeVisitor");
     public static final int CXResult_Success = (int)0L;
     public static final int CXResult_Invalid = (int)1L;
@@ -6494,16 +6491,16 @@ public final class Index_h {
     public static final MethodHandle clang_findReferencesInFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_findReferencesInFile",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
-                SystemABI.C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+                CSupport.C_INT.withName("kind"),
+                CSupport.C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("context"),
-                SystemABI.C_POINTER.withName("visit")
+                CSupport.C_POINTER.withName("context"),
+                CSupport.C_POINTER.withName("visit")
             ).withName("CXCursorAndRangeVisitor")
         )
     );
@@ -6517,12 +6514,12 @@ public final class Index_h {
     public static final MethodHandle clang_findIncludesInFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_findIncludesInFile",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
             MemoryLayout.ofStruct(
-                SystemABI.C_POINTER.withName("context"),
-                SystemABI.C_POINTER.withName("visit")
+                CSupport.C_POINTER.withName("context"),
+                CSupport.C_POINTER.withName("visit")
             ).withName("CXCursorAndRangeVisitor")
         )
     );
@@ -6534,8 +6531,8 @@ public final class Index_h {
         }
     }
     public static final MemoryLayout CXIdxLoc$LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-        SystemABI.C_INT.withName("int_data"),
+        MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+        CSupport.C_INT.withName("int_data"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxLoc$int_data = CXIdxLoc$LAYOUT.varHandle(int.class, PathElement.groupElement("int_data"));
@@ -6547,15 +6544,15 @@ public final class Index_h {
     }
     public static final MemoryLayout CXIdxIncludedFileInfo$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("hashLoc"),
-        SystemABI.C_POINTER.withName("filename"),
-        SystemABI.C_POINTER.withName("file"),
-        SystemABI.C_INT.withName("isImport"),
-        SystemABI.C_INT.withName("isAngled"),
-        SystemABI.C_INT.withName("isModuleImport"),
+        CSupport.C_POINTER.withName("filename"),
+        CSupport.C_POINTER.withName("file"),
+        CSupport.C_INT.withName("isImport"),
+        CSupport.C_INT.withName("isAngled"),
+        CSupport.C_INT.withName("isModuleImport"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxIncludedFileInfo$isImport = CXIdxIncludedFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isImport"));
@@ -6580,14 +6577,14 @@ public final class Index_h {
         CXIdxIncludedFileInfo$isModuleImport.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXIdxImportedASTFileInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("file"),
-        SystemABI.C_POINTER.withName("module"),
+        CSupport.C_POINTER.withName("file"),
+        CSupport.C_POINTER.withName("module"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc"),
-        SystemABI.C_INT.withName("isImplicit"),
+        CSupport.C_INT.withName("isImplicit"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxImportedASTFileInfo$isImplicit = CXIdxImportedASTFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isImplicit"));
@@ -6638,16 +6635,16 @@ public final class Index_h {
     public static final int CXIdxAttr_IBOutlet = (int)2L;
     public static final int CXIdxAttr_IBOutletCollection = (int)3L;
     public static final MemoryLayout CXIdxAttrInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
+        CSupport.C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc")
     );
@@ -6659,19 +6656,19 @@ public final class Index_h {
         CXIdxAttrInfo$kind.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXIdxEntityInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
-        SystemABI.C_INT.withName("templateKind"),
-        SystemABI.C_INT.withName("lang"),
+        CSupport.C_INT.withName("kind"),
+        CSupport.C_INT.withName("templateKind"),
+        CSupport.C_INT.withName("lang"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("name"),
-        SystemABI.C_POINTER.withName("USR"),
+        CSupport.C_POINTER.withName("name"),
+        CSupport.C_POINTER.withName("USR"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
-        SystemABI.C_POINTER.withName("attributes"),
-        SystemABI.C_INT.withName("numAttributes"),
+        CSupport.C_POINTER.withName("attributes"),
+        CSupport.C_INT.withName("numAttributes"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxEntityInfo$kind = CXIdxEntityInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
@@ -6704,50 +6701,50 @@ public final class Index_h {
     }
     public static final MemoryLayout CXIdxContainerInfo$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor")
     );
     public static final MemoryLayout CXIdxIBOutletCollectionAttrInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("attrInfo"),
-        SystemABI.C_POINTER.withName("objcClass"),
+        CSupport.C_POINTER.withName("attrInfo"),
+        CSupport.C_POINTER.withName("objcClass"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("classCursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("classLoc")
     );
     public static final int CXIdxDeclFlag_Skipped = (int)1L;
     public static final MemoryLayout CXIdxDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("entityInfo"),
+        CSupport.C_POINTER.withName("entityInfo"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc"),
-        SystemABI.C_POINTER.withName("semanticContainer"),
-        SystemABI.C_POINTER.withName("lexicalContainer"),
-        SystemABI.C_INT.withName("isRedeclaration"),
-        SystemABI.C_INT.withName("isDefinition"),
-        SystemABI.C_INT.withName("isContainer"),
+        CSupport.C_POINTER.withName("semanticContainer"),
+        CSupport.C_POINTER.withName("lexicalContainer"),
+        CSupport.C_INT.withName("isRedeclaration"),
+        CSupport.C_INT.withName("isDefinition"),
+        CSupport.C_INT.withName("isContainer"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("declAsContainer"),
-        SystemABI.C_INT.withName("isImplicit"),
+        CSupport.C_POINTER.withName("declAsContainer"),
+        CSupport.C_INT.withName("isImplicit"),
         MemoryLayout.ofPaddingBits(32),
-        SystemABI.C_POINTER.withName("attributes"),
-        SystemABI.C_INT.withName("numAttributes"),
-        SystemABI.C_INT.withName("flags")
+        CSupport.C_POINTER.withName("attributes"),
+        CSupport.C_INT.withName("numAttributes"),
+        CSupport.C_INT.withName("flags")
     );
     public static final VarHandle CXIdxDeclInfo$isRedeclaration = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isRedeclaration"));
     public static final int CXIdxDeclInfo$isRedeclaration$get(MemorySegment seg) {
@@ -6795,8 +6792,8 @@ public final class Index_h {
     public static final int CXIdxObjCContainer_Interface = (int)1L;
     public static final int CXIdxObjCContainer_Implementation = (int)2L;
     public static final MemoryLayout CXIdxObjCContainerDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("declInfo"),
-        SystemABI.C_INT.withName("kind"),
+        CSupport.C_POINTER.withName("declInfo"),
+        CSupport.C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxObjCContainerDeclInfo$kind = CXIdxObjCContainerDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
@@ -6807,34 +6804,34 @@ public final class Index_h {
         CXIdxObjCContainerDeclInfo$kind.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXIdxBaseClassInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("base"),
+        CSupport.C_POINTER.withName("base"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc")
     );
     public static final MemoryLayout CXIdxObjCProtocolRefInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("protocol"),
+        CSupport.C_POINTER.withName("protocol"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc")
     );
     public static final MemoryLayout CXIdxObjCProtocolRefListInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("protocols"),
-        SystemABI.C_INT.withName("numProtocols"),
+        CSupport.C_POINTER.withName("protocols"),
+        CSupport.C_INT.withName("numProtocols"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxObjCProtocolRefListInfo$numProtocols = CXIdxObjCProtocolRefListInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numProtocols"));
@@ -6845,34 +6842,34 @@ public final class Index_h {
         CXIdxObjCProtocolRefListInfo$numProtocols.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout CXIdxObjCInterfaceDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("containerInfo"),
-        SystemABI.C_POINTER.withName("superInfo"),
-        SystemABI.C_POINTER.withName("protocols")
+        CSupport.C_POINTER.withName("containerInfo"),
+        CSupport.C_POINTER.withName("superInfo"),
+        CSupport.C_POINTER.withName("protocols")
     );
     public static final MemoryLayout CXIdxObjCCategoryDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("containerInfo"),
-        SystemABI.C_POINTER.withName("objcClass"),
+        CSupport.C_POINTER.withName("containerInfo"),
+        CSupport.C_POINTER.withName("objcClass"),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("classCursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("classLoc"),
-        SystemABI.C_POINTER.withName("protocols")
+        CSupport.C_POINTER.withName("protocols")
     );
     public static final MemoryLayout CXIdxObjCPropertyDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("declInfo"),
-        SystemABI.C_POINTER.withName("getter"),
-        SystemABI.C_POINTER.withName("setter")
+        CSupport.C_POINTER.withName("declInfo"),
+        CSupport.C_POINTER.withName("getter"),
+        CSupport.C_POINTER.withName("setter")
     );
     public static final MemoryLayout CXIdxCXXClassDeclInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("declInfo"),
-        SystemABI.C_POINTER.withName("bases"),
-        SystemABI.C_INT.withName("numBases"),
+        CSupport.C_POINTER.withName("declInfo"),
+        CSupport.C_POINTER.withName("bases"),
+        CSupport.C_INT.withName("numBases"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxCXXClassDeclInfo$numBases = CXIdxCXXClassDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numBases"));
@@ -6895,22 +6892,22 @@ public final class Index_h {
     public static final int CXSymbolRole_AddressOf = (int)128L;
     public static final int CXSymbolRole_Implicit = (int)256L;
     public static final MemoryLayout CXIdxEntityRefInfo$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_INT.withName("kind"),
+        CSupport.C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32),
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ).withName("cursor"),
         MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ).withName("loc"),
-        SystemABI.C_POINTER.withName("referencedEntity"),
-        SystemABI.C_POINTER.withName("parentEntity"),
-        SystemABI.C_POINTER.withName("container"),
-        SystemABI.C_INT.withName("role"),
+        CSupport.C_POINTER.withName("referencedEntity"),
+        CSupport.C_POINTER.withName("parentEntity"),
+        CSupport.C_POINTER.withName("container"),
+        CSupport.C_INT.withName("role"),
         MemoryLayout.ofPaddingBits(32)
     );
     public static final VarHandle CXIdxEntityRefInfo$kind = CXIdxEntityRefInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
@@ -6928,20 +6925,20 @@ public final class Index_h {
         CXIdxEntityRefInfo$role.set(seg.baseAddress(), x);
     }
     public static final MemoryLayout IndexerCallbacks$LAYOUT = MemoryLayout.ofStruct(
-        SystemABI.C_POINTER.withName("abortQuery"),
-        SystemABI.C_POINTER.withName("diagnostic"),
-        SystemABI.C_POINTER.withName("enteredMainFile"),
-        SystemABI.C_POINTER.withName("ppIncludedFile"),
-        SystemABI.C_POINTER.withName("importedASTFile"),
-        SystemABI.C_POINTER.withName("startedTranslationUnit"),
-        SystemABI.C_POINTER.withName("indexDeclaration"),
-        SystemABI.C_POINTER.withName("indexEntityReference")
+        CSupport.C_POINTER.withName("abortQuery"),
+        CSupport.C_POINTER.withName("diagnostic"),
+        CSupport.C_POINTER.withName("enteredMainFile"),
+        CSupport.C_POINTER.withName("ppIncludedFile"),
+        CSupport.C_POINTER.withName("importedASTFile"),
+        CSupport.C_POINTER.withName("startedTranslationUnit"),
+        CSupport.C_POINTER.withName("indexDeclaration"),
+        CSupport.C_POINTER.withName("indexEntityReference")
     );
     public static final MethodHandle clang_index_isEntityObjCContainerKind = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_isEntityObjCContainerKind",
         "(I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_INT
         )
     );
     public static final int clang_index_isEntityObjCContainerKind (int x0) {
@@ -6954,8 +6951,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getObjCContainerDeclInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getObjCContainerDeclInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getObjCContainerDeclInfo (MemoryAddress x0) {
@@ -6968,8 +6965,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getObjCInterfaceDeclInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getObjCInterfaceDeclInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getObjCInterfaceDeclInfo (MemoryAddress x0) {
@@ -6982,8 +6979,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getObjCCategoryDeclInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getObjCCategoryDeclInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getObjCCategoryDeclInfo (MemoryAddress x0) {
@@ -6996,8 +6993,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getObjCProtocolRefListInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getObjCProtocolRefListInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getObjCProtocolRefListInfo (MemoryAddress x0) {
@@ -7010,8 +7007,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getObjCPropertyDeclInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getObjCPropertyDeclInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getObjCPropertyDeclInfo (MemoryAddress x0) {
@@ -7024,8 +7021,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getIBOutletCollectionAttrInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getIBOutletCollectionAttrInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getIBOutletCollectionAttrInfo (MemoryAddress x0) {
@@ -7038,8 +7035,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getCXXClassDeclInfo = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getCXXClassDeclInfo",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getCXXClassDeclInfo (MemoryAddress x0) {
@@ -7052,8 +7049,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getClientContainer = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getClientContainer",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getClientContainer (MemoryAddress x0) {
@@ -7067,8 +7064,8 @@ public final class Index_h {
         LIBRARIES, "clang_index_setClientContainer",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_index_setClientContainer (MemoryAddress x0, MemoryAddress x1) {
@@ -7081,8 +7078,8 @@ public final class Index_h {
     public static final MethodHandle clang_index_getClientEntity = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_index_getClientEntity",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_index_getClientEntity (MemoryAddress x0) {
@@ -7096,8 +7093,8 @@ public final class Index_h {
         LIBRARIES, "clang_index_setClientEntity",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_index_setClientEntity (MemoryAddress x0, MemoryAddress x1) {
@@ -7110,8 +7107,8 @@ public final class Index_h {
     public static final MethodHandle clang_IndexAction_create = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_IndexAction_create",
         "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
-        FunctionDescriptor.of(SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final MemoryAddress clang_IndexAction_create (MemoryAddress CIdx) {
@@ -7125,7 +7122,7 @@ public final class Index_h {
         LIBRARIES, "clang_IndexAction_dispose",
         "(Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
-            SystemABI.C_POINTER
+            CSupport.C_POINTER
         )
     );
     public static final void clang_IndexAction_dispose (MemoryAddress x0) {
@@ -7144,19 +7141,19 @@ public final class Index_h {
     public static final MethodHandle clang_indexSourceFile = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_indexSourceFile",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_indexSourceFile (MemoryAddress x0, MemoryAddress client_data, MemoryAddress index_callbacks, int index_callbacks_size, int index_options, MemoryAddress source_filename, MemoryAddress command_line_args, int num_command_line_args, MemoryAddress unsaved_files, int num_unsaved_files, MemoryAddress out_TU, int TU_options) {
@@ -7169,19 +7166,19 @@ public final class Index_h {
     public static final MethodHandle clang_indexSourceFileFullArgv = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_indexSourceFileFullArgv",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_INT
         )
     );
     public static final int clang_indexSourceFileFullArgv (MemoryAddress x0, MemoryAddress client_data, MemoryAddress index_callbacks, int index_callbacks_size, int index_options, MemoryAddress source_filename, MemoryAddress command_line_args, int num_command_line_args, MemoryAddress unsaved_files, int num_unsaved_files, MemoryAddress out_TU, int TU_options) {
@@ -7194,13 +7191,13 @@ public final class Index_h {
     public static final MethodHandle clang_indexTranslationUnit = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_indexTranslationUnit",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_INT,
-            SystemABI.C_INT,
-            SystemABI.C_POINTER
+        FunctionDescriptor.of(CSupport.C_INT,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_INT,
+            CSupport.C_INT,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_indexTranslationUnit (MemoryAddress x0, MemoryAddress client_data, MemoryAddress index_callbacks, int index_callbacks_size, int index_options, MemoryAddress x5) {
@@ -7215,15 +7212,15 @@ public final class Index_h {
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
         FunctionDescriptor.ofVoid(
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final void clang_indexLoc_getFileLocation (MemorySegment loc, MemoryAddress indexFile, MemoryAddress file, MemoryAddress line, MemoryAddress column, MemoryAddress offset) {
@@ -7237,13 +7234,13 @@ public final class Index_h {
         LIBRARIES, "clang_indexLoc_getCXSourceLocation",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-            SystemABI.C_INT.withName("int_data"),
+            MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+            CSupport.C_INT.withName("int_data"),
             MemoryLayout.ofPaddingBits(32)
         ),
             MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("ptr_data"),
-                SystemABI.C_INT.withName("int_data"),
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
+                CSupport.C_INT.withName("int_data"),
                 MemoryLayout.ofPaddingBits(32)
             )
         )
@@ -7258,14 +7255,14 @@ public final class Index_h {
     public static final MethodHandle clang_Type_visitFields = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_Type_visitFields",
         "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
-        FunctionDescriptor.of(SystemABI.C_INT,
+        FunctionDescriptor.of(CSupport.C_INT,
             MemoryLayout.ofStruct(
-                SystemABI.C_INT.withName("kind"),
+                CSupport.C_INT.withName("kind"),
                 MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, SystemABI.C_POINTER).withName("data")
+                MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("data")
             ),
-            SystemABI.C_POINTER,
-            SystemABI.C_POINTER
+            CSupport.C_POINTER,
+            CSupport.C_POINTER
         )
     );
     public static final int clang_Type_visitFields (MemorySegment T, MemoryAddress visitor, MemoryAddress client_data) {
@@ -7275,13 +7272,13 @@ public final class Index_h {
             throw new AssertionError(ex);
         }
     }
-    private static final FunctionDescriptor clang_Type_visitFields$visitor$DESC = FunctionDescriptor.of(SystemABI.C_INT,
+    private static final FunctionDescriptor clang_Type_visitFields$visitor$DESC = FunctionDescriptor.of(CSupport.C_INT,
         MemoryLayout.ofStruct(
-            SystemABI.C_INT.withName("kind"),
-            SystemABI.C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, SystemABI.C_POINTER).withName("data")
+            CSupport.C_INT.withName("kind"),
+            CSupport.C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, CSupport.C_POINTER).withName("data")
         ),
-        SystemABI.C_POINTER
+        CSupport.C_POINTER
     );
     public interface clang_Type_visitFields$visitor {
         int apply(MemorySegment x0, MemoryAddress x1);

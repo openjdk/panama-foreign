@@ -25,7 +25,6 @@
 
 package jdk.incubator.jextract.tool;
 
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.foreign.MemoryAddress;

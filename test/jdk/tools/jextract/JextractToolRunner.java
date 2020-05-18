@@ -42,11 +42,9 @@ import java.util.spi.ToolProvider;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type;
 import jdk.test.lib.util.FileUtils;
 
-import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;

@@ -114,14 +114,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static String getCLangConstantsHolder() {
-        String prefix = "jdk.incubator.foreign.SystemABI.";
-        String abi = SharedUtils.getSystemABI().name();
+        String prefix = "jdk.incubator.foreign.CSupport.";
+        String abi = SharedUtils.getSystemLinker().name();
         switch (abi) {
-            case SystemABI.ABI_SYSV:
+            case CSupport.SysV.NAME:
                 return prefix + "SysV";
-            case SystemABI.ABI_WINDOWS:
+            case CSupport.Win64.NAME:
                 return prefix + "Win64";
-            case SystemABI.ABI_AARCH64:
+            case CSupport.AArch64.NAME:
                 return prefix + "AArch64";
             default:
                 throw new UnsupportedOperationException("Unsupported ABI: " + abi);
@@ -178,7 +178,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private List<JavaFileObject> getPrimitiveTypeFiles(String pkgName) throws IOException, URISyntaxException {
-        var abi = SharedUtils.getSystemABI();
+        var abi = SharedUtils.getSystemLinker();
         var cXJavaFile = OutputFactory.class.getResource("resources/C-X.java.template");
         var lines = Files.readAllLines(Paths.get(cXJavaFile.toURI()));
 

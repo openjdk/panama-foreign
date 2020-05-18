@@ -21,14 +21,12 @@
  * questions.
  */
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;
 
-import static jdk.incubator.foreign.SystemABI.NATIVE_TYPE;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
 
@@ -82,18 +80,18 @@ public class LibStructTest {
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)CAllTypes.$LAYOUT();
-        checkField(g, "sc", SystemABI.C_CHAR);
-        checkField(g, "uc", SystemABI.C_CHAR);
-        checkField(g, "s",  SystemABI.C_SHORT);
-        checkField(g, "us", SystemABI.C_SHORT);
-        checkField(g, "i",  SystemABI.C_INT);
-        checkField(g, "ui", SystemABI.C_INT);
-        checkField(g, "l",  SystemABI.C_LONG);
-        checkField(g, "ul", SystemABI.C_LONG);
-        checkField(g, "ll", SystemABI.C_LONGLONG);
-        checkField(g, "ull",SystemABI.C_LONGLONG);
-        checkField(g, "f",  SystemABI.C_FLOAT);
-        checkField(g, "d",  SystemABI.C_DOUBLE);
-        checkField(g, "ld", SystemABI.C_LONGDOUBLE);
+        checkField(g, "sc", CSupport.C_CHAR);
+        checkField(g, "uc", CSupport.C_CHAR);
+        checkField(g, "s",  CSupport.C_SHORT);
+        checkField(g, "us", CSupport.C_SHORT);
+        checkField(g, "i",  CSupport.C_INT);
+        checkField(g, "ui", CSupport.C_INT);
+        checkField(g, "l",  CSupport.C_LONG);
+        checkField(g, "ul", CSupport.C_LONG);
+        checkField(g, "ll", CSupport.C_LONGLONG);
+        checkField(g, "ull",CSupport.C_LONGLONG);
+        checkField(g, "f",  CSupport.C_FLOAT);
+        checkField(g, "d",  CSupport.C_DOUBLE);
+        checkField(g, "ld", CSupport.C_LONGDOUBLE);
     }
 }

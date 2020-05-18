@@ -25,14 +25,14 @@
  */
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.internal.clang.libclang.Index_h;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -50,12 +50,12 @@ public class LibClang {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                SystemABI abi = SharedUtils.getSystemABI();
-                String putenv = abi.name().equals(SystemABI.ABI_WINDOWS) ?
+                ForeignLinker abi = SharedUtils.getSystemLinker();
+                String putenv = abi.name().equals(CSupport.Win64.NAME) ?
                         "_putenv" : "putenv";
                 MethodHandle PUT_ENV = abi.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),
                                 MethodType.methodType(int.class, MemoryAddress.class),
-                                FunctionDescriptor.of(SystemABI.C_INT, SystemABI.C_POINTER));
+                                FunctionDescriptor.of(CSupport.C_INT, CSupport.C_POINTER));
                 int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.baseAddress());
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);
