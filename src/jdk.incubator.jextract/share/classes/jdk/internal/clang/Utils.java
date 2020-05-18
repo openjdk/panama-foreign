@@ -26,26 +26,25 @@
 
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
 public class Utils {
-    public static final VarHandle BYTE_VH = SystemABI.C_CHAR.varHandle(byte.class);
+    public static final VarHandle BYTE_VH = CSupport.C_CHAR.varHandle(byte.class);
     public static final VarHandle BYTE_ARR_VH = MemoryHandles.withStride(BYTE_VH, 1);
-    public static final VarHandle INT_VH = SystemABI.C_INT.varHandle(int.class);
-    public static final VarHandle LONG_VH = SystemABI.C_LONGLONG.varHandle(long.class);
-    public static final VarHandle POINTER_VH = MemoryHandles.asAddressVarHandle(SystemABI.C_POINTER.varHandle(long.class));
+    public static final VarHandle INT_VH = CSupport.C_INT.varHandle(int.class);
+    public static final VarHandle LONG_VH = CSupport.C_LONGLONG.varHandle(long.class);
+    public static final VarHandle POINTER_VH = MemoryHandles.asAddressVarHandle(CSupport.C_POINTER.varHandle(long.class));
     public static final VarHandle POINTER_ARR_VH = MemoryHandles.withStride(POINTER_VH, 8);
 
     private static final MethodHandle STRLEN;
@@ -53,15 +52,15 @@ public class Utils {
 
     static {
         try {
-            STRLEN = SharedUtils.getSystemABI().downcallHandle(
+            STRLEN = SharedUtils.getSystemLinker().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strlen"),
                     MethodType.methodType(int.class, MemoryAddress.class),
-                    FunctionDescriptor.of(SystemABI.C_INT, SystemABI.C_POINTER));
+                    FunctionDescriptor.of(CSupport.C_INT, CSupport.C_POINTER));
 
-            STRCPY = SharedUtils.getSystemABI().downcallHandle(
+            STRCPY = SharedUtils.getSystemLinker().downcallHandle(
                     LibraryLookup.ofDefault().lookup("strcpy"),
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                    FunctionDescriptor.of(SystemABI.C_POINTER, SystemABI.C_POINTER, SystemABI.C_POINTER));
+                    FunctionDescriptor.of(CSupport.C_POINTER, CSupport.C_POINTER, CSupport.C_POINTER));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -100,7 +99,7 @@ public class Utils {
     }
 
     static MemorySegment toNativeString(String value, int length) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(length, SystemABI.C_CHAR);
+        MemoryLayout strLayout = MemoryLayout.ofSequence(length, CSupport.C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
         MemoryAddress addr = segment.baseAddress();
         for (int i = 0 ; i < value.length() ; i++) {
@@ -145,7 +144,7 @@ public class Utils {
             return null;
         }
 
-        MemorySegment segment = MemorySegment.allocateNative(MemoryLayout.ofSequence(ar.length, SystemABI.C_POINTER));
+        MemorySegment segment = MemorySegment.allocateNative(MemoryLayout.ofSequence(ar.length, CSupport.C_POINTER));
         for (int i = 0; i < ar.length; i++) {
             POINTER_ARR_VH.set(segment.baseAddress(), i, toNativeString(ar[i]).baseAddress());
         }

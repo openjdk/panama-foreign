@@ -26,9 +26,10 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
@@ -41,7 +42,7 @@ import java.util.function.Supplier;
  * General Layout utility functions
  */
 public final class LayoutUtils {
-    private static SystemABI abi = SharedUtils.getSystemABI();
+    private static ForeignLinker abi = SharedUtils.getSystemLinker();
     private LayoutUtils() {}
 
     public static String getName(Type type) {
@@ -89,10 +90,10 @@ public final class LayoutUtils {
             case LongDouble:
                 return Primitive.Kind.LongDouble.layout().orElseThrow(unsupported);
             case Complex:
-                if (!abi.name().equals(SystemABI.ABI_SYSV)) {
+                if (!abi.name().equals(CSupport.SysV.NAME)) {
                     throw new UnsupportedOperationException("unsupported: " + t.kind());
                 }
-                return SystemABI.SysV.C_COMPLEX_LONGDOUBLE;
+                return CSupport.SysV.C_COMPLEX_LONGDOUBLE;
             case Record:
                 return getRecordLayout(t);
             case Vector:
@@ -112,7 +113,7 @@ public final class LayoutUtils {
                 return getLayout(t.canonicalType());
             case Pointer:
             case BlockPointer:
-                return SystemABI.C_POINTER;
+                return CSupport.C_POINTER;
             default:
                 throw new UnsupportedOperationException("unsupported: " + t.kind());
         }
@@ -139,7 +140,7 @@ public final class LayoutUtils {
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return SystemABI.C_POINTER;
+                return CSupport.C_POINTER;
             } else {
                 return t.type().accept(this, null);
             }
@@ -196,7 +197,7 @@ public final class LayoutUtils {
             case 8: return Primitive.Kind.Char;
             case 16: return Primitive.Kind.Short;
             case 32: return Primitive.Kind.Int;
-            case 64: return SystemABI.getSystemABI().name().equals(SystemABI.Win64.NAME) ?
+            case 64: return CSupport.getSystemLinker().name().equals(CSupport.Win64.NAME) ?
                     Primitive.Kind.LongLong : Primitive.Kind.Long;
             default:
                 throw new IllegalStateException("Cannot infer container layout");

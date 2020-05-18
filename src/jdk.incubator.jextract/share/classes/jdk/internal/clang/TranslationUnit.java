@@ -26,13 +26,12 @@
 
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.internal.clang.libclang.Index_h;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -120,8 +119,8 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Tokens tokenize(SourceRange range) {
-        MemorySegment p = MemorySegment.allocateNative(SystemABI.C_POINTER);
-        MemorySegment pCnt = MemorySegment.allocateNative(SystemABI.C_INT);
+        MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
+        MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
         Index_h.clang_tokenize(tu, range.range, p.baseAddress(), pCnt.baseAddress());
         Tokens rv = new Tokens(Utils.getPointer(p.baseAddress()), Utils.getInt(pCnt.baseAddress()));
         return rv;

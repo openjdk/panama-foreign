@@ -30,8 +30,6 @@
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.BeforeClass;

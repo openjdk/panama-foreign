@@ -50,12 +50,12 @@ import java.nio.file.Path;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.SystemABI.C_CHAR;
-import static jdk.incubator.foreign.SystemABI.C_DOUBLE;
-import static jdk.incubator.foreign.SystemABI.C_FLOAT;
-import static jdk.incubator.foreign.SystemABI.C_INT;
-import static jdk.incubator.foreign.SystemABI.C_LONGLONG;
-import static jdk.incubator.foreign.SystemABI.C_SHORT;
+import static jdk.incubator.foreign.CSupport.C_CHAR;
+import static jdk.incubator.foreign.CSupport.C_DOUBLE;
+import static jdk.incubator.foreign.CSupport.C_FLOAT;
+import static jdk.incubator.foreign.CSupport.C_INT;
+import static jdk.incubator.foreign.CSupport.C_LONGLONG;
+import static jdk.incubator.foreign.CSupport.C_SHORT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 

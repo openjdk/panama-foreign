@@ -26,9 +26,9 @@
 
 package jdk.incubator.jextract;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SystemABI;
 import jdk.internal.jextract.impl.LayoutUtils;
 import jdk.internal.jextract.impl.TypeImpl;
 
@@ -95,11 +95,11 @@ public interface Type {
             /**
              * {@code Bool} type.
              */
-            Bool("_Bool", SystemABI.C_BOOL),
+            Bool("_Bool", CSupport.C_BOOL),
             /**
              * {@code char} type.
              */
-            Char("char", SystemABI.C_CHAR),
+            Char("char", CSupport.C_CHAR),
             /**
              * {@code char16} type.
              */
@@ -111,19 +111,19 @@ public interface Type {
             /**
              * {@code short} type.
              */
-            Short("short", SystemABI.C_SHORT),
+            Short("short", CSupport.C_SHORT),
             /**
              * {@code int} type.
              */
-            Int("int", SystemABI.C_INT),
+            Int("int", CSupport.C_INT),
             /**
              * {@code long} type.
              */
-            Long("long", SystemABI.C_LONG),
+            Long("long", CSupport.C_LONG),
             /**
              * {@code long long} type.
              */
-            LongLong("long long", SystemABI.C_LONGLONG),
+            LongLong("long long", CSupport.C_LONGLONG),
             /**
              * {@code int128} type.
              */
@@ -131,15 +131,15 @@ public interface Type {
             /**
              * {@code float} type.
              */
-            Float("float", SystemABI.C_FLOAT),
+            Float("float", CSupport.C_FLOAT),
             /**
              * {@code double} type.
              */
-            Double("double",SystemABI.C_DOUBLE),
+            Double("double",CSupport.C_DOUBLE),
             /**
              * {@code long double} type.
              */
-            LongDouble("long double", SystemABI.C_LONGDOUBLE),
+            LongDouble("long double", CSupport.C_LONGDOUBLE),
             /**
              * {@code float128} type.
              */

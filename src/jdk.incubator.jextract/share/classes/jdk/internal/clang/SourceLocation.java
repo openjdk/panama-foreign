@@ -25,11 +25,10 @@
  */
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.jextract.impl.LayoutUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,10 +50,10 @@ public class SourceLocation {
 
     @SuppressWarnings("unchecked")
     private Location getLocation(LocationFactory fn) {
-        try (MemorySegment file = MemorySegment.allocateNative(SystemABI.C_POINTER);
-             MemorySegment line = MemorySegment.allocateNative(SystemABI.C_INT);
-             MemorySegment col = MemorySegment.allocateNative(SystemABI.C_INT);
-             MemorySegment offset = MemorySegment.allocateNative(SystemABI.C_INT)) {
+        try (MemorySegment file = MemorySegment.allocateNative(CSupport.C_POINTER);
+             MemorySegment line = MemorySegment.allocateNative(CSupport.C_INT);
+             MemorySegment col = MemorySegment.allocateNative(CSupport.C_INT);
+             MemorySegment offset = MemorySegment.allocateNative(CSupport.C_INT)) {
 
             fn.get(loc, file.baseAddress(), line.baseAddress(), col.baseAddress(), offset.baseAddress());
             MemoryAddress fname = Utils.getPointer(file.baseAddress());

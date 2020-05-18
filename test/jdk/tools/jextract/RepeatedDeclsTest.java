@@ -21,8 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.jextract.Type;
+import jdk.incubator.foreign.CSupport;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
@@ -30,7 +29,6 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -108,16 +106,16 @@ public class RepeatedDeclsTest extends JextractToolRunner {
         MemoryLayout pointLayout = findLayout(pointCls);
         assertNotNull(pointLayout);
         assertTrue(((GroupLayout)pointLayout).isStruct());
-        checkField(pointLayout, "i", SystemABI.C_INT);
-        checkField(pointLayout, "j", SystemABI.C_INT);
+        checkField(pointLayout, "i", CSupport.C_INT);
+        checkField(pointLayout, "j", CSupport.C_INT);
     }
 
     private void checkPoint3D(Class<?> point3DCls) {
         MemoryLayout point3DLayout = findLayout(point3DCls);
         assertNotNull(point3DLayout);
         assertTrue(((GroupLayout)point3DLayout).isStruct());
-        checkField(point3DLayout, "i", SystemABI.C_INT);
-        checkField(point3DLayout, "j", SystemABI.C_INT);
-        checkField(point3DLayout, "k", SystemABI.C_INT);
+        checkField(point3DLayout, "i", CSupport.C_INT);
+        checkField(point3DLayout, "j", CSupport.C_INT);
+        checkField(point3DLayout, "k", CSupport.C_INT);
     }
 }

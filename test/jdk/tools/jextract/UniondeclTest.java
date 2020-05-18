@@ -21,8 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.foreign.SystemABI;
-import jdk.incubator.jextract.Type;
+import jdk.incubator.foreign.CSupport;
 import org.testng.annotations.Test;
 import java.nio.file.Path;
 import jdk.incubator.foreign.GroupLayout;
@@ -52,8 +51,8 @@ public class UniondeclTest extends JextractToolRunner {
             GroupLayout intOrFloatLayout = (GroupLayout)findLayout(intOrFloatCls);
             assertNotNull(intOrFloatLayout);
             assertTrue(intOrFloatLayout.isUnion());
-            checkField(intOrFloatLayout, "i",  SystemABI.C_INT);
-            checkField(intOrFloatLayout, "f", SystemABI.C_FLOAT);
+            checkField(intOrFloatLayout, "i",  CSupport.C_INT);
+            checkField(intOrFloatLayout, "f", CSupport.C_FLOAT);
         } finally {
             deleteDir(uniondeclOutput);
         }
