@@ -542,17 +542,23 @@ final class VarHandles {
     private static void noCheckedExceptions(MethodHandle handle) {
         if (handle instanceof DirectMethodHandle) {
             DirectMethodHandle directHandle = (DirectMethodHandle)handle;
-            MethodHandleInfo info = MethodHandles.Lookup.IMPL_LOOKUP.revealDirect(directHandle);
-            Class<?>[] exceptionTypes = switch (info.getReferenceKind()) {
-                case MethodHandleInfo.REF_invokeInterface, MethodHandleInfo.REF_invokeSpecial,
-                        MethodHandleInfo.REF_invokeStatic, MethodHandleInfo.REF_invokeVirtual ->
-                        info.reflectAs(Method.class, MethodHandles.Lookup.IMPL_LOOKUP).getExceptionTypes();
-                case MethodHandleInfo.REF_newInvokeSpecial ->
-                        info.reflectAs(Constructor.class, MethodHandles.Lookup.IMPL_LOOKUP).getExceptionTypes();
-                case MethodHandleInfo.REF_getField, MethodHandleInfo.REF_getStatic,
-                        MethodHandleInfo.REF_putField, MethodHandleInfo.REF_putStatic -> null;
-                default -> throw new AssertionError("Cannot get here");
-            };
+            byte refKind = directHandle.member.getReferenceKind();
+            MethodHandleInfo info = new InfoFromMemberName(
+                    MethodHandles.Lookup.IMPL_LOOKUP,
+                    directHandle.member,
+                    refKind);
+            final Class<?>[] exceptionTypes;
+            if (MethodHandleNatives.refKindIsMethod(refKind)) {
+                exceptionTypes = info.reflectAs(Method.class, MethodHandles.Lookup.IMPL_LOOKUP)
+                        .getExceptionTypes();
+            } else if (MethodHandleNatives.refKindIsField(refKind)) {
+                exceptionTypes = null;
+            } else if (MethodHandleNatives.refKindIsConstructor(refKind)) {
+                exceptionTypes = info.reflectAs(Constructor.class, MethodHandles.Lookup.IMPL_LOOKUP)
+                        .getExceptionTypes();
+            } else {
+                throw new AssertionError("Cannot get here");
+            }
             if (exceptionTypes != null) {
                 if (Stream.of(exceptionTypes).anyMatch(VarHandles::isCheckedException)) {
                     throw newIllegalArgumentException("Cannot adapt a var handle with a method handle which throws checked exceptions");
