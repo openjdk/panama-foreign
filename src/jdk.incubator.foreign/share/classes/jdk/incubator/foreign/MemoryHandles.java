@@ -28,7 +28,6 @@ package jdk.incubator.foreign;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.UnsignedAdapters;
 import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
