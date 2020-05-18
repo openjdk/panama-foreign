@@ -49,6 +49,8 @@ public class TestAdaptVarHandles {
 
     static MethodHandle S2I;
     static MethodHandle I2S;
+    static MethodHandle O2I;
+    static MethodHandle I2O;
     static MethodHandle S2L;
     static MethodHandle S2L_EX;
     static MethodHandle S2I_EX;
@@ -61,6 +63,8 @@ public class TestAdaptVarHandles {
         try {
             S2I = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToInt", MethodType.methodType(int.class, String.class));
             I2S = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "intToString", MethodType.methodType(String.class, int.class));
+            O2I = MethodHandles.explicitCastArguments(S2I, MethodType.methodType(int.class, Object.class));
+            I2O = MethodHandles.explicitCastArguments(I2S, MethodType.methodType(Object.class, int.class));
             S2L = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToLong", MethodType.methodType(long.class, String.class));
             S2L_EX = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToLongException", MethodType.methodType(long.class, String.class));
             BASE_ADDR = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "baseAddress", MethodType.methodType(MemoryAddress.class, MemorySegment.class));
@@ -95,6 +99,25 @@ public class TestAdaptVarHandles {
         oldValue = (String)i2SHandle.compareAndExchange(segment.baseAddress(), "12", "42");
         assertEquals(oldValue, "12");
         value = (String)i2SHandle.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress());
+        assertEquals(value, "42");
+    }
+
+    @Test
+    public void testFilterValueLoose() throws Throwable {
+        ValueLayout layout = MemoryLayouts.JAVA_INT;
+        MemorySegment segment = MemorySegment.allocateNative(layout);
+        VarHandle intHandle = layout.varHandle(int.class);
+        VarHandle i2SHandle = MemoryHandles.filterValue(intHandle, O2I, I2O);
+        i2SHandle.set(segment.baseAddress(), "1");
+        String oldValue = (String)i2SHandle.getAndAdd(segment.baseAddress(), "42");
+        assertEquals(oldValue, "1");
+        String value = (String)i2SHandle.get(segment.baseAddress());
+        assertEquals(value, "43");
+        boolean swapped = (boolean)i2SHandle.compareAndSet(segment.baseAddress(), "43", "12");
+        assertTrue(swapped);
+        oldValue = (String)i2SHandle.compareAndExchange(segment.baseAddress(), "12", "42");
+        assertEquals(oldValue, "12");
+        value = (String)(Object)i2SHandle.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress());
         assertEquals(value, "42");
     }
 
