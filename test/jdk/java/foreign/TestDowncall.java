@@ -33,26 +33,25 @@
  * @run testng/othervm -Dforeign.restricted=permit TestDowncall
  */
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ForeignLinker;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import org.testng.annotations.*;
-import static org.testng.Assert.*;
 
 public class TestDowncall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestDowncall");
-    static SystemABI abi = SystemABI.getSystemABI();
+    static ForeignLinker abi = CSupport.getSystemLinker();
 
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)

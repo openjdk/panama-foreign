@@ -27,10 +27,8 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.SystemABI;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
@@ -48,6 +46,7 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Optional;
 
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 
 /**
@@ -98,7 +97,7 @@ public class CallArranger {
     }
 
     public static Bindings getBindings(MethodType mt, FunctionDescriptor cDesc, boolean forUpcall) {
-        SharedUtils.checkFunctionTypes(mt, cDesc, AArch64ABI.ADDRESS_SIZE);
+        SharedUtils.checkFunctionTypes(mt, cDesc, AArch64Linker.ADDRESS_SIZE);
 
         CallingSequenceBuilder csb = new CallingSequenceBuilder(forUpcall);
 
@@ -107,7 +106,7 @@ public class CallArranger {
 
         boolean returnInMemory = isInMemoryReturn(cDesc.returnLayout());
         if (returnInMemory) {
-            csb.addArgumentBindings(MemoryAddress.class, SystemABI.AArch64.C_POINTER,
+            csb.addArgumentBindings(MemoryAddress.class, AArch64.C_POINTER,
                     argCalc.getIndirectBindings());
         } else if (cDesc.returnLayout().isPresent()) {
             Class<?> carrier = mt.returnType();
@@ -163,17 +162,17 @@ public class CallArranger {
     }
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        SystemABI.AArch64.ArgumentClass clazz = AArch64ABI.argumentClassFor(type);
+        AArch64.ArgumentClass clazz = AArch64Linker.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
 
-        if (clazz == SystemABI.AArch64.ArgumentClass.INTEGER) {
+        if (clazz == AArch64.ArgumentClass.INTEGER) {
             return TypeClass.INTEGER;
-        } else if(clazz == SystemABI.AArch64.ArgumentClass.POINTER) {
+        } else if(clazz == AArch64.ArgumentClass.POINTER) {
             return TypeClass.POINTER;
-        } else if (clazz == SystemABI.AArch64.ArgumentClass.VECTOR) {
+        } else if (clazz == AArch64.ArgumentClass.VECTOR) {
             return TypeClass.FLOAT;
         }
         throw new IllegalArgumentException("Unknown ABI class: " + clazz);
@@ -198,15 +197,15 @@ public class CallArranger {
         if (!(baseType instanceof ValueLayout))
             return false;
 
-        SystemABI.AArch64.ArgumentClass baseArgClass = AArch64ABI.argumentClassFor(baseType);
-        if (baseArgClass != SystemABI.AArch64.ArgumentClass.VECTOR)
+        AArch64.ArgumentClass baseArgClass = AArch64Linker.argumentClassFor(baseType);
+        if (baseArgClass != AArch64.ArgumentClass.VECTOR)
            return false;
 
         for (MemoryLayout elem : groupLayout.memberLayouts()) {
             if (!(elem instanceof ValueLayout))
                 return false;
 
-            SystemABI.AArch64.ArgumentClass argClass = AArch64ABI.argumentClassFor(elem);
+            AArch64.ArgumentClass argClass = AArch64Linker.argumentClassFor(elem);
             if (elem.bitSize() != baseType.bitSize() ||
                     elem.bitAlignment() != baseType.bitAlignment() ||
                     baseArgClass != argClass) {

@@ -22,9 +22,10 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.SystemABI;
+import jdk.incubator.foreign.ForeignLinker;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -35,11 +36,10 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
-import static jdk.incubator.foreign.SystemABI.C_INT;
+import static jdk.incubator.foreign.CSupport.C_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -49,7 +49,7 @@ import static jdk.incubator.foreign.SystemABI.C_INT;
 @Fork(3)
 public class CallOverhead {
 
-    static final SystemABI abi = SystemABI.getSystemABI();
+    static final ForeignLinker abi = CSupport.getSystemLinker();
     static final MethodHandle func;
     static final MethodHandle identity;
 

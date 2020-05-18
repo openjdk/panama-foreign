@@ -24,34 +24,36 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SystemABI;
-import jdk.internal.foreign.abi.*;
+import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Optional;
 
+import static jdk.incubator.foreign.CSupport.*;
+
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
-public class SysVx64ABI implements SystemABI {
+public class SysVx64Linker implements ForeignLinker {
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
     public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
     public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
     public static final int MAX_X87_RETURN_REGISTERS = 2;
 
-    private static SysVx64ABI instance;
+    private static SysVx64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
 
-    public static SysVx64ABI getInstance() {
+    public static SysVx64Linker getInstance() {
         if (instance == null) {
-            instance = new SysVx64ABI();
+            instance = new SysVx64Linker();
         }
         return instance;
     }
