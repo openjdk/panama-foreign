@@ -155,12 +155,6 @@ public interface JavaLangInvokeAccess {
     long[] memoryAddressStrides(VarHandle handle);
 
     /**
-     * Var handle carrier adapter.
-     * Used by {@code jdk.incubator.foreign.MemoryHandles}.
-     */
-    VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType);
-
-    /**
      * Var handle carrier combinator.
      * Used by {@code jdk.incubator.foreign.MemoryHandles}.
      */

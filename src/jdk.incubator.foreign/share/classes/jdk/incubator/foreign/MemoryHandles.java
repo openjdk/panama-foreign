@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.UnsignedAdapters;
 import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
@@ -360,7 +361,7 @@ public final class MemoryHandles {
      * @jls 5.1.3 Narrowing Primitive Conversion
      */
     public static VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
-        return JLI.asUnsigned(target, adaptedType);
+        return UnsignedAdapters.asUnsigned(target, adaptedType);
     }
 
     /**

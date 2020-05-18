@@ -262,66 +262,6 @@ endef
 ################################################################################
 
 ################################################################################
-# Setup a rule for generating a memory access unsigned var handle adapter classes
-# Param 1 - Variable declaration prefix
-# Param 2 - Pair of [adapter dot carrier] types, with first letter capitalized
-define GenerateVarHandleUnsignedMemoryAccessAdapter
-
-  $1_AdapterType := $(word 1,$(subst ., ,$2))
-  $1_CarrierType := $(word 2,$(subst ., ,$2))
-
-  $1_FILENAME := $(VARHANDLES_GENSRC_DIR)/MemoryHandle$$($1_AdapterType)ToUnsigned$$($1_CarrierType).java
-
-  ifeq ($$($1_AdapterType), Long)
-    $1_adapterType := long
-    $1_AdapterType := Long
-    $1_BoxAdapterType := Long
-    ifeq ($$($1_CarrierType), Byte)
-      $1_carrierType := byte
-      $1_CarrierType := Byte
-      $1_BoxCarrierType := Byte
-    else ifeq ($$($1_CarrierType), Short)
-      $1_carrierType := short
-      $1_CarrierType := Short
-      $1_BoxCarrierType := Short
-    else ifeq ($$($1_CarrierType), Int)
-      $1_carrierType := int
-      $1_CarrierType := Int
-      $1_BoxCarrierType := Integer
-        endif
-  endif
-
-  ifeq ($$($1_AdapterType), Int)
-      $1_adapterType := int
-      $1_AdapterType := Int
-      $1_BoxAdapterType := Integer
-      ifeq ($$($1_CarrierType), Byte)
-        $1_carrierType := byte
-        $1_CarrierType := Byte
-        $1_BoxCarrierType := Byte
-      else ifeq ($$($1_CarrierType), Short)
-        $1_carrierType := short
-        $1_CarrierType := Short
-        $1_BoxCarrierType := Short
-      endif
-    endif
-
-  $$($1_FILENAME): $(VARHANDLES_SRC_DIR)/X-VarHandleMemoryHandleUnsigned.java.template $(BUILD_TOOLS_JDK)
-	$$(call MakeDir, $$(@D))
-	$(RM) $$@
-	$(TOOL_SPP) -nel -K$$($1_type)             \
-	    -DadapterType=$$($1_adapterType)       \
-	    -DAdapterType=$$($1_AdapterType)       \
-	    -DBoxAdapterType=$$($1_BoxAdapterType) \
-	    -DcarrierType=$$($1_carrierType)       \
-	    -DCarrierType=$$($1_CarrierType)       \
-	    -DBoxCarrierType=$$($1_BoxCarrierType) \
-	    -i$$< -o$$@
-
-  GENSRC_VARHANDLES += $$($1_FILENAME)
-endef
-
-################################################################################
 
 # List the types to generate source for, with capitalized first letter
 VARHANDLES_TYPES := Boolean Byte Short Char Int Long Float Double Reference
@@ -337,10 +277,5 @@ $(foreach t, $(VARHANDLES_BYTE_ARRAY_TYPES), \
 VARHANDLES_MEMORY_ADDRESS_TYPES := Byte Short Char Int Long Float Double
 $(foreach t, $(VARHANDLES_MEMORY_ADDRESS_TYPES), \
   $(eval $(call GenerateVarHandleMemoryAccess,VAR_HANDLE_MEMORY_ADDRESS_$t,$t)))
-
-# List the type combinations to generate source for, with capitalized first letter
-VARHANDLES_UNSIGNED_MEMORY_HANDLE_CARRIER_COMBINATIONS := Int.Byte Int.Short Long.Byte Long.Short Long.Int
-$(foreach t, $(VARHANDLES_UNSIGNED_MEMORY_HANDLE_CARRIER_COMBINATIONS), \
-  $(eval $(call GenerateVarHandleUnsignedMemoryAccessAdapter,VAR_HANDLE_MEMORY_ADDRESS_$t,$t)))
 
 GENSRC_JAVA_BASE += $(GENSRC_VARHANDLES)

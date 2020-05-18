@@ -1839,11 +1839,6 @@ abstract class MethodHandleImpl {
             }
 
             @Override
-            public VarHandle asUnsigned(VarHandle target, final Class<?> adaptedType) {
-                return VarHandles.asUnsigned(target, adaptedType);
-            }
-
-            @Override
             public VarHandle filterValue(VarHandle target, MethodHandle filterToTarget, MethodHandle filterFromTarget) {
                 return VarHandles.filterValue(target, filterToTarget, filterFromTarget);
             }
