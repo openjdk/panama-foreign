@@ -261,8 +261,6 @@ endef
 
 ################################################################################
 
-################################################################################
-
 # List the types to generate source for, with capitalized first letter
 VARHANDLES_TYPES := Boolean Byte Short Char Int Long Float Double Reference
 $(foreach t, $(VARHANDLES_TYPES), \
