@@ -46,9 +46,7 @@ public class TestMemoryHandleAsUnsigned {
 
     @DataProvider(name = "unsignedIntToByteData")
     public Object[][] unsignedIntToByteData() {
-        // some boundary values
-        int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE };
-        return IntStream.concat(IntStream.range(0, 512), Arrays.stream(l))
+        return IntStream.range(0, 256)
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
@@ -70,9 +68,7 @@ public class TestMemoryHandleAsUnsigned {
 
     @DataProvider(name = "unsignedLongToByteData")
     public Object[][] unsignedLongToByteData() {
-        // some boundary values
-        long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE };
-        return LongStream.concat(LongStream.range(0L, 512L), Arrays.stream(l))
+        return LongStream.range(0L, 256L)
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
@@ -94,11 +90,7 @@ public class TestMemoryHandleAsUnsigned {
 
     @DataProvider(name = "unsignedIntToShortData")
     public Object[][] unsignedIntToShortData() {
-        // some boundary values
-        int[] l = new int[] { Integer.MAX_VALUE, Integer.MIN_VALUE,
-                Short.MAX_VALUE - 1, Short.MAX_VALUE, Short.MAX_VALUE + 1,
-                Short.MIN_VALUE - 1, Short.MIN_VALUE, Short.MIN_VALUE + 1, };
-        return IntStream.concat(IntStream.range(0, 512), Arrays.stream(l))
+        return IntStream.range(0, 65_536).filter(i -> i % 99 == 0)
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
@@ -120,11 +112,7 @@ public class TestMemoryHandleAsUnsigned {
 
     @DataProvider(name = "unsignedLongToShortData")
     public Object[][] unsignedLongToShortData() {
-        // some boundary values
-        long[] l = new long[] { Long.MAX_VALUE, Long.MIN_VALUE,
-                Short.MAX_VALUE - 1L, Short.MAX_VALUE, Short.MAX_VALUE + 1L,
-                Short.MIN_VALUE - 1L, Short.MIN_VALUE, Short.MIN_VALUE + 1L, };
-        return LongStream.concat(LongStream.range(0L, 512L), Arrays.stream(l))
+        return LongStream.range(0L, 65_536L).filter(i -> i % 99 == 0)
                 .mapToObj(v -> new Object[] { v }).toArray(Object[][]::new);
     }
 
