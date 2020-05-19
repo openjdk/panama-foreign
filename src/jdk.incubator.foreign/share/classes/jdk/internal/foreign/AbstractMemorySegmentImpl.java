@@ -33,6 +33,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
@@ -129,6 +130,53 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         UNSAFE.copyMemory(
                 that.base(), that.min(),
                 base(), min(), size);
+    }
+
+    @Override
+    public long mismatch(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)other;
+        final long thisSize = this.byteSize();
+        final long thatSize = that.byteSize();
+        final long minSize = Math.min(thisSize, thatSize);
+
+        this.checkRange(0, minSize, false);
+        that.checkRange(0, minSize, false);
+
+        if (this == other)
+            return -1;
+
+        long off = 0;
+        long remaining = minSize;
+        int i = 0;
+        while (remaining > 7) {
+            int size;
+            if (remaining > Integer.MAX_VALUE) {
+                size = Integer.MAX_VALUE;
+            } else {
+                size = (int) remaining;
+            }
+            i = ArraysSupport.vectorizedMismatch(
+                    this.base(),
+                    this.min() + off,
+                    that.base(),
+                    that.min() + off,
+                    size,
+                    ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
+            if (i >= 0) {
+                return off + i;
+            }
+            i = size - ~i;
+
+            off += i;
+            remaining -= i;
+        }
+
+        for (; off < minSize; off++) {
+            if (UNSAFE.getByte(this.base(), this.min() + off) != UNSAFE.getByte(that.base(), that.min() + off)) {
+                return off;
+            }
+        }
+        return thisSize != thatSize ? minSize : -1;
     }
 
     @Override
