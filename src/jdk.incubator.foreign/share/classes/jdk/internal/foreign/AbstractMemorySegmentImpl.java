@@ -26,6 +26,8 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
@@ -132,51 +134,41 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+            .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+
     @Override
     public long mismatch(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)other;
         final long thisSize = this.byteSize();
         final long thatSize = that.byteSize();
-        final long minSize = Math.min(thisSize, thatSize);
-
-        this.checkRange(0, minSize, false);
-        that.checkRange(0, minSize, false);
-
-        if (this == other)
+        final long length = Math.min(thisSize, thatSize);
+        this.checkRange(0, length, false);
+        that.checkRange(0, length, false);
+        if (this == other) {
             return -1;
+        }
 
-        long off = 0;
-        long remaining = minSize;
-        int i = 0;
-        while (remaining > 7) {
-            int size;
-            if (remaining > Integer.MAX_VALUE) {
-                size = Integer.MAX_VALUE;
-            } else {
-                size = (int) remaining;
-            }
-            i = ArraysSupport.vectorizedMismatch(
-                    this.base(),
-                    this.min() + off,
-                    that.base(),
-                    that.min() + off,
-                    size,
-                    ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
+        long i = 0;
+        if (length > 7) {
+            i = ArraysSupport.vectorizedMismatchLarge(
+                    this.base(), this.min(),
+                    that.base(), that.min(),
+                    length, ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
             if (i >= 0) {
-                return off + i;
+                return i;
             }
-            i = size - ~i;
-
-            off += i;
-            remaining -= i;
+            i = length - ~i;
         }
 
-        for (; off < minSize; off++) {
-            if (UNSAFE.getByte(this.base(), this.min() + off) != UNSAFE.getByte(that.base(), that.min() + off)) {
-                return off;
+        MemoryAddress thisAddress = this.baseAddress();
+        MemoryAddress thatAddress = that.baseAddress();
+        for (; i < length; i++) {
+            if ((byte) BYTE_HANDLE.get(thisAddress, i) != (byte) BYTE_HANDLE.get(thatAddress, i)) {
+                return i;
             }
         }
-        return thisSize != thatSize ? minSize : -1;
+        return thisSize != thatSize ? length : -1;
     }
 
     @Override

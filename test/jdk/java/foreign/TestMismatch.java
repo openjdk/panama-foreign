@@ -209,7 +209,7 @@ public class TestMismatch {
 
     @DataProvider(name = "slices")
     static Object[][] slices() {
-        int[] sizes = { 16, 8, 4, 2, 1 };
+        int[] sizes = { 16, 8, 1 };
         List<MemorySegment> aSlices = new ArrayList<>();
         List<MemorySegment> bSlices = new ArrayList<>();
         for (List<MemorySegment> slices : List.of(aSlices, bSlices)) {

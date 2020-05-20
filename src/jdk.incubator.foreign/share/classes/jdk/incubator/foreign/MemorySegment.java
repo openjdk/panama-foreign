@@ -344,7 +344,8 @@ public interface MemorySegment extends AutoCloseable {
      * between the two segments at that offset within the respective segments.
      * If one segment is a proper prefix of the other then the returned offset is
      * the smaller of the segment sizes, and it follows that the offset is only
-     * valid for the larger segment. Otherwise, there is no mismatch.
+     * valid for the larger segment. Otherwise, there is no mismatch and {@code
+     * -1} is returned.
      *
      * @param other the segment to be tested for a mismatch with this segment
      * @return the relative offset, in bytes, of the first mismatch between this

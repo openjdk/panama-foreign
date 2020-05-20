@@ -160,6 +160,37 @@ public class ArraysSupport {
         }
     }
 
+    /**
+     * Mismatch over long lengths.
+     */
+    public static long vectorizedMismatchLarge(Object a, long aOffset,
+                                               Object b, long bOffset,
+                                               long length,
+                                               int log2ArrayIndexScale) {
+        long off = 0;
+        long remaining = length;
+        int i ;
+        while (remaining > 7) {
+            int size;
+            if (remaining > Integer.MAX_VALUE) {
+                size = Integer.MAX_VALUE;
+            } else {
+                size = (int) remaining;
+            }
+            i = vectorizedMismatch(
+                    a, aOffset + off,
+                    b, bOffset + off,
+                    size, log2ArrayIndexScale);
+            if (i >= 0)
+                return off + i;
+
+            i = size - ~i;
+            off += i;
+            remaining -= i;
+        }
+        return ~off;
+    }
+
     // Booleans
     // Each boolean element takes up one byte
 
