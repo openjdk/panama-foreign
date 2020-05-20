@@ -939,22 +939,31 @@ class LambdaFormEditor {
         Name newBaseAddress = oldBaseAddress.withConstraint(newData);
         buf.renameParameter(0, newBaseAddress);
 
+        // Now we set up the call to the filter
         Name getCombiner = new Name(newData.getterFunction(oldData.fieldCount()), newBaseAddress);
+
         Object[] combinerArgs = new Object[combinerArity + 1];
-        combinerArgs[0] = getCombiner;
+        combinerArgs[0] = getCombiner; // first (synthetic) argument should be the MH that acts as a target of the invoke
+
+        // set up additional adapter parameters (in case the combiner is not a unary function)
         Name[] newParams = new Name[combinerArity - 1]; // last combiner parameter is the return adapter
         for (int i = 0; i < newParams.length; i++) {
             newParams[i] = new Name(argPos + i, basicType(combinerType.parameterType(i)));
         }
+
+        // set up remaining filter parameters to point to the corresponding adapter parameters (see above)
         System.arraycopy(newParams, 0,
                 combinerArgs, 1, combinerArity - 1);
+
+        // the last filter argument is set to point at the result of the target method handle
         combinerArgs[combinerArity] = buf.name(lambdaForm.names.length - 1);
         Name callCombiner = new Name(combinerType, combinerArgs);
 
+        // insert the two new expressions
         buf.insertExpression(exprPos, getCombiner);
         buf.insertExpression(exprPos + 1, callCombiner);
 
-        // insert the two new expressions
+        // insert additional arguments
         int insPos = argPos;
         for (Name newParam : newParams) {
             buf.insertParameter(insPos++, newParam);
