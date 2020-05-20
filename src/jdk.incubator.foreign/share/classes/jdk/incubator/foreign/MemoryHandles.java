@@ -416,19 +416,20 @@ public final class MemoryHandles {
     }
 
     /**
-     * Adapts a target var handle by pre-processing incoming and outgoing values using a pair of unary filter functions.
+     * Adapts a target var handle by pre-processing incoming and outgoing values using a pair of filter functions.
      * <p>
      * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var handle, the incoming value (of type {@code T}, where
-     * {@code T} is the parameter type of the first filter function) is processed using the first filter and then passed
+     * {@code T} is the <em>last</em> parameter type of the first filter function) is processed using the first filter and then passed
      * to the target var handle.
      * Conversely, when calling e.g. {@link VarHandle#get(Object...)} on the resulting var handle, the return value obtained from
-     * the target var handle (of type {@code T}, where {@code T} is the parameter type of the second filter function)
+     * the target var handle (of type {@code T}, where {@code T} is the <em>last</em> parameter type of the second filter function)
      * is processed using the second filter and returned to the caller. More advanced access mode types, such as
      * {@link java.lang.invoke.VarHandle.AccessMode#COMPARE_AND_EXCHANGE} might apply both filters at the same time.
      * <p>
-     * For the boxing and unboxing filters to be well formed, their types must be of the form {@code S -> T} and {@code T -> S},
-     * respectively, where {@code T} is the type of the target var handle. If this is the case, the resulting var handle will
-     * have type {@code S}.
+     * For the boxing and unboxing filters to be well formed, their types must be of the form {@code (A... , S) -> T} and
+     * {@code (A... , T) -> S}, respectively, where {@code T} is the type of the target var handle. If this is the case,
+     * the resulting var handle will have type {@code S} and will feature the additional coordinates {@code A...} (which
+     * will be appended to the coordinates of the target var handle).
      * <p>
      * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
      * atomic access guarantees as those featured by the target var handle.
@@ -439,7 +440,7 @@ public final class MemoryHandles {
      * @return an adapter var handle which accepts a new type, performing the provided boxing/unboxing conversions.
      * @throws NullPointerException if either {@code target}, {@code filterToTarget} or {@code filterFromTarget} are {@code == null}.
      * @throws IllegalArgumentException if {@code filterFromTarget} and {@code filterToTarget} are not well-formed, that is, they have types
-     * other than {@code S -> T} and {@code T -> S}, respectively, where {@code T} is the type of the target var handle,
+     * other than {@code (A... , S) -> T} and {@code (A... , T) -> S}, respectively, where {@code T} is the type of the target var handle,
      * or if either {@code filterFromTarget} or {@code filterToTarget} throws any checked exceptions.
      */
     public static VarHandle filterValue(VarHandle target, MethodHandle filterToTarget, MethodHandle filterFromTarget) {
