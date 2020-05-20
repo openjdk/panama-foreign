@@ -382,8 +382,8 @@ public interface MemorySegment extends AutoCloseable {
     /**
      * Copy the contents of this memory segment into a fresh byte array.
      * @return a fresh byte array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link byte[]} instance,
-     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link byte[]} instance, e.g. its size is greater than {@link Integer#MAX_VALUE},
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
