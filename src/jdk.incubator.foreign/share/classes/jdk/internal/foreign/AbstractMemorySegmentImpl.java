@@ -160,7 +160,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             }
             i = length - ~i;
         }
-
         MemoryAddress thisAddress = this.baseAddress();
         MemoryAddress thatAddress = that.baseAddress();
         for (; i < length; i++) {

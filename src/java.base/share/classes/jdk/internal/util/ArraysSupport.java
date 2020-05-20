@@ -171,12 +171,7 @@ public class ArraysSupport {
         long remaining = length;
         int i ;
         while (remaining > 7) {
-            int size;
-            if (remaining > Integer.MAX_VALUE) {
-                size = Integer.MAX_VALUE;
-            } else {
-                size = (int) remaining;
-            }
+            int size = (int) Math.min(Integer.MAX_VALUE, remaining);
             i = vectorizedMismatch(
                     a, aOffset + off,
                     b, bOffset + off,
