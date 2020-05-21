@@ -49,6 +49,7 @@ public class TestAdaptVarHandles {
 
     static MethodHandle S2I;
     static MethodHandle I2S;
+    static MethodHandle CTX_I2S;
     static MethodHandle O2I;
     static MethodHandle I2O;
     static MethodHandle S2L;
@@ -63,6 +64,8 @@ public class TestAdaptVarHandles {
         try {
             S2I = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToInt", MethodType.methodType(int.class, String.class));
             I2S = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "intToString", MethodType.methodType(String.class, int.class));
+            CTX_I2S = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "ctxIntToString",
+                    MethodType.methodType(String.class, String.class, String.class, int.class));
             O2I = MethodHandles.explicitCastArguments(S2I, MethodType.methodType(int.class, Object.class));
             I2O = MethodHandles.explicitCastArguments(I2S, MethodType.methodType(Object.class, int.class));
             S2L = MethodHandles.lookup().findStatic(TestAdaptVarHandles.class, "stringToLong", MethodType.methodType(long.class, String.class));
@@ -100,6 +103,27 @@ public class TestAdaptVarHandles {
         assertEquals(oldValue, "12");
         value = (String)i2SHandle.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress());
         assertEquals(value, "42");
+    }
+
+    @Test
+    public void testFilterValueComposite() throws Throwable {
+        ValueLayout layout = MemoryLayouts.JAVA_INT;
+        MemorySegment segment = MemorySegment.allocateNative(layout);
+        VarHandle intHandle = layout.varHandle(int.class);
+        MethodHandle CTX_S2I = MethodHandles.dropArguments(S2I, 0, String.class, String.class);
+        VarHandle i2SHandle = MemoryHandles.filterValue(intHandle, CTX_S2I, CTX_I2S);
+        i2SHandle = MemoryHandles.insertCoordinates(i2SHandle, 1, "a", "b");
+        i2SHandle.set(segment.baseAddress(), "1");
+        String oldValue = (String)i2SHandle.getAndAdd(segment.baseAddress(), "42");
+        assertEquals(oldValue, "ab1");
+        String value = (String)i2SHandle.get(segment.baseAddress());
+        assertEquals(value, "ab43");
+        boolean swapped = (boolean)i2SHandle.compareAndSet(segment.baseAddress(), "43", "12");
+        assertTrue(swapped);
+        oldValue = (String)i2SHandle.compareAndExchange(segment.baseAddress(), "12", "42");
+        assertEquals(oldValue, "ab12");
+        value = (String)i2SHandle.toMethodHandle(VarHandle.AccessMode.GET).invokeExact(segment.baseAddress());
+        assertEquals(value, "ab42");
     }
 
     @Test
@@ -154,6 +178,14 @@ public class TestAdaptVarHandles {
     public void testBadFilterBoxArity() {
         VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
         MemoryHandles.filterValue(intHandle, S2I, I2S.bindTo(42));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadFilterBoxPrefixCoordinates() {
+        VarHandle intHandle = MemoryLayouts.JAVA_INT.varHandle(int.class);
+        MemoryHandles.filterValue(intHandle,
+                MethodHandles.dropArguments(S2I, 1, int.class),
+                MethodHandles.dropArguments(I2S, 1, long.class));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -484,4 +516,8 @@ public class TestAdaptVarHandles {
     }
 
     static void void_filter(String s) { }
+
+    static String ctxIntToString(String a, String b, int i) {
+        return a + b + String.valueOf(i);
+    }
 }
