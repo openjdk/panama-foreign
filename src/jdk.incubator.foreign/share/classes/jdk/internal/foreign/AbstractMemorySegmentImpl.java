@@ -447,7 +447,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
-    public static AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
+    public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
         0, 0, MemoryScope.createUnchecked(null, null, null)
     ) {
         @Override
