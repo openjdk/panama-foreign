@@ -27,6 +27,7 @@
  * @summary Ensures that IOException is thrown after the socket is closed
  * @run testng AfterClose
  * @run testng/othervm -Djdk.net.usePlainSocketImpl AfterClose
+ * @run testng/othervm -Djdk.net.usePlainDatagramSocketImpl AfterClose
  */
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static java.lang.Boolean.*;
@@ -57,6 +59,7 @@ import static org.testng.Assert.expectThrows;
 public class AfterClose {
 
     static final Class<IOException> IOE = IOException.class;
+    static final String RO = "READ_ONLY";
 
     static Map<SocketOption<?>,List<Object>> OPTION_VALUES_MAP = optionValueMap();
 
@@ -104,6 +107,8 @@ public class AfterClose {
             map.put((SocketOption<?>)field.get(null), listOf(10, 100));
             field = c.getField("TCP_KEEPCOUNT");
             map.put((SocketOption<?>)field.get(null), listOf(10, 100));
+            field = c.getField("SO_INCOMING_NAPI_ID");
+            map.put((SocketOption<?>)field.get(null), listOf(RO));
         } catch (ClassNotFoundException e) {
             // ignore, jdk.net module not present
         } catch (ReflectiveOperationException e) {
@@ -156,7 +161,7 @@ public class AfterClose {
         Socket socket = createClosedSocketFromAdapter();
         for (int i=0; i<3; i++); {
             for (T value : values) {
-                expectThrows(IOE, () -> socket.setOption(option, value));
+                if (!RO.equals(value)) expectThrows(IOE, () -> socket.setOption(option, value));
                 expectThrows(IOE, () -> socket.getOption(option));
             }
         }
@@ -209,7 +214,7 @@ public class AfterClose {
         ServerSocket serverSocket = createClosedServerSocketFromAdapter();
         for (int i=0; i<3; i++); {
             for (T value : values) {
-                expectThrows(IOE, () -> serverSocket.setOption(option, value));
+                if (!RO.equals(value)) expectThrows(IOE, () -> serverSocket.setOption(option, value));
                 expectThrows(IOE, () -> serverSocket.getOption(option));
             }
         }

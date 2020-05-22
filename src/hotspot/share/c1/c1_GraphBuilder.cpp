@@ -701,10 +701,10 @@ GraphBuilder::ScopeData::ScopeData(ScopeData* parent)
   if (parent != NULL) {
     _max_inline_size = (intx) ((float) NestedInliningSizeRatio * (float) parent->max_inline_size() / 100.0f);
   } else {
-    _max_inline_size = MaxInlineSize;
+    _max_inline_size = C1MaxInlineSize;
   }
-  if (_max_inline_size < MaxTrivialSize) {
-    _max_inline_size = MaxTrivialSize;
+  if (_max_inline_size < C1MaxTrivialSize) {
+    _max_inline_size = C1MaxTrivialSize;
   }
 }
 
@@ -2081,23 +2081,6 @@ void GraphBuilder::invoke(Bytecodes::Code code) {
   Values* args = state()->pop_arguments(target->arg_size_no_receiver() + patching_appendix_arg);
   Value recv = has_receiver ? apop() : NULL;
   int vtable_index = Method::invalid_vtable_index;
-
-#ifdef SPARC
-  // Currently only supported on Sparc.
-  // The UseInlineCaches only controls dispatch to invokevirtuals for
-  // loaded classes which we weren't able to statically bind.
-  if (!UseInlineCaches && target->is_loaded() && code == Bytecodes::_invokevirtual
-      && !target->can_be_statically_bound()) {
-    // Find a vtable index if one is available
-    // For arrays, callee_holder is Object. Resolving the call with
-    // Object would allow an illegal call to finalize() on an
-    // array. We use holder instead: illegal calls to finalize() won't
-    // be compiled as vtable calls (IC call resolution will catch the
-    // illegal call) and the few legal calls on array types won't be
-    // either.
-    vtable_index = target->resolve_vtable_index(calling_klass, holder);
-  }
-#endif
 
   // A null check is required here (when there is a receiver) for any of the following cases
   // - invokespecial, always need a null check.
@@ -3817,8 +3800,8 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
   // now perform tests that are based on flag settings
   bool inlinee_by_directive = compilation()->directive()->should_inline(callee);
   if (callee->force_inline() || inlinee_by_directive) {
-    if (inline_level() > MaxForceInlineLevel                    ) INLINE_BAILOUT("MaxForceInlineLevel");
-    if (recursive_inline_level(callee) > MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
+    if (inline_level() > MaxForceInlineLevel                      ) INLINE_BAILOUT("MaxForceInlineLevel");
+    if (recursive_inline_level(callee) > C1MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
 
     const char* msg = "";
     if (callee->force_inline())  msg = "force inline by annotation";
@@ -3826,9 +3809,15 @@ bool GraphBuilder::try_inline_full(ciMethod* callee, bool holder_known, bool ign
     print_inlining(callee, msg);
   } else {
     // use heuristic controls on inlining
-    if (inline_level() > MaxInlineLevel                         ) INLINE_BAILOUT("inlining too deep");
-    if (recursive_inline_level(callee) > MaxRecursiveInlineLevel) INLINE_BAILOUT("recursive inlining too deep");
+    if (inline_level() > C1MaxInlineLevel                       ) INLINE_BAILOUT("inlining too deep");
+    int callee_recursive_level = recursive_inline_level(callee);
+    if (callee_recursive_level > C1MaxRecursiveInlineLevel      ) INLINE_BAILOUT("recursive inlining too deep");
     if (callee->code_size_for_inlining() > max_inline_size()    ) INLINE_BAILOUT("callee is too large");
+    // Additional condition to limit stack usage for non-recursive calls.
+    if ((callee_recursive_level == 0) &&
+        (callee->max_stack() + callee->max_locals() - callee->size_of_parameters() > C1InlineStackLimit)) {
+      INLINE_BAILOUT("callee uses too much stack");
+    }
 
     // don't inline throwable methods unless the inlining tree is rooted in a throwable class
     if (callee->name() == ciSymbol::object_initializer_name() &&
