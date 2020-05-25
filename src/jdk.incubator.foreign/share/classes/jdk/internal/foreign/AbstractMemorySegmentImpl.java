@@ -26,6 +26,8 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.access.JavaNioAccess;
@@ -33,6 +35,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
@@ -129,6 +132,42 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         UNSAFE.copyMemory(
                 that.base(), that.min(),
                 base(), min(), size);
+    }
+
+    private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+            .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+
+    @Override
+    public long mismatch(MemorySegment other) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)other;
+        final long thisSize = this.byteSize();
+        final long thatSize = that.byteSize();
+        final long length = Math.min(thisSize, thatSize);
+        this.checkRange(0, length, false);
+        that.checkRange(0, length, false);
+        if (this == other) {
+            return -1;
+        }
+
+        long i = 0;
+        if (length > 7) {
+            i = ArraysSupport.vectorizedMismatchLarge(
+                    this.base(), this.min(),
+                    that.base(), that.min(),
+                    length, ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
+            if (i >= 0) {
+                return i;
+            }
+            i = length - ~i;
+        }
+        MemoryAddress thisAddress = this.baseAddress();
+        MemoryAddress thatAddress = that.baseAddress();
+        for (; i < length; i++) {
+            if ((byte) BYTE_HANDLE.get(thisAddress, i) != (byte) BYTE_HANDLE.get(thatAddress, i)) {
+                return i;
+            }
+        }
+        return thisSize != thatSize ? length : -1;
     }
 
     @Override

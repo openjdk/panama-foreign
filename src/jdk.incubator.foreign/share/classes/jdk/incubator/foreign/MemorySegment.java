@@ -333,6 +333,32 @@ public interface MemorySegment extends AutoCloseable {
     void copyFrom(MemorySegment src);
 
     /**
+     * Finds and returns the offset, in bytes, of the first mismatch between
+     * this segment and a given other segment. The offset is relative to the
+     * {@link #baseAddress() base address} of each segment and will be in the
+     * range of 0 (inclusive) up to the {@link #byteSize() size} (in bytes) of
+     * the smaller memory segment (exclusive).
+     * <p>
+     * If the two segments share a common prefix then the returned offset is
+     * the length of the common prefix and it follows that there is a mismatch
+     * between the two segments at that offset within the respective segments.
+     * If one segment is a proper prefix of the other then the returned offset is
+     * the smaller of the segment sizes, and it follows that the offset is only
+     * valid for the larger segment. Otherwise, there is no mismatch and {@code
+     * -1} is returned.
+     *
+     * @param other the segment to be tested for a mismatch with this segment
+     * @return the relative offset, in bytes, of the first mismatch between this
+     * and the given other segment, otherwise -1 if no mismatch
+     * @throws IllegalStateException if either this segment of the other segment
+     * have been already closed, or if access occurs from a thread other than the
+     * thread owning either segment
+     * @throws UnsupportedOperationException if either this segment or the other
+     * segment does not feature at least the {@link MemorySegment#READ} access mode
+     */
+    long mismatch(MemorySegment other);
+
+    /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
      * the properties of this segment. For instance, if this segment is <em>immutable</em>
      * (e.g. the segment has access mode {@link #READ} but not {@link #WRITE}), then the resulting buffer is <em>read-only</em>
