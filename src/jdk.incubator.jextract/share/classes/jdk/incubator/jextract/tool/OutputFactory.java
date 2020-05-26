@@ -69,6 +69,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private Map<Declaration, String> structClassNames = new HashMap<>();
     private List<String> structSources = new ArrayList<>();
     private Set<String> nestedClassNames = new HashSet<>();
+    private Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
     private int nestedClassNameCount = 0;
     /*
      * We may have case-insensitive name collision! A C program may have
@@ -85,6 +86,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private String structClassName(Declaration decl) {
         return structClassNames.computeIfAbsent(decl, d -> uniqueNestedClassName("C" + d.name()));
+    }
+
+    private boolean structDefinitionSeen(Declaration decl) {
+        return structClassNames.containsKey(decl);
     }
 
     // have we seen this Variable earlier?
@@ -136,6 +141,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         decl.members().forEach(this::generateDecl);
         for (String src : structSources) {
             builder.addContent(src);
+        }
+        // check if unresolved typedefs can be resolved now!
+        for (Declaration.Typedef td : unresolvedStructTypedefs) {
+            Declaration.Scoped structDef = ((Type.Declared)td.type()).tree();
+            if (structDefinitionSeen(structDef)) {
+                builder.emitTypedef(uniqueNestedClassName("C" + td.name()), structClassName(structDef));
+            }
         }
         builder.classEnd();
         try {
@@ -325,7 +337,26 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                         if (s.name().isEmpty()) {
                             visitScoped(s, tree);
                         } else {
-                            builder.emitTypedef(uniqueNestedClassName("C" + tree.name()), structClassName(s));
+                            /*
+                             * If typedef is seen after the struct/union definition, we can generate subclass
+                             * right away. If not, we've to save it and revisit after all the declarations are
+                             * seen. This is to support forward declaration of typedefs.
+                             *
+                             * typedef struct Foo Bar;
+                             *
+                             * struct Foo {
+                             *     int x, y;
+                             * };
+                             */
+                            if (structDefinitionSeen(s)) {
+                                builder.emitTypedef(uniqueNestedClassName("C" + tree.name()), structClassName(s));
+                            } else {
+                                /*
+                                 * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.
+                                 * Save it to visit at the end of all declarations.
+                                 */
+                                unresolvedStructTypedefs.add(tree);
+                            }
                         }
                     }
                     break;
