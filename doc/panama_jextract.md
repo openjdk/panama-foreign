@@ -486,3 +486,72 @@ java -Dforeign.restricted=permit \
     -Djava.library.path=/usr/lib LibprocMain.java
 
 ```
+
+## Using libgit2 from Java (Mac OS)
+
+### Getting and building libgit2
+
+* Download libgit2 v1.0.0 source from https://github.com/libgit2/libgit2/releases
+* Use cmake to build from libgit2
+* Let ${LIBGIT2_HOME} be the directory where you expanded libgit2 sources.
+* Let ${LIBGIT2_HOME}/build be the build directory where libgit2.dylib is built.
+
+### jextract git2.h
+
+```sh
+
+jextract -t com.github -lgit2 \
+  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \
+  -I ${LIBGIT2_HOME}/include/ \
+  -I ${LIBGIT2_HOME}/include/git2 \
+  ${LIBGIT2_HOME}/include/git2.h
+
+```
+
+### Java program that uses libgit2 to clone github repo
+
+```java
+
+import static com.github.git2_h.*;
+import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.MemoryAddress.NULL;
+import static jdk.incubator.foreign.NativeAllocationScope.*;
+import static com.github.Cstring.*;
+
+public class GitClone {
+    public static void main(String[] args) {
+          if (args.length != 2) {
+              System.err.println("java GitClone <url> <path>");
+              System.exit(1);
+          }
+          git_libgit2_init();
+          try (var scope = unboundedScope()) {
+              var repo = scope.allocate(C_POINTER, NULL);
+              var url = toCString(args[0], scope);
+              var path = toCString(args[1], scope);
+              System.out.println(git_clone(repo, url, path, NULL));
+          }
+          git_libgit2_shutdown();
+    }
+}
+
+```
+
+### Compiling and running the libgit2 sample
+
+```sh
+
+# file run.sh
+
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=${LIBGIT2_HOME}/build/ \
+    GitClone.java $*
+```
+
+### Cloning a github repo using the above run.sh command
+
+```sh
+
+sh run.sh https://github.com/libgit2/libgit2.git libgit2
+
+```

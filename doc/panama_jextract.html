@@ -134,6 +134,14 @@
 <li><a href="#java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</a></li>
 <li><a href="#compiling-and-running-the-libproc-sample">Compiling and running the libproc sample</a></li>
 </ul></li>
+<li><a href="#using-libgit2-from-java-mac-os">Using libgit2 from Java (Mac OS)</a>
+<ul>
+<li><a href="#getting-and-building-libgit2">Getting and building libgit2</a></li>
+<li><a href="#jextract-git2.h">jextract git2.h</a></li>
+<li><a href="#java-program-that-uses-libgit2-to-clone-github-repo">Java program that uses libgit2 to clone github repo</a></li>
+<li><a href="#compiling-and-running-the-libgit2-sample">Compiling and running the libgit2 sample</a></li>
+<li><a href="#cloning-a-github-repo-using-the-above-run.sh-command">Cloning a github repo using the above run.sh command</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -483,5 +491,54 @@
 <span id="cb25-2"><a href="#cb25-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
 <span id="cb25-3"><a href="#cb25-3"></a>    --add-modules jdk.incubator.foreign \</span>
 <span id="cb25-4"><a href="#cb25-4"></a>    -Djava.library.path=/usr/lib LibprocMain.java</span></code></pre></div>
+<h2 id="using-libgit2-from-java-mac-os">Using libgit2 from Java (Mac OS)</h2>
+<h3 id="getting-and-building-libgit2">Getting and building libgit2</h3>
+<ul>
+<li>Download libgit2 v1.0.0 source from https://github.com/libgit2/libgit2/releases</li>
+<li>Use cmake to build from libgit2</li>
+<li>Let ${LIBGIT2_HOME} be the directory where you expanded libgit2 sources.</li>
+<li>Let ${LIBGIT2_HOME}/build be the build directory where libgit2.dylib is built.</li>
+</ul>
+<h3 id="jextract-git2.h">jextract git2.h</h3>
+<div class="sourceCode" id="cb26"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1"></a></span>
+<span id="cb26-2"><a href="#cb26-2"></a><span class="ex">jextract</span> -t com.github -lgit2 \</span>
+<span id="cb26-3"><a href="#cb26-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \</span>
+<span id="cb26-4"><a href="#cb26-4"></a>  -I <span class="va">${LIBGIT2_HOME}</span>/include/ \</span>
+<span id="cb26-5"><a href="#cb26-5"></a>  -I <span class="va">${LIBGIT2_HOME}</span>/include/git2 \</span>
+<span id="cb26-6"><a href="#cb26-6"></a>  <span class="va">${LIBGIT2_HOME}</span>/include/git2.h</span></code></pre></div>
+<h3 id="java-program-that-uses-libgit2-to-clone-github-repo">Java program that uses libgit2 to clone github repo</h3>
+<div class="sourceCode" id="cb27"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb27-1"><a href="#cb27-1"></a></span>
+<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">import static</span><span class="im"> com.github.git2_h.*;</span></span>
+<span id="cb27-3"><a href="#cb27-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb27-4"><a href="#cb27-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope.*;</span></span>
+<span id="cb27-6"><a href="#cb27-6"></a><span class="kw">import static</span><span class="im"> com.github.Cstring.*;</span></span>
+<span id="cb27-7"><a href="#cb27-7"></a></span>
+<span id="cb27-8"><a href="#cb27-8"></a><span class="kw">public</span> <span class="kw">class</span> GitClone {</span>
+<span id="cb27-9"><a href="#cb27-9"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb27-10"><a href="#cb27-10"></a>          <span class="kw">if</span> (args.<span class="fu">length</span> != <span class="dv">2</span>) {</span>
+<span id="cb27-11"><a href="#cb27-11"></a>              <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;java GitClone &lt;url&gt; &lt;path&gt;&quot;</span>);</span>
+<span id="cb27-12"><a href="#cb27-12"></a>              <span class="bu">System</span>.<span class="fu">exit</span>(<span class="dv">1</span>);</span>
+<span id="cb27-13"><a href="#cb27-13"></a>          }</span>
+<span id="cb27-14"><a href="#cb27-14"></a>          <span class="fu">git_libgit2_init</span>();</span>
+<span id="cb27-15"><a href="#cb27-15"></a>          <span class="kw">try</span> (var scope = <span class="fu">unboundedScope</span>()) {</span>
+<span id="cb27-16"><a href="#cb27-16"></a>              var repo = scope.<span class="fu">allocate</span>(C_POINTER, NULL);</span>
+<span id="cb27-17"><a href="#cb27-17"></a>              var url = <span class="fu">toCString</span>(args[<span class="dv">0</span>], scope);</span>
+<span id="cb27-18"><a href="#cb27-18"></a>              var path = <span class="fu">toCString</span>(args[<span class="dv">1</span>], scope);</span>
+<span id="cb27-19"><a href="#cb27-19"></a>              <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="fu">git_clone</span>(repo, url, path, NULL));</span>
+<span id="cb27-20"><a href="#cb27-20"></a>          }</span>
+<span id="cb27-21"><a href="#cb27-21"></a>          <span class="fu">git_libgit2_shutdown</span>();</span>
+<span id="cb27-22"><a href="#cb27-22"></a>    }</span>
+<span id="cb27-23"><a href="#cb27-23"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-libgit2-sample">Compiling and running the libgit2 sample</h3>
+<div class="sourceCode" id="cb28"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1"></a></span>
+<span id="cb28-2"><a href="#cb28-2"></a><span class="co"># file run.sh</span></span>
+<span id="cb28-3"><a href="#cb28-3"></a></span>
+<span id="cb28-4"><a href="#cb28-4"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
+<span id="cb28-5"><a href="#cb28-5"></a>    -Djava.library.path=<span class="va">${LIBGIT2_HOME}</span>/build/ \</span>
+<span id="cb28-6"><a href="#cb28-6"></a>    GitClone.java <span class="va">$*</span></span></code></pre></div>
+<h3 id="cloning-a-github-repo-using-the-above-run.sh-command">Cloning a github repo using the above run.sh command</h3>
+<div class="sourceCode" id="cb29"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1"></a></span>
+<span id="cb29-2"><a href="#cb29-2"></a><span class="fu">sh</span> run.sh https://github.com/libgit2/libgit2.git libgit2</span></code></pre></div>
 </body>
 </html>
