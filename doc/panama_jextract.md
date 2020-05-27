@@ -518,7 +518,7 @@ import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static jdk.incubator.foreign.NativeAllocationScope.*;
 import static com.github.Cstring.*;
 
-public class GitMain {
+public class GitClone {
     public static void main(String[] args) {
           if (args.length != 2) {
               System.err.println("java GitClone <url> <path>");
