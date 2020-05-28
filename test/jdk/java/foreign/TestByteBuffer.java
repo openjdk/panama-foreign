@@ -239,8 +239,6 @@ public class TestByteBuffer {
         }
     }
 
-    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
-
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE)) {
@@ -263,7 +261,7 @@ public class TestByteBuffer {
         //write to channel
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             MemoryAddress base = segment.baseAddress();
-            initTuples(base, tuples.elementCount().getAsLong());
+            initTuples(base);
             segment.force();
         }
 

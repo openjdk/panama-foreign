@@ -396,8 +396,8 @@ public interface MemorySegment extends AutoCloseable {
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
-     * The segment will feature all <a href="#access-modes">access modes</a>, unless the given
-     * buffer is {@linkplain ByteBuffer#isReadOnly() read-only} in which case the segment will
+     * The segment will feature all <a href="#access-modes">access modes</a> (see {@link #DEFAULT_ACCESS}),
+     * unless the given buffer is {@linkplain ByteBuffer#isReadOnly() read-only} in which case the segment will
      * not feature the {@link #WRITE} access mode.
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, to ensure it remains <em>reachable</em>
@@ -414,7 +414,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated byte array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -427,7 +428,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated char array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -440,7 +442,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated short array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -466,7 +469,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated float array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -479,7 +483,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated long array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -492,7 +497,8 @@ public interface MemorySegment extends AutoCloseable {
      * Creates a new array memory segment that models the memory associated with a given heap-allocated double array.
      * <p>
      * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>.
+     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -544,9 +550,9 @@ allocateNative(bytesSize, 1);
     /**
      * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
      * <p>
-     * The segment will feature all <a href="#access-modes">access modes</a>, unless the given mapping mode
-     * is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, in which case the segment will not feature
-     * the {@link #WRITE} access mode.
+     * The segment will feature all <a href="#access-modes">access modes</a> (see {@link #DEFAULT_ACCESS}),
+     * unless the given mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, in which case
+     * the segment will not feature the {@link #WRITE} access mode.
      *
      * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
      * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
@@ -568,7 +574,8 @@ allocateNative(bytesSize, 1);
 
     /**
      * Creates a new native memory segment that models a newly allocated block of off-heap memory with given size and
-     * alignment constraint (in bytes). The segment will feature all <a href="#access-modes">access modes</a>.
+     * alignment constraint (in bytes). The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      * Moreover, a client is responsible to call the {@link MemorySegment#close()} on a native memory segment,
@@ -598,7 +605,8 @@ allocateNative(bytesSize, 1);
      * bounds, and can therefore be closed; closing such a segment can optionally result in calling an user-provided cleanup
      * action. This method can be very useful when interacting with custom native memory sources (e.g. custom allocators,
      * GPU memory, etc.), where an address to some underlying memory region is typically obtained from native code
-     * (often as a plain {@code long} value). The segment will feature all <a href="#access-modes">access modes</a>.
+     * (often as a plain {@code long} value). The segment will feature all <a href="#access-modes">access modes</a>
+     * (see {@link #DEFAULT_ACCESS}).
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -666,4 +674,11 @@ allocateNative(bytesSize, 1);
      * @see MemorySegment#withAccessModes(int)
      */
     int HANDOFF = ACQUIRE << 1;
+
+    /**
+     * Default access mode; this is a union of all the access modes supported by memory segments.
+     * @see MemorySegment#accessModes()
+     * @see MemorySegment#withAccessModes(int)
+     */
+    int DEFAULT_ACCESS = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
 }
