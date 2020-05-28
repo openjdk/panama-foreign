@@ -76,7 +76,7 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
-
+import static jdk.incubator.foreign.MemorySegment.*;
 import static org.testng.Assert.*;
 
 public class TestByteBuffer {
@@ -231,6 +231,21 @@ public class TestByteBuffer {
                 MemoryAddress base = segment.baseAddress();
                 checkTuples(base, mbb);
             });
+        }
+    }
+
+    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
+
+    @Test
+    public void testDefaultAccessModesMappedSegment() throws Throwable {
+        try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 8, FileChannel.MapMode.READ_WRITE)) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
+        }
+
+        try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 8, FileChannel.MapMode.READ_ONLY)) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES & ~WRITE));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES& ~WRITE);
         }
     }
 
@@ -441,6 +456,21 @@ public class TestByteBuffer {
             initializer.accept(nativeArray.baseAddress());
             heapArray.copyFrom(nativeArray);
             checker.accept(heapArray.baseAddress());
+        }
+    }
+
+    @Test
+    public void testDefaultAccessModesOfBuffer() {
+        ByteBuffer rwBuffer = ByteBuffer.wrap(new byte[4]);
+        try (MemorySegment segment = MemorySegment.ofByteBuffer(rwBuffer)) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
+        }
+
+        ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
+        try (MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer)) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES & ~WRITE));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES & ~WRITE);
         }
     }
 

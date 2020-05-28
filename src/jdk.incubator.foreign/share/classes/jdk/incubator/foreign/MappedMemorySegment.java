@@ -32,8 +32,8 @@ import java.nio.file.Path;
  * A mapped memory segment, that is, a memory segment backed by memory-mapped file.
  *
  * <p> Mapped memory segments are created via the {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}.
- * Mapped memory segments behave like ordinary segments, but also provide additional capabilities that are specific to
- * mapped memory segments, such as {@link #force()} and {@link #load()}.
+ * Mapped memory segments behave like ordinary segments, but provide additional capabilities to manipulate memory-mapped
+ * memory regions, such as {@link #force()} and {@link #load()}.
  * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
  * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
