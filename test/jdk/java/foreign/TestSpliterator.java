@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -37,14 +35,18 @@ import jdk.incubator.foreign.SequenceLayout;
 import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
 import org.testng.annotations.*;
+import static jdk.incubator.foreign.MemorySegment.*;
 import static org.testng.Assert.*;
 
 public class TestSpliterator {
@@ -92,7 +94,7 @@ public class TestSpliterator {
 
         //check that a segment w/o ACQUIRE access mode can still be used from same thread
         AtomicLong spliteratorSum = new AtomicLong();
-        MemorySegment.spliterator(segment.withAccessModes(MemorySegment.READ), layout)
+        spliterator(segment.withAccessModes(MemorySegment.READ), layout)
                 .forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
         assertEquals(spliteratorSum.get(), expected);
     }
@@ -201,5 +203,55 @@ public class TestSpliterator {
                 { 1000, 10000 },
                 { 10000, 10000 },
         };
+    }
+
+    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
+
+    @DataProvider(name = "accessScenarios")
+    public Object[][] accessScenarios() {
+        SequenceLayout layout = MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_INT);
+        var mallocSegment = MemorySegment.allocateNative(layout);
+
+        Map<Supplier<Spliterator<MemorySegment>>,Integer> l = Map.of(
+            () -> spliterator(mallocSegment.withAccessModes(ALL_ACCESS_MODES), layout), ALL_ACCESS_MODES,
+            () -> spliterator(mallocSegment.withAccessModes(0), layout), 0,
+            () -> spliterator(mallocSegment.withAccessModes(READ), layout), READ,
+            () -> spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE), layout), READ|WRITE,
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE), layout), READ|WRITE|ACQUIRE,
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE|HANDOFF), layout), READ|WRITE|ACQUIRE|HANDOFF
+
+        );
+        return l.entrySet().stream().map(e -> new Object[] { e.getKey(), e.getValue() }).toArray(Object[][]::new);
+    }
+
+    static Consumer<MemorySegment> assertAccessModes(int accessModes) {
+        return segment -> {
+            assertTrue(segment.hasAccessModes(accessModes & ~CLOSE));
+            assertEquals(segment.accessModes(), accessModes & ~CLOSE);
+        };
+    }
+
+    @Test(dataProvider = "accessScenarios")
+    public void testAccessModes(Supplier<Spliterator<MemorySegment>> spliteratorSupplier,
+                                int expectedAccessModes) {
+        Spliterator<MemorySegment> spliterator = spliteratorSupplier.get();
+        spliterator.forEachRemaining(assertAccessModes(expectedAccessModes));
+
+        spliterator = spliteratorSupplier.get();
+        do { } while (spliterator.tryAdvance(assertAccessModes(expectedAccessModes)));
+
+        splitOrConsume(spliteratorSupplier.get(), assertAccessModes(expectedAccessModes));
+    }
+
+    static void splitOrConsume(Spliterator<MemorySegment> spliterator,
+                               Consumer<MemorySegment> consumer) {
+        var s1 = spliterator.trySplit();
+        if (s1 != null) {
+            splitOrConsume(s1, consumer);
+            splitOrConsume(spliterator, consumer);
+        } else {
+            spliterator.forEachRemaining(consumer);
+        }
     }
 }

@@ -201,7 +201,7 @@ abstract class MemoryScope {
     @ForceInline
     private static void checkAliveConfined(MemoryScope scope) {
         if (scope.closed) {
-            throw new IllegalStateException("This scope is already closed");
+            throw new IllegalStateException("This segment is already closed");
         }
     }
 

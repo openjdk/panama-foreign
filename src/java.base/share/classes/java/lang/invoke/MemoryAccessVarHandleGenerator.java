@@ -26,9 +26,10 @@
 package java.lang.invoke;
 
 import jdk.internal.access.foreign.MemoryAddressProxy;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.ConstantDynamic;
+import jdk.internal.org.objectweb.asm.Handle;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.Type;
@@ -42,10 +43,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static jdk.internal.org.objectweb.asm.Opcodes.AALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
@@ -53,10 +54,16 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.ASTORE;
 import static jdk.internal.org.objectweb.asm.Opcodes.BIPUSH;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.GETSTATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_0;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_1;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_2;
+import static jdk.internal.org.objectweb.asm.Opcodes.ICONST_3;
 import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
@@ -66,10 +73,12 @@ import static jdk.internal.org.objectweb.asm.Opcodes.LASTORE;
 import static jdk.internal.org.objectweb.asm.Opcodes.LLOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.NEWARRAY;
 import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.PUTSTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.DUP;
 import static jdk.internal.org.objectweb.asm.Opcodes.SIPUSH;
 import static jdk.internal.org.objectweb.asm.Opcodes.T_LONG;
+import static jdk.internal.org.objectweb.asm.Opcodes.V14;
 
 class MemoryAccessVarHandleGenerator {
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.foreign.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
@@ -117,13 +126,12 @@ class MemoryAccessVarHandleGenerator {
         }
     }
 
-    private static final Unsafe U = Unsafe.getUnsafe();
-
     private final String implClassName;
     private final int dimensions;
     private final Class<?> carrier;
     private final Class<?> helperClass;
     private final VarForm form;
+    private final Object[] classData;
 
     MemoryAccessVarHandleGenerator(Class<?> carrier, int dims) {
         this.dimensions = dims;
@@ -133,6 +141,10 @@ class MemoryAccessVarHandleGenerator {
         this.form = new VarForm(BASE_CLASS, MemoryAddressProxy.class, carrier, components);
         this.helperClass = helperClassCache.get(carrier);
         this.implClassName = helperClass.getName().replace('.', '/') + dimensions;
+        // live constants
+        Class<?>[] intermediate = new Class<?>[dimensions];
+        Arrays.fill(intermediate, long.class);
+        this.classData = new Object[] { carrier, intermediate, ADD_OFFSETS_HANDLE, MUL_OFFSETS_HANDLE };
     }
 
     /*
@@ -140,18 +152,24 @@ class MemoryAccessVarHandleGenerator {
      * The factory has type (ZJJ[J)VarHandle.
      */
     MethodHandle generateHandleFactory() {
-        Class<?> implCls = generateClass();
+        byte[] classBytes = generateClassBytes();
+        if (DEBUG_DUMP_CLASSES_DIR != null) {
+            debugWriteClassToFile(classBytes);
+        }
         try {
+            MethodHandles.Lookup lookup = MethodHandles.lookup().defineHiddenClassWithClassData(classBytes, classData);
+            Class<?> implCls = lookup.lookupClass();
             Class<?>[] components = new Class<?>[dimensions];
             Arrays.fill(components, long.class);
 
             VarForm form = new VarForm(implCls, MemoryAddressProxy.class, carrier, components);
 
             MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
-            MethodHandle constr = MethodHandles.Lookup.IMPL_LOOKUP.findConstructor(implCls, constrType);
+            MethodHandle constr = lookup.findConstructor(implCls, constrType);
             constr = MethodHandles.insertArguments(constr, 0, form);
             return constr;
         } catch (Throwable ex) {
+            debugPrintClass(classBytes);
             throw new AssertionError(ex);
         }
     }
@@ -160,19 +178,21 @@ class MemoryAccessVarHandleGenerator {
      * Generate a specialized VarHandle class for given carrier
      * and access coordinates.
      */
-    Class<?> generateClass() {
-        BinderClassWriter cw = new BinderClassWriter();
+    byte[] generateClassBytes() {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 
         if (DEBUG) {
             System.out.println("Generating header implementation class");
         }
 
-        cw.visit(52, ACC_PUBLIC | ACC_SUPER, implClassName, null, Type.getInternalName(BASE_CLASS), null);
+        cw.visit(V14, ACC_PUBLIC | ACC_SUPER, implClassName, null, Type.getInternalName(BASE_CLASS), null);
 
         //add dimension fields
         for (int i = 0; i < dimensions; i++) {
             cw.visitField(ACC_PRIVATE | ACC_FINAL, "dim" + i, "J", null, null);
         }
+
+        addStaticInitializer(cw);
 
         addConstructor(cw);
 
@@ -186,13 +206,53 @@ class MemoryAccessVarHandleGenerator {
             addAccessModeMethodIfNeeded(mode, cw);
         }
 
-
         cw.visitEnd();
-        byte[] classBytes = cw.toByteArray();
-        return defineClass(cw, classBytes);
+        return cw.toByteArray();
     }
 
-    void addConstructor(BinderClassWriter cw) {
+    void addStaticInitializer(ClassWriter cw) {
+        // carrier and intermediate
+        cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "carrier", Class.class.descriptorString(), null, null);
+        cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "intermediate", Class[].class.descriptorString(), null, null);
+        cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "addHandle", MethodHandle.class.descriptorString(), null, null);
+        cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "mulHandle", MethodHandle.class.descriptorString(), null, null);
+
+        MethodVisitor mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+        mv.visitCode();
+        // extract class data in static final fields
+        MethodType mtype = MethodType.methodType(Object.class, MethodHandles.Lookup.class, String.class, Class.class);
+        Handle bsm = new Handle(H_INVOKESTATIC, Type.getInternalName(MethodHandles.class), "classData",
+                    mtype.descriptorString(), false);
+        ConstantDynamic dynamic = new ConstantDynamic("classData", Object[].class.descriptorString(), bsm);
+        mv.visitLdcInsn(dynamic);
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Object[].class));
+        mv.visitVarInsn(ASTORE, 0);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(ICONST_0);
+        mv.visitInsn(AALOAD);
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
+        mv.visitFieldInsn(PUTSTATIC, implClassName, "carrier", Class.class.descriptorString());
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(ICONST_1);
+        mv.visitInsn(AALOAD);
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class[].class));
+        mv.visitFieldInsn(PUTSTATIC, implClassName, "intermediate", Class[].class.descriptorString());
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(ICONST_2);
+        mv.visitInsn(AALOAD);
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+        mv.visitFieldInsn(PUTSTATIC, implClassName, "addHandle", MethodHandle.class.descriptorString());
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(ICONST_3);
+        mv.visitInsn(AALOAD);
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+        mv.visitFieldInsn(PUTSTATIC, implClassName, "mulHandle", MethodHandle.class.descriptorString());
+        mv.visitInsn(Opcodes.RETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    void addConstructor(ClassWriter cw) {
         MethodType constrType = MethodType.methodType(void.class, VarForm.class, boolean.class, long.class, long.class, long.class, long[].class);
         MethodVisitor mv = cw.visitMethod(0, "<init>", constrType.toMethodDescriptorString(), null, null);
         mv.visitCode();
@@ -219,21 +279,16 @@ class MemoryAccessVarHandleGenerator {
         mv.visitEnd();
     }
 
-    void addAccessModeTypeMethod(BinderClassWriter cw) {
+    void addAccessModeTypeMethod(ClassWriter cw) {
         MethodType modeMethType = MethodType.methodType(MethodType.class, VarHandle.AccessMode.class);
         MethodVisitor mv = cw.visitMethod(ACC_FINAL, "accessModeTypeUncached", modeMethType.toMethodDescriptorString(), null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", Type.getDescriptor(VarHandle.AccessType.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(MemoryAddressProxy.class));
+        mv.visitFieldInsn(GETFIELD, Type.getInternalName(VarHandle.AccessMode.class), "at", VarHandle.AccessType.class.descriptorString());
+        mv.visitLdcInsn(Type.getType(MemoryAddressProxy.class));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
-
-        Class<?>[] dims = new Class<?>[dimensions];
-        Arrays.fill(dims, long.class);
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(dims));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class[].class));
+        mv.visitFieldInsn(GETSTATIC, implClassName, "carrier", Class.class.descriptorString());
+        mv.visitFieldInsn(GETSTATIC, implClassName, "intermediate", Class[].class.descriptorString());
 
         mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(VarHandle.AccessType.class),
                 "accessModeType", MethodType.methodType(MethodType.class, Class.class, Class.class, Class[].class).toMethodDescriptorString(), false);
@@ -244,7 +299,7 @@ class MemoryAccessVarHandleGenerator {
         mv.visitEnd();
     }
 
-    void addAccessModeMethodIfNeeded(VarHandle.AccessMode mode, BinderClassWriter cw) {
+    void addAccessModeMethodIfNeeded(VarHandle.AccessMode mode, ClassWriter cw) {
         String methName = mode.methodName();
         MethodType methType = form.getMethodType(mode.at.ordinal())
                 .insertParameterTypes(0, VarHandle.class);
@@ -276,15 +331,14 @@ class MemoryAccessVarHandleGenerator {
             mv.visitFieldInsn(GETFIELD, Type.getInternalName(BASE_CLASS), "offset", "J");
             for (int i = 0 ; i < dimensions ; i++) {
                 // load ADD MH
-                mv.visitLdcInsn(cw.makeConstantPoolPatch(ADD_OFFSETS_HANDLE));
-                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+                mv.visitFieldInsn(GETSTATIC, implClassName, "addHandle", MethodHandle.class.descriptorString());
 
                 //fixup stack so that ADD MH ends up bottom
                 mv.visitInsn(Opcodes.DUP_X2);
                 mv.visitInsn(Opcodes.POP);
 
                 // load MUL MH
-                mv.visitLdcInsn(cw.makeConstantPoolPatch(MUL_OFFSETS_HANDLE));
+                mv.visitFieldInsn(GETSTATIC, implClassName, "mulHandle", MethodHandle.class.descriptorString());
                 mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
 
                 mv.visitVarInsn(ALOAD, 0); // load recv
@@ -327,7 +381,7 @@ class MemoryAccessVarHandleGenerator {
         }
     }
 
-    void addStridesAccessor(BinderClassWriter cw) {
+    void addStridesAccessor(ClassWriter cw) {
         MethodVisitor mv = cw.visitMethod(ACC_FINAL, "strides", "()[J", null, null);
         mv.visitCode();
         iConstInsn(mv, dimensions);
@@ -346,29 +400,13 @@ class MemoryAccessVarHandleGenerator {
         mv.visitEnd();
     }
 
-    void addCarrierAccessor(BinderClassWriter cw) {
+    void addCarrierAccessor(ClassWriter cw) {
         MethodVisitor mv = cw.visitMethod(ACC_FINAL, "carrier", "()Ljava/lang/Class;", null, null);
         mv.visitCode();
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(carrier));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Class.class));
+        mv.visitFieldInsn(GETSTATIC, implClassName, "carrier", Class.class.descriptorString());
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
-    }
-
-    //where
-    private Class<?> defineClass(BinderClassWriter cw, byte[] classBytes) {
-        try {
-            if (DEBUG_DUMP_CLASSES_DIR != null) {
-                debugWriteClassToFile(classBytes);
-            }
-            Object[] patches = cw.resolvePatches(classBytes);
-            Class<?> c = U.defineAnonymousClass(BASE_CLASS, classBytes, patches);
-            return c;
-        } catch (Throwable e) {
-            debugPrintClass(classBytes);
-            throw e;
-        }
     }
 
     // shared code generation helpers
@@ -467,59 +505,6 @@ class MemoryAccessVarHandleGenerator {
             fos.write(data);
         } catch (IOException e) {
             throw new RuntimeException("Failed to write class " + implClassName + " to file " + file);
-        }
-    }
-
-    static class BinderClassWriter extends ClassWriter {
-
-        private final ArrayList<ConstantPoolPatch> cpPatches = new ArrayList<>();
-        private int curUniquePatchIndex = 0;
-
-        BinderClassWriter() {
-            super(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        }
-
-        public String makeConstantPoolPatch(Object o) {
-            int myUniqueIndex = curUniquePatchIndex++;
-            String cpPlaceholder = "CONSTANT_PLACEHOLDER_" + myUniqueIndex;
-            int index = newConst(cpPlaceholder);
-            cpPatches.add(new ConstantPoolPatch(index, cpPlaceholder, o));
-            return cpPlaceholder;
-        }
-
-        public Object[] resolvePatches(byte[] classFile) {
-            if (cpPatches.isEmpty()) {
-                return null;
-            }
-
-            int size = ((classFile[8] & 0xFF) << 8) | (classFile[9] & 0xFF);
-
-            Object[] patches = new Object[size];
-            for (ConstantPoolPatch p : cpPatches) {
-                if (p.index >= size) {
-                    throw new InternalError("Failed to resolve constant pool patch entries");
-                }
-                patches[p.index] = p.value;
-            }
-
-            return patches;
-        }
-
-        static class ConstantPoolPatch {
-            final int index;
-            final String placeholder;
-            final Object value;
-
-            ConstantPoolPatch(int index, String placeholder, Object value) {
-                this.index = index;
-                this.placeholder = placeholder;
-                this.value = value;
-            }
-
-            @Override
-            public String toString() {
-                return "CpPatch/index="+index+",placeholder="+placeholder+",value="+value;
-            }
         }
     }
 }

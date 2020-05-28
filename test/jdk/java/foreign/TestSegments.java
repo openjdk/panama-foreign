@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -45,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import static jdk.incubator.foreign.MemorySegment.WRITE;
+import static jdk.incubator.foreign.MemorySegment.*;
 import static org.testng.Assert.*;
 
 public class TestSegments {
@@ -142,6 +143,16 @@ public class TestSegments {
                 base = base.addOffset(1);
                 start++;
             }
+        }
+    }
+
+    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
+
+    @Test(dataProvider = "segmentFactories")
+    public void testAccessModesOfFactories(Supplier<MemorySegment> memorySegmentSupplier) {
+        try (MemorySegment segment = memorySegmentSupplier.get()) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
         }
     }
 
@@ -250,10 +261,17 @@ public class TestSegments {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadWithAccessModes() {
+    public void testWithAccessModesBadUnsupportedMode() {
         int[] arr = new int[1];
         MemorySegment segment = MemorySegment.ofArray(arr);
         segment.withAccessModes((1 << AccessActions.values().length) + 1);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadWithAccessModesBadStrongerMode() {
+        int[] arr = new int[1];
+        MemorySegment segment = MemorySegment.ofArray(arr).withAccessModes(READ);
+        segment.withAccessModes(WRITE);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -322,6 +340,7 @@ public class TestSegments {
                 "close",
                 "fill",
                 "copyFrom",
+                "mismatch",
                 "toByteArray",
                 "withOwnerThread"
         );

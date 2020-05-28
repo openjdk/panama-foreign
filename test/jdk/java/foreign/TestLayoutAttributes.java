@@ -46,6 +46,15 @@ public class TestLayoutAttributes {
     }
 
     @Test
+    public void testAttributeOverwrite() {
+        MemoryLayout ml = MemoryLayouts.BITS_32_LE
+                .withAttribute("MyAttribute", 10L);
+        assertEquals((long) ml.attribute("MyAttribute").orElseThrow(), 10L);
+        ml = ml.withAttribute("MyAttribute", 11L);
+        assertEquals((long) ml.attribute("MyAttribute").orElseThrow(), 11L);
+    }
+
+    @Test
     public void testAttributeNonExistent() {
         MemoryLayout ml = MemoryLayouts.BITS_32_LE
                 .withAttribute("MyAttribute", 10L);
@@ -57,7 +66,7 @@ public class TestLayoutAttributes {
         MemoryLayout ml = MemoryLayouts.BITS_32_LE
                 .withName("foo");
         assertEquals(ml.name().orElseThrow(), "foo");
-        assertEquals(ml.attribute("name").orElseThrow(), "foo");
+        assertEquals(ml.attribute(MemoryLayout.LAYOUT_NAME).orElseThrow(), "foo");
     }
 
     @Test
@@ -66,7 +75,9 @@ public class TestLayoutAttributes {
                 .withName("foo")
                 .withAttribute("MyAttribute", 10L);
         List<String> attribs = ml.attributes().collect(Collectors.toList());
-        assertEquals(attribs, List.of("name", "MyAttribute"));
+        assertEquals(attribs.size(), 2);
+        assertTrue(attribs.contains("MyAttribute"));
+        assertTrue(attribs.contains(MemoryLayout.LAYOUT_NAME));
     }
 
 }

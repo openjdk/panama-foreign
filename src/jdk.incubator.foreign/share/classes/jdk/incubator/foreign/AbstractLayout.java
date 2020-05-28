@@ -48,12 +48,10 @@ import static java.lang.constant.ConstantDescs.CD_String;
 import static java.lang.constant.ConstantDescs.CD_long;
 
 abstract class AbstractLayout implements MemoryLayout {
-    // memory layout attribute key for layout name
-    static final String NAME = "name";
 
     private final OptionalLong size;
     final long alignment;
-    protected final Map<String, Constable> attributes;
+    final Map<String, Constable> attributes;
 
     public AbstractLayout(OptionalLong size, long alignment, Map<String, Constable> attributes) {
         this.size = size;
@@ -63,12 +61,12 @@ abstract class AbstractLayout implements MemoryLayout {
 
     @Override
     public AbstractLayout withName(String name) {
-        return withAttribute(NAME, name);
+        return withAttribute(LAYOUT_NAME, name);
     }
 
     @Override
     public final Optional<String> name() {
-        return attribute(NAME).map(String.class::cast);
+        return attribute(LAYOUT_NAME).map(String.class::cast);
     }
 
     @Override
