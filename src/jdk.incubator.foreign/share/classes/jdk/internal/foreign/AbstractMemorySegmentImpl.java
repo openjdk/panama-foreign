@@ -64,11 +64,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
-    final static int ACCESS_MASK = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
     final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
     final static int SMALL = FIRST_RESERVED_FLAG;
     final static long NONCE = new Random().nextLong();
-    final static int DEFAULT_MASK = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
 
     final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
@@ -93,8 +91,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     static int defaultAccessModes(long size) {
         return (enableSmallSegments && size < Integer.MAX_VALUE) ?
-                DEFAULT_MASK | SMALL :
-                DEFAULT_MASK;
+                ALL_ACCESS | SMALL :
+                ALL_ACCESS;
     }
 
     @Override
@@ -192,7 +190,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final int accessModes() {
-        return mask & ACCESS_MASK;
+        return mask & ALL_ACCESS;
     }
 
     @Override
@@ -216,7 +214,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((~accessModes() & accessModes) != 0) {
             throw new IllegalArgumentException("Cannot acquire more access modes");
         }
-        return dup(0, length, (mask & ~ACCESS_MASK) | accessModes, scope);
+        return dup(0, length, (mask & ~ALL_ACCESS) | accessModes, scope);
     }
 
     @Override
@@ -226,7 +224,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     private void checkAccessModes(int accessModes) {
-        if ((accessModes & ~ACCESS_MASK) != 0) {
+        if ((accessModes & ~ALL_ACCESS) != 0) {
             throw new IllegalArgumentException("Invalid access modes");
         }
     }

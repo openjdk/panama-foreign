@@ -146,13 +146,11 @@ public class TestSegments {
         }
     }
 
-    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
-
     @Test(dataProvider = "segmentFactories")
     public void testAccessModesOfFactories(Supplier<MemorySegment> memorySegmentSupplier) {
         try (MemorySegment segment = memorySegmentSupplier.get()) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
-            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS));
+            assertEquals(segment.accessModes(), ALL_ACCESS);
         }
     }
 
