@@ -287,6 +287,80 @@ public interface MemorySegment extends AutoCloseable {
     void close();
 
     /**
+     * Fills a value into this memory segment.
+     * <p>
+     * More specifically, the given value is filled into each address of this
+     * segment. Equivalent to (but likely more efficient than) the following code:
+     *
+     * <blockquote><pre>
+     * byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+     *         .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+     * for (long l = 0; l < segment.byteSize(); l++) {
+     *     byteHandle.set(segment.baseAddress(), l, value);
+     * }</pre></blockquote>
+     * without any regard or guarantees on the ordering of particular memory
+     * elements being set.
+     * <p>
+     * Fill can be useful to initialize or reset the memory of a segment.
+     *
+     * @param value the value to fill into this segment
+     * @return this memory segment
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
+     * @throws UnsupportedOperationException if this segment does not support the {@link #WRITE} access mode
+     */
+    MemorySegment fill(byte value);
+
+    /**
+     * Performs a bulk copy from given source segment to this segment. More specifically, the bytes at
+     * offset {@code 0} through {@code src.byteSize() - 1} in the source segment are copied into this segment
+     * at offset {@code 0} through {@code src.byteSize() - 1}.
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code 0} through {@code src.byteSize() - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * this segment at offset {@code 0} through {@code src.byteSize() - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@link MemorySegment#mapFromPath mapped} to two segments.
+     *
+     * @param src the source segment.
+     * @throws IndexOutOfBoundsException if {src.byteSize() > this.byteSize()}.
+     * @throws IllegalStateException if either the source segment or this segment have been already closed,
+     * or if access occurs from a thread other than the thread owning either segment.
+     * @throws UnsupportedOperationException if either the source segment or this segment do not feature required access modes;
+     * more specifically, {@code src} should feature at least the {@link MemorySegment#READ} access mode,
+     * while this segment should feature at least the {@link MemorySegment#WRITE} access mode.
+     */
+    void copyFrom(MemorySegment src);
+
+    /**
+     * Finds and returns the offset, in bytes, of the first mismatch between
+     * this segment and a given other segment. The offset is relative to the
+     * {@link #baseAddress() base address} of each segment and will be in the
+     * range of 0 (inclusive) up to the {@link #byteSize() size} (in bytes) of
+     * the smaller memory segment (exclusive).
+     * <p>
+     * If the two segments share a common prefix then the returned offset is
+     * the length of the common prefix and it follows that there is a mismatch
+     * between the two segments at that offset within the respective segments.
+     * If one segment is a proper prefix of the other then the returned offset is
+     * the smaller of the segment sizes, and it follows that the offset is only
+     * valid for the larger segment. Otherwise, there is no mismatch and {@code
+     * -1} is returned.
+     *
+     * @param other the segment to be tested for a mismatch with this segment
+     * @return the relative offset, in bytes, of the first mismatch between this
+     * and the given other segment, otherwise -1 if no mismatch
+     * @throws IllegalStateException if either this segment of the other segment
+     * have been already closed, or if access occurs from a thread other than the
+     * thread owning either segment
+     * @throws UnsupportedOperationException if either this segment or the other
+     * segment does not feature at least the {@link MemorySegment#READ} access mode
+     */
+    long mismatch(MemorySegment other);
+
+    /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
      * the properties of this segment. For instance, if this segment is <em>immutable</em>
      * (e.g. the segment has access mode {@link #READ} but not {@link #WRITE}), then the resulting buffer is <em>read-only</em>
