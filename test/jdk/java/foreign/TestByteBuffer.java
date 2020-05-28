@@ -237,18 +237,16 @@ public class TestByteBuffer {
         }
     }
 
-    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
-
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
-            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS));
+            assertEquals(segment.accessModes(), ALL_ACCESS);
         }
 
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS_MODES& ~WRITE);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
+            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
         }
     }
 
@@ -519,14 +517,14 @@ public class TestByteBuffer {
     public void testDefaultAccessModesOfBuffer() {
         ByteBuffer rwBuffer = ByteBuffer.wrap(new byte[4]);
         try (MemorySegment segment = MemorySegment.ofByteBuffer(rwBuffer)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
-            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS));
+            assertEquals(segment.accessModes(), ALL_ACCESS);
         }
 
         ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
         try (MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS_MODES & ~WRITE);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
+            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
         }
     }
 
