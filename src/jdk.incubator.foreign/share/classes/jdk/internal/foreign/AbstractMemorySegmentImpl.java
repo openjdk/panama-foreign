@@ -91,8 +91,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     static int defaultAccessModes(long size) {
         return (enableSmallSegments && size < Integer.MAX_VALUE) ?
-                DEFAULT_ACCESS | SMALL :
-                DEFAULT_ACCESS;
+                ALL_ACCESS | SMALL :
+                ALL_ACCESS;
     }
 
     @Override
@@ -190,7 +190,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final int accessModes() {
-        return mask & DEFAULT_ACCESS;
+        return mask & ALL_ACCESS;
     }
 
     @Override
@@ -214,7 +214,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((~accessModes() & accessModes) != 0) {
             throw new IllegalArgumentException("Cannot acquire more access modes");
         }
-        return dup(0, length, (mask & ~DEFAULT_ACCESS) | accessModes, scope);
+        return dup(0, length, (mask & ~ALL_ACCESS) | accessModes, scope);
     }
 
     @Override
@@ -224,7 +224,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     private void checkAccessModes(int accessModes) {
-        if ((accessModes & ~DEFAULT_ACCESS) != 0) {
+        if ((accessModes & ~ALL_ACCESS) != 0) {
             throw new IllegalArgumentException("Invalid access modes");
         }
     }

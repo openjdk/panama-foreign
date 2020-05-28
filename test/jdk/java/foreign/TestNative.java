@@ -178,8 +178,8 @@ public class TestNative {
         MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
                 () -> free(addr.toRawLongValue()), null);
         try (MemorySegment segment = mallocSegment) {
-            assertTrue(segment.hasAccessModes(DEFAULT_ACCESS));
-            assertEquals(segment.accessModes(), DEFAULT_ACCESS);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS));
+            assertEquals(segment.accessModes(), ALL_ACCESS);
         }
     }
 

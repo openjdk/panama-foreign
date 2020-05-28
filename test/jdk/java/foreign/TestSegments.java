@@ -149,8 +149,8 @@ public class TestSegments {
     @Test(dataProvider = "segmentFactories")
     public void testAccessModesOfFactories(Supplier<MemorySegment> memorySegmentSupplier) {
         try (MemorySegment segment = memorySegmentSupplier.get()) {
-            assertTrue(segment.hasAccessModes(DEFAULT_ACCESS));
-            assertEquals(segment.accessModes(), DEFAULT_ACCESS);
+            assertTrue(segment.hasAccessModes(ALL_ACCESS));
+            assertEquals(segment.accessModes(), ALL_ACCESS);
         }
     }
 

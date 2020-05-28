@@ -211,7 +211,7 @@ public class TestSpliterator {
         var mallocSegment = MemorySegment.allocateNative(layout);
 
         Map<Supplier<Spliterator<MemorySegment>>,Integer> l = Map.of(
-            () -> spliterator(mallocSegment.withAccessModes(DEFAULT_ACCESS), layout), DEFAULT_ACCESS,
+            () -> spliterator(mallocSegment.withAccessModes(ALL_ACCESS), layout), ALL_ACCESS,
             () -> spliterator(mallocSegment.withAccessModes(0), layout), 0,
             () -> spliterator(mallocSegment.withAccessModes(READ), layout), READ,
             () -> spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
