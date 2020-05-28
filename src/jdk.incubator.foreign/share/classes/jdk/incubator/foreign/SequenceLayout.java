@@ -114,7 +114,7 @@ public final class SequenceLayout extends AbstractLayout {
      * Returns a new sequence layout where element layouts in the flattened projection of this
      * sequence layout (see {@link #flatten()}) are re-arranged into one or more nested sequence layouts
      * according to the provided element counts. This transformation preserves the layout size;
-     * that is, multiplying the provided element counts should yield the same element count
+     * that is, multiplying the provided element counts must yield the same element count
      * as the flattened projection of this sequence layout.
      * <p>
      * For instance, given a sequence layout of the kind:

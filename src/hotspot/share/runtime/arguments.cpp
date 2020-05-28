@@ -560,6 +560,9 @@ static SpecialFlag const special_jvm_flags[] = {
 #endif // !X86
   { "UseAdaptiveGCBoundary",         JDK_Version::undefined(), JDK_Version::jdk(15), JDK_Version::jdk(16) },
   { "MonitorBound",                  JDK_Version::jdk(14),     JDK_Version::jdk(15), JDK_Version::jdk(16) },
+#ifdef AARCH64
+  { "UseBarriersForVolatile",        JDK_Version::undefined(), JDK_Version::jdk(15), JDK_Version::jdk(16) },
+#endif
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   // These entries will generate build errors.  Their purpose is to test the macros.
@@ -599,7 +602,6 @@ static AliasedFlag const aliased_jvm_flags[] = {
 
 // NOTE: A compatibility request will be necessary for each alias to be removed.
 static AliasedLoggingFlag const aliased_logging_flags[] = {
-  { "PrintCompressedOopsMode",   LogLevel::Info,  true,  LOG_TAGS(gc, heap, coops) },
   { "PrintSharedSpaces",         LogLevel::Info,  true,  LOG_TAGS(cds) },
   { "TraceBiasedLocking",        LogLevel::Info,  true,  LOG_TAGS(biasedlocking) },
   { "TraceClassLoading",         LogLevel::Info,  true,  LOG_TAGS(class, load) },

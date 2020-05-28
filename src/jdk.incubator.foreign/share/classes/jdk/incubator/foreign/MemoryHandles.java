@@ -286,7 +286,7 @@ public final class MemoryHandles {
      * immediately following the leading access coordinate of type {@link MemoryAddress}.
      *
      * @param target the target memory access handle to access after the scale adjustment.
-     * @param bytesStride the stride, in bytes, by which to multiply the coordinate value. Must be greater than zero.
+     * @param bytesStride the stride, in bytes, by which to multiply the coordinate value.
      * @return the adapted var handle.
      * @throws IllegalArgumentException if the first access coordinate type is not of type {@link MemoryAddress}.
      */
@@ -459,7 +459,7 @@ public final class MemoryHandles {
      * For the coordinate filters to be well formed, their types must be of the form {@code S1 -> T1, S2 -> T1 ... Sn -> Tn},
      * where {@code T1, T2 ... Tn} are the coordinate types starting at position {@code pos} of the target var handle.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the target var handle
@@ -471,9 +471,8 @@ public final class MemoryHandles {
      * @throws IllegalArgumentException if the handles in {@code filters} are not well-formed, that is, they have types
      * other than {@code S1 -> T1, S2 -> T2, ... Sn -> Tn} where {@code T1, T2 ... Tn} are the coordinate types starting
      * at position {@code pos} of the target var handle, if {@code pos} is not between 0 and the target var handle coordinate arity, inclusive,
-     * or if more filters are provided than the actual number of coordinate types, or if any of the filters throws any
-     * checked exceptions.
-     * available starting at {@code pos}.
+     * or if more filters are provided than the actual number of coordinate types available starting at {@code pos},
+     * or if any of the filters throws any checked exceptions.
      */
     public static VarHandle filterCoordinates(VarHandle target, int pos, MethodHandle... filters) {
         return JLI.filterCoordinates(target, pos, filters);
@@ -490,7 +489,7 @@ public final class MemoryHandles {
      * For the bound coordinates to be well formed, their types must be {@code T1, T2 ... Tn },
      * where {@code T1, T2 ... Tn} are the coordinate types starting at position {@code pos} of the target var handle.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the var handle to invoke after the bound coordinates are inserted
@@ -533,7 +532,7 @@ public final class MemoryHandles {
      * more than once in the array, and an incoming coordinate will be dropped
      * if its index does not appear in the array.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      * @param target the var handle to invoke after the coordinates have been reordered
      * @param newCoordinates the new coordinate types
@@ -557,7 +556,7 @@ public final class MemoryHandles {
      * filter function and the target var handle is then called on the modified (usually shortened)
      * coordinate list.
      * <p>
-     * If {code R} is the return type of the filter (which cannot be void), the target var handle must accept a value of
+     * If {@code R} is the return type of the filter (which cannot be void), the target var handle must accept a value of
      * type {@code R} as its coordinate in position {@code pos}, preceded and/or followed by
      * any coordinate not passed to the filter.
      * No coordinates are reordered, and the result returned from the filter
@@ -571,7 +570,7 @@ public final class MemoryHandles {
      * coordinate type of the target var handle at position {@code pos}, and that target var handle
      * coordinate is supplied by the return value of the filter.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the var handle to invoke after the coordinates have been filtered
@@ -599,7 +598,7 @@ public final class MemoryHandles {
      * target var handle's coordinate types. If {@code pos} is zero, the dummy coordinates will precede
      * the target's real arguments; if {@code pos} is <i>N</i> they will come after.
      * <p>
-     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode} and
+     * The resulting var handle will feature the same access modes (see {@link java.lang.invoke.VarHandle.AccessMode}) and
      * atomic access guarantees as those featured by the target var handle.
      *
      * @param target the var handle to invoke after the dummy coordinates are dropped

@@ -214,7 +214,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     public AbstractMemorySegmentImpl withAccessModes(int accessModes) {
         checkAccessModes(accessModes);
         if ((~accessModes() & accessModes) != 0) {
-            throw new UnsupportedOperationException("Cannot acquire more access modes");
+            throw new IllegalArgumentException("Cannot acquire more access modes");
         }
         return dup(0, length, (mask & ~ACCESS_MASK) | accessModes, scope);
     }

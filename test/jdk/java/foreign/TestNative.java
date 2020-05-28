@@ -53,7 +53,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
+import static jdk.incubator.foreign.MemorySegment.*;
 import static org.testng.Assert.*;
 
 public class TestNative {
@@ -149,7 +149,7 @@ public class TestNative {
     public static native long getCapacity(Buffer buffer);
 
     public static native long allocate(int size);
-    public static native long free(long address);
+    public static native void free(long address);
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
@@ -169,6 +169,19 @@ public class TestNative {
             int expected = capacity / elemSize;
             assertEquals(buf.capacity(), expected);
             assertEquals(getCapacity(buf), expected);
+        }
+    }
+
+    static final int ALL_ACCESS_MODES = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
+
+    @Test
+    public void testDefaultAccessModes() {
+        MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
+        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
+                () -> free(addr.toRawLongValue()), null);
+        try (MemorySegment segment = mallocSegment) {
+            assertTrue(segment.hasAccessModes(ALL_ACCESS_MODES));
+            assertEquals(segment.accessModes(), ALL_ACCESS_MODES);
         }
     }
 

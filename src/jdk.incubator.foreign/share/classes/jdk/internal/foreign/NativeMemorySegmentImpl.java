@@ -95,8 +95,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         MemoryScope scope = MemoryScope.create(null, () -> unsafe.freeMemory(buf));
         MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                                                            defaultAccessModes(alignedSize),
-                                                            scope);
+                defaultAccessModes(alignedSize), scope);
         if (alignedSize != bytesSize) {
             long delta = alignedBuf - buf;
             segment = segment.asSlice(delta, bytesSize);
