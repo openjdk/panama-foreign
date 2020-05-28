@@ -261,7 +261,7 @@ public class TestByteBuffer {
         //write to channel
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             MemoryAddress base = segment.baseAddress();
-            initTuples(base);
+            initTuples(base, tuples.elementCount().getAsLong());
             segment.force();
         }
 
