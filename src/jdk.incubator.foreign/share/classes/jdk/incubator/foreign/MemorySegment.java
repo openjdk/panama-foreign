@@ -552,16 +552,18 @@ allocateNative(bytesSize, 1);
      * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
      *
      * @param path the path to the file to memory map.
+     * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
      *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegment#force()}).
      * @return a new mapped memory segment.
+     * @throws IllegalArgumentException if {@code bytesOffset < 0}.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      */
-    static MappedMemorySegment mapFromPath(Path path, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesSize, mapMode);
+    static MappedMemorySegment mapFromPath(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode);
     }
 
     /**
