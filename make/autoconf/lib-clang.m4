@@ -163,7 +163,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       else
         AC_MSG_CHECKING([if libclang should be enabled])
         AC_MSG_RESULT([no, not found])
-        AC_MSG_NOTICE([Cannot locate libclang! You can download pre-built llvm
+        AC_MSG_ERROR([Cannot locate libclang! You can download pre-built llvm
             binary from http://llvm.org/releases/download.html, then specify the
             location using --with-libclang])
       fi
