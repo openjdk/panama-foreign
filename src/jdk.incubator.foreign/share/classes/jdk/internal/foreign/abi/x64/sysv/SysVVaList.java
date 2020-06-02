@@ -41,16 +41,12 @@ import java.util.List;
 
 import static jdk.incubator.foreign.CSupport.SysV;
 import static jdk.incubator.foreign.CSupport.VaList;
-import static jdk.incubator.foreign.CSupport.SysV.C_DOUBLE;
-import static jdk.incubator.foreign.CSupport.SysV.C_INT;
-import static jdk.incubator.foreign.CSupport.Win64.C_POINTER;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.incubator.foreign.MemorySegment.READ;
 import static jdk.incubator.foreign.MemorySegment.WRITE;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
-import static jdk.internal.foreign.abi.SharedUtils.withOwnerThreadOrNoOp;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
 public class SysVVaList implements VaList {
@@ -332,27 +328,28 @@ public class SysVVaList implements VaList {
                 preAlignStack(layout);
                 return switch (typeClass.kind()) {
                     case STRUCT -> {
-                        MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr, layout.byteSize(),
-                                segment.ownerThread(), null, null);
-                        slices.add(slice);
-                        postAlignStack(layout);
-                        yield slice.withAccessModes(WRITE | READ);
+                        try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr, layout.byteSize(),
+                                segment.ownerThread(), null, null)) {
+                            MemorySegment seg = MemorySegment.allocateNative(layout);
+                            seg.copyFrom(slice);
+                            postAlignStack(layout);
+                            yield seg;
+                        }
                     }
                     case POINTER, INTEGER, FLOAT -> {
                         VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                        Object res;
                         try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr, layout.byteSize(),
                                                                                     segment.ownerThread(), null, null)) {
-                            res = reader.get(slice.baseAddress());
+                            Object res = reader.get(slice.baseAddress());
+                            postAlignStack(layout);
+                            yield res;
                         }
-                        postAlignStack(layout);
-                        yield res;
                     }
                 };
             } else {
                 return switch (typeClass.kind()) {
                     case STRUCT -> {
-                        MemorySegment value = withOwnerThreadOrNoOp(MemorySegment.allocateNative(layout), segment.ownerThread());
+                        MemorySegment value = MemorySegment.allocateNative(layout);
                         int classIdx = 0;
                         long offset = 0;
                         while (offset < layout.byteSize()) {
@@ -368,8 +365,7 @@ public class SysVVaList implements VaList {
                             }
                             offset += copy;
                         }
-                        slices.add(value);
-                        yield value.withAccessModes(WRITE | READ);
+                        yield value;
                     }
                     case POINTER, INTEGER -> {
                         VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);

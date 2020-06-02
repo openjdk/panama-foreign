@@ -37,12 +37,9 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 
-import static jdk.incubator.foreign.CSupport.Win64.C_DOUBLE;
-import static jdk.incubator.foreign.CSupport.Win64.C_INT;
 import static jdk.incubator.foreign.CSupport.Win64.C_POINTER;
 import static jdk.incubator.foreign.MemorySegment.CLOSE;
 import static jdk.incubator.foreign.MemorySegment.READ;
-import static jdk.incubator.foreign.MemorySegment.WRITE;
 
 // see vadefs.h (VC header)
 //
@@ -66,15 +63,15 @@ class WinVaList implements CSupport.VaList {
     private static final VarHandle VH_address = MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
 
     private final MemorySegment segment;
-    private final List<MemorySegment> slices;
+    private final List<MemorySegment> copies;
 
     WinVaList(MemorySegment segment) {
         this(segment, new ArrayList<>());
     }
 
-    WinVaList(MemorySegment segment, List<MemorySegment> slices) {
+    WinVaList(MemorySegment segment, List<MemorySegment> copies) {
         this.segment = segment;
-        this.slices = slices;
+        this.copies = copies;
     }
 
     static Builder builder() {
@@ -88,7 +85,7 @@ class WinVaList implements CSupport.VaList {
     @Override
     public void close() {
         segment.close();
-        slices.forEach(MemorySegment::close);
+        copies.forEach(MemorySegment::close);
     }
 
     @Override
@@ -138,7 +135,7 @@ class WinVaList implements CSupport.VaList {
 
         public WinVaList build() {
             MemorySegment ms = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size());
-            List<MemorySegment> slices = new ArrayList<>();
+            List<MemorySegment> copies = new ArrayList<>();
 
             MemoryAddress addr = ms.baseAddress();
             for (SimpleVaArg arg : args) {
@@ -149,7 +146,7 @@ class WinVaList implements CSupport.VaList {
                         case STRUCT_REFERENCE -> {
                             MemorySegment copy = MemorySegment.allocateNative(arg.layout);
                             copy.copyFrom(msArg); // by-value
-                            slices.add(copy);
+                            copies.add(copy);
                             VH_address.set(addr, copy.baseAddress());
                         }
                         case STRUCT_REGISTER -> {
@@ -165,7 +162,7 @@ class WinVaList implements CSupport.VaList {
                 addr = addr.addOffset(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(ms.withAccessModes(CLOSE | READ), slices);
+            return new WinVaList(ms.withAccessModes(CLOSE | READ), copies);
         }
     }
 
@@ -206,22 +203,23 @@ class WinVaList implements CSupport.VaList {
             Object res;
             if (carrier == MemorySegment.class) {
                 TypeClass typeClass = TypeClass.typeClassFor(layout);
-                switch (typeClass) {
+                res = switch (typeClass) {
                     case STRUCT_REFERENCE -> {
                         MemoryAddress structAddr = (MemoryAddress) VH_address.get(ptr);
-                        MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
-                                                                                segment.ownerThread(), null, null);
-                        slices.add(struct);
-                        res = struct.withAccessModes(WRITE | READ);
+                        try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
+                                                                                segment.ownerThread(), null, null)) {
+                            MemorySegment seg = MemorySegment.allocateNative(layout.byteSize());
+                            seg.copyFrom(struct);
+                            yield seg;
+                        }
                     }
                     case STRUCT_REGISTER -> {
                         MemorySegment struct = MemorySegment.allocateNative(layout);
                         struct.copyFrom(segment.asSlice(ptr.segmentOffset(), layout.byteSize()));
-                        slices.add(struct);
-                        res = struct.withAccessModes(WRITE | READ);
+                        yield struct;
                     }
                     default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
-                }
+                };
             } else {
                 VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
                 res = reader.get(ptr);

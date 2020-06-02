@@ -262,11 +262,6 @@ public class SharedUtils {
             ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
             : layout.varHandle(carrier);
     }
-
-    public static MemorySegment withOwnerThreadOrNoOp(MemorySegment segment, Thread thread) {
-        return segment.ownerThread() != thread ? segment.withOwnerThread(thread) : segment;
-    }
-
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;
