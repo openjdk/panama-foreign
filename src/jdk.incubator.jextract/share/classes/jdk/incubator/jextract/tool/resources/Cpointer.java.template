@@ -3,6 +3,7 @@
 import java.lang.invoke.VarHandle;
 import jdk.incubator.foreign.NativeAllocationScope;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import static jdk.incubator.foreign.CSupport.C_POINTER;
@@ -15,11 +16,11 @@ public final class Cpointer {
 
     public static final MemoryLayout LAYOUT = C_POINTER;
     public static final Class<?> CARRIER = long.class;
-    private static final VarHandle handle = LAYOUT.varHandle(CARRIER);
-    private static final VarHandle arrayHandle = arrayHandle(LAYOUT, CARRIER);
+    private static final VarHandle handle = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(CARRIER));
+    private static final VarHandle arrayHandle = MemoryHandles.asAddressVarHandle(arrayHandle(LAYOUT, CARRIER));
 
     private static MemoryAddress get(MemoryAddress addr) {
-        return MemoryAddress.ofLong((long) handle.get(addr));
+        return (MemoryAddress) handle.get(addr);
     }
 
     public static MemoryAddress asArray(MemoryAddress addr, int numPointers) {
@@ -28,6 +29,6 @@ public final class Cpointer {
     }
 
     public static MemoryAddress get(MemoryAddress addr, long index) {
-        return MemoryAddress.ofLong((long)arrayHandle.get(addr, index));
+        return (MemoryAddress) arrayHandle.get(addr, index);
     }
 }
