@@ -109,6 +109,14 @@ EXPORT void upcallDoubles(CB cb) {
 }
 
 EXPORT void upcallStack(CB cb) {
+    Point point;
+    point.x = 5;
+    point.y = 10;
+
+    BigPoint bigPoint;
+    bigPoint.x = 15;
+    bigPoint.y = 20;
+
     passToUpcall(cb, 32 + 14,
         1LL, 2LL, 3LL, 4LL, 5LL, 6LL, 7LL, 8LL,
         9LL, 10LL, 11LL, 12LL, 13LL, 14LL, 15LL, 16LL,
@@ -116,7 +124,8 @@ EXPORT void upcallStack(CB cb) {
         9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0,
         // should all be passed on the stack
         1, 'a', 3,  4,  5LL,  6.0f,  7.0,
-        8, 'b', 10, 11, 12LL, 13.0f, 14.0);
+        8, 'b', 10, 11, 12LL, 13.0f, 14.0,
+        point, bigPoint);
 }
 
 EXPORT void upcallMemoryAddress(CB cb) {

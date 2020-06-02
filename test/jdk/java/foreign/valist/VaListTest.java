@@ -223,14 +223,16 @@ public class VaListTest {
     public static Object[][] upcalls() {
         return new Object[][]{
             { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
-                MemorySegment struct = vaList.readStructOrUnion(BigPoint_LAYOUT);
-                assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
-                assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                try (MemorySegment struct = vaList.readStructOrUnion(BigPoint_LAYOUT)) {
+                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                }
             })},
             { linkVaListCB("upcallStruct"), VaListConsumer.mh(vaList -> {
-                MemorySegment struct = vaList.readStructOrUnion(Point_LAYOUT);
-                assertEquals((int) VH_Point_x.get(struct.baseAddress()), 5);
-                assertEquals((int) VH_Point_y.get(struct.baseAddress()), 10);
+                try (MemorySegment struct = vaList.readStructOrUnion(Point_LAYOUT)) {
+                    assertEquals((int) VH_Point_x.get(struct.baseAddress()), 5);
+                    assertEquals((int) VH_Point_y.get(struct.baseAddress()), 10);
+                }
             })},
             { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                 MemoryAddress intPtr = vaList.readPointer(C_POINTER);
@@ -251,9 +253,9 @@ public class VaListTest {
             })},
             { linkVaListCB("upcallStack"), VaListConsumer.mh(vaList -> {
                 // skip all registers
-                assertEquals(vaList.readLong(C_LONGLONG), 1L); // windows are read from shadow space 1
-                assertEquals(vaList.readLong(C_LONGLONG), 2L); // windows are read from shadow space 2
-                assertEquals(vaList.readLong(C_LONGLONG), 3L); // windows first stack arg (int/float)
+                assertEquals(vaList.readLong(C_LONGLONG), 1L); // 1st windows arg read from shadow space
+                assertEquals(vaList.readLong(C_LONGLONG), 2L); // 2nd windows arg read from shadow space
+                assertEquals(vaList.readLong(C_LONGLONG), 3L); // windows 1st stack arg (int/float)
                 assertEquals(vaList.readLong(C_LONGLONG), 4L);
                 assertEquals(vaList.readLong(C_LONGLONG), 5L);
                 assertEquals(vaList.readLong(C_LONGLONG), 6L);
@@ -300,6 +302,15 @@ public class VaListTest {
                 assertEquals((float) vaList.readDouble(C_DOUBLE), 13.0F);
                 assertEquals(vaList.readDouble(C_DOUBLE), 14.0D);
 
+                try (MemorySegment point = vaList.readStructOrUnion(Point_LAYOUT)) {
+                    assertEquals((int) VH_Point_x.get(point.baseAddress()), 5);
+                    assertEquals((int) VH_Point_y.get(point.baseAddress()), 10);
+                }
+
+                try (MemorySegment bigPoint = vaList.readStructOrUnion(BigPoint_LAYOUT)) {
+                    assertEquals((long) VH_BigPoint_x.get(bigPoint.baseAddress()), 15);
+                    assertEquals((long) VH_BigPoint_y.get(bigPoint.baseAddress()), 20);
+                }
             })},
         };
     }

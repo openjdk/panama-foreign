@@ -55,31 +55,137 @@ public class CSupport {
     }
 
     /**
+     * An interface that models a C {@code va_list}.
+     *
      * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
      * arguments to variadic calls are erased by way of 'default argument promotions',
      * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
      * and which erases all {@code float} arguments to {@code double}.
      *
-     * As such, this reader interface only supports reading {@code int}, {@code double},
-     * and any other type that fits into a {@code long} (when given it's layout).
+     * As such, this interface only supports reading {@code int}, {@code double},
+     * and any other type that fits into a {@code long}.
      */
-    public interface VaList extends AutoCloseable /* permits */ {
+    public interface VaList extends AutoCloseable {
+
+        /**
+         * Reads a value into an {@code int}
+         *
+         * @param layout the layout of the value
+         * @return the value read as an {@code int}
+         */
         int readInt(MemoryLayout layout);
+
+        /**
+         * Reads a value into a {@code long}
+         *
+         * @param layout the layout of the value
+         * @return the value read as an {@code long}
+         */
         long readLong(MemoryLayout layout);
+
+        /**
+         * Reads a value into a {@code double}
+         *
+         * @param layout the layout of the value
+         * @return the value read as an {@code double}
+         */
         double readDouble(MemoryLayout layout);
+
+        /**
+         * Reads a value into a {@code MemoryAddress}
+         *
+         * @param layout the layout of the value
+         * @return the value read as an {@code MemoryAddress}
+         */
         MemoryAddress readPointer(MemoryLayout layout);
+
+        /**
+         * Reads a value into a {@code MemorySegment}
+         *
+         * @param layout the layout of the value
+         * @return the value read as an {@code MemorySegment}
+         */
         MemorySegment readStructOrUnion(MemoryLayout layout);
+
+        /**
+         * Skips a number of va arguments with the given memory layouts.
+         *
+         * @param layouts the layout of the value
+         */
         void skip(MemoryLayout...layouts);
 
+        /**
+         * A predicate used to check if this va list is alive,
+         * or in other words; if {@code close()} has been called on this
+         * va list.
+         *
+         * @return true if this va list is still alive.
+         * @see #close()
+         */
         boolean isAlive();
+
+        /**
+         * Closes this va list, releasing any resources it was using.
+         *
+         * @see #isAlive()
+         */
         void close();
+
+        /**
+         * Copies this va list.
+         *
+         * @return a copy of this va list.
+         */
         VaList copy();
 
+        /**
+         * A builder interface used to construct a va list.
+         */
         interface Builder {
+
+            /**
+             * Adds a native value represented as an {@code int} to the va list.
+             *
+             * @param layout the native layout of the value.
+             * @param value the value, represented as an {@code int}.
+             * @return this builder.
+             */
             Builder intArg(MemoryLayout layout, int value);
+
+            /**
+             * Adds a native value represented as a {@code long} to the va list.
+             *
+             * @param layout the native layout of the value.
+             * @param value the value, represented as a {@code long}.
+             * @return this builder.
+             */
             Builder longArg(MemoryLayout layout, long value);
+
+            /**
+             * Adds a native value represented as a {@code double} to the va list.
+             *
+             * @param layout the native layout of the value.
+             * @param value the value, represented as a {@code double}.
+             * @return this builder.
+             */
             Builder doubleArg(MemoryLayout layout, double value);
+
+            /**
+             * Adds a native value represented as a {@code MemoryAddress} to the va list.
+             *
+             * @param layout the native layout of the value.
+             * @param value the value, represented as a {@code MemoryAddress}.
+             * @return this builder.
+             */
             Builder memoryAddressArg(MemoryLayout layout, MemoryAddress value);
+
+            /**
+             * Adds a native value represented as a {@code MemorySegment} to the va list.
+             *
+             * @param layout the native layout of the value.
+             * @param value the value, represented as a {@code MemorySegment}.
+             * @return this builder.
+             */
             Builder memorySegmentArg(MemoryLayout layout, MemorySegment value);
         }
     }
