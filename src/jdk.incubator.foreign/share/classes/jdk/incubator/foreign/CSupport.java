@@ -54,30 +54,26 @@ public class CSupport {
         return SharedUtils.newVaList(actions);
     }
 
+    /**
+     * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
+     * arguments to variadic calls are erased by way of 'default argument promotions',
+     * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
+     * and which erases all {@code float} arguments to {@code double}.
+     *
+     * As such, this reader interface only supports reading {@code int}, {@code double},
+     * and any other type that fits into a {@code long} (when given it's layout).
+     */
     public interface VaList extends AutoCloseable /* permits */ {
-        Reader reader(int num);
+        int readInt(MemoryLayout layout);
+        long readLong(MemoryLayout layout);
+        double readDouble(MemoryLayout layout);
+        MemoryAddress readPointer(MemoryLayout layout);
+        MemorySegment readStructOrUnion(MemoryLayout layout);
+        void skip(MemoryLayout...layouts);
+
         boolean isAlive();
         void close();
-
-        /**
-         * Reader interface used to read values from a va_list
-         *
-         * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
-         * arguments to variadic calls are erased by way of 'default argument promotions',
-         * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
-         * and which erases all {@code float} arguments to {@code double}.
-         *
-         * As such, this reader interface only supports reading {@code int}, {@code double},
-         * and any other type that fits into a {@code long} (when given it's layout).
-         */
-        interface Reader {
-            int readInt(MemoryLayout layout);
-            long readLong(MemoryLayout layout);
-            double readDouble(MemoryLayout layout);
-            MemoryAddress readPointer(MemoryLayout layout);
-            MemorySegment readStructOrUnion(MemoryLayout layout);
-            void skip(MemoryLayout...layouts);
-        }
+        VaList copy();
 
         interface Builder {
             Builder intArg(MemoryLayout layout, int value);

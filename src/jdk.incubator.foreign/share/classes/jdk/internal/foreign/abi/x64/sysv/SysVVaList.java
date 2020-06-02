@@ -42,8 +42,6 @@ import java.util.List;
 import static jdk.incubator.foreign.CSupport.SysV;
 import static jdk.incubator.foreign.CSupport.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
-import static jdk.incubator.foreign.MemorySegment.READ;
-import static jdk.incubator.foreign.MemorySegment.WRITE;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
@@ -115,9 +113,146 @@ public class SysVVaList implements VaList {
 
     private final MemorySegment segment;
     private final List<MemorySegment> slices = new ArrayList<>();
+    private final MemorySegment regSaveArea;
 
     SysVVaList(MemorySegment segment) {
         this.segment = segment;
+        regSaveArea = regSaveArea();
+        slices.add(regSaveArea);
+    }
+
+    private int currentGPOffset() {
+        return (int) VH_gp_offset.get(segment.baseAddress());
+    }
+
+    private void currentGPOffset(int i) {
+        VH_gp_offset.set(segment.baseAddress(), i);
+    }
+
+    private int currentFPOffset() {
+        return (int) VH_fp_offset.get(segment.baseAddress());
+    }
+
+    private void currentFPOffset(int i) {
+        VH_fp_offset.set(segment.baseAddress(), i);
+    }
+
+    private MemoryAddress stackPtr() {
+        return (MemoryAddress) VH_overflow_arg_area.get(segment.baseAddress());
+    }
+
+    private void stackPtr(MemoryAddress ptr) {
+        VH_overflow_arg_area.set(segment.baseAddress(), ptr);
+    }
+
+    private MemorySegment regSaveArea() {
+        return MemorySegment.ofNativeRestricted((MemoryAddress) VH_reg_save_area.get(segment.baseAddress()),
+            LAYOUT_REG_SAVE_AREA.byteSize(), segment.ownerThread(), null, null);
+    }
+
+    private void preAlignStack(MemoryLayout layout) {
+        if (layout.byteAlignment() > 8) {
+            stackPtr(Utils.alignUp(stackPtr(), 16));
+        }
+    }
+
+    private void postAlignStack(MemoryLayout layout) {
+        stackPtr(Utils.alignUp(stackPtr().addOffset(layout.byteSize()), 8));
+    }
+
+    @Override
+    public int readInt(MemoryLayout layout) {
+        return (int) read(int.class, layout);
+    }
+
+    @Override
+    public long readLong(MemoryLayout layout) {
+        return (long) read(long.class, layout);
+    }
+
+    @Override
+    public double readDouble(MemoryLayout layout) {
+        return (double) read(double.class, layout);
+    }
+
+    @Override
+    public MemoryAddress readPointer(MemoryLayout layout) {
+        return (MemoryAddress) read(MemoryAddress.class, layout);
+    }
+
+    @Override
+    public MemorySegment readStructOrUnion(MemoryLayout layout) {
+        return (MemorySegment) read(MemorySegment.class, layout);
+    }
+
+    private Object read(Class<?> carrier, MemoryLayout layout) {
+        checkCompatibleType(carrier, layout, SysVx64Linker.ADDRESS_SIZE);
+        TypeClass typeClass = TypeClass.classifyLayout(layout);
+        if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass)) {
+            preAlignStack(layout);
+            return switch (typeClass.kind()) {
+                case STRUCT -> {
+                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr(), layout.byteSize(),
+                                                                                segment.ownerThread(), null, null)) {
+                        MemorySegment seg = MemorySegment.allocateNative(layout);
+                        seg.copyFrom(slice);
+                        postAlignStack(layout);
+                        yield seg;
+                    }
+                }
+                case POINTER, INTEGER, FLOAT -> {
+                    VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
+                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr(), layout.byteSize(),
+                                                                                segment.ownerThread(), null, null)) {
+                        Object res = reader.get(slice.baseAddress());
+                        postAlignStack(layout);
+                        yield res;
+                    }
+                }
+            };
+        } else {
+            return switch (typeClass.kind()) {
+                case STRUCT -> {
+                    MemorySegment value = MemorySegment.allocateNative(layout);
+                    int classIdx = 0;
+                    long offset = 0;
+                    while (offset < layout.byteSize()) {
+                        final long copy = Math.min(layout.byteSize() - offset, 8);
+                        boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
+                        MemorySegment slice = value.asSlice(offset, copy);
+                        if (isSSE) {
+                            slice.copyFrom(regSaveArea.asSlice(currentFPOffset(), copy));
+                            currentFPOffset(currentFPOffset() + FP_SLOT_SIZE);
+                        } else {
+                            slice.copyFrom(regSaveArea.asSlice(currentGPOffset(), copy));
+                            currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
+                        }
+                        offset += copy;
+                    }
+                    yield value;
+                }
+                case POINTER, INTEGER -> {
+                    VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                    Object res = reader.get(regSaveArea.baseAddress().addOffset(currentGPOffset()));
+                    currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
+                    yield res;
+                }
+                case FLOAT -> {
+                    VarHandle reader = layout.varHandle(carrier);
+                    Object res = reader.get(regSaveArea.baseAddress().addOffset(currentFPOffset()));
+                    currentFPOffset(currentFPOffset() + FP_SLOT_SIZE);
+                    yield res;
+                }
+            };
+        }
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        for (MemoryLayout layout : layouts) {
+            preAlignStack(layout);
+            postAlignStack(layout);
+        }
     }
 
     static SysVVaList.Builder builder() {
@@ -133,11 +268,6 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public Reader reader(int num) {
-        return new Reader();
-    }
-
-    @Override
     public boolean isAlive() {
         return segment.isAlive();
     }
@@ -148,6 +278,13 @@ public class SysVVaList implements VaList {
         slices.forEach(MemorySegment::close);
     }
 
+    @Override
+    public VaList copy() {
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT.byteSize());
+        copy.copyFrom(segment);
+        return new SysVVaList(copy);
+    }
+
     private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset, TypeClass typeClass) {
         return currentGPOffset > MAX_GP_OFFSET - typeClass.nIntegerRegs() * GP_SLOT_SIZE
                 || currentFPOffset > MAX_FP_OFFSET - typeClass.nVectorRegs() * FP_SLOT_SIZE;
@@ -155,16 +292,11 @@ public class SysVVaList implements VaList {
 
     @Override
     public String toString() {
-        int gp_offset = (int) VH_gp_offset.get(segment.baseAddress());
-        int fp_offset = (int) VH_gp_offset.get(segment.baseAddress());
-        MemoryAddress overflowArgArea = (MemoryAddress) VH_overflow_arg_area.get(segment.baseAddress());
-        MemoryAddress regSaveArea = (MemoryAddress) VH_reg_save_area.get(segment.baseAddress());
-
         return "SysVVaList{"
-               + "gp_offset=" + gp_offset
-               + ", fp_offset=" + fp_offset
-               + ", overflow_arg_area=" + overflowArgArea
-               + ", reg_save_area=" + regSaveArea
+               + "gp_offset=" + currentGPOffset()
+               + ", fp_offset=" + currentFPOffset()
+               + ", overflow_arg_area=" + stackPtr()
+               + ", reg_save_area=" + regSaveArea()
                + '}';
     }
 
@@ -208,7 +340,6 @@ public class SysVVaList implements VaList {
             } else {
                 switch (typeClass.kind()) {
                     case STRUCT -> {
-
                         MemorySegment valueSegment = (MemorySegment) value;
                         int classIdx = 0;
                         long offset = 0;
@@ -268,127 +399,6 @@ public class SysVVaList implements VaList {
             res.slices.add(reg_save_area);
             assert reg_save_area.ownerThread() == vaListSegment.ownerThread();
             return res;
-        }
-    }
-
-    class Reader implements CSupport.VaList.Reader {
-        private long currentGPOffset;
-        private long currentFPOffset;
-        private MemoryAddress stackPtr;
-        private final MemorySegment regSaveArea;
-
-        private Reader() {
-            regSaveArea = MemorySegment.ofNativeRestricted((MemoryAddress) VH_reg_save_area.get(segment.baseAddress()),
-                    LAYOUT_REG_SAVE_AREA.byteSize(), segment.ownerThread(), null, null);
-            slices.add(regSaveArea);
-            stackPtr = (MemoryAddress) VH_overflow_arg_area.get(segment.baseAddress());
-            currentGPOffset = (int) VH_gp_offset.get(segment.baseAddress());
-            currentFPOffset = (int) VH_fp_offset.get(segment.baseAddress());
-        }
-
-        private void preAlignStack(MemoryLayout layout) {
-            if (layout.byteAlignment() > 8) {
-                stackPtr = Utils.alignUp(stackPtr, 16);
-            }
-        }
-
-        private void postAlignStack(MemoryLayout layout) {
-            stackPtr = Utils.alignUp(stackPtr.addOffset(layout.byteSize()), 8);
-        }
-
-        @Override
-        public int readInt(MemoryLayout layout) {
-            return (int) read(int.class, layout);
-        }
-
-        @Override
-        public long readLong(MemoryLayout layout) {
-            return (long) read(long.class, layout);
-        }
-
-        @Override
-        public double readDouble(MemoryLayout layout) {
-            return (double) read(double.class, layout);
-        }
-
-        @Override
-        public MemoryAddress readPointer(MemoryLayout layout) {
-            return (MemoryAddress) read(MemoryAddress.class, layout);
-        }
-
-        @Override
-        public MemorySegment readStructOrUnion(MemoryLayout layout) {
-            return (MemorySegment) read(MemorySegment.class, layout);
-        }
-
-        private Object read(Class<?> carrier, MemoryLayout layout) {
-            checkCompatibleType(carrier, layout, SysVx64Linker.ADDRESS_SIZE);
-            TypeClass typeClass = TypeClass.classifyLayout(layout);
-            if (isRegOverflow(currentGPOffset, currentFPOffset, typeClass)) {
-                preAlignStack(layout);
-                return switch (typeClass.kind()) {
-                    case STRUCT -> {
-                        try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr, layout.byteSize(),
-                                segment.ownerThread(), null, null)) {
-                            MemorySegment seg = MemorySegment.allocateNative(layout);
-                            seg.copyFrom(slice);
-                            postAlignStack(layout);
-                            yield seg;
-                        }
-                    }
-                    case POINTER, INTEGER, FLOAT -> {
-                        VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                        try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr, layout.byteSize(),
-                                                                                    segment.ownerThread(), null, null)) {
-                            Object res = reader.get(slice.baseAddress());
-                            postAlignStack(layout);
-                            yield res;
-                        }
-                    }
-                };
-            } else {
-                return switch (typeClass.kind()) {
-                    case STRUCT -> {
-                        MemorySegment value = MemorySegment.allocateNative(layout);
-                        int classIdx = 0;
-                        long offset = 0;
-                        while (offset < layout.byteSize()) {
-                            final long copy = Math.min(layout.byteSize() - offset, 8);
-                            boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
-                            MemorySegment slice = value.asSlice(offset, copy);
-                            if (isSSE) {
-                                slice.copyFrom(regSaveArea.asSlice(currentFPOffset, copy));
-                                currentFPOffset += FP_SLOT_SIZE;
-                            } else {
-                                slice.copyFrom(regSaveArea.asSlice(currentGPOffset, copy));
-                                currentGPOffset += GP_SLOT_SIZE;
-                            }
-                            offset += copy;
-                        }
-                        yield value;
-                    }
-                    case POINTER, INTEGER -> {
-                        VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                        Object res = reader.get(regSaveArea.baseAddress().addOffset(currentGPOffset));
-                        currentGPOffset += GP_SLOT_SIZE;
-                        yield res;
-                    }
-                    case FLOAT -> {
-                        VarHandle reader = layout.varHandle(carrier);
-                        Object res = reader.get(regSaveArea.baseAddress().addOffset(currentFPOffset));
-                        currentFPOffset += FP_SLOT_SIZE;
-                        yield res;
-                    }
-                };
-            }
-        }
-
-        @Override
-        public void skip(MemoryLayout... layouts) {
-            for (MemoryLayout layout : layouts) {
-                preAlignStack(layout);
-                postAlignStack(layout);
-            }
         }
     }
 }

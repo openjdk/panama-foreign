@@ -63,6 +63,7 @@ class WinVaList implements CSupport.VaList {
     private static final VarHandle VH_address = MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
 
     private final MemorySegment segment;
+    private MemoryAddress ptr;
     private final List<MemorySegment> copies;
 
     WinVaList(MemorySegment segment) {
@@ -71,7 +72,72 @@ class WinVaList implements CSupport.VaList {
 
     WinVaList(MemorySegment segment, List<MemorySegment> copies) {
         this.segment = segment;
+        this.ptr = segment.baseAddress();
         this.copies = copies;
+    }
+
+    @Override
+    public int readInt(MemoryLayout layout) {
+        return (int) read(int.class, layout);
+    }
+
+    @Override
+    public long readLong(MemoryLayout layout) {
+        return (long) read(long.class, layout);
+    }
+
+    @Override
+    public double readDouble(MemoryLayout layout) {
+        return (double) read(double.class, layout);
+    }
+
+    @Override
+    public MemoryAddress readPointer(MemoryLayout layout) {
+        return (MemoryAddress) read(MemoryAddress.class, layout);
+    }
+
+    @Override
+    public MemorySegment readStructOrUnion(MemoryLayout layout) {
+        return (MemorySegment) read(MemorySegment.class, layout);
+    }
+
+    private Object read(Class<?> carrier, MemoryLayout layout) {
+        SharedUtils.checkCompatibleType(carrier, layout, Windowsx64Linker.ADDRESS_SIZE);
+        Object res;
+        if (carrier == MemorySegment.class) {
+            TypeClass typeClass = TypeClass.typeClassFor(layout);
+            res = switch (typeClass) {
+                case STRUCT_REFERENCE -> {
+                    MemoryAddress structAddr = (MemoryAddress) VH_address.get(ptr);
+                    try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
+                                                                            segment.ownerThread(), null, null)) {
+                        MemorySegment seg = MemorySegment.allocateNative(layout.byteSize());
+                        seg.copyFrom(struct);
+                        yield seg;
+                    }
+                }
+                case STRUCT_REGISTER -> {
+                    MemorySegment struct = MemorySegment.allocateNative(layout);
+                    struct.copyFrom(segment.asSlice(ptr.segmentOffset(), layout.byteSize()));
+                    yield struct;
+                }
+                default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
+            };
+        } else {
+            VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+            res = reader.get(ptr);
+        }
+        ptr = ptr.addOffset(VA_SLOT_SIZE_BYTES);
+        return res;
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        ptr = ptr.addOffset(layouts.length * VA_SLOT_SIZE_BYTES);
+    }
+
+    static WinVaList ofAddress(MemoryAddress addr) {
+        return new WinVaList(MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null));
     }
 
     static Builder builder() {
@@ -89,8 +155,8 @@ class WinVaList implements CSupport.VaList {
     }
 
     @Override
-    public Reader reader(int num) {
-        return new Reader(num);
+    public CSupport.VaList copy() {
+        return WinVaList.ofAddress(ptr.addOffset(0));
     }
 
     @Override
@@ -163,74 +229,6 @@ class WinVaList implements CSupport.VaList {
             }
 
             return new WinVaList(ms.withAccessModes(CLOSE | READ), copies);
-        }
-    }
-
-    class Reader implements CSupport.VaList.Reader {
-        private MemoryAddress ptr;
-
-        public Reader(int num) {
-            ptr = segment.asSlice(0, num * VA_SLOT_SIZE_BYTES).baseAddress();
-        }
-
-        @Override
-        public int readInt(MemoryLayout layout) {
-            return (int) read(int.class, layout);
-        }
-
-        @Override
-        public long readLong(MemoryLayout layout) {
-            return (long) read(long.class, layout);
-        }
-
-        @Override
-        public double readDouble(MemoryLayout layout) {
-            return (double) read(double.class, layout);
-        }
-
-        @Override
-        public MemoryAddress readPointer(MemoryLayout layout) {
-            return (MemoryAddress) read(MemoryAddress.class, layout);
-        }
-
-        @Override
-        public MemorySegment readStructOrUnion(MemoryLayout layout) {
-            return (MemorySegment) read(MemorySegment.class, layout);
-        }
-
-        private Object read(Class<?> carrier, MemoryLayout layout) {
-            SharedUtils.checkCompatibleType(carrier, layout, Windowsx64Linker.ADDRESS_SIZE);
-            Object res;
-            if (carrier == MemorySegment.class) {
-                TypeClass typeClass = TypeClass.typeClassFor(layout);
-                res = switch (typeClass) {
-                    case STRUCT_REFERENCE -> {
-                        MemoryAddress structAddr = (MemoryAddress) VH_address.get(ptr);
-                        try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
-                                                                                segment.ownerThread(), null, null)) {
-                            MemorySegment seg = MemorySegment.allocateNative(layout.byteSize());
-                            seg.copyFrom(struct);
-                            yield seg;
-                        }
-                    }
-                    case STRUCT_REGISTER -> {
-                        MemorySegment struct = MemorySegment.allocateNative(layout);
-                        struct.copyFrom(segment.asSlice(ptr.segmentOffset(), layout.byteSize()));
-                        yield struct;
-                    }
-                    default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
-                };
-            } else {
-                VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                res = reader.get(ptr);
-            }
-            ptr = ptr.addOffset(VA_SLOT_SIZE_BYTES);
-            return res;
-        }
-
-        @Override
-        public void skip(MemoryLayout... layouts) {
-            ptr = ptr.addOffset(layouts.length * VA_SLOT_SIZE_BYTES);
         }
     }
 }

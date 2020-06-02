@@ -139,6 +139,6 @@ public class Windowsx64Linker implements ForeignLinker {
     }
 
     private static CSupport.VaList boxVaList(MemoryAddress ma) {
-        return new WinVaList(MemorySegment.ofNativeRestricted(ma, Long.MAX_VALUE, Thread.currentThread(), null, null));
+        return WinVaList.ofAddress(ma);
     }
 }
