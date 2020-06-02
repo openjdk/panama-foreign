@@ -31,7 +31,7 @@ extern "C" {
 #define EXPORT
 #endif
 
-void func(void (*callback)(int argc, char** argv));
+EXPORT void func(void (*callback)(int argc, char** argv));
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,7 @@ import jdk.incubator.foreign.NativeAllocationScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246341.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static test.jextract.test8246341.test8246341_h.*;
 
 /*
@@ -41,13 +42,18 @@ import static test.jextract.test8246341.test8246341_h.*;
 public class LibTest8246341Test {
     @Test
     public void test() {
-        try (var scope = func$callback.allocate((argc, argv) -> {
-            var addr = Cpointer.resize(argv, argc);
+        boolean[] callbackCalled = new boolean[1];
+        try (var callback = func$callback.allocate((argc, argv) -> {
+            callbackCalled[0] = true;
+            var addr = Cpointer.asArray(argv, argc);
             assertEquals(argc, 4);
             assertEquals(Cstring.toJavaString(Cpointer.get(addr, 0)), "java");
             assertEquals(Cstring.toJavaString(Cpointer.get(addr, 1)), "python");
             assertEquals(Cstring.toJavaString(Cpointer.get(addr, 2)), "javascript");
             assertEquals(Cstring.toJavaString(Cpointer.get(addr, 3)), "c++");
-        })) {}
+        })) {
+            func(callback.baseAddress());
+        }
+        assertTrue(callbackCalled[0]);
     }
 }

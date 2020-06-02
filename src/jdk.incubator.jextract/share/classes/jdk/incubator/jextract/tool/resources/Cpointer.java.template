@@ -22,7 +22,7 @@ public final class Cpointer {
         return MemoryAddress.ofLong((long) handle.get(addr));
     }
 
-    public static MemoryAddress resize(MemoryAddress addr, int numPointers) {
+    public static MemoryAddress asArray(MemoryAddress addr, int numPointers) {
         return MemorySegment.ofNativeRestricted(addr, numPointers * LAYOUT.byteSize(),
                Thread.currentThread(), null, null).baseAddress();
     }
