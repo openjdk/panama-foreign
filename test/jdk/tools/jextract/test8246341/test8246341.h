@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 EXPORT void func(void (*callback)(int argc, char** argv));
+EXPORT void fillin(char** pmsg);
 
 #ifdef __cplusplus
 }

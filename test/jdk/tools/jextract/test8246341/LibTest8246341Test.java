@@ -23,6 +23,7 @@
 
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeAllocationScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246341.*;
@@ -41,7 +42,7 @@ import static test.jextract.test8246341.test8246341_h.*;
  */
 public class LibTest8246341Test {
     @Test
-    public void test() {
+    public void testPointerArray() {
         boolean[] callbackCalled = new boolean[1];
         try (var callback = func$callback.allocate((argc, argv) -> {
             callbackCalled[0] = true;
@@ -55,5 +56,20 @@ public class LibTest8246341Test {
             func(callback.baseAddress());
         }
         assertTrue(callbackCalled[0]);
+    }
+
+    @Test
+    public void testPointerAllocate() {
+        try (var scope = NativeAllocationScope.boundedScope(Cpointer.sizeof())) {
+            var addr = Cpointer.allocate(MemoryAddress.NULL, scope);
+            fillin(addr);
+            assertEquals(Cstring.toJavaString(Cpointer.get(addr)), "hello world");
+        }
+
+        try (var seg = Cpointer.allocate(MemoryAddress.NULL)) {
+            var addr = seg.baseAddress();
+            fillin(addr);
+            assertEquals(Cstring.toJavaString(Cpointer.get(addr)), "hello world");
+        }
     }
 }

@@ -23,6 +23,11 @@ public class C-X {
     private static final VarHandle handle = LAYOUT.varHandle(CARRIER);
     private static final VarHandle arrayHandle = arrayHandle(LAYOUT, CARRIER);
 
+    public static MemoryAddress asArray(MemoryAddress addr, int numElements) {
+        return MemorySegment.ofNativeRestricted(addr, numElements * LAYOUT.byteSize(),
+               Thread.currentThread(), null, null).baseAddress();
+    }
+
     public static ${CARRIER} get(MemoryAddress addr) {
         return (${CARRIER}) handle.get(addr);
     }

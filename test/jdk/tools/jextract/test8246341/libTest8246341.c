@@ -25,8 +25,13 @@
 
 #define NUM_STRINGS 4
 
-char* table[NUM_STRINGS] = { "java", "python", "javascript", "c++" };
+static char* table[NUM_STRINGS] = { "java", "python", "javascript", "c++" };
+static char* msg = "hello world";
 
 EXPORT void func(void (*callback)(int argc, char** argv)) {
     callback(NUM_STRINGS, table);
+}
+
+EXPORT void fillin(char** pmsg) {
+    *pmsg = msg;
 }
