@@ -156,6 +156,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.addAll(constantHelper.getClasses());
             files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(getCstringFile(pkgName));
+            files.add(getCpointerFile(pkgName));
             files.addAll(getPrimitiveTypeFiles(pkgName));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
@@ -181,12 +182,20 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private JavaFileObject getCstringFile(String pkgName) throws IOException, URISyntaxException {
-        var cstringFile = OutputFactory.class.getResource("resources/Cstring.java.template");
+        return getTemplateFile(pkgName, "Cstring", "resources/Cstring.java.template");
+    }
+
+    private JavaFileObject getCpointerFile(String pkgName) throws IOException, URISyntaxException {
+        return getTemplateFile(pkgName, "Cpointer", "resources/Cpointer.java.template");
+    }
+
+    private JavaFileObject getTemplateFile(String pkgName, String className, String path) throws IOException, URISyntaxException {
+        var cstringFile = OutputFactory.class.getResource(path);
         var lines = Files.readAllLines(Paths.get(cstringFile.toURI()));
         String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
         String contents =  pkgPrefix +
                 lines.stream().collect(Collectors.joining("\n"));
-        return fileFromString(pkgName,"Cstring", contents);
+        return fileFromString(pkgName,className, contents);
     }
 
     private List<JavaFileObject> getPrimitiveTypeFiles(String pkgName) throws IOException, URISyntaxException {
