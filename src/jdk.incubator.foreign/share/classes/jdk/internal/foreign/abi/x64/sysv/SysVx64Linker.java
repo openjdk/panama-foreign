@@ -150,4 +150,8 @@ public class SysVx64Linker implements ForeignLinker {
     private static CSupport.VaList boxVaList(MemoryAddress ma) {
         return SysVVaList.ofAddress(ma);
     }
+
+    public static VaList newVaListOfAddress(MemoryAddress ma) {
+        return SysVVaList.ofAddress(ma);
+    }
 }

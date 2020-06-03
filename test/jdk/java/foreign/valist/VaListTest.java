@@ -161,11 +161,6 @@ public class VaListTest {
         }
     }
 
-    // TODO
-    // check by-value struct immutability on both ABIS
-    // check read/write/close access (not just read) of values read from va_list
-    // check va_copy is really an effective copy, and no argument aliasing can occur
-
     @Test
     public void testWinStructByValue() throws Throwable {
         try (MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT)) {
@@ -224,6 +219,22 @@ public class VaListTest {
         return new Object[][]{
             { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.readStructOrUnion(BigPoint_LAYOUT)) {
+                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                }
+            })},
+            { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
+                VaList copy = vaList.copy();
+                try (MemorySegment struct = vaList.readStructOrUnion(BigPoint_LAYOUT)) {
+                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+
+                    VH_BigPoint_x.set(struct.baseAddress(), 0);
+                    VH_BigPoint_y.set(struct.baseAddress(), 0);
+                }
+
+                // should be independent
+                try (MemorySegment struct = copy.readStructOrUnion(BigPoint_LAYOUT)) {
                     assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
                 }
@@ -307,10 +318,31 @@ public class VaListTest {
                     assertEquals((int) VH_Point_y.get(point.baseAddress()), 10);
                 }
 
+                VaList copy = vaList.copy();
                 try (MemorySegment bigPoint = vaList.readStructOrUnion(BigPoint_LAYOUT)) {
                     assertEquals((long) VH_BigPoint_x.get(bigPoint.baseAddress()), 15);
                     assertEquals((long) VH_BigPoint_y.get(bigPoint.baseAddress()), 20);
+
+                    VH_BigPoint_x.set(bigPoint.baseAddress(), 0);
+                    VH_BigPoint_y.set(bigPoint.baseAddress(), 0);
                 }
+
+                // should be independent
+                try (MemorySegment struct = copy.readStructOrUnion(BigPoint_LAYOUT)) {
+                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 15);
+                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 20);
+                }
+            })},
+            // test skip
+            { linkVaListCB("upcallStack"), VaListConsumer.mh(vaList -> {
+                vaList.skip(C_LONGLONG, C_LONGLONG, C_LONGLONG, C_LONGLONG);
+                assertEquals(vaList.readLong(C_LONGLONG), 5L);
+                vaList.skip(C_LONGLONG, C_LONGLONG, C_LONGLONG, C_LONGLONG);
+                assertEquals(vaList.readLong(C_LONGLONG), 10L);
+                vaList.skip(C_LONGLONG, C_LONGLONG, C_LONGLONG, C_LONGLONG, C_LONGLONG, C_LONGLONG);
+                assertEquals(vaList.readDouble(C_DOUBLE), 1.0D);
+                vaList.skip(C_DOUBLE, C_DOUBLE, C_DOUBLE, C_DOUBLE);
+                assertEquals(vaList.readDouble(C_DOUBLE), 6.0D);
             })},
         };
     }

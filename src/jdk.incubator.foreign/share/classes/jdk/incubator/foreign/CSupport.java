@@ -139,6 +139,23 @@ public class CSupport {
         VaList copy();
 
         /**
+         * Returns the underlying memory address of this va list.
+         *
+         * @return the address
+         */
+        MemoryAddress toAddress();
+
+        /**
+         * Constructs a {@code VaList} out of the memory address of a va_list.
+         *
+         * @param ma the memory address
+         * @return the new {@code VaList}.
+         */
+        static VaList ofAddress(MemoryAddress ma) {
+            return SharedUtils.newVaListOfAddress(ma);
+        }
+
+        /**
          * A builder interface used to construct a va list.
          */
         interface Builder {

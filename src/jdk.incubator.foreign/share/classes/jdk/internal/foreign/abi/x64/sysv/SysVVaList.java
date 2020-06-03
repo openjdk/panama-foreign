@@ -250,8 +250,14 @@ public class SysVVaList implements VaList {
     @Override
     public void skip(MemoryLayout... layouts) {
         for (MemoryLayout layout : layouts) {
-            preAlignStack(layout);
-            postAlignStack(layout);
+            TypeClass typeClass = TypeClass.classifyLayout(layout);
+            if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass)) {
+                preAlignStack(layout);
+                postAlignStack(layout);
+            } else {
+                currentGPOffset(currentGPOffset() + (((int) typeClass.nIntegerRegs()) * GP_SLOT_SIZE));
+                currentFPOffset(currentFPOffset() + (((int) typeClass.nVectorRegs()) * FP_SLOT_SIZE));
+            }
         }
     }
 
@@ -283,6 +289,11 @@ public class SysVVaList implements VaList {
         MemorySegment copy = MemorySegment.allocateNative(LAYOUT.byteSize());
         copy.copyFrom(segment);
         return new SysVVaList(copy);
+    }
+
+    @Override
+    public MemoryAddress toAddress() {
+        return segment.baseAddress();
     }
 
     private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset, TypeClass typeClass) {

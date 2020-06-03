@@ -141,4 +141,9 @@ public class Windowsx64Linker implements ForeignLinker {
     private static CSupport.VaList boxVaList(MemoryAddress ma) {
         return WinVaList.ofAddress(ma);
     }
+
+    public static VaList newVaListOfAddress(MemoryAddress ma) {
+        return WinVaList.ofAddress(ma);
+    }
+
 }

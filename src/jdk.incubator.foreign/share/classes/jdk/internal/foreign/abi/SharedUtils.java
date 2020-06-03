@@ -262,6 +262,17 @@ public class SharedUtils {
             ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
             : layout.varHandle(carrier);
     }
+
+    public static VaList newVaListOfAddress(MemoryAddress ma) {
+        String name = CSupport.getSystemLinker().name();
+        return switch(name) {
+            case Win64.NAME -> Windowsx64Linker.newVaListOfAddress(ma);
+            case SysV.NAME -> SysVx64Linker.newVaListOfAddress(ma);
+            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        };
+    }
+
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;

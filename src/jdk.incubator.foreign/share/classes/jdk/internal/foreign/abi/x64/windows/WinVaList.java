@@ -156,7 +156,12 @@ class WinVaList implements CSupport.VaList {
 
     @Override
     public CSupport.VaList copy() {
-        return WinVaList.ofAddress(ptr.addOffset(0));
+        return WinVaList.ofAddress(ptr);
+    }
+
+    @Override
+    public MemoryAddress toAddress() {
+        return ptr;
     }
 
     @Override
