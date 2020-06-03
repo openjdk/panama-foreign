@@ -7,13 +7,18 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeAllocationScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static ${C_LANG}.*;
 
@@ -78,6 +83,47 @@ public class RuntimeHelper {
             return upcallStub(handle, fdesc);
         } catch (Throwable ex) {
             throw new AssertionError(ex);
+        }
+    }
+
+    public static final class Scope extends NativeAllocationScope {
+        private final NativeAllocationScope impl;
+        private final List<MemorySegment> segments = new ArrayList<>();
+
+        public Scope() {
+            impl = NativeAllocationScope.unboundedScope();
+        }
+
+        public Scope(long size) {
+            impl = NativeAllocationScope.boundedScope(size);
+        }
+
+        @Override
+        public OptionalLong byteSize() {
+            return impl.byteSize();
+        }
+
+        @Override
+        public long allocatedBytes() {
+            return impl.allocatedBytes();
+        }
+
+        @Override
+        public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
+            return impl.allocate(bytesSize, bytesAlignment);
+        }
+
+        @Override
+        public void close() {
+            for (var seg : segments) {
+                seg.close();
+            }
+            impl.close();
+        }
+
+        public MemorySegment register(MemorySegment seg) {
+            segments.add(Objects.requireNonNull(seg));
+            return seg;
         }
     }
 
