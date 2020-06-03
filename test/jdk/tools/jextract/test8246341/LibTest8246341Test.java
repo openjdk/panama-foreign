@@ -21,8 +21,6 @@
  * questions.
  */
 
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeAllocationScope;
 import org.testng.annotations.Test;
@@ -36,7 +34,7 @@ import static test.jextract.test8246341.test8246341_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @bug 8246341
- * @summary jextract should generate simple allocation, access API for C primitive types
+ * @summary jextract should generate Cpointer utilities class
  * @run driver JtregJextract -l Test8246341 -t test.jextract.test8246341 -- test8246341.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8246341Test
  */
