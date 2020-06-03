@@ -582,8 +582,8 @@ import static org.sqlite.sqlite3_h.*;
 public class SqliteMain {
    public static void main(String[] args) throws Exception {
         try (var scope = new CScope()) {
-            // char** errMsg;
-            var errMsg = Cpointer.allocate(NULL, scope);
+            // char** errMsgPtrPtr;
+            var errMsgPtrPtr = Cpointer.allocate(NULL, scope);
 
             // sqlite3** dbPtrPtr;
             var dbPtrPtr = Cpointer.allocate(NULL, scope);
@@ -606,12 +606,12 @@ public class SqliteMain {
                 "  NAME TEXT NOT NULL,"    +
                 "  SALARY REAL NOT NULL )", scope);
 
-            rc = sqlite3_exec(dbPtr, sql, NULL, NULL, errMsg);
+            rc = sqlite3_exec(dbPtr, sql, NULL, NULL, errMsgPtrPtr);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsg)));
-                //sqlite3_free(errMsg);
+                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsgPtrPtr)));
+                sqlite3_free(Cpointer.get(errMsgPtrPtr));
             } else {
                 System.out.println("employee table created");
             }
@@ -623,12 +623,12 @@ public class SqliteMain {
                 "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
                     "VALUES (333, 'Abc', 100000.0);", scope
             );
-            rc = sqlite3_exec(dbPtr, sql, NULL, NULL, errMsg);
+            rc = sqlite3_exec(dbPtr, sql, NULL, NULL, errMsgPtrPtr);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsg)));
-                // sqlite3_free(Cpointer.get(errMsg));
+                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsgPtrPtr)));
+                sqlite3_free(Cpointer.get(errMsgPtrPtr));
             } else {
                 System.out.println("rows inserted");
             }
@@ -651,12 +651,12 @@ public class SqliteMain {
 
             // select query
             sql = Cstring.toCString("SELECT * FROM EMPLOYEE", scope);
-            rc = sqlite3_exec(dbPtr, sql, callback.baseAddress(), NULL, errMsg);
+            rc = sqlite3_exec(dbPtr, sql, callback.baseAddress(), NULL, errMsgPtrPtr);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsg)));
-                // sqlite3_free(Cpointer.get(errMsg));
+                System.err.println("SQL error: " + Cstring.toJavaString(Cpointer.get(errMsgPtrPtr)));
+                sqlite3_free(Cpointer.get(errMsgPtrPtr));
             } else {
                 System.out.println("done");
             }
@@ -665,6 +665,7 @@ public class SqliteMain {
         }
     }
 }
+
 ```
 
 ### Compiling and running the libgit2 sample
