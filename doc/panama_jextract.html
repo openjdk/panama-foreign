@@ -142,6 +142,12 @@
 <li><a href="#compiling-and-running-the-libgit2-sample">Compiling and running the libgit2 sample</a></li>
 <li><a href="#cloning-a-github-repo-using-the-above-run.sh-command">Cloning a github repo using the above run.sh command</a></li>
 </ul></li>
+<li><a href="#using-sqlite3-library-from-java-mac-os">Using sqlite3 library from Java (Mac OS)</a>
+<ul>
+<li><a href="#jextract-sqlite3.h">jextract sqlite3.h</a></li>
+<li><a href="#java-program-that-uses-sqlite3">Java program that uses sqlite3</a></li>
+<li><a href="#compiling-and-running-the-libgit2-sample-1">Compiling and running the libgit2 sample</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -540,5 +546,111 @@
 <h3 id="cloning-a-github-repo-using-the-above-run.sh-command">Cloning a github repo using the above run.sh command</h3>
 <div class="sourceCode" id="cb29"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1"></a></span>
 <span id="cb29-2"><a href="#cb29-2"></a><span class="fu">sh</span> run.sh https://github.com/libgit2/libgit2.git libgit2</span></code></pre></div>
+<h2 id="using-sqlite3-library-from-java-mac-os">Using sqlite3 library from Java (Mac OS)</h2>
+<h3 id="jextract-sqlite3.h">jextract sqlite3.h</h3>
+<div class="sourceCode" id="cb30"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1"></a></span>
+<span id="cb30-2"><a href="#cb30-2"></a><span class="ex">jextract</span> \</span>
+<span id="cb30-3"><a href="#cb30-3"></a>  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \</span>
+<span id="cb30-4"><a href="#cb30-4"></a>  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sqlite3.h \</span>
+<span id="cb30-5"><a href="#cb30-5"></a>  -t org.sqlite -lsqlite3</span></code></pre></div>
+<h3 id="java-program-that-uses-sqlite3">Java program that uses sqlite3</h3>
+<div class="sourceCode" id="cb31"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb31-1"><a href="#cb31-1"></a></span>
+<span id="cb31-2"><a href="#cb31-2"></a><span class="kw">import</span><span class="im"> org.sqlite.Cpointer;</span></span>
+<span id="cb31-3"><a href="#cb31-3"></a><span class="kw">import</span><span class="im"> org.sqlite.Cstring;</span></span>
+<span id="cb31-4"><a href="#cb31-4"></a><span class="kw">import</span><span class="im"> org.sqlite.RuntimeHelper.CScope;</span></span>
+<span id="cb31-5"><a href="#cb31-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb31-6"><a href="#cb31-6"></a><span class="kw">import static</span><span class="im"> org.sqlite.sqlite3_h.*;</span></span>
+<span id="cb31-7"><a href="#cb31-7"></a></span>
+<span id="cb31-8"><a href="#cb31-8"></a><span class="kw">public</span> <span class="kw">class</span> SqliteMain {</span>
+<span id="cb31-9"><a href="#cb31-9"></a>   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) <span class="kw">throws</span> <span class="bu">Exception</span> {</span>
+<span id="cb31-10"><a href="#cb31-10"></a>        <span class="kw">try</span> (var scope = <span class="kw">new</span> <span class="fu">CScope</span>()) {</span>
+<span id="cb31-11"><a href="#cb31-11"></a>            <span class="co">// char** errMsg;</span></span>
+<span id="cb31-12"><a href="#cb31-12"></a>            var errMsg = Cpointer.<span class="fu">allocate</span>(NULL, scope);</span>
+<span id="cb31-13"><a href="#cb31-13"></a></span>
+<span id="cb31-14"><a href="#cb31-14"></a>            <span class="co">// sqlite3** dbPtrPtr;</span></span>
+<span id="cb31-15"><a href="#cb31-15"></a>            var dbPtrPtr = Cpointer.<span class="fu">allocate</span>(NULL, scope);</span>
+<span id="cb31-16"><a href="#cb31-16"></a></span>
+<span id="cb31-17"><a href="#cb31-17"></a>            <span class="dt">int</span> rc = <span class="fu">sqlite3_open</span>(Cstring.<span class="fu">toCString</span>(<span class="st">&quot;employee.db&quot;</span>,scope), dbPtrPtr);</span>
+<span id="cb31-18"><a href="#cb31-18"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
+<span id="cb31-19"><a href="#cb31-19"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_open failed: &quot;</span> + rc);</span>
+<span id="cb31-20"><a href="#cb31-20"></a>                <span class="kw">return</span>;</span>
+<span id="cb31-21"><a href="#cb31-21"></a>            } <span class="kw">else</span> {</span>
+<span id="cb31-22"><a href="#cb31-22"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;employee db opened&quot;</span>);</span>
+<span id="cb31-23"><a href="#cb31-23"></a>            }</span>
+<span id="cb31-24"><a href="#cb31-24"></a></span>
+<span id="cb31-25"><a href="#cb31-25"></a>            <span class="co">// sqlite3* dbPtr;</span></span>
+<span id="cb31-26"><a href="#cb31-26"></a>            var dbPtr = Cpointer.<span class="fu">get</span>(dbPtrPtr);</span>
+<span id="cb31-27"><a href="#cb31-27"></a></span>
+<span id="cb31-28"><a href="#cb31-28"></a>            <span class="co">// create a new table</span></span>
+<span id="cb31-29"><a href="#cb31-29"></a>            var sql = Cstring.<span class="fu">toCString</span>(</span>
+<span id="cb31-30"><a href="#cb31-30"></a>                <span class="st">&quot;CREATE TABLE EMPLOYEE (&quot;</span>  +</span>
+<span id="cb31-31"><a href="#cb31-31"></a>                <span class="st">&quot;  ID INT PRIMARY KEY NOT NULL,&quot;</span> +</span>
+<span id="cb31-32"><a href="#cb31-32"></a>                <span class="st">&quot;  NAME TEXT NOT NULL,&quot;</span>    +</span>
+<span id="cb31-33"><a href="#cb31-33"></a>                <span class="st">&quot;  SALARY REAL NOT NULL )&quot;</span>, scope);</span>
+<span id="cb31-34"><a href="#cb31-34"></a></span>
+<span id="cb31-35"><a href="#cb31-35"></a>            rc = <span class="fu">sqlite3_exec</span>(dbPtr, sql, NULL, NULL, errMsg);</span>
+<span id="cb31-36"><a href="#cb31-36"></a></span>
+<span id="cb31-37"><a href="#cb31-37"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
+<span id="cb31-38"><a href="#cb31-38"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
+<span id="cb31-39"><a href="#cb31-39"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsg)));</span>
+<span id="cb31-40"><a href="#cb31-40"></a>                <span class="co">//sqlite3_free(errMsg);</span></span>
+<span id="cb31-41"><a href="#cb31-41"></a>            } <span class="kw">else</span> {</span>
+<span id="cb31-42"><a href="#cb31-42"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;employee table created&quot;</span>);</span>
+<span id="cb31-43"><a href="#cb31-43"></a>            }</span>
+<span id="cb31-44"><a href="#cb31-44"></a></span>
+<span id="cb31-45"><a href="#cb31-45"></a>            <span class="co">// insert two rows</span></span>
+<span id="cb31-46"><a href="#cb31-46"></a>            sql = Cstring.<span class="fu">toCString</span>(</span>
+<span id="cb31-47"><a href="#cb31-47"></a>                <span class="st">&quot;INSERT INTO EMPLOYEE (ID,NAME,SALARY) &quot;</span> +</span>
+<span id="cb31-48"><a href="#cb31-48"></a>                    <span class="st">&quot;VALUES (134, &#39;Xyz&#39;, 200000.0); &quot;</span> +</span>
+<span id="cb31-49"><a href="#cb31-49"></a>                <span class="st">&quot;INSERT INTO EMPLOYEE (ID,NAME,SALARY) &quot;</span> +</span>
+<span id="cb31-50"><a href="#cb31-50"></a>                    <span class="st">&quot;VALUES (333, &#39;Abc&#39;, 100000.0);&quot;</span>, scope</span>
+<span id="cb31-51"><a href="#cb31-51"></a>            );</span>
+<span id="cb31-52"><a href="#cb31-52"></a>            rc = <span class="fu">sqlite3_exec</span>(dbPtr, sql, NULL, NULL, errMsg);</span>
+<span id="cb31-53"><a href="#cb31-53"></a></span>
+<span id="cb31-54"><a href="#cb31-54"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
+<span id="cb31-55"><a href="#cb31-55"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
+<span id="cb31-56"><a href="#cb31-56"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsg)));</span>
+<span id="cb31-57"><a href="#cb31-57"></a>                <span class="co">// sqlite3_free(Cpointer.get(errMsg));</span></span>
+<span id="cb31-58"><a href="#cb31-58"></a>            } <span class="kw">else</span> {</span>
+<span id="cb31-59"><a href="#cb31-59"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;rows inserted&quot;</span>);</span>
+<span id="cb31-60"><a href="#cb31-60"></a>            }</span>
+<span id="cb31-61"><a href="#cb31-61"></a></span>
+<span id="cb31-62"><a href="#cb31-62"></a>            <span class="dt">int</span>[] rowNum = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</span>
+<span id="cb31-63"><a href="#cb31-63"></a>            <span class="co">// callback to print rows from SELECT query</span></span>
+<span id="cb31-64"><a href="#cb31-64"></a>            var callback = sqlite3_exec$callback.<span class="fu">allocate</span>((a, argc, argv, columnNames) -&gt; {</span>
+<span id="cb31-65"><a href="#cb31-65"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Row num: &quot;</span> + rowNum[<span class="dv">0</span>]++);</span>
+<span id="cb31-66"><a href="#cb31-66"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;numColumns = &quot;</span> + argc);</span>
+<span id="cb31-67"><a href="#cb31-67"></a>                argv = Cpointer.<span class="fu">asArray</span>(argv, argc);</span>
+<span id="cb31-68"><a href="#cb31-68"></a>                columnNames = Cpointer.<span class="fu">asArray</span>(columnNames, argc);</span>
+<span id="cb31-69"><a href="#cb31-69"></a>                <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; argc; i++) {</span>
+<span id="cb31-70"><a href="#cb31-70"></a>                     <span class="bu">String</span> name = Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(columnNames, i));</span>
+<span id="cb31-71"><a href="#cb31-71"></a>                     <span class="bu">String</span> value = Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(argv, i));</span>
+<span id="cb31-72"><a href="#cb31-72"></a>                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</span>
+<span id="cb31-73"><a href="#cb31-73"></a>                }</span>
+<span id="cb31-74"><a href="#cb31-74"></a>                <span class="kw">return</span> <span class="dv">0</span>;</span>
+<span id="cb31-75"><a href="#cb31-75"></a>            });</span>
+<span id="cb31-76"><a href="#cb31-76"></a>            scope.<span class="fu">register</span>(callback);</span>
+<span id="cb31-77"><a href="#cb31-77"></a></span>
+<span id="cb31-78"><a href="#cb31-78"></a>            <span class="co">// select query</span></span>
+<span id="cb31-79"><a href="#cb31-79"></a>            sql = Cstring.<span class="fu">toCString</span>(<span class="st">&quot;SELECT * FROM EMPLOYEE&quot;</span>, scope);</span>
+<span id="cb31-80"><a href="#cb31-80"></a>            rc = <span class="fu">sqlite3_exec</span>(dbPtr, sql, callback.<span class="fu">baseAddress</span>(), NULL, errMsg);</span>
+<span id="cb31-81"><a href="#cb31-81"></a></span>
+<span id="cb31-82"><a href="#cb31-82"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
+<span id="cb31-83"><a href="#cb31-83"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
+<span id="cb31-84"><a href="#cb31-84"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsg)));</span>
+<span id="cb31-85"><a href="#cb31-85"></a>                <span class="co">// sqlite3_free(Cpointer.get(errMsg));</span></span>
+<span id="cb31-86"><a href="#cb31-86"></a>            } <span class="kw">else</span> {</span>
+<span id="cb31-87"><a href="#cb31-87"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;done&quot;</span>);</span>
+<span id="cb31-88"><a href="#cb31-88"></a>            }</span>
+<span id="cb31-89"><a href="#cb31-89"></a></span>
+<span id="cb31-90"><a href="#cb31-90"></a>            <span class="fu">sqlite3_close</span>(dbPtr);</span>
+<span id="cb31-91"><a href="#cb31-91"></a>        }</span>
+<span id="cb31-92"><a href="#cb31-92"></a>    }</span>
+<span id="cb31-93"><a href="#cb31-93"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-libgit2-sample-1">Compiling and running the libgit2 sample</h3>
+<div class="sourceCode" id="cb32"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1"></a></span>
+<span id="cb32-2"><a href="#cb32-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
+<span id="cb32-3"><a href="#cb32-3"></a>   --add-modules jdk.incubator.foreign \</span>
+<span id="cb32-4"><a href="#cb32-4"></a>   -Djava.library.path=/usr/lib SqliteMain.java</span></code></pre></div>
 </body>
 </html>
