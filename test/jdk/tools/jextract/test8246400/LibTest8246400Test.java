@@ -42,7 +42,7 @@ public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
         MemorySegment sum = null, callback = null;
-        try (var scope = new Scope()) {
+        try (var scope = new CScope()) {
             var v1 = CVector.allocate(scope);
             CVector.x$set(v1, 1.0);
             CVector.y$set(v1, 0.0);

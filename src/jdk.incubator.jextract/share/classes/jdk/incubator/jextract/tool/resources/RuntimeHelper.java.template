@@ -86,15 +86,15 @@ public class RuntimeHelper {
         }
     }
 
-    public static final class Scope extends NativeAllocationScope {
+    public static final class CScope extends NativeAllocationScope {
         private final NativeAllocationScope impl;
         private final List<MemorySegment> segments = new ArrayList<>();
 
-        public Scope() {
+        public CScope() {
             impl = NativeAllocationScope.unboundedScope();
         }
 
-        public Scope(long size) {
+        public CScope(long size) {
             impl = NativeAllocationScope.boundedScope(size);
         }
 
