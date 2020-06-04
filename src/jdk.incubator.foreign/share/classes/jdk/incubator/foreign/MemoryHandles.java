@@ -357,9 +357,14 @@ public final class MemoryHandles {
      * primitive data types as if they were a wider signed primitive type. For
      * example, it is often convenient to model an <i>unsigned short</i> as a
      * Java {@code int} to avoid dealing with negative values, which would be
-     * the case if modeled as a Java {@code short}. The returned var handle
-     * converts to and from wider primitive types, to a more narrow possibly
-     * unsigned primitive type.
+     * the case if modeled as a Java {@code short}. This is illustrated in the following example:
+     * <blockquote><pre>{@code
+    MemorySegment segment = MemorySegment.allocateNative(2);
+    VarHandle SHORT_VH = MemoryLayouts.JAVA_SHORT.varHandle(short.class);
+    VarHandle INT_VH = MemoryHandles.asUnsigned(SHORT_VH, int.class);
+    SHORT_VH.set(segment.baseAddress(), (short)-1);
+    INT_VH.get(segment.baseAddress()); // returns 65535
+     * }</pre></blockquote>
      * <p>
      * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var
      * handle, the incoming value (of type {@code adaptedType}) is converted by a
@@ -381,7 +386,7 @@ public final class MemoryHandles {
      *
      * @param target the memory access var handle to be adapted
      * @param adaptedType the adapted type
-     * @returns the adapted var handle.
+     * @return the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code target}
      * is not one of {@code byte}, {@code short}, or {@code int}; if {@code
      * adaptedType} is not one of {@code int}, or {@code long}; if the bitwidth

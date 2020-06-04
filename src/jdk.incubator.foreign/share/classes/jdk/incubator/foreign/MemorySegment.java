@@ -74,7 +74,7 @@ import java.util.function.Consumer;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFromPath(Path, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
+ * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
  * (see {@link MappedMemorySegment}).
  *
  * <h2>Closing a memory segment</h2>
@@ -292,12 +292,14 @@ public interface MemorySegment extends AutoCloseable {
      * More specifically, the given value is filled into each address of this
      * segment. Equivalent to (but likely more efficient than) the following code:
      *
-     * <blockquote><pre>
-     * byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
-     *         .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-     * for (long l = 0; l < segment.byteSize(); l++) {
-     *     byteHandle.set(segment.baseAddress(), l, value);
-     * }</pre></blockquote>
+     * <pre>{@code
+byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+         .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+for (long l = 0; l < segment.byteSize(); l++) {
+     byteHandle.set(segment.baseAddress(), l, value);
+}
+     * }</pre>
+     *
      * without any regard or guarantees on the ordering of particular memory
      * elements being set.
      * <p>
@@ -325,7 +327,7 @@ public interface MemorySegment extends AutoCloseable {
      * For example, this may occur if the same file is {@link MemorySegment#mapFromPath mapped} to two segments.
      *
      * @param src the source segment.
-     * @throws IndexOutOfBoundsException if {src.byteSize() > this.byteSize()}.
+     * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
      * @throws IllegalStateException if either the source segment or this segment have been already closed,
      * or if access occurs from a thread other than the thread owning either segment.
      * @throws UnsupportedOperationException if either the source segment or this segment do not feature required access modes;
