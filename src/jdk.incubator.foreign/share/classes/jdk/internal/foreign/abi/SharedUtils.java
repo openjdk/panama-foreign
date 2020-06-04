@@ -24,10 +24,12 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
@@ -41,7 +43,9 @@ import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
@@ -49,6 +53,7 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodType.methodType;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class SharedUtils {
 
@@ -185,15 +190,15 @@ public class SharedUtils {
         return dest;
     }
 
-    private static void checkCompatibleType(Class<?> carrier, MemoryLayout layout, long addressSize) {
+    public static void checkCompatibleType(Class<?> carrier, MemoryLayout layout, long addressSize) {
         if (carrier.isPrimitive()) {
             Utils.checkPrimitiveCarrierCompat(carrier, layout);
         } else if (carrier == MemoryAddress.class) {
             Utils.checkLayoutType(layout, ValueLayout.class);
             if (layout.bitSize() != addressSize)
                 throw new IllegalArgumentException("Address size mismatch: " + addressSize + " != " + layout.bitSize());
-        } else if(carrier == MemorySegment.class) {
-           Utils.checkLayoutType(layout, GroupLayout.class);
+        } else if (carrier == MemorySegment.class) {
+            Utils.checkLayoutType(layout, GroupLayout.class);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier);
         }
@@ -240,5 +245,49 @@ public class SharedUtils {
             return AArch64Linker.getInstance();
         }
         throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
+    }
+
+    public static VaList newVaList(Consumer<VaList.Builder> actions) {
+        String name = CSupport.getSystemLinker().name();
+        return switch(name) {
+            case Win64.NAME -> Windowsx64Linker.newVaList(actions);
+            case SysV.NAME -> SysVx64Linker.newVaList(actions);
+            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        };
+    }
+
+    public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
+        return carrier == MemoryAddress.class
+            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+            : layout.varHandle(carrier);
+    }
+
+    public static VaList newVaListOfAddress(MemoryAddress ma) {
+        String name = CSupport.getSystemLinker().name();
+        return switch(name) {
+            case Win64.NAME -> Windowsx64Linker.newVaListOfAddress(ma);
+            case SysV.NAME -> SysVx64Linker.newVaListOfAddress(ma);
+            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        };
+    }
+
+    public static class SimpleVaArg {
+        public final Class<?> carrier;
+        public final MemoryLayout layout;
+        public final Object value;
+
+        public SimpleVaArg(Class<?> carrier, MemoryLayout layout, Object value) {
+            this.carrier = carrier;
+            this.layout = layout;
+            this.value = value;
+        }
+
+        public VarHandle varHandle() {
+            return carrier == MemoryAddress.class
+                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+                : layout.varHandle(carrier);
+        }
     }
 }

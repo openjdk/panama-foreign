@@ -67,6 +67,11 @@ public final class Utils {
         return (n + alignment - 1) & -alignment;
     }
 
+    public static MemoryAddress alignUp(MemoryAddress ma, long alignment) {
+        long offset = ma.toRawLongValue();
+        return ma.addOffset(alignUp(offset, alignment) - offset);
+    }
+
     public static long bitsToBytesOrThrow(long bits, Supplier<RuntimeException> exFactory) {
         if (bits % 8 == 0) {
             return bits / 8;
