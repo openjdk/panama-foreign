@@ -27,8 +27,6 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
@@ -47,7 +45,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static jdk.incubator.foreign.CSupport.*;
-import static jdk.incubator.foreign.CSupport.Win64.VARARGS_ATTRIBUTE_NAME;
 import static jdk.internal.foreign.abi.x64.X86_64Architecture.*;
 
 /**
@@ -146,75 +143,8 @@ public class CallArranger {
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
         return returnLayout
                 .filter(GroupLayout.class::isInstance)
-                .filter(g -> !isRegisterAggregate(g))
+                .filter(g -> !TypeClass.isRegisterAggregate(g))
                 .isPresent();
-    }
-
-    private enum TypeClass {
-        STRUCT_REGISTER,
-        STRUCT_REFERENCE,
-        POINTER,
-        INTEGER,
-        FLOAT,
-        VARARG_FLOAT
-    }
-
-    private static TypeClass classifyValueType(ValueLayout type) {
-        Win64.ArgumentClass clazz = Windowsx64Linker.argumentClassFor(type);
-        if (clazz == null) {
-            //padding not allowed here
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
-
-        // No 128 bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
-        // like a struct when passing as an argument (passed by pointer).
-        // https://docs.microsoft.com/en-us/cpp/cpp/m128?view=vs-2019
-
-        // x87 is ignored on Windows:
-        // "The x87 register stack is unused, and may be used by the callee,
-        // but must be considered volatile across function calls."
-        // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
-
-        if (clazz == Win64.ArgumentClass.INTEGER) {
-            return TypeClass.INTEGER;
-        } else if(clazz == Win64.ArgumentClass.POINTER) {
-            return TypeClass.POINTER;
-        } else if (clazz == Win64.ArgumentClass.FLOAT) {
-            if (type.attribute(VARARGS_ATTRIBUTE_NAME)
-                    .map(String.class::cast)
-                    .map(Boolean::parseBoolean).orElse(false)) {
-                return TypeClass.VARARG_FLOAT;
-            }
-            return TypeClass.FLOAT;
-        }
-        throw new IllegalArgumentException("Unknown ABI class: " + clazz);
-    }
-
-    private static boolean isRegisterAggregate(MemoryLayout type) {
-        long size = type.byteSize();
-        return size == 1
-            || size == 2
-            || size == 4
-            || size == 8;
-    }
-
-    private static TypeClass classifyStructType(MemoryLayout layout) {
-        if (isRegisterAggregate(layout)) {
-            return TypeClass.STRUCT_REGISTER;
-        }
-        return TypeClass.STRUCT_REFERENCE;
-    }
-
-    private static TypeClass classifyType(MemoryLayout type) {
-        if (type instanceof ValueLayout) {
-            return classifyValueType((ValueLayout) type);
-        } else if (type instanceof  GroupLayout) {
-            return classifyStructType(type);
-        } else if (type instanceof SequenceLayout) {
-            return TypeClass.INTEGER;
-        } else {
-            throw new IllegalArgumentException("Unhandled type " + type);
-        }
     }
 
     static class StorageCalculator {
@@ -263,7 +193,7 @@ public class CallArranger {
 
         @Override
         public List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyType(layout);
+            TypeClass argumentClass = TypeClass.typeClassFor(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
                 case STRUCT_REGISTER: {
@@ -326,7 +256,7 @@ public class CallArranger {
 
         @Override
         public List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyType(layout);
+            TypeClass argumentClass = TypeClass.typeClassFor(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
                 case STRUCT_REGISTER: {
