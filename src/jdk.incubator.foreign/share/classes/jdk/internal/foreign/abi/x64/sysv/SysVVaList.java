@@ -161,27 +161,27 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public int readInt(MemoryLayout layout) {
+    public int vargAsInt(MemoryLayout layout) {
         return (int) read(int.class, layout);
     }
 
     @Override
-    public long readLong(MemoryLayout layout) {
+    public long vargAsLong(MemoryLayout layout) {
         return (long) read(long.class, layout);
     }
 
     @Override
-    public double readDouble(MemoryLayout layout) {
+    public double vargAsDouble(MemoryLayout layout) {
         return (double) read(double.class, layout);
     }
 
     @Override
-    public MemoryAddress readPointer(MemoryLayout layout) {
+    public MemoryAddress vargAsAddress(MemoryLayout layout) {
         return (MemoryAddress) read(MemoryAddress.class, layout);
     }
 
     @Override
-    public MemorySegment readStructOrUnion(MemoryLayout layout) {
+    public MemorySegment vargAsSegment(MemoryLayout layout) {
         return (MemorySegment) read(MemorySegment.class, layout);
     }
 
@@ -318,27 +318,27 @@ public class SysVVaList implements VaList {
         private final List<SimpleVaArg> stackArgs = new ArrayList<>();
 
         @Override
-        public Builder intArg(MemoryLayout layout, int value) {
+        public Builder vargFromInt(MemoryLayout layout, int value) {
             return arg(int.class, layout, value);
         }
 
         @Override
-        public Builder longArg(MemoryLayout layout, long value) {
+        public Builder vargFromLong(MemoryLayout layout, long value) {
             return arg(long.class, layout, value);
         }
 
         @Override
-        public Builder doubleArg(MemoryLayout layout, double value) {
+        public Builder vargFromDouble(MemoryLayout layout, double value) {
             return arg(double.class, layout, value);
         }
 
         @Override
-        public Builder memoryAddressArg(MemoryLayout layout, MemoryAddress value) {
+        public Builder vargFromAddress(MemoryLayout layout, MemoryAddress value) {
             return arg(MemoryAddress.class, layout, value);
         }
 
         @Override
-        public Builder memorySegmentArg(MemoryLayout layout, MemorySegment value) {
+        public Builder vargFromSegment(MemoryLayout layout, MemorySegment value) {
             return arg(MemorySegment.class, layout, value);
         }
 

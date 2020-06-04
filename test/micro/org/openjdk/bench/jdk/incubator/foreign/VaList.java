@@ -80,9 +80,9 @@ public class VaList {
     @Benchmark
     public void vaList() throws Throwable {
         try (CSupport.VaList vaList = CSupport.newVaList(b ->
-            b.intArg(C_INT, 1)
-             .doubleArg(C_DOUBLE, 2D)
-             .longArg(C_LONGLONG, 3L)
+            b.vargFromInt(C_INT, 1)
+             .vargFromDouble(C_DOUBLE, 2D)
+             .vargFromLong(C_LONGLONG, 3L)
         )) {
             MH_vaList.invokeExact(3,
                                   vaList);

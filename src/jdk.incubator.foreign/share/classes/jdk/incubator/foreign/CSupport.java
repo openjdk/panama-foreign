@@ -73,7 +73,7 @@ public class CSupport {
          * @param layout the layout of the value
          * @return the value read as an {@code int}
          */
-        int readInt(MemoryLayout layout);
+        int vargAsInt(MemoryLayout layout);
 
         /**
          * Reads a value into a {@code long}
@@ -81,7 +81,7 @@ public class CSupport {
          * @param layout the layout of the value
          * @return the value read as an {@code long}
          */
-        long readLong(MemoryLayout layout);
+        long vargAsLong(MemoryLayout layout);
 
         /**
          * Reads a value into a {@code double}
@@ -89,7 +89,7 @@ public class CSupport {
          * @param layout the layout of the value
          * @return the value read as an {@code double}
          */
-        double readDouble(MemoryLayout layout);
+        double vargAsDouble(MemoryLayout layout);
 
         /**
          * Reads a value into a {@code MemoryAddress}
@@ -97,7 +97,7 @@ public class CSupport {
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
          */
-        MemoryAddress readPointer(MemoryLayout layout);
+        MemoryAddress vargAsAddress(MemoryLayout layout);
 
         /**
          * Reads a value into a {@code MemorySegment}
@@ -105,7 +105,7 @@ public class CSupport {
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
          */
-        MemorySegment readStructOrUnion(MemoryLayout layout);
+        MemorySegment vargAsSegment(MemoryLayout layout);
 
         /**
          * Skips a number of va arguments with the given memory layouts.
@@ -167,7 +167,7 @@ public class CSupport {
              * @param value the value, represented as an {@code int}.
              * @return this builder.
              */
-            Builder intArg(MemoryLayout layout, int value);
+            Builder vargFromInt(MemoryLayout layout, int value);
 
             /**
              * Adds a native value represented as a {@code long} to the va list.
@@ -176,7 +176,7 @@ public class CSupport {
              * @param value the value, represented as a {@code long}.
              * @return this builder.
              */
-            Builder longArg(MemoryLayout layout, long value);
+            Builder vargFromLong(MemoryLayout layout, long value);
 
             /**
              * Adds a native value represented as a {@code double} to the va list.
@@ -185,7 +185,7 @@ public class CSupport {
              * @param value the value, represented as a {@code double}.
              * @return this builder.
              */
-            Builder doubleArg(MemoryLayout layout, double value);
+            Builder vargFromDouble(MemoryLayout layout, double value);
 
             /**
              * Adds a native value represented as a {@code MemoryAddress} to the va list.
@@ -194,7 +194,7 @@ public class CSupport {
              * @param value the value, represented as a {@code MemoryAddress}.
              * @return this builder.
              */
-            Builder memoryAddressArg(MemoryLayout layout, MemoryAddress value);
+            Builder vargFromAddress(MemoryLayout layout, MemoryAddress value);
 
             /**
              * Adds a native value represented as a {@code MemorySegment} to the va list.
@@ -203,7 +203,7 @@ public class CSupport {
              * @param value the value, represented as a {@code MemorySegment}.
              * @return this builder.
              */
-            Builder memorySegmentArg(MemoryLayout layout, MemorySegment value);
+            Builder vargFromSegment(MemoryLayout layout, MemorySegment value);
         }
     }
 
