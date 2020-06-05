@@ -668,7 +668,7 @@ public class SqliteMain {
 
 ```
 
-### Compiling and running the libgit2 sample
+### Compiling and running the sqlite3 sample
 
 ```sh
 
