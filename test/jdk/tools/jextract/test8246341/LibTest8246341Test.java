@@ -22,7 +22,6 @@
  */
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.NativeAllocationScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246341.*;
 import static org.testng.Assert.assertEquals;
@@ -58,7 +57,7 @@ public class LibTest8246341Test {
 
     @Test
     public void testPointerAllocate() {
-        try (var scope = NativeAllocationScope.boundedScope(Cpointer.sizeof())) {
+        try (var scope = new CScope(Cpointer.sizeof())) {
             var addr = Cpointer.allocate(MemoryAddress.NULL, scope);
             fillin(addr);
             assertEquals(Cstring.toJavaString(Cpointer.get(addr)), "hello world");

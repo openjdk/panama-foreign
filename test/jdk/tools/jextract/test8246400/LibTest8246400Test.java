@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.Test;
 import test.jextract.test8246400.*;
@@ -41,7 +42,8 @@ import static test.jextract.test8246400.RuntimeHelper.*;
 public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
-        MemorySegment sum = null, callback = null;
+        MemorySegment sum = null;
+        MemoryAddress callback = null;
         try (var scope = new CScope()) {
             var v1 = CVector.allocate(scope);
             CVector.x$set(v1, 1.0);
@@ -60,16 +62,15 @@ public class LibTest8246400Test {
             callback = cosine_similarity$dot.allocate((a, b) -> {
                 return (CVector.x$get(a.baseAddress()) * CVector.x$get(b.baseAddress())) +
                     (CVector.y$get(a.baseAddress()) * CVector.y$get(b.baseAddress()));
-            });
-            scope.register(callback);
+            }, scope);
 
-            var value = cosine_similarity(v1.segment(), v2.segment(), callback.baseAddress());
+            var value = cosine_similarity(v1.segment(), v2.segment(), callback);
             assertEquals(value, 0.0, 0.1);
 
-            value = cosine_similarity(v1.segment(), v1.segment(), callback.baseAddress());
+            value = cosine_similarity(v1.segment(), v1.segment(), callback);
             assertEquals(value, 1.0, 0.1);
         }
         assertTrue(!sum.isAlive());
-        assertTrue(!callback.isAlive());
+        assertTrue(!callback.segment().isAlive());
     }
 }

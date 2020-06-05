@@ -50,7 +50,7 @@ public class C-X {
         return seg;
     }
 
-    public static MemoryAddress allocate(${CARRIER} value, NativeAllocationScope scope) {
+    public static MemoryAddress allocate(${CARRIER} value, CScope scope) {
         var addr = scope.allocate(LAYOUT);
         handle.set(addr, value);
         return addr;
@@ -61,7 +61,7 @@ public class C-X {
         return MemorySegment.allocateNative(arrLayout);
     }
 
-    public static MemoryAddress allocateArray(int length, NativeAllocationScope scope) {
+    public static MemoryAddress allocateArray(int length, CScope scope) {
         var arrLayout = MemoryLayout.ofSequence(length, LAYOUT);
         return scope.allocate(arrLayout);
     }
@@ -73,7 +73,7 @@ public class C-X {
         return seg;
     }
 
-    public static MemoryAddress allocateArray(${CARRIER}[] arr, NativeAllocationScope scope) {
+    public static MemoryAddress allocateArray(${CARRIER}[] arr, CScope scope) {
         var arrLayout = MemoryLayout.ofSequence(arr.length, LAYOUT);
         var addr = scope.allocate(arrLayout);
         addr.segment().copyFrom(MemorySegment.ofArray(arr));
