@@ -146,7 +146,7 @@
 <ul>
 <li><a href="#jextract-sqlite3.h">jextract sqlite3.h</a></li>
 <li><a href="#java-program-that-uses-sqlite3">Java program that uses sqlite3</a></li>
-<li><a href="#compiling-and-running-the-libgit2-sample-1">Compiling and running the libgit2 sample</a></li>
+<li><a href="#compiling-and-running-the-sqlite3-sample">Compiling and running the sqlite3 sample</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -313,30 +313,30 @@
 <span id="cb17-4"><a href="#cb17-4"></a>  -l openblas -t blas /usr/local/opt/openblas/include/cblas.h</span></code></pre></div>
 <h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
 <div class="sourceCode" id="cb18"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb18-1"><a href="#cb18-1"></a></span>
-<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope;</span></span>
-<span id="cb18-3"><a href="#cb18-3"></a><span class="kw">import</span><span class="im"> blas.*;</span></span>
-<span id="cb18-4"><a href="#cb18-4"></a><span class="kw">import static</span><span class="im"> blas.RuntimeHelper.*;</span></span>
-<span id="cb18-5"><a href="#cb18-5"></a><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></span>
-<span id="cb18-6"><a href="#cb18-6"></a></span>
-<span id="cb18-7"><a href="#cb18-7"></a><span class="kw">public</span> <span class="kw">class</span> TestBlas {</span>
-<span id="cb18-8"><a href="#cb18-8"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb18-9"><a href="#cb18-9"></a>        <span class="dt">int</span> Layout;</span>
-<span id="cb18-10"><a href="#cb18-10"></a>        <span class="dt">int</span> transa;</span>
-<span id="cb18-11"><a href="#cb18-11"></a></span>
-<span id="cb18-12"><a href="#cb18-12"></a>        <span class="dt">double</span> alpha, beta;</span>
-<span id="cb18-13"><a href="#cb18-13"></a>        <span class="dt">int</span> m, n, lda, incx, incy, i;</span>
-<span id="cb18-14"><a href="#cb18-14"></a></span>
-<span id="cb18-15"><a href="#cb18-15"></a>        Layout = <span class="fu">CblasColMajor</span>();</span>
-<span id="cb18-16"><a href="#cb18-16"></a>        transa = <span class="fu">CblasNoTrans</span>();</span>
-<span id="cb18-17"><a href="#cb18-17"></a></span>
-<span id="cb18-18"><a href="#cb18-18"></a>        m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></span>
-<span id="cb18-19"><a href="#cb18-19"></a>        n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></span>
-<span id="cb18-20"><a href="#cb18-20"></a>        lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></span>
-<span id="cb18-21"><a href="#cb18-21"></a>        incx = <span class="dv">1</span>;</span>
-<span id="cb18-22"><a href="#cb18-22"></a>        incy = <span class="dv">1</span>;</span>
-<span id="cb18-23"><a href="#cb18-23"></a>        alpha = <span class="dv">1</span>;</span>
-<span id="cb18-24"><a href="#cb18-24"></a>        beta = <span class="dv">0</span>;</span>
-<span id="cb18-25"><a href="#cb18-25"></a>        <span class="kw">try</span> (NativeAllocationScope scope = NativeAllocationScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="kw">import</span><span class="im"> blas.*;</span></span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="kw">import static</span><span class="im"> blas.RuntimeHelper.*;</span></span>
+<span id="cb18-4"><a href="#cb18-4"></a><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a></span>
+<span id="cb18-6"><a href="#cb18-6"></a><span class="kw">public</span> <span class="kw">class</span> TestBlas {</span>
+<span id="cb18-7"><a href="#cb18-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb18-8"><a href="#cb18-8"></a>        <span class="dt">int</span> Layout;</span>
+<span id="cb18-9"><a href="#cb18-9"></a>        <span class="dt">int</span> transa;</span>
+<span id="cb18-10"><a href="#cb18-10"></a></span>
+<span id="cb18-11"><a href="#cb18-11"></a>        <span class="dt">double</span> alpha, beta;</span>
+<span id="cb18-12"><a href="#cb18-12"></a>        <span class="dt">int</span> m, n, lda, incx, incy, i;</span>
+<span id="cb18-13"><a href="#cb18-13"></a></span>
+<span id="cb18-14"><a href="#cb18-14"></a>        Layout = <span class="fu">CblasColMajor</span>();</span>
+<span id="cb18-15"><a href="#cb18-15"></a>        transa = <span class="fu">CblasNoTrans</span>();</span>
+<span id="cb18-16"><a href="#cb18-16"></a></span>
+<span id="cb18-17"><a href="#cb18-17"></a>        m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></span>
+<span id="cb18-18"><a href="#cb18-18"></a>        n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></span>
+<span id="cb18-19"><a href="#cb18-19"></a>        lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></span>
+<span id="cb18-20"><a href="#cb18-20"></a>        incx = <span class="dv">1</span>;</span>
+<span id="cb18-21"><a href="#cb18-21"></a>        incy = <span class="dv">1</span>;</span>
+<span id="cb18-22"><a href="#cb18-22"></a>        alpha = <span class="dv">1</span>;</span>
+<span id="cb18-23"><a href="#cb18-23"></a>        beta = <span class="dv">0</span>;</span>
+<span id="cb18-24"><a href="#cb18-24"></a></span>
+<span id="cb18-25"><a href="#cb18-25"></a>        <span class="kw">try</span> (var scope = <span class="kw">new</span> <span class="fu">CScope</span>()) {</span>
 <span id="cb18-26"><a href="#cb18-26"></a>            var a = Cdouble.<span class="fu">allocateArray</span>(m*n, scope);</span>
 <span id="cb18-27"><a href="#cb18-27"></a>            var x = Cdouble.<span class="fu">allocateArray</span>(n, scope);</span>
 <span id="cb18-28"><a href="#cb18-28"></a>            var y = Cdouble.<span class="fu">allocateArray</span>(n, scope);</span>
@@ -370,14 +370,15 @@
 <span id="cb18-56"><a href="#cb18-56"></a>            Cdouble.<span class="fu">set</span>(y, <span class="dv">1</span>, <span class="fl">0.</span><span class="dv">0</span>);</span>
 <span id="cb18-57"><a href="#cb18-57"></a>            Cdouble.<span class="fu">set</span>(y, <span class="dv">2</span>, <span class="fl">0.</span><span class="dv">0</span>);</span>
 <span id="cb18-58"><a href="#cb18-58"></a>            Cdouble.<span class="fu">set</span>(y, <span class="dv">3</span>, <span class="fl">0.</span><span class="dv">0</span>);</span>
-<span id="cb18-59"><a href="#cb18-59"></a>            <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);</span>
-<span id="cb18-60"><a href="#cb18-60"></a>            <span class="co">/* Print y */</span></span>
-<span id="cb18-61"><a href="#cb18-61"></a>            <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++) {</span>
-<span id="cb18-62"><a href="#cb18-62"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, Cdouble.<span class="fu">get</span>(y, (<span class="dt">long</span>)i)));</span>
-<span id="cb18-63"><a href="#cb18-63"></a>            }</span>
-<span id="cb18-64"><a href="#cb18-64"></a>        }</span>
-<span id="cb18-65"><a href="#cb18-65"></a>    }</span>
-<span id="cb18-66"><a href="#cb18-66"></a>}</span></code></pre></div>
+<span id="cb18-59"><a href="#cb18-59"></a></span>
+<span id="cb18-60"><a href="#cb18-60"></a>            <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);</span>
+<span id="cb18-61"><a href="#cb18-61"></a>            <span class="co">/* Print y */</span></span>
+<span id="cb18-62"><a href="#cb18-62"></a>            <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++) {</span>
+<span id="cb18-63"><a href="#cb18-63"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, Cdouble.<span class="fu">get</span>(y, (<span class="dt">long</span>)i)));</span>
+<span id="cb18-64"><a href="#cb18-64"></a>            }</span>
+<span id="cb18-65"><a href="#cb18-65"></a>        }</span>
+<span id="cb18-66"><a href="#cb18-66"></a>    }</span>
+<span id="cb18-67"><a href="#cb18-67"></a>}</span></code></pre></div>
 <h3 id="compiling-and-running-the-above-blas-sample">Compiling and running the above BLAS sample</h3>
 <div class="sourceCode" id="cb19"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1"></a></span>
 <span id="cb19-2"><a href="#cb19-2"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
@@ -394,7 +395,7 @@
 <span id="cb20-6"><a href="#cb20-6"></a>   /usr/local/opt/lapack/include/lapacke.h</span></code></pre></div>
 <h3 id="java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</h3>
 <div class="sourceCode" id="cb21"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb21-1"><a href="#cb21-1"></a></span>
-<span id="cb21-2"><a href="#cb21-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope;</span></span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemoryAddress;</span></span>
 <span id="cb21-3"><a href="#cb21-3"></a><span class="kw">import</span><span class="im"> lapack.*;</span></span>
 <span id="cb21-4"><a href="#cb21-4"></a><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></span>
 <span id="cb21-5"><a href="#cb21-5"></a></span>
@@ -402,7 +403,7 @@
 <span id="cb21-7"><a href="#cb21-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
 <span id="cb21-8"><a href="#cb21-8"></a></span>
 <span id="cb21-9"><a href="#cb21-9"></a>        <span class="co">/* Locals */</span></span>
-<span id="cb21-10"><a href="#cb21-10"></a>        <span class="kw">try</span> (var scope = NativeAllocationScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb21-10"><a href="#cb21-10"></a>        <span class="kw">try</span> (var scope = <span class="kw">new</span> <span class="fu">CScope</span>()) {</span>
 <span id="cb21-11"><a href="#cb21-11"></a>            var A = Cdouble.<span class="fu">allocateArray</span>(<span class="kw">new</span> <span class="dt">double</span>[]{</span>
 <span id="cb21-12"><a href="#cb21-12"></a>                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></span>
 <span id="cb21-13"><a href="#cb21-13"></a>            }, scope);</span>
@@ -445,7 +446,8 @@
 <span id="cb21-50"><a href="#cb21-50"></a>            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</span>
 <span id="cb21-51"><a href="#cb21-51"></a>        }</span>
 <span id="cb21-52"><a href="#cb21-52"></a>    }</span>
-<span id="cb21-53"><a href="#cb21-53"></a>}</span></code></pre></div>
+<span id="cb21-53"><a href="#cb21-53"></a>}</span>
+<span id="cb21-54"><a href="#cb21-54"></a></span></code></pre></div>
 <h3 id="compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</h3>
 <div class="sourceCode" id="cb22"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1"></a></span>
 <span id="cb22-2"><a href="#cb22-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
@@ -461,37 +463,36 @@
 <span id="cb23-5"><a href="#cb23-5"></a>  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libproc.h</span></code></pre></div>
 <h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb24-1"><a href="#cb24-1"></a></span>
-<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope;</span></span>
-<span id="cb24-3"><a href="#cb24-3"></a><span class="kw">import</span><span class="im"> org.unix.*;</span></span>
-<span id="cb24-4"><a href="#cb24-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
-<span id="cb24-5"><a href="#cb24-5"></a><span class="kw">import static</span><span class="im"> org.unix.libproc_h.*;</span></span>
-<span id="cb24-6"><a href="#cb24-6"></a></span>
-<span id="cb24-7"><a href="#cb24-7"></a><span class="kw">public</span> <span class="kw">class</span> LibprocMain {</span>
-<span id="cb24-8"><a href="#cb24-8"></a>    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;</span>
-<span id="cb24-9"><a href="#cb24-9"></a></span>
-<span id="cb24-10"><a href="#cb24-10"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb24-11"><a href="#cb24-11"></a>        <span class="kw">try</span> (var scope = NativeAllocationScope.<span class="fu">unboundedScope</span>()) {</span>
-<span id="cb24-12"><a href="#cb24-12"></a>            <span class="co">// get the number of processes</span></span>
-<span id="cb24-13"><a href="#cb24-13"></a>            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(NULL, <span class="dv">0</span>);</span>
-<span id="cb24-14"><a href="#cb24-14"></a>            <span class="co">// allocate an array</span></span>
-<span id="cb24-15"><a href="#cb24-15"></a>            var pids = Cint.<span class="fu">allocateArray</span>(numPids, scope);</span>
-<span id="cb24-16"><a href="#cb24-16"></a>            <span class="co">// list all the pids into the native array</span></span>
-<span id="cb24-17"><a href="#cb24-17"></a>            <span class="fu">proc_listallpids</span>(pids, numPids);</span>
-<span id="cb24-18"><a href="#cb24-18"></a>            <span class="co">// convert native array to java array</span></span>
-<span id="cb24-19"><a href="#cb24-19"></a>            <span class="dt">int</span>[] jpids = Cint.<span class="fu">toJavaArray</span>(pids.<span class="fu">segment</span>());</span>
-<span id="cb24-20"><a href="#cb24-20"></a>            <span class="co">// buffer for process name</span></span>
-<span id="cb24-21"><a href="#cb24-21"></a>            var nameBuf = Cchar.<span class="fu">allocateArray</span>(NAME_BUF_MAX,scope);</span>
-<span id="cb24-22"><a href="#cb24-22"></a>            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</span>
-<span id="cb24-23"><a href="#cb24-23"></a>                <span class="dt">int</span> pid = jpids[i];</span>
-<span id="cb24-24"><a href="#cb24-24"></a>                <span class="co">// get the process name</span></span>
-<span id="cb24-25"><a href="#cb24-25"></a>                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);</span>
-<span id="cb24-26"><a href="#cb24-26"></a>                <span class="bu">String</span> procName = Cstring.<span class="fu">toJavaString</span>(nameBuf);</span>
-<span id="cb24-27"><a href="#cb24-27"></a>                <span class="co">// print pid and process name</span></span>
-<span id="cb24-28"><a href="#cb24-28"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, pid, procName);</span>
-<span id="cb24-29"><a href="#cb24-29"></a>            }</span>
-<span id="cb24-30"><a href="#cb24-30"></a>        }</span>
-<span id="cb24-31"><a href="#cb24-31"></a>    }</span>
-<span id="cb24-32"><a href="#cb24-32"></a>}</span></code></pre></div>
+<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">import</span><span class="im"> org.unix.*;</span></span>
+<span id="cb24-3"><a href="#cb24-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb24-4"><a href="#cb24-4"></a><span class="kw">import static</span><span class="im"> org.unix.libproc_h.*;</span></span>
+<span id="cb24-5"><a href="#cb24-5"></a></span>
+<span id="cb24-6"><a href="#cb24-6"></a><span class="kw">public</span> <span class="kw">class</span> LibprocMain {</span>
+<span id="cb24-7"><a href="#cb24-7"></a>    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;</span>
+<span id="cb24-8"><a href="#cb24-8"></a></span>
+<span id="cb24-9"><a href="#cb24-9"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb24-10"><a href="#cb24-10"></a>        <span class="kw">try</span> (var scope = <span class="kw">new</span> <span class="fu">CScope</span>()) {</span>
+<span id="cb24-11"><a href="#cb24-11"></a>            <span class="co">// get the number of processes</span></span>
+<span id="cb24-12"><a href="#cb24-12"></a>            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(NULL, <span class="dv">0</span>);</span>
+<span id="cb24-13"><a href="#cb24-13"></a>            <span class="co">// allocate an array</span></span>
+<span id="cb24-14"><a href="#cb24-14"></a>            var pids = Cint.<span class="fu">allocateArray</span>(numPids, scope);</span>
+<span id="cb24-15"><a href="#cb24-15"></a>            <span class="co">// list all the pids into the native array</span></span>
+<span id="cb24-16"><a href="#cb24-16"></a>            <span class="fu">proc_listallpids</span>(pids, numPids);</span>
+<span id="cb24-17"><a href="#cb24-17"></a>            <span class="co">// convert native array to java array</span></span>
+<span id="cb24-18"><a href="#cb24-18"></a>            <span class="dt">int</span>[] jpids = Cint.<span class="fu">toJavaArray</span>(pids.<span class="fu">segment</span>());</span>
+<span id="cb24-19"><a href="#cb24-19"></a>            <span class="co">// buffer for process name</span></span>
+<span id="cb24-20"><a href="#cb24-20"></a>            var nameBuf = Cchar.<span class="fu">allocateArray</span>(NAME_BUF_MAX,scope);</span>
+<span id="cb24-21"><a href="#cb24-21"></a>            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</span>
+<span id="cb24-22"><a href="#cb24-22"></a>                <span class="dt">int</span> pid = jpids[i];</span>
+<span id="cb24-23"><a href="#cb24-23"></a>                <span class="co">// get the process name</span></span>
+<span id="cb24-24"><a href="#cb24-24"></a>                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);</span>
+<span id="cb24-25"><a href="#cb24-25"></a>                <span class="bu">String</span> procName = Cstring.<span class="fu">toJavaString</span>(nameBuf);</span>
+<span id="cb24-26"><a href="#cb24-26"></a>                <span class="co">// print pid and process name</span></span>
+<span id="cb24-27"><a href="#cb24-27"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, pid, procName);</span>
+<span id="cb24-28"><a href="#cb24-28"></a>            }</span>
+<span id="cb24-29"><a href="#cb24-29"></a>        }</span>
+<span id="cb24-30"><a href="#cb24-30"></a>    }</span>
+<span id="cb24-31"><a href="#cb24-31"></a>}</span></code></pre></div>
 <h3 id="compiling-and-running-the-libproc-sample">Compiling and running the libproc sample</h3>
 <div class="sourceCode" id="cb25"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1"></a></span>
 <span id="cb25-2"><a href="#cb25-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
@@ -514,10 +515,10 @@
 <span id="cb26-6"><a href="#cb26-6"></a>  <span class="va">${LIBGIT2_HOME}</span>/include/git2.h</span></code></pre></div>
 <h3 id="java-program-that-uses-libgit2-to-clone-github-repo">Java program that uses libgit2 to clone github repo</h3>
 <div class="sourceCode" id="cb27"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb27-1"><a href="#cb27-1"></a></span>
-<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">import static</span><span class="im"> com.github.git2_h.*;</span></span>
-<span id="cb27-3"><a href="#cb27-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
-<span id="cb27-4"><a href="#cb27-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
-<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.NativeAllocationScope.*;</span></span>
+<span id="cb27-2"><a href="#cb27-2"></a><span class="kw">import</span><span class="im"> com.github.CScope;</span></span>
+<span id="cb27-3"><a href="#cb27-3"></a><span class="kw">import static</span><span class="im"> com.github.git2_h.*;</span></span>
+<span id="cb27-4"><a href="#cb27-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb27-6"><a href="#cb27-6"></a><span class="kw">import static</span><span class="im"> com.github.Cstring.*;</span></span>
 <span id="cb27-7"><a href="#cb27-7"></a></span>
 <span id="cb27-8"><a href="#cb27-8"></a><span class="kw">public</span> <span class="kw">class</span> GitClone {</span>
@@ -527,7 +528,7 @@
 <span id="cb27-12"><a href="#cb27-12"></a>              <span class="bu">System</span>.<span class="fu">exit</span>(<span class="dv">1</span>);</span>
 <span id="cb27-13"><a href="#cb27-13"></a>          }</span>
 <span id="cb27-14"><a href="#cb27-14"></a>          <span class="fu">git_libgit2_init</span>();</span>
-<span id="cb27-15"><a href="#cb27-15"></a>          <span class="kw">try</span> (var scope = <span class="fu">unboundedScope</span>()) {</span>
+<span id="cb27-15"><a href="#cb27-15"></a>          <span class="kw">try</span> (var scope = <span class="kw">new</span> <span class="fu">CScope</span>()) {</span>
 <span id="cb27-16"><a href="#cb27-16"></a>              var repo = scope.<span class="fu">allocate</span>(C_POINTER, NULL);</span>
 <span id="cb27-17"><a href="#cb27-17"></a>              var url = <span class="fu">toCString</span>(args[<span class="dv">0</span>], scope);</span>
 <span id="cb27-18"><a href="#cb27-18"></a>              var path = <span class="fu">toCString</span>(args[<span class="dv">1</span>], scope);</span>
@@ -557,7 +558,7 @@
 <div class="sourceCode" id="cb31"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb31-1"><a href="#cb31-1"></a></span>
 <span id="cb31-2"><a href="#cb31-2"></a><span class="kw">import</span><span class="im"> org.sqlite.Cpointer;</span></span>
 <span id="cb31-3"><a href="#cb31-3"></a><span class="kw">import</span><span class="im"> org.sqlite.Cstring;</span></span>
-<span id="cb31-4"><a href="#cb31-4"></a><span class="kw">import</span><span class="im"> org.sqlite.RuntimeHelper.CScope;</span></span>
+<span id="cb31-4"><a href="#cb31-4"></a><span class="kw">import</span><span class="im"> org.sqlite.CScope;</span></span>
 <span id="cb31-5"><a href="#cb31-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb31-6"><a href="#cb31-6"></a><span class="kw">import static</span><span class="im"> org.sqlite.sqlite3_h.*;</span></span>
 <span id="cb31-7"><a href="#cb31-7"></a></span>
@@ -628,26 +629,25 @@
 <span id="cb31-72"><a href="#cb31-72"></a>                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</span>
 <span id="cb31-73"><a href="#cb31-73"></a>                }</span>
 <span id="cb31-74"><a href="#cb31-74"></a>                <span class="kw">return</span> <span class="dv">0</span>;</span>
-<span id="cb31-75"><a href="#cb31-75"></a>            });</span>
-<span id="cb31-76"><a href="#cb31-76"></a>            scope.<span class="fu">register</span>(callback);</span>
-<span id="cb31-77"><a href="#cb31-77"></a></span>
-<span id="cb31-78"><a href="#cb31-78"></a>            <span class="co">// select query</span></span>
-<span id="cb31-79"><a href="#cb31-79"></a>            sql = Cstring.<span class="fu">toCString</span>(<span class="st">&quot;SELECT * FROM EMPLOYEE&quot;</span>, scope);</span>
-<span id="cb31-80"><a href="#cb31-80"></a>            rc = <span class="fu">sqlite3_exec</span>(dbPtr, sql, callback.<span class="fu">baseAddress</span>(), NULL, errMsgPtrPtr);</span>
-<span id="cb31-81"><a href="#cb31-81"></a></span>
-<span id="cb31-82"><a href="#cb31-82"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
-<span id="cb31-83"><a href="#cb31-83"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
-<span id="cb31-84"><a href="#cb31-84"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
-<span id="cb31-85"><a href="#cb31-85"></a>                <span class="fu">sqlite3_free</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr));</span>
-<span id="cb31-86"><a href="#cb31-86"></a>            } <span class="kw">else</span> {</span>
-<span id="cb31-87"><a href="#cb31-87"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;done&quot;</span>);</span>
-<span id="cb31-88"><a href="#cb31-88"></a>            }</span>
-<span id="cb31-89"><a href="#cb31-89"></a></span>
-<span id="cb31-90"><a href="#cb31-90"></a>            <span class="fu">sqlite3_close</span>(dbPtr);</span>
-<span id="cb31-91"><a href="#cb31-91"></a>        }</span>
-<span id="cb31-92"><a href="#cb31-92"></a>    }</span>
-<span id="cb31-93"><a href="#cb31-93"></a>}</span></code></pre></div>
-<h3 id="compiling-and-running-the-libgit2-sample-1">Compiling and running the libgit2 sample</h3>
+<span id="cb31-75"><a href="#cb31-75"></a>            }, scope);</span>
+<span id="cb31-76"><a href="#cb31-76"></a></span>
+<span id="cb31-77"><a href="#cb31-77"></a>            <span class="co">// select query</span></span>
+<span id="cb31-78"><a href="#cb31-78"></a>            sql = Cstring.<span class="fu">toCString</span>(<span class="st">&quot;SELECT * FROM EMPLOYEE&quot;</span>, scope);</span>
+<span id="cb31-79"><a href="#cb31-79"></a>            rc = <span class="fu">sqlite3_exec</span>(dbPtr, sql, callback, NULL, errMsgPtrPtr);</span>
+<span id="cb31-80"><a href="#cb31-80"></a></span>
+<span id="cb31-81"><a href="#cb31-81"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
+<span id="cb31-82"><a href="#cb31-82"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
+<span id="cb31-83"><a href="#cb31-83"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
+<span id="cb31-84"><a href="#cb31-84"></a>                <span class="fu">sqlite3_free</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr));</span>
+<span id="cb31-85"><a href="#cb31-85"></a>            } <span class="kw">else</span> {</span>
+<span id="cb31-86"><a href="#cb31-86"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;done&quot;</span>);</span>
+<span id="cb31-87"><a href="#cb31-87"></a>            }</span>
+<span id="cb31-88"><a href="#cb31-88"></a></span>
+<span id="cb31-89"><a href="#cb31-89"></a>            <span class="fu">sqlite3_close</span>(dbPtr);</span>
+<span id="cb31-90"><a href="#cb31-90"></a>        }</span>
+<span id="cb31-91"><a href="#cb31-91"></a>    }</span>
+<span id="cb31-92"><a href="#cb31-92"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-sqlite3-sample">Compiling and running the sqlite3 sample</h3>
 <div class="sourceCode" id="cb32"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1"></a></span>
 <span id="cb32-2"><a href="#cb32-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
 <span id="cb32-3"><a href="#cb32-3"></a>   --add-modules jdk.incubator.foreign \</span>

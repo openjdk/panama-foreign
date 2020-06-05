@@ -263,7 +263,6 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 
 ```java
 
-import jdk.incubator.foreign.NativeAllocationScope;
 import blas.*;
 import static blas.RuntimeHelper.*;
 import static blas.cblas_h.*;
@@ -286,7 +285,8 @@ public class TestBlas {
         incy = 1;
         alpha = 1;
         beta = 0;
-        try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
+
+        try (var scope = new CScope()) {
             var a = Cdouble.allocateArray(m*n, scope);
             var x = Cdouble.allocateArray(n, scope);
             var y = Cdouble.allocateArray(n, scope);
@@ -320,6 +320,7 @@ public class TestBlas {
             Cdouble.set(y, 1, 0.0);
             Cdouble.set(y, 2, 0.0);
             Cdouble.set(y, 3, 0.0);
+
             cblas_dgemv(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);
             /* Print y */
             for (i = 0; i < n; i++) {
@@ -328,7 +329,6 @@ public class TestBlas {
         }
     }
 }
-
 ```
 
 ### Compiling and running the above BLAS sample
@@ -361,7 +361,7 @@ jextract \
 
 ```java
 
-import jdk.incubator.foreign.NativeAllocationScope;
+import jdk.incubator.foreign.MemoryAddress;
 import lapack.*;
 import static lapack.lapacke_h.*;
 
@@ -369,7 +369,7 @@ public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
-        try (var scope = NativeAllocationScope.unboundedScope()) {
+        try (var scope = new CScope()) {
             var A = Cdouble.allocateArray(new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
             }, scope);
@@ -414,6 +414,7 @@ public class TestLapack {
     }
 }
 
+
 ```
 
 ### Compiling and running the above LAPACK sample
@@ -443,7 +444,6 @@ jextract -t org.unix \
 
 ```java
 
-import jdk.incubator.foreign.NativeAllocationScope;
 import org.unix.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.unix.libproc_h.*;
@@ -452,7 +452,7 @@ public class LibprocMain {
     private static final int NAME_BUF_MAX = 256;
 
     public static void main(String[] args) {
-        try (var scope = NativeAllocationScope.unboundedScope()) {
+        try (var scope = new CScope()) {
             // get the number of processes
             int numPids = proc_listallpids(NULL, 0);
             // allocate an array
@@ -512,10 +512,10 @@ jextract -t com.github -lgit2 \
 
 ```java
 
+import com.github.CScope;
 import static com.github.git2_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
-import static jdk.incubator.foreign.NativeAllocationScope.*;
 import static com.github.Cstring.*;
 
 public class GitClone {
@@ -525,7 +525,7 @@ public class GitClone {
               System.exit(1);
           }
           git_libgit2_init();
-          try (var scope = unboundedScope()) {
+          try (var scope = new CScope()) {
               var repo = scope.allocate(C_POINTER, NULL);
               var url = toCString(args[0], scope);
               var path = toCString(args[1], scope);
@@ -534,7 +534,6 @@ public class GitClone {
           git_libgit2_shutdown();
     }
 }
-
 ```
 
 ### Compiling and running the libgit2 sample
@@ -575,7 +574,7 @@ jextract \
 
 import org.sqlite.Cpointer;
 import org.sqlite.Cstring;
-import org.sqlite.RuntimeHelper.CScope;
+import org.sqlite.CScope;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.sqlite.sqlite3_h.*;
 
@@ -646,12 +645,11 @@ public class SqliteMain {
                      System.out.printf("%s = %s\n", name, value);
                 }
                 return 0;
-            });
-            scope.register(callback);
+            }, scope);
 
             // select query
             sql = Cstring.toCString("SELECT * FROM EMPLOYEE", scope);
-            rc = sqlite3_exec(dbPtr, sql, callback.baseAddress(), NULL, errMsgPtrPtr);
+            rc = sqlite3_exec(dbPtr, sql, callback, NULL, errMsgPtrPtr);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
@@ -665,10 +663,9 @@ public class SqliteMain {
         }
     }
 }
-
 ```
 
-### Compiling and running the libgit2 sample
+### Compiling and running the sqlite3 sample
 
 ```sh
 
