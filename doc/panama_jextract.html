@@ -251,7 +251,7 @@
 <span id="cb11-13"><a href="#cb11-13"></a>            <span class="co">// print char* as is</span></span>
 <span id="cb11-14"><a href="#cb11-14"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(p);</span>
 <span id="cb11-15"><a href="#cb11-15"></a>            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span></span>
-<span id="cb11-16"><a href="#cb11-16"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + Cstring.<span class="fu">toJavaString</span>(p));</span>
+<span id="cb11-16"><a href="#cb11-16"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + Cstring.<span class="fu">toJavaStringRestricted</span>(p));</span>
 <span id="cb11-17"><a href="#cb11-17"></a>        }</span>
 <span id="cb11-18"><a href="#cb11-18"></a>    }</span>
 <span id="cb11-19"><a href="#cb11-19"></a>}</span></code></pre></div>
@@ -593,7 +593,7 @@
 <span id="cb31-36"><a href="#cb31-36"></a></span>
 <span id="cb31-37"><a href="#cb31-37"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
 <span id="cb31-38"><a href="#cb31-38"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
-<span id="cb31-39"><a href="#cb31-39"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
+<span id="cb31-39"><a href="#cb31-39"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaStringRestricted</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
 <span id="cb31-40"><a href="#cb31-40"></a>                <span class="fu">sqlite3_free</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr));</span>
 <span id="cb31-41"><a href="#cb31-41"></a>            } <span class="kw">else</span> {</span>
 <span id="cb31-42"><a href="#cb31-42"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;employee table created&quot;</span>);</span>
@@ -610,7 +610,7 @@
 <span id="cb31-53"><a href="#cb31-53"></a></span>
 <span id="cb31-54"><a href="#cb31-54"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
 <span id="cb31-55"><a href="#cb31-55"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
-<span id="cb31-56"><a href="#cb31-56"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
+<span id="cb31-56"><a href="#cb31-56"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaStringRestricted</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
 <span id="cb31-57"><a href="#cb31-57"></a>                <span class="fu">sqlite3_free</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr));</span>
 <span id="cb31-58"><a href="#cb31-58"></a>            } <span class="kw">else</span> {</span>
 <span id="cb31-59"><a href="#cb31-59"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;rows inserted&quot;</span>);</span>
@@ -621,11 +621,11 @@
 <span id="cb31-64"><a href="#cb31-64"></a>            var callback = sqlite3_exec$callback.<span class="fu">allocate</span>((a, argc, argv, columnNames) -&gt; {</span>
 <span id="cb31-65"><a href="#cb31-65"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Row num: &quot;</span> + rowNum[<span class="dv">0</span>]++);</span>
 <span id="cb31-66"><a href="#cb31-66"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;numColumns = &quot;</span> + argc);</span>
-<span id="cb31-67"><a href="#cb31-67"></a>                argv = Cpointer.<span class="fu">asArray</span>(argv, argc);</span>
-<span id="cb31-68"><a href="#cb31-68"></a>                columnNames = Cpointer.<span class="fu">asArray</span>(columnNames, argc);</span>
+<span id="cb31-67"><a href="#cb31-67"></a>                argv = Cpointer.<span class="fu">asArrayRestricted</span>(argv, argc);</span>
+<span id="cb31-68"><a href="#cb31-68"></a>                columnNames = Cpointer.<span class="fu">asArrayRestricted</span>(columnNames, argc);</span>
 <span id="cb31-69"><a href="#cb31-69"></a>                <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; argc; i++) {</span>
-<span id="cb31-70"><a href="#cb31-70"></a>                     <span class="bu">String</span> name = Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(columnNames, i));</span>
-<span id="cb31-71"><a href="#cb31-71"></a>                     <span class="bu">String</span> value = Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(argv, i));</span>
+<span id="cb31-70"><a href="#cb31-70"></a>                     <span class="bu">String</span> name = Cstring.<span class="fu">toJavaStringRestricted</span>(Cpointer.<span class="fu">get</span>(columnNames, i));</span>
+<span id="cb31-71"><a href="#cb31-71"></a>                     <span class="bu">String</span> value = Cstring.<span class="fu">toJavaStringRestricted</span>(Cpointer.<span class="fu">get</span>(argv, i));</span>
 <span id="cb31-72"><a href="#cb31-72"></a>                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</span>
 <span id="cb31-73"><a href="#cb31-73"></a>                }</span>
 <span id="cb31-74"><a href="#cb31-74"></a>                <span class="kw">return</span> <span class="dv">0</span>;</span>
@@ -637,7 +637,7 @@
 <span id="cb31-80"><a href="#cb31-80"></a></span>
 <span id="cb31-81"><a href="#cb31-81"></a>            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</span>
 <span id="cb31-82"><a href="#cb31-82"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</span>
-<span id="cb31-83"><a href="#cb31-83"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaString</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
+<span id="cb31-83"><a href="#cb31-83"></a>                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Cstring.<span class="fu">toJavaStringRestricted</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr)));</span>
 <span id="cb31-84"><a href="#cb31-84"></a>                <span class="fu">sqlite3_free</span>(Cpointer.<span class="fu">get</span>(errMsgPtrPtr));</span>
 <span id="cb31-85"><a href="#cb31-85"></a>            } <span class="kw">else</span> {</span>
 <span id="cb31-86"><a href="#cb31-86"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;done&quot;</span>);</span>
