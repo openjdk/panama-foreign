@@ -18,9 +18,17 @@ public final class Cpointer {
     private static final VarHandle handle = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(CARRIER));
     private static final VarHandle arrayHandle = MemoryHandles.asAddressVarHandle(arrayHandle(LAYOUT, CARRIER));
 
-    public static MemoryAddress asArray(MemoryAddress addr, int numPointers) {
+    public static MemoryAddress asArrayRestricted(MemoryAddress addr, int numPointers) {
         return MemorySegment.ofNativeRestricted(addr, numPointers * LAYOUT.byteSize(),
                Thread.currentThread(), null, null).baseAddress();
+    }
+
+    public static MemoryAddress asArray(MemoryAddress addr, int numPointers) {
+        var seg = addr.segment();
+        if (seg == null) {
+            throw new IllegalArgumentException("no underlying segment for the address");
+        }
+        return seg.asSlice(addr.segmentOffset(), numPointers * LAYOUT.byteSize()).baseAddress();
     }
 
     public static MemoryAddress get(MemoryAddress addr) {

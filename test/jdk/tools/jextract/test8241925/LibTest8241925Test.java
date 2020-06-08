@@ -67,12 +67,12 @@ public class LibTest8241925Test {
                 assertEquals(dblArray[i], convertedDblArray[i], 0.1);
             }
 
-            assertEquals(Cstring.toJavaString(name()), "java");
+            assertEquals(Cstring.toJavaStringRestricted(name()), "java");
 
             var dest = Cchar.allocateArray(12, scope);
             Cstring.copy(dest, "hello ");
             var src = Cstring.toCString("world", scope);
-            assertEquals(Cstring.toJavaString(concatenate(dest, src)), "hello world");
+            assertEquals(Cstring.toJavaStringRestricted(concatenate(dest, src)), "hello world");
         }
     }
 }

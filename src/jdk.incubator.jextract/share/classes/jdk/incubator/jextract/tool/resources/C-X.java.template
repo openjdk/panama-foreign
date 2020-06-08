@@ -23,9 +23,17 @@ public class C-X {
     private static final VarHandle handle = LAYOUT.varHandle(CARRIER);
     private static final VarHandle arrayHandle = arrayHandle(LAYOUT, CARRIER);
 
-    public static MemoryAddress asArray(MemoryAddress addr, int numElements) {
+    public static MemoryAddress asArrayRestricted(MemoryAddress addr, int numElements) {
         return MemorySegment.ofNativeRestricted(addr, numElements * LAYOUT.byteSize(),
                Thread.currentThread(), null, null).baseAddress();
+    }
+
+    public static MemoryAddress asArray(MemoryAddress addr, int numElements) {
+        var seg = addr.segment();
+        if (seg == null) {
+            throw new IllegalArgumentException("no underlying segment for the address");
+        }
+        return seg.asSlice(addr.segmentOffset(), numElements * LAYOUT.byteSize()).baseAddress();
     }
 
     public static ${CARRIER} get(MemoryAddress addr) {
