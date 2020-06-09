@@ -32,3 +32,9 @@ struct Bar {
     unsigned int y:31;
     struct Foo z[1];
 };
+
+struct Baz {
+    unsigned long x:1;
+    unsigned long y:63;
+    struct Bar z[1];
+};
