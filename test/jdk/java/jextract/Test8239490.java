@@ -55,5 +55,16 @@ public class Test8239490 extends JextractApiTestBase {
             checkBitField(bitfieldsBar, barBitfieldNames[i], intType, barBitfieldSizes[i]);
         }
         checkField(structBar, "z", Type.array(1, Type.declared(structFoo)));
+
+        // check Baz
+        String[] bazBitfieldNames = { "x", "y" };
+        int[] bazBitfieldSizes = { 1, 63 };
+        Declaration.Scoped structBaz = checkStruct(d, "Baz", "", "z");
+        Declaration.Scoped bitfieldsBaz = checkBitfields(structBaz, "", "x", "y");
+        Type longType = ((Declaration.Variable)bitfieldsBaz.members().get(0)).type();
+        for (int i = 0 ; i < bazBitfieldNames.length ; i++) {
+            checkBitField(bitfieldsBaz, bazBitfieldNames[i], longType, bazBitfieldSizes[i]);
+        }
+        checkField(structBaz, "z", Type.array(1, Type.declared(structBar)));
     }
 }

@@ -197,7 +197,7 @@ public final class LayoutUtils {
             case 8: return Primitive.Kind.Char;
             case 16: return Primitive.Kind.Short;
             case 32: return Primitive.Kind.Int;
-            case 64: return CSupport.getSystemLinker().name().equals(CSupport.Win64.NAME) ?
+            case 64: return abi.name().equals(CSupport.Win64.NAME) ?
                     Primitive.Kind.LongLong : Primitive.Kind.Long;
             default:
                 throw new IllegalStateException("Cannot infer container layout");
