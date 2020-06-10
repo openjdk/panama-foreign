@@ -26,8 +26,8 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.BoundedAllocationScope;
-import jdk.internal.foreign.UnboundedAllocationScope;
+import jdk.internal.foreign.AbstractAllocationScope;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 
 import java.lang.invoke.VarHandle;
 import java.util.OptionalLong;
@@ -47,6 +47,8 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      * @return the size, in bytes, of this allocation scope (if available).
      */
     public abstract OptionalLong byteSize();
+
+    public abstract Thread ownerThread();
 
     /**
      * Returns the number of allocated bytes in this allocation scope.
@@ -226,6 +228,8 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      */
     public abstract MemoryAddress allocate(long bytesSize, long bytesAlignment);
 
+    public abstract MemorySegment register(MemorySegment segment);
+
     /**
      * Close this allocation scope; calling this method will render any address obtained through this allocation scope
      * unusable and might release any backing memory resources associated with this allocation scope.
@@ -239,7 +243,7 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      * @return a new bounded allocation scope, with given size (in bytes).
      */
     public static NativeAllocationScope boundedScope(long size) {
-        return new BoundedAllocationScope(size);
+        return new AbstractAllocationScope.BoundedAllocationScope(size);
     }
 
     /**
@@ -247,6 +251,6 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      * @return a new unbounded allocation scope.
      */
     public static NativeAllocationScope unboundedScope() {
-        return new UnboundedAllocationScope();
+        return new AbstractAllocationScope.UnboundedAllocationScope();
     }
 }
