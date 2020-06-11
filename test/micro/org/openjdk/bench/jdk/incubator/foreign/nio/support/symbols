@@ -1,0 +1,5 @@
+--exclude-headers .*stdbool.h$
+--include-symbols opendir
+--include-symbols readdir
+--include-symbols stat64
+--include-symbols closedir

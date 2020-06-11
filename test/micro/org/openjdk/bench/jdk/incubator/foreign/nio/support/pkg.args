@@ -1,0 +1,10 @@
+--src-dump-dir=../../../../../../../..
+-d output
+-t org.openjdk.bench.jdk.incubator.foreign.nio.support
+--package-map /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include=org.openjdk.bench.jdk.incubator.foreign.nio.support
+--package-map /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types=jdk.internal.panama.systypes
+--package-map /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks=jdk.internal.macos
+--package-map /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Headers=jdk.internal.macos.cf
+--package-map /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Headers=jdk.internal.macos.cs
+--exclude-headers .*/math.h$
+--exclude-headers .*/stdbool.h$
