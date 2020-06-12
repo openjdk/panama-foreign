@@ -55,7 +55,7 @@ public abstract class AbstractNativeScope extends NativeScope {
     @Override
     public MemorySegment register(MemorySegment segment) {
         Objects.requireNonNull(segment);
-        if (segment.ownerThread() != ownerThread()) {
+        if (segment.ownerThread() != null && (segment.ownerThread() != ownerThread())) {
             throw new IllegalArgumentException("Cannot register segment owned by a different thread");
         } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
             throw new IllegalArgumentException("Cannot register a non-closeable segment");
