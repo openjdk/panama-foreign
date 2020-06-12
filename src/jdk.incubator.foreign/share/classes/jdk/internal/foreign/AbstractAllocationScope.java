@@ -6,6 +6,7 @@ import jdk.incubator.foreign.NativeAllocationScope;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.OptionalLong;
 
 public abstract class AbstractAllocationScope extends NativeAllocationScope {
@@ -52,13 +53,17 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
     }
 
     @Override
-    public MemorySegment register(MemorySegment segment) {
-        if (segment.ownerThread() != null && segment.ownerThread() != ownerThread()) {
+    public MemorySegment claim(MemorySegment segment) {
+        Objects.requireNonNull(segment);
+        if (segment.ownerThread() != ownerThread()) {
             throw new IllegalArgumentException("Cannot register segment owned by a different thread");
+        } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
+            throw new IllegalArgumentException("Cannot register a non-closeable segment");
         }
-        segments.add(segment);
-        return ((AbstractMemorySegmentImpl)segment)
-                .dupFence(ownerThread())
+        MemorySegment attachedSegment = ((AbstractMemorySegmentImpl)segment)
+                .dupAndClose(ownerThread());
+        segments.add(attachedSegment);
+        return attachedSegment
                 .withAccessModes(segment.accessModes() & SCOPE_MASK);
     }
 
@@ -105,7 +110,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
                     return slice.baseAddress();
                 } catch (IndexOutOfBoundsException ex) {
                     sp = 0L;
-                    segment = newSegment(BLOCK_SIZE);
+                    segment = newSegment(BLOCK_SIZE, 1L);
                 }
             }
             throw new AssertionError("Cannot get here!");
@@ -128,7 +133,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
 
         public BoundedAllocationScope(long size) {
             super(Thread.currentThread());
-            this.segment = newSegment(size);
+            this.segment = newSegment(size, 1);
         }
 
         @Override

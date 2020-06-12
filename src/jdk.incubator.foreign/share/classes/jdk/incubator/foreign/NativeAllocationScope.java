@@ -39,6 +39,14 @@ import java.util.OptionalLong;
  * using a <em>bounded</em> allocation scope will typically provide better performances than independently allocating the memory
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> allocation scope.
  * For this reason, using a bounded allocation scope is recommended in cases where programs might need to emulate native stack allocation.
+ * <p>
+ * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@code MemoryAddress} instances
+ * returned by the allocation scope will be backed by memory segments confined by the same owner thread as the allocation scope.
+ * <p>
+ * To allow for more usability, it is possible for an allocation scope to claim ownership of an existing memory segment
+ * (see {@link #claim(MemorySegment)}). This might be useful to allow one or more segments which were independently
+ * created to share the same life-cycle as a given allocation scope - which in turns enables client to group all memory
+ * allocation and usage under a single <em>try-with-resources block</em>.
  */
 public abstract class NativeAllocationScope implements AutoCloseable {
 
@@ -48,6 +56,10 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      */
     public abstract OptionalLong byteSize();
 
+    /**
+     * The thread owning this allocation scope.
+     * @return the thread owning this allocation scope.
+     */
     public abstract Thread ownerThread();
 
     /**
@@ -228,7 +240,24 @@ public abstract class NativeAllocationScope implements AutoCloseable {
      */
     public abstract MemoryAddress allocate(long bytesSize, long bytesAlignment);
 
-    public abstract MemorySegment register(MemorySegment segment);
+    /**
+     * Claim ownership of a given segment. The input segment must be closeable - that is, it must feature
+     * the {@link MemorySegment#CLOSE} access mode. As a side-effect, the input segment will be marked
+     * as <em>not alive</em>, and a new segment will be returned.
+     * <p>
+     * The returned segment will feature only {@link MemorySegment#READ} and
+     * {@link MemorySegment#WRITE} access modes (assuming these were available in the original segment). As such
+     * the resulting segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
+     * indirectly when this allocation scope is closed.
+     * @param segment the segment whose ownership will be claimed by this allocation scope.
+     * @return a new, non closeable memory segment, backed by the same underlying region as {@code segment},
+     * but whose life-cycle is tied to that of this allocation scope.
+     * @throws IllegalStateException if {@code segment} is not <em>alive</em> (see {@link MemorySegment#isAlive()}).
+     * @throws NullPointerException if {@code segment == null}
+     * @throws IllegalArgumentException if {@code segment.ownerThread() != this.ownerThread()}, or if {@code segment}
+     * does not feature the {@link MemorySegment#CLOSE} access mode.
+     */
+    public abstract MemorySegment claim(MemorySegment segment);
 
     /**
      * Close this allocation scope; calling this method will render any address obtained through this allocation scope

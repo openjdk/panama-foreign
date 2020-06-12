@@ -27,6 +27,7 @@
  * @run testng TestAllocationScope
  */
 
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeAllocationScope;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayouts;
@@ -38,8 +39,11 @@ import org.testng.annotations.*;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import static jdk.incubator.foreign.MemorySegment.CLOSE;
+import static jdk.incubator.foreign.MemorySegment.HANDOFF;
 import static org.testng.Assert.*;
 
 public class TestAllocationScope {
@@ -101,6 +105,83 @@ public class TestAllocationScope {
                 assertTrue(address.segment().baseAddress().toRawLongValue() % i == 0);
             }
         }
+    }
+
+    @Test
+    public void testAttachClose() {
+        MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
+        MemorySegment s2 = MemorySegment.ofArray(new byte[1]);
+        MemorySegment s3 = MemorySegment.ofArray(new byte[1]);
+        assertTrue(s1.isAlive());
+        assertTrue(s2.isAlive());
+        assertTrue(s3.isAlive());
+        try (NativeAllocationScope scope = NativeAllocationScope.boundedScope(10)) {
+            MemorySegment ss1 = scope.claim(s1);
+            assertFalse(s1.isAlive());
+            assertTrue(ss1.isAlive());
+            s1 = ss1;
+            MemorySegment ss2 = scope.claim(s2);
+            assertFalse(s2.isAlive());
+            assertTrue(ss2.isAlive());
+            s2 = ss2;
+            MemorySegment ss3 = scope.claim(s3);
+            assertFalse(s3.isAlive());
+            assertTrue(ss3.isAlive());
+            s3 = ss3;
+        }
+        assertFalse(s1.isAlive());
+        assertFalse(s2.isAlive());
+        assertFalse(s3.isAlive());
+    }
+
+    @Test
+    public void testNoTerminalOps() {
+        try (NativeAllocationScope scope = NativeAllocationScope.boundedScope(10)) {
+            MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
+            MemorySegment attached = scope.claim(s1);
+            int[] terminalOps = {CLOSE, HANDOFF};
+            for (int mode : terminalOps) {
+                if (attached.hasAccessModes(mode)) {
+                    fail();
+                }
+            }
+        }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNoReattach() {
+        MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
+        NativeAllocationScope scope1 = NativeAllocationScope.boundedScope(10);
+        NativeAllocationScope scope2 = NativeAllocationScope.boundedScope(10);
+        scope2.claim(scope1.claim(s1));
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testNullClaim() {
+        NativeAllocationScope.boundedScope(10).claim(null);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testNotAliveClaim() {
+        MemorySegment segment = MemorySegment.ofArray(new byte[1]);
+        segment.close();
+        NativeAllocationScope.boundedScope(10).claim(segment);
+    }
+
+    @Test
+    public void testNoClaimFromWrongThread() throws InterruptedException {
+        MemorySegment s = MemorySegment.ofArray(new byte[1]);
+        AtomicBoolean failed = new AtomicBoolean(false);
+        Thread t = new Thread(() -> {
+            try {
+                NativeAllocationScope.boundedScope(10).claim(s);
+            } catch (IllegalArgumentException ex) {
+                failed.set(true);
+            }
+        });
+        t.start();
+        t.join();
+        assertTrue(failed.get());
     }
 
     @DataProvider(name = "allocationScopes")

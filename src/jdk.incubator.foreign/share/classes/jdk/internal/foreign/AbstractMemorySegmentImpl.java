@@ -238,11 +238,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (scope.ownerThread() == newOwner) {
             throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
         } else {
-            return dupFence(newOwner);
+            return dupAndClose(newOwner);
         }
     }
 
-    public MemorySegment dupFence(Thread newOwner) {
+    public MemorySegment dupAndClose(Thread newOwner) {
         try {
             return dup(0L, length, mask, scope.dup(newOwner));
         } finally {
