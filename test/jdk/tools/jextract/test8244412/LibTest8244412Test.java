@@ -23,10 +23,10 @@
 
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeScope;
 
 import org.testng.annotations.Test;
 import test.jextract.test8244412.Clong_long;
-import test.jextract.test8244412.CScope;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static test.jextract.test8244412.test8244412_h.*;
@@ -43,7 +43,7 @@ import static test.jextract.test8244412.test8244412_h.*;
 public class LibTest8244412Test {
     @Test
     public void test() {
-        try (var scope = new CScope()) {
+        try (var scope = NativeScope.unboundedScope()) {
             var addr = Cmysize_t.allocate(0L, scope);
             assertEquals(Cmysize_t.get(addr), 0L);
             Cmysize_t.set(addr, 13455566L);

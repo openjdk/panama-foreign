@@ -5,6 +5,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import static jdk.incubator.foreign.CSupport.C_POINTER;
 
 public final class Cpointer {
@@ -53,7 +54,7 @@ public final class Cpointer {
         return seg;
     }
 
-    public static MemoryAddress allocate(MemoryAddress value, CScope scope) {
+    public static MemoryAddress allocate(MemoryAddress value, NativeScope scope) {
         var addr = scope.allocate(LAYOUT);
         handle.set(addr, value);
         return addr;
@@ -64,7 +65,7 @@ public final class Cpointer {
         return MemorySegment.allocateNative(arrLayout);
     }
 
-    public static MemoryAddress allocateArray(int length, CScope scope) {
+    public static MemoryAddress allocateArray(int length, NativeScope scope) {
         var arrLayout = MemoryLayout.ofSequence(length, LAYOUT);
         return scope.allocate(arrLayout);
     }

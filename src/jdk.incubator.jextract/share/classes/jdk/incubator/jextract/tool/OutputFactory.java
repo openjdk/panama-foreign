@@ -155,7 +155,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.add(builder.build());
             files.addAll(constantHelper.getClasses());
             files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
-            files.add(getCScopeFile(pkgName));
             files.add(getCstringFile(pkgName));
             files.add(getCpointerFile(pkgName));
             files.addAll(getPrimitiveTypeFiles(pkgName));
@@ -180,10 +179,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    private JavaFileObject getCScopeFile(String pkgName) throws IOException, URISyntaxException {
-        return getTemplateFile(pkgName, "CScope", "resources/CScope.java.template");
     }
 
     private JavaFileObject getCstringFile(String pkgName) throws IOException, URISyntaxException {
