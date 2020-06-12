@@ -25,10 +25,14 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
+import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -523,5 +527,152 @@ public class CSupport {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+    }
+
+    private final static VarHandle byteArrHandle =
+            MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+
+    /**
+     * Convert a Java string into a null-terminated C string, using the given
+     * {@linkplain java.nio.charset.Charset charset}, storing the result into a
+     * new native memory segment.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @return a new native memory segment containing the converted C string.
+     * @throws NullPointerException if either {@code str == null}.
+     */
+    public static MemorySegment toCString(String str) {
+        Objects.requireNonNull(str);
+        return toCString(str.getBytes());
+    }
+
+    /**
+     * Convert a Java string into a null-terminated C string, using the
+     * platform's default charset, storing the result into a new native memory segment.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the C string.
+     * @return a new native memory segment containing the converted C string.
+     * @throws NullPointerException if either {@code str == null} or {@code charset == null}.
+     */
+    public static MemorySegment toCString(String str, Charset charset) {
+        Objects.requireNonNull(str);
+        Objects.requireNonNull(charset);
+        return toCString(str.getBytes(charset));
+    }
+
+    /**
+     * Convert a Java string into a null-terminated C string, using the given
+     * {@linkplain java.nio.charset.Charset charset}, storing the result into a
+     * native memory segment allocated using the provided scope.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @param scope the scope to be used for the native segment allocation.
+     * @return a new native memory segment containing the converted C string.
+     * @throws NullPointerException if either {@code str == null} or {@code scope == null}.
+     */
+    public static MemoryAddress toCString(String str, NativeScope scope) {
+        Objects.requireNonNull(str);
+        Objects.requireNonNull(scope);
+        return toCString(str.getBytes(), scope);
+    }
+
+    /**
+     * Convert a Java string into a null-terminated C string, using the
+     * platform's default charset, storing the result into a new native memory segment
+     * native memory segment allocated using the provided scope.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the C string.
+     * @param scope the scope to be used for the native segment allocation.
+     * @return a new native memory segment containing the converted C string.
+     * @throws NullPointerException if either {@code str == null}, {@code charset == null} or {@code scope == null}.
+     */
+    public static MemoryAddress toCString(String str, Charset charset, NativeScope scope) {
+        Objects.requireNonNull(str);
+        Objects.requireNonNull(charset);
+        Objects.requireNonNull(scope);
+        return toCString(str.getBytes(charset), scope);
+    }
+
+    /**
+     * Convert a null-terminated C string stored at given address into a Java string.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param addr the address at which the string is stored.
+     * @return a Java string with the contents of the null-terminated C string at given address.
+     * @throws NullPointerException if {@code addr == null}
+     * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
+     */
+    public static String toJavaStringRestricted(MemoryAddress addr) {
+        Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
+        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING));
+    }
+
+    /**
+     * Convert a null-terminated C string stored at given address into a Java string.
+     * @param addr the address at which the string is stored.
+     * @return a Java string with the contents of the null-terminated C string at given address.
+     * @throws NullPointerException if {@code addr == null}
+     * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
+     * @throws IllegalStateException if the size of the native string is greater than the size of the segment
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     */
+    public static String toJavaString(MemoryAddress addr) {
+        return toJavaStringInternal(addr);
+    }
+
+    private static String toJavaStringInternal(MemoryAddress addr) {
+        StringBuilder buf = new StringBuilder();
+        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
+        for (int offset = 0 ; offset >= 0 ; offset++) {
+            byte curr = (byte) byteArrHandle.get(addr, (long)offset);
+            if (curr == 0) {
+                return buf.toString();
+            }
+            buf.append((char) curr);
+        }
+        throw new IllegalArgumentException("String too large");
+    }
+
+    private static void copy(MemoryAddress addr, byte[] bytes) {
+        var heapSegment = MemorySegment.ofArray(bytes);
+        addr.segment().copyFrom(heapSegment);
+        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
+    }
+
+    private static MemorySegment toCString(byte[] bytes) {
+        MemorySegment segment = MemorySegment.allocateNative(bytes.length + 1, 1L);
+        MemoryAddress addr = segment.baseAddress();
+        copy(addr, bytes);
+        return segment;
+    }
+
+    private static MemoryAddress toCString(byte[] bytes, NativeScope scope) {
+        MemoryAddress addr = scope.allocate(bytes.length + 1, 1L);
+        copy(addr, bytes);
+        return addr;
     }
 }
