@@ -227,7 +227,7 @@ public class StdLibTest extends NativeTestHelper {
                     byteArrHandle.set(buf.baseAddress(), i, (byte)chars[(int)i]);
                 }
                 byteArrHandle.set(buf.baseAddress(), (long)chars.length, (byte)'\0');
-                return toJavaString(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())).rebase(buf));
+                return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())));
             }
         }
 
@@ -441,13 +441,5 @@ public class StdLibTest extends NativeTestHelper {
                                 perms.stream());
                     }).collect(Collectors.toCollection(LinkedHashSet::new));
         }
-    }
-
-    static MemorySegment toCString(String value) {
-        return Cstring.toCString(value);
-    }
-
-    static String toJavaString(MemoryAddress address) {
-        return Cstring.toJavaString(address);
     }
 }

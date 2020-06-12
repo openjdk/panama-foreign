@@ -511,4 +511,28 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             throw new UnsupportedOperationException();
         }
     };
+
+    public static final AbstractMemorySegmentImpl EVERYTHING = new AbstractMemorySegmentImpl(
+            Long.MAX_VALUE, READ | WRITE, MemoryScope.createUnchecked(null, null, null)
+    ) {
+        @Override
+        ByteBuffer makeByteBuffer() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        long min() {
+            return 0;
+        }
+
+        @Override
+        Object base() {
+            return null;
+        }
+
+        @Override
+        AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
+            throw new UnsupportedOperationException();
+        }
+    };
 }
