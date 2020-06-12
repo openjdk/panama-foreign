@@ -533,9 +533,8 @@ public class CSupport {
             MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
     /**
-     * Convert a Java string into a null-terminated C string, using the given
-     * {@linkplain java.nio.charset.Charset charset}, storing the result into a
-     * new native memory segment.
+     * Convert a Java string into a null-terminated C string, using the
+     * platform's default charset, storing the result into a new native memory segment.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -552,8 +551,8 @@ public class CSupport {
     }
 
     /**
-     * Convert a Java string into a null-terminated C string, using the
-     * platform's default charset, storing the result into a new native memory segment.
+     * Convert a Java string into a null-terminated C string, using the given {@linkplain java.nio.charset.Charset charset},
+     * storing the result into a new native memory segment.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -572,9 +571,8 @@ public class CSupport {
     }
 
     /**
-     * Convert a Java string into a null-terminated C string, using the given
-     * {@linkplain java.nio.charset.Charset charset}, storing the result into a
-     * native memory segment allocated using the provided scope.
+     * Convert a Java string into a null-terminated C string, using the platform's default charset,
+     * storing the result into a native memory segment allocated using the provided scope.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -593,9 +591,8 @@ public class CSupport {
     }
 
     /**
-     * Convert a Java string into a null-terminated C string, using the
-     * platform's default charset, storing the result into a new native memory segment
-     * native memory segment allocated using the provided scope.
+     * Convert a Java string into a null-terminated C string, using the given {@linkplain java.nio.charset.Charset charset},
+     * storing the result into a new native memory segment native memory segment allocated using the provided scope.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
