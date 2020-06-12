@@ -2,21 +2,21 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeAllocationScope;
+import jdk.incubator.foreign.NativeScope;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalLong;
 
-public abstract class AbstractAllocationScope extends NativeAllocationScope {
+public abstract class AbstractNativeScope extends NativeScope {
 
     private final List<MemorySegment> segments = new ArrayList<>();
     private final Thread ownerThread;
 
     private static final int SCOPE_MASK = MemorySegment.READ | MemorySegment.WRITE; // no terminal operations allowed
 
-    AbstractAllocationScope(Thread ownerThread) {
+    AbstractNativeScope(Thread ownerThread) {
         this.ownerThread = ownerThread;
     }
 
@@ -53,7 +53,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
     }
 
     @Override
-    public MemorySegment claim(MemorySegment segment) {
+    public MemorySegment register(MemorySegment segment) {
         Objects.requireNonNull(segment);
         if (segment.ownerThread() != ownerThread()) {
             throw new IllegalArgumentException("Cannot register segment owned by a different thread");
@@ -67,7 +67,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
                 .withAccessModes(segment.accessModes() & SCOPE_MASK);
     }
 
-    public static class UnboundedAllocationScope extends AbstractAllocationScope {
+    public static class UnboundedNativeScope extends AbstractNativeScope {
 
         private static final long BLOCK_SIZE = 4 * 1024;
         private static final long MAX_ALLOC_SIZE = BLOCK_SIZE / 2;
@@ -86,7 +86,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
             return size;
         }
 
-        public UnboundedAllocationScope() {
+        public UnboundedNativeScope() {
             super(Thread.currentThread());
             this.segment = newSegment(BLOCK_SIZE);
         }
@@ -117,7 +117,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
         }
     }
 
-    public static class BoundedAllocationScope extends AbstractAllocationScope {
+    public static class BoundedNativeScope extends AbstractNativeScope {
         private final MemorySegment segment;
         private long sp = 0L;
 
@@ -131,7 +131,7 @@ public abstract class AbstractAllocationScope extends NativeAllocationScope {
             return sp;
         }
 
-        public BoundedAllocationScope(long size) {
+        public BoundedNativeScope(long size) {
             super(Thread.currentThread());
             this.segment = newSegment(size, 1);
         }
