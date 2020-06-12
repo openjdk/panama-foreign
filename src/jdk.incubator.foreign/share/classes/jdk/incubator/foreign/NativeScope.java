@@ -253,8 +253,8 @@ public abstract class NativeScope implements AutoCloseable {
      * but whose life-cycle is tied to that of this native scope.
      * @throws IllegalStateException if {@code segment} is not <em>alive</em> (see {@link MemorySegment#isAlive()}).
      * @throws NullPointerException if {@code segment == null}
-     * @throws IllegalArgumentException if {@code segment.ownerThread() != this.ownerThread()}, or if {@code segment}
-     * does not feature the {@link MemorySegment#CLOSE} access mode.
+     * @throws IllegalArgumentException if {@code segment} is not confined and {@code segment.ownerThread() != this.ownerThread()},
+     * or if {@code segment} does not feature the {@link MemorySegment#CLOSE} access mode.
      */
     public abstract MemorySegment register(MemorySegment segment);
 
