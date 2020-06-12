@@ -582,10 +582,11 @@ public class CSupport {
      * control over the encoding process is required.
      *
      * @param str the Java string to be converted into a C string.
+     * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null} or {@code scope == null}.
      */
-    public static MemoryAddress toCString(String str, NativeAllocationScope scope) {
+    public static MemoryAddress toCString(String str, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -603,10 +604,11 @@ public class CSupport {
      *
      * @param str the Java string to be converted into a C string.
      * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the C string.
+     * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null}, {@code charset == null} or {@code scope == null}.
      */
-    public static MemoryAddress toCString(String str, Charset charset, NativeAllocationScope scope) {
+    public static MemoryAddress toCString(String str, Charset charset, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -662,16 +664,14 @@ public class CSupport {
     }
 
     private static MemorySegment toCString(byte[] bytes) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
-        MemorySegment segment = MemorySegment.allocateNative(strLayout);
+        MemorySegment segment = MemorySegment.allocateNative(bytes.length + 1, 1L);
         MemoryAddress addr = segment.baseAddress();
         copy(addr, bytes);
         return segment;
     }
 
-    private static MemoryAddress toCString(byte[] bytes, NativeAllocationScope scope) {
-        MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
-        MemoryAddress addr = scope.allocate(strLayout);
+    private static MemoryAddress toCString(byte[] bytes, NativeScope scope) {
+        MemoryAddress addr = scope.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
     }
