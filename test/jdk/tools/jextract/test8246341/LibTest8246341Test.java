@@ -22,6 +22,7 @@
  */
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246341.*;
 import static org.testng.Assert.assertEquals;
@@ -33,6 +34,7 @@ import static test.jextract.test8246341.Cstring.toJavaStringRestricted;
  * @test
  * @library ..
  * @modules jdk.incubator.jextract
+ * @modules jdk.incubator.foreign
  * @bug 8246341
  * @summary jextract should generate Cpointer utilities class
  * @run driver JtregJextract -l Test8246341 -t test.jextract.test8246341 -- test8246341.h
@@ -58,7 +60,7 @@ public class LibTest8246341Test {
 
     @Test
     public void testPointerAllocate() {
-        try (var scope = new CScope(Cpointer.sizeof())) {
+        try (var scope = NativeScope.boundedScope(Cpointer.sizeof())) {
             var addr = Cpointer.allocate(MemoryAddress.NULL, scope);
             fillin(addr);
             assertEquals(toJavaStringRestricted(Cpointer.get(addr)), "hello world");

@@ -149,7 +149,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         sb.append(PUB_MODS);
-        sb.append("MemoryAddress allocate(NativeAllocationScope scope) { return scope.allocate($LAYOUT()); }\n");
+        sb.append("MemoryAddress allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         decrAlign();
     }
 
@@ -170,7 +170,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         sb.append(PUB_MODS);
-        sb.append("MemoryAddress allocateArray(int len, NativeAllocationScope scope) {\n");
+        sb.append("MemoryAddress allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
         sb.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");

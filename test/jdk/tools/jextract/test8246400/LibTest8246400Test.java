@@ -23,6 +23,7 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246400.*;
 import static org.testng.Assert.assertEquals;
@@ -44,7 +45,7 @@ public class LibTest8246400Test {
     public void testSegmentRegister() {
         MemorySegment sum = null;
         MemoryAddress callback = null;
-        try (var scope = new CScope()) {
+        try (var scope = NativeScope.unboundedScope()) {
             var v1 = CVector.allocate(scope);
             CVector.x$set(v1, 1.0);
             CVector.y$set(v1, 0.0);
@@ -54,7 +55,7 @@ public class LibTest8246400Test {
             CVector.y$set(v2, 1.0);
 
             sum = add(v1.segment(), v2.segment());
-            scope.register(sum);
+            sum = scope.register(sum);
 
             assertEquals(CVector.x$get(sum.baseAddress()), 1.0, 0.1);
             assertEquals(CVector.y$get(sum.baseAddress()), 1.0, 0.1);
