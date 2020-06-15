@@ -45,7 +45,7 @@ public class CSupport {
      * Obtain a linker that uses the de facto C ABI of the current system to do it's linking.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @return a linker for this system.
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
@@ -645,7 +645,7 @@ public class CSupport {
      * over the decoding process is required.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
@@ -666,7 +666,7 @@ public class CSupport {
      * over the decoding process is required.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @param addr the address at which the string is stored.
      * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the Java string.

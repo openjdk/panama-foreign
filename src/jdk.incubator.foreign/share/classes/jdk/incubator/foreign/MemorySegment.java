@@ -611,7 +611,7 @@ allocateNative(bytesSize, 1);
      * (see {@link #ALL_ACCESS}).
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param addr the desired base address
