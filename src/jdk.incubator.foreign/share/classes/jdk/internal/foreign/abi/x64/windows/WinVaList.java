@@ -160,7 +160,7 @@ class WinVaList implements CSupport.VaList {
     }
 
     @Override
-    public MemoryAddress toAddress() {
+    public MemoryAddress address() {
         return ptr;
     }
 
