@@ -292,7 +292,7 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public MemoryAddress toAddress() {
+    public MemoryAddress address() {
         return segment.baseAddress();
     }
 

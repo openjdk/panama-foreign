@@ -54,10 +54,6 @@ public class CSupport {
         return SharedUtils.getSystemLinker();
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions) {
-        return SharedUtils.newVaList(actions);
-    }
-
     /**
      * An interface that models a C {@code va_list}.
      *
@@ -76,6 +72,8 @@ public class CSupport {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code int}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         int vargAsInt(MemoryLayout layout);
 
@@ -84,6 +82,8 @@ public class CSupport {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code long}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         long vargAsLong(MemoryLayout layout);
 
@@ -92,6 +92,8 @@ public class CSupport {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code double}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         double vargAsDouble(MemoryLayout layout);
 
@@ -100,6 +102,8 @@ public class CSupport {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         MemoryAddress vargAsAddress(MemoryLayout layout);
 
@@ -108,6 +112,8 @@ public class CSupport {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         MemorySegment vargAsSegment(MemoryLayout layout);
 
@@ -115,57 +121,73 @@ public class CSupport {
          * Skips a number of va arguments with the given memory layouts.
          *
          * @param layouts the layout of the value
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
-        void skip(MemoryLayout...layouts);
+        void skip(MemoryLayout... layouts);
 
         /**
-         * A predicate used to check if this va list is alive,
-         * or in other words; if {@code close()} has been called on this
-         * va list.
+         * A predicate used to check if the memory associated with the C {@code va_list} modelled
+         * by this instance is still valid; or, in other words, if {@code close()} has been called on this
+         * instance.
          *
-         * @return true if this va list is still alive.
+         * @return true, if the memory associated with the C {@code va_list} modelled by this instance is still valid
          * @see #close()
          */
         boolean isAlive();
 
         /**
-         * Closes this va list, releasing any resources it was using.
+         * Releases the underlying C {@code va_list} modelled by this instance. As a result, subsequent attempts to call
+         * operations on this instance (e.g. {@link #copy()} will fail with an exception.
          *
          * @see #isAlive()
          */
         void close();
 
         /**
-         * Copies this va list.
+         * Copies this C {@code va_list}.
          *
-         * @return a copy of this va list.
+         * @return a copy of this C {@code va_list}.
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
          */
         VaList copy();
 
         /**
-         * Returns the underlying memory address of this va list.
+         * Returns the memory address of the C {@code va_list} associated with this instance.
          *
-         * @return the address
+         * @return the memory address of the C {@code va_list} associated with this instance.
          */
-        MemoryAddress toAddress();
+        MemoryAddress address();
 
         /**
-         * Constructs a {@code VaList} out of the memory address of a va_list.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          *
-         * @param ma the memory address
-         * @return the new {@code VaList}.
+         * @param address a memory address pointing to an existing C {@code va_list}.
+         * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
-        static VaList ofAddress(MemoryAddress ma) {
-            return SharedUtils.newVaListOfAddress(ma);
+        static VaList ofAddress(MemoryAddress address) {
+            return SharedUtils.newVaListOfAddress(address);
         }
 
         /**
-         * A builder interface used to construct a va list.
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}).
+         *
+         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
+         *                of the underlying C {@code va_list}.
+         * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
+         */
+        static VaList make(Consumer<VaList.Builder> actions) {
+            return SharedUtils.newVaList(actions);
+        }
+
+        /**
+         * A builder interface used to construct a C {@code va_list}.
          */
         interface Builder {
 
             /**
-             * Adds a native value represented as an {@code int} to the va list.
+             * Adds a native value represented as an {@code int} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
              * @param value the value, represented as an {@code int}.
@@ -174,7 +196,7 @@ public class CSupport {
             Builder vargFromInt(MemoryLayout layout, int value);
 
             /**
-             * Adds a native value represented as a {@code long} to the va list.
+             * Adds a native value represented as a {@code long} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code long}.
@@ -183,7 +205,7 @@ public class CSupport {
             Builder vargFromLong(MemoryLayout layout, long value);
 
             /**
-             * Adds a native value represented as a {@code double} to the va list.
+             * Adds a native value represented as a {@code double} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code double}.
@@ -192,7 +214,7 @@ public class CSupport {
             Builder vargFromDouble(MemoryLayout layout, double value);
 
             /**
-             * Adds a native value represented as a {@code MemoryAddress} to the va list.
+             * Adds a native value represented as a {@code MemoryAddress} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code MemoryAddress}.
@@ -201,7 +223,7 @@ public class CSupport {
             Builder vargFromAddress(MemoryLayout layout, MemoryAddress value);
 
             /**
-             * Adds a native value represented as a {@code MemorySegment} to the va list.
+             * Adds a native value represented as a {@code MemorySegment} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code MemorySegment}.
