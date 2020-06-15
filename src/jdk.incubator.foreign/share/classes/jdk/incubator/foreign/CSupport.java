@@ -175,7 +175,7 @@ public class CSupport {
          *
          * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
          *                of the underlying C {@code va_list}.
-         * @return a new {@code VaList} instance backed a fresh C {@code va_list}.
+         * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
         static VaList make(Consumer<VaList.Builder> actions) {
             return SharedUtils.newVaList(actions);

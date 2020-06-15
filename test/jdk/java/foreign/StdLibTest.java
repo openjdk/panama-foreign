@@ -359,7 +359,7 @@ public class StdLibTest extends NativeTestHelper {
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
             try (MemorySegment formatStr = toCString(format)) {
                 return (int)vprintf.invokeExact(formatStr.baseAddress(),
-                        newVaList(b -> args.forEach(a -> a.accept(b))));
+                        VaList.make(b -> args.forEach(a -> a.accept(b))));
             }
         }
 
