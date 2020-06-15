@@ -26,6 +26,8 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -635,7 +637,12 @@ public class CSupport {
     }
 
     /**
-     * Convert a null-terminated C string stored at given address into a Java string.
+     * Convert a null-terminated C string stored at given address into a Java string, using the platform's default charset.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement string.  The {@link
+     * java.nio.charset.CharsetDecoder} class should be used when more control
+     * over the decoding process is required.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -647,11 +654,38 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING));
+        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
     }
 
     /**
-     * Convert a null-terminated C string stored at given address into a Java string.
+     * Convert a null-terminated C string stored at given address into a Java string, using the given {@linkplain java.nio.charset.Charset charset}.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement string.  The {@link
+     * java.nio.charset.CharsetDecoder} class should be used when more control
+     * over the decoding process is required.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM crash or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @param addr the address at which the string is stored.
+     * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the Java string.
+     * @return a Java string with the contents of the null-terminated C string at given address.
+     * @throws NullPointerException if {@code addr == null}
+     * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
+     */
+    public static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
+        Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
+        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
+    }
+
+    /**
+     * Convert a null-terminated C string stored at given address into a Java string, using the platform's default charset.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement string.  The {@link
+     * java.nio.charset.CharsetDecoder} class should be used when more control
+     * over the decoding process is required.
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws NullPointerException if {@code addr == null}
@@ -660,18 +694,43 @@ public class CSupport {
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
      */
     public static String toJavaString(MemoryAddress addr) {
-        return toJavaStringInternal(addr);
+        return toJavaStringInternal(addr, Charset.defaultCharset());
     }
 
-    private static String toJavaStringInternal(MemoryAddress addr) {
-        StringBuilder buf = new StringBuilder();
+    /**
+     * Convert a null-terminated C string stored at given address into a Java string, using the given {@linkplain java.nio.charset.Charset charset}.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement string.  The {@link
+     * java.nio.charset.CharsetDecoder} class should be used when more control
+     * over the decoding process is required.
+     * @param addr the address at which the string is stored.
+     * @param charset The {@linkplain java.nio.charset.Charset} to be used to compute the contents of the Java string.
+     * @return a Java string with the contents of the null-terminated C string at given address.
+     * @throws NullPointerException if {@code addr == null}
+     * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
+     * @throws IllegalStateException if the size of the native string is greater than the size of the segment
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     */
+    public static String toJavaString(MemoryAddress addr, Charset charset) {
+        return toJavaStringInternal(addr, charset);
+    }
+
+    private static String toJavaStringInternal(MemoryAddress addr, Charset charset) {
+        int len = strlen(addr);
+        byte[] bytes = new byte[len];
+        MemorySegment.ofArray(bytes)
+                .copyFrom(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, len, null, null, null));
+        return new String(bytes, charset);
+    }
+
+    private static int strlen(MemoryAddress address) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0 ; offset >= 0 ; offset++) {
-            byte curr = (byte) byteArrHandle.get(addr, (long)offset);
+        for (int offset = 0; offset >= 0; offset++) {
+            byte curr = (byte) byteArrHandle.get(address, (long) offset);
             if (curr == 0) {
-                return buf.toString();
+                return offset;
             }
-            buf.append((char) curr);
         }
         throw new IllegalArgumentException("String too large");
     }
