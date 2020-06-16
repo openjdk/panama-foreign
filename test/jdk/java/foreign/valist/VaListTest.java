@@ -214,6 +214,20 @@ public class VaListTest {
         }
     }
 
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
+    public void testEmptyNotCloseable() {
+        VaList list = VaList.empty();
+        list.close();
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
+    public void testEmptyVaListFromBuilderNotCloseable() {
+        VaList list = VaList.make(b -> {});
+        list.close();
+    }
+
     @DataProvider
     public static Object[][] upcalls() {
         return new Object[][]{

@@ -31,10 +31,13 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,6 +114,9 @@ public class SysVVaList implements VaList {
     private static final VarHandle VH_reg_save_area
         = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(long.class, groupElement("reg_save_area")));
 
+    private static final Cleaner cleaner = Cleaner.create();
+    private static final CSupport.VaList EMPTY = new SharedUtils.EmptyVaList(emptyListAddress());
+
     private final MemorySegment segment;
     private final List<MemorySegment> slices = new ArrayList<>();
     private final MemorySegment regSaveArea;
@@ -119,6 +125,23 @@ public class SysVVaList implements VaList {
         this.segment = segment;
         regSaveArea = regSaveArea();
         slices.add(regSaveArea);
+    }
+
+    private static MemoryAddress emptyListAddress() {
+        MemorySegment ms = MemorySegment.allocateNative(LAYOUT);
+        cleaner.register(SysVVaList.class, ms::close);
+        MemoryAddress base = ms.baseAddress();
+        VH_gp_offset.set(base, MAX_GP_OFFSET);
+        VH_fp_offset.set(base, MAX_FP_OFFSET);
+        VH_overflow_arg_area.set(base, MemoryAddress.NULL);
+        VH_reg_save_area.set(base, MemoryAddress.NULL);
+        MemorySegment unconfined = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                base, ms.byteSize(), null, null, null).withAccessModes(0);
+        return unconfined.baseAddress();
+    }
+
+    public static CSupport.VaList empty() {
+        return EMPTY;
     }
 
     private int currentGPOffset() {
@@ -269,10 +292,6 @@ public class SysVVaList implements VaList {
         return new SysVVaList(MemorySegment.ofNativeRestricted(ma, LAYOUT.byteSize(), Thread.currentThread(), null, null));
     }
 
-    MemorySegment getSegment() {
-        return segment;
-    }
-
     @Override
     public boolean isAlive() {
         return segment.isAlive();
@@ -383,7 +402,15 @@ public class SysVVaList implements VaList {
             return this;
         }
 
-        public SysVVaList build() {
+        private boolean isEmpty() {
+            return currentGPOffset == 0 && currentFPOffset == FP_OFFSET && stackArgs.isEmpty();
+        }
+
+        public VaList build() {
+            if (isEmpty()) {
+                return EMPTY;
+            }
+
             MemorySegment vaListSegment = MemorySegment.allocateNative(LAYOUT.byteSize());
             SysVVaList res = new SysVVaList(vaListSegment);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;

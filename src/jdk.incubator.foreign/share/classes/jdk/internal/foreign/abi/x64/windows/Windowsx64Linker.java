@@ -30,6 +30,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
 import java.lang.invoke.MethodHandle;
@@ -61,9 +62,9 @@ public class Windowsx64Linker implements ForeignLinker {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_unboxVaList = lookup.findStatic(Windowsx64Linker.class, "unboxVaList",
-                MethodType.methodType(MemoryAddress.class, CSupport.VaList.class));
-            MH_boxVaList = lookup.findStatic(Windowsx64Linker.class, "boxVaList",
+            MH_unboxVaList = lookup.findVirtual(CSupport.VaList.class, "address",
+                MethodType.methodType(MemoryAddress.class));
+            MH_boxVaList = lookup.findStatic(Windowsx64Linker.class, "newVaListOfAddress",
                 MethodType.methodType(VaList.class, MemoryAddress.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
@@ -83,45 +84,17 @@ public class Windowsx64Linker implements ForeignLinker {
         return builder.build();
     }
 
-    private static MethodType convertVaListCarriers(MethodType mt) {
-        Class<?>[] params = new Class<?>[mt.parameterCount()];
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pType = mt.parameterType(i);
-            params[i] = ((pType == CSupport.VaList.class) ? WinVaList.CARRIER : pType);
-        }
-        return MethodType.methodType(mt.returnType(), params);
-    }
-
-    private static MethodHandle unxboxVaLists(MethodType type, MethodHandle handle) {
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i, MH_unboxVaList);
-            }
-        }
-        return handle;
-    }
-
     @Override
     public MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        MethodType llMt = convertVaListCarriers(type);
+        MethodType llMt = SharedUtils.convertVaListCarriers(type, WinVaList.CARRIER);
         MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
-        handle = unxboxVaLists(type, handle);
-        return handle;
-    }
-
-    private static MethodHandle boxVaLists(MethodHandle handle) {
-        MethodType type = handle.type();
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i, MH_boxVaList);
-            }
-        }
+        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
 
     @Override
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        target = boxVaLists(target);
+        target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
@@ -134,16 +107,11 @@ public class Windowsx64Linker implements ForeignLinker {
         return (Win64.ArgumentClass)layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get();
     }
 
-    private static MemoryAddress unboxVaList(CSupport.VaList list) {
-        return ((WinVaList) list).getSegment().baseAddress();
-    }
-
-    private static CSupport.VaList boxVaList(MemoryAddress ma) {
-        return WinVaList.ofAddress(ma);
-    }
-
     public static VaList newVaListOfAddress(MemoryAddress ma) {
         return WinVaList.ofAddress(ma);
     }
 
+    public static VaList emptyVaList() {
+        return WinVaList.empty();
+    }
 }

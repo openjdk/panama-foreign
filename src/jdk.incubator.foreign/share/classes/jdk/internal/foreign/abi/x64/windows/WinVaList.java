@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CSupport.VaList;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -57,10 +58,12 @@ import static jdk.incubator.foreign.MemorySegment.READ;
 //            ? **(t**)((ap += sizeof(__int64)) - sizeof(__int64))             \
 //            :  *(t* )((ap += sizeof(__int64)) - sizeof(__int64)))
 //
-class WinVaList implements CSupport.VaList {
+class WinVaList implements VaList {
     public static final Class<?> CARRIER = MemoryAddress.class;
     private static final long VA_SLOT_SIZE_BYTES = 8;
     private static final VarHandle VH_address = MemoryHandles.asAddressVarHandle(C_POINTER.varHandle(long.class));
+
+    private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private final MemorySegment segment;
     private MemoryAddress ptr;
@@ -74,6 +77,10 @@ class WinVaList implements CSupport.VaList {
         this.segment = segment;
         this.ptr = segment.baseAddress();
         this.copies = copies;
+    }
+
+    public static final VaList empty() {
+        return EMPTY;
     }
 
     @Override
@@ -144,10 +151,6 @@ class WinVaList implements CSupport.VaList {
         return new Builder();
     }
 
-    MemorySegment getSegment() {
-        return segment;
-    }
-
     @Override
     public void close() {
         segment.close();
@@ -155,7 +158,7 @@ class WinVaList implements CSupport.VaList {
     }
 
     @Override
-    public CSupport.VaList copy() {
+    public VaList copy() {
         return WinVaList.ofAddress(ptr);
     }
 
@@ -169,7 +172,7 @@ class WinVaList implements CSupport.VaList {
         return segment.isAlive();
     }
 
-    static class Builder implements CSupport.VaList.Builder {
+    static class Builder implements VaList.Builder {
 
         private final List<SimpleVaArg> args = new ArrayList<>();
 
@@ -204,9 +207,9 @@ class WinVaList implements CSupport.VaList {
             return arg(MemorySegment.class, layout, value);
         }
 
-        public WinVaList build() {
+        public VaList build() {
             if (args.isEmpty()) {
-                return new WinVaList(MemorySegment.allocateNative(1).withAccessModes(CLOSE), List.of());
+                return EMPTY;
             }
             MemorySegment ms = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size());
             List<MemorySegment> copies = new ArrayList<>();
