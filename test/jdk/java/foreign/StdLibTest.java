@@ -316,7 +316,7 @@ public class StdLibTest extends NativeTestHelper {
             }
             boolean isdst() {
                 byte b = (byte)byteHandle.get(base.addOffset(32));
-                return b == 0 ? false : true;
+                return b != 0;
             }
         }
 
