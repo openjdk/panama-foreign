@@ -175,12 +175,26 @@ public class CSupport {
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
          *
+         * Note that when there are no arguments added to the created va list,
+         * this method will return the same as {@linkplain #empty()}.
+         *
          * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
          *                of the underlying C {@code va_list}.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
         static VaList make(Consumer<VaList.Builder> actions) {
             return SharedUtils.newVaList(actions);
+        }
+
+        /**
+         * Returns an empty C {@code va_list} constant.
+         *
+         * The returned {@code VaList} can not be closed.
+         *
+         * @return a {@code VaList} modelling an empty C {@code va_list}.
+         */
+        static VaList empty() {
+            return SharedUtils.emptyVaList();
         }
 
         /**
