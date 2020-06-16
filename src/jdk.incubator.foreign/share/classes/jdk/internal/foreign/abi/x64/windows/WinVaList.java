@@ -205,6 +205,9 @@ class WinVaList implements CSupport.VaList {
         }
 
         public WinVaList build() {
+            if (args.isEmpty()) {
+                return new WinVaList(MemorySegment.allocateNative(1).withAccessModes(CLOSE), List.of());
+            }
             MemorySegment ms = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size());
             List<MemorySegment> copies = new ArrayList<>();
 
