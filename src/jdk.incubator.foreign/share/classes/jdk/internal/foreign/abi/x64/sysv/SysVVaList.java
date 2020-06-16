@@ -31,10 +31,10 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
@@ -51,6 +51,8 @@ import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
 public class SysVVaList implements VaList {
+    private static final Unsafe U = Unsafe.getUnsafe();
+
     static final Class<?> CARRIER = MemoryAddress.class;
 
 //    struct typedef __va_list_tag __va_list_tag {
@@ -128,7 +130,9 @@ public class SysVVaList implements VaList {
     }
 
     private static MemoryAddress emptyListAddress() {
-        MemorySegment ms = MemorySegment.allocateNative(LAYOUT);
+        long ptr = U.allocateMemory(LAYOUT.byteSize());
+        MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null, () -> U.freeMemory(ptr), null);
         cleaner.register(SysVVaList.class, ms::close);
         MemoryAddress base = ms.baseAddress();
         VH_gp_offset.set(base, MAX_GP_OFFSET);
