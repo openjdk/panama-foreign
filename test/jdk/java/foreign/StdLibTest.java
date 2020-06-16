@@ -358,8 +358,15 @@ public class StdLibTest extends NativeTestHelper {
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
             try (MemorySegment formatStr = toCString(format)) {
-                return (int)vprintf.invokeExact(formatStr.baseAddress(),
-                        VaList.make(b -> args.forEach(a -> a.accept(b))));
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)));
+                int result = (int)vprintf.invokeExact(formatStr.baseAddress(), vaList);
+                try {
+                    vaList.close();
+                }
+                catch (UnsupportedOperationException e) {
+                    assertEquals(e.getMessage(), "Empty VaList");
+                }
+                return result;
             }
         }
 

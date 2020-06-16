@@ -37,6 +37,7 @@ import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
@@ -273,6 +274,44 @@ public class SharedUtils {
         };
     }
 
+    public static VaList emptyVaList() {
+        String name = CSupport.getSystemLinker().name();
+        return switch(name) {
+            case Win64.NAME -> Windowsx64Linker.emptyVaList();
+            case SysV.NAME -> SysVx64Linker.emptyVaList();
+            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        };
+    }
+
+    public static MethodType convertVaListCarriers(MethodType mt, Class<?> carrier) {
+        Class<?>[] params = new Class<?>[mt.parameterCount()];
+        for (int i = 0; i < params.length; i++) {
+            Class<?> pType = mt.parameterType(i);
+            params[i] = ((pType == VaList.class) ? carrier : pType);
+        }
+        return methodType(mt.returnType(), params);
+    }
+
+    public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
+        for (int i = 0; i < type.parameterCount(); i++) {
+            if (type.parameterType(i) == VaList.class) {
+               handle = MethodHandles.filterArguments(handle, i, unboxer);
+            }
+        }
+        return handle;
+    }
+
+    public static MethodHandle boxVaLists(MethodHandle handle, MethodHandle boxer) {
+        MethodType type = handle.type();
+        for (int i = 0; i < type.parameterCount(); i++) {
+            if (type.parameterType(i) == VaList.class) {
+               handle = MethodHandles.filterArguments(handle, i, boxer);
+            }
+        }
+        return handle;
+    }
+
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;
@@ -288,6 +327,69 @@ public class SharedUtils {
             return carrier == MemoryAddress.class
                 ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
                 : layout.varHandle(carrier);
+        }
+    }
+
+    public static class EmptyVaList implements CSupport.VaList {
+
+        private final MemoryAddress address;
+
+        public EmptyVaList(MemoryAddress address) {
+            this.address = address;
+        }
+
+        private static UnsupportedOperationException uoe() {
+            return new UnsupportedOperationException("Empty VaList");
+        }
+
+        @Override
+        public int vargAsInt(MemoryLayout layout) {
+            throw uoe();
+        }
+
+        @Override
+        public long vargAsLong(MemoryLayout layout) {
+            throw uoe();
+        }
+
+        @Override
+        public double vargAsDouble(MemoryLayout layout) {
+            throw uoe();
+        }
+
+        @Override
+        public MemoryAddress vargAsAddress(MemoryLayout layout) {
+            throw uoe();
+        }
+
+        @Override
+        public MemorySegment vargAsSegment(MemoryLayout layout) {
+            throw uoe();
+        }
+
+        @Override
+        public void skip(MemoryLayout... layouts) {
+            throw uoe();
+        }
+
+        @Override
+        public boolean isAlive() {
+            return true;
+        }
+
+        @Override
+        public void close() {
+            throw uoe();
+        }
+
+        @Override
+        public VaList copy() {
+            return this;
+        }
+
+        @Override
+        public MemoryAddress address() {
+            return address;
         }
     }
 }
