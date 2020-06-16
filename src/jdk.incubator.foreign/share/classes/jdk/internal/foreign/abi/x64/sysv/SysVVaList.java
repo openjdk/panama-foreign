@@ -139,9 +139,7 @@ public class SysVVaList implements VaList {
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
         VH_reg_save_area.set(base, MemoryAddress.NULL);
-        MemorySegment unconfined = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                base, ms.byteSize(), null, null, null).withAccessModes(0);
-        return unconfined.baseAddress();
+        return ms.withAccessModes(0).baseAddress();
     }
 
     public static CSupport.VaList empty() {
