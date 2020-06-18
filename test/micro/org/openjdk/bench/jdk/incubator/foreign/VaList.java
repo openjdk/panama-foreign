@@ -79,7 +79,7 @@ public class VaList {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (CSupport.VaList vaList = CSupport.newVaList(b ->
+        try (CSupport.VaList vaList = CSupport.VaList.make(b ->
             b.vargFromInt(C_INT, 1)
              .vargFromDouble(C_DOUBLE, 2D)
              .vargFromLong(C_LONGLONG, 3L)

@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -159,6 +160,21 @@ public class StdLibTest extends NativeTestHelper {
         assertEquals(found, expected.length());
     }
 
+    @Test(dataProvider = "printfArgs")
+    void test_vprintf(List<PrintfArg> args) throws Throwable {
+        String formatArgs = args.stream()
+                .map(a -> a.format)
+                .collect(Collectors.joining(","));
+
+        String formatString = "hello(" + formatArgs + ")\n";
+
+        String expected = String.format(formatString, args.stream()
+                .map(a -> a.javaValue).toArray());
+
+        int found = stdLibHelper.vprintf(formatString, args);
+        assertEquals(found, expected.length());
+    }
+
     static class StdLibHelper {
 
         final static MethodHandle strcat;
@@ -170,6 +186,7 @@ public class StdLibTest extends NativeTestHelper {
         final static MethodHandle qsortCompar;
         final static FunctionDescriptor qsortComparFunction;
         final static MethodHandle rand;
+        final static MethodHandle vprintf;
         final static MemoryAddress printfAddr;
         final static FunctionDescriptor printfBase;
 
@@ -211,6 +228,10 @@ public class StdLibTest extends NativeTestHelper {
                         MethodType.methodType(int.class),
                         FunctionDescriptor.of(C_INT));
 
+                vprintf = abi.downcallHandle(lookup.lookup("vprintf"),
+                        MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
+                        FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
+
                 printfAddr = lookup.lookup("printf");
 
                 printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
@@ -227,7 +248,7 @@ public class StdLibTest extends NativeTestHelper {
                     byteArrHandle.set(buf.baseAddress(), i, (byte)chars[(int)i]);
                 }
                 byteArrHandle.set(buf.baseAddress(), (long)chars.length, (byte)'\0');
-                return toJavaString(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())).rebase(buf));
+                return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())));
             }
         }
 
@@ -295,7 +316,7 @@ public class StdLibTest extends NativeTestHelper {
             }
             boolean isdst() {
                 byte b = (byte)byteHandle.get(base.addOffset(32));
-                return b == 0 ? false : true;
+                return b != 0;
             }
         }
 
@@ -332,6 +353,20 @@ public class StdLibTest extends NativeTestHelper {
             try (MemorySegment formatStr = toCString(format)) {
                 return (int)specializedPrintf(args).invokeExact(formatStr.baseAddress(),
                         args.stream().map(a -> a.nativeValue).toArray());
+            }
+        }
+
+        int vprintf(String format, List<PrintfArg> args) throws Throwable {
+            try (MemorySegment formatStr = toCString(format)) {
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)));
+                int result = (int)vprintf.invokeExact(formatStr.baseAddress(), vaList);
+                try {
+                    vaList.close();
+                }
+                catch (UnsupportedOperationException e) {
+                    assertEquals(e.getMessage(), "Empty VaList");
+                }
+                return result;
             }
         }
 
@@ -402,24 +437,38 @@ public class StdLibTest extends NativeTestHelper {
                 .toArray(Object[][]::new);
     }
 
-    enum PrintfArg {
-        INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42),
-        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").baseAddress(), "str"),
-        CHAR(byte.class, asVarArg(C_CHAR), "%c", (byte) 'h', 'h'),
-        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d);
+    enum PrintfArg implements Consumer<VaList.Builder> {
+
+        INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42, VaList.Builder::vargFromInt),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").baseAddress(), "str", VaList.Builder::vargFromAddress),
+        CHAR(byte.class, asVarArg(C_CHAR), "%c", (byte) 'h', 'h', (builder, layout, value) -> builder.vargFromInt(C_INT, (int)value)),
+        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
 
         final Class<?> carrier;
         final MemoryLayout layout;
         final String format;
         final Object nativeValue;
         final Object javaValue;
+        @SuppressWarnings("rawtypes")
+        final VaListBuilderCall builderCall;
 
-        PrintfArg(Class<?> carrier, MemoryLayout layout, String format, Object nativeValue, Object javaValue) {
+        <Z> PrintfArg(Class<?> carrier, MemoryLayout layout, String format, Z nativeValue, Object javaValue, VaListBuilderCall<Z> builderCall) {
             this.carrier = carrier;
             this.layout = layout;
             this.format = format;
             this.nativeValue = nativeValue;
             this.javaValue = javaValue;
+            this.builderCall = builderCall;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void accept(VaList.Builder builder) {
+            builderCall.build(builder, layout, nativeValue);
+        }
+
+        interface VaListBuilderCall<V> {
+            void build(VaList.Builder builder, MemoryLayout layout, V value);
         }
     }
 
@@ -441,13 +490,5 @@ public class StdLibTest extends NativeTestHelper {
                                 perms.stream());
                     }).collect(Collectors.toCollection(LinkedHashSet::new));
         }
-    }
-
-    static MemorySegment toCString(String value) {
-        return Cstring.toCString(value);
-    }
-
-    static String toJavaString(MemoryAddress address) {
-        return Cstring.toJavaString(address);
     }
 }

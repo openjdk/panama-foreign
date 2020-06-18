@@ -130,7 +130,7 @@ public class VaListTest {
 
     @Test
     public void testIntSum() throws Throwable {
-        try (VaList vaList = CSupport.newVaList(b ->
+        try (VaList vaList = VaList.make(b ->
                 b.vargFromInt(C_INT, 10)
                  .vargFromInt(C_INT, 15)
                  .vargFromInt(C_INT, 20))) {
@@ -141,7 +141,7 @@ public class VaListTest {
 
     @Test
     public void testDoubleSum() throws Throwable {
-        try (VaList vaList = CSupport.newVaList(b ->
+        try (VaList vaList = VaList.make(b ->
                 b.vargFromDouble(C_DOUBLE, 3.0D)
                  .vargFromDouble(C_DOUBLE, 4.0D)
                  .vargFromDouble(C_DOUBLE, 5.0D))) {
@@ -154,7 +154,7 @@ public class VaListTest {
     public void testVaListMemoryAddress() throws Throwable {
         try (MemorySegment msInt = MemorySegment.allocateNative(C_INT)) {
             VH_int.set(msInt.baseAddress(), 10);
-            try (VaList vaList = CSupport.newVaList(b -> b.vargFromAddress(C_POINTER, msInt.baseAddress()))) {
+            try (VaList vaList = VaList.make(b -> b.vargFromAddress(C_POINTER, msInt.baseAddress()))) {
                 int x = (int) MH_getInt.invokeExact(vaList);
                 assertEquals(x, 10);
             }
@@ -167,7 +167,7 @@ public class VaListTest {
             VH_Point_x.set(struct.baseAddress(), 5);
             VH_Point_y.set(struct.baseAddress(), 10);
 
-            try (VaList vaList = CSupport.newVaList(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
+            try (VaList vaList = VaList.make(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
                 int sum = (int) MH_sumStruct.invokeExact(vaList);
                 assertEquals(sum, 15);
             }
@@ -180,7 +180,7 @@ public class VaListTest {
             VH_BigPoint_x.set(struct.baseAddress(), 5);
             VH_BigPoint_y.set(struct.baseAddress(), 10);
 
-            try (VaList vaList = CSupport.newVaList(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
+            try (VaList vaList = VaList.make(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
                 long sum = (long) MH_sumBigStruct.invokeExact(vaList);
                 assertEquals(sum, 15);
             }
@@ -212,6 +212,20 @@ public class VaListTest {
         try (MemorySegment stub = abi.upcallStub(callback, desc)) {
             target.invokeExact(stub.baseAddress());
         }
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
+    public void testEmptyNotCloseable() {
+        VaList list = VaList.empty();
+        list.close();
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
+    public void testEmptyVaListFromBuilderNotCloseable() {
+        VaList list = VaList.make(b -> {});
+        list.close();
     }
 
     @DataProvider
