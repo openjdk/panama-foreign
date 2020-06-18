@@ -22,11 +22,15 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 
 /**
  * The binding operators defined in the Binding class can be combined into argument and return value processing 'recipes'.
@@ -362,6 +366,10 @@ public abstract class Binding {
 
         public Class<?> type() {
             return type;
+        }
+
+        public VarHandle varHandle() {
+            return MemoryHandles.withOffset(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), offset);
         }
 
         @Override

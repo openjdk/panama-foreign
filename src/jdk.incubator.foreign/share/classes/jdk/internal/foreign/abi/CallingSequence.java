@@ -26,6 +26,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 
 import java.lang.invoke.MethodType;
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class CallingSequence {
@@ -43,11 +44,18 @@ public class CallingSequence {
         this.argumentBindings = argumentBindings;
     }
 
-    public Stream<Binding.Move> moveBindings() {
+    public Stream<Binding.Move> argMoveBindings() {
         return argumentBindings.stream()
                 .flatMap(List::stream)
                 .filter(Binding.Move.class::isInstance)
                 .map(Binding.Move.class::cast);
+    }
+
+    public Stream<Binding.Move> retMoveBindings() {
+        return returnBindings()
+            .stream()
+            .filter(Binding.Move.class::isInstance)
+            .map(Binding.Move.class::cast);
     }
 
     public int argumentCount() {
@@ -56,6 +64,10 @@ public class CallingSequence {
 
     public List<Binding> argumentBindings(int i) {
         return argumentBindings.get(i);
+    }
+
+    public Stream<Binding> argumentBindings() {
+        return argumentBindings.stream().flatMap(List::stream);
     }
 
     public List<Binding> returnBindings() {

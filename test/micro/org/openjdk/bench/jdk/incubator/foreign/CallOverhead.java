@@ -83,12 +83,24 @@ public class CallOverhead {
     }
 
     @Benchmark
+    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
+    public void panama_blank_NO_SPEC() throws Throwable {
+        func.invokeExact();
+    }
+
+    @Benchmark
     public int jni_identity() throws Throwable {
         return identity(10);
     }
 
     @Benchmark
     public int panama_identity() throws Throwable {
+        return (int) identity.invokeExact(10);
+    }
+
+    @Benchmark
+    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
+    public int panama_identity_NO_SPEC() throws Throwable {
         return (int) identity.invokeExact(10);
     }
 }
