@@ -125,7 +125,7 @@ SequenceLayout taggedValues = MemoryLayout.ofSequence(5,
  * <p>
  * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
  * For instance, given the {@code taggedValues} layout instance constructed as above, we can obtain the offset,
- * in bits, of the <em>first</em> member layout named <code>value</code>, as follows:
+ * in bits, of the member layout named <code>value</code> in the <em>first</em> sequence element, as follows:
  * <blockquote><pre>{@code
 long valueOffset = taggedValues.bitOffset(PathElement.sequenceElement(0),
                                           PathElement.groupElement("value")); // yields 32
