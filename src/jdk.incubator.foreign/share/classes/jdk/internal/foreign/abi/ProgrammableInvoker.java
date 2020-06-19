@@ -172,7 +172,7 @@ public class ProgrammableInvoker {
         if (NO_SPEC || retMoves.length > 1) {
             Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
-    
+
             handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 1, handle, argIndexMap, retIndexMap);
             handle = handle.asCollector(Object[].class, callingSequence.methodType().parameterCount())
                                              .asType(callingSequence.methodType());
