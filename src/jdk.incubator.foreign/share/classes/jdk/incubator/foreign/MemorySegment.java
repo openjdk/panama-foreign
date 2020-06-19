@@ -287,7 +287,7 @@ public interface MemorySegment extends AutoCloseable {
     /**
      * Closes this memory segment. Once a memory segment has been closed, any attempt to use the memory segment,
      * or to access any {@link MemoryAddress} instance associated with it will fail with {@link IllegalStateException}.
-     * Depending on the kind of memory segment being closed, calling this method further trigger deallocation of all the resources
+     * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment, or if the segment cannot be closed because it is being operated upon by a different
