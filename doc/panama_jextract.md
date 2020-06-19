@@ -87,10 +87,10 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.
 ```sh
 
 jextract -l python2.7 \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/python2.7/ \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/ \
   -t org.python \
-   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h
+   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h
 
 ```
 
@@ -136,8 +136,9 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 ```sh
 
 jextract -l readline -t org.unix \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include \
-   /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/readline/readline.h
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
+   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/readline/readline.h
+
 
 ```
 
@@ -181,9 +182,9 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 ```sh
 
 jextract -t org.unix -lcurl \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/curl/ \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/curl/curl.h
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/ \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/curl.h
 
 ```
 
@@ -254,7 +255,7 @@ The following command can be used to extract cblas.h on MacOs
 ```sh
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
 
 ```
@@ -352,7 +353,7 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 ```sh
 
 jextract \
-   -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
    -l lapacke -t lapack \
    --filter lapacke.h \
    /usr/local/opt/lapack/include/lapacke.h
@@ -436,9 +437,9 @@ java -Dforeign.restricted=permit \
 ```sh
 
 jextract -t org.unix \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   --filter libproc.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/libproc.h
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libproc.h
 
 ```
 
@@ -504,7 +505,7 @@ java -Dforeign.restricted=permit \
 ```sh
 
 jextract -t com.github -lgit2 \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/usr/include/ \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
   -I ${LIBGIT2_HOME}/include/ \
   -I ${LIBGIT2_HOME}/include/git2 \
   ${LIBGIT2_HOME}/include/git2.h
@@ -519,7 +520,6 @@ import jdk.incubator.foreign.NativeScope;
 import static com.github.git2_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
-import static com.github.Cstring.*;
 
 public class GitClone {
     public static void main(String[] args) {
@@ -566,8 +566,8 @@ sh run.sh https://github.com/libgit2/libgit2.git libgit2
 ```sh
 
 jextract \
-  -I /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/sqlite3.h \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h \
   -t org.sqlite -lsqlite3
 
 ```
