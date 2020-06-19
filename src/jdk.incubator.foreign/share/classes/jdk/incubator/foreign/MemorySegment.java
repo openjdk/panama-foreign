@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
  * and temporal bounds. Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
- * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal checks ensure that memory access
+ * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal bounds ensure that memory access
  * operations on a segment cannot occur after a memory segment has been closed (see {@link MemorySegment#close()}).
  * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
@@ -102,32 +102,6 @@ import java.util.function.Consumer;
  *     objects.</li>
  * </ul>
  *
- * <h2><a id = "thread-confinement">Thread confinement</a></h2>
- *
- * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
- * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
- * to directly manipulate the memory segment (e.g. close the memory segment) or access the underlying memory associated with
- * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
- * owner thread will result in a runtime failure.
- * <p>
- * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
- * {@link #withOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
- * a segment in a controlled, cooperative and race-free fashion.
- * <p>
- * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
- * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
- * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
- * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
- * For instance, the following code can be used to sum all int values in a memory segment in parallel:
- * <blockquote><pre>{@code
-MemorySegment segment = ...
-SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
-int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
-            .mapToInt(s -> (int)VH_int.get(s.baseAddress()))
-            .sum();
- * }</pre></blockquote>
- *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
  * Memory segments supports zero or more <em>access modes</em>. Supported access modes are {@link #READ},
@@ -162,12 +136,38 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
  *
+ * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ *
+ * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
+ * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
+ * to directly manipulate the memory segment (e.g. close the memory segment) or access the underlying memory associated with
+ * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
+ * owner thread will result in a runtime failure.
+ * <p>
+ * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
+ * {@link #withOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
+ * a segment in a controlled, cooperative and race-free fashion.
+ * <p>
+ * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
+ * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
+ * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
+ * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
+ * For instance, the following code can be used to sum all int values in a memory segment in parallel:
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
+int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
+.mapToInt(s -> (int)VH_int.get(s.baseAddress()))
+.sum();
+ * }</pre></blockquote>
+ *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * {@link MappedMemorySegment} and other explicitly permitted subtypes.
  *
  * @implSpec
- * Implementations of this interface are immutable and thread-safe.
+ * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
 public interface MemorySegment extends AutoCloseable {
 
