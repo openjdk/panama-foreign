@@ -291,7 +291,7 @@ public class CSupport {
     /**
      * The {@code va_list} native type.
      */
-    public static final MemoryLayout C_VA_LIST = Utils.pick(SysV.C_VA_LIST, Win64.C_VA_LIST, null);
+    public static final MemoryLayout C_VA_LIST = Utils.pick(SysV.C_VA_LIST, Win64.C_VA_LIST, AArch64.C_VA_LIST);
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.
@@ -563,6 +563,11 @@ public class CSupport {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+
+        /**
+         * The {@code va_list} native type, as it is passed to a function.
+         */
+        public static final MemoryLayout C_VA_LIST = AArch64.C_POINTER;
     }
 
     /**
