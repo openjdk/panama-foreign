@@ -76,12 +76,22 @@ import java.util.function.Consumer;
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
  * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
  * (see {@link MappedMemorySegment}).
+ * <p>
+ * Array and buffer segments are effectively <em>views</em> over existing memory regions which might outlive the
+ * lifecycle of the segments derived from them, and can even be manipulated directly (e.g. via array access, or direct use
+ * of the {@link ByteBuffer} API) by other clients. As a result, while sharing array or buffer segments is possible,
+ * it is strongly advised that clients wishing to do so take extra precautions to make sure that the underlying memory sources
+ * associated with such segments remain inaccessible, and that said memory sources are never aliased by more than one segment
+ * at a time - e.g. so as to prevent concurrent modifications of the contents of an array, or buffer segment.
  *
  * <h2>Closing a memory segment</h2>
  *
- * Memory segments are closed explicitly (see {@link MemorySegment#close()}). In general when a segment is closed, all off-heap
- * resources associated with it are released; this has different meanings depending on the kind of memory segment being
- * considered:
+ * Memory segments are closed explicitly (see {@link MemorySegment#close()}). When a segment is closed, it is no longer
+ * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on the segment (or on any {@link MemoryAddress} instance
+ * derived from it) will fail with {@link IllegalStateException}.
+ * <p>
+ * Closing a segment might trigger the releasing of the underlying memory resources associated with said segment, depending on
+ * the kind of memory segment being considered:
  * <ul>
  *     <li>closing a native memory segment results in <em>freeing</em> the native memory associated with it</li>
  *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
