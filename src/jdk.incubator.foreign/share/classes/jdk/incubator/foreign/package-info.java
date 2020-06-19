@@ -35,7 +35,7 @@
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
  * memory access var handles, e.g. using <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
- * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it values
+ * For example, to allocate an off-heap memory region big enough to hold 10 values of the primitive type {@code int}, and fill it with values
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * <pre>{@code
