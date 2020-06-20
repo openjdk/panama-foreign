@@ -27,7 +27,7 @@ package jdk.incubator.jbind.core;
 
 import java.lang.invoke.VarHandle;
 import java.nio.charset.Charset;
-import jdk.incubator.foreign.NativeAllocationScope;
+import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -60,7 +60,7 @@ public final class CString {
         return segment;
     }
 
-    private static MemoryAddress toCString(byte[] bytes, NativeAllocationScope scope) {
+    private static MemoryAddress toCString(byte[] bytes, NativeScope scope) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(bytes.length + 1, C_CHAR);
         MemoryAddress addr = scope.allocate(strLayout);
         copy(addr, bytes);
@@ -83,11 +83,11 @@ public final class CString {
          return toCString(str.getBytes(charset));
     }
 
-    public static MemoryAddress toCString(String str, NativeAllocationScope scope) {
+    public static MemoryAddress toCString(String str, NativeScope scope) {
         return toCString(str.getBytes(), scope);
     }
 
-    public static MemoryAddress toCString(String str, Charset charset, NativeAllocationScope scope) {
+    public static MemoryAddress toCString(String str, Charset charset, NativeScope scope) {
         return toCString(str.getBytes(charset), scope);
     }
 

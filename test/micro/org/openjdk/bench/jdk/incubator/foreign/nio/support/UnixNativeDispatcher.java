@@ -29,7 +29,7 @@ import java.nio.file.DirectoryStream;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeAllocationScope;
+import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.jbind.core.CString;
 
 /**
@@ -63,7 +63,7 @@ public abstract class UnixNativeDispatcher {
     };
 
     public static UnixFileAttributes statFFI(String path) {
-        try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
             MemoryAddress file = CString.toCString(path, scope);
             LibC.stat64 buffer = LibC.stat64.allocate(scope::allocate);
             LibC.stat64(file, buffer.ptr());
@@ -72,7 +72,7 @@ public abstract class UnixNativeDispatcher {
     }
 
     public static long opendirFFI(String path) {
-        try (NativeAllocationScope scope = NativeAllocationScope.unboundedScope()) {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
             MemoryAddress dir = LibC.opendir(CString.toCString(path, scope));
             if (dir.equals(MemoryAddress.NULL)) {
                 throw new RuntimeException();
