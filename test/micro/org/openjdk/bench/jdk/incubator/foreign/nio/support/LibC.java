@@ -61,6 +61,7 @@ public final class LibC {
         public final GroupLayout getLayout() { return $LAYOUT; }
 
         public static final VarHandle st_dev$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_dev");
+        public static final long st_dev$OFFSET = 0L;
         public final MemoryAddress st_dev$ptr() {
             return ptr().addOffset(0L);
         }
@@ -72,6 +73,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_mode$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "st_mode");
+        public static final long st_mode$OFFSET = 4L;
         public final MemoryAddress st_mode$ptr() {
             return ptr().addOffset(4L);
         }
@@ -83,6 +85,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_nlink$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "st_nlink");
+        public static final long st_nlink$OFFSET = 6L;
         public final MemoryAddress st_nlink$ptr() {
             return ptr().addOffset(6L);
         }
@@ -94,6 +97,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_ino$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_ino");
+        public static final long st_ino$OFFSET = 8L;
         public final MemoryAddress st_ino$ptr() {
             return ptr().addOffset(8L);
         }
@@ -105,6 +109,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_uid$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_uid");
+        public static final long st_uid$OFFSET = 16L;
         public final MemoryAddress st_uid$ptr() {
             return ptr().addOffset(16L);
         }
@@ -116,6 +121,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_gid$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_gid");
+        public static final long st_gid$OFFSET = 20L;
         public final MemoryAddress st_gid$ptr() {
             return ptr().addOffset(20L);
         }
@@ -127,6 +133,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_rdev$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_rdev");
+        public static final long st_rdev$OFFSET = 24L;
         public final MemoryAddress st_rdev$ptr() {
             return ptr().addOffset(24L);
         }
@@ -137,6 +144,7 @@ public final class LibC {
             st_rdev$VH.set(ptr(), value);
         }
 
+        public static final long st_atimespec$OFFSET = 32L;
         public final MemoryAddress st_atimespec$ptr() {
             return ptr().addOffset(32L);
         }
@@ -147,6 +155,7 @@ public final class LibC {
             timespec.at(st_atimespec$ptr()).asSegment().copyFrom(value.asSegment());
         }
 
+        public static final long st_mtimespec$OFFSET = 48L;
         public final MemoryAddress st_mtimespec$ptr() {
             return ptr().addOffset(48L);
         }
@@ -157,6 +166,7 @@ public final class LibC {
             timespec.at(st_mtimespec$ptr()).asSegment().copyFrom(value.asSegment());
         }
 
+        public static final long st_ctimespec$OFFSET = 64L;
         public final MemoryAddress st_ctimespec$ptr() {
             return ptr().addOffset(64L);
         }
@@ -167,6 +177,7 @@ public final class LibC {
             timespec.at(st_ctimespec$ptr()).asSegment().copyFrom(value.asSegment());
         }
 
+        public static final long st_birthtimespec$OFFSET = 80L;
         public final MemoryAddress st_birthtimespec$ptr() {
             return ptr().addOffset(80L);
         }
@@ -178,6 +189,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_size$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_size");
+        public static final long st_size$OFFSET = 96L;
         public final MemoryAddress st_size$ptr() {
             return ptr().addOffset(96L);
         }
@@ -189,6 +201,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_blocks$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_blocks");
+        public static final long st_blocks$OFFSET = 104L;
         public final MemoryAddress st_blocks$ptr() {
             return ptr().addOffset(104L);
         }
@@ -200,6 +213,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_blksize$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_blksize");
+        public static final long st_blksize$OFFSET = 112L;
         public final MemoryAddress st_blksize$ptr() {
             return ptr().addOffset(112L);
         }
@@ -211,6 +225,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_flags$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_flags");
+        public static final long st_flags$OFFSET = 116L;
         public final MemoryAddress st_flags$ptr() {
             return ptr().addOffset(116L);
         }
@@ -222,6 +237,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_gen$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_gen");
+        public static final long st_gen$OFFSET = 120L;
         public final MemoryAddress st_gen$ptr() {
             return ptr().addOffset(120L);
         }
@@ -233,6 +249,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_lspare$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_lspare");
+        public static final long st_lspare$OFFSET = 124L;
         public final MemoryAddress st_lspare$ptr() {
             return ptr().addOffset(124L);
         }
@@ -244,6 +261,7 @@ public final class LibC {
         }
 
         public static final VarHandle st_qspare$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_qspare");
+        public static final long st_qspare$OFFSET = 128L;
         public final MemoryAddress st_qspare$ptr() {
             return ptr().addOffset(128L);
         }
@@ -273,6 +291,7 @@ public final class LibC {
         public final GroupLayout getLayout() { return $LAYOUT; }
 
         public static final VarHandle tv_sec$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "tv_sec");
+        public static final long tv_sec$OFFSET = 0L;
         public final MemoryAddress tv_sec$ptr() {
             return ptr().addOffset(0L);
         }
@@ -284,6 +303,7 @@ public final class LibC {
         }
 
         public static final VarHandle tv_nsec$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "tv_nsec");
+        public static final long tv_nsec$OFFSET = 8L;
         public final MemoryAddress tv_nsec$ptr() {
             return ptr().addOffset(8L);
         }
@@ -313,6 +333,7 @@ public final class LibC {
         public final GroupLayout getLayout() { return $LAYOUT; }
 
         public static final VarHandle __sig$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "__sig");
+        public static final long __sig$OFFSET = 0L;
         public final MemoryAddress __sig$ptr() {
             return ptr().addOffset(0L);
         }
@@ -324,6 +345,7 @@ public final class LibC {
         }
 
         public static final VarHandle __opaque$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "__opaque");
+        public static final long __opaque$OFFSET = 8L;
         public final MemoryAddress __opaque$ptr() {
             return ptr().addOffset(8L);
         }
@@ -358,6 +380,7 @@ public final class LibC {
         public final GroupLayout getLayout() { return $LAYOUT; }
 
         public static final VarHandle d_ino$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "d_ino");
+        public static final long d_ino$OFFSET = 0L;
         public final MemoryAddress d_ino$ptr() {
             return ptr().addOffset(0L);
         }
@@ -369,6 +392,7 @@ public final class LibC {
         }
 
         public static final VarHandle d_seekoff$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "d_seekoff");
+        public static final long d_seekoff$OFFSET = 8L;
         public final MemoryAddress d_seekoff$ptr() {
             return ptr().addOffset(8L);
         }
@@ -380,6 +404,7 @@ public final class LibC {
         }
 
         public static final VarHandle d_reclen$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "d_reclen");
+        public static final long d_reclen$OFFSET = 16L;
         public final MemoryAddress d_reclen$ptr() {
             return ptr().addOffset(16L);
         }
@@ -391,6 +416,7 @@ public final class LibC {
         }
 
         public static final VarHandle d_namlen$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "d_namlen");
+        public static final long d_namlen$OFFSET = 18L;
         public final MemoryAddress d_namlen$ptr() {
             return ptr().addOffset(18L);
         }
@@ -402,6 +428,7 @@ public final class LibC {
         }
 
         public static final VarHandle d_type$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "d_type");
+        public static final long d_type$OFFSET = 20L;
         public final MemoryAddress d_type$ptr() {
             return ptr().addOffset(20L);
         }
@@ -413,6 +440,7 @@ public final class LibC {
         }
 
         public static final VarHandle d_name$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "d_name");
+        public static final long d_name$OFFSET = 21L;
         public final MemoryAddress d_name$ptr() {
             return ptr().addOffset(21L);
         }
