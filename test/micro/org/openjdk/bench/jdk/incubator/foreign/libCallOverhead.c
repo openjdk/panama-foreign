@@ -32,3 +32,20 @@ EXPORT void func() {}
 EXPORT int identity(int x) {
   return x;
 }
+
+typedef struct {
+    long long x;
+    long long y;
+} Point;
+
+EXPORT Point identity_struct(Point p) {
+    return p;
+}
+
+EXPORT void* identity_memory_address(void* p) {
+    return p;
+}
+
+EXPORT void args5(long long a0, double a1, long long a2, double a3, long long a4) {}
+EXPORT void args10(long long a0, double a1, long long a2, double a3, long long a4,
+                   double a5, long long a6, double a7, long long a8, double a9) {}

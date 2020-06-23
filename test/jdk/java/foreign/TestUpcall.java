@@ -30,7 +30,13 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
- * @run testng/othervm -Dforeign.restricted=permit TestUpcall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
+ *   TestUpcall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
+ *   -Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true
+ *   TestUpcall
  */
 
 import jdk.incubator.foreign.CSupport;
@@ -138,7 +144,6 @@ public class TestUpcall extends CallGeneratorHelper {
         return args;
     }
 
-    @SuppressWarnings("unchecked")
     static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
             return dummyAddress;
@@ -156,9 +161,9 @@ public class TestUpcall extends CallGeneratorHelper {
 
             final int finalI = i;
             if (carrier == MemorySegment.class) {
-                argChecks.add(o -> assertStructEquals((MemorySegment) o[finalI], (MemorySegment) box.get()[finalI], layout));
+                argChecks.add(o -> assertStructEquals((MemorySegment) box.get()[finalI], (MemorySegment) o[finalI], layout));
             } else {
-                argChecks.add(o -> assertEquals(o[finalI], box.get()[finalI]));
+                argChecks.add(o -> assertEquals(box.get()[finalI], o[finalI]));
             }
         }
 
@@ -167,7 +172,7 @@ public class TestUpcall extends CallGeneratorHelper {
         Class<?> firstCarrier = paramCarrier(firstlayout);
 
         if (firstCarrier == MemorySegment.class) {
-            checks.add(o -> assertStructEquals((MemorySegment) o, (MemorySegment) box.get()[0], firstlayout));
+            checks.add(o -> assertStructEquals((MemorySegment) box.get()[0], (MemorySegment) o, firstlayout));
         } else {
             checks.add(o -> assertEquals(o, box.get()[0]));
         }
@@ -182,13 +187,13 @@ public class TestUpcall extends CallGeneratorHelper {
         return stub;
     }
 
-    private static void assertStructEquals(MemorySegment s1, MemorySegment s2, MemoryLayout layout) {
-        assertEquals(s1.byteSize(), s2.byteSize());
+    private static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
+        assertEquals(actual.byteSize(), expected.byteSize());
         GroupLayout g = (GroupLayout) layout;
         for (MemoryLayout field : g.memberLayouts()) {
             if (field instanceof ValueLayout) {
                 VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
-                assertEquals(vh.get(s1.baseAddress()), vh.get(s2.baseAddress()));
+                assertEquals(vh.get(actual.baseAddress()), vh.get(expected.baseAddress()));
             }
         }
     }
