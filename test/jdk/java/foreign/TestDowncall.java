@@ -30,7 +30,13 @@
  *          java.base/sun.security.action
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
- * @run testng/othervm -Dforeign.restricted=permit TestDowncall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
+ *   TestDowncall
+ * @run testng/othervm
+ *   -Dforeign.restricted=permit
+ *   -Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true
+ *   TestDowncall
  */
 
 import jdk.incubator.foreign.CSupport;

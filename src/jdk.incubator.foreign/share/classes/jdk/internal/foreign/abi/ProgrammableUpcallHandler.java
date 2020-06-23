@@ -89,10 +89,13 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
             MemoryAddress stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(buffer.rebase(bufferBase.segment()).addOffset(layout.stack_args)));
             Object[] args = new Object[type.parameterCount()];
             for (int i = 0 ; i < type.parameterCount() ; i++) {
-                args[i] = jdk.internal.foreign.abi.BindingInterpreter.box(callingSequence.argumentBindings(i),
-                        s -> abi.arch.isStackType(s.type())
-                            ? stackArgsBase.addOffset(s.index() * abi.arch.typeSize(abi.arch.stackType()))
-                            : bufferBase.addOffset(layout.argOffset(s)));
+                args[i] = BindingInterpreter.box(callingSequence.argumentBindings(i),
+                        (storage, type) -> {
+                            MemoryAddress ptr = abi.arch.isStackType(storage.type())
+                                ? stackArgsBase.addOffset(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
+                                : bufferBase.addOffset(layout.argOffset(storage));
+                            return SharedUtils.read(ptr, type);
+                        });
             }
 
             if (DEBUG) {
@@ -108,8 +111,11 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
             }
 
             if (mh.type().returnType() != void.class) {
-                jdk.internal.foreign.abi.BindingInterpreter.unbox(o,
-                        callingSequence.returnBindings(), s -> bufferBase.addOffset(layout.retOffset(s)), new ArrayList<>());
+                BindingInterpreter.unbox(o, callingSequence.returnBindings(),
+                        (storage, type, value) -> {
+                            MemoryAddress ptr = bufferBase.addOffset(layout.retOffset(storage));
+                            SharedUtils.writeOverSized(ptr, type, value);
+                        }, null);
             }
 
             if (DEBUG) {
