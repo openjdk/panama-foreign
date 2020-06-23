@@ -321,6 +321,13 @@ public class SharedUtils {
         return handle;
     }
 
+    static void checkType(Class<?> actualType, Class<?> expectedType) {
+        if (expectedType != actualType) {
+            throw new IllegalArgumentException(
+                    String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
+        }
+    }
+
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;

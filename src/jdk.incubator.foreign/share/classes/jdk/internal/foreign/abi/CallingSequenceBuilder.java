@@ -23,9 +23,7 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodType;
@@ -81,51 +79,12 @@ public class CallingSequenceBuilder {
         }
     }
 
-    private static void checkType(Class<?> actualType, Class<?> expectedType) {
-        if (expectedType != actualType) {
-            throw new IllegalArgumentException(
-                    String.format("Invalid operand type: %s. %s expected", actualType, expectedType));
-        }
-    }
-
     private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {
         Deque<Class<?>> stack = new ArrayDeque<>();
         stack.push(inType);
 
         for (Binding b : bindings) {
-            switch (b.tag()) {
-                case MOVE -> {
-                    Class<?> actualType = stack.pop();
-                    Class<?> expectedType = ((Binding.Move) b).type();
-                    checkType(actualType, expectedType);
-                }
-                case DEREFERENCE -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemorySegment.class);
-                    Class<?> newType = ((Binding.Dereference) b).type();
-                    stack.push(newType);
-                }
-                case BASE_ADDRESS -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemorySegment.class);
-                    stack.push(MemoryAddress.class);
-                }
-                case CONVERT_ADDRESS -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemoryAddress.class);
-                    stack.push(long.class);
-                }
-                case ALLOC_BUFFER ->
-                    throw new UnsupportedOperationException();
-                case COPY_BUFFER -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemorySegment.class);
-                    stack.push(MemorySegment.class);
-                }
-                case DUP ->
-                    stack.push(stack.peekLast());
-                default -> throw new IllegalArgumentException("Unknown binding: " + b);
-            }
+            b.verifyUnbox(stack);
         }
 
         if (!stack.isEmpty()) {
@@ -133,43 +92,11 @@ public class CallingSequenceBuilder {
         }
     }
 
-    private static void verifyBoxBindings(Class<?> outType, List<Binding> bindings) {
+    private static void verifyBoxBindings(Class<?> expectedReturnType, List<Binding> bindings) {
         Deque<Class<?>> stack = new ArrayDeque<>();
 
         for (Binding b : bindings) {
-            switch (b.tag()) {
-                case MOVE -> {
-                    Class<?> newType = ((Binding.Move) b).type();
-                    stack.push(newType);
-                }
-                case DEREFERENCE -> {
-                    Class<?> storeType = stack.pop();
-                    checkType(storeType, ((Binding.Dereference) b).type());
-                    Class<?> segmentType = stack.pop();
-                    checkType(segmentType, MemorySegment.class);
-                }
-                case CONVERT_ADDRESS -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, long.class);
-                    stack.push(MemoryAddress.class);
-                }
-                case BASE_ADDRESS -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemorySegment.class);
-                    stack.push(MemoryAddress.class);
-                }
-                case ALLOC_BUFFER -> {
-                    stack.push(MemorySegment.class);
-                }
-                case COPY_BUFFER -> {
-                    Class<?> actualType = stack.pop();
-                    checkType(actualType, MemoryAddress.class);
-                    stack.push(MemorySegment.class);
-                }
-                case DUP ->
-                    stack.push(stack.peekLast());
-                default -> throw new IllegalArgumentException("Unknown binding: " + b);
-            }
+            b.verifyBox(stack);
         }
 
         if (stack.size() != 1) {
@@ -177,6 +104,6 @@ public class CallingSequenceBuilder {
         }
 
         Class<?> actualReturnType = stack.pop();
-        checkType(actualReturnType, outType);
+        SharedUtils.checkType(actualReturnType, expectedReturnType);
     }
 }

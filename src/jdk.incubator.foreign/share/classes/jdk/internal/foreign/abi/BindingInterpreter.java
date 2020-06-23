@@ -22,10 +22,7 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.Utils;
+import jdk.incubator.foreign.NativeScope;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -33,82 +30,19 @@ import java.util.List;
 
 public class BindingInterpreter {
 
-    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, List<? super MemorySegment> buffers) {
+    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, NativeScope scope) {
         Deque<Object> stack = new ArrayDeque<>();
         stack.push(arg);
         for (Binding b : bindings) {
-            switch (b.tag()) {
-                case MOVE -> {
-                    Binding.Move binding = (Binding.Move) b;
-                    storeFunc.store(binding.storage(), binding.type(), stack.pop());
-                }
-                case DEREFERENCE -> {
-                    Binding.Dereference deref = (Binding.Dereference) b;
-                    MemorySegment operand = (MemorySegment) stack.pop();
-                    MemoryAddress baseAddress = operand.baseAddress();
-                    MemoryAddress readAddress = baseAddress.addOffset(deref.offset());
-                    stack.push(SharedUtils.read(readAddress, deref.type()));
-                }
-                case COPY_BUFFER -> {
-                    Binding.Copy binding = (Binding.Copy) b;
-                    MemorySegment operand = (MemorySegment) stack.pop();
-                    assert operand.byteSize() == binding.size() : "operand size mismatch";
-                    MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
-                    copy.copyFrom(operand.asSlice(0, binding.size()));
-                    buffers.add(copy);
-                    stack.push(copy);
-                }
-                case ALLOC_BUFFER ->
-                    throw new UnsupportedOperationException();
-                case CONVERT_ADDRESS ->
-                    stack.push(((MemoryAddress) stack.pop()).toRawLongValue());
-                case BASE_ADDRESS ->
-                    stack.push(((MemorySegment) stack.pop()).baseAddress());
-                case DUP ->
-                    stack.push(stack.peekLast());
-                default -> throw new IllegalArgumentException("Unsupported tag: " + b);
-            }
+            b.unbox(stack, storeFunc, scope);
         }
     }
 
     static Object box(List<Binding> bindings, LoadFunc loadFunc) {
         Deque<Object> stack = new ArrayDeque<>();
         for (Binding b : bindings) {
-            switch (b.tag()) {
-                case MOVE -> {
-                    Binding.Move binding = (Binding.Move) b;
-                    stack.push(loadFunc.load(binding.storage(), binding.type()));
-                }
-                case DEREFERENCE -> {
-                    Binding.Dereference binding = (Binding.Dereference) b;
-                    Object value = stack.pop();
-                    MemorySegment operand = (MemorySegment) stack.pop();
-                    MemoryAddress baseAddress = operand.baseAddress();
-                    MemoryAddress writeAddress = baseAddress.addOffset(binding.offset());
-                    SharedUtils.write(writeAddress, binding.type(), value);
-                }
-                case COPY_BUFFER -> {
-                    Binding.Copy binding = (Binding.Copy) b;
-                    MemoryAddress operand = (MemoryAddress) stack.pop();
-                    operand = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), binding.size());
-                    MemorySegment copy = MemorySegment.allocateNative(binding.size(), binding.alignment());
-                    copy.copyFrom(operand.segment().asSlice(0, binding.size()));
-                    stack.push(copy); // leaked
-                }
-                case ALLOC_BUFFER -> {
-                    Binding.Allocate binding = (Binding.Allocate) b;
-                    stack.push(MemorySegment.allocateNative(binding.size(), binding.alignment()));
-                }
-                case CONVERT_ADDRESS ->
-                    stack.push(MemoryAddress.ofLong((long) stack.pop()));
-                case BASE_ADDRESS ->
-                    stack.push(((MemorySegment) stack.pop()).baseAddress());
-                case DUP ->
-                    stack.push(stack.peekLast());
-                default -> throw new IllegalArgumentException("Unsupported tag: " + b);
-            }
+            b.box(stack, loadFunc);
         }
-
        return stack.pop();
     }
 

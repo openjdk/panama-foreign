@@ -115,7 +115,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
                         (storage, type, value) -> {
                             MemoryAddress ptr = bufferBase.addOffset(layout.retOffset(storage));
                             SharedUtils.writeOverSized(ptr, type, value);
-                        }, new ArrayList<>());
+                        }, null);
             }
 
             if (DEBUG) {
