@@ -166,7 +166,7 @@ public class CallOverhead {
     public void panama_args5_NO_SPEC() throws Throwable {
         args5.invokeExact(10L, 11D, 12L, 13D, 14L);
     }
-    
+
     @Benchmark
     public void panama_args10() throws Throwable {
         args10.invokeExact(10L, 11D, 12L, 13D, 14L,
