@@ -28,10 +28,7 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper StdLibTest
- * @run testng/othervm
- *        -Dforeign.restricted=permit
- *        -XX:NonNMethodCodeHeapSize=10M
- *        StdLibTest
+ * @run testng/othervm -Dforeign.restricted=permit StdLibTest
  */
 
 import java.lang.invoke.MethodHandle;
