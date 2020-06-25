@@ -41,7 +41,7 @@ import static java.lang.invoke.MethodHandleStatics.UNSAFE;
 
 final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 
-    static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+    static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
 
     static final int ALIGN = $BoxType$.BYTES - 1;
 
@@ -565,7 +565,7 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 
         @ForceInline
         static int index(ByteBuffer bb, int index) {
-            MemorySegmentProxy segmentProxy = nioAccess.bufferSegment(bb);
+            MemorySegmentProxy segmentProxy = NIO_ACCESS.bufferSegment(bb);
             if (segmentProxy != null) {
                 segmentProxy.checkValidState();
             }
