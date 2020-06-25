@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -19,28 +21,9 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
+package jdk.internal.invoke;
 
-#include "precompiled.hpp"
-#include "ci/ciVMStorage.hpp"
-#include "ci/ciClassList.hpp"
-#include "ci/ciUtilities.inline.hpp"
-
-jint ciVMStorage::type() const {
-  VM_ENTRY_MARK;
-  return jdk_internal_invoke_VMStorage::type(get_oop());
-}
-
-jint ciVMStorage::index() const {
-  VM_ENTRY_MARK;
-  return jdk_internal_invoke_VMStorage::index(get_oop());
-}
-
-VMReg ciVMStorage::as_VMReg() const {
-  VM_ENTRY_MARK;
-  return VMRegImpl::vmStorageToVMReg(
-    jdk_internal_invoke_VMStorage::type(get_oop()),
-    jdk_internal_invoke_VMStorage::index(get_oop())
-  );
+public interface ABIDescriptorProxy {
+    int shadowSpaceBytes();
 }

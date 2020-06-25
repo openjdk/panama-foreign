@@ -27,8 +27,9 @@
 
 #include "ci/ciInstance.hpp"
 #include "ci/ciObjArray.hpp"
-#include "ci/ciABIDescriptor.hpp"
 #include "ci/ciMethodType.hpp"
+
+#include "utilities/regionPtr.hpp"
 
 // ciNativeEntryPoint
 //
@@ -36,21 +37,21 @@
 class ciNativeEntryPoint : public ciInstance {
 private:
   const char* _name;
-
-  void init();
+  RegionPtr<VMReg> _arg_moves;
+  RegionPtr<VMReg> _ret_moves;
 public:
-  ciNativeEntryPoint(instanceHandle h_i) : ciInstance(h_i), _name(NULL) {}
+  ciNativeEntryPoint(instanceHandle h_i);
 
   // What kind of ciObject is this?
   bool is_native_entry_point() const { return true; }
 
-  address          entry_point() const;
-  ciABIDescriptor* abi_descriptor() const;
-  ciObjArray*      argMoves() const;
-  ciObjArray*      returnMoves() const;
-  jboolean         need_transition() const;
-  ciMethodType*    method_type() const;
-  const char*      name();
+  address                 entry_point() const;
+  jint                    shadow_space() const;
+  RegionPtr<VMReg>        argMoves() const;
+  RegionPtr<VMReg>        returnMoves() const;
+  jboolean                need_transition() const;
+  ciMethodType*           method_type() const;
+  const char*             name();
 };
 
 #endif // SHARE_VM_CI_CINATIVEENTRYPOINT_HPP

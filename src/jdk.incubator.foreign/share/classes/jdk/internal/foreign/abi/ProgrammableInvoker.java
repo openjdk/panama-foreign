@@ -30,6 +30,8 @@ import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
+import jdk.internal.invoke.NativeEntryPoint;
+import jdk.internal.invoke.VMStorageProxy;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -159,14 +161,17 @@ public class ProgrammableInvoker {
                                             .asType(leafType);
 
         if (!(NO_INTRINSICS || retMoves.length > 1)) {
-            handle = JLIA.nativeMethodHandle(
-                    leafType,
-                    handle,
-                    addr.toRawLongValue(),
-                    abi.toInternal(),
-                    toInternalStorage(argMoves),
-                    toInternalStorage(retMoves),
-                    !callingSequence.isTrivial());
+            NativeEntryPoint nep = NativeEntryPoint.make(
+                addr.toRawLongValue(),
+                "native_call",
+                abi,
+                toStorageArray(argMoves),
+                toStorageArray(retMoves),
+                !callingSequence.isTrivial(),
+                leafType
+            );
+
+            handle = JLIA.nativeMethodHandle(nep, handle);
         }
 
         if (NO_SPEC || retMoves.length > 1) {
@@ -183,11 +188,8 @@ public class ProgrammableInvoker {
         return handle;
     }
 
-    private static jdk.internal.invoke.VMStorage[] toInternalStorage(Binding.Move[] argMoves) {
-        return Arrays.stream(argMoves)
-                     .map(Binding.Move::storage)
-                     .map(VMStorage::toInternal)
-                     .toArray(jdk.internal.invoke.VMStorage[]::new);
+    private VMStorageProxy[] toStorageArray(Binding.Move[] moves) {
+        return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
     }
 
     private MethodHandle specialize(MethodHandle leafHandle) {

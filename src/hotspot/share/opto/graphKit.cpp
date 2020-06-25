@@ -26,8 +26,6 @@
 #include "ci/ciUtilities.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
 #include "ci/ciObjArray.hpp"
-#include "ci/ciVMStorage.hpp"
-#include "ci/ciABIDescriptor.hpp"
 #include "asm/register.hpp"
 #include "compiler/compileLog.hpp"
 #include "gc/shared/barrierSet.hpp"
@@ -52,6 +50,7 @@
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/growableArray.hpp"
+#include "utilities/regionPtr.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -2585,7 +2584,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   const Type** arg_types = NEW_RESOURCE_ARRAY(const Type*, n_filtered_args);
   GrowableArray<VMReg> arg_regs(C->comp_arena(), n_filtered_args, n_filtered_args, VMRegImpl::Bad());
 
-  ciObjArray* argRegs = nep->argMoves();
+  RegionPtr<VMReg> argRegs = nep->argMoves();
   {
     for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
         vm_arg_pos < n_filtered_args; vm_arg_pos++) {
@@ -2594,7 +2593,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
       const Type* type = call_type->domain()->field_at(TypeFunc::Parms + vm_unfiltered_arg_pos);
       VMReg reg = type == Type::HALF
         ? VMRegImpl::Bad()
-        : argRegs->obj_at(java_arg_read_pos++)->as_vm_storage()->as_VMReg();
+        : argRegs[java_arg_read_pos++];
 
       argument_nodes[vm_arg_pos] = node;
       arg_types[vm_arg_pos] = type;
@@ -2606,14 +2605,14 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   GrowableArray<VMReg> ret_regs(C->comp_arena(), n_returns, n_returns, VMRegImpl::Bad());
   const Type** ret_types = NEW_RESOURCE_ARRAY(const Type*, n_returns);
 
-  ciObjArray* retRegs = nep->returnMoves();
+  RegionPtr<VMReg> retRegs = nep->returnMoves();
   {
     for (uint vm_ret_pos = 0, java_ret_read_pos = 0;
         vm_ret_pos < n_returns; vm_ret_pos++) { // 0 or 1
       const Type* type = call_type->range()->field_at(TypeFunc::Parms + vm_ret_pos);
       VMReg reg = type == Type::HALF
         ? VMRegImpl::Bad()
-        : retRegs->obj_at(java_ret_read_pos++)->as_vm_storage()->as_VMReg();
+        : retRegs[java_ret_read_pos++];
 
       ret_regs.at_put(vm_ret_pos, reg);
       ret_types[vm_ret_pos] = type;
@@ -2628,7 +2627,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   address call_addr = nep->entry_point();
   if (nep->need_transition()) {
     call_addr = SharedRuntime::make_native_invoker(call_addr,
-                                                   nep->abi_descriptor()->shadow_space(),
+                                                   nep->shadow_space(),
                                                    arg_regs, ret_regs);
     C->add_native_stub(call_addr);
   }
@@ -2637,7 +2636,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   CallNativeNode* call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
                                             arg_regs,
                                             ret_regs,
-                                            nep->abi_descriptor()->shadow_space(),
+                                            nep->shadow_space(),
                                             nep->need_transition());
 
   if (call->_need_transition) {

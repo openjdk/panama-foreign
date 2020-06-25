@@ -25,9 +25,8 @@
 
 package java.lang.invoke;
 
-import jdk.internal.invoke.ABIDescriptor;
-import jdk.internal.invoke.VMStorage;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.invoke.NativeEntryPoint;
 
 import static java.lang.invoke.LambdaForm.*;
 import static java.lang.invoke.MethodHandleNatives.Constants.REF_invokeStatic;
@@ -48,8 +47,8 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
     }
 
     /** TODO */
-    public static MethodHandle make(MethodType type, MethodHandle fallback, long addr, ABIDescriptor abi,
-                                    VMStorage[] argMoves, VMStorage[] returnMoves, boolean needTransition) {
+    public static MethodHandle make(NativeEntryPoint nep, MethodHandle fallback) {
+        MethodType type = nep.type();
         if (!allTypesPrimitive(type))
             throw new IllegalArgumentException("Type must only contain primitives: " + type);
 
@@ -57,9 +56,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
             throw new IllegalArgumentException("Type of fallback must match");
 
         LambdaForm lform = preparedLambdaForm(type);
-        //fallback.customize(); // needed
-        return new NativeMethodHandle(type, lform, fallback,
-                NativeEntryPoint.make(addr, abi, argMoves, returnMoves, needTransition, type));
+        return new NativeMethodHandle(type, lform, fallback, nep);
     }
 
     private static boolean allTypesPrimitive(MethodType type) {
@@ -76,10 +73,6 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
 
     private static final MemberName.Factory IMPL_NAMES = MemberName.getFactory();
 
-    private static MethodType toLinkerType(MethodType mt) {
-        return mt.insertParameterTypes(0, MethodHandle.class).appendParameterTypes(NativeEntryPoint.class);
-    }
-
     private static LambdaForm preparedLambdaForm(MethodType mtype) {
         int id = MethodTypeForm.LF_INVNATIVE;
         mtype = mtype.basicType();
@@ -91,7 +84,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
 
     private static LambdaForm makePreparedLambdaForm(MethodType mtype) {
         MethodType linkerType = mtype.insertParameterTypes(0, MethodHandle.class)
-                .appendParameterTypes(NativeEntryPoint.class);
+                .appendParameterTypes(Object.class);
         MemberName linker = new MemberName(MethodHandle.class, "linkToNative", linkerType, REF_invokeStatic);
         try {
             linker = IMPL_NAMES.resolveOrFail(REF_invokeStatic, linker, null, NoSuchMethodException.class);
@@ -134,7 +127,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
     }
 
     @ForceInline
-    static NativeEntryPoint internalNativeEntryPoint(Object mh) {
+    static Object internalNativeEntryPoint(Object mh) {
         return ((NativeMethodHandle)mh).nep;
     }
 

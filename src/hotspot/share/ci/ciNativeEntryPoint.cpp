@@ -28,45 +28,26 @@
 #include "ci/ciUtilities.inline.hpp"
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
+#include "memory/allocation.hpp"
+#include "code/vmreg.hpp"
 
-// ------------------------------------------------------------------
-// ciNativeEntryPoint::get_entry_point
-//
-// Return: NEP.addr
-address ciNativeEntryPoint::entry_point() const {
-  VM_ENTRY_MARK;
-  return java_lang_invoke_NativeEntryPoint::addr(get_oop());
+RegionPtr<VMReg> getVMRegArray(ciArray* array) {
+  assert(array->element_basic_type() == T_LONG, "Unexpected type");
+
+  RegionPtr<VMReg> out(NEW_ARENA_ARRAY(CURRENT_ENV->arena(), VMReg, array->length()), array->length());
+
+  for (int i = 0; i < array->length(); i++) {
+    ciConstant con = array->element_value(i);
+    VMReg reg = VMRegImpl::as_VMReg(con.as_long());
+    out[i] = reg;
+  }
+
+  return out;
 }
 
-ciABIDescriptor* ciNativeEntryPoint::abi_descriptor() const {
-  VM_ENTRY_MARK;
-  return CURRENT_ENV->get_object(java_lang_invoke_NativeEntryPoint::abi_descriptor(get_oop()))->as_abi_descriptor();
-}
-
-ciObjArray* ciNativeEntryPoint::argMoves() const {
-  VM_ENTRY_MARK;
-  return CURRENT_ENV->get_object(java_lang_invoke_NativeEntryPoint::argMoves(get_oop()))->as_obj_array();
-}
-
-ciObjArray* ciNativeEntryPoint::returnMoves() const {
-  VM_ENTRY_MARK;
-  return CURRENT_ENV->get_object(java_lang_invoke_NativeEntryPoint::returnMoves(get_oop()))->as_obj_array();
-}
-
-jboolean ciNativeEntryPoint::need_transition() const {
-  VM_ENTRY_MARK;
-  return java_lang_invoke_NativeEntryPoint::need_transition(get_oop());
-}
-
-ciMethodType* ciNativeEntryPoint::method_type() const {
-  VM_ENTRY_MARK;
-  return CURRENT_ENV->get_object(java_lang_invoke_NativeEntryPoint::method_type(get_oop()))->as_method_type();
-}
-
-void ciNativeEntryPoint::init() {
-  VM_ENTRY_MARK;
+ciNativeEntryPoint::ciNativeEntryPoint(instanceHandle h_i) : ciInstance(h_i), _name(NULL) {
   // Copy name
-  oop name_str = java_lang_invoke_NativeEntryPoint::name(get_oop());
+  oop name_str = jdk_internal_invoke_NativeEntryPoint::name(get_oop());
   if (name_str != NULL) {
     char* temp_name = java_lang_String::as_quoted_ascii(name_str);
     size_t len = strlen(temp_name) + 1;
@@ -74,9 +55,39 @@ void ciNativeEntryPoint::init() {
     strncpy(name, temp_name, len);
     _name = name;
   }
+
+  _arg_moves = getVMRegArray(CURRENT_ENV->get_object(jdk_internal_invoke_NativeEntryPoint::argMoves(get_oop()))->as_array());
+  _ret_moves = getVMRegArray(CURRENT_ENV->get_object(jdk_internal_invoke_NativeEntryPoint::returnMoves(get_oop()))->as_array());
+}
+
+address ciNativeEntryPoint::entry_point() const {
+  VM_ENTRY_MARK;
+  return jdk_internal_invoke_NativeEntryPoint::addr(get_oop());
+}
+
+jint ciNativeEntryPoint::shadow_space() const {
+  VM_ENTRY_MARK;
+  return jdk_internal_invoke_NativeEntryPoint::shadow_space(get_oop());
+}
+
+RegionPtr<VMReg> ciNativeEntryPoint::argMoves() const {
+  return _arg_moves;
+}
+
+RegionPtr<VMReg> ciNativeEntryPoint::returnMoves() const {
+  return _ret_moves;
+}
+
+jboolean ciNativeEntryPoint::need_transition() const {
+  VM_ENTRY_MARK;
+  return jdk_internal_invoke_NativeEntryPoint::need_transition(get_oop());
+}
+
+ciMethodType* ciNativeEntryPoint::method_type() const {
+  VM_ENTRY_MARK;
+  return CURRENT_ENV->get_object(jdk_internal_invoke_NativeEntryPoint::method_type(get_oop()))->as_method_type();
 }
 
 const char* ciNativeEntryPoint::name() {
-  if (_name == NULL)  init();
   return _name;
 }

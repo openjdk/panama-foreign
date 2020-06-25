@@ -3830,142 +3830,64 @@ bool java_lang_invoke_LambdaForm::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
-int java_lang_invoke_NativeEntryPoint::_addr_offset;
-int java_lang_invoke_NativeEntryPoint::_abi_descriptor_offset;
-int java_lang_invoke_NativeEntryPoint::_argMoves_offset;
-int java_lang_invoke_NativeEntryPoint::_returnMoves_offset;
-int java_lang_invoke_NativeEntryPoint::_need_transition_offset;
-int java_lang_invoke_NativeEntryPoint::_method_type_offset;
-int java_lang_invoke_NativeEntryPoint::_name_offset;
+int jdk_internal_invoke_NativeEntryPoint::_addr_offset;
+int jdk_internal_invoke_NativeEntryPoint::_shadow_space_offset;
+int jdk_internal_invoke_NativeEntryPoint::_argMoves_offset;
+int jdk_internal_invoke_NativeEntryPoint::_returnMoves_offset;
+int jdk_internal_invoke_NativeEntryPoint::_need_transition_offset;
+int jdk_internal_invoke_NativeEntryPoint::_method_type_offset;
+int jdk_internal_invoke_NativeEntryPoint::_name_offset;
 
 #define NEP_FIELDS_DO(macro) \
   macro(_addr_offset,            k, "addr",           long_signature, false); \
-  macro(_abi_descriptor_offset,  k, "abi",            jdk_internal_invoke_ABIDescriptor_signature, false); \
-  macro(_argMoves_offset,        k, "argMoves",       jdk_internal_invoke_VMStorage_array_signature, false); \
-  macro(_returnMoves_offset,     k, "returnMoves",    jdk_internal_invoke_VMStorage_array_signature, false); \
+  macro(_shadow_space_offset,    k, "shadowSpace",    int_signature, false); \
+  macro(_argMoves_offset,        k, "argMoves",       long_array_signature, false); \
+  macro(_returnMoves_offset,     k, "returnMoves",    long_array_signature, false); \
   macro(_need_transition_offset, k, "needTransition", bool_signature, false); \
   macro(_method_type_offset,     k, "methodType",     java_lang_invoke_MethodType_signature, false); \
   macro(_name_offset,            k, "name",           string_signature, false);
 
-bool java_lang_invoke_NativeEntryPoint::is_instance(oop obj) {
+bool jdk_internal_invoke_NativeEntryPoint::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
-void java_lang_invoke_NativeEntryPoint::compute_offsets() {
+void jdk_internal_invoke_NativeEntryPoint::compute_offsets() {
   InstanceKlass* k = SystemDictionary::NativeEntryPoint_klass();
   NEP_FIELDS_DO(FIELD_COMPUTE_OFFSET);
 }
 
 #if INCLUDE_CDS
-void java_lang_invoke_NativeEntryPoint::serialize_offsets(SerializeClosure* f) {
+void jdk_internal_invoke_NativeEntryPoint::serialize_offsets(SerializeClosure* f) {
   NEP_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
 }
 #endif
 
-address java_lang_invoke_NativeEntryPoint::addr(oop entry) {
+address jdk_internal_invoke_NativeEntryPoint::addr(oop entry) {
   return (address)entry->long_field(_addr_offset);
 }
 
-oop java_lang_invoke_NativeEntryPoint::abi_descriptor(oop entry) {
-  return entry->obj_field(_abi_descriptor_offset);
+jint jdk_internal_invoke_NativeEntryPoint::shadow_space(oop entry) {
+  return entry->int_field(_shadow_space_offset);
 }
 
-oop java_lang_invoke_NativeEntryPoint::argMoves(oop entry) {
+oop jdk_internal_invoke_NativeEntryPoint::argMoves(oop entry) {
   return entry->obj_field(_argMoves_offset);
 }
 
-oop java_lang_invoke_NativeEntryPoint::returnMoves(oop entry) {
+oop jdk_internal_invoke_NativeEntryPoint::returnMoves(oop entry) {
   return entry->obj_field(_returnMoves_offset);
 }
 
-jboolean java_lang_invoke_NativeEntryPoint::need_transition(oop entry) {
+jboolean jdk_internal_invoke_NativeEntryPoint::need_transition(oop entry) {
   return entry->bool_field(_need_transition_offset);
 }
 
-oop java_lang_invoke_NativeEntryPoint::method_type(oop entry) {
+oop jdk_internal_invoke_NativeEntryPoint::method_type(oop entry) {
   return entry->obj_field(_method_type_offset);
 }
 
-oop java_lang_invoke_NativeEntryPoint::name(oop entry) {
+oop jdk_internal_invoke_NativeEntryPoint::name(oop entry) {
   return entry->obj_field(_name_offset);
-}
-
-int jdk_internal_invoke_ABIDescriptor::_inputStorage_offset;
-int jdk_internal_invoke_ABIDescriptor::_outputStorage_offset;
-int jdk_internal_invoke_ABIDescriptor::_volatileStorage_offset;
-int jdk_internal_invoke_ABIDescriptor::_stackAlignment_offset;
-int jdk_internal_invoke_ABIDescriptor::_shadowSpace_offset;
-
-#define ABIDESCRIPTOR_FIELDS_DO(macro) \
-  macro(_inputStorage_offset,  k, "inputStorage", jdk_internal_invoke_VMStorage_array_array_signature, false); \
-  macro(_outputStorage_offset, k, "outputStorage", jdk_internal_invoke_VMStorage_array_array_signature, false); \
-  macro(_volatileStorage_offset, k, "volatileStorage", jdk_internal_invoke_VMStorage_array_array_signature, false); \
-  macro(_stackAlignment_offset, k, "stackAlignment", int_signature, false); \
-  macro(_shadowSpace_offset, k, "shadowSpace", int_signature, false); \
-
-bool jdk_internal_invoke_ABIDescriptor::is_instance(oop obj) {
-  return obj != NULL && is_subclass(obj->klass());
-}
-
-void jdk_internal_invoke_ABIDescriptor::compute_offsets() {
-  InstanceKlass* k = SystemDictionary::ABIDescriptor_klass();
-  ABIDESCRIPTOR_FIELDS_DO(FIELD_COMPUTE_OFFSET);
-}
-
-#if INCLUDE_CDS
-void jdk_internal_invoke_ABIDescriptor::serialize_offsets(SerializeClosure* f) {
-  ABIDESCRIPTOR_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
-}
-#endif
-
-oop jdk_internal_invoke_ABIDescriptor::inputStorage(oop entry) {
-  return entry->obj_field(_inputStorage_offset);
-}
-
-oop jdk_internal_invoke_ABIDescriptor::outputStorage(oop entry) {
-  return entry->obj_field(_outputStorage_offset);
-}
-
-oop jdk_internal_invoke_ABIDescriptor::volatileStorage(oop entry) {
-  return entry->obj_field(_volatileStorage_offset);
-}
-
-jint jdk_internal_invoke_ABIDescriptor::stackAlignment(oop entry) {
-  return entry->int_field(_stackAlignment_offset);
-}
-
-jint jdk_internal_invoke_ABIDescriptor::shadowSpace(oop entry) {
-  return entry->int_field(_shadowSpace_offset);
-}
-
-int jdk_internal_invoke_VMStorage::_type_offset;
-int jdk_internal_invoke_VMStorage::_index_offset;
-
-#define VMSTORAGE_FIELDS_DO(macro) \
-  macro(_type_offset,  k, "type", int_signature, false); \
-  macro(_index_offset, k, "index", int_signature, false); \
-
-bool jdk_internal_invoke_VMStorage::is_instance(oop obj) {
-  return obj != NULL && is_subclass(obj->klass());
-}
-
-void jdk_internal_invoke_VMStorage::compute_offsets() {
-  InstanceKlass* k = SystemDictionary::VMStorage_klass();
-  VMSTORAGE_FIELDS_DO(FIELD_COMPUTE_OFFSET);
-}
-
-#if INCLUDE_CDS
-void jdk_internal_invoke_VMStorage::serialize_offsets(SerializeClosure* f) {
-  VMSTORAGE_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
-}
-#endif
-
-jint jdk_internal_invoke_VMStorage::type(oop entry) {
-  return entry->int_field(_type_offset);
-}
-
-jint jdk_internal_invoke_VMStorage::index(oop entry) {
-  return entry->int_field(_index_offset);
 }
 
 oop java_lang_invoke_MethodHandle::type(oop mh) {

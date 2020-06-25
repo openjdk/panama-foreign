@@ -331,14 +331,8 @@
   NOT_LP64(  do_alias(intptr_signature,               int_signature)  )                           \
   LP64_ONLY( do_alias(intptr_signature,               long_signature) )                           \
   /* Panama Support */                                                                                          \
-  template(java_lang_invoke_NativeEntryPoint,                    "java/lang/invoke/NativeEntryPoint")           \
-  template(java_lang_invoke_NativeEntryPoint_signature,          "Ljava/lang/invoke/NativeEntryPoint;")         \
-  template(jdk_internal_invoke_ABIDescriptor,                    "jdk/internal/invoke/ABIDescriptor")           \
-  template(jdk_internal_invoke_ABIDescriptor_signature,          "Ljdk/internal/invoke/ABIDescriptor;")         \
-  template(jdk_internal_invoke_VMStorage,                        "jdk/internal/invoke/VMStorage")               \
-  template(jdk_internal_invoke_VMStorage_signature,              "Ljdk/internal/invoke/VMStorage;")             \
-  template(jdk_internal_invoke_VMStorage_array_signature,        "[Ljdk/internal/invoke/VMStorage;")            \
-  template(jdk_internal_invoke_VMStorage_array_array_signature,  "[[Ljdk/internal/invoke/VMStorage;")           \
+  template(jdk_internal_invoke_NativeEntryPoint,                 "jdk/internal/invoke/NativeEntryPoint")           \
+  template(jdk_internal_invoke_NativeEntryPoint_signature,       "Ljdk/internal/invoke/NativeEntryPoint;")         \
                                                                                                   \
   /* Support for JVMCI */                                                                         \
   JVMCI_VM_SYMBOLS_DO(template, do_alias)                                                         \
@@ -511,6 +505,7 @@
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
   template(int_array_signature,                       "[I")                                       \
+  template(long_array_signature,                      "[J")                                       \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \

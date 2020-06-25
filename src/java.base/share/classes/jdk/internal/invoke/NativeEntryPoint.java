@@ -23,28 +23,33 @@
  * questions.
  */
 
-package java.lang.invoke;
+package jdk.internal.invoke;
 
-import jdk.internal.invoke.ABIDescriptor;
-import jdk.internal.invoke.VMStorage;
-
-import java.lang.ref.Cleaner;
+import java.lang.invoke.MethodType;
 import java.util.Objects;
 
 /** TODO */
-/*non-public*/ class NativeEntryPoint {
-    final long addr;
-    final ABIDescriptor abi;
-    final VMStorage[] argMoves;
-    final VMStorage[] returnMoves;
-    final boolean needTransition;
-    final MethodType methodType; // C2 sees erased version (byte -> int), so need this explicitly
-    final String name;
+public class NativeEntryPoint {
+    static {
+        registerNatives();
+    }
 
-    NativeEntryPoint(long addr, ABIDescriptor abi, VMStorage[] argMoves, VMStorage[] returnMoves,
+    private final long addr;
+
+    private final int shadowSpace;
+
+    // encoded as VMRegImpl*
+    private final long[] argMoves;
+    private final long[] returnMoves;
+
+    private final boolean needTransition;
+    private final MethodType methodType; // C2 sees erased version (byte -> int), so need this explicitly
+    private final String name;
+
+    private NativeEntryPoint(long addr, int shadowSpace, long[] argMoves, long[] returnMoves,
                      boolean needTransition, MethodType methodType, String name) {
         this.addr = addr;
-        this.abi = Objects.requireNonNull(abi);
+        this.shadowSpace = shadowSpace;
         this.argMoves = Objects.requireNonNull(argMoves);
         this.returnMoves = Objects.requireNonNull(returnMoves);
         this.needTransition = needTransition;
@@ -52,13 +57,29 @@ import java.util.Objects;
         this.name = name;
     }
 
-    static NativeEntryPoint make(long addr, ABIDescriptor abi,VMStorage[] argMoves, VMStorage[] returnMoves,
-                                 boolean needTransition, MethodType methodType) {
+    public static NativeEntryPoint make(long addr, String name, ABIDescriptorProxy abi, VMStorageProxy[] argMoves, VMStorageProxy[] returnMoves,
+                                        boolean needTransition, MethodType methodType) {
         if (returnMoves.length > 1) {
             throw new IllegalArgumentException("Multiple register return not supported");
         }
 
         return new NativeEntryPoint(
-            addr, abi, argMoves, returnMoves, needTransition, methodType, "native_call");
+            addr, abi.shadowSpaceBytes(), encodeVMStorages(argMoves), encodeVMStorages(returnMoves), needTransition, methodType, name);
     }
+
+    private static long[] encodeVMStorages(VMStorageProxy[] moves) {
+        long[] out = new long[moves.length];
+        for (int i = 0; i < moves.length; i++) {
+            out[i] = vmStorageToVMReg(moves[i].type(), moves[i].index());
+        }
+        return out;
+    }
+
+    private static native long vmStorageToVMReg(int type, int index);
+
+    public MethodType type() {
+        return methodType;
+    }
+
+    private static native void registerNatives();
 }

@@ -22,9 +22,9 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.util.Arrays;
+import jdk.internal.invoke.ABIDescriptorProxy;
 
-public class ABIDescriptor {
+public class ABIDescriptor implements ABIDescriptorProxy {
     final Architecture arch;
 
     public final VMStorage[][] inputStorage;
@@ -45,19 +45,8 @@ public class ABIDescriptor {
         this.shadowSpace = shadowSpace;
     }
 
-    public jdk.internal.invoke.ABIDescriptor toInternal() {
-        return new jdk.internal.invoke.ABIDescriptor(
-                Arrays.stream(inputStorage).map(a -> Arrays.stream(a)
-                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
-                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
-                Arrays.stream(outputStorage).map(a -> Arrays.stream(a)
-                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
-                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
-                Arrays.stream(volatileStorage).map(a -> Arrays.stream(a)
-                        .map(VMStorage::toInternal).toArray(jdk.internal.invoke.VMStorage[]::new))
-                        .toArray(jdk.internal.invoke.VMStorage[][]::new),
-                stackAlignment,
-                shadowSpace
-        );
+    @Override
+    public int shadowSpaceBytes() {
+        return shadowSpace;
     }
 }
