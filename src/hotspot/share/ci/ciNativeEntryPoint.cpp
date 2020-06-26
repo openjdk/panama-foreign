@@ -26,15 +26,15 @@
 #include "ci/ciClassList.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
 #include "ci/ciUtilities.inline.hpp"
+#include "ci/ciArray.hpp"
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
 #include "memory/allocation.hpp"
-#include "code/vmreg.hpp"
 
-RegionPtr<VMReg> getVMRegArray(ciArray* array) {
+VMReg* getVMRegArray(ciArray* array) {
   assert(array->element_basic_type() == T_LONG, "Unexpected type");
 
-  RegionPtr<VMReg> out(NEW_ARENA_ARRAY(CURRENT_ENV->arena(), VMReg, array->length()), array->length());
+  VMReg* out = NEW_ARENA_ARRAY(CURRENT_ENV->arena(), VMReg, array->length());
 
   for (int i = 0; i < array->length(); i++) {
     ciConstant con = array->element_value(i);
@@ -70,11 +70,11 @@ jint ciNativeEntryPoint::shadow_space() const {
   return jdk_internal_invoke_NativeEntryPoint::shadow_space(get_oop());
 }
 
-RegionPtr<VMReg> ciNativeEntryPoint::argMoves() const {
+VMReg* ciNativeEntryPoint::argMoves() const {
   return _arg_moves;
 }
 
-RegionPtr<VMReg> ciNativeEntryPoint::returnMoves() const {
+VMReg* ciNativeEntryPoint::returnMoves() const {
   return _ret_moves;
 }
 

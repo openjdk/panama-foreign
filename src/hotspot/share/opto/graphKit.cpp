@@ -50,7 +50,6 @@
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/powerOfTwo.hpp"
 #include "utilities/growableArray.hpp"
-#include "utilities/regionPtr.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -2584,7 +2583,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   const Type** arg_types = NEW_RESOURCE_ARRAY(const Type*, n_filtered_args);
   GrowableArray<VMReg> arg_regs(C->comp_arena(), n_filtered_args, n_filtered_args, VMRegImpl::Bad());
 
-  RegionPtr<VMReg> argRegs = nep->argMoves();
+  VMReg* argRegs = nep->argMoves();
   {
     for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
         vm_arg_pos < n_filtered_args; vm_arg_pos++) {
@@ -2605,7 +2604,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   GrowableArray<VMReg> ret_regs(C->comp_arena(), n_returns, n_returns, VMRegImpl::Bad());
   const Type** ret_types = NEW_RESOURCE_ARRAY(const Type*, n_returns);
 
-  RegionPtr<VMReg> retRegs = nep->returnMoves();
+  VMReg* retRegs = nep->returnMoves();
   {
     for (uint vm_ret_pos = 0, java_ret_read_pos = 0;
         vm_ret_pos < n_returns; vm_ret_pos++) { // 0 or 1

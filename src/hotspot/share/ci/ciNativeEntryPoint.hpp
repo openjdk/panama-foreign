@@ -26,10 +26,9 @@
 #define SHARE_VM_CI_CINATIVEENTRYPOINT_HPP
 
 #include "ci/ciInstance.hpp"
-#include "ci/ciObjArray.hpp"
 #include "ci/ciMethodType.hpp"
 
-#include "utilities/regionPtr.hpp"
+#include "code/vmreg.hpp"
 
 // ciNativeEntryPoint
 //
@@ -37,21 +36,21 @@
 class ciNativeEntryPoint : public ciInstance {
 private:
   const char* _name;
-  RegionPtr<VMReg> _arg_moves;
-  RegionPtr<VMReg> _ret_moves;
+  VMReg* _arg_moves;
+  VMReg* _ret_moves;
 public:
   ciNativeEntryPoint(instanceHandle h_i);
 
   // What kind of ciObject is this?
   bool is_native_entry_point() const { return true; }
 
-  address                 entry_point() const;
-  jint                    shadow_space() const;
-  RegionPtr<VMReg>        argMoves() const;
-  RegionPtr<VMReg>        returnMoves() const;
-  jboolean                need_transition() const;
-  ciMethodType*           method_type() const;
-  const char*             name();
+  address        entry_point() const;
+  jint           shadow_space() const;
+  VMReg*         argMoves() const;
+  VMReg*        returnMoves() const;
+  jboolean       need_transition() const;
+  ciMethodType*  method_type() const;
+  const char*    name();
 };
 
 #endif // SHARE_VM_CI_CINATIVEENTRYPOINT_HPP
