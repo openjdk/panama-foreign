@@ -22,11 +22,31 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
+import jdk.internal.foreign.MemoryAddressImpl;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.filterArguments;
+import static java.lang.invoke.MethodHandles.insertArguments;
+import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodType.methodType;
 
 /**
  * The binding operators defined in the Binding class can be combined into argument and return value processing 'recipes'.
@@ -182,6 +202,30 @@ import java.util.Objects;
  * --------------------
  */
 public abstract class Binding {
+    private static final MethodHandle MH_UNBOX_ADDRESS;
+    private static final MethodHandle MH_BOX_ADDRESS;
+    private static final MethodHandle MH_BASE_ADDRESS;
+    private static final MethodHandle MH_COPY_BUFFER;
+    private static final MethodHandle MH_ALLOCATE_BUFFER;
+
+    static {
+        try {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            MH_UNBOX_ADDRESS = lookup.findVirtual(MemoryAddress.class, "toRawLongValue",
+                    methodType(long.class));
+            MH_BOX_ADDRESS = lookup.findStatic(MemoryAddress.class, "ofLong",
+                    methodType(MemoryAddress.class, long.class));
+            MH_BASE_ADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
+                    methodType(MemoryAddress.class));
+            MH_COPY_BUFFER = lookup.findStatic(Binding.class, "copyBuffer",
+                    methodType(MemorySegment.class, MemorySegment.class, long.class, long.class, NativeScope.class));
+            MH_ALLOCATE_BUFFER = lookup.findStatic(MemorySegment.class, "allocateNative",
+                    methodType(MemorySegment.class, long.class, long.class));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     enum Tag {
         MOVE,
         DEREFERENCE,
@@ -202,9 +246,45 @@ public abstract class Binding {
         return tag;
     }
 
+    public abstract void verifyUnbox(Deque<Class<?>> stack);
+    public abstract void verifyBox(Deque<Class<?>> stack);
+
+    public abstract void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope);
+    public abstract void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc);
+
+    public abstract MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos);
+    public abstract MethodHandle specializeBox(MethodHandle returnFilter);
+
+    private static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
+        MethodType oldType = mh.type();
+        Class<?> sourceType = oldType.parameterType(sourceIndex);
+        Class<?> destType = oldType.parameterType(destIndex);
+        if (sourceType != destType) {
+            // TODO meet?
+            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
+        }
+        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
+        int[] reorder = new int[oldType.parameterCount()];
+        assert destIndex > sourceIndex;
+        for (int i = 0, index = 0; i < reorder.length; i++) {
+            if (i != destIndex) {
+                reorder[i] = index++;
+            } else {
+                reorder[i] = sourceIndex;
+            }
+        }
+        return permuteArguments(mh, newType, reorder);
+    }
+
     private static void checkType(Class<?> type) {
         if (!type.isPrimitive() || type == void.class || type == boolean.class)
             throw new IllegalArgumentException("Illegal type: " + type);
+    }
+
+    private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, NativeScope allocator) {
+        MemorySegment copy = allocator.allocate(size, alignment).segment();
+        copy.copyFrom(operand.asSlice(0, size));
+        return copy;
     }
 
     public static Move move(VMStorage storage, Class<?> type) {
@@ -336,6 +416,38 @@ public abstract class Binding {
         public int hashCode() {
             return Objects.hash(tag(), storage, type);
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            Class<?> expectedType = type;
+            SharedUtils.checkType(actualType, expectedType);
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            stack.push(type);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            storeFunc.store(storage, type, stack.pop());
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            stack.push(loadFunc.load(storage, type));
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            return specializedHandle; // no-op
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            return returnFilter; // no-op
+        }
     }
 
     /**
@@ -386,6 +498,61 @@ public abstract class Binding {
         public int hashCode() {
             return Objects.hash(tag(), offset, type);
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemorySegment.class);
+            Class<?> newType = type;
+            stack.push(newType);
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            Class<?> storeType = stack.pop();
+            SharedUtils.checkType(storeType, type);
+            Class<?> segmentType = stack.pop();
+            SharedUtils.checkType(segmentType, MemorySegment.class);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            MemorySegment operand = (MemorySegment) stack.pop();
+            MemoryAddress baseAddress = operand.baseAddress();
+            MemoryAddress readAddress = baseAddress.addOffset(offset);
+            stack.push(SharedUtils.read(readAddress, type));
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            Object value = stack.pop();
+            MemorySegment operand = (MemorySegment) stack.pop();
+            MemoryAddress baseAddress = operand.baseAddress();
+            MemoryAddress writeAddress = baseAddress.addOffset(offset);
+            SharedUtils.write(writeAddress, type, value);
+        }
+
+        private VarHandle varHandle() {
+            return MemoryHandles.withOffset(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), offset);
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            MethodHandle filter = filterArguments(
+                varHandle()
+                    .toMethodHandle(VarHandle.AccessMode.GET)
+                    .asType(methodType(type, MemoryAddress.class)), 0, MH_BASE_ADDRESS);
+            return filterArguments(specializedHandle, insertPos, filter);
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            MethodHandle setter = varHandle().toMethodHandle(VarHandle.AccessMode.SET);
+            setter = filterArguments(
+                setter.asType(methodType(void.class, MemoryAddress.class, type)),
+                0, MH_BASE_ADDRESS);
+            return collectArguments(returnFilter, returnFilter.type().parameterCount(), setter);
+        }
     }
 
     /**
@@ -434,6 +601,49 @@ public abstract class Binding {
         public int hashCode() {
             return Objects.hash(tag(), size, alignment);
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemorySegment.class);
+            stack.push(MemorySegment.class);
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemoryAddress.class);
+            stack.push(MemorySegment.class);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            MemorySegment operand = (MemorySegment) stack.pop();
+            MemorySegment copy = scope.allocate(size, alignment).segment();
+            copy.copyFrom(operand.asSlice(0, size));
+            stack.push(copy);
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            MemoryAddress operand = (MemoryAddress) stack.pop();
+            operand = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+            MemorySegment copy = MemorySegment.allocateNative(size, alignment);
+            copy.copyFrom(operand.segment().asSlice(0, size));
+            stack.push(copy); // leaked
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            MethodHandle filter = insertArguments(MH_COPY_BUFFER, 1, size, alignment);
+            specializedHandle = collectArguments(specializedHandle, insertPos, filter);
+            return mergeArguments(specializedHandle, 0, insertPos + 1);
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
@@ -480,6 +690,36 @@ public abstract class Binding {
         public int hashCode() {
             return Objects.hash(tag(), size, alignment);
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            stack.push(MemorySegment.class);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            stack.push(MemorySegment.allocateNative(size, alignment));
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            return collectArguments(returnFilter, 0, insertArguments(MH_ALLOCATE_BUFFER, 0, size, alignment));
+        }
     }
 
     /**
@@ -512,6 +752,40 @@ public abstract class Binding {
             if (this == o) return true;
             return o != null && getClass() == o.getClass();
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemoryAddress.class);
+            stack.push(long.class);
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, long.class);
+            stack.push(MemoryAddress.class);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            stack.push(((MemoryAddress) stack.pop()).toRawLongValue());
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            stack.push(MemoryAddress.ofLong((long) stack.pop()));
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            return filterArguments(specializedHandle, insertPos, MH_UNBOX_ADDRESS);
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            return filterArguments(returnFilter, 0, MH_BOX_ADDRESS);
+        }
     }
 
     /**
@@ -542,6 +816,40 @@ public abstract class Binding {
             if (this == o) return true;
             return o != null && getClass() == o.getClass();
         }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemorySegment.class);
+            stack.push(MemoryAddress.class);
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            Class<?> actualType = stack.pop();
+            SharedUtils.checkType(actualType, MemorySegment.class);
+            stack.push(MemoryAddress.class);
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            stack.push(((MemorySegment) stack.pop()).baseAddress());
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            stack.push(((MemorySegment) stack.pop()).baseAddress());
+        }
+
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            return filterArguments(specializedHandle, insertPos, MH_BASE_ADDRESS);
+        }
+
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**
@@ -571,6 +879,72 @@ public abstract class Binding {
         public boolean equals(Object o) {
             if (this == o) return true;
             return o != null && getClass() == o.getClass();
+        }
+
+        @Override
+        public void verifyUnbox(Deque<Class<?>> stack) {
+            stack.push(stack.peekLast());
+        }
+
+        @Override
+        public void verifyBox(Deque<Class<?>> stack) {
+            stack.push(stack.peekLast());
+        }
+
+        @Override
+        public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
+            stack.push(stack.peekLast());
+        }
+
+        @Override
+        public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
+            stack.push(stack.peekLast());
+        }
+
+        /*
+         * Fixes up Y-shaped data graphs (produced by DEREFERENCE):
+         *
+         * 1. DUP()
+         * 2. DEREFERENCE(0, int.class)
+         * 3. MOVE  (ignored)
+         * 4. DEREFERENCE(4, int.class)
+         * 5. MOVE  (ignored)
+         *
+         * (specialized in reverse!)
+         *
+         * 5. (int, int) -> void                       insertPos = 1
+         * 4. (MemorySegment, int) -> void             insertPos = 1
+         * 3. (MemorySegment, int) -> void             insertPos = 0
+         * 2. (MemorySegment, MemorySegment) -> void   insertPos = 0
+         * 1. (MemorySegment) -> void                  insertPos = 0
+         *
+         */
+        @Override
+        public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
+            return mergeArguments(specializedHandle, insertPos, insertPos + 1);
+        }
+
+        /*
+         * Fixes up Y-shaped data graphs (produced by DEREFERENCE):
+         *
+         * 1. ALLOCATE_BUFFER(4, 4)
+         * 2. DUP
+         * 3. MOVE  (ignored)
+         * 4. DEREFERNCE(0, int.class)
+         *
+         * (specialized in reverse!)
+         *
+         * input: (MemorySegment) -> MemorySegment (identity function of high-level return)
+         * 4. (MemorySegment, MemorySegment, int) -> MemorySegment
+         * 3. (MemorySegment, MemorySegment, int) -> MemorySegment
+         * 2. (MemorySegment, int) -> MemorySegment
+         * 1. (int) -> MemorySegment
+         *
+         */
+        @Override
+        public MethodHandle specializeBox(MethodHandle returnFilter) {
+            // assumes shape like: (MS, ..., MS, T) R
+            return mergeArguments(returnFilter, 0, returnFilter.type().parameterCount() - 2);
         }
     }
 }

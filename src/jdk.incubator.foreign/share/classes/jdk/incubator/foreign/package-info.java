@@ -42,16 +42,16 @@
 static final VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
 
 try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
-   MemoryAddress base = segment.baseAddress();
-   for (long i = 0 ; i < 10 ; i++) {
-     intHandle.set(base.addOffset(i * 4), (int)i);
-   }
- }
+    MemoryAddress base = segment.baseAddress();
+    for (long i = 0 ; i < 10 ; i++) {
+       intHandle.set(base.addOffset(i * 4), (int)i);
+    }
+}
  * }</pre>
  *
  * Here we create a var handle, namely {@code intHandle}, to manipulate values of the primitive type {@code int}, at
  * a given memory location. Also, {@code intHandle} is stored in a {@code static} and {@code final} field, to achieve
- * better performances and allow for inlining of the memory access operation through the {@link java.lang.invoke.VarHandle}
+ * better performance and allow for inlining of the memory access operation through the {@link java.lang.invoke.VarHandle}
  * instance. We then create a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
  * The segment is created inside a <em>try-with-resources</em> construct: this idiom ensures that all the memory resources
