@@ -158,8 +158,8 @@ MemorySegment segment = ...
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
 int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
-.mapToInt(s -> (int)VH_int.get(s.baseAddress()))
-.sum();
+                       .mapToInt(s -> (int)VH_int.get(s.baseAddress()))
+                       .sum();
  * }</pre></blockquote>
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
@@ -620,7 +620,7 @@ allocateNative(bytesSize, 1);
      * (often as a plain {@code long} value). The segment will feature all <a href="#access-modes">access modes</a>
      * (see {@link #ALL_ACCESS}).
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *

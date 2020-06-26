@@ -147,7 +147,7 @@ MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.ofPadding
  * <blockquote><pre>{@code
 MemoryLayout taggedValuesWithHole = MemoryLayout.ofSequence(5,
     MemoryLayout.ofStruct(
-        MemoryLayout.ofPaddingBits(8, ByteOrder.nativeOrder()).withName("kind").
+        MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder()).withName("kind").
         MemoryLayout.ofPaddingBits(32),
         MemoryLayout.ofPaddingBits(32)
 ));
