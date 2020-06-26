@@ -357,7 +357,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
         Class<?> clazz = typeTranslator.getJavaType(type);
-        if (tree.kind() == Declaration.Variable.Kind.BITFIELD || clazz == MemoryAddress.class ||
+        if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
                 (layout instanceof ValueLayout && layout.byteSize() > 8)) {
             //skip
             return null;
