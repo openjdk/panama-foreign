@@ -27,8 +27,6 @@
 
 #include "utilities/debug.hpp"
 
-#include <algorithm>
-
 // A thin wrapper around a pointer + an element count
 // Loosely modelled after std::span
 template<class T>
@@ -59,7 +57,12 @@ public:
     if (_element_count != other._element_count) {
       return false;
     }
-    return std::equal(begin(), end(), other.begin());
+    for (T* ittA = begin(), ittB = other.begin(); ittA < end(); ++ittA, ++ittB) {
+      if (*ittA != *ittB) {
+        return false;
+      }
+    }
+    return true;
   }
   bool contains(const RegionPtr<T>& rp2) const {
     return begin() <= rp2.begin() && end() >= rp2.end();
