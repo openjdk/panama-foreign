@@ -41,6 +41,7 @@
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
+#include "utilities/debug.hpp"
 
 // Utility function.
 const TypeFunc* CallGenerator::tf() const {

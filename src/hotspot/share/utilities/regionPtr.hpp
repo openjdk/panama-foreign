@@ -25,6 +25,8 @@
 #ifndef SHARE_UTILITIES_REGIONPTR_HPP
 #define SHARE_UTILITIES_REGIONPTR_HPP
 
+#include "utilities/debug.hpp"
+
 #include <algorithm>
 
 // A thin wrapper around a pointer + an element count
