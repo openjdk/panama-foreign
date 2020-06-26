@@ -68,9 +68,9 @@ import java.util.stream.Stream;
  * <blockquote><pre>{@code
 SequenceLayout taggedValues = MemoryLayout.ofSequence(5,
     MemoryLayout.ofStruct(
-        MemoryLayout.ofValueBits(8, ByteOrder.NATIVE_ORDER).withName("kind"),
+        MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder()).withName("kind"),
         MemoryLayout.ofPaddingBits(24),
-        MemoryLayout.ofValueBits(32, ByteOrder.NATIVE_ORDER).withName("value")
+        MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("value")
     )
 ).withName("TaggedValues");
  * }</pre></blockquote>
@@ -147,7 +147,7 @@ MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.ofPadding
  * <blockquote><pre>{@code
 MemoryLayout taggedValuesWithHole = MemoryLayout.ofSequence(5,
     MemoryLayout.ofStruct(
-        MemoryLayout.ofValueBits(8, ByteOrder.NATIVE_ORDER).withName("kind").
+        MemoryLayout.ofPaddingBits(8, ByteOrder.nativeOrder()).withName("kind").
         MemoryLayout.ofPaddingBits(32),
         MemoryLayout.ofPaddingBits(32)
 ));
