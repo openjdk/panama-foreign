@@ -132,6 +132,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    public void copyFromSwap(MemorySegment src, long elemSize) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkRange(0, size, true);
+        that.checkRange(0, size, false);
+        UNSAFE.copySwapMemory(
+                that.base(), that.min(),
+                base(), min(), size, elemSize);
+    }
+
     private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
             .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
