@@ -24,6 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -111,6 +112,15 @@ public class LoopOverNonConstant {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
             res += unsafe.getInt(unsafe_addr + (i * CARRIER_SIZE));
+        }
+        return res;
+    }
+
+    @Benchmark
+    public int segment_loop_static() {
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i ++) {
+            res += MemoryLayouts.getInt(segment.baseAddress(), i * CARRIER_SIZE);
         }
         return res;
     }
