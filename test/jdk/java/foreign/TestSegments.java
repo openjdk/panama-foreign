@@ -340,6 +340,12 @@ public class TestSegments {
                 "copyFrom",
                 "mismatch",
                 "toByteArray",
+                "toCharArray",
+                "toShortArray",
+                "toIntArray",
+                "toFloatArray",
+                "toLongArray",
+                "toDoubleArray",
                 "withOwnerThread"
         );
 
