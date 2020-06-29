@@ -321,8 +321,8 @@ public class TestNativeScope {
                 { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<double[]>) NativeScope::allocateArray,
                         ToArrayHelper.toDoubleArray },
-                
-                
+
+
                 { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<byte[]>) NativeScope::allocateArray,
                         ToArrayHelper.toByteArray },
@@ -385,7 +385,7 @@ public class TestNativeScope {
                         ToArrayHelper.toDoubleArray },
         };
     }
-        
+
     interface AllocationFunction<X> {
         MemoryAddress allocate(NativeScope scope, ValueLayout layout, X value);
     }
@@ -393,11 +393,11 @@ public class TestNativeScope {
     interface ScopeFactory {
         NativeScope make(int size);
     }
-    
+
     interface ToArrayHelper<T> {
         T array();
         T toArray(MemorySegment segment, ValueLayout layout);
-        
+
         ToArrayHelper<byte[]> toByteArray = new ToArrayHelper<>() {
             @Override
             public byte[] array() {
