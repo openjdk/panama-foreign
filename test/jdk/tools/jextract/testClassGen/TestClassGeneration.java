@@ -197,7 +197,7 @@ public class TestClassGeneration extends JextractToolRunner {
     public void testStructMember(String structName, MemoryLayout memberLayout, Class<?> expectedType, Object testValue) throws Throwable {
         String memberName = memberLayout.name().orElseThrow();
 
-        Class<?> structCls = loader.loadClass("com.acme.examples_h$C" + structName);
+        Class<?> structCls = loader.loadClass("com.acme.examples_h$" + structName);
         Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
         try (MemorySegment struct = MemorySegment.allocateNative(structLayout)) {

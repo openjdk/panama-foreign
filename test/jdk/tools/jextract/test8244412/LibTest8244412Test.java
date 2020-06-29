@@ -44,11 +44,11 @@ public class LibTest8244412Test {
     @Test
     public void test() {
         try (var scope = NativeScope.unboundedScope()) {
-            var addr = Cmysize_t.allocate(0L, scope);
-            assertEquals(Cmysize_t.get(addr), 0L);
-            Cmysize_t.set(addr, 13455566L);
-            assertEquals(Cmysize_t.get(addr), 13455566L);
-            assertTrue(Cmysize_t.sizeof() == Clong_long.sizeof());
+            var addr = mysize_t.allocate(0L, scope);
+            assertEquals(mysize_t.get(addr), 0L);
+            mysize_t.set(addr, 13455566L);
+            assertEquals(mysize_t.get(addr), 13455566L);
+            assertTrue(mysize_t.sizeof() == Clong_long.sizeof());
         }
     }
 }

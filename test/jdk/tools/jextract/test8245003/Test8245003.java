@@ -39,17 +39,17 @@ public class Test8245003 {
     @Test
     public void testStructAccessor() {
         var addr = special_pt$ADDR();
-        assertEquals(addr.segment().byteSize(), CPoint.sizeof());
-        assertEquals(CPoint.x$get(addr), 56);
-        assertEquals(CPoint.y$get(addr), 75);
+        assertEquals(addr.segment().byteSize(), Point.sizeof());
+        assertEquals(Point.x$get(addr), 56);
+        assertEquals(Point.y$get(addr), 75);
 
         addr = special_pt3d$ADDR();
-        assertEquals(addr.segment().byteSize(), CPoint3D.sizeof());
-        assertEquals(CPoint3D.z$get(addr), 35);
-        var pointAddr = CPoint3D.p$addr(addr);
-        assertEquals(pointAddr.segment().byteSize(), CPoint.sizeof());
-        assertEquals(CPoint.x$get(pointAddr), 43);
-        assertEquals(CPoint.y$get(pointAddr), 45);
+        assertEquals(addr.segment().byteSize(), Point3D.sizeof());
+        assertEquals(Point3D.z$get(addr), 35);
+        var pointAddr = Point3D.p$addr(addr);
+        assertEquals(pointAddr.segment().byteSize(), Point.sizeof());
+        assertEquals(Point.x$get(pointAddr), 43);
+        assertEquals(Point.y$get(pointAddr), 45);
     }
 
     @Test
@@ -65,9 +65,9 @@ public class Test8245003 {
         assertEquals(arr[4], 345);
 
         addr = foo$ADDR();
-        assertEquals(addr.segment().byteSize(), CFoo.sizeof());
-        assertEquals(CFoo.count$get(addr), 37);
-        var greeting = CFoo.greeting$addr(addr);
+        assertEquals(addr.segment().byteSize(), Foo.sizeof());
+        assertEquals(Foo.count$get(addr), 37);
+        var greeting = Foo.greeting$addr(addr);
         byte[] barr = Cchar.toJavaArray(greeting.segment());
         assertEquals(new String(barr), "hello");
     }
