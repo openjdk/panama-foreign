@@ -81,7 +81,7 @@ public final class MemoryLayouts {
      *     
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a byte value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a byte value read from {@code addr} at the offset specified by {@code index}.
      */
     public static byte getByte_LE(MemoryAddress addr, long offset) {
         return (byte)byte_LE_handle.get(addr, offset);
@@ -113,7 +113,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a char value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a char value read from {@code addr} at the offset specified by {@code index}.
      */
     public static char getChar_LE(MemoryAddress addr, long offset) {
         return (char)char_LE_handle.get(addr, offset);
@@ -145,7 +145,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a short value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a short value read from {@code addr} at the offset specified by {@code index}.
      */
     public static short getShort_LE(MemoryAddress addr, long offset) {
         return (short)short_LE_handle.get(addr, offset);
@@ -177,7 +177,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return an int value read from {@code addr} at the offset specified by {@code index}. 
+     * @return an int value read from {@code addr} at the offset specified by {@code index}.
      */
     public static int getInt_LE(MemoryAddress addr, long offset) {
         return (int)int_LE_handle.get(addr, offset);
@@ -209,7 +209,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a float value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a float value read from {@code addr} at the offset specified by {@code index}.
      */
     public static float getFloat_LE(MemoryAddress addr, long offset) {
         return (float)float_LE_handle.get(addr, offset);
@@ -241,7 +241,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a long value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a long value read from {@code addr} at the offset specified by {@code index}.
      */
     public static long getLong_LE(MemoryAddress addr, long offset) {
         return (long)long_LE_handle.get(addr, offset);
@@ -273,7 +273,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a double value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a double value read from {@code addr} at the offset specified by {@code index}.
      */
     public static double getDouble_LE(MemoryAddress addr, long offset) {
         return (double)double_LE_handle.get(addr, offset);
@@ -334,7 +334,7 @@ public final class MemoryLayouts {
      *
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a byte value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a byte value read from {@code addr} at the offset specified by {@code index}.
      */
     public static byte getByte_BE(MemoryAddress addr, long offset) {
         return (byte)byte_BE_handle.get(addr, offset);
@@ -366,7 +366,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a char value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a char value read from {@code addr} at the offset specified by {@code index}.
      */
     public static char getChar_BE(MemoryAddress addr, long offset) {
         return (char)char_BE_handle.get(addr, offset);
@@ -398,7 +398,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a short value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a short value read from {@code addr} at the offset specified by {@code index}.
      */
     public static short getShort_BE(MemoryAddress addr, long offset) {
         return (short)short_BE_handle.get(addr, offset);
@@ -430,7 +430,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return an int value read from {@code addr} at the offset specified by {@code index}. 
+     * @return an int value read from {@code addr} at the offset specified by {@code index}.
      */
     public static int getInt_BE(MemoryAddress addr, long offset) {
         return (int)int_BE_handle.get(addr, offset);
@@ -462,7 +462,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a float value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a float value read from {@code addr} at the offset specified by {@code index}.
      */
     public static float getFloat_BE(MemoryAddress addr, long offset) {
         return (float)float_BE_handle.get(addr, offset);
@@ -494,7 +494,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a long value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a long value read from {@code addr} at the offset specified by {@code index}.
      */
     public static long getLong_BE(MemoryAddress addr, long offset) {
         return (long)long_BE_handle.get(addr, offset);
@@ -526,7 +526,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a double value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a double value read from {@code addr} at the offset specified by {@code index}.
      */
     public static double getDouble_BE(MemoryAddress addr, long offset) {
         return (double)double_BE_handle.get(addr, offset);
@@ -614,7 +614,7 @@ public final class MemoryLayouts {
      *
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a byte value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a byte value read from {@code addr} at the offset specified by {@code index}.
      */
     public static byte getByte(MemoryAddress addr, long offset) {
         return (byte)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? byte_BE_handle : byte_LE_handle).get(addr, offset);
@@ -646,7 +646,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a char value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a char value read from {@code addr} at the offset specified by {@code index}.
      */
     public static char getChar(MemoryAddress addr, long offset) {
         return (char)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? char_BE_handle : char_LE_handle).get(addr, offset);
@@ -678,7 +678,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a short value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a short value read from {@code addr} at the offset specified by {@code index}.
      */
     public static short getShort(MemoryAddress addr, long offset) {
         return (short)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).get(addr, offset);
@@ -742,7 +742,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a float value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a float value read from {@code addr} at the offset specified by {@code index}.
      */
     public static float getFloat(MemoryAddress addr, long offset) {
         return (float)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? float_BE_handle : float_LE_handle).get(addr, offset);
@@ -774,7 +774,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a long value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a long value read from {@code addr} at the offset specified by {@code index}.
      */
     public static long getLong(MemoryAddress addr, long offset) {
         return (long)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle).get(addr, offset);
@@ -806,7 +806,7 @@ public final class MemoryLayouts {
      * }</pre></blockquote>
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
-     * @return a double value read from {@code addr} at the offset specified by {@code index}. 
+     * @return a double value read from {@code addr} at the offset specified by {@code index}.
      */
     public static double getDouble(MemoryAddress addr, long offset) {
         return (double)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? double_BE_handle : double_LE_handle).get(addr, offset);
