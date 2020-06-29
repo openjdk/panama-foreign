@@ -26,8 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -567,7 +565,10 @@ public class CSupport {
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
     }
 
-    private final static VarHandle byteArrHandle =
+    /**
+     * Byte array handle to read byte array from C char*
+     */
+    public final static VarHandle byteArrHandle =
             MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
     /**
@@ -668,7 +669,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
+        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
     }
 
     /**
@@ -690,7 +691,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
+        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
     }
 
     /**
@@ -708,7 +709,7 @@ public class CSupport {
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
      */
     public static String toJavaString(MemoryAddress addr) {
-        return toJavaStringInternal(addr, Charset.defaultCharset());
+        return SharedUtils.toJavaStringInternal(addr, Charset.defaultCharset());
     }
 
     /**
@@ -727,26 +728,7 @@ public class CSupport {
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
      */
     public static String toJavaString(MemoryAddress addr, Charset charset) {
-        return toJavaStringInternal(addr, charset);
-    }
-
-    private static String toJavaStringInternal(MemoryAddress addr, Charset charset) {
-        int len = strlen(addr);
-        byte[] bytes = new byte[len];
-        MemorySegment.ofArray(bytes)
-                .copyFrom(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, len, null, null, null));
-        return new String(bytes, charset);
-    }
-
-    private static int strlen(MemoryAddress address) {
-        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset++) {
-            byte curr = (byte) byteArrHandle.get(address, (long) offset);
-            if (curr == 0) {
-                return offset;
-            }
-        }
-        throw new IllegalArgumentException("String too large");
+        return SharedUtils.toJavaStringInternal(addr, charset);
     }
 
     private static void copy(MemoryAddress addr, byte[] bytes) {
