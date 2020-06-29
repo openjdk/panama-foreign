@@ -42,33 +42,33 @@ public class LibStructTest {
     public void testMakePoint() {
         try (var seg = makePoint(42, -39)) {
             var addr = seg.baseAddress();
-            assertEquals(CPoint.x$get(addr), 42);
-            assertEquals(CPoint.y$get(addr), -39);
+            assertEquals(Point.x$get(addr), 42);
+            assertEquals(Point.y$get(addr), -39);
         }
     }
 
     @Test
     public void testAllocate() {
-        try (var seg = CPoint.allocate()) {
+        try (var seg = Point.allocate()) {
             var addr = seg.baseAddress();
-            CPoint.x$set(addr, 56);
-            CPoint.y$set(addr, 65);
-            assertEquals(CPoint.x$get(addr), 56);
-            assertEquals(CPoint.y$get(addr), 65);
+            Point.x$set(addr, 56);
+            Point.y$set(addr, 65);
+            assertEquals(Point.x$get(addr), 56);
+            assertEquals(Point.y$get(addr), 65);
         }
     }
 
     @Test
     public void testAllocateArray() {
-        try (var seg = CPoint.allocateArray(3)) {
+        try (var seg = Point.allocateArray(3)) {
             var addr = seg.baseAddress();
             for (int i = 0; i < 3; i++) {
-                CPoint.x$set(addr, i, 56 + i);
-                CPoint.y$set(addr, i, 65 + i);
+                Point.x$set(addr, i, 56 + i);
+                Point.y$set(addr, i, 65 + i);
             }
             for (int i = 0; i < 3; i++) {
-                assertEquals(CPoint.x$get(addr, i), 56 + i);
-                assertEquals(CPoint.y$get(addr, i), 65 + i);
+                assertEquals(Point.x$get(addr, i), 56 + i);
+                assertEquals(Point.y$get(addr, i), 65 + i);
             }
         }
     }
@@ -79,7 +79,7 @@ public class LibStructTest {
 
     @Test
     public void testFieldTypes() {
-        GroupLayout g = (GroupLayout)CAllTypes.$LAYOUT();
+        GroupLayout g = (GroupLayout)AllTypes.$LAYOUT();
         checkField(g, "sc", CSupport.C_CHAR);
         checkField(g, "uc", CSupport.C_CHAR);
         checkField(g, "s",  CSupport.C_SHORT);

@@ -46,23 +46,23 @@ public class LibTest8246400Test {
         MemorySegment sum = null;
         MemoryAddress callback = null;
         try (var scope = NativeScope.unboundedScope()) {
-            var v1 = CVector.allocate(scope);
-            CVector.x$set(v1, 1.0);
-            CVector.y$set(v1, 0.0);
+            var v1 = Vector.allocate(scope);
+            Vector.x$set(v1, 1.0);
+            Vector.y$set(v1, 0.0);
 
-            var v2 = CVector.allocate(scope);
-            CVector.x$set(v2, 0.0);
-            CVector.y$set(v2, 1.0);
+            var v2 = Vector.allocate(scope);
+            Vector.x$set(v2, 0.0);
+            Vector.y$set(v2, 1.0);
 
             sum = add(v1.segment(), v2.segment());
             sum = scope.register(sum);
 
-            assertEquals(CVector.x$get(sum.baseAddress()), 1.0, 0.1);
-            assertEquals(CVector.y$get(sum.baseAddress()), 1.0, 0.1);
+            assertEquals(Vector.x$get(sum.baseAddress()), 1.0, 0.1);
+            assertEquals(Vector.y$get(sum.baseAddress()), 1.0, 0.1);
 
             callback = cosine_similarity$dot.allocate((a, b) -> {
-                return (CVector.x$get(a.baseAddress()) * CVector.x$get(b.baseAddress())) +
-                    (CVector.y$get(a.baseAddress()) * CVector.y$get(b.baseAddress()));
+                return (Vector.x$get(a.baseAddress()) * Vector.x$get(b.baseAddress())) +
+                    (Vector.y$get(a.baseAddress()) * Vector.y$get(b.baseAddress()));
             }, scope);
 
             var value = cosine_similarity(v1.segment(), v2.segment(), callback);

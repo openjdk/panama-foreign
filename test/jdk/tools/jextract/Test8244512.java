@@ -57,6 +57,6 @@ public class Test8244512 extends JextractToolRunner {
     }
 
     private static void checkClass(Loader loader, String name) {
-        assertNotNull(loader.loadClass("nested_h$C" + name));
+        assertNotNull(loader.loadClass("nested_h$" + name));
     }
 }

@@ -64,7 +64,7 @@ class StructBuilder extends JavaSourceBuilder {
 
     @Override
     public void addLayoutGetter(String javaName, MemoryLayout layout) {
-        var desc = constantHelper.addLayout(javaName, layout);
+        var desc = constantHelper.addLayout(javaName + "$struct", layout);
         incrAlign();
         indent();
         sb.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " $LAYOUT() {\n");

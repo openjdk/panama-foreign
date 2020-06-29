@@ -38,11 +38,11 @@ public class Test8244938 {
     @Test
     public void testNestedStructReturn() {
          var seg = func();
-         assertEquals(seg.byteSize(), CPoint.sizeof());
+         assertEquals(seg.byteSize(), Point.sizeof());
          var addr = seg.baseAddress();
-         assertEquals(CPoint.k$get(addr), 44);
-         var point2dAddr = CPoint.point2d$addr(addr);
-         assertEquals(CPoint2D.i$get(point2dAddr), 567);
-         assertEquals(CPoint2D.j$get(point2dAddr), 33);
+         assertEquals(Point.k$get(addr), 44);
+         var point2dAddr = Point.point2d$addr(addr);
+         assertEquals(Point2D.i$get(point2dAddr), 567);
+         assertEquals(Point2D.j$get(point2dAddr), 33);
     }
 }

@@ -81,11 +81,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
      * generating unique case-insensitive names for nested classes.
      */
     private String uniqueNestedClassName(String name) {
+        name = Utils.javaSafeIdentifier(name);
         return nestedClassNames.add(name.toLowerCase())? name : (name + "$" + nestedClassNameCount++);
     }
 
     private String structClassName(Declaration decl) {
-        return structClassNames.computeIfAbsent(decl, d -> uniqueNestedClassName("C" + d.name()));
+        return structClassNames.computeIfAbsent(decl, d -> uniqueNestedClassName(d.name()));
     }
 
     private boolean structDefinitionSeen(Declaration decl) {
@@ -146,7 +147,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
             Declaration.Scoped structDef = ((Type.Declared)td.type()).tree();
             if (structDefinitionSeen(structDef)) {
-                builder.emitTypedef(uniqueNestedClassName("C" + td.name()), structClassName(structDef));
+                builder.emitTypedef(uniqueNestedClassName(td.name()), structClassName(structDef));
             }
         }
         builder.classEnd();
@@ -358,7 +359,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                builder.emitTypedef(uniqueNestedClassName("C" + tree.name()), structClassName(s));
+                                builder.emitTypedef(uniqueNestedClassName(tree.name()), structClassName(s));
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.
@@ -374,7 +375,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 }
             }
         } else if (type instanceof Type.Primitive) {
-             builder.emitPrimitiveTypedef((Type.Primitive)type, uniqueNestedClassName("C" + tree.name()));
+             builder.emitPrimitiveTypedef((Type.Primitive)type, uniqueNestedClassName(tree.name()));
         }
         return null;
     }
