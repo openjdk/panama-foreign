@@ -328,6 +328,12 @@ public class SharedUtils {
         }
     }
 
+    public static boolean isTrivial(FunctionDescriptor cDesc) {
+        return cDesc.attribute(FunctionDescriptor.IS_TRIVIAL)
+                .map(Boolean.class::cast)
+                .orElse(false);
+    }
+
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;

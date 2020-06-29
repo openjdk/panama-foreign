@@ -30,7 +30,6 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -45,7 +44,6 @@ import jdk.internal.foreign.abi.SharedUtils;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,7 +116,7 @@ public class CallArranger {
                     List.of(move(rax, long.class)));
         }
 
-        csb.setTrivial(Utils.isTrivial(cDesc));
+        csb.setTrivial(SharedUtils.isTrivial(cDesc));
 
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }

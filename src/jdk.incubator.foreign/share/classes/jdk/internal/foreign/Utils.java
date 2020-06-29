@@ -145,11 +145,4 @@ public final class Utils {
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
 
-    public static boolean isTrivial(FunctionDescriptor cDesc) {
-        return cDesc.attribute(FunctionDescriptor.IS_TRIVIAL)
-                .filter(String.class::isInstance)
-                .map(String.class::cast)
-                .map(Boolean::parseBoolean)
-                .orElse(false);
-    }
 }
