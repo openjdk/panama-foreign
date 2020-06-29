@@ -49,10 +49,35 @@ final class Utils {
     }
 
     static String javaSafeIdentifier(String name) {
-        // We never get the problem of Java non-identifiers (like 123, ab-xy) as
-        // C identifiers. But we may have a java keyword used as a C identifier.
-        assert SourceVersion.isIdentifier(name);
+        return javaSafeIdentifier(name, false);
+    }
 
-        return SourceVersion.isKeyword(name)? (name + "_") : name;
+    static String javaSafeIdentifier(String name, boolean checkAllChars) {
+        if (checkAllChars) {
+            StringBuilder buf = new StringBuilder();
+            char[] chars = name.toCharArray();
+            if (Character.isJavaIdentifierStart(chars[0])) {
+                buf.append(chars[0]);
+            } else {
+                buf.append('_');
+            }
+            if (chars.length > 1) {
+                for (int i = 1; i < chars.length; i++) {
+                    char ch = chars[i];
+                    if (Character.isJavaIdentifierPart(ch)) {
+                        buf.append(ch);
+                    } else {
+                        buf.append('_');
+                    }
+                }
+            }
+            return buf.toString();
+        } else {
+            // We never get the problem of Java non-identifiers (like 123, ab-xy) as
+            // C identifiers. But we may have a java keyword used as a C identifier.
+            assert SourceVersion.isIdentifier(name);
+
+            return SourceVersion.isKeyword(name) ? (name + "_") : name;
+        }
     }
 }

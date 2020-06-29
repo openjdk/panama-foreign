@@ -187,7 +187,7 @@ public class Main {
 
             JavaFileObject[] files = OutputFactory.generateWrapped(
                 toplevel,
-                header.getFileName().toString().replace(".h", "_h"),
+                Utils.javaSafeIdentifier(header.getFileName().toString().replace(".h", "_h"), true),
                 options.targetPackage,
                 options.libraryNames);
             jextractTask.write(output, files);
