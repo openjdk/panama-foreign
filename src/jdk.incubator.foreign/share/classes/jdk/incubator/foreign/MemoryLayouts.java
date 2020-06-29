@@ -78,7 +78,7 @@ public final class MemoryLayouts {
     VarHandle handle = MemoryHandles.withStride(BITS_8_LE.withBitAlignment(8).varHandle(byte.class), 1L);
     byte value = (byte)handle.get(addr, offset);
      * }</pre></blockquote>
-     *     
+     *
      * @param addr base address.
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a byte value read from {@code addr} at the offset specified by {@code index}.
