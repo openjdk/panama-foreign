@@ -52,8 +52,6 @@ import java.util.OptionalLong;
  */
 public abstract class NativeScope implements AutoCloseable {
 
-    Unsafe unsafe = Unsafe.getUnsafe();
-
     /**
      * If this native scope is bounded, returns the size, in bytes, of this native scope.
      * @return the size, in bytes, of this native scope (if available).
@@ -354,6 +352,25 @@ public abstract class NativeScope implements AutoCloseable {
      */
     public MemoryAddress allocate(MemoryLayout layout) {
         return allocate(layout.byteSize(), layout.byteAlignment());
+    }
+
+    /**
+     * Allocate a block of memory corresponding to an array with given element layout and size.
+     * The address returned by this method is associated with a segment which cannot be closed.
+     * Moreover, the returned address must conform to the layout alignment constraints. This is equivalent to the
+     * following code:
+     * <pre>{@code
+    allocate(MemoryLayout.ofSequence(size, elementLayout));
+     * }</pre>
+     * @param elementLayout the array element layout.
+     * @param size the array size.
+     * @return an address which points to the newly allocated memory block.
+     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
+     * {@code limit() - size() < (elementLayout.byteSize() * size)}.
+     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
+     */
+    public MemoryAddress allocateArray(MemoryLayout elementLayout, long size) {
+        return allocate(MemoryLayout.ofSequence(size, elementLayout));
     }
 
     /**
