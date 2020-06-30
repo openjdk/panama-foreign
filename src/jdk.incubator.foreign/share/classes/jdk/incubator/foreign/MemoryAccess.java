@@ -3,7 +3,18 @@ package jdk.incubator.foreign;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
-public class MemoryAccess {
+/**
+ * This class defines ready-made static accessors which can be used to dereference memory segments in many ways.
+ * Each accessor (see {@link #getInt(MemoryAddress, long)} takes a <em>base</em> address and an offset (expressed in bytes).
+ * The final address at which the dereference will occur will be computed by offsetting the base address by
+ * the specified offset, as if by calling {@link MemoryAddress#addOffset(long)} on the specified base address.
+ */
+public final class MemoryAccess {
+
+    public MemoryAccess() {
+        // just the one
+    }
+
     private static final VarHandle byte_LE_handle = indexedHandle(MemoryLayouts.BITS_8_LE, byte.class);
     private static final VarHandle char_LE_handle = indexedHandle(MemoryLayouts.BITS_16_LE, char.class);
     private static final VarHandle short_LE_handle = indexedHandle(MemoryLayouts.BITS_16_LE, short.class);
