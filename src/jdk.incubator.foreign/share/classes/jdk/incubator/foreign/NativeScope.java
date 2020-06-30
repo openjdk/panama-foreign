@@ -28,11 +28,14 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.AbstractNativeScope;
+import jdk.internal.foreign.Utils;
 import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.OptionalLong;
+import java.util.function.Function;
 
 /**
  * This class provides a scope of given size, within which several allocations can be performed. An native scope is backed
@@ -190,12 +193,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, byte[] array) {
-        if (elementLayout.byteSize() != 1) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        addr.segment().copyFrom(MemorySegment.ofArray(array));
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -210,16 +208,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, short[] array) {
-        if (elementLayout.byteSize() != 2) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
-        }
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -234,16 +223,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, char[] array) {
-        if (elementLayout.byteSize() != 2) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
-        }
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -258,16 +238,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, int[] array) {
-        if (elementLayout.byteSize() != 4) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
-        }
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -282,16 +253,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, float[] array) {
-        if (elementLayout.byteSize() != 4) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
-        }
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -306,16 +268,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, long[] array) {
-        if (elementLayout.byteSize() != 8) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
-        }
-        return addr;
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
@@ -330,14 +283,17 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
     public MemoryAddress allocateArray(ValueLayout elementLayout, double[] array) {
-        if (elementLayout.byteSize() != 8) {
-            throw new IllegalArgumentException("Bad layout size");
-        }
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(array.length, elementLayout));
-        if (elementLayout.order() == ByteOrder.nativeOrder()) {
-            addr.segment().copyFrom(MemorySegment.ofArray(array));
+        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
+    }
+
+    private <Z> MemoryAddress copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
+                                                        Function<Z, MemorySegment> heapSegmentFactory) {
+        Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
+        MemoryAddress addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
+        if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
+            addr.segment().copyFrom(heapSegmentFactory.apply(array));
         } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(MemorySegment.ofArray(array), elementLayout.byteSize());
+            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
         }
         return addr;
     }
