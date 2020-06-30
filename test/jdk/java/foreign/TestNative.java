@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.internal.misc.Unsafe;
 import org.testng.annotations.DataProvider;
@@ -112,7 +113,7 @@ public class TestNative {
                                               BiFunction<Z, Integer, Object> nativeBufferExtractor,
                                               BiFunction<Long, Integer, Object> nativeRawExtractor) {
         long nelems = layout.elementCount().getAsLong();
-        ByteBuffer bb = base.segment().asSlice(base.segmentOffset(), (int)layout.byteSize()).asByteBuffer();
+        ByteBuffer bb = MemorySegments.asByteBuffer(base.segment().asSlice(base.segmentOffset(), (int)layout.byteSize()));
         Z z = bufferFactory.apply(bb);
         for (long i = 0 ; i < nelems ; i++) {
             Object handleValue = handleExtractor.apply(base, i);
@@ -153,7 +154,7 @@ public class TestNative {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(seq)) {
             MemoryAddress address = segment.baseAddress();
             initializer.accept(address);
             checker.accept(address);
@@ -163,8 +164,8 @@ public class TestNative {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
-        try (MemorySegment segment = MemorySegment.allocateNative(doubles)) {
-            ByteBuffer bb = segment.asByteBuffer();
+        try (MemorySegment segment = MemorySegments.allocateNative(doubles)) {
+            ByteBuffer bb = MemorySegments.asByteBuffer(segment);
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
             assertEquals(buf.capacity(), expected);
@@ -175,7 +176,7 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
-        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
+        MemorySegment mallocSegment = MemorySegments.ofNativeRestricted(addr, 12, null,
                 () -> free(addr.toRawLongValue()), null);
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
@@ -187,7 +188,7 @@ public class TestNative {
     public void testMallocSegment() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
         assertNull(addr.segment());
-        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
+        MemorySegment mallocSegment = MemorySegments.ofNativeRestricted(addr, 12, null,
                 () -> free(addr.toRawLongValue()), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
@@ -196,14 +197,14 @@ public class TestNative {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
-        try (MemorySegment segment = MemorySegment.allocateNative(4)) {
-            MemorySegment.ofNativeRestricted(segment.baseAddress(), 0, null, null, null);
+        try (MemorySegment segment = MemorySegments.allocateNative(4)) {
+            MemorySegments.ofNativeRestricted(segment.baseAddress(), 0, null, null, null);
         }
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNullUnsafeSegment() {
-        MemorySegment.ofNativeRestricted(null, 10, null, null, null);
+        MemorySegments.ofNativeRestricted(null, 10, null, null, null);
     }
 
     static {

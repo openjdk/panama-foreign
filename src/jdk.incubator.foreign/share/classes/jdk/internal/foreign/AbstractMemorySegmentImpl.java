@@ -83,13 +83,13 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         this.scope = scope;
     }
 
-    abstract long min();
+    public abstract long min();
 
-    abstract Object base();
+    public abstract Object base();
 
     abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope);
 
-    abstract ByteBuffer makeByteBuffer();
+    public abstract ByteBuffer makeByteBuffer();
 
     static int defaultAccessModes(long size) {
         return (enableSmallSegments && size < Integer.MAX_VALUE) ?
@@ -118,81 +118,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public final MemorySegment fill(byte value){
-        checkRange(0, length, true);
-        UNSAFE.setMemory(base(), min(), length, value);
-        return this;
-    }
-
-    public void copyFrom(MemorySegment src) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
-        long size = that.byteSize();
-        checkRange(0, size, true);
-        that.checkRange(0, size, false);
-        UNSAFE.copyMemory(
-                that.base(), that.min(),
-                base(), min(), size);
-    }
-
-    private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
-            .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-
-    @Override
-    public long mismatch(MemorySegment other) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)other;
-        final long thisSize = this.byteSize();
-        final long thatSize = that.byteSize();
-        final long length = Math.min(thisSize, thatSize);
-        this.checkRange(0, length, false);
-        that.checkRange(0, length, false);
-        if (this == other) {
-            return -1;
-        }
-
-        long i = 0;
-        if (length > 7) {
-            if ((byte) BYTE_HANDLE.get(this.baseAddress(), 0) != (byte) BYTE_HANDLE.get(that.baseAddress(), 0)) {
-                return 0;
-            }
-            i = ArraysSupport.vectorizedMismatchLargeForBytes(
-                    this.base(), this.min(),
-                    that.base(), that.min(),
-                    length);
-            if (i >= 0) {
-                return i;
-            }
-            long remaining = ~i;
-            assert remaining < 8 : "remaining greater than 7: " + remaining;
-            i = length - remaining;
-        }
-        MemoryAddress thisAddress = this.baseAddress();
-        MemoryAddress thatAddress = that.baseAddress();
-        for (; i < length; i++) {
-            if ((byte) BYTE_HANDLE.get(thisAddress, i) != (byte) BYTE_HANDLE.get(thatAddress, i)) {
-                return i;
-            }
-        }
-        return thisSize != thatSize ? length : -1;
-    }
-
-    @Override
     @ForceInline
     public final MemoryAddress baseAddress() {
         return new MemoryAddressImpl(this, 0);
-    }
-
-    @Override
-    public final ByteBuffer asByteBuffer() {
-        if (!isSet(READ)) {
-            throw unsupportedAccessMode(READ);
-        }
-        checkArraySize("ByteBuffer", 1);
-        ByteBuffer _bb = makeByteBuffer();
-        if (!isSet(WRITE)) {
-            //scope is IMMUTABLE - obtain a RO byte buffer
-            _bb = _bb.asReadOnlyBuffer();
-        }
-        return _bb;
     }
 
     @Override
@@ -230,7 +158,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return (accessModes() & accessModes) == accessModes;
     }
 
-    private void checkAccessModes(int accessModes) {
+    public void checkAccessModes(int accessModes) {
         if ((accessModes & ~ALL_ACCESS) != 0) {
             throw new IllegalArgumentException("Invalid access modes");
         }
@@ -273,54 +201,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return dup(0, length, mask, scope.acquire());
     }
 
-    @Override
-    public final byte[] toByteArray() {
-        return toArray(byte[].class, 1, byte[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final short[] toShortArray() {
-        return toArray(short[].class, 2, short[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final char[] toCharArray() {
-        return toArray(char[].class, 2, char[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final int[] toIntArray() {
-        return toArray(int[].class, 4, int[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final float[] toFloatArray() {
-        return toArray(float[].class, 4, float[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final long[] toLongArray() {
-        return toArray(long[].class, 8, long[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final double[] toDoubleArray() {
-        return toArray(double[].class, 8, double[]::new, MemorySegment::ofArray);
-    }
-
-    private <Z> Z toArray(Class<Z> arrayClass, int elemSize, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
-        int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
-        Z arr = arrayFactory.apply(size);
-        MemorySegment arrSegment = segmentFactory.apply(arr);
-        arrSegment.copyFrom(this);
-        return arr;
-    }
-
     boolean isSmall() {
         return isSet(SMALL);
     }
 
-    void checkRange(long offset, long length, boolean writeAccess) {
+    public void checkRange(long offset, long length, boolean writeAccess) {
         scope.checkValidState();
         if (writeAccess && !isSet(WRITE)) {
             throw unsupportedAccessMode(WRITE);
@@ -339,17 +224,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     private boolean isSet(int mask) {
         return (this.mask & mask) != 0;
-    }
-
-    private int checkArraySize(String typeName, int elemSize) {
-        if (length % elemSize != 0) {
-            throw new UnsupportedOperationException(String.format("Segment size is not a multiple of %d. Size: %d", elemSize, length));
-        }
-        long arraySize = length / elemSize;
-        if (arraySize > (Integer.MAX_VALUE - 8)) { //conservative check
-            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
-        }
-        return (int)arraySize;
     }
 
     private void checkBounds(long offset, long length) {
@@ -534,17 +408,17 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         0, 0, MemoryScope.createUnchecked(null, null, null)
     ) {
         @Override
-        ByteBuffer makeByteBuffer() {
+        public ByteBuffer makeByteBuffer() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        long min() {
+        public long min() {
             return 0;
         }
 
         @Override
-        Object base() {
+        public Object base() {
             return null;
         }
 

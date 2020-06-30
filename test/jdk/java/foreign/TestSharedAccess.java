@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.Test;
 
@@ -57,7 +58,7 @@ public class TestSharedAccess {
     @Test
     public void testConfined() throws Throwable {
         Thread owner = Thread.currentThread();
-        MemorySegment s = MemorySegment.allocateNative(4);
+        MemorySegment s = MemorySegments.allocateNative(4);
         AtomicReference<MemorySegment> confined = new AtomicReference<>(s);
         setInt(s.baseAddress(), 42);
         assertEquals(getInt(s.baseAddress()), 42);
@@ -83,13 +84,13 @@ public class TestSharedAccess {
     @Test
     public void testShared() throws Throwable {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-        try (MemorySegment s = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment s = MemorySegments.allocateNative(layout)) {
             for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
                 setInt(s.baseAddress().addOffset(i * 4), 42);
             }
             List<Thread> threads = new ArrayList<>();
             List<Spliterator<MemorySegment>> spliterators = new ArrayList<>();
-            spliterators.add(MemorySegment.spliterator(s, layout));
+            spliterators.add(MemorySegments.spliterator(s, layout));
             while (true) {
                 boolean progress = false;
                 List<Spliterator<MemorySegment>> newSpliterators = new ArrayList<>();
@@ -127,11 +128,11 @@ public class TestSharedAccess {
 
     @Test
     public void testSharedUnsafe() throws Throwable {
-        try (MemorySegment s = MemorySegment.allocateNative(4)) {
+        try (MemorySegment s = MemorySegments.allocateNative(4)) {
             setInt(s.baseAddress(), 42);
             assertEquals(getInt(s.baseAddress()), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = MemorySegment.ofNativeRestricted(
+            MemorySegment sharedSegment = MemorySegments.ofNativeRestricted(
                     s.baseAddress(), s.byteSize(), null, null, null);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
@@ -157,7 +158,7 @@ public class TestSharedAccess {
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadCloseWithPendingAcquireBuffer() {
         withAcquired(segment -> {
-            segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
+            segment = MemorySegments.ofByteBuffer(MemorySegments.asByteBuffer(segment)); // original segment is lost
             segment.close(); // this should still fail
         });
     }
@@ -170,25 +171,25 @@ public class TestSharedAccess {
     @Test(expectedExceptions=IllegalStateException.class)
     public void testBadHandoffWithPendingAcquireBuffer() {
         withAcquired(segment -> {
-            segment = MemorySegment.ofByteBuffer(segment.asByteBuffer()); // original segment is lost
+            segment = MemorySegments.ofByteBuffer(MemorySegments.asByteBuffer(segment)); // original segment is lost
             segment.withOwnerThread(new Thread()); // this should still fail
         });
     }
 
     @Test(expectedExceptions=IllegalArgumentException.class)
     public void testBadHandoffSameThread() {
-        MemorySegment.ofArray(new int[4]).withOwnerThread(Thread.currentThread());
+        MemorySegments.ofArray(new int[4]).withOwnerThread(Thread.currentThread());
     }
 
     @Test(expectedExceptions=NullPointerException.class)
     public void testBadHandoffNullThread() {
-        MemorySegment.ofArray(new int[4]).withOwnerThread(null);
+        MemorySegments.ofArray(new int[4]).withOwnerThread(null);
     }
 
     private void withAcquired(Consumer<MemorySegment> acquiredAction) {
         CountDownLatch holder = new CountDownLatch(1);
-        MemorySegment segment = MemorySegment.allocateNative(16);
-        Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
+        MemorySegment segment = MemorySegments.allocateNative(16);
+        Spliterator<MemorySegment> spliterator = MemorySegments.spliterator(segment,
                 MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
         CountDownLatch acquired = new CountDownLatch(1);
         Runnable r = () -> spliterator.tryAdvance(s -> {
@@ -215,12 +216,12 @@ public class TestSharedAccess {
         CountDownLatch a = new CountDownLatch(1);
         CountDownLatch b = new CountDownLatch(1);
         CompletableFuture<?> r;
-        try (MemorySegment s1 = MemorySegment.allocateNative(MemoryLayout.ofSequence(2, MemoryLayouts.JAVA_INT))) {
+        try (MemorySegment s1 = MemorySegments.allocateNative(MemoryLayout.ofSequence(2, MemoryLayouts.JAVA_INT))) {
             r = CompletableFuture.runAsync(() -> {
                 try {
-                    ByteBuffer bb = s1.asByteBuffer();
+                    ByteBuffer bb = MemorySegments.asByteBuffer(s1);
 
-                    MemorySegment s2 = MemorySegment.ofByteBuffer(bb);
+                    MemorySegment s2 = MemorySegments.ofByteBuffer(bb);
                     a.countDown();
 
                     try {

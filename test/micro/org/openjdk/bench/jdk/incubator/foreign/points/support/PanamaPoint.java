@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign.points.support;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -40,11 +41,10 @@ public class PanamaPoint implements AutoCloseable {
 
     private static final VarHandle VH_x = LAYOUT.varHandle(int.class, groupElement("x"));
     private static final VarHandle VH_y = LAYOUT.varHandle(int.class, groupElement("y"));
-
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this(MemorySegment.allocateNative(LAYOUT), x, y);
+        this(MemorySegments.allocateNative(LAYOUT), x, y);
     }
 
     public PanamaPoint(MemorySegment segment, int x, int y) {

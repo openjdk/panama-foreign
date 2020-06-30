@@ -31,6 +31,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.Test;
 
 public class TestNoForeignUnsafeOverride {
@@ -40,6 +41,6 @@ public class TestNoForeignUnsafeOverride {
 
     @Test(expectedExceptions = IllegalAccessError.class)
     public void testUnsafeAccess() {
-        MemorySegment.ofNativeRestricted(MemoryAddress.ofLong(42), 10, null, null, null);
+        MemorySegments.ofNativeRestricted(MemoryAddress.ofLong(42), 10, null, null, null);
     }
 }

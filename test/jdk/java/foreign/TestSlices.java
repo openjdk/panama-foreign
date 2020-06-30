@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemorySegment;
 
 import java.lang.invoke.VarHandle;
 
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -48,7 +49,7 @@ public class TestSlices {
 
     @Test(dataProvider = "slices")
     public void testSlices(VarHandle handle, int lo, int hi, int[] values) {
-        try (MemorySegment segment = MemorySegment.allocateNative(LAYOUT)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(LAYOUT)) {
             //init
             for (long i = 0 ; i < 2 ; i++) {
                 for (long j = 0 ; j < 5 ; j++) {

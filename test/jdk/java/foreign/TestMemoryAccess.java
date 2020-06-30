@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -83,7 +84,7 @@ public class TestMemoryAccess {
 
     private void testAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, MemoryLayout layout, VarHandle handle, Checker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegments.allocateNative(layout))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {
@@ -115,7 +116,7 @@ public class TestMemoryAccess {
 
     private void testArrayAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, ArrayChecker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegments.allocateNative(seq))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {
@@ -184,7 +185,7 @@ public class TestMemoryAccess {
 
     private void testMatrixAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, MatrixChecker checker) {
         MemoryAddress outer_address;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
+        try (MemorySegment segment = viewFactory.apply(MemorySegments.allocateNative(seq))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             MemoryAddress addr = segment.baseAddress();
             try {

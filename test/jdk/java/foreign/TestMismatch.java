@@ -34,6 +34,7 @@ import java.util.function.IntFunction;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static java.lang.System.out;
@@ -61,15 +62,15 @@ public class TestMismatch {
         MemorySegment s2 = initializeSegment(ss2);
 
         if (s1.byteSize() == s2.byteSize()) {
-            assertEquals(s1.mismatch(s2), -1);  // identical
-            assertEquals(s2.mismatch(s1), -1);
+            assertEquals(MemorySegments.mismatch(s1, s2), -1);  // identical
+            assertEquals(MemorySegments.mismatch(s2, s1), -1);
         } else if (s1.byteSize() > s2.byteSize()) {
-            assertEquals(s1.mismatch(s2), s2.byteSize());  // proper prefix
-            assertEquals(s2.mismatch(s1), s2.byteSize());
+            assertEquals(MemorySegments.mismatch(s1, s2), s2.byteSize());  // proper prefix
+            assertEquals(MemorySegments.mismatch(s2, s1), s2.byteSize());
         } else {
             assert s1.byteSize() < s2.byteSize();
-            assertEquals(s1.mismatch(s2), s1.byteSize());  // proper prefix
-            assertEquals(s2.mismatch(s1), s1.byteSize());
+            assertEquals(MemorySegments.mismatch(s1, s2), s1.byteSize());  // proper prefix
+            assertEquals(MemorySegments.mismatch(s2, s1), s1.byteSize());
         }
     }
 
@@ -84,38 +85,38 @@ public class TestMismatch {
             BYTE_HANDLE.set(s2.baseAddress().addOffset(i), (byte) 0xFF);
 
             if (s1.byteSize() == s2.byteSize()) {
-                assertEquals(s1.mismatch(s2), expectedMismatchOffset);
-                assertEquals(s2.mismatch(s1), expectedMismatchOffset);
+                assertEquals(MemorySegments.mismatch(s1, s2), expectedMismatchOffset);
+                assertEquals(MemorySegments.mismatch(s2, s1), expectedMismatchOffset);
             } else if (s1.byteSize() > s2.byteSize()) {
-                assertEquals(s1.mismatch(s2), expectedMismatchOffset);
-                assertEquals(s2.mismatch(s1), expectedMismatchOffset);
+                assertEquals(MemorySegments.mismatch(s1, s2), expectedMismatchOffset);
+                assertEquals(MemorySegments.mismatch(s2, s1), expectedMismatchOffset);
             } else {
                 assert s1.byteSize() < s2.byteSize();
                 var off = Math.min(s1.byteSize(), expectedMismatchOffset);
-                assertEquals(s1.mismatch(s2), off);  // proper prefix
-                assertEquals(s2.mismatch(s1), off);
+                assertEquals(MemorySegments.mismatch(s1, s2), off);  // proper prefix
+                assertEquals(MemorySegments.mismatch(s2, s1), off);
             }
         }
     }
 
     @Test
     public void testEmpty() {
-        var s1 = MemorySegment.ofArray(new byte[0]);
-        assertEquals(s1.mismatch(s1), -1);
-        try (var nativeSegment = MemorySegment.allocateNative(4)) {
+        var s1 = MemorySegments.ofArray(new byte[0]);
+        assertEquals(MemorySegments.mismatch(s1, s1), -1);
+        try (var nativeSegment = MemorySegments.allocateNative(4)) {
             var s2 = nativeSegment.asSlice(0, 0);
-            assertEquals(s1.mismatch(s2), -1);
-            assertEquals(s2.mismatch(s1), -1);
+            assertEquals(MemorySegments.mismatch(s1, s2), -1);
+            assertEquals(MemorySegments.mismatch(s2, s1), -1);
         }
     }
 
     @Test
     public void testLarge() {
-        try (var s1 = MemorySegment.allocateNative((long)Integer.MAX_VALUE + 10L);
-             var s2 = MemorySegment.allocateNative((long)Integer.MAX_VALUE + 10L)) {
-            assertEquals(s1.mismatch(s1), -1);
-            assertEquals(s1.mismatch(s2), -1);
-            assertEquals(s2.mismatch(s1), -1);
+        try (var s1 = MemorySegments.allocateNative((long)Integer.MAX_VALUE + 10L);
+             var s2 = MemorySegments.allocateNative((long)Integer.MAX_VALUE + 10L)) {
+            assertEquals(MemorySegments.mismatch(s1, s1), -1);
+            assertEquals(MemorySegments.mismatch(s1, s2), -1);
+            assertEquals(MemorySegments.mismatch(s2, s1), -1);
 
             testLargeAcrossMaxBoundary(s1, s2);
 
@@ -127,9 +128,9 @@ public class TestMismatch {
         for (long i = s2.byteSize() -1 ; i >= Integer.MAX_VALUE - 10L; i--) {
             var s3 = s1.asSlice(0, i);
             var s4 = s2.asSlice(0, i);
-            assertEquals(s3.mismatch(s3), -1);
-            assertEquals(s3.mismatch(s4), -1);
-            assertEquals(s4.mismatch(s3), -1);
+            assertEquals(MemorySegments.mismatch(s3, s3), -1);
+            assertEquals(MemorySegments.mismatch(s3, s4), -1);
+            assertEquals(MemorySegments.mismatch(s4, s3), -1);
         }
     }
 
@@ -137,8 +138,8 @@ public class TestMismatch {
         for (long i = s2.byteSize() -1 ; i >= Integer.MAX_VALUE - 10L; i--) {
             BYTE_HANDLE.set(s2.baseAddress().addOffset(i), (byte) 0xFF);
             long expectedMismatchOffset = i;
-            assertEquals(s1.mismatch(s2), expectedMismatchOffset);
-            assertEquals(s2.mismatch(s1), expectedMismatchOffset);
+            assertEquals(MemorySegments.mismatch(s1, s2), expectedMismatchOffset);
+            assertEquals(MemorySegments.mismatch(s2, s1), expectedMismatchOffset);
         }
     }
 
@@ -147,40 +148,40 @@ public class TestMismatch {
 
     @Test
     public void testClosed() {
-        var s1 = MemorySegment.ofArray(new byte[4]);
-        var s2 = MemorySegment.ofArray(new byte[4]);
+        var s1 = MemorySegments.ofArray(new byte[4]);
+        var s2 = MemorySegments.ofArray(new byte[4]);
         s1.close();
-        assertThrows(ISE, () -> s1.mismatch(s1));
-        assertThrows(ISE, () -> s1.mismatch(s2));
-        assertThrows(ISE, () -> s2.mismatch(s1));
+        assertThrows(ISE, () -> MemorySegments.mismatch(s1, s1));
+        assertThrows(ISE, () -> MemorySegments.mismatch(s1, s2));
+        assertThrows(ISE, () -> MemorySegments.mismatch(s2, s1));
     }
 
     @Test
     public void testInsufficientAccessModes() {
-        var s1 = MemorySegment.ofArray(new byte[4]);
-        var s2 = MemorySegment.ofArray(new byte[4]);
+        var s1 = MemorySegments.ofArray(new byte[4]);
+        var s2 = MemorySegments.ofArray(new byte[4]);
         var s1WithoutRead = s1.withAccessModes(s1.accessModes() & ~READ);
         var s2WithoutRead = s2.withAccessModes(s2.accessModes() & ~READ);
 
-        assertThrows(UOE, () -> s1.mismatch(s2WithoutRead));
-        assertThrows(UOE, () -> s1WithoutRead.mismatch(s2));
-        assertThrows(UOE, () -> s1WithoutRead.mismatch(s2WithoutRead));
+        assertThrows(UOE, () -> MemorySegments.mismatch(s1, s2WithoutRead));
+        assertThrows(UOE, () -> MemorySegments.mismatch(s1WithoutRead, s2));
+        assertThrows(UOE, () -> MemorySegments.mismatch(s1WithoutRead, s2WithoutRead));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
     public void testNull() {
-        var segment = MemorySegment.ofArray(new byte[4]);
-        segment.mismatch(null);
+        var segment = MemorySegments.ofArray(new byte[4]);
+        MemorySegments.mismatch(segment, null);
     }
 
     @Test
     public void testThreadAccess() throws Exception {
-        var segment = MemorySegment.ofArray(new byte[4]);
+        var segment = MemorySegments.ofArray(new byte[4]);
         {
             AtomicReference<RuntimeException> exception = new AtomicReference<>();
             Runnable action = () -> {
                 try {
-                    MemorySegment.ofArray(new byte[4]).mismatch(segment);
+                    MemorySegments.mismatch(MemorySegments.ofArray(new byte[4]), segment);
                 } catch (RuntimeException e) {
                     exception.set(e);
                 }
@@ -198,7 +199,7 @@ public class TestMismatch {
             AtomicReference<RuntimeException> exception = new AtomicReference<>();
             Runnable action = () -> {
                 try {
-                    segment.mismatch(MemorySegment.ofArray(new byte[4]));
+                    MemorySegments.mismatch(segment, MemorySegments.ofArray(new byte[4]));
                 } catch (RuntimeException e) {
                     exception.set(e);
                 }
@@ -215,8 +216,8 @@ public class TestMismatch {
     }
 
     enum SegmentKind {
-        NATIVE(MemorySegment::allocateNative),
-        ARRAY(i -> MemorySegment.ofArray(new byte[i]));
+        NATIVE(MemorySegments::allocateNative),
+        ARRAY(i -> MemorySegments.ofArray(new byte[i]));
 
         final IntFunction<MemorySegment> segmentFactory;
 

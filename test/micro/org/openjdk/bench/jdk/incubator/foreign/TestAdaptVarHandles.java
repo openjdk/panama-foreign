@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -96,7 +97,7 @@ public class TestAdaptVarHandles {
     static final MethodHandle MH_box_int = MethodHandles.filterReturnValue(MH_int, INT_TO_INTBOX);
 
     int[] base = new int[ELEM_SIZE];
-    MemorySegment segment = MemorySegment.ofArray(base);
+    MemorySegment segment = MemorySegments.ofArray(base);
 
     @Setup
     public void setup() {

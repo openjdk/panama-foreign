@@ -59,12 +59,12 @@ public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    H base() {
+    public H base() {
         return Objects.requireNonNull(baseProvider.get());
     }
 
     @Override
-    long min() {
+    public long min() {
         return offset;
     }
 
@@ -74,7 +74,7 @@ public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    ByteBuffer makeByteBuffer() {
+    public ByteBuffer makeByteBuffer() {
         if (!(base() instanceof byte[])) {
             throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
         }

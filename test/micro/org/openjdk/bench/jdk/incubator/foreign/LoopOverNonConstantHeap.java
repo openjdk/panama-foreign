@@ -26,6 +26,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -73,7 +74,7 @@ public class LoopOverNonConstantHeap {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(base, UNSAFE_BYTE_BASE + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.ofArray(base);
+        segment = MemorySegments.ofArray(base);
         byteBuffer = ByteBuffer.wrap(base).order(ByteOrder.nativeOrder());
     }
 
@@ -123,7 +124,7 @@ public class LoopOverNonConstantHeap {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryLayouts.getInt(segment.baseAddress(), i * CARRIER_SIZE);
+            res += MemorySegments.getInt(segment.baseAddress(), i * CARRIER_SIZE);
         }
         return res;
     }

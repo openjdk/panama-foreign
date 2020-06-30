@@ -55,7 +55,7 @@ import java.util.concurrent.locks.StampedLock;
  * the single thread performing the checked access or there is an external synchronization
  * in place that prevents concurrent access and closing of the scope.
  */
-abstract class MemoryScope {
+public abstract class MemoryScope {
 
     /**
      * Creates a root MemoryScope with given ref, cleanupAction and current
@@ -70,7 +70,7 @@ abstract class MemoryScope {
      * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
      * @return a root MemoryScope
      */
-    static MemoryScope create(Object ref, Runnable cleanupAction) {
+    public static MemoryScope create(Object ref, Runnable cleanupAction) {
         return new Root(Thread.currentThread(), ref, cleanupAction);
     }
 

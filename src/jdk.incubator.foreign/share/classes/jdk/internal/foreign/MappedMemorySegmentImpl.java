@@ -54,7 +54,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
     }
 
     @Override
-    ByteBuffer makeByteBuffer() {
+    public ByteBuffer makeByteBuffer() {
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
     }

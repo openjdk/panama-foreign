@@ -24,6 +24,7 @@
 
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.MemorySegments;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -55,35 +56,35 @@ public class BulkOps {
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
     static final long unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
-    static final MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE);
+    static final MemorySegment segment = MemorySegments.allocateNative(ALLOC_SIZE);
 
     static final int[] bytes = new int[ELEM_SIZE];
-    static final MemorySegment bytesSegment = MemorySegment.ofArray(bytes);
+    static final MemorySegment bytesSegment = MemorySegments.ofArray(bytes);
     static final int UNSAFE_INT_OFFSET = unsafe.arrayBaseOffset(int[].class);
 
     // large(ish) segments/buffers with same content, 0, for mismatch, non-multiple-of-8 sized
     static final int SIZE_WITH_TAIL = (1024 * 1024) + 7;
-    static final MemorySegment mismatchSegmentLarge1 = MemorySegment.allocateNative(SIZE_WITH_TAIL);
-    static final MemorySegment mismatchSegmentLarge2 = MemorySegment.allocateNative(SIZE_WITH_TAIL);
+    static final MemorySegment mismatchSegmentLarge1 = MemorySegments.allocateNative(SIZE_WITH_TAIL);
+    static final MemorySegment mismatchSegmentLarge2 = MemorySegments.allocateNative(SIZE_WITH_TAIL);
     static final ByteBuffer mismatchBufferLarge1 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
     static final ByteBuffer mismatchBufferLarge2 = ByteBuffer.allocateDirect(SIZE_WITH_TAIL);
 
     // mismatch at first byte
-    static final MemorySegment mismatchSegmentSmall1 = MemorySegment.allocateNative(7);
-    static final MemorySegment mismatchSegmentSmall2 = MemorySegment.allocateNative(7);
+    static final MemorySegment mismatchSegmentSmall1 = MemorySegments.allocateNative(7);
+    static final MemorySegment mismatchSegmentSmall2 = MemorySegments.allocateNative(7);
     static final ByteBuffer mismatchBufferSmall1 = ByteBuffer.allocateDirect(7);
     static final ByteBuffer mismatchBufferSmall2 = ByteBuffer.allocateDirect(7);
     static {
-        mismatchSegmentSmall1.fill((byte) 0xFF);
+        MemorySegments.fill(mismatchSegmentSmall1, (byte) 0xFF);
         mismatchBufferSmall1.put((byte) 0xFF).clear();
         // verify expected mismatch indices
-        long si = mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
+        long si = MemorySegments.mismatch(mismatchSegmentLarge1, mismatchSegmentLarge2);
         if (si != -1)
             throw new AssertionError("Unexpected mismatch index:" + si);
         int bi = mismatchBufferLarge1.mismatch(mismatchBufferLarge2);
         if (bi != -1)
             throw new AssertionError("Unexpected mismatch index:" + bi);
-        si = mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
+        si = MemorySegments.mismatch(mismatchSegmentSmall1, mismatchSegmentSmall2);
         if (si != 0)
             throw new AssertionError("Unexpected mismatch index:" + si);
         bi = mismatchBufferSmall1.mismatch(mismatchBufferSmall2);
@@ -106,7 +107,7 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_fill() {
-        segment.fill((byte)42);
+        MemorySegments.fill(segment, (byte)42);
     }
 
     @Benchmark
@@ -118,13 +119,13 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy() {
-        segment.copyFrom(bytesSegment);
+        MemorySegments.copy(bytesSegment, segment);
     }
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_large_segment() {
-        return mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
+        return MemorySegments.mismatch(mismatchSegmentLarge1, mismatchSegmentLarge2);
     }
 
     @Benchmark
@@ -136,7 +137,7 @@ public class BulkOps {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public long mismatch_small_segment() {
-        return mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
+        return MemorySegments.mismatch(mismatchSegmentSmall1, mismatchSegmentSmall2);
     }
 
     @Benchmark

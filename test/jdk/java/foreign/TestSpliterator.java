@@ -30,6 +30,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.lang.invoke.VarHandle;
@@ -61,7 +62,7 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.ofSequence(size, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegments.allocateNative(layout);
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment.baseAddress(), (long) i, i);
         }
@@ -70,13 +71,13 @@ public class TestSpliterator {
         long serial = sum(0, segment);
         assertEquals(serial, expected);
         //parallel counted completer
-        long parallelCounted = new SumSegmentCounted(null, MemorySegment.spliterator(segment, layout), threshold).invoke();
+        long parallelCounted = new SumSegmentCounted(null, MemorySegments.spliterator(segment, layout), threshold).invoke();
         assertEquals(parallelCounted, expected);
         //parallel recursive action
-        long parallelRecursive = new SumSegmentRecursive(MemorySegment.spliterator(segment, layout), threshold).invoke();
+        long parallelRecursive = new SumSegmentRecursive(MemorySegments.spliterator(segment, layout), threshold).invoke();
         assertEquals(parallelRecursive, expected);
         //parallel stream
-        long streamParallel = StreamSupport.stream(MemorySegment.spliterator(segment, layout), true)
+        long streamParallel = StreamSupport.stream(MemorySegments.spliterator(segment, layout), true)
                 .reduce(0L, TestSpliterator::sumSingle, Long::sum);
         assertEquals(streamParallel, expected);
         segment.close();
@@ -86,7 +87,7 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegments.allocateNative(layout);
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment.baseAddress(), (long) i, i);
         }
@@ -94,7 +95,7 @@ public class TestSpliterator {
 
         //check that a segment w/o ACQUIRE access mode can still be used from same thread
         AtomicLong spliteratorSum = new AtomicLong();
-        spliterator(segment.withAccessModes(MemorySegment.READ), layout)
+        MemorySegments.spliterator(segment.withAccessModes(MemorySegment.READ), layout)
                 .forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
         assertEquals(spliteratorSum.get(), expected);
     }
@@ -208,16 +209,16 @@ public class TestSpliterator {
     @DataProvider(name = "accessScenarios")
     public Object[][] accessScenarios() {
         SequenceLayout layout = MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_INT);
-        var mallocSegment = MemorySegment.allocateNative(layout);
+        var mallocSegment = MemorySegments.allocateNative(layout);
 
         Map<Supplier<Spliterator<MemorySegment>>,Integer> l = Map.of(
-            () -> spliterator(mallocSegment.withAccessModes(ALL_ACCESS), layout), ALL_ACCESS,
-            () -> spliterator(mallocSegment.withAccessModes(0), layout), 0,
-            () -> spliterator(mallocSegment.withAccessModes(READ), layout), READ,
-            () -> spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE), layout), READ|WRITE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE), layout), READ|WRITE|ACQUIRE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE|HANDOFF), layout), READ|WRITE|ACQUIRE|HANDOFF
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(ALL_ACCESS), layout), ALL_ACCESS,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(0), layout), 0,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(READ), layout), READ,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(READ|WRITE), layout), READ|WRITE,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE), layout), READ|WRITE|ACQUIRE,
+            () -> MemorySegments.spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE|HANDOFF), layout), READ|WRITE|ACQUIRE|HANDOFF
 
         );
         return l.entrySet().stream().map(e -> new Object[] { e.getKey(), e.getValue() }).toArray(Object[][]::new);

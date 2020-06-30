@@ -30,6 +30,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -84,8 +85,8 @@ public class TestRebase {
     static class SegmentSlice {
 
         enum Kind {
-            NATIVE(MemorySegment::allocateNative),
-            ARRAY(i -> MemorySegment.ofArray(new byte[i]));
+            NATIVE(MemorySegments::allocateNative),
+            ARRAY(i -> MemorySegments.ofArray(new byte[i]));
 
             final IntFunction<MemorySegment> segmentFactory;
 

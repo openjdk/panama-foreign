@@ -30,6 +30,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -57,7 +58,7 @@ public class TestMemoryCopy {
             BYTE_HANDLE.set(addr1.addOffset(i), (byte) i);
         }
         //perform copy
-        s2.segment.copyFrom(s1.segment.asSlice(0, size));
+        MemorySegments.copy(s1.segment.asSlice(0, size), s2.segment);
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
             assertEquals((byte)i, BYTE_HANDLE.get(addr2.addOffset(i)));
@@ -67,8 +68,8 @@ public class TestMemoryCopy {
     static class SegmentSlice {
 
         enum Kind {
-            NATIVE(MemorySegment::allocateNative),
-            ARRAY(i -> MemorySegment.ofArray(new byte[i]));
+            NATIVE(MemorySegments::allocateNative),
+            ARRAY(i -> MemorySegments.ofArray(new byte[i]));
 
             final IntFunction<MemorySegment> segmentFactory;
 

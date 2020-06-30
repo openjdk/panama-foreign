@@ -35,6 +35,7 @@ import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -62,7 +63,7 @@ public class TestLayouts {
         VarHandle array_elem_handle = layout.varHandle(double.class,
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement());
-        try (MemorySegment segment = MemorySegment.allocateNative(
+        try (MemorySegment segment = MemorySegments.allocateNative(
                 layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")))) {
             size_handle.set(segment.baseAddress(), 4);
             for (int i = 0 ; i < 4 ; i++) {
@@ -88,7 +89,7 @@ public class TestLayouts {
                 MemoryLayout.PathElement.groupElement("arr"),
                 MemoryLayout.PathElement.sequenceElement(0),
                 MemoryLayout.PathElement.sequenceElement());
-        try (MemorySegment segment = MemorySegment.allocateNative(
+        try (MemorySegment segment = MemorySegments.allocateNative(
                 layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()))) {
             size_handle.set(segment.baseAddress(), 4);
             for (int i = 0 ; i < 4 ; i++) {
@@ -105,7 +106,7 @@ public class TestLayouts {
     @Test
     public void testIndexedSequencePath() {
         MemoryLayout seq = MemoryLayout.ofSequence(10, MemoryLayouts.JAVA_INT);
-        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(seq)) {
             VarHandle indexHandle = seq.varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
             // init segment
             for (int i = 0 ; i < 10 ; i++) {

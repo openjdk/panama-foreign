@@ -33,6 +33,8 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.*;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import static org.testng.Assert.*;
@@ -58,7 +60,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             intHandle.set(segment.baseAddress(), intValue);
             int expectedIntValue = Byte.toUnsignedInt(byteValue);
             assertEquals((int) intHandle.get(segment.baseAddress()), expectedIntValue);
@@ -80,7 +82,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             longHandle.set(segment.baseAddress(), longValue);
             long expectedLongValue = Byte.toUnsignedLong(byteValue);
             assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
@@ -102,7 +104,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(shortHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             intHandle.set(segment.baseAddress(), intValue);
             int expectedIntValue = Short.toUnsignedInt(shortValue);
             assertEquals((int) intHandle.get(segment.baseAddress()), expectedIntValue);
@@ -124,7 +126,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(shortHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             longHandle.set(segment.baseAddress(), longValue);
             long expectedLongValue = Short.toUnsignedLong(shortValue);
             assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
@@ -150,7 +152,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = layout.varHandle(int.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(intHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             longHandle.set(segment.baseAddress(), longValue);
             long expectedLongValue = Integer.toUnsignedLong(intValue);
             assertEquals((long) longHandle.get(segment.baseAddress()), expectedLongValue);
@@ -164,7 +166,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class, PathElement.sequenceElement());
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (MemorySegment segment = MemorySegments.allocateNative(layout)) {
             intHandle.set(segment.baseAddress(), 0L, (int) -1);
             assertEquals((int) intHandle.get(segment.baseAddress(), 0L), 255);
             intHandle.set(segment.baseAddress(), 1L, (int) 200);
@@ -175,7 +177,7 @@ public class TestMemoryHandleAsUnsigned {
     @Test
     public void testCoordinatesStride() {
         byte[] arr = { 0, 0, (byte) 129, 0 };
-        MemorySegment segment = MemorySegment.ofArray(arr);
+        MemorySegment segment = MemorySegments.ofArray(arr);
         MemoryAddress addr = segment.baseAddress();
 
         {

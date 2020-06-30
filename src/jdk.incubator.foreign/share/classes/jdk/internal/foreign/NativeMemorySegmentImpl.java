@@ -64,18 +64,18 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    ByteBuffer makeByteBuffer() {
+    public ByteBuffer makeByteBuffer() {
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         return nioAccess.newDirectByteBuffer(min(), (int) this.length, null, this);
     }
 
     @Override
-    long min() {
+    public long min() {
         return min;
     }
 
     @Override
-    Object base() {
+    public Object base() {
         return null;
     }
 

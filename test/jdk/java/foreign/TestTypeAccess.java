@@ -29,6 +29,7 @@
 
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemorySegments;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
@@ -40,14 +41,14 @@ public class TestTypeAccess {
 
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressCoordinateAsString() {
-        try (MemorySegment s = MemorySegment.allocateNative(8)) {
+        try (MemorySegment s = MemorySegments.allocateNative(8)) {
             int v = (int)INT_HANDLE.get("string");
         }
     }
 
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryCoordinatePrimitive() {
-        try (MemorySegment s = MemorySegment.allocateNative(8)) {
+        try (MemorySegment s = MemorySegments.allocateNative(8)) {
             int v = (int)INT_HANDLE.get(1);
         }
     }

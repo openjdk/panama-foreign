@@ -22,10 +22,12 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.MappedMemorySegment;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -96,7 +98,7 @@ public class LoopOverNonConstantMapped {
             }
             ((MappedByteBuffer)byteBuffer).force();
         }
-        segment = MemorySegment.mapFromPath(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE);
+        segment = MemorySegments.mapFromPath(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE);
         unsafe_addr = segment.baseAddress().toRawLongValue();
     }
 
@@ -147,7 +149,7 @@ public class LoopOverNonConstantMapped {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryLayouts.getInt(segment.baseAddress(), i * CARRIER_SIZE);
+            res += MemorySegments.getInt(segment.baseAddress(), i * CARRIER_SIZE);
         }
         return res;
     }
