@@ -7871,30 +7871,6 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
   bind(done);
 }
 
-void MacroAssembler::spill_register(VMReg reg) {
-  assert(reg->is_reg(), "must be a register");
-  if (reg->is_Register()) {
-    push(reg->as_Register());
-  } else if (reg->is_XMMRegister()) {
-    subptr(rsp, 16); // 16 bytes
-    movdqu(Address(rsp, 0), reg->as_XMMRegister());
-  } else {
-    ShouldNotReachHere();
-  }
-}
-
-void MacroAssembler::fill_register(VMReg reg) {
-  assert(reg->is_reg(), "must be a register");
-  if (reg->is_Register()) {
-    pop(reg->as_Register());
-  } else if (reg->is_XMMRegister()) {
-    movdqu(reg->as_XMMRegister(), Address(rsp, 0));
-    addptr(rsp, 16); // 16 bytes
-  } else {
-    ShouldNotReachHere();
-  }
-}
-
 #ifdef _LP64
 void MacroAssembler::convert_f2i(Register dst, XMMRegister src) {
   Label done;

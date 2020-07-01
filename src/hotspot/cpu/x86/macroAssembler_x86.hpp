@@ -1721,10 +1721,6 @@ public:
   void byte_array_inflate(Register src, Register dst, Register len,
                           XMMRegister tmp1, Register tmp2);
 
-  // save/restore to/from stack
-  void spill_register(VMReg reg);
-  void fill_register(VMReg reg);
-
 #ifdef _LP64
   void convert_f2i(Register dst, XMMRegister src);
   void convert_d2i(Register dst, XMMRegister src);

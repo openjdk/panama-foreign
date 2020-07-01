@@ -3694,6 +3694,32 @@ public:
      _output_registers(output_registers) {}
   void generate();
 
+  void spill_register(VMReg reg) {
+    assert(reg->is_reg(), "must be a register");
+    MacroAssembler* masm = _masm;
+    if (reg->is_Register()) {
+      __ push(reg->as_Register());
+    } else if (reg->is_XMMRegister()) {
+      __ subptr(rsp, 16); // 16 bytes
+      __ movdqu(Address(rsp, 0), reg->as_XMMRegister());
+    } else {
+      ShouldNotReachHere();
+    }
+  }
+
+  void fill_register(VMReg reg) {
+    assert(reg->is_reg(), "must be a register");
+    MacroAssembler* masm = _masm;
+    if (reg->is_Register()) {
+      __ pop(reg->as_Register());
+    } else if (reg->is_XMMRegister()) {
+      __ movdqu(reg->as_XMMRegister(), Address(rsp, 0));
+      __ addptr(rsp, 16); // 16 bytes
+    } else {
+      ShouldNotReachHere();
+    }
+  }
+
 private:
 #ifdef ASSERT
 bool target_uses_register(VMReg reg) {
@@ -3794,7 +3820,7 @@ void NativeInvokerGenerator::generate() {
   __ vzeroupper();
 
   if (need_spills) {
-    __ spill_register(ret_reg);
+    spill_register(ret_reg);
   }
 
   __ mov(c_rarg0, r15_thread);
@@ -3806,7 +3832,7 @@ void NativeInvokerGenerator::generate() {
   __ reinit_heapbase();
 
   if (need_spills) {
-    __ fill_register(ret_reg);
+    fill_register(ret_reg);
   }
 
   __ jmp(L_after_safepoint_poll);
@@ -3819,7 +3845,7 @@ void NativeInvokerGenerator::generate() {
   __ vzeroupper();
 
   if (need_spills) {
-    __ spill_register(ret_reg);
+    spill_register(ret_reg);
   }
 
   __ mov(r12, rsp); // remember sp
@@ -3830,7 +3856,7 @@ void NativeInvokerGenerator::generate() {
   __ reinit_heapbase();
 
   if (need_spills) {
-    __ fill_register(ret_reg);
+    fill_register(ret_reg);
   }
 
   __ jmp(L_after_reguard);
