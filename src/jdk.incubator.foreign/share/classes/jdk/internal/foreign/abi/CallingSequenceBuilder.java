@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ public class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.VERIFY_BINDINGS", "true"));
 
+    private boolean isTrivial;
     private final boolean forUpcall;
     private final List<List<Binding>> inputBindings = new ArrayList<>();
     private List<Binding> outputBindings = List.of();
@@ -65,8 +66,13 @@ public class CallingSequenceBuilder {
         return this;
     }
 
+    public CallingSequenceBuilder setTrivial(boolean isTrivial) {
+        this.isTrivial = isTrivial;
+        return this;
+    }
+
     public CallingSequence build() {
-        return new CallingSequence(mt, desc, inputBindings, outputBindings);
+        return new CallingSequence(mt, desc, isTrivial, inputBindings, outputBindings);
     }
 
     private void verifyBindings(boolean forArguments, Class<?> carrier, List<Binding> bindings) {

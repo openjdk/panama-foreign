@@ -44,7 +44,6 @@ import jdk.internal.foreign.abi.SharedUtils;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,6 +115,8 @@ public class CallArranger {
             csb.addArgumentBindings(long.class, SysV.C_LONG,
                     List.of(move(rax, long.class)));
         }
+
+        csb.setTrivial(SharedUtils.isTrivial(cDesc));
 
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }

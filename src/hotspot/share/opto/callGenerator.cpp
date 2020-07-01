@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,8 @@
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "ci/ciNativeEntryPoint.hpp"
+#include "utilities/debug.hpp"
 
 // Utility function.
 const TypeFunc* CallGenerator::tf() const {
@@ -846,6 +848,30 @@ CallGenerator* CallGenerator::for_method_handle_call(JVMState* jvms, ciMethod* c
   }
 }
 
+class NativeCallGenerator : public CallGenerator {
+private:
+  ciNativeEntryPoint* _nep;
+public:
+  NativeCallGenerator(ciMethod* m, ciNativeEntryPoint* nep)
+   : CallGenerator(m), _nep(nep) {}
+
+  virtual JVMState* generate(JVMState* jvms);
+};
+
+JVMState* NativeCallGenerator::generate(JVMState* jvms) {
+  GraphKit kit(jvms);
+
+  Node* call = kit.make_native_call(tf(), method()->arg_size(), _nep); // -fallback, - nep
+
+  kit.C->print_inlining_update(this);
+  address addr = _nep->entry_point();
+  if (kit.C->log() != NULL) {
+    kit.C->log()->elem("l2n_intrinsification_success bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+  }
+
+  return kit.transfer_exceptions_into_jvms();
+}
+
 CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod* caller, ciMethod* callee, bool& input_not_const) {
   GraphKit kit(jvms);
   PhaseGVN& gvn = kit.gvn();
@@ -964,6 +990,20 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
       } else {
         print_inlining_failure(C, callee, jvms->depth() - 1, jvms->bci(),
                                "member_name not constant");
+      }
+    }
+    break;
+
+    case vmIntrinsics::_linkToNative:
+    {
+      Node* nep = kit.argument(callee->arg_size() - 1);
+      if (nep->Opcode() == Op_ConP) {
+        const TypeOopPtr* oop_ptr = nep->bottom_type()->is_oopptr();
+        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
+        return new NativeCallGenerator(callee, nep);
+      } else {
+        print_inlining_failure(C, callee, jvms->depth() - 1, jvms->bci(),
+                               "NativeEntryPoint not constant");
       }
     }
     break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -861,6 +861,10 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
     case Op_CallDynamicJava:
       // Calling Java code so use Java calling convention
       save_policy = _matcher._register_save_policy;
+      break;
+    case Op_CallNative:
+      // FIXME compute actual save policy based on nep->abi
+      save_policy = _matcher._c_reg_save_policy;
       break;
 
     default:
