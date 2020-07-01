@@ -1002,7 +1002,6 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
         ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
         return new NativeCallGenerator(callee, nep);
       } else {
-        // can this happen?
         print_inlining_failure(C, callee, jvms->depth() - 1, jvms->bci(),
                                "NativeEntryPoint not constant");
       }
