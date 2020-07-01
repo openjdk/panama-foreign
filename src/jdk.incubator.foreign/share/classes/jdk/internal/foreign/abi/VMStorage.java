@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,11 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.invoke.VMStorageProxy;
+
 import java.util.Objects;
 
-public class VMStorage {
+public class VMStorage implements VMStorageProxy {
     private final int type;
     private final int index;
 
