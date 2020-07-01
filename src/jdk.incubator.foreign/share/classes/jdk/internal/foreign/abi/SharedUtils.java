@@ -28,6 +28,7 @@ import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -269,7 +270,7 @@ public class SharedUtils {
     private static int strlen(MemoryAddress address) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset++) {
-            byte curr = (byte) CSupport.byteArrHandle.get(address, (long) offset);
+            byte curr = MemoryAccess.getByte(address, offset);
             if (curr == 0) {
                 return offset;
             }
