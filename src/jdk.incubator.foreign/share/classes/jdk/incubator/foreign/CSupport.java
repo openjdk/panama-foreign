@@ -566,12 +566,6 @@ public class CSupport {
     }
 
     /**
-     * Byte array handle to read byte array from C char*
-     */
-    public final static VarHandle byteArrHandle =
-            MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-
-    /**
      * Convert a Java string into a null-terminated C string, using the
      * platform's default charset, storing the result into a new native memory segment.
      * <p>
@@ -734,7 +728,7 @@ public class CSupport {
     private static void copy(MemoryAddress addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
         addr.segment().copyFrom(heapSegment);
-        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
+        MemoryAccess.setByte(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes) {
