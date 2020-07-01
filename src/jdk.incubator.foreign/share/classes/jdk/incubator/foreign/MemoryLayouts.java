@@ -26,7 +26,6 @@
 
 package jdk.incubator.foreign;
 
-import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
 /**
