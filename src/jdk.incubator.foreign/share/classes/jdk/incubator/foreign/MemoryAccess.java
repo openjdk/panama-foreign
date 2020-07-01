@@ -11,7 +11,7 @@ import java.nio.ByteOrder;
  */
 public final class MemoryAccess {
 
-    public MemoryAccess() {
+    private MemoryAccess() {
         // just the one
     }
 
