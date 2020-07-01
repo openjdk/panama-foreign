@@ -319,11 +319,10 @@ public abstract class NativeScope implements AutoCloseable {
     allocate(MemoryLayout.ofSequence(size, elementLayout));
      * }</pre>
      * @param elementLayout the array element layout.
-     * @param size the array size.
+     * @param size the array element count.
      * @return an address which points to the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * size)}.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
     public MemoryAddress allocateArray(MemoryLayout elementLayout, long size) {
         return allocate(MemoryLayout.ofSequence(size, elementLayout));
