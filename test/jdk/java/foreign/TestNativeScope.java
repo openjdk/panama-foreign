@@ -34,12 +34,21 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
 
+import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static jdk.incubator.foreign.MemorySegment.CLOSE;
@@ -51,14 +60,14 @@ public class TestNativeScope {
     final static int ELEMS = 128;
 
     @Test(dataProvider = "nativeScopes")
-    public <Z> void testAllocation(Z value, ScopeFactory scopeFactory, MemoryLayout layout, Class<?> carrier, AllocationFunction<Z> allocationFunction, Function<MemoryLayout, VarHandle> handleFactory) {
-        MemoryLayout[] layouts = {
+    public <Z> void testAllocation(Z value, ScopeFactory scopeFactory, ValueLayout layout, AllocationFunction<Z> allocationFunction, Function<MemoryLayout, VarHandle> handleFactory) {
+        ValueLayout[] layouts = {
                 layout,
                 layout.withBitAlignment(layout.bitAlignment() * 2),
                 layout.withBitAlignment(layout.bitAlignment() * 4),
                 layout.withBitAlignment(layout.bitAlignment() * 8)
         };
-        for (MemoryLayout alignedLayout : layouts) {
+        for (ValueLayout alignedLayout : layouts) {
             List<MemoryAddress> addressList = new ArrayList<>();
             int elems = ELEMS / ((int)alignedLayout.byteAlignment() / (int)layout.byteAlignment());
             try (NativeScope scope = scopeFactory.make((int)alignedLayout.byteSize() * ELEMS)) {
@@ -195,108 +204,288 @@ public class TestNativeScope {
         assertFalse(registered.isAlive());
     }
 
+    @Test(dataProvider = "arrayScopes")
+    public <Z> void testArray(ScopeFactory scopeFactory, ValueLayout layout, AllocationFunction<Object> allocationFunction, ToArrayHelper<Z> arrayHelper) {
+        Z arr = arrayHelper.array();
+        try (NativeScope scope = scopeFactory.make(100)) {
+            MemoryAddress address = allocationFunction.allocate(scope, layout, arr);
+            Z found = arrayHelper.toArray(address.segment(), layout);
+            assertEquals(found, arr);
+        }
+    }
+
     @DataProvider(name = "nativeScopes")
     static Object[][] nativeScopes() {
         return new Object[][] {
-                { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_BE, byte.class,
+                { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_BE, short.class,
+                { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
                 { 42, (ScopeFactory) NativeScope::boundedScope,
-                        MemoryLayouts.BITS_32_BE, int.class,
+                        MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(int.class) },
-                { 42f, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_BE, float.class,
+                { 42f, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Float>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(float.class) },
-                { 42L, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE, long.class,
+                { 42L, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Long>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(long.class) },
-                { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE, double.class,
+                { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
-                { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE, MemoryAddress.class,
-                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
-                { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_LE, byte.class,
+                { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_LE, short.class,
+                { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
                 { 42, (ScopeFactory) NativeScope::boundedScope,
-                        MemoryLayouts.BITS_32_LE, int.class,
+                        MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(int.class) },
-                { 42f, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_LE, float.class,
+                { 42f, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Float>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(float.class) },
-                { 42L, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE, long.class,
+                { 42L, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Long>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(long.class) },
-                { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE, double.class,
+                { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
-                { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE, MemoryAddress.class,
-                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
-                { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE, byte.class,
+                { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_BE, short.class,
+                { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
                 { 42, (ScopeFactory)size -> NativeScope.unboundedScope(),
-                        MemoryLayouts.BITS_32_BE, int.class,
+                        MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(int.class) },
-                { 42f, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_BE, float.class,
+                { 42f, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Float>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(float.class) },
-                { 42L, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE, long.class,
+                { 42L, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Long>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(long.class) },
-                { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE, double.class,
+                { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
-                { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE, MemoryAddress.class,
-                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
-                { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE, byte.class,
+                { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_LE, short.class,
+                { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
                 { 42, (ScopeFactory)size -> NativeScope.unboundedScope(),
-                        MemoryLayouts.BITS_32_LE, int.class,
+                        MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(int.class) },
-                { 42f, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_LE, float.class,
+                { 42f, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Float>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(float.class) },
-                { 42L, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE, long.class,
+                { 42L, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Long>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(long.class) },
-                { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE, double.class,
+                { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
-                { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE, MemoryAddress.class,
-                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
+        };
+    }
+
+    @DataProvider(name = "arrayScopes")
+    static Object[][] arrayScopes() {
+        return new Object[][] {
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_LE,
+                        (AllocationFunction<byte[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toByteArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_LE,
+                        (AllocationFunction<short[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toShortArray },
+                { (ScopeFactory) NativeScope::boundedScope,
+                        MemoryLayouts.BITS_32_LE,
+                        (AllocationFunction<int[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toIntArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_LE,
+                        (AllocationFunction<float[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toFloatArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
+                        (AllocationFunction<long[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toLongArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
+                        (AllocationFunction<double[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toDoubleArray },
+
+
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_BE,
+                        (AllocationFunction<byte[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toByteArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_BE,
+                        (AllocationFunction<short[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toShortArray },
+                { (ScopeFactory) NativeScope::boundedScope,
+                        MemoryLayouts.BITS_32_BE,
+                        (AllocationFunction<int[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toIntArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_32_BE,
+                        (AllocationFunction<float[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toFloatArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
+                        (AllocationFunction<long[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toLongArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
+                        (AllocationFunction<double[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toDoubleArray },
+
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE,
+                        (AllocationFunction<byte[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toByteArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_LE,
+                        (AllocationFunction<short[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toShortArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(),
+                        MemoryLayouts.BITS_32_LE,
+                        (AllocationFunction<int[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toIntArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_LE,
+                        (AllocationFunction<float[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toFloatArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
+                        (AllocationFunction<long[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toLongArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
+                        (AllocationFunction<double[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toDoubleArray },
+
+
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE,
+                        (AllocationFunction<byte[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toByteArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_BE,
+                        (AllocationFunction<short[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toShortArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(),
+                        MemoryLayouts.BITS_32_BE,
+                        (AllocationFunction<int[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toIntArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_32_BE,
+                        (AllocationFunction<float[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toFloatArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
+                        (AllocationFunction<long[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toLongArray },
+                { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
+                        (AllocationFunction<double[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toDoubleArray },
         };
     }
 
     interface AllocationFunction<X> {
-        MemoryAddress allocate(NativeScope scope, MemoryLayout layout, X value);
+        MemoryAddress allocate(NativeScope scope, ValueLayout layout, X value);
     }
 
     interface ScopeFactory {
         NativeScope make(int size);
+    }
+
+    interface ToArrayHelper<T> {
+        T array();
+        T toArray(MemorySegment segment, ValueLayout layout);
+
+        ToArrayHelper<byte[]> toByteArray = new ToArrayHelper<>() {
+            @Override
+            public byte[] array() {
+                return new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public byte[] toArray(MemorySegment segment, ValueLayout layout) {
+                ByteBuffer buffer = segment.asByteBuffer().order(layout.order());
+                byte[] found = new byte[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
+
+        ToArrayHelper<short[]> toShortArray = new ToArrayHelper<>() {
+            @Override
+            public short[] array() {
+                return new short[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public short[] toArray(MemorySegment segment, ValueLayout layout) {
+                ShortBuffer buffer = segment.asByteBuffer().order(layout.order()).asShortBuffer();
+                short[] found = new short[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
+
+        ToArrayHelper<int[]> toIntArray = new ToArrayHelper<>() {
+            @Override
+            public int[] array() {
+                return new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public int[] toArray(MemorySegment segment, ValueLayout layout) {
+                IntBuffer buffer = segment.asByteBuffer().order(layout.order()).asIntBuffer();
+                int[] found = new int[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
+
+        ToArrayHelper<float[]> toFloatArray = new ToArrayHelper<>() {
+            @Override
+            public float[] array() {
+                return new float[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public float[] toArray(MemorySegment segment, ValueLayout layout) {
+                FloatBuffer buffer = segment.asByteBuffer().order(layout.order()).asFloatBuffer();
+                float[] found = new float[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
+
+        ToArrayHelper<long[]> toLongArray = new ToArrayHelper<>() {
+            @Override
+            public long[] array() {
+                return new long[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public long[] toArray(MemorySegment segment, ValueLayout layout) {
+                LongBuffer buffer = segment.asByteBuffer().order(layout.order()).asLongBuffer();
+                long[] found = new long[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
+
+        ToArrayHelper<double[]> toDoubleArray = new ToArrayHelper<>() {
+            @Override
+            public double[] array() {
+                return new double[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+            }
+
+            @Override
+            public double[] toArray(MemorySegment segment, ValueLayout layout) {
+                DoubleBuffer buffer = segment.asByteBuffer().order(layout.order()).asDoubleBuffer();
+                double[] found = new double[buffer.limit()];
+                buffer.get(found);
+                return found;
+            }
+        };
     }
 }
