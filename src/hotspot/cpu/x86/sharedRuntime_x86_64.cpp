@@ -3700,8 +3700,16 @@ public:
     if (reg->is_Register()) {
       __ push(reg->as_Register());
     } else if (reg->is_XMMRegister()) {
-      __ subptr(rsp, 16); // 16 bytes
-      __ movdqu(Address(rsp, 0), reg->as_XMMRegister());
+      if (UseAVX >= 3) {
+        __ subptr(rsp, 64); // bytes
+        __ evmovdqul(Address(rsp, 0), reg->as_XMMRegister(), Assembler::AVX_512bit);
+      } else if (UseAVX >= 1) {
+        __ subptr(rsp, 32);
+        __ vmovdqu(Address(rsp, 0), reg->as_XMMRegister());
+      } else {
+        __ subptr(rsp, 16);
+        __ movdqu(Address(rsp, 0), reg->as_XMMRegister());
+      }
     } else {
       ShouldNotReachHere();
     }
@@ -3713,8 +3721,16 @@ public:
     if (reg->is_Register()) {
       __ pop(reg->as_Register());
     } else if (reg->is_XMMRegister()) {
-      __ movdqu(reg->as_XMMRegister(), Address(rsp, 0));
-      __ addptr(rsp, 16); // 16 bytes
+      if (UseAVX >= 3) {
+        __ evmovdqul(reg->as_XMMRegister(), Address(rsp, 0), Assembler::AVX_512bit);
+        __ addptr(rsp, 64); // bytes
+      } else if (UseAVX >= 1) {
+        __ vmovdqu(reg->as_XMMRegister(), Address(rsp, 0));
+        __ addptr(rsp, 32);
+      } else {
+        __ movdqu(reg->as_XMMRegister(), Address(rsp, 0));
+        __ addptr(rsp, 16);
+      }
     } else {
       ShouldNotReachHere();
     }
