@@ -407,7 +407,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
      * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link short[]} instance, e.g. because {@code byteSize() % 4 != 0},
+     * segment's contents cannot be copied into a {@link short[]} instance, e.g. because {@code byteSize() % 2 != 0},
      * or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
