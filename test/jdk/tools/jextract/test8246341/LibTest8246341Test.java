@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ import test.jextract.test8246341.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static test.jextract.test8246341.test8246341_h.*;
-import static test.jextract.test8246341.Cstring.toJavaStringRestricted;
+import static jdk.incubator.foreign.CSupport.*;
 
 /*
  * @test
@@ -41,17 +42,28 @@ import static test.jextract.test8246341.Cstring.toJavaStringRestricted;
  * @run testng/othervm -Dforeign.restricted=permit LibTest8246341Test
  */
 public class LibTest8246341Test {
+    private static MemoryAddress getPointerAt(MemoryAddress addr, int element) {
+        return MemoryAccess.getAddress(addr, element*C_POINTER.byteSize());
+    }
+
+    public static MemoryAddress allocatePointer(MemoryAddress value, NativeScope scope) {
+        var addr = scope.allocate(C_POINTER);
+        var handle = C_POINTER.varHandle(long.class);
+        handle.set(addr, value.toRawLongValue());
+        return addr;
+    }
+
     @Test
     public void testPointerArray() {
         boolean[] callbackCalled = new boolean[1];
         try (var callback = func$callback.allocate((argc, argv) -> {
             callbackCalled[0] = true;
-            var addr = Cpointer.asArrayRestricted(argv, argc);
+            var addr = RuntimeHelper.asArrayRestricted(argv, C_POINTER, argc);
             assertEquals(argc, 4);
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr, 0)), "java");
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr, 1)), "python");
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr, 2)), "javascript");
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr, 3)), "c++");
+            assertEquals(toJavaStringRestricted(getPointerAt(addr, 0)), "java");
+            assertEquals(toJavaStringRestricted(getPointerAt(addr, 1)), "python");
+            assertEquals(toJavaStringRestricted(getPointerAt(addr, 2)), "javascript");
+            assertEquals(toJavaStringRestricted(getPointerAt(addr, 3)), "c++");
         })) {
             func(callback.baseAddress());
         }
@@ -60,16 +72,10 @@ public class LibTest8246341Test {
 
     @Test
     public void testPointerAllocate() {
-        try (var scope = NativeScope.boundedScope(Cpointer.sizeof())) {
-            var addr = Cpointer.allocate(MemoryAddress.NULL, scope);
+        try (var scope = NativeScope.boundedScope(C_POINTER.byteSize())) {
+            var addr = allocatePointer(MemoryAddress.NULL, scope);
             fillin(addr);
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr)), "hello world");
-        }
-
-        try (var seg = Cpointer.allocate(MemoryAddress.NULL)) {
-            var addr = seg.baseAddress();
-            fillin(addr);
-            assertEquals(toJavaStringRestricted(Cpointer.get(addr)), "hello world");
+            assertEquals(toJavaStringRestricted(getPointerAt(addr, 0)), "hello world");
         }
     }
 }
