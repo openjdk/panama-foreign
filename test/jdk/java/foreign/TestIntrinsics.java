@@ -28,7 +28,12 @@
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          java.base/sun.security.action
  * @build NativeTestHelper
- * @run testng/othervm -Dforeign.restricted=permit -Xbatch TestIntrinsics
+ * @run testng/othervm
+ *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
+ *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
+ *   -Dforeign.restricted=permit
+ *   -Xbatch
+ *   TestIntrinsics
  */
 
 import jdk.incubator.foreign.CSupport;

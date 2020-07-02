@@ -32,13 +32,13 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.invoke.VMStorageProxy;
+import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,10 +49,8 @@ import java.util.stream.IntStream;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.empty;
-import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
@@ -65,10 +63,10 @@ import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 public class ProgrammableInvoker {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.DEBUG");
-    private static final boolean NO_SPEC =
-        privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.NO_SPEC");
-    private static final boolean NO_INTRINSICS =
-        privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS");
+    private static final boolean USE_SPEC = Boolean.parseBoolean(
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_SPEC", "true"));
+    private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "false"));
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
@@ -160,7 +158,8 @@ public class ProgrammableInvoker {
                                             .asCollector(Object[].class, leafType.parameterCount())
                                             .asType(leafType);
 
-        if (!(NO_INTRINSICS || retMoves.length > 1)) {
+        boolean isSimple = !(retMoves.length > 1);
+        if (USE_INTRINSICS && isSimple) {
             NativeEntryPoint nep = NativeEntryPoint.make(
                 addr.toRawLongValue(),
                 "native_call",
@@ -174,15 +173,15 @@ public class ProgrammableInvoker {
             handle = JLIA.nativeMethodHandle(nep, handle);
         }
 
-        if (NO_SPEC || retMoves.length > 1) {
+        if (USE_SPEC && isSimple) {
+            handle = specialize(handle);
+         } else {
             Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
 
             handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 1, handle, argIndexMap, retIndexMap);
             handle = handle.asCollector(Object[].class, callingSequence.methodType().parameterCount())
                                              .asType(callingSequence.methodType());
-         } else {
-             handle = specialize(handle);
          }
 
         return handle;
