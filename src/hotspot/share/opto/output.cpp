@@ -3300,6 +3300,9 @@ void PhaseOutput::install_code(ciMethod*         target,
     if (!C->native_stubs()->is_empty()) {
       num_stubs = C->native_stubs()->length();
       native_stubs = NEW_C_HEAP_ARRAY(address, num_stubs, mtInternal);
+      for (int i = 0; i < num_stubs; i++) {
+        native_stubs[i] = C->native_stubs()->at(i);
+      }
     }
 
     C->env()->register_method(target,
