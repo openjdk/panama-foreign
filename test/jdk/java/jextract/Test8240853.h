@@ -23,5 +23,5 @@
 
 union Foo {
     int i;
-    long l;
+    long long l;
 };
