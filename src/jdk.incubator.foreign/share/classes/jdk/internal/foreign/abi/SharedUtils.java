@@ -351,7 +351,7 @@ public class SharedUtils {
     }
 
     public static boolean isTrivial(FunctionDescriptor cDesc) {
-        return cDesc.attribute(FunctionDescriptor.IS_TRIVIAL)
+        return cDesc.attribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME)
                 .map(Boolean.class::cast)
                 .orElse(false);
     }
