@@ -302,17 +302,30 @@ public class CSupport {
         }
 
         /**
-         * The name of the SysV linker ({@see ForeignLinker#name})
+         * The name of the SysV linker
+         * @see ForeignLinker#name
          */
         public static final String NAME = "SysV";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public final static String CLASS_ATTRIBUTE_NAME = "abi/sysv/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for integral values */
             INTEGER,
+            /** Classification constant for floating point values */
             SSE,
+            /** Classification constant for x87 floating point values */
             X87,
+            /** Classification constant for {@code complex long double} values */
             COMPLEX_87,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -398,17 +411,32 @@ public class CSupport {
         }
 
         /**
-         * The name of the Windows linker ({@see ForeignLinker#name})
+         * The name of the Windows linker
+         * @see ForeignLinker#name
          */
         public final static String NAME = "Windows";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used to mark variadic parameters. The
+         * attribute value must be a boolean.
+         */
         public final static String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public final static String CLASS_ATTRIBUTE_NAME = "abi/windows/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for integral values */
             INTEGER,
+            /** Classification constant for floating point values */
             FLOAT,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -477,8 +505,14 @@ public class CSupport {
          */
         public static final MemoryLayout C_VA_LIST = Win64.C_POINTER;
 
-        public static ValueLayout asVarArg(ValueLayout l) {
-            return l.withAttribute(VARARGS_ATTRIBUTE_NAME, "true");
+        /**
+         * Return a new memory layout which describes a variadic parameter to be passed to a function.
+         * @param layout the original parameter layout.
+         * @return a layout which is the same as {@code layout}, except for the extra attribute {@link #VARARGS_ATTRIBUTE_NAME},
+         * which is set to {@code true}.
+         */
+        public static ValueLayout asVarArg(ValueLayout layout) {
+            return layout.withAttribute(VARARGS_ATTRIBUTE_NAME, "true");
         }
     }
 
@@ -492,15 +526,26 @@ public class CSupport {
         }
 
         /**
-         * The name of the AArch64 linker ({@see ForeignLinker#name})
+         * The name of the AArch64 linker
+         * @see ForeignLinker#name
          */
         public final static String NAME = "AArch64";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public static final String CLASS_ATTRIBUTE_NAME = "abi/aarch64/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for machine integral values */
             INTEGER,
+            /** Classification constant for machine floating point values */
             VECTOR,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -700,7 +745,7 @@ public class CSupport {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
     public static String toJavaString(MemoryAddress addr) {
         return SharedUtils.toJavaStringInternal(addr, Charset.defaultCharset());
@@ -719,7 +764,7 @@ public class CSupport {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
     public static String toJavaString(MemoryAddress addr, Charset charset) {
         return SharedUtils.toJavaStringInternal(addr, charset);

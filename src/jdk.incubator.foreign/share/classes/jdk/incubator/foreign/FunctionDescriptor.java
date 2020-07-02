@@ -42,7 +42,12 @@ import java.util.stream.Stream;
  * is used to model the signature of native functions.
  */
 public final class FunctionDescriptor implements Constable {
-    public static final String IS_TRIVIAL = "abi/is_trivial";
+
+    /**
+     * The name of the function descriptor attribute (see {@link #attributes()} used to mark trivial functions. The
+     * attribute value must be a boolean.
+     */
+    public static final String TRIVIAL_ATTRIBUTE_NAME = "abi/trivial";
     
     private final MemoryLayout resLayout;
     private final MemoryLayout[] argLayouts;
@@ -54,14 +59,34 @@ public final class FunctionDescriptor implements Constable {
         this.argLayouts = argLayouts;
     }
 
+    /**
+     * Returns the attribute with the given name (if it exists).
+     *
+     * @param name the attribute name
+     * @return the attribute with the given name (if it exists).
+     */
     public Optional<Constable> attribute(String name) {
         return Optional.ofNullable(attributes.get(name));
     }
 
+    /**
+     * Returns a stream of the attribute names associated with this function descriptor.
+     *
+     * @return a stream of the attribute names associated with this function descriptor.
+     */
     public Stream<String> attributes() {
         return attributes.keySet().stream();
     }
 
+    /**
+     * Returns a new function descriptor which features the same attributes as this descriptor, plus the newly specified attribute.
+     * If this descriptor already contains an attribute with the same name, the existing attribute value is overwritten in the returned
+     * descriptor.
+     *
+     * @param name the attribute name.
+     * @param value the attribute value.
+     * @return a new function descriptor which features the same attributes as this descriptor, plus the newly specified attribute.
+     */
     public FunctionDescriptor withAttribute(String name, Constable value) {
         Map<String, Constable> newAttributes = new HashMap<>(attributes);
         newAttributes.put(name, value);
