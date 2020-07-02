@@ -512,7 +512,7 @@ public class CSupport {
          * which is set to {@code true}.
          */
         public static ValueLayout asVarArg(ValueLayout layout) {
-            return layout.withAttribute(VARARGS_ATTRIBUTE_NAME, "true");
+            return layout.withAttribute(VARARGS_ATTRIBUTE_NAME, true);
         }
     }
 
