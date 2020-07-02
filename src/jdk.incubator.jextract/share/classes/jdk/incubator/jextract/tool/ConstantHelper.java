@@ -136,9 +136,9 @@ class ConstantHelper {
             Map.entry(Short.TYPE,               desc(Short.TYPE)),
             Map.entry(Character.TYPE,           desc(Character.TYPE)),
             Map.entry(Integer.TYPE,             desc(Integer.TYPE)),
-            Map.entry(Long.TYPE,                desc(Short.TYPE)),
-            Map.entry(Float.TYPE,               desc(Short.TYPE)),
-            Map.entry(Double.TYPE,              desc(Short.TYPE)),
+            Map.entry(Long.TYPE,                desc(Long.TYPE)),
+            Map.entry(Float.TYPE,               desc(Float.TYPE)),
+            Map.entry(Double.TYPE,              desc(Double.TYPE)),
             Map.entry(MemoryAddress.class,      desc(Long.TYPE))
     );
 
