@@ -543,7 +543,7 @@ public class CSupport {
         public enum ArgumentClass {
             /** Classification constant for machine integral values */
             INTEGER,
-            /** Classification constant for machine integral values */
+            /** Classification constant for machine floating point values */
             VECTOR,
             /** Classification constant for machine pointer values */
             POINTER;
