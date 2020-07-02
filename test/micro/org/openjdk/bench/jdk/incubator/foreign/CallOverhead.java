@@ -81,14 +81,14 @@ public class CallOverhead {
                 MethodType mt = MethodType.methodType(void.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid();
                 func = abi.downcallHandle(addr, mt, fd);
-                func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.IS_TRIVIAL, true));
+                func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
             }
             {
                 MemoryAddress addr = ll.lookup("identity");
                 MethodType mt = MethodType.methodType(int.class, int.class);
                 FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
                 identity = abi.downcallHandle(addr, mt, fd);
-                identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.IS_TRIVIAL, true));
+                identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
             }
             identity_struct = abi.downcallHandle(ll.lookup("identity_struct"),
                     MethodType.methodType(MemorySegment.class, MemorySegment.class),
