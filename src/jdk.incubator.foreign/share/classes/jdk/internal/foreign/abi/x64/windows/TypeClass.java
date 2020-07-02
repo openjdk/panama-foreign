@@ -63,8 +63,7 @@ enum TypeClass {
             return POINTER;
         } else if (clazz == CSupport.Win64.ArgumentClass.FLOAT) {
             if (type.attribute(VARARGS_ATTRIBUTE_NAME)
-                    .map(String.class::cast)
-                    .map(Boolean::parseBoolean).orElse(false)) {
+                    .map(Boolean.class::cast).orElse(false)) {
                 return VARARG_FLOAT;
             }
             return FLOAT;
