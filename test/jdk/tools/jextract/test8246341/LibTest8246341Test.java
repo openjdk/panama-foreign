@@ -42,10 +42,6 @@ import static jdk.incubator.foreign.CSupport.*;
  * @run testng/othervm -Dforeign.restricted=permit LibTest8246341Test
  */
 public class LibTest8246341Test {
-    private static MemoryAddress getPointerAt(MemoryAddress addr, int element) {
-        return MemoryAccess.getAddress(addr, element*C_POINTER.byteSize());
-    }
-
     @Test
     public void testPointerArray() {
         boolean[] callbackCalled = new boolean[1];
@@ -53,10 +49,10 @@ public class LibTest8246341Test {
             callbackCalled[0] = true;
             var addr = RuntimeHelper.asArrayRestricted(argv, C_POINTER, argc);
             assertEquals(argc, 4);
-            assertEquals(toJavaStringRestricted(getPointerAt(addr, 0)), "java");
-            assertEquals(toJavaStringRestricted(getPointerAt(addr, 1)), "python");
-            assertEquals(toJavaStringRestricted(getPointerAt(addr, 2)), "javascript");
-            assertEquals(toJavaStringRestricted(getPointerAt(addr, 3)), "c++");
+            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 0)), "java");
+            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 1)), "python");
+            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 2)), "javascript");
+            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 3)), "c++");
         })) {
             func(callback.baseAddress());
         }
@@ -67,9 +63,9 @@ public class LibTest8246341Test {
     public void testPointerAllocate() {
         try (var scope = NativeScope.boundedScope(C_POINTER.byteSize())) {
             var addr = scope.allocate(C_POINTER);
-            MemoryAccess.setAddress(addr, 0, MemoryAddress.NULL);
+            MemoryAccess.setAddress(addr, MemoryAddress.NULL);
             fillin(addr);
-            assertEquals(toJavaStringRestricted(getPointerAt(addr, 0)), "hello world");
+            assertEquals(toJavaStringRestricted(MemoryAccess.getAddress(addr)), "hello world");
         }
     }
 }
