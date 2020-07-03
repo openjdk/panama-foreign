@@ -45,14 +45,14 @@ public class LibTest8241925Test {
     public void test() {
         try (var scope = NativeScope.unboundedScope()) {
             var addr = scope.allocate(C_INT, 12);
-            assertEquals(MemoryAccess.getInt(addr, 0), 12);
+            assertEquals(MemoryAccess.getInt(addr), 12);
             square(addr);
-            assertEquals(MemoryAccess.getInt(addr, 0), 144);
+            assertEquals(MemoryAccess.getInt(addr), 144);
 
             addr = scope.allocate(C_DOUBLE, 12.0);
-            assertEquals(MemoryAccess.getDouble(addr, 0), 12.0, 0.1);
+            assertEquals(MemoryAccess.getDouble(addr), 12.0, 0.1);
             square_fp(addr);
-            assertEquals(MemoryAccess.getDouble(addr, 0), 144.0, 0.1);
+            assertEquals(MemoryAccess.getDouble(addr), 144.0, 0.1);
 
             int[] intArray = { 34, 67, 78, 8 };
             addr = scope.allocateArray(C_INT, intArray);

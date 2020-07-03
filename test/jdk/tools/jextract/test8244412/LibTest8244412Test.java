@@ -45,9 +45,9 @@ public class LibTest8244412Test {
     public void test() {
         try (var scope = NativeScope.unboundedScope()) {
             var addr = scope.allocate(mysize_t, 0L);
-            assertEquals(MemoryAccess.getLong(addr, 0), 0L);
-            MemoryAccess.setLong(addr, 0, 13455566L);
-            assertEquals(MemoryAccess.getLong(addr, 0), 13455566L);
+            assertEquals(MemoryAccess.getLong(addr), 0L);
+            MemoryAccess.setLong(addr, 13455566L);
+            assertEquals(MemoryAccess.getLong(addr), 13455566L);
         }
     }
 }
