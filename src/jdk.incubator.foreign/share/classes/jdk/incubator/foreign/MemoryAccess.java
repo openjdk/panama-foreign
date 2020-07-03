@@ -16,7 +16,7 @@ import java.nio.ByteOrder;
  * To help dereferencing in array-like use cases (e.g. where the layout of a given memory segment is a sequence
  * layout of given size an element count), higher-level overloads are also provided (see {@link #getIntAtIndex(MemoryAddress, long)}),
  * which take an <em>base</em> address and a <em>logical</em> element index. The formula to obtain the byte offset {@code O} from an
- * index {@code I} is given by {@code O = I * S} where {@code s} is the size (expressed in bytes) of the element to
+ * index {@code I} is given by {@code O = I * S} where {@code S} is the size (expressed in bytes) of the element to
  * be dereferenced.
  */
 public final class MemoryAccess {
