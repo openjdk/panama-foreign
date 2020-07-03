@@ -46,13 +46,6 @@ public class LibTest8246341Test {
         return MemoryAccess.getAddress(addr, element*C_POINTER.byteSize());
     }
 
-    public static MemoryAddress allocatePointer(MemoryAddress value, NativeScope scope) {
-        var addr = scope.allocate(C_POINTER);
-        var handle = C_POINTER.varHandle(long.class);
-        handle.set(addr, value.toRawLongValue());
-        return addr;
-    }
-
     @Test
     public void testPointerArray() {
         boolean[] callbackCalled = new boolean[1];
@@ -73,7 +66,8 @@ public class LibTest8246341Test {
     @Test
     public void testPointerAllocate() {
         try (var scope = NativeScope.boundedScope(C_POINTER.byteSize())) {
-            var addr = allocatePointer(MemoryAddress.NULL, scope);
+            var addr = scope.allocate(C_POINTER);
+            MemoryAccess.setAddress(addr, 0, MemoryAddress.NULL);
             fillin(addr);
             assertEquals(toJavaStringRestricted(getPointerAt(addr, 0)), "hello world");
         }
