@@ -778,7 +778,7 @@ public class CSupport {
     private static void copy(MemoryAddress addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
         addr.segment().copyFrom(heapSegment);
-        MemoryAccess.setByte(addr, bytes.length, (byte)0);
+        MemoryAccess.setByteAtOffset(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes) {
