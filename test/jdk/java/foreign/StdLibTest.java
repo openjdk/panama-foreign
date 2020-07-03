@@ -233,9 +233,9 @@ public class StdLibTest extends NativeTestHelper {
                  MemorySegment other = toCString(s2)) {
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
-                    setByte(buf.baseAddress(), i, (byte)chars[(int)i]);
+                    setByteAtOffset(buf.baseAddress(), i, (byte)chars[(int)i]);
                 }
-                setByte(buf.baseAddress(), chars.length, (byte)'\0');
+                setByteAtOffset(buf.baseAddress(), chars.length, (byte)'\0');
                 return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())));
             }
         }
@@ -261,7 +261,7 @@ public class StdLibTest extends NativeTestHelper {
 
         Tm gmtime(long arg) throws Throwable {
             try (MemorySegment time = MemorySegment.allocateNative(8)) {
-                setLong(time.baseAddress(), 0, arg);
+                setLong(time.baseAddress(), arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.baseAddress()));
             }
         }
@@ -279,31 +279,31 @@ public class StdLibTest extends NativeTestHelper {
             }
 
             int sec() {
-                return getInt(base, 0);
+                return getIntAtOffset(base, 0);
             }
             int min() {
-                return getInt(base, 4);
+                return getIntAtOffset(base, 4);
             }
             int hour() {
-                return getInt(base, 8);
+                return getIntAtOffset(base, 8);
             }
             int mday() {
-                return getInt(base, 12);
+                return getIntAtOffset(base, 12);
             }
             int mon() {
-                return getInt(base, 16);
+                return getIntAtOffset(base, 16);
             }
             int year() {
-                return getInt(base, 20);
+                return getIntAtOffset(base, 20);
             }
             int wday() {
-                return getInt(base, 24);
+                return getIntAtOffset(base, 24);
             }
             int yday() {
-                return getInt(base, 28);
+                return getIntAtOffset(base, 28);
             }
             boolean isdst() {
-                byte b = getByte(base, 32);
+                byte b = getByteAtOffset(base, 32);
                 return b != 0;
             }
         }
@@ -326,8 +326,8 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
-            return getInt(base.baseAddress(), addr1.rebase(base).segmentOffset()) -
-                   getInt(base.baseAddress(), addr2.rebase(base).segmentOffset());
+            return getIntAtOffset(base.baseAddress(), addr1.rebase(base).segmentOffset()) -
+                   getIntAtOffset(base.baseAddress(), addr2.rebase(base).segmentOffset());
         }
 
         int rand() throws Throwable {
