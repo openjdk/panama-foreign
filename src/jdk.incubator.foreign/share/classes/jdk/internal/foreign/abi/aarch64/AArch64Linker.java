@@ -95,8 +95,8 @@ public class AArch64Linker implements ForeignLinker {
         return (AArch64.ArgumentClass)layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get();
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions) {
-        AArch64VaList.Builder builder = AArch64VaList.builder();
+    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
+        AArch64VaList.Builder builder = AArch64VaList.builder(allocator);
         actions.accept(builder);
         return builder.build();
     }

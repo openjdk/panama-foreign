@@ -29,7 +29,6 @@ import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
-import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -118,6 +117,17 @@ public class CSupport {
         MemorySegment vargAsSegment(MemoryLayout layout);
 
         /**
+         * Reads a value into a {@code MemorySegment}, using the given {@code NativeScope} to allocate said segment.
+         *
+         * @param layout the layout of the value
+         * @param scope the scope to allocate the segment in
+         * @return the value read as an {@code MemorySegment}
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
+         */
+        MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
+
+        /**
          * Skips a number of va arguments with the given memory layouts.
          *
          * @param layouts the layout of the value
@@ -147,11 +157,29 @@ public class CSupport {
         /**
          * Copies this C {@code va_list}.
          *
+         * @apiNote that this method only copies the va list 'view' and not any argument space it may manage.
+         * That means that if this va list was created with the {@link #make(Consumer)} method, closing
+         * this va list will also free the argument space, and make the copy unusable.
+         *
          * @return a copy of this C {@code va_list}.
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
          */
         VaList copy();
+
+        /**
+         * Copies this C {@code va_list}, using the given {@code NativeScope} to allocate the copy (if needed).
+         *
+         * @apiNote this method only copies the va list 'view' and not any argument space it may manage.
+         * That means that if this va list was created with the {@link #make(Consumer)} method, closing
+         * this va list will also free the argument space, and make the copy unusable.
+         *
+         * @param scope the scope to allocate the copy in
+         * @return a copy of this C {@code va_list}.
+         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
+         * (see {@link #close()}).
+         */
+        VaList copy(NativeScope scope);
 
         /**
          * Returns the memory address of the C {@code va_list} associated with this instance.
@@ -176,12 +204,30 @@ public class CSupport {
          * Note that when there are no arguments added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
          *
+         * Va lists created with this method also implicitly manage an off-heap 'argument space' that holds
+         * the arguments in the va list. Closing the returned va list will also free the argument space.
+         *
          * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
          *                of the underlying C {@code va_list}.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
         static VaList make(Consumer<VaList.Builder> actions) {
-            return SharedUtils.newVaList(actions);
+            return SharedUtils.newVaList(actions, MemorySegment::allocateNative);
+        }
+
+        /**
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}), and using the given
+         * {@code NativeScope} to do all needed allocations.
+         *
+         * Note that when there are no arguments added to the created va list,
+         * this method will return the same as {@linkplain #empty()}.
+         *
+         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
+         *                of the underlying C {@code va_list}.
+         * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
+         */
+        static VaList make(Consumer<VaList.Builder> actions, NativeScope scope) {
+            return SharedUtils.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
         }
 
         /**

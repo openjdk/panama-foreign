@@ -78,8 +78,8 @@ public class Windowsx64Linker implements ForeignLinker {
         return instance;
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions) {
-        WinVaList.Builder builder = WinVaList.builder();
+    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
+        WinVaList.Builder builder = WinVaList.builder(allocator);
         actions.accept(builder);
         return builder.build();
     }
