@@ -1,5 +1,7 @@
 package jdk.incubator.foreign;
 
+import jdk.internal.vm.annotation.ForceInline;
+
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
@@ -1414,7 +1416,7 @@ public final class MemoryAccess {
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
     public static char getCharAtIndex_LE(MemoryAddress addr, long index) {
-        return getCharAtOffset_LE(addr, 2 * index);
+        return getCharAtOffset_LE(addr, scale(index, 2));
     }
 
     /**
@@ -1429,7 +1431,7 @@ public final class MemoryAccess {
      * @param value the char value to be written.
      */
     public static void setCharAtIndex_LE(MemoryAddress addr, long index, char value) {
-        setCharAtOffset_LE(addr, 2 * index, value);
+        setCharAtOffset_LE(addr, scale(index, 2), value);
     }
 
     /**
@@ -1444,7 +1446,7 @@ public final class MemoryAccess {
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
     public static short getShortAtIndex_LE(MemoryAddress addr, long index) {
-        return getShortAtOffset_LE(addr, 2 * index);
+        return getShortAtOffset_LE(addr, scale(index, 2));
     }
 
     /**
@@ -1459,7 +1461,7 @@ public final class MemoryAccess {
      * @param value the short value to be written.
      */
     public static void setShortAtIndex_LE(MemoryAddress addr, long index, short value) {
-        setShortAtOffset_LE(addr, 2 * index, value);
+        setShortAtOffset_LE(addr, scale(index, 2), value);
     }
 
     /**
@@ -1474,7 +1476,7 @@ public final class MemoryAccess {
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
     public static int getIntAtIndex_LE(MemoryAddress addr, long index) {
-        return getIntAtOffset_LE(addr, 4 * index);
+        return getIntAtOffset_LE(addr, scale(index, 4));
     }
 
     /**
@@ -1489,7 +1491,7 @@ public final class MemoryAccess {
      * @param value the int value to be written.
      */
     public static void setIntAtIndex_LE(MemoryAddress addr, long index, int value) {
-        setIntAtOffset_LE(addr, 4 * index, value);
+        setIntAtOffset_LE(addr, scale(index, 4), value);
     }
 
     /**
@@ -1504,7 +1506,7 @@ public final class MemoryAccess {
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
     public static float getFloatAtIndex_LE(MemoryAddress addr, long index) {
-        return getFloatAtOffset_LE(addr, 4 * index);
+        return getFloatAtOffset_LE(addr, scale(index, 4));
     }
 
     /**
@@ -1519,7 +1521,7 @@ public final class MemoryAccess {
      * @param value the float value to be written.
      */
     public static void setFloatAtIndex_LE(MemoryAddress addr, long index, float value) {
-        setFloatAtOffset_LE(addr, 4 * index, value);
+        setFloatAtOffset_LE(addr, scale(index, 4), value);
     }
 
     /**
@@ -1534,7 +1536,7 @@ public final class MemoryAccess {
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
     public static long getLongAtIndex_LE(MemoryAddress addr, long index) {
-        return getLongAtOffset_LE(addr, 8 * index);
+        return getLongAtOffset_LE(addr, scale(index, 8));
     }
 
     /**
@@ -1549,7 +1551,7 @@ public final class MemoryAccess {
      * @param value the long value to be written.
      */
     public static void setLongAtIndex_LE(MemoryAddress addr, long index, long value) {
-        setLongAtOffset_LE(addr, 8 * index, value);
+        setLongAtOffset_LE(addr, scale(index, 8), value);
     }
 
     /**
@@ -1564,7 +1566,7 @@ public final class MemoryAccess {
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
     public static double getDoubleAtIndex_LE(MemoryAddress addr, long index) {
-        return getDoubleAtOffset_LE(addr, 8 * index);
+        return getDoubleAtOffset_LE(addr, scale(index, 8));
     }
 
     /**
@@ -1579,7 +1581,7 @@ public final class MemoryAccess {
      * @param value the double value to be written.
      */
     public static void setDoubleAtIndex_LE(MemoryAddress addr, long index, double value) {
-        setDoubleAtOffset_LE(addr, 8 * index, value);
+        setDoubleAtOffset_LE(addr, scale(index, 8), value);
     }
 
     /**
@@ -1625,7 +1627,7 @@ public final class MemoryAccess {
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
     public static char getCharAtIndex_BE(MemoryAddress addr, long index) {
-        return getCharAtOffset_BE(addr, 2 * index);
+        return getCharAtOffset_BE(addr, scale(index, 2));
     }
 
     /**
@@ -1640,7 +1642,7 @@ public final class MemoryAccess {
      * @param value the char value to be written.
      */
     public static void setCharAtIndex_BE(MemoryAddress addr, long index, char value) {
-        setCharAtOffset_BE(addr, 2 * index, value);
+        setCharAtOffset_BE(addr, scale(index, 2), value);
     }
 
     /**
@@ -1655,7 +1657,7 @@ public final class MemoryAccess {
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
     public static short getShortAtIndex_BE(MemoryAddress addr, long index) {
-        return getShortAtOffset_BE(addr, 2 * index);
+        return getShortAtOffset_BE(addr, scale(index, 2));
     }
 
     /**
@@ -1670,7 +1672,7 @@ public final class MemoryAccess {
      * @param value the short value to be written.
      */
     public static void setShortAtIndex_BE(MemoryAddress addr, long index, short value) {
-        setShortAtOffset_BE(addr, 2 * index, value);
+        setShortAtOffset_BE(addr, scale(index, 2), value);
     }
 
     /**
@@ -1685,7 +1687,7 @@ public final class MemoryAccess {
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
     public static int getIntAtIndex_BE(MemoryAddress addr, long index) {
-        return getIntAtOffset_BE(addr, 4 * index);
+        return getIntAtOffset_BE(addr, scale(index, 4));
     }
 
     /**
@@ -1700,7 +1702,7 @@ public final class MemoryAccess {
      * @param value the int value to be written.
      */
     public static void setIntAtIndex_BE(MemoryAddress addr, long index, int value) {
-        setIntAtOffset_BE(addr, 4 * index, value);
+        setIntAtOffset_BE(addr, scale(index, 4), value);
     }
 
     /**
@@ -1715,7 +1717,7 @@ public final class MemoryAccess {
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
     public static float getFloatAtIndex_BE(MemoryAddress addr, long index) {
-        return getFloatAtOffset_BE(addr, 4 * index);
+        return getFloatAtOffset_BE(addr, scale(index, 4));
     }
 
     /**
@@ -1730,7 +1732,7 @@ public final class MemoryAccess {
      * @param value the float value to be written.
      */
     public static void setFloatAtIndex_BE(MemoryAddress addr, long index, float value) {
-        setFloatAtOffset_BE(addr, 4 * index, value);
+        setFloatAtOffset_BE(addr, scale(index, 4), value);
     }
 
     /**
@@ -1745,7 +1747,7 @@ public final class MemoryAccess {
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
     public static long getLongAtIndex_BE(MemoryAddress addr, long index) {
-        return getLongAtOffset_BE(addr, 8 * index);
+        return getLongAtOffset_BE(addr, scale(index, 8));
     }
 
     /**
@@ -1760,7 +1762,7 @@ public final class MemoryAccess {
      * @param value the long value to be written.
      */
     public static void setLongAtIndex_BE(MemoryAddress addr, long index, long value) {
-        setLongAtOffset_BE(addr, 8 * index, value);
+        setLongAtOffset_BE(addr, scale(index, 8), value);
     }
 
     /**
@@ -1775,7 +1777,7 @@ public final class MemoryAccess {
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
     public static double getDoubleAtIndex_BE(MemoryAddress addr, long index) {
-        return getDoubleAtOffset_BE(addr, 8 * index);
+        return getDoubleAtOffset_BE(addr, scale(index, 8));
     }
 
     /**
@@ -1790,7 +1792,7 @@ public final class MemoryAccess {
      * @param value the double value to be written.
      */
     public static void setDoubleAtIndex_BE(MemoryAddress addr, long index, double value) {
-        setDoubleAtOffset_BE(addr, 8 * index, value);
+        setDoubleAtOffset_BE(addr, scale(index, 8), value);
     }
 
     /**
@@ -1836,7 +1838,7 @@ public final class MemoryAccess {
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
     public static char getCharAtIndex(MemoryAddress addr, long index) {
-        return getCharAtOffset(addr, 2 * index);
+        return getCharAtOffset(addr, scale(index, 2));
     }
 
     /**
@@ -1851,7 +1853,7 @@ public final class MemoryAccess {
      * @param value the char value to be written.
      */
     public static void setCharAtIndex(MemoryAddress addr, long index, char value) {
-        setCharAtOffset(addr, 2 * index, value);
+        setCharAtOffset(addr, scale(index, 2), value);
     }
 
     /**
@@ -1866,7 +1868,7 @@ public final class MemoryAccess {
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
     public static short getShortAtIndex(MemoryAddress addr, long index) {
-        return getShortAtOffset(addr, 2 * index);
+        return getShortAtOffset(addr, scale(index, 2));
     }
 
     /**
@@ -1881,7 +1883,7 @@ public final class MemoryAccess {
      * @param value the short value to be written.
      */
     public static void setShortAtIndex(MemoryAddress addr, long index, short value) {
-        setShortAtOffset(addr, 2 * index, value);
+        setShortAtOffset(addr, scale(index, 2), value);
     }
 
     /**
@@ -1896,7 +1898,7 @@ public final class MemoryAccess {
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
     public static int getIntAtIndex(MemoryAddress addr, long index) {
-        return getIntAtOffset(addr, 4 * index);
+        return getIntAtOffset(addr, scale(index, 4));
     }
 
     /**
@@ -1911,7 +1913,7 @@ public final class MemoryAccess {
      * @param value the int value to be written.
      */
     public static void setIntAtIndex(MemoryAddress addr, long index, int value) {
-        setIntAtOffset(addr, 4 * index, value);
+        setIntAtOffset(addr, scale(index, 4), value);
     }
 
     /**
@@ -1926,7 +1928,7 @@ public final class MemoryAccess {
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
     public static float getFloatAtIndex(MemoryAddress addr, long index) {
-        return getFloatAtOffset(addr, 4 * index);
+        return getFloatAtOffset(addr, scale(index, 4));
     }
 
     /**
@@ -1941,7 +1943,7 @@ public final class MemoryAccess {
      * @param value the float value to be written.
      */
     public static void setFloatAtIndex(MemoryAddress addr, long index, float value) {
-        setFloatAtOffset(addr, 4 * index, value);
+        setFloatAtOffset(addr, scale(index, 4), value);
     }
 
     /**
@@ -1956,7 +1958,7 @@ public final class MemoryAccess {
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
     public static long getLongAtIndex(MemoryAddress addr, long index) {
-        return getLongAtOffset(addr, 8 * index);
+        return getLongAtOffset(addr, scale(index, 8));
     }
 
     /**
@@ -1971,7 +1973,7 @@ public final class MemoryAccess {
      * @param value the long value to be written.
      */
     public static void setLongAtIndex(MemoryAddress addr, long index, long value) {
-        setLongAtOffset(addr, 8 * index, value);
+        setLongAtOffset(addr, scale(index, 8), value);
     }
 
     /**
@@ -1986,7 +1988,7 @@ public final class MemoryAccess {
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
     public static double getDoubleAtIndex(MemoryAddress addr, long index) {
-        return getDoubleAtOffset(addr, 8 * index);
+        return getDoubleAtOffset(addr, scale(index, 8));
     }
 
     /**
@@ -2001,7 +2003,7 @@ public final class MemoryAccess {
      * @param value the double value to be written.
      */
     public static void setDoubleAtIndex(MemoryAddress addr, long index, double value) {
-        setDoubleAtOffset(addr, 8 * index, value);
+        setDoubleAtOffset(addr, scale(index, 8), value);
     }
 
     /**
@@ -2016,7 +2018,7 @@ public final class MemoryAccess {
      * @return a memory address read from {@code addr} at the element index specified by {@code index}.
      */
     public static MemoryAddress getAddressAtIndex(MemoryAddress addr, long index) {
-        return getAddressAtOffset(addr, index * 8);
+        return getAddressAtOffset(addr, scale(index, 8));
     }
 
     /**
@@ -2031,6 +2033,15 @@ public final class MemoryAccess {
      * @param value the memory address to be written.
      */
     public static void setAddressAtIndex(MemoryAddress addr, long index, MemoryAddress value) {
-        setAddressAtOffset(addr, index * 8, value);
+        setAddressAtOffset(addr, scale(index, 8), value);
+    }
+
+    @ForceInline
+    private static long scale(long index, int size) {
+        if (index < Integer.MAX_VALUE) {
+            return (int)index * size;
+        } else {
+            return index * size;
+        }
     }
 }
