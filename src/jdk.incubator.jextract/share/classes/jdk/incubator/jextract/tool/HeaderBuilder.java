@@ -110,11 +110,18 @@ class HeaderBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    public void emitPrimitiveTypedef(Type.Primitive primType, String className) {
+    public void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
-        if (primitiveKindSupported(kind)) {
-            String superClassName = "C" + kind.typeName().replace(" ", "_");
-            emitTypedef(className, superClassName);
+        if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
+            incrAlign();
+            indent();
+            sb.append(PUB_MODS);
+            sb.append("ValueLayout ");
+            sb.append(name);
+            sb.append(" = ");
+            sb.append(TypeTranslator.typeToLayoutName(kind));
+            sb.append(";\n");
+            decrAlign();
         }
     }
 

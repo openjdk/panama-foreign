@@ -106,7 +106,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames) {
         String qualName = pkgName.isEmpty() ? clsName : pkgName + "." + clsName;
         ConstantHelper constantHelper = new ConstantHelper(qualName,
-                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of(pkgName, "Cstring"),
+                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),
                 libraryNames.toArray(String[]::new));
         return new OutputFactory(clsName, pkgName,
                 new HeaderBuilder(clsName, pkgName, constantHelper), constantHelper).generate(decl);
@@ -156,9 +156,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.add(builder.build());
             files.addAll(constantHelper.getClasses());
             files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
-            files.add(getCstringFile(pkgName));
-            files.add(getCpointerFile(pkgName));
-            files.addAll(getPrimitiveTypeFiles(pkgName));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -180,45 +177,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    private JavaFileObject getCstringFile(String pkgName) throws IOException, URISyntaxException {
-        return getTemplateFile(pkgName, "Cstring", "resources/Cstring.java.template");
-    }
-
-    private JavaFileObject getCpointerFile(String pkgName) throws IOException, URISyntaxException {
-        return getTemplateFile(pkgName, "Cpointer", "resources/Cpointer.java.template");
-    }
-
-    private JavaFileObject getTemplateFile(String pkgName, String className, String path) throws IOException, URISyntaxException {
-        var cstringFile = OutputFactory.class.getResource(path);
-        var lines = Files.readAllLines(Paths.get(cstringFile.toURI()));
-        String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
-        String contents =  pkgPrefix +
-                lines.stream().collect(Collectors.joining("\n"));
-        return fileFromString(pkgName,className, contents);
-    }
-
-    private List<JavaFileObject> getPrimitiveTypeFiles(String pkgName) throws IOException, URISyntaxException {
-        var abi = SharedUtils.getSystemLinker();
-        var cXJavaFile = OutputFactory.class.getResource("resources/C-X.java.template");
-        var lines = Files.readAllLines(Paths.get(cXJavaFile.toURI()));
-
-        List<JavaFileObject> files = new ArrayList<>();
-        String pkgPrefix = pkgName.isEmpty()? "" : "package " + pkgName + ";\n";
-        for (Primitive.Kind type : Primitive.Kind.values()) {
-            if (type.layout().isEmpty()) continue;
-            String typeName = type.typeName().toLowerCase().replace(' ', '_');
-            MemoryLayout layout = type.layout().get();
-            String contents =  pkgPrefix +
-                    lines.stream().collect(Collectors.joining("\n")).
-                            replace("-X", typeName).
-                            replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER).
-                            replace("${LAYOUT}", TypeTranslator.typeToLayoutName(type)).
-                            replace("${CARRIER}", classForType(type, layout).getName());
-            files.add(fileFromString(pkgName,"C" + typeName, contents));
-        }
-        return files;
     }
 
     private static Class<?> classForType(Primitive.Kind type, MemoryLayout layout) {

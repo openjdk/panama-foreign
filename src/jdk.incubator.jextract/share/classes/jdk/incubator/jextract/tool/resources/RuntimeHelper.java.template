@@ -81,6 +81,19 @@ public class RuntimeHelper {
         }
     }
 
+    public static MemoryAddress asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
+        return MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
+               Thread.currentThread(), null, null).baseAddress();
+    }
+
+    public static MemoryAddress asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
+        var seg = addr.segment();
+        if (seg == null) {
+            throw new IllegalArgumentException("no underlying segment for the address");
+        }
+        return seg.asSlice(addr.segmentOffset(), numElements * layout.byteSize()).baseAddress();
+    }
+
     private static class VarargsInvoker {
         private static final MethodHandle INVOKE_MH;
         private final MemoryAddress symbol;

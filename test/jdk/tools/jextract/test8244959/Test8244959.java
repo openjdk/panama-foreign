@@ -26,8 +26,8 @@ import org.testng.annotations.Test;
 import jdk.incubator.foreign.MemorySegment;
 
 import static org.testng.Assert.assertEquals;
-import static test.jextract.printf.Cstring.*;
 import static test.jextract.printf.printf_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 /*
  * @test

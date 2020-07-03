@@ -41,10 +41,9 @@ public class Test8244412 extends JextractToolRunner {
         Path typedefsH = getInputFilePath("typedefs.h");
         run("-d", typedefsOutput.toString(), typedefsH.toString()).checkSuccess();
         try(Loader loader = classLoader(typedefsOutput)) {
-            Class<?> bytetCls = loader.loadClass("typedefs_h$byte_t");
-            assertNotNull(bytetCls);
-            Class<?> sizetCls = loader.loadClass("typedefs_h$mysize_t");
-            assertNotNull(sizetCls);
+            Class<?> headerCls = loader.loadClass("typedefs_h");
+            assertNotNull(findField(headerCls, "byte_t"));
+            assertNotNull(findField(headerCls, "mysize_t"));
         } finally {
             deleteDir(typedefsOutput);
         }

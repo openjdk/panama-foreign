@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import test.jextract.test8245003.*;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8245003.test8245003_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 /*
  * @test
@@ -55,8 +56,8 @@ public class Test8245003 {
     @Test
     public void testArrayAccessor() {
         var addr = iarr$ADDR();
-        assertEquals(addr.segment().byteSize(), Cint.sizeof()*5);
-        int[] arr = Cint.toJavaArray(addr.segment());
+        assertEquals(addr.segment().byteSize(), C_INT.byteSize()*5);
+        int[] arr = addr.segment().toIntArray();
         assertEquals(arr.length, 5);
         assertEquals(arr[0], 2);
         assertEquals(arr[1], -2);
@@ -68,7 +69,7 @@ public class Test8245003 {
         assertEquals(addr.segment().byteSize(), Foo.sizeof());
         assertEquals(Foo.count$get(addr), 37);
         var greeting = Foo.greeting$addr(addr);
-        byte[] barr = Cchar.toJavaArray(greeting.segment());
+        byte[] barr = greeting.segment().toByteArray();
         assertEquals(new String(barr), "hello");
     }
 }

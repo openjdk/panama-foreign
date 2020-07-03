@@ -86,7 +86,8 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.
 
 ```sh
 
-jextract -l python2.7 \
+jextract \
+  -l python2.7 \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/ \
   -t org.python \
@@ -98,7 +99,8 @@ jextract -l python2.7 \
 
 ```java
 
-import org.python.Cstring;
+
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
 import static org.python.RuntimeHelper.*;
@@ -109,7 +111,7 @@ public class PythonMain {
         String script = "print(sum([33, 55, 66])); print('Hello from Python!')\n";
 
         Py_Initialize();
-        try (var s = Cstring.toCString(script)) {
+        try (var s = toCString(script)) {
             var str = s.baseAddress();
             PyRun_SimpleStringFlags(str, NULL);
             Py_Finalize();
@@ -135,10 +137,10 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 
 ```sh
 
-jextract -l readline -t org.unix \
+jextract \
+  -l readline -t org.unix \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/readline/readline.h
-
 
 ```
 
@@ -146,13 +148,13 @@ jextract -l readline -t org.unix \
 
 ```java
 
-import org.unix.Cstring;
 import static org.unix.RuntimeHelper.*;
 import static org.unix.readline_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class Readline {
     public static void main(String[] args) {
-        try (var s = Cstring.toCString("name? ")) {
+        try (var s = toCString("name? ")) {
             var pstr = s.baseAddress();
             // call "readline" API
             var p = readline(pstr);
@@ -160,7 +162,7 @@ public class Readline {
             // print char* as is
             System.out.println(p);
             // convert char* ptr from readline as Java String & print it
-            System.out.println("Hello, " + Cstring.toJavaStringRestricted(p));
+            System.out.println("Hello, " + toJavaStringRestricted(p));
         }
     }
 }
@@ -192,10 +194,11 @@ jextract -t org.unix -lcurl \
 
 ```java
 
-import org.unix.Cstring;
+
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.unix.RuntimeHelper.*;
 import static org.unix.curl_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class CurlMain {
    public static void main(String[] args) {
@@ -203,7 +206,7 @@ public class CurlMain {
        curl_global_init(CURL_GLOBAL_DEFAULT());
        var curl = curl_easy_init();
        if(!curl.equals(NULL)) {
-           try (var s = Cstring.toCString(urlStr)) {
+           try (var s = toCString(urlStr)) {
                var url = s.baseAddress();
                curl_easy_setopt(curl, CURLOPT_URL(), url);
                int res = curl_easy_perform(curl);
@@ -264,12 +267,19 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 
 ```java
 
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.NativeScope;
 import blas.*;
 import static blas.RuntimeHelper.*;
 import static blas.cblas_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class TestBlas {
+    private static double getDouble(MemoryAddress addr, int element) {
+        return MemoryAccess.getDouble(addr, element*C_DOUBLE.byteSize());
+    }
+
     public static void main(String[] args) {
         int Layout;
         int transa;
@@ -289,44 +299,21 @@ public class TestBlas {
         beta = 0;
 
         try (var scope = NativeScope.unboundedScope()) {
-            var a = Cdouble.allocateArray(m*n, scope);
-            var x = Cdouble.allocateArray(n, scope);
-            var y = Cdouble.allocateArray(n, scope);
-
-            /* The elements of the first column */
-            Cdouble.set(a, 0, 1.0);
-            Cdouble.set(a, 1, 2.0);
-            Cdouble.set(a, 2, 3.0);
-            Cdouble.set(a, 3, 4.0);
-            /* The elements of the second column */
-            Cdouble.set(a, m, 1.0);
-            Cdouble.set(a, m + 1, 1.0);
-            Cdouble.set(a, m + 2, 1.0);
-            Cdouble.set(a, m + 3, 1.0);
-            /* The elements of the third column */
-            Cdouble.set(a, m*2, 3.0);
-            Cdouble.set(a, m*2 + 1, 4.0);
-            Cdouble.set(a, m*2 + 2, 5.0);
-            Cdouble.set(a, m*2 + 3, 6.0);
-            /* The elements of the fourth column */
-            Cdouble.set(a, m*3, 5.0);
-            Cdouble.set(a, m*3 + 1, 6.0);
-            Cdouble.set(a, m*3 + 2, 7.0);
-            Cdouble.set(a, m*3 + 3, 8.0);
-            /* The elemetns of x and y */
-            Cdouble.set(x, 0, 1.0);
-            Cdouble.set(x, 1, 2.0);
-            Cdouble.set(x, 2, 1.0);
-            Cdouble.set(x, 3, 1.0);
-            Cdouble.set(y, 0, 0.0);
-            Cdouble.set(y, 1, 0.0);
-            Cdouble.set(y, 2, 0.0);
-            Cdouble.set(y, 3, 0.0);
+            var a = scope.allocateArray(C_DOUBLE, new double[] {
+                1.0, 2.0, 3.0, 4.0,
+                1.0, 1.0, 1.0, 1.0,
+                3.0, 4.0, 5.0, 6.0,
+                5.0, 6.0, 7.0, 8.0
+            });
+            var x = scope.allocateArray(C_DOUBLE, new double[] {
+                1.0, 2.0, 1.0, 1.0
+            });
+            var y = scope.allocateArray(C_DOUBLE, n);
 
             cblas_dgemv(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);
             /* Print y */
             for (i = 0; i < n; i++) {
-                System.out.print(String.format(" y%d = %f\n", i, Cdouble.get(y, (long)i)));
+                System.out.print(String.format(" y%d = %f\n", i, getDouble(y, i)));
             }
         }
     }
@@ -338,9 +325,10 @@ public class TestBlas {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
-    -Djava.library.path=/usr/local/opt/openblas/lib \
-    TestBlas.java
+jextract \
+  -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
+  -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
 
 ```
 
@@ -364,22 +352,24 @@ jextract \
 
 ```java
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeScope;
 import lapack.*;
 import static lapack.lapacke_h.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
         try (var scope = NativeScope.unboundedScope()) {
-            var A = Cdouble.allocateArray(new double[]{
+            var A = scope.allocateArray(C_DOUBLE, new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
-            }, scope);
-            var b = Cdouble.allocateArray(new double[]{
+            });
+            var b = scope.allocateArray(C_DOUBLE, new double[]{
                     -10, 12, 14, 16, 18, -3, 14, 12, 16, 16
-            }, scope);
+            });
             int info, m, n, lda, ldb, nrhs;
 
             /* Initialization */
@@ -412,7 +402,7 @@ public class TestLapack {
         System.out.printf("\n %s\n", msg);
 
         for( i = 0; i < m; i++ ) {
-            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", Cdouble.get(mat, i+j*ldm));
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", MemoryAccess.getDouble(mat, C_DOUBLE.byteSize()*(i+j*ldm)));
             System.out.printf( "\n" );
         }
     }
@@ -436,7 +426,8 @@ java -Dforeign.restricted=permit \
 
 ```sh
 
-jextract -t org.unix \
+jextract \
+  -t org.unix \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   --filter libproc.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libproc.h
@@ -447,6 +438,8 @@ jextract -t org.unix \
 
 ```java
 
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import org.unix.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
@@ -460,18 +453,18 @@ public class LibprocMain {
             // get the number of processes
             int numPids = proc_listallpids(NULL, 0);
             // allocate an array
-            var pids = Cint.allocateArray(numPids, scope);
+            var pids = scope.allocateArray(CSupport.C_INT, numPids);
             // list all the pids into the native array
             proc_listallpids(pids, numPids);
             // convert native array to java array
-            int[] jpids = Cint.toJavaArray(pids.segment());
+            int[] jpids = pids.segment().toIntArray();
             // buffer for process name
-            var nameBuf = Cchar.allocateArray(NAME_BUF_MAX,scope);
+            var nameBuf = scope.allocateArray(CSupport.C_CHAR, NAME_BUF_MAX);
             for (int i = 0; i < jpids.length; i++) {
                 int pid = jpids[i];
                 // get the process name
                 proc_name(pid, nameBuf, NAME_BUF_MAX);
-                String procName = Cstring.toJavaString(nameBuf);
+                String procName = CSupport.toJavaString(nameBuf);
                 // print pid and process name
                 System.out.printf("%d %s\n", pid, procName);
             }
@@ -504,7 +497,8 @@ java -Dforeign.restricted=permit \
 
 ```sh
 
-jextract -t com.github -lgit2 \
+jextract \
+  -t com.github -lgit2 \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
   -I ${LIBGIT2_HOME}/include/ \
   -I ${LIBGIT2_HOME}/include/git2 \
@@ -516,6 +510,8 @@ jextract -t com.github -lgit2 \
 
 ```java
 
+import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeScope;
 import static com.github.git2_h.*;
 import static jdk.incubator.foreign.CSupport.*;
@@ -529,11 +525,12 @@ public class GitClone {
           }
           git_libgit2_init();
           try (var scope = NativeScope.unboundedScope()) {
-              var repo = scope.allocate(C_POINTER, NULL);
+              var repo = scope.allocate(C_POINTER);
+              MemoryAccess.setAddress(repo, 0, NULL);
               var url = toCString(args[0], scope);
               var path = toCString(args[1], scope);
               System.out.println(git_clone(repo, url, path, NULL));
-          }
+          }          
           git_libgit2_shutdown();
     }
 }
@@ -568,29 +565,41 @@ sh run.sh https://github.com/libgit2/libgit2.git libgit2
 jextract \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h \
-  -t org.sqlite -lsqlite3
+  -t org.sqlite -lsqlite3 
 
 ```
 ### Java program that uses sqlite3
 
 ```java
 
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.NativeScope;
-import org.sqlite.Cpointer;
-import org.sqlite.Cstring;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.sqlite.sqlite3_h.*;
+import static org.sqlite.RuntimeHelper.*;
+import static jdk.incubator.foreign.CSupport.*;
 
 public class SqliteMain {
+   private static MemoryAddress getPointer(MemoryAddress addr) {
+       return getPointer(addr, 0);
+   }
+
+   private static MemoryAddress getPointer(MemoryAddress addr, int element) {
+       return MemoryAccess.getAddress(addr, element*C_POINTER.byteSize());
+   }
+
    public static void main(String[] args) throws Exception {
         try (var scope = NativeScope.unboundedScope()) {
             // char** errMsgPtrPtr;
-            var errMsgPtrPtr = Cpointer.allocate(NULL, scope);
+            var errMsgPtrPtr = scope.allocate(C_POINTER);
+            MemoryAccess.setAddress(errMsgPtrPtr, 0, NULL);
 
             // sqlite3** dbPtrPtr;
-            var dbPtrPtr = Cpointer.allocate(NULL, scope);
+            var dbPtrPtr = scope.allocate(C_POINTER);
+            MemoryAccess.setAddress(dbPtrPtr, 0, NULL);
 
-            int rc = sqlite3_open(Cstring.toCString("employee.db",scope), dbPtrPtr);
+            int rc = sqlite3_open(toCString("employee.db",scope), dbPtrPtr);
             if (rc != 0) {
                 System.err.println("sqlite3_open failed: " + rc);
                 return;
@@ -599,10 +608,10 @@ public class SqliteMain {
             }
 
             // sqlite3* dbPtr;
-            var dbPtr = Cpointer.get(dbPtrPtr);
+            var dbPtr = getPointer(dbPtrPtr);
 
             // create a new table
-            var sql = Cstring.toCString(
+            var sql = toCString(
                 "CREATE TABLE EMPLOYEE ("  +
                 "  ID INT PRIMARY KEY NOT NULL," +
                 "  NAME TEXT NOT NULL,"    +
@@ -612,14 +621,14 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaStringRestricted(Cpointer.get(errMsgPtrPtr)));
-                sqlite3_free(Cpointer.get(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
+                sqlite3_free(getPointer(errMsgPtrPtr));
             } else {
                 System.out.println("employee table created");
             }
 
             // insert two rows
-            sql = Cstring.toCString(
+            sql = toCString(
                 "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
                     "VALUES (134, 'Xyz', 200000.0); " +
                 "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
@@ -629,8 +638,8 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaStringRestricted(Cpointer.get(errMsgPtrPtr)));
-                sqlite3_free(Cpointer.get(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
+                sqlite3_free(getPointer(errMsgPtrPtr));
             } else {
                 System.out.println("rows inserted");
             }
@@ -640,24 +649,24 @@ public class SqliteMain {
             var callback = sqlite3_exec$callback.allocate((a, argc, argv, columnNames) -> {
                 System.out.println("Row num: " + rowNum[0]++);
                 System.out.println("numColumns = " + argc);
-                argv = Cpointer.asArrayRestricted(argv, argc);
-                columnNames = Cpointer.asArrayRestricted(columnNames, argc);
+                argv = asArrayRestricted(argv, C_POINTER, argc);
+                columnNames = asArrayRestricted(columnNames, C_POINTER, argc);
                 for (int i = 0; i < argc; i++) {
-                     String name = Cstring.toJavaStringRestricted(Cpointer.get(columnNames, i));
-                     String value = Cstring.toJavaStringRestricted(Cpointer.get(argv, i));
+                     String name = toJavaStringRestricted(getPointer(columnNames, i));
+                     String value = toJavaStringRestricted(getPointer(argv, i));
                      System.out.printf("%s = %s\n", name, value);
                 }
                 return 0;
             }, scope);
 
             // select query
-            sql = Cstring.toCString("SELECT * FROM EMPLOYEE", scope);
+            sql = toCString("SELECT * FROM EMPLOYEE", scope);
             rc = sqlite3_exec(dbPtr, sql, callback, NULL, errMsgPtrPtr);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + Cstring.toJavaStringRestricted(Cpointer.get(errMsgPtrPtr)));
-                sqlite3_free(Cpointer.get(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
+                sqlite3_free(getPointer(errMsgPtrPtr));
             } else {
                 System.out.println("done");
             }
@@ -666,6 +675,7 @@ public class SqliteMain {
         }
     }
 }
+
 ```
 
 ### Compiling and running the sqlite3 sample
