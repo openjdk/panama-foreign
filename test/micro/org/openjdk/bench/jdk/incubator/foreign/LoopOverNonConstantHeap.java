@@ -123,7 +123,7 @@ public class LoopOverNonConstantHeap {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.getInt(segment.baseAddress(), i * CARRIER_SIZE);
+            res += MemoryAccess.getIntAtIndex(segment.baseAddress(), i);
         }
         return res;
     }
