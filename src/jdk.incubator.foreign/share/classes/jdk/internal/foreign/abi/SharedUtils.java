@@ -270,7 +270,7 @@ public class SharedUtils {
     private static int strlen(MemoryAddress address) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset++) {
-            byte curr = MemoryAccess.getByte(address, offset);
+            byte curr = MemoryAccess.getByteAtOffset(address, offset);
             if (curr == 0) {
                 return offset;
             }
