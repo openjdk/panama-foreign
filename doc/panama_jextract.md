@@ -86,7 +86,7 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -l python2.7 \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/ \
@@ -137,7 +137,7 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -l readline -t org.unix \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/readline/readline.h
@@ -183,7 +183,7 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true -t org.unix -lcurl \
+jextract -t org.unix -lcurl \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/ \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/curl.h
@@ -325,7 +325,7 @@ public class TestBlas {
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
@@ -340,7 +340,7 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
    -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
    -l lapacke -t lapack \
    --filter lapacke.h \
@@ -426,7 +426,7 @@ java -Dforeign.restricted=permit \
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -t org.unix \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   --filter libproc.h \
@@ -497,7 +497,7 @@ java -Dforeign.restricted=permit \
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -t com.github -lgit2 \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
   -I ${LIBGIT2_HOME}/include/ \
@@ -568,7 +568,7 @@ sh run.sh https://github.com/libgit2/libgit2.git libgit2
 
 ```sh
 
-jextract -J-Djdk.internal.foreign.ProgrammableInvoker.NO_INTRINSICS=true \
+jextract \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h \
   -t org.sqlite -lsqlite3 
