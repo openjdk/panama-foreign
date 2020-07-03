@@ -1,0 +1,540 @@
+/*
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Arm Limited. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package jdk.internal.foreign.abi.aarch64;
+
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.misc.Unsafe;
+
+import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
+
+import static jdk.incubator.foreign.CSupport.AArch64;
+import static jdk.incubator.foreign.CSupport.VaList;
+import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
+import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
+import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
+import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
+import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMENTS;
+
+public class AArch64VaList implements VaList {
+    private static final Unsafe U = Unsafe.getUnsafe();
+
+    static final Class<?> CARRIER = MemoryAddress.class;
+
+    // See AAPCS Appendix B "Variable Argument Lists" for definition of
+    // va_list on AArch64.
+    //
+    // typedef struct __va_list {
+    //     void *__stack;   // next stack param
+    //     void *__gr_top;  // end of GP arg reg save area
+    //     void *__vr_top;  // end of FP/SIMD arg reg save area
+    //     int __gr_offs;   // offset from __gr_top to next GP register arg
+    //     int __vr_offs;   // offset from __vr_top to next FP/SIMD register arg
+    // } va_list;
+
+    static final GroupLayout LAYOUT = MemoryLayout.ofStruct(
+        AArch64.C_POINTER.withName("__stack"),
+        AArch64.C_POINTER.withName("__gr_top"),
+        AArch64.C_POINTER.withName("__vr_top"),
+        AArch64.C_INT.withName("__gr_offs"),
+        AArch64.C_INT.withName("__vr_offs")
+    ).withName("__va_list");
+
+    private static final MemoryLayout GP_REG
+        = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
+    private static final MemoryLayout FP_REG
+        = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder());
+
+    private static final MemoryLayout LAYOUT_GP_REGS
+        = MemoryLayout.ofSequence(MAX_REGISTER_ARGUMENTS, GP_REG);
+    private static final MemoryLayout LAYOUT_FP_REGS
+        = MemoryLayout.ofSequence(MAX_REGISTER_ARGUMENTS, FP_REG);
+
+    private static final int GP_SLOT_SIZE = (int) GP_REG.byteSize();
+    private static final int FP_SLOT_SIZE = (int) FP_REG.byteSize();
+
+    private static final int MAX_GP_OFFSET = (int) LAYOUT_GP_REGS.byteSize();
+    private static final int MAX_FP_OFFSET = (int) LAYOUT_FP_REGS.byteSize();
+
+    private static final VarHandle VH_stack
+        = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(long.class, groupElement("__stack")));
+    private static final VarHandle VH_gr_top
+        = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(long.class, groupElement("__gr_top")));
+    private static final VarHandle VH_vr_top
+        = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(long.class, groupElement("__vr_top")));
+    private static final VarHandle VH_gr_offs
+        = LAYOUT.varHandle(int.class, groupElement("__gr_offs"));
+    private static final VarHandle VH_vr_offs
+        = LAYOUT.varHandle(int.class, groupElement("__vr_offs"));
+
+    private static final Cleaner cleaner = Cleaner.create();
+    private static final CSupport.VaList EMPTY
+        = new SharedUtils.EmptyVaList(emptyListAddress());
+
+    private final MemorySegment segment;
+    private final List<MemorySegment> slices = new ArrayList<>();
+    private final MemorySegment fpRegsArea;
+    private final MemorySegment gpRegsArea;
+
+    AArch64VaList(MemorySegment segment) {
+        this.segment = segment;
+
+        gpRegsArea = MemorySegment.ofNativeRestricted(
+            grTop().addOffset(-MAX_GP_OFFSET), MAX_GP_OFFSET,
+            segment.ownerThread(), null, null);
+
+        fpRegsArea = MemorySegment.ofNativeRestricted(
+            vrTop().addOffset(-MAX_FP_OFFSET), MAX_FP_OFFSET,
+            segment.ownerThread(), null, null);
+
+        slices.add(gpRegsArea);
+        slices.add(fpRegsArea);
+    }
+
+    private static MemoryAddress emptyListAddress() {
+        long ptr = U.allocateMemory(LAYOUT.byteSize());
+        MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null,
+                () -> U.freeMemory(ptr), null);
+        cleaner.register(AArch64VaList.class, ms::close);
+        MemoryAddress base = ms.baseAddress();
+        VH_stack.set(base, MemoryAddress.NULL);
+        VH_gr_top.set(base, MemoryAddress.NULL);
+        VH_vr_top.set(base, MemoryAddress.NULL);
+        VH_gr_offs.set(base, 0);
+        VH_vr_offs.set(base, 0);
+        return ms.withAccessModes(0).baseAddress();
+    }
+
+    public static CSupport.VaList empty() {
+        return EMPTY;
+    }
+
+    private MemoryAddress grTop() {
+        return (MemoryAddress) VH_gr_top.get(segment.baseAddress());
+    }
+
+    private MemoryAddress vrTop() {
+        return (MemoryAddress) VH_vr_top.get(segment.baseAddress());
+    }
+
+    private int grOffs() {
+        final int offs = (int) VH_gr_offs.get(segment.baseAddress());
+        assert offs <= 0;
+        return offs;
+    }
+
+    private int vrOffs() {
+        final int offs = (int) VH_vr_offs.get(segment.baseAddress());
+        assert offs <= 0;
+        return offs;
+    }
+
+    private MemoryAddress stackPtr() {
+        return (MemoryAddress) VH_stack.get(segment.baseAddress());
+    }
+
+    private void stackPtr(MemoryAddress ptr) {
+        VH_stack.set(segment.baseAddress(), ptr);
+    }
+
+    private void consumeGPSlots(int num) {
+        final int old = (int) VH_gr_offs.get(segment.baseAddress());
+        VH_gr_offs.set(segment.baseAddress(), old + num * GP_SLOT_SIZE);
+    }
+
+    private void consumeFPSlots(int num) {
+        final int old = (int) VH_vr_offs.get(segment.baseAddress());
+        VH_vr_offs.set(segment.baseAddress(), old + num * FP_SLOT_SIZE);
+    }
+
+    private long currentGPOffset() {
+        // Offset from start of GP register segment. __gr_top points to the top
+        // (highest address) of the GP registers area. __gr_offs is the negative
+        // offset of next saved register from the top.
+
+        return gpRegsArea.byteSize() + grOffs();
+    }
+
+    private long currentFPOffset() {
+        // Offset from start of FP register segment. __vr_top points to the top
+        // (highest address) of the FP registers area. __vr_offs is the negative
+        // offset of next saved register from the top.
+
+        return fpRegsArea.byteSize() + vrOffs();
+    }
+
+    private void preAlignStack(MemoryLayout layout) {
+        if (layout.byteAlignment() > 8) {
+            stackPtr(Utils.alignUp(stackPtr(), 16));
+        }
+    }
+
+    private void postAlignStack(MemoryLayout layout) {
+        stackPtr(Utils.alignUp(stackPtr().addOffset(layout.byteSize()), 8));
+    }
+
+    @Override
+    public int vargAsInt(MemoryLayout layout) {
+        return (int) read(int.class, layout);
+    }
+
+    @Override
+    public long vargAsLong(MemoryLayout layout) {
+        return (long) read(long.class, layout);
+    }
+
+    @Override
+    public double vargAsDouble(MemoryLayout layout) {
+        return (double) read(double.class, layout);
+    }
+
+    @Override
+    public MemoryAddress vargAsAddress(MemoryLayout layout) {
+        return (MemoryAddress) read(MemoryAddress.class, layout);
+    }
+
+    @Override
+    public MemorySegment vargAsSegment(MemoryLayout layout) {
+        return (MemorySegment) read(MemorySegment.class, layout);
+    }
+
+    private Object read(Class<?> carrier, MemoryLayout layout) {
+        checkCompatibleType(carrier, layout, AArch64Linker.ADDRESS_SIZE);
+
+        TypeClass typeClass = TypeClass.classifyLayout(layout);
+        if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass, layout)) {
+            preAlignStack(layout);
+            return switch (typeClass) {
+                case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
+                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
+                             stackPtr(), layout.byteSize(),
+                             segment.ownerThread(), null, null)) {
+                        MemorySegment seg = MemorySegment.allocateNative(layout);
+                        seg.copyFrom(slice);
+                        postAlignStack(layout);
+                        yield seg;
+                    }
+                }
+                case POINTER, INTEGER, FLOAT -> {
+                    VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
+                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
+                             stackPtr(), layout.byteSize(),
+                             segment.ownerThread(), null, null)) {
+                        Object res = reader.get(slice.baseAddress());
+                        postAlignStack(layout);
+                        yield res;
+                    }
+                }
+            };
+        } else {
+            return switch (typeClass) {
+                case STRUCT_REGISTER -> {
+                    // Struct is passed packed in integer registers.
+                    MemorySegment value = MemorySegment.allocateNative(layout);
+                    long offset = 0;
+                    while (offset < layout.byteSize()) {
+                        final long copy = Math.min(layout.byteSize() - offset, 8);
+                        MemorySegment slice = value.asSlice(offset, copy);
+                        slice.copyFrom(gpRegsArea.asSlice(currentGPOffset(), copy));
+                        consumeGPSlots(1);
+                        offset += copy;
+                    }
+                    yield value;
+                }
+                case STRUCT_HFA -> {
+                    // Struct is passed with each element in a separate floating
+                    // point register.
+                    MemorySegment value = MemorySegment.allocateNative(layout);
+                    GroupLayout group = (GroupLayout)layout;
+                    long offset = 0;
+                    for (MemoryLayout elem : group.memberLayouts()) {
+                        assert elem.byteSize() <= 8;
+                        final long copy = elem.byteSize();
+                        MemorySegment slice = value.asSlice(offset, copy);
+                        slice.copyFrom(fpRegsArea.asSlice(currentFPOffset(), copy));
+                        consumeFPSlots(1);
+                        offset += copy;
+                    }
+                    yield value;
+                }
+                case STRUCT_REFERENCE -> {
+                    // Struct is passed indirectly via a pointer in an integer register.
+                    VarHandle ptrReader
+                        = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class, AArch64.C_POINTER);
+                    MemoryAddress ptr = (MemoryAddress) ptrReader.get(
+                        gpRegsArea.baseAddress().addOffset(currentGPOffset()));
+                    consumeGPSlots(1);
+
+                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
+                             ptr, layout.byteSize(), segment.ownerThread(), null, null)) {
+                        MemorySegment seg = MemorySegment.allocateNative(layout);
+                        seg.copyFrom(slice);
+                        yield seg;
+                    }
+                }
+                case POINTER, INTEGER -> {
+                    VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                    Object res = reader.get(gpRegsArea.baseAddress().addOffset(currentGPOffset()));
+                    consumeGPSlots(1);
+                    yield res;
+                }
+                case FLOAT -> {
+                    VarHandle reader = layout.varHandle(carrier);
+                    Object res = reader.get(fpRegsArea.baseAddress().addOffset(currentFPOffset()));
+                    consumeFPSlots(1);
+                    yield res;
+                }
+            };
+        }
+    }
+
+    @Override
+    public void skip(MemoryLayout... layouts) {
+        for (MemoryLayout layout : layouts) {
+            TypeClass typeClass = TypeClass.classifyLayout(layout);
+            if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass, layout)) {
+                preAlignStack(layout);
+                postAlignStack(layout);
+            } else if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
+                consumeFPSlots(numSlots(layout));
+            } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
+                consumeGPSlots(1);
+            } else {
+                consumeGPSlots(numSlots(layout));
+            }
+        }
+    }
+
+    static AArch64VaList.Builder builder() {
+        return new AArch64VaList.Builder();
+    }
+
+    public static VaList ofAddress(MemoryAddress ma) {
+        return new AArch64VaList(
+            MemorySegment.ofNativeRestricted(
+                ma, LAYOUT.byteSize(), Thread.currentThread(), null, null));
+    }
+
+    @Override
+    public boolean isAlive() {
+        return segment.isAlive();
+    }
+
+    @Override
+    public void close() {
+        segment.close();
+        slices.forEach(MemorySegment::close);
+    }
+
+    @Override
+    public VaList copy() {
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT.byteSize());
+        copy.copyFrom(segment);
+        return new AArch64VaList(copy);
+    }
+
+    @Override
+    public MemoryAddress address() {
+        return segment.baseAddress();
+    }
+
+    private static int numSlots(MemoryLayout layout) {
+        return (int) Utils.alignUp(layout.byteSize(), 8) / 8;
+    }
+
+    private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset,
+                                         TypeClass typeClass, MemoryLayout layout) {
+        if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
+            return currentFPOffset > MAX_FP_OFFSET - numSlots(layout) * FP_SLOT_SIZE;
+        } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
+            return currentGPOffset > MAX_GP_OFFSET - GP_SLOT_SIZE;
+        } else {
+            return currentGPOffset > MAX_GP_OFFSET - numSlots(layout) * GP_SLOT_SIZE;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "AArch64VaList{"
+            + "__stack=" + stackPtr()
+            + ", __gr_top=" + grTop()
+            + ", __vr_top=" + vrTop()
+            + ", __gr_offs=" + grOffs()
+            + ", __vr_offs=" + vrOffs()
+            + '}';
+    }
+
+    static class Builder implements CSupport.VaList.Builder {
+        private final MemorySegment gpRegs
+            = MemorySegment.allocateNative(LAYOUT_GP_REGS);
+        private final MemorySegment fpRegs
+            = MemorySegment.allocateNative(LAYOUT_FP_REGS);
+
+        private long currentGPOffset = 0;
+        private long currentFPOffset = 0;
+        private final List<SimpleVaArg> stackArgs = new ArrayList<>();
+
+        @Override
+        public Builder vargFromInt(MemoryLayout layout, int value) {
+            return arg(int.class, layout, value);
+        }
+
+        @Override
+        public Builder vargFromLong(MemoryLayout layout, long value) {
+            return arg(long.class, layout, value);
+        }
+
+        @Override
+        public Builder vargFromDouble(MemoryLayout layout, double value) {
+            return arg(double.class, layout, value);
+        }
+
+        @Override
+        public Builder vargFromAddress(MemoryLayout layout, MemoryAddress value) {
+            return arg(MemoryAddress.class, layout, value);
+        }
+
+        @Override
+        public Builder vargFromSegment(MemoryLayout layout, MemorySegment value) {
+            return arg(MemorySegment.class, layout, value);
+        }
+
+        private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
+            checkCompatibleType(carrier, layout, AArch64Linker.ADDRESS_SIZE);
+
+            TypeClass typeClass = TypeClass.classifyLayout(layout);
+            if (isRegOverflow(currentGPOffset, currentFPOffset, typeClass, layout)) {
+                stackArgs.add(new SimpleVaArg(carrier, layout, value));
+            } else {
+                switch (typeClass) {
+                    case STRUCT_REGISTER -> {
+                        // Struct is passed packed in integer registers.
+                        MemorySegment valueSegment = (MemorySegment) value;
+                        long offset = 0;
+                        while (offset < layout.byteSize()) {
+                            final long copy = Math.min(layout.byteSize() - offset, 8);
+                            MemorySegment slice = valueSegment.asSlice(offset, copy);
+                            gpRegs.asSlice(currentGPOffset, copy).copyFrom(slice);
+                            currentGPOffset += GP_SLOT_SIZE;
+                            offset += copy;
+                        }
+                    }
+                    case STRUCT_HFA -> {
+                        // Struct is passed with each element in a separate floating
+                        // point register.
+                        MemorySegment valueSegment = (MemorySegment) value;
+                        GroupLayout group = (GroupLayout)layout;
+                        long offset = 0;
+                        for (MemoryLayout elem : group.memberLayouts()) {
+                            assert elem.byteSize() <= 8;
+                            final long copy = elem.byteSize();
+                            MemorySegment slice = valueSegment.asSlice(offset, copy);
+                            fpRegs.asSlice(currentFPOffset, copy).copyFrom(slice);
+                            currentFPOffset += FP_SLOT_SIZE;
+                            offset += copy;
+                        }
+                    }
+                    case STRUCT_REFERENCE -> {
+                        // Struct is passed indirectly via a pointer in an integer register.
+                        MemorySegment valueSegment = (MemorySegment) value;
+                        VarHandle writer
+                            = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class,
+                                                               AArch64.C_POINTER);
+                        writer.set(gpRegs.baseAddress().addOffset(currentGPOffset),
+                                   valueSegment.baseAddress());
+                        currentGPOffset += GP_SLOT_SIZE;
+                    }
+                    case POINTER, INTEGER -> {
+                        VarHandle writer = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                        writer.set(gpRegs.baseAddress().addOffset(currentGPOffset), value);
+                        currentGPOffset += GP_SLOT_SIZE;
+                    }
+                    case FLOAT -> {
+                        VarHandle writer = layout.varHandle(carrier);
+                        writer.set(fpRegs.baseAddress().addOffset(currentFPOffset), value);
+                        currentFPOffset += FP_SLOT_SIZE;
+                    }
+                }
+            }
+            return this;
+        }
+
+        private boolean isEmpty() {
+            return currentGPOffset == 0 && currentFPOffset == 0 && stackArgs.isEmpty();
+        }
+
+        public VaList build() {
+            if (isEmpty()) {
+                return EMPTY;
+            }
+
+            MemorySegment vaListSegment = MemorySegment.allocateNative(LAYOUT.byteSize());
+            AArch64VaList res = new AArch64VaList(vaListSegment);
+
+            MemoryAddress stackArgsPtr = MemoryAddress.NULL;
+            if (!stackArgs.isEmpty()) {
+                long stackArgsSize = stackArgs.stream()
+                    .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), 8), Long::sum);
+                MemorySegment stackArgsSegment = MemorySegment.allocateNative(stackArgsSize, 16);
+                MemoryAddress maStackArea = stackArgsSegment.baseAddress();
+                for (SimpleVaArg arg : stackArgs) {
+                    final long alignedSize = Utils.alignUp(arg.layout.byteSize(), 8);
+                    maStackArea = Utils.alignUp(maStackArea, alignedSize);
+                    VarHandle writer = arg.varHandle();
+                    writer.set(maStackArea, arg.value);
+                    maStackArea = maStackArea.addOffset(alignedSize);
+                }
+                stackArgsPtr = stackArgsSegment.baseAddress();
+                res.slices.add(stackArgsSegment);
+            }
+
+            MemoryAddress vaListAddr = vaListSegment.baseAddress();
+            VH_gr_top.set(vaListAddr, gpRegs.baseAddress().addOffset(gpRegs.byteSize()));
+            VH_vr_top.set(vaListAddr, fpRegs.baseAddress().addOffset(fpRegs.byteSize()));
+            VH_stack.set(vaListAddr, stackArgsPtr);
+            VH_gr_offs.set(vaListAddr, -MAX_GP_OFFSET);
+            VH_vr_offs.set(vaListAddr, -MAX_FP_OFFSET);
+
+            res.slices.add(gpRegs);
+            res.slices.add(fpRegs);
+            assert gpRegs.ownerThread() == vaListSegment.ownerThread();
+            assert fpRegs.ownerThread() == vaListSegment.ownerThread();
+            return res;
+        }
+    }
+}

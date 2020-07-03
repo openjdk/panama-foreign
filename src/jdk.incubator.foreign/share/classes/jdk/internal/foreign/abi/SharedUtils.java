@@ -284,7 +284,7 @@ public class SharedUtils {
         return switch(name) {
             case Win64.NAME -> Windowsx64Linker.newVaList(actions);
             case SysV.NAME -> SysVx64Linker.newVaList(actions);
-            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            case AArch64.NAME -> AArch64Linker.newVaList(actions);
             default -> throw new IllegalStateException("Unknown linker name: " + name);
         };
     }
@@ -300,7 +300,7 @@ public class SharedUtils {
         return switch(name) {
             case Win64.NAME -> Windowsx64Linker.newVaListOfAddress(ma);
             case SysV.NAME -> SysVx64Linker.newVaListOfAddress(ma);
-            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            case AArch64.NAME -> AArch64Linker.newVaListOfAddress(ma);
             default -> throw new IllegalStateException("Unknown linker name: " + name);
         };
     }
@@ -310,7 +310,7 @@ public class SharedUtils {
         return switch(name) {
             case Win64.NAME -> Windowsx64Linker.emptyVaList();
             case SysV.NAME -> SysVx64Linker.emptyVaList();
-            case AArch64.NAME -> throw new UnsupportedOperationException("Not yet implemented for this platform");
+            case AArch64.NAME -> AArch64Linker.emptyVaList();
             default -> throw new IllegalStateException("Unknown linker name: " + name);
         };
     }
