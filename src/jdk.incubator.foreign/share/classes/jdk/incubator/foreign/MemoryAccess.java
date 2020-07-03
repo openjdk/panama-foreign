@@ -6,7 +6,7 @@ import java.nio.ByteOrder;
 /**
  * This class defines ready-made static accessors which can be used to dereference memory segments in many ways.
  * <p>
- * The most primitive accessors (see {@link #getInt(MemoryAddress, long)}) take a <em>base</em> address and an offset (expressed in bytes).
+ * The most primitive accessors (see {@link #getIntAtOffset(MemoryAddress, long)} (MemoryAddress, long)}) take a <em>base</em> address and an offset (expressed in bytes).
  * The final address at which the dereference will occur will be computed by offsetting the base address by
  * the specified offset, as if by calling {@link MemoryAddress#addOffset(long)} on the specified base address.
  * <p>
@@ -14,7 +14,7 @@ import java.nio.ByteOrder;
  * clients can omit the offset coordinate.
  * <p>
  * To help dereferencing in array-like use cases (e.g. where the layout of a given memory segment is a sequence
- * layout of given size an element count), higher-level overloads are also provided (see {@link #getIntElement(MemoryAddress, long)}),
+ * layout of given size an element count), higher-level overloads are also provided (see {@link #getIntAtIndex(MemoryAddress, long)}),
  * which take an <em>base</em> address and a <em>logical</em> element index. The formula to obtain the byte offset {@code O} from an
  * index {@code I} is given by {@code O = I * S} where {@code s} is the size (expressed in bytes) of the element to
  * be dereferenced.
@@ -54,7 +54,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static byte getByte_LE(MemoryAddress addr, long offset) {
+    public static byte getByteAtOffset_LE(MemoryAddress addr, long offset) {
         return (byte)byte_LE_handle.get(addr, offset);
     }
 
@@ -70,7 +70,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the byte value to be written.
      */
-    public static void setByte_LE(MemoryAddress addr, long offset, byte value) {
+    public static void setByteAtOffset_LE(MemoryAddress addr, long offset, byte value) {
         byte_LE_handle.set(addr, offset, value);
     }
 
@@ -86,7 +86,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static char getChar_LE(MemoryAddress addr, long offset) {
+    public static char getCharAtOffset_LE(MemoryAddress addr, long offset) {
         return (char)char_LE_handle.get(addr, offset);
     }
 
@@ -102,7 +102,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the char value to be written.
      */
-    public static void setChar_LE(MemoryAddress addr, long offset, char value) {
+    public static void setCharAtOffset_LE(MemoryAddress addr, long offset, char value) {
         char_LE_handle.set(addr, offset, value);
     }
 
@@ -118,7 +118,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static short getShort_LE(MemoryAddress addr, long offset) {
+    public static short getShortAtOffset_LE(MemoryAddress addr, long offset) {
         return (short)short_LE_handle.get(addr, offset);
     }
 
@@ -134,7 +134,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the short value to be written.
      */
-    public static void setShort_LE(MemoryAddress addr, long offset, short value) {
+    public static void setShortAtOffset_LE(MemoryAddress addr, long offset, short value) {
         short_LE_handle.set(addr, offset, value);
     }
 
@@ -150,7 +150,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static int getInt_LE(MemoryAddress addr, long offset) {
+    public static int getIntAtOffset_LE(MemoryAddress addr, long offset) {
         return (int)int_LE_handle.get(addr, offset);
     }
 
@@ -166,7 +166,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the int value to be written.
      */
-    public static void setInt_LE(MemoryAddress addr, long offset, int value) {
+    public static void setIntAtOffset_LE(MemoryAddress addr, long offset, int value) {
         int_LE_handle.set(addr, offset, value);
     }
 
@@ -182,7 +182,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static float getFloat_LE(MemoryAddress addr, long offset) {
+    public static float getFloatAtOffset_LE(MemoryAddress addr, long offset) {
         return (float)float_LE_handle.get(addr, offset);
     }
 
@@ -198,7 +198,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the float value to be written.
      */
-    public static void setFloat_LE(MemoryAddress addr, long offset, float value) {
+    public static void setFloatAtOffset_LE(MemoryAddress addr, long offset, float value) {
         float_LE_handle.set(addr, offset, value);
     }
 
@@ -214,7 +214,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static long getLong_LE(MemoryAddress addr, long offset) {
+    public static long getLongAtOffset_LE(MemoryAddress addr, long offset) {
         return (long)long_LE_handle.get(addr, offset);
     }
 
@@ -230,7 +230,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the long value to be written.
      */
-    public static void setLong_LE(MemoryAddress addr, long offset, long value) {
+    public static void setLongAtOffset_LE(MemoryAddress addr, long offset, long value) {
         long_LE_handle.set(addr, offset, value);
     }
 
@@ -246,7 +246,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static double getDouble_LE(MemoryAddress addr, long offset) {
+    public static double getDoubleAtOffset_LE(MemoryAddress addr, long offset) {
         return (double)double_LE_handle.get(addr, offset);
     }
 
@@ -262,7 +262,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the double value to be written.
      */
-    public static void setDouble_LE(MemoryAddress addr, long offset, double value) {
+    public static void setDoubleAtOffset_LE(MemoryAddress addr, long offset, double value) {
         double_LE_handle.set(addr, offset, value);
     }
 
@@ -279,7 +279,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static byte getByte_BE(MemoryAddress addr, long offset) {
+    public static byte getByteAtOffset_BE(MemoryAddress addr, long offset) {
         return (byte)byte_BE_handle.get(addr, offset);
     }
 
@@ -295,7 +295,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the byte value to be written.
      */
-    public static void setByte_BE(MemoryAddress addr, long offset, byte value) {
+    public static void setByteAtOffset_BE(MemoryAddress addr, long offset, byte value) {
         byte_BE_handle.set(addr, offset, value);
     }
 
@@ -311,7 +311,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static char getChar_BE(MemoryAddress addr, long offset) {
+    public static char getCharAtOffset_BE(MemoryAddress addr, long offset) {
         return (char)char_BE_handle.get(addr, offset);
     }
 
@@ -327,7 +327,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the char value to be written.
      */
-    public static void setChar_BE(MemoryAddress addr, long offset, char value) {
+    public static void setCharAtOffset_BE(MemoryAddress addr, long offset, char value) {
         char_BE_handle.set(addr, offset, value);
     }
 
@@ -343,7 +343,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static short getShort_BE(MemoryAddress addr, long offset) {
+    public static short getShortAtOffset_BE(MemoryAddress addr, long offset) {
         return (short)short_BE_handle.get(addr, offset);
     }
 
@@ -359,7 +359,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the short value to be written.
      */
-    public static void setShort_BE(MemoryAddress addr, long offset, short value) {
+    public static void setShortAtOffset_BE(MemoryAddress addr, long offset, short value) {
         short_BE_handle.set(addr, offset, value);
     }
 
@@ -375,7 +375,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static int getInt_BE(MemoryAddress addr, long offset) {
+    public static int getIntAtOffset_BE(MemoryAddress addr, long offset) {
         return (int)int_BE_handle.get(addr, offset);
     }
 
@@ -391,7 +391,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the int value to be written.
      */
-    public static void setInt_BE(MemoryAddress addr, long offset, int value) {
+    public static void setIntAtOffset_BE(MemoryAddress addr, long offset, int value) {
         int_BE_handle.set(addr, offset, value);
     }
 
@@ -407,7 +407,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static float getFloat_BE(MemoryAddress addr, long offset) {
+    public static float getFloatAtOffset_BE(MemoryAddress addr, long offset) {
         return (float)float_BE_handle.get(addr, offset);
     }
 
@@ -423,7 +423,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the float value to be written.
      */
-    public static void setFloat_BE(MemoryAddress addr, long offset, float value) {
+    public static void setFloatAtOffset_BE(MemoryAddress addr, long offset, float value) {
         float_BE_handle.set(addr, offset, value);
     }
 
@@ -439,7 +439,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static long getLong_BE(MemoryAddress addr, long offset) {
+    public static long getLongAtOffset_BE(MemoryAddress addr, long offset) {
         return (long)long_BE_handle.get(addr, offset);
     }
 
@@ -455,7 +455,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the long value to be written.
      */
-    public static void setLong_BE(MemoryAddress addr, long offset, long value) {
+    public static void setLongAtOffset_BE(MemoryAddress addr, long offset, long value) {
         long_BE_handle.set(addr, offset, value);
     }
 
@@ -471,7 +471,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static double getDouble_BE(MemoryAddress addr, long offset) {
+    public static double getDoubleAtOffset_BE(MemoryAddress addr, long offset) {
         return (double)double_BE_handle.get(addr, offset);
     }
 
@@ -487,7 +487,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the double value to be written.
      */
-    public static void setDouble_BE(MemoryAddress addr, long offset, double value) {
+    public static void setDoubleAtOffset_BE(MemoryAddress addr, long offset, double value) {
         double_BE_handle.set(addr, offset, value);
     }
 
@@ -504,7 +504,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static byte getByte(MemoryAddress addr, long offset) {
+    public static byte getByteAtOffset(MemoryAddress addr, long offset) {
         return (byte)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? byte_BE_handle : byte_LE_handle).get(addr, offset);
     }
 
@@ -520,7 +520,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the byte value to be written.
      */
-    public static void setByte(MemoryAddress addr, long offset, byte value) {
+    public static void setByteAtOffset(MemoryAddress addr, long offset, byte value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? byte_BE_handle : byte_LE_handle).set(addr, offset, value);
     }
 
@@ -536,7 +536,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static char getChar(MemoryAddress addr, long offset) {
+    public static char getCharAtOffset(MemoryAddress addr, long offset) {
         return (char)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? char_BE_handle : char_LE_handle).get(addr, offset);
     }
 
@@ -552,7 +552,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the char value to be written.
      */
-    public static void setChar(MemoryAddress addr, long offset, char value) {
+    public static void setCharAtOffset(MemoryAddress addr, long offset, char value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? char_BE_handle : char_LE_handle).set(addr, offset, value);
     }
 
@@ -568,7 +568,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static short getShort(MemoryAddress addr, long offset) {
+    public static short getShortAtOffset(MemoryAddress addr, long offset) {
         return (short)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).get(addr, offset);
     }
 
@@ -584,7 +584,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the short value to be written.
      */
-    public static void setShort(MemoryAddress addr, long offset, short value) {
+    public static void setShortAtOffset(MemoryAddress addr, long offset, short value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).set(addr, offset, value);
     }
 
@@ -600,7 +600,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static int getInt(MemoryAddress addr, long offset) {
+    public static int getIntAtOffset(MemoryAddress addr, long offset) {
         return (int)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).get(addr, offset);
     }
 
@@ -616,7 +616,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the int value to be written.
      */
-    public static void setInt(MemoryAddress addr, long offset, int value) {
+    public static void setIntAtOffset(MemoryAddress addr, long offset, int value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).set(addr, offset, value);
     }
 
@@ -632,7 +632,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static float getFloat(MemoryAddress addr, long offset) {
+    public static float getFloatAtOffset(MemoryAddress addr, long offset) {
         return (float)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? float_BE_handle : float_LE_handle).get(addr, offset);
     }
 
@@ -648,7 +648,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the float value to be written.
      */
-    public static void setFloat(MemoryAddress addr, long offset, float value) {
+    public static void setFloatAtOffset(MemoryAddress addr, long offset, float value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? float_BE_handle : float_LE_handle).set(addr, offset, value);
     }
 
@@ -664,7 +664,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static long getLong(MemoryAddress addr, long offset) {
+    public static long getLongAtOffset(MemoryAddress addr, long offset) {
         return (long)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle).get(addr, offset);
     }
 
@@ -680,7 +680,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the long value to be written.
      */
-    public static void setLong(MemoryAddress addr, long offset, long value) {
+    public static void setLongAtOffset(MemoryAddress addr, long offset, long value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle).set(addr, offset, value);
     }
 
@@ -696,7 +696,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static double getDouble(MemoryAddress addr, long offset) {
+    public static double getDoubleAtOffset(MemoryAddress addr, long offset) {
         return (double)((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? double_BE_handle : double_LE_handle).get(addr, offset);
     }
 
@@ -712,7 +712,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the double value to be written.
      */
-    public static void setDouble(MemoryAddress addr, long offset, double value) {
+    public static void setDoubleAtOffset(MemoryAddress addr, long offset, double value) {
         ((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? double_BE_handle : double_LE_handle).set(addr, offset, value);
     }
 
@@ -728,7 +728,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @return a memory address read from {@code addr} at the offset specified by {@code offset}.
      */
-    public static MemoryAddress getAddress(MemoryAddress addr, long offset) {
+    public static MemoryAddress getAddressAtOffset(MemoryAddress addr, long offset) {
         return (MemoryAddress)address_handle.get(addr, offset);
     }
 
@@ -744,7 +744,7 @@ public final class MemoryAccess {
      * @param offset offset (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(offset)}.
      * @param value the memory address to be written.
      */
-    public static void setAddress(MemoryAddress addr, long offset, MemoryAddress value) {
+    public static void setAddressAtOffset(MemoryAddress addr, long offset, MemoryAddress value) {
         address_handle.set(addr, offset, value);
     }
 
@@ -757,14 +757,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte_LE(addr, 0L);
+    byte value = getByteAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static byte getByte_LE(MemoryAddress addr) {
-        return getByte_LE(addr, 0L);
+        return getByteAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -772,13 +772,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte_LE(addr, 0L, value);
+    setByteAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the byte value to be written.
      */
     public static void setByte_LE(MemoryAddress addr, byte value) {
-        setByte_LE(addr, 0L, value);
+        setByteAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -786,13 +786,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar_LE(addr, 0L);
+    char value = getCharAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static char getChar_LE(MemoryAddress addr) {
-        return getChar_LE(addr, 0L);
+        return getCharAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -800,13 +800,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar_LE(addr, 0L, value);
+    setCharAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the char value to be written.
      */
     public static void setChar_LE(MemoryAddress addr, char value) {
-        setChar_LE(addr, 0L, value);
+        setCharAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -814,13 +814,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort_LE(addr, 0L);
+    short value = getShortAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static short getShort_LE(MemoryAddress addr) {
-        return getShort_LE(addr, 0L);
+        return getShortAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -828,13 +828,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort_LE(addr, 0L, value);
+    setShortAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the short value to be written.
      */
     public static void setShort_LE(MemoryAddress addr, short value) {
-        setShort_LE(addr, 0L, value);
+        setShortAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -842,13 +842,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt_LE(addr, 0L);
+    int value = getIntAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static int getInt_LE(MemoryAddress addr) {
-        return getInt_LE(addr, 0L);
+        return getIntAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -856,13 +856,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt_LE(addr, 0L, value);
+    setIntAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the int value to be written.
      */
     public static void setInt_LE(MemoryAddress addr, int value) {
-        setInt_LE(addr, 0L, value);
+        setIntAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -870,13 +870,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat_LE(addr, 0L);
+    float value = getFloatAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static float getFloat_LE(MemoryAddress addr) {
-        return getFloat_LE(addr, 0L);
+        return getFloatAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -884,13 +884,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat_LE(addr, 0L, value);
+    setFloatAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the float value to be written.
      */
     public static void setFloat_LE(MemoryAddress addr, float value) {
-        setFloat_LE(addr, 0L, value);
+        setFloatAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -898,13 +898,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    long value = getLong_LE(addr, 0L);
+    long value = getLongAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static long getLong_LE(MemoryAddress addr) {
-        return getLong_LE(addr, 0L);
+        return getLongAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -912,13 +912,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong_LE(addr, 0L, value);
+    setLongAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the long value to be written.
      */
     public static void setLong_LE(MemoryAddress addr, long value) {
-        setLong_LE(addr, 0L, value);
+        setLongAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -926,13 +926,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    double value = getDouble_LE(addr, 0L);
+    double value = getDoubleAtOffset_LE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static double getDouble_LE(MemoryAddress addr) {
-        return getDouble_LE(addr, 0L);
+        return getDoubleAtOffset_LE(addr, 0L);
     }
 
     /**
@@ -940,13 +940,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble_LE(addr, 0L, value);
+    setDoubleAtOffset_LE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the double value to be written.
      */
     public static void setDouble_LE(MemoryAddress addr, double value) {
-        setDouble_LE(addr, 0L, value);
+        setDoubleAtOffset_LE(addr, 0L, value);
     }
 
     /**
@@ -954,14 +954,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte_BE(addr, 0L);
+    byte value = getByteAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static byte getByte_BE(MemoryAddress addr) {
-        return getByte_BE(addr, 0L);
+        return getByteAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -969,13 +969,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte_BE(addr, 0L, value);
+    setByteAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the byte value to be written.
      */
     public static void setByte_BE(MemoryAddress addr, byte value) {
-        setByte_BE(addr, 0L, value);
+        setByteAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -983,13 +983,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar_BE(addr, 0L);
+    char value = getCharAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static char getChar_BE(MemoryAddress addr) {
-        return getChar_BE(addr, 0L);
+        return getCharAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -997,13 +997,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar_BE(addr, 0L, value);
+    setCharAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the char value to be written.
      */
     public static void setChar_BE(MemoryAddress addr, char value) {
-        setChar_BE(addr, 0L, value);
+        setCharAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1011,13 +1011,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort_BE(addr, 0L);
+    short value = getShortAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static short getShort_BE(MemoryAddress addr) {
-        return getShort_BE(addr, 0L);
+        return getShortAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -1025,13 +1025,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort_BE(addr, 0L, value);
+    setShortAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the short value to be written.
      */
     public static void setShort_BE(MemoryAddress addr, short value) {
-        setShort_BE(addr, 0L, value);
+        setShortAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1039,13 +1039,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt_BE(addr, 0L);
+    int value = getIntAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static int getInt_BE(MemoryAddress addr) {
-        return getInt_BE(addr, 0L);
+        return getIntAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -1053,13 +1053,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt_BE(addr, 0L, value);
+    setIntAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the int value to be written.
      */
     public static void setInt_BE(MemoryAddress addr, int value) {
-        setInt_BE(addr, 0L, value);
+        setIntAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1067,13 +1067,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat_BE(addr, 0L);
+    float value = getFloatAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static float getFloat_BE(MemoryAddress addr) {
-        return getFloat_BE(addr, 0L);
+        return getFloatAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -1081,13 +1081,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat_BE(addr, 0L, value);
+    setFloatAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the float value to be written.
      */
     public static void setFloat_BE(MemoryAddress addr, float value) {
-        setFloat_BE(addr, 0L, value);
+        setFloatAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1095,13 +1095,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    long value = getLong_BE(addr, 0L);
+    long value = getLongAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static long getLong_BE(MemoryAddress addr) {
-        return getLong_BE(addr, 0L);
+        return getLongAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -1109,13 +1109,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong_BE(addr, 0L, value);
+    setLongAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the long value to be written.
      */
     public static void setLong_BE(MemoryAddress addr, long value) {
-        setLong_BE(addr, 0L, value);
+        setLongAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1123,13 +1123,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    double value = getDouble_BE(addr, 0L);
+    double value = getDoubleAtOffset_BE(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static double getDouble_BE(MemoryAddress addr) {
-        return getDouble_BE(addr, 0L);
+        return getDoubleAtOffset_BE(addr, 0L);
     }
 
     /**
@@ -1137,13 +1137,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble_BE(addr, 0L, value);
+    setDoubleAtOffset_BE(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the double value to be written.
      */
     public static void setDouble_BE(MemoryAddress addr, double value) {
-        setDouble_BE(addr, 0L, value);
+        setDoubleAtOffset_BE(addr, 0L, value);
     }
 
     /**
@@ -1151,14 +1151,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte(addr, 0L);
+    byte value = getByteAtOffset(addr, 0L);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @return a byte value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static byte getByte(MemoryAddress addr) {
-        return getByte(addr, 0L);
+        return getByteAtOffset(addr, 0L);
     }
 
     /**
@@ -1166,13 +1166,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte(addr, 0L, value);
+    setByteAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the byte value to be written.
      */
     public static void setByte(MemoryAddress addr, byte value) {
-        setByte(addr, 0L, value);
+        setByteAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1180,13 +1180,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar(addr, 0L);
+    char value = getCharAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a char value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static char getChar(MemoryAddress addr) {
-        return getChar(addr, 0L);
+        return getCharAtOffset(addr, 0L);
     }
 
     /**
@@ -1194,13 +1194,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar(addr, 0L, value);
+    setCharAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the char value to be written.
      */
     public static void setChar(MemoryAddress addr, char value) {
-        setChar(addr, 0L, value);
+        setCharAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1208,13 +1208,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort(addr, 0L);
+    short value = getShortAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a short value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static short getShort(MemoryAddress addr) {
-        return getShort(addr, 0L);
+        return getShortAtOffset(addr, 0L);
     }
 
     /**
@@ -1222,13 +1222,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort(addr, 0L, value);
+    setShortAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the short value to be written.
      */
     public static void setShort(MemoryAddress addr, short value) {
-        setShort(addr, 0L, value);
+        setShortAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1236,13 +1236,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt(addr, 0L);
+    int value = getIntAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return an int value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static int getInt(MemoryAddress addr) {
-        return getInt(addr, 0L);
+        return getIntAtOffset(addr, 0L);
     }
 
     /**
@@ -1250,13 +1250,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt(addr, 0L, value);
+    setIntAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the int value to be written.
      */
     public static void setInt(MemoryAddress addr, int value) {
-        setInt(addr, 0L, value);
+        setIntAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1264,13 +1264,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat(addr, 0L);
+    float value = getFloatAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a float value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static float getFloat(MemoryAddress addr) {
-        return getFloat(addr, 0L);
+        return getFloatAtOffset(addr, 0L);
     }
 
     /**
@@ -1278,13 +1278,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat(addr, 0L, value);
+    setFloatAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the float value to be written.
      */
     public static void setFloat(MemoryAddress addr, float value) {
-        setFloat(addr, 0L, value);
+        setFloatAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1292,13 +1292,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    long value = getLong(addr, 0L);
+    long value = getLongAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a long value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static long getLong(MemoryAddress addr) {
-        return getLong(addr, 0L);
+        return getLongAtOffset(addr, 0L);
     }
 
     /**
@@ -1306,13 +1306,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong(addr, 0L, value);
+    setLongAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the long value to be written.
      */
     public static void setLong(MemoryAddress addr, long value) {
-        setLong(addr, 0L, value);
+        setLongAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1320,13 +1320,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    double value = getDouble(addr, 0L);
+    double value = getDoubleAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a double value read from {@code addr} at the offset specified by {@code offset}.
      */
     public static double getDouble(MemoryAddress addr) {
-        return getDouble(addr, 0L);
+        return getDoubleAtOffset(addr, 0L);
     }
 
     /**
@@ -1334,13 +1334,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble(addr, 0L, value);
+    setDoubleAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the double value to be written.
      */
     public static void setDouble(MemoryAddress addr, double value) {
-        setDouble(addr, 0L, value);
+        setDoubleAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1348,13 +1348,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    MemoryAddress value = getAddress(addr, 0L);
+    MemoryAddress value = getAddressAtOffset(addr, 0L);
      * }</pre></blockquote>
      * @param addr base address.
      * @return a memory address read from {@code addr} at the offset specified by {@code offset}.
      */
     public static MemoryAddress getAddress(MemoryAddress addr) {
-        return getAddress(addr, 0L);
+        return getAddressAtOffset(addr, 0L);
     }
 
     /**
@@ -1362,13 +1362,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setAddress(addr, 0L, value);
+    setAddressAtOffset(addr, 0L, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param value the memory address to be written.
      */
     public static void setAddress(MemoryAddress addr, MemoryAddress value) {
-        setAddress(addr, 0L, value);
+        setAddressAtOffset(addr, 0L, value);
     }
 
     /**
@@ -1376,15 +1376,15 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte_LE(addr, index);
+    byte value = getByteAtOffset_LE(addr, index);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @return a byte value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static byte getByteElement_LE(MemoryAddress addr, long index) {
-        return getByte_LE(addr, index);
+    public static byte getByteAtIndex_LE(MemoryAddress addr, long index) {
+        return getByteAtOffset_LE(addr, index);
     }
 
     /**
@@ -1392,14 +1392,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte_LE(addr, index, value);
+    setByteAtOffset_LE(addr, index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @param value the byte value to be written.
      */
-    public static void setByteElement_LE(MemoryAddress addr, long index, byte value) {
-        setByte_LE(addr, index, value);
+    public static void setByteAtIndex_LE(MemoryAddress addr, long index, byte value) {
+        setByteAtOffset_LE(addr, index, value);
     }
 
     /**
@@ -1407,14 +1407,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar_LE(addr, 2 * index);
+    char value = getCharAtOffset_LE(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static char getCharElement_LE(MemoryAddress addr, long index) {
-        return getChar_LE(addr, 2 * index);
+    public static char getCharAtIndex_LE(MemoryAddress addr, long index) {
+        return getCharAtOffset_LE(addr, 2 * index);
     }
 
     /**
@@ -1422,14 +1422,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar_LE(addr, 2 * index, value);
+    setCharAtOffset_LE(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the char value to be written.
      */
-    public static void setCharElement_LE(MemoryAddress addr, long index, char value) {
-        setChar_LE(addr, 2 * index, value);
+    public static void setCharAtIndex_LE(MemoryAddress addr, long index, char value) {
+        setCharAtOffset_LE(addr, 2 * index, value);
     }
 
     /**
@@ -1437,14 +1437,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort_LE(addr, 2 * index);
+    short value = getShortAtOffset_LE(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static short getShortElement_LE(MemoryAddress addr, long index) {
-        return getShort_LE(addr, 2 * index);
+    public static short getShortAtIndex_LE(MemoryAddress addr, long index) {
+        return getShortAtOffset_LE(addr, 2 * index);
     }
 
     /**
@@ -1452,14 +1452,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort_LE(addr, 2 * index, value);
+    setShortAtOffset_LE(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the short value to be written.
      */
-    public static void setShortElement_LE(MemoryAddress addr, long index, short value) {
-        setShort_LE(addr, 2 * index, value);
+    public static void setShortAtIndex_LE(MemoryAddress addr, long index, short value) {
+        setShortAtOffset_LE(addr, 2 * index, value);
     }
 
     /**
@@ -1467,14 +1467,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt_LE(addr, 4 * index);
+    int value = getIntAtOffset_LE(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static int getIntElement_LE(MemoryAddress addr, long index) {
-        return getInt_LE(addr, 4 * index);
+    public static int getIntAtIndex_LE(MemoryAddress addr, long index) {
+        return getIntAtOffset_LE(addr, 4 * index);
     }
 
     /**
@@ -1482,14 +1482,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt_LE(addr, 4 * index, value);
+    setIntAtOffset_LE(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the int value to be written.
      */
-    public static void setIntElement_LE(MemoryAddress addr, long index, int value) {
-        setInt_LE(addr, 4 * index, value);
+    public static void setIntAtIndex_LE(MemoryAddress addr, long index, int value) {
+        setIntAtOffset_LE(addr, 4 * index, value);
     }
 
     /**
@@ -1497,14 +1497,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat_LE(addr, 4 * index);
+    float value = getFloatAtOffset_LE(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static float getFloatElement_LE(MemoryAddress addr, long index) {
-        return getFloat_LE(addr, 4 * index);
+    public static float getFloatAtIndex_LE(MemoryAddress addr, long index) {
+        return getFloatAtOffset_LE(addr, 4 * index);
     }
 
     /**
@@ -1512,14 +1512,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat_LE(addr, 4 * index, value);
+    setFloatAtOffset_LE(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the float value to be written.
      */
-    public static void setFloatElement_LE(MemoryAddress addr, long index, float value) {
-        setFloat_LE(addr, 4 * index, value);
+    public static void setFloatAtIndex_LE(MemoryAddress addr, long index, float value) {
+        setFloatAtOffset_LE(addr, 4 * index, value);
     }
 
     /**
@@ -1527,14 +1527,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getLong_LE(addr, 8 * index);
+    return getLongAtOffset_LE(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static long getLongElement_LE(MemoryAddress addr, long index) {
-        return getLong_LE(addr, 8 * index);
+    public static long getLongAtIndex_LE(MemoryAddress addr, long index) {
+        return getLongAtOffset_LE(addr, 8 * index);
     }
 
     /**
@@ -1542,14 +1542,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong_LE(addr, 8 * index, value);
+    setLongAtOffset_LE(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the long value to be written.
      */
-    public static void setLongElement_LE(MemoryAddress addr, long index, long value) {
-        setLong_LE(addr, 8 * index, value);
+    public static void setLongAtIndex_LE(MemoryAddress addr, long index, long value) {
+        setLongAtOffset_LE(addr, 8 * index, value);
     }
 
     /**
@@ -1557,14 +1557,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getDouble_LE(addr, 8 * index);
+    return getDoubleAtOffset_LE(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static double getDoubleElement_LE(MemoryAddress addr, long index) {
-        return getDouble_LE(addr, 8 * index);
+    public static double getDoubleAtIndex_LE(MemoryAddress addr, long index) {
+        return getDoubleAtOffset_LE(addr, 8 * index);
     }
 
     /**
@@ -1572,14 +1572,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble_LE(addr, 8 * index, value);
+    setDoubleAtOffset_LE(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the double value to be written.
      */
-    public static void setDoubleElement_LE(MemoryAddress addr, long index, double value) {
-        setDouble_LE(addr, 8 * index, value);
+    public static void setDoubleAtIndex_LE(MemoryAddress addr, long index, double value) {
+        setDoubleAtOffset_LE(addr, 8 * index, value);
     }
 
     /**
@@ -1587,15 +1587,15 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte_BE(addr, index);
+    byte value = getByteAtOffset_BE(addr, index);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @return a byte value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static byte getByteElement_BE(MemoryAddress addr, long index) {
-        return getByte_BE(addr, index);
+    public static byte getByteAtIndex_BE(MemoryAddress addr, long index) {
+        return getByteAtOffset_BE(addr, index);
     }
 
     /**
@@ -1603,14 +1603,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte_BE(addr, index, value);
+    setByteAtOffset_BE(addr, index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @param value the byte value to be written.
      */
-    public static void setByteElement_BE(MemoryAddress addr, long index, byte value) {
-        setByte_BE(addr, index, value);
+    public static void setByteAtIndex_BE(MemoryAddress addr, long index, byte value) {
+        setByteAtOffset_BE(addr, index, value);
     }
 
     /**
@@ -1618,14 +1618,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar_BE(addr, 2 * index);
+    char value = getCharAtOffset_BE(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static char getCharElement_BE(MemoryAddress addr, long index) {
-        return getChar_BE(addr, 2 * index);
+    public static char getCharAtIndex_BE(MemoryAddress addr, long index) {
+        return getCharAtOffset_BE(addr, 2 * index);
     }
 
     /**
@@ -1633,14 +1633,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar_BE(addr, 2 * index, value);
+    setCharAtOffset_BE(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the char value to be written.
      */
-    public static void setCharElement_BE(MemoryAddress addr, long index, char value) {
-        setChar_BE(addr, 2 * index, value);
+    public static void setCharAtIndex_BE(MemoryAddress addr, long index, char value) {
+        setCharAtOffset_BE(addr, 2 * index, value);
     }
 
     /**
@@ -1648,14 +1648,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort_BE(addr, 2 * index);
+    short value = getShortAtOffset_BE(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static short getShortElement_BE(MemoryAddress addr, long index) {
-        return getShort_BE(addr, 2 * index);
+    public static short getShortAtIndex_BE(MemoryAddress addr, long index) {
+        return getShortAtOffset_BE(addr, 2 * index);
     }
 
     /**
@@ -1663,14 +1663,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort_BE(addr, 2 * index, value);
+    setShortAtOffset_BE(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the short value to be written.
      */
-    public static void setShortElement_BE(MemoryAddress addr, long index, short value) {
-        setShort_BE(addr, 2 * index, value);
+    public static void setShortAtIndex_BE(MemoryAddress addr, long index, short value) {
+        setShortAtOffset_BE(addr, 2 * index, value);
     }
 
     /**
@@ -1678,14 +1678,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt_BE(addr, 4 * index);
+    int value = getIntAtOffset_BE(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static int getIntElement_BE(MemoryAddress addr, long index) {
-        return getInt_BE(addr, 4 * index);
+    public static int getIntAtIndex_BE(MemoryAddress addr, long index) {
+        return getIntAtOffset_BE(addr, 4 * index);
     }
 
     /**
@@ -1693,14 +1693,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt_BE(addr, 4 * index, value);
+    setIntAtOffset_BE(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the int value to be written.
      */
-    public static void setIntElement_BE(MemoryAddress addr, long index, int value) {
-        setInt_BE(addr, 4 * index, value);
+    public static void setIntAtIndex_BE(MemoryAddress addr, long index, int value) {
+        setIntAtOffset_BE(addr, 4 * index, value);
     }
 
     /**
@@ -1708,14 +1708,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat_BE(addr, 4 * index);
+    float value = getFloatAtOffset_BE(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static float getFloatElement_BE(MemoryAddress addr, long index) {
-        return getFloat_BE(addr, 4 * index);
+    public static float getFloatAtIndex_BE(MemoryAddress addr, long index) {
+        return getFloatAtOffset_BE(addr, 4 * index);
     }
 
     /**
@@ -1723,14 +1723,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat_BE(addr, 4 * index, value);
+    setFloatAtOffset_BE(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the float value to be written.
      */
-    public static void setFloatElement_BE(MemoryAddress addr, long index, float value) {
-        setFloat_BE(addr, 4 * index, value);
+    public static void setFloatAtIndex_BE(MemoryAddress addr, long index, float value) {
+        setFloatAtOffset_BE(addr, 4 * index, value);
     }
 
     /**
@@ -1738,14 +1738,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getLong_BE(addr, 8 * index);
+    return getLongAtOffset_BE(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static long getLongElement_BE(MemoryAddress addr, long index) {
-        return getLong_BE(addr, 8 * index);
+    public static long getLongAtIndex_BE(MemoryAddress addr, long index) {
+        return getLongAtOffset_BE(addr, 8 * index);
     }
 
     /**
@@ -1753,14 +1753,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong_BE(addr, 8 * index, value);
+    setLongAtOffset_BE(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the long value to be written.
      */
-    public static void setLongElement_BE(MemoryAddress addr, long index, long value) {
-        setLong_BE(addr, 8 * index, value);
+    public static void setLongAtIndex_BE(MemoryAddress addr, long index, long value) {
+        setLongAtOffset_BE(addr, 8 * index, value);
     }
 
     /**
@@ -1768,14 +1768,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getDouble_BE(addr, 8 * index);
+    return getDoubleAtOffset_BE(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static double getDoubleElement_BE(MemoryAddress addr, long index) {
-        return getDouble_BE(addr, 8 * index);
+    public static double getDoubleAtIndex_BE(MemoryAddress addr, long index) {
+        return getDoubleAtOffset_BE(addr, 8 * index);
     }
 
     /**
@@ -1783,14 +1783,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble_BE(addr, 8 * index, value);
+    setDoubleAtOffset_BE(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the double value to be written.
      */
-    public static void setDoubleElement_BE(MemoryAddress addr, long index, double value) {
-        setDouble_BE(addr, 8 * index, value);
+    public static void setDoubleAtIndex_BE(MemoryAddress addr, long index, double value) {
+        setDoubleAtOffset_BE(addr, 8 * index, value);
     }
 
     /**
@@ -1798,15 +1798,15 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    byte value = getByte(addr, index);
+    byte value = getByteAtOffset(addr, index);
      * }</pre></blockquote>
      *
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @return a byte value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static byte getByteElement(MemoryAddress addr, long index) {
-        return getByte(addr, index);
+    public static byte getByteAtIndex(MemoryAddress addr, long index) {
+        return getByteAtOffset(addr, index);
     }
 
     /**
@@ -1814,14 +1814,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setByte(addr, index, value);
+    setByteAtOffset(addr, index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index)}.
      * @param value the byte value to be written.
      */
-    public static void setByteElement(MemoryAddress addr, long index, byte value) {
-        setByte(addr, index, value);
+    public static void setByteAtIndex(MemoryAddress addr, long index, byte value) {
+        setByteAtOffset(addr, index, value);
     }
 
     /**
@@ -1829,14 +1829,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    char value = getChar(addr, 2 * index);
+    char value = getCharAtOffset(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a char value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static char getCharElement(MemoryAddress addr, long index) {
-        return getChar(addr, 2 * index);
+    public static char getCharAtIndex(MemoryAddress addr, long index) {
+        return getCharAtOffset(addr, 2 * index);
     }
 
     /**
@@ -1844,14 +1844,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setChar(addr, 2 * index, value);
+    setCharAtOffset(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the char value to be written.
      */
-    public static void setCharElement(MemoryAddress addr, long index, char value) {
-        setChar(addr, 2 * index, value);
+    public static void setCharAtIndex(MemoryAddress addr, long index, char value) {
+        setCharAtOffset(addr, 2 * index, value);
     }
 
     /**
@@ -1859,14 +1859,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    short value = getShort(addr, 2 * index);
+    short value = getShortAtOffset(addr, 2 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @return a short value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static short getShortElement(MemoryAddress addr, long index) {
-        return getShort(addr, 2 * index);
+    public static short getShortAtIndex(MemoryAddress addr, long index) {
+        return getShortAtOffset(addr, 2 * index);
     }
 
     /**
@@ -1874,14 +1874,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setShort(addr, 2 * index, value);
+    setShortAtOffset(addr, 2 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 2)}.
      * @param value the short value to be written.
      */
-    public static void setShortElement(MemoryAddress addr, long index, short value) {
-        setShort(addr, 2 * index, value);
+    public static void setShortAtIndex(MemoryAddress addr, long index, short value) {
+        setShortAtOffset(addr, 2 * index, value);
     }
 
     /**
@@ -1889,14 +1889,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    int value = getInt(addr, 4 * index);
+    int value = getIntAtOffset(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return an int value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static int getIntElement(MemoryAddress addr, long index) {
-        return getInt(addr, 4 * index);
+    public static int getIntAtIndex(MemoryAddress addr, long index) {
+        return getIntAtOffset(addr, 4 * index);
     }
 
     /**
@@ -1904,14 +1904,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setInt(addr, 4 * index, value);
+    setIntAtOffset(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the int value to be written.
      */
-    public static void setIntElement(MemoryAddress addr, long index, int value) {
-        setInt(addr, 4 * index, value);
+    public static void setIntAtIndex(MemoryAddress addr, long index, int value) {
+        setIntAtOffset(addr, 4 * index, value);
     }
 
     /**
@@ -1919,14 +1919,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    float value = getFloat(addr, 4 * index);
+    float value = getFloatAtOffset(addr, 4 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @return a float value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static float getFloatElement(MemoryAddress addr, long index) {
-        return getFloat(addr, 4 * index);
+    public static float getFloatAtIndex(MemoryAddress addr, long index) {
+        return getFloatAtOffset(addr, 4 * index);
     }
 
     /**
@@ -1934,14 +1934,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setFloat(addr, 4 * index, value);
+    setFloatAtOffset(addr, 4 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 4)}.
      * @param value the float value to be written.
      */
-    public static void setFloatElement(MemoryAddress addr, long index, float value) {
-        setFloat(addr, 4 * index, value);
+    public static void setFloatAtIndex(MemoryAddress addr, long index, float value) {
+        setFloatAtOffset(addr, 4 * index, value);
     }
 
     /**
@@ -1949,14 +1949,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getLong(addr, 8 * index);
+    return getLongAtOffset(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a long value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static long getLongElement(MemoryAddress addr, long index) {
-        return getLong(addr, 8 * index);
+    public static long getLongAtIndex(MemoryAddress addr, long index) {
+        return getLongAtOffset(addr, 8 * index);
     }
 
     /**
@@ -1964,14 +1964,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setLong(addr, 8 * index, value);
+    setLongAtOffset(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the long value to be written.
      */
-    public static void setLongElement(MemoryAddress addr, long index, long value) {
-        setLong(addr, 8 * index, value);
+    public static void setLongAtIndex(MemoryAddress addr, long index, long value) {
+        setLongAtOffset(addr, 8 * index, value);
     }
 
     /**
@@ -1979,14 +1979,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getDouble(addr, 8 * index);
+    return getDoubleAtOffset(addr, 8 * index);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a double value read from {@code addr} at the element index specified by {@code index}.
      */
-    public static double getDoubleElement(MemoryAddress addr, long index) {
-        return getDouble(addr, 8 * index);
+    public static double getDoubleAtIndex(MemoryAddress addr, long index) {
+        return getDoubleAtOffset(addr, 8 * index);
     }
 
     /**
@@ -1994,14 +1994,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setDouble(addr, 8 * index, value);
+    setDoubleAtOffset(addr, 8 * index, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the double value to be written.
      */
-    public static void setDoubleElement(MemoryAddress addr, long index, double value) {
-        setDouble(addr, 8 * index, value);
+    public static void setDoubleAtIndex(MemoryAddress addr, long index, double value) {
+        setDoubleAtOffset(addr, 8 * index, value);
     }
 
     /**
@@ -2009,14 +2009,14 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    return getAddress(addr, index * 8);
+    return getAddressAtOffset(addr, index * 8);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @return a memory address read from {@code addr} at the element index specified by {@code index}.
      */
-    public static MemoryAddress getAddressElement(MemoryAddress addr, long index) {
-        return getAddress(addr, index * 8);
+    public static MemoryAddress getAddressAtIndex(MemoryAddress addr, long index) {
+        return getAddressAtOffset(addr, index * 8);
     }
 
     /**
@@ -2024,13 +2024,13 @@ public final class MemoryAccess {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    setAddress(addr, index * 8, value);
+    setAddressAtOffset(addr, index * 8, value);
      * }</pre></blockquote>
      * @param addr base address.
      * @param index element index (relative to {@code addr}). The final address of this read operation can be expressed as {@code addr.addOffset(index * 8)}.
      * @param value the memory address to be written.
      */
-    public static void setAddressElement(MemoryAddress addr, long index, MemoryAddress value) {
-        setAddress(addr, index * 8, value);
+    public static void setAddressAtIndex(MemoryAddress addr, long index, MemoryAddress value) {
+        setAddressAtOffset(addr, index * 8, value);
     }
 }
