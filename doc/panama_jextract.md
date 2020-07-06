@@ -276,10 +276,6 @@ import static blas.cblas_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 public class TestBlas {
-    private static double getDouble(MemoryAddress addr, int element) {
-        return MemoryAccess.getDouble(addr, element*C_DOUBLE.byteSize());
-    }
-
     public static void main(String[] args) {
         int Layout;
         int transa;
@@ -313,12 +309,11 @@ public class TestBlas {
             cblas_dgemv(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);
             /* Print y */
             for (i = 0; i < n; i++) {
-                System.out.print(String.format(" y%d = %f\n", i, getDouble(y, i)));
+                System.out.print(String.format(" y%d = %f\n", i, MemoryAccess.getDoubleAtIndex(y, i)));
             }
         }
     }
 }
-
 ```
 
 ### Compiling and running the above BLAS sample
@@ -402,7 +397,7 @@ public class TestLapack {
         System.out.printf("\n %s\n", msg);
 
         for( i = 0; i < m; i++ ) {
-            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", MemoryAccess.getDouble(mat, C_DOUBLE.byteSize()*(i+j*ldm)));
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", MemoryAccess.getDoubleAtIndex(mat, i+j*ldm));
             System.out.printf( "\n" );
         }
     }
@@ -510,7 +505,6 @@ jextract \
 
 ```java
 
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeScope;
 import static com.github.git2_h.*;
@@ -526,14 +520,14 @@ public class GitClone {
           git_libgit2_init();
           try (var scope = NativeScope.unboundedScope()) {
               var repo = scope.allocate(C_POINTER);
-              MemoryAccess.setAddress(repo, 0, NULL);
               var url = toCString(args[0], scope);
               var path = toCString(args[1], scope);
               System.out.println(git_clone(repo, url, path, NULL));
-          }          
+          }
           git_libgit2_shutdown();
     }
 }
+
 ```
 
 ### Compiling and running the libgit2 sample
@@ -565,7 +559,7 @@ sh run.sh https://github.com/libgit2/libgit2.git libgit2
 jextract \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sqlite3.h \
-  -t org.sqlite -lsqlite3 
+  -t org.sqlite -lsqlite3
 
 ```
 ### Java program that uses sqlite3
@@ -581,23 +575,13 @@ import static org.sqlite.RuntimeHelper.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 public class SqliteMain {
-   private static MemoryAddress getPointer(MemoryAddress addr) {
-       return getPointer(addr, 0);
-   }
-
-   private static MemoryAddress getPointer(MemoryAddress addr, int element) {
-       return MemoryAccess.getAddress(addr, element*C_POINTER.byteSize());
-   }
-
    public static void main(String[] args) throws Exception {
         try (var scope = NativeScope.unboundedScope()) {
             // char** errMsgPtrPtr;
             var errMsgPtrPtr = scope.allocate(C_POINTER);
-            MemoryAccess.setAddress(errMsgPtrPtr, 0, NULL);
 
             // sqlite3** dbPtrPtr;
             var dbPtrPtr = scope.allocate(C_POINTER);
-            MemoryAccess.setAddress(dbPtrPtr, 0, NULL);
 
             int rc = sqlite3_open(toCString("employee.db",scope), dbPtrPtr);
             if (rc != 0) {
@@ -608,7 +592,7 @@ public class SqliteMain {
             }
 
             // sqlite3* dbPtr;
-            var dbPtr = getPointer(dbPtrPtr);
+            var dbPtr = MemoryAccess.getAddress(dbPtrPtr);
 
             // create a new table
             var sql = toCString(
@@ -621,8 +605,8 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
-                sqlite3_free(getPointer(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("employee table created");
             }
@@ -638,8 +622,8 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
-                sqlite3_free(getPointer(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("rows inserted");
             }
@@ -652,8 +636,8 @@ public class SqliteMain {
                 argv = asArrayRestricted(argv, C_POINTER, argc);
                 columnNames = asArrayRestricted(columnNames, C_POINTER, argc);
                 for (int i = 0; i < argc; i++) {
-                     String name = toJavaStringRestricted(getPointer(columnNames, i));
-                     String value = toJavaStringRestricted(getPointer(argv, i));
+                     String name = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(columnNames, i));
+                     String value = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(argv, i));
                      System.out.printf("%s = %s\n", name, value);
                 }
                 return 0;
@@ -665,8 +649,8 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(getPointer(errMsgPtrPtr)));
-                sqlite3_free(getPointer(errMsgPtrPtr));
+                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("done");
             }
