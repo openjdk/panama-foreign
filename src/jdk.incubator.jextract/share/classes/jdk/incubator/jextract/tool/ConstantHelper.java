@@ -27,6 +27,7 @@ package jdk.incubator.jextract.tool;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -99,6 +100,13 @@ class ConstantHelper {
             desc(methodType(MemoryAddress.class))
     );
 
+    private static final DirectMethodHandleDesc MH_MemoryHandles_asAddressVarHandle = MethodHandleDesc.ofMethod(
+            Kind.STATIC,
+            desc(MemoryHandles.class),
+            "asAddressVarHandle",
+            desc(methodType(VarHandle.class, VarHandle.class))
+    );
+
     private static final DirectMethodHandleDesc BSM_GET_STATIC_FINAL = ConstantDescs.ofConstantBootstrap(
             CD_ConstantBootstraps,
             "getStaticFinal",
@@ -122,6 +130,17 @@ class ConstantHelper {
     private final ConstantDesc LIBRARIES;
 
     private final Map<String, DirectMethodHandleDesc> pool = new HashMap<>();
+
+    private static final Map<Class<?>, ClassDesc> CARRIERS = Map.ofEntries(
+            Map.entry(Byte.TYPE,                desc(Byte.TYPE)),
+            Map.entry(Short.TYPE,               desc(Short.TYPE)),
+            Map.entry(Character.TYPE,           desc(Character.TYPE)),
+            Map.entry(Integer.TYPE,             desc(Integer.TYPE)),
+            Map.entry(Long.TYPE,                desc(Long.TYPE)),
+            Map.entry(Float.TYPE,               desc(Float.TYPE)),
+            Map.entry(Double.TYPE,              desc(Double.TYPE)),
+            Map.entry(MemoryAddress.class,      desc(Long.TYPE))
+    );
 
     ConstantHelper(String parentClassName, ClassDesc runtimeHelper, ClassDesc cString, String[] libraryNames) {
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -408,16 +427,25 @@ class ConstantHelper {
         return DynamicConstantDesc.ofNamed(BSM_INVOKE, "VH_" + name, CD_VarHandle, MH_MemoryLayout_varHandle, memoryLayout, carrier);
     }
 
+    private static ConstantDesc addressVarHandleDesc(String name, ConstantDesc varHandle) {
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "VH_" + name, CD_VarHandle, MH_MemoryHandles_asAddressVarHandle, varHandle);
+    }
+
     private static ConstantDesc groupElementDesc(String fieldName) {
         return DynamicConstantDesc.ofNamed(BSM_INVOKE, "groupElement_" + fieldName, CD_PathElelemt, MH_PathElement_groupElement, fieldName);
     }
 
     private static ConstantDesc varHandleDesc(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        if (parentLayout != null) {
-            return varHandleDesc(javaName, desc(parentLayout), desc(type), groupElementDesc(nativeName));
-        } else {
-            return varHandleDesc(javaName, desc(layout), desc(type));
+        var carrier = CARRIERS.get(type);
+        if (carrier == null) {
+            carrier = desc(type);
         }
+
+        var varHandle = parentLayout != null ?
+                varHandleDesc(javaName, desc(parentLayout), carrier, groupElementDesc(nativeName)) :
+                varHandleDesc(javaName, desc(layout), carrier);
+
+        return type == MemoryAddress.class ? addressVarHandleDesc(javaName, varHandle) : varHandle;
     }
 
     private ConstantDesc globalVarAddressDesc(String name, MemoryLayout layout) {
