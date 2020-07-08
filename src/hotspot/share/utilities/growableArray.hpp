@@ -31,6 +31,7 @@
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/ostream.hpp"
 #include "utilities/powerOfTwo.hpp"
+#include "utilities/ostream.hpp"
 
 // A growable array.
 
@@ -124,6 +125,21 @@ protected:
   ~GrowableArrayView() {}
 
 public:
+  bool operator==(const GrowableArrayView<E>& rhs) const {
+    if (_len != rhs._len)
+      return false;
+    for (int i = 0; i < _len; i++) {
+      if (at(i) != rhs.at(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool operator!=(const GrowableArrayView<E>& rhs) const {
+    return !(*this == rhs);
+  }
+
   E& at(int i) {
     assert(0 <= i && i < _len, "illegal index");
     return _data[i];
@@ -285,13 +301,17 @@ public:
     return min;
   }
 
-  void print() {
-    tty->print("Growable Array " INTPTR_FORMAT, this);
-    tty->print(": length %ld (_max %ld) { ", _len, _max);
+  void print_on(outputStream *st) const {
+    st->print("Growable Array " INTPTR_FORMAT, (intptr_t) this);
+    st->print(": length %d (_max %d) { ", _len, _max);
     for (int i = 0; i < _len; i++) {
-      tty->print(INTPTR_FORMAT " ", *(intptr_t*)&(_data[i]));
+      st->print(INTPTR_FORMAT " ", *(intptr_t*)&(_data[i]));
     }
-    tty->print("}\n");
+    st->print("}\n");
+  }
+
+  void print() {
+    print_on(tty);
   }
 };
 

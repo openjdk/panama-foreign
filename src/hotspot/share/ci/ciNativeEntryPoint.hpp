@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,28 +19,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
 
+#ifndef SHARE_VM_CI_CINATIVEENTRYPOINT_HPP
+#define SHARE_VM_CI_CINATIVEENTRYPOINT_HPP
 
-package org.graalvm.compiler.nodes.graphbuilderconf;
+#include "ci/ciInstance.hpp"
+#include "ci/ciMethodType.hpp"
 
-import org.graalvm.compiler.core.common.type.Stamp;
+#include "code/vmreg.hpp"
 
-public interface NodeIntrinsicPluginFactory {
+// ciNativeEntryPoint
+//
+// The class represents a java.lang.invoke.NativeEntryPoint object.
+class ciNativeEntryPoint : public ciInstance {
+private:
+  const char* _name;
+  VMReg* _arg_moves;
+  VMReg* _ret_moves;
+public:
+  ciNativeEntryPoint(instanceHandle h_i);
 
-    public interface InjectionProvider {
+  // What kind of ciObject is this?
+  bool is_native_entry_point() const { return true; }
 
-        <T> T getInjectedArgument(Class<T> type);
+  address        entry_point() const;
+  jint           shadow_space() const;
+  VMReg*         argMoves() const;
+  VMReg*        returnMoves() const;
+  jboolean       need_transition() const;
+  ciMethodType*  method_type() const;
+  const char*    name();
+};
 
-        /**
-         * Gets a stamp denoting a given type and non-nullness property.
-         *
-         * @param type the type the returned stamp represents
-         * @param nonNull specifies if the returned stamp denotes a value that is guaranteed to be
-         *            non-null
-         */
-        Stamp getInjectedStamp(Class<?> type, boolean nonNull);
-    }
-
-    void registerPlugins(InvocationPlugins plugins, InjectionProvider injection);
-}
+#endif // SHARE_VM_CI_CINATIVEENTRYPOINT_HPP

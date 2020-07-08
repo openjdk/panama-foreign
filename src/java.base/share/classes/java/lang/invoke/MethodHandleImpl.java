@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package java.lang.invoke;
 
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.reflect.CallerSensitive;
@@ -1831,6 +1832,11 @@ abstract class MethodHandleImpl {
             @Override
             public long[] memoryAddressStrides(VarHandle handle) {
                 return checkMemoryAccessHandle(handle).strides();
+            }
+
+            @Override
+            public MethodHandle nativeMethodHandle(NativeEntryPoint nep, MethodHandle fallback) {
+                return NativeMethodHandle.make(nep, fallback);
             }
 
             @Override

@@ -120,6 +120,7 @@ extern "C" {
   void JNICALL JVM_RegisterUpcallHandlerMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterProgrammableUpcallHandlerMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterProgrammableInvokerMethods(JNIEnv *env, jclass unsafecls);
+  void JNICALL JVM_RegisterNativeEntryPointMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterPerfMethods(JNIEnv *env, jclass perfclass);
   void JNICALL JVM_RegisterWhiteBoxMethods(JNIEnv *env, jclass wbclass);
 #if INCLUDE_JVMCI
@@ -137,6 +138,7 @@ static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_jdk_internal_foreign_abi_UpcallStubs_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },
   { CC"Java_jdk_internal_foreign_abi_ProgrammableUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterProgrammableUpcallHandlerMethods) },
   { CC"Java_jdk_internal_foreign_abi_ProgrammableInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterProgrammableInvokerMethods) },
+  { CC"Java_jdk_internal_invoke_NativeEntryPoint_registerNatives",      NULL, FN_PTR(JVM_RegisterNativeEntryPointMethods) },
   { CC"Java_jdk_internal_perf_Perf_registerNatives",               NULL, FN_PTR(JVM_RegisterPerfMethods)         },
   { CC"Java_sun_hotspot_WhiteBox_registerNatives",                 NULL, FN_PTR(JVM_RegisterWhiteBoxMethods)     },
 #if INCLUDE_JVMCI

@@ -45,6 +45,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
 import static jdk.incubator.foreign.CSupport.C_DOUBLE;
+import static jdk.incubator.foreign.CSupport.C_FLOAT;
 import static jdk.incubator.foreign.CSupport.C_INT;
 import static jdk.incubator.foreign.CSupport.C_LONGLONG;
 import static jdk.incubator.foreign.CSupport.C_POINTER;
@@ -75,6 +76,12 @@ public class VaListTest {
     private static final MethodHandle MH_sumBigStruct = link("sumBigStruct",
             MethodType.methodType(long.class, VaList.class),
             FunctionDescriptor.of(C_LONGLONG, C_VA_LIST));
+    private static final MethodHandle MH_sumHugeStruct = link("sumHugeStruct",
+            MethodType.methodType(long.class, VaList.class),
+            FunctionDescriptor.of(C_LONGLONG, C_VA_LIST));
+    private static final MethodHandle MH_sumFloatStruct = link("sumFloatStruct",
+            MethodType.methodType(float.class, VaList.class),
+            FunctionDescriptor.of(C_FLOAT, C_VA_LIST));
     private static final MethodHandle MH_sumStack = link("sumStack",
             MethodType.methodType(void.class, MemoryAddress.class, MemoryAddress.class, int.class,
                 long.class, long.class, long.class, long.class,
@@ -127,6 +134,20 @@ public class VaListTest {
     );
     private static final VarHandle VH_Point_x = Point_LAYOUT.varHandle(int.class, groupElement("x"));
     private static final VarHandle VH_Point_y = Point_LAYOUT.varHandle(int.class, groupElement("y"));
+    private static final GroupLayout FloatPoint_LAYOUT = MemoryLayout.ofStruct(
+        C_FLOAT.withName("x"),
+        C_FLOAT.withName("y")
+    );
+    private static final VarHandle VH_FloatPoint_x = FloatPoint_LAYOUT.varHandle(float.class, groupElement("x"));
+    private static final VarHandle VH_FloatPoint_y = FloatPoint_LAYOUT.varHandle(float.class, groupElement("y"));
+    private static final GroupLayout HugePoint_LAYOUT = MemoryLayout.ofStruct(
+        C_LONGLONG.withName("x"),
+        C_LONGLONG.withName("y"),
+        C_LONGLONG.withName("z")
+    );
+    private static final VarHandle VH_HugePoint_x = HugePoint_LAYOUT.varHandle(long.class, groupElement("x"));
+    private static final VarHandle VH_HugePoint_y = HugePoint_LAYOUT.varHandle(long.class, groupElement("y"));
+    private static final VarHandle VH_HugePoint_z = HugePoint_LAYOUT.varHandle(long.class, groupElement("z"));
 
     @Test
     public void testIntSum() throws Throwable {
@@ -183,6 +204,35 @@ public class VaListTest {
             try (VaList vaList = VaList.make(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
                 long sum = (long) MH_sumBigStruct.invokeExact(vaList);
                 assertEquals(sum, 15);
+            }
+        }
+    }
+
+    @Test
+    public void testFloatStructByValue() throws Throwable {
+        try (MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT)) {
+            VH_FloatPoint_x.set(struct.baseAddress(), 1.234f);
+            VH_FloatPoint_y.set(struct.baseAddress(), 3.142f);
+
+            try (VaList vaList = VaList.make(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct))) {
+                float sum = (float) MH_sumFloatStruct.invokeExact(vaList);
+                assertEquals(sum, 4.376f, 0.00001f);
+            }
+        }
+    }
+
+    @Test
+    public void testHugeStructByValue() throws Throwable {
+        // On AArch64 a struct needs to be larger than 16 bytes to be
+        // passed by reference.
+        try (MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT)) {
+            VH_HugePoint_x.set(struct.baseAddress(), 1);
+            VH_HugePoint_y.set(struct.baseAddress(), 2);
+            VH_HugePoint_z.set(struct.baseAddress(), 3);
+
+            try (VaList vaList = VaList.make(b -> b.vargFromSegment(HugePoint_LAYOUT, struct))) {
+                long sum = (long) MH_sumHugeStruct.invokeExact(vaList);
+                assertEquals(sum, 6);
             }
         }
     }
@@ -257,6 +307,19 @@ public class VaListTest {
                 try (MemorySegment struct = vaList.vargAsSegment(Point_LAYOUT)) {
                     assertEquals((int) VH_Point_x.get(struct.baseAddress()), 5);
                     assertEquals((int) VH_Point_y.get(struct.baseAddress()), 10);
+                }
+            })},
+            { linkVaListCB("upcallHugeStruct"), VaListConsumer.mh(vaList -> {
+                try (MemorySegment struct = vaList.vargAsSegment(HugePoint_LAYOUT)) {
+                    assertEquals((long) VH_HugePoint_x.get(struct.baseAddress()), 1);
+                    assertEquals((long) VH_HugePoint_y.get(struct.baseAddress()), 2);
+                    assertEquals((long) VH_HugePoint_z.get(struct.baseAddress()), 3);
+                }
+            })},
+            { linkVaListCB("upcallFloatStruct"), VaListConsumer.mh(vaList -> {
+                try (MemorySegment struct = vaList.vargAsSegment(FloatPoint_LAYOUT)) {
+                    assertEquals((float) VH_FloatPoint_x.get(struct.baseAddress()), 1.0f);
+                    assertEquals((float) VH_FloatPoint_y.get(struct.baseAddress()), 2.0f);
                 }
             })},
             { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {

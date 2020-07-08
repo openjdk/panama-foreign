@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,9 @@
  */
 package jdk.internal.foreign.abi;
 
-public class ABIDescriptor {
+import jdk.internal.invoke.ABIDescriptorProxy;
+
+public class ABIDescriptor implements ABIDescriptorProxy {
     final Architecture arch;
 
     public final VMStorage[][] inputStorage;
@@ -33,7 +35,7 @@ public class ABIDescriptor {
     final int stackAlignment;
     final int shadowSpace;
 
-    public ABIDescriptor(Architecture arch, jdk.internal.foreign.abi.VMStorage[][] inputStorage, jdk.internal.foreign.abi.VMStorage[][] outputStorage,
+    public ABIDescriptor(Architecture arch, VMStorage[][] inputStorage, VMStorage[][] outputStorage,
                          VMStorage[][] volatileStorage, int stackAlignment, int shadowSpace) {
         this.arch = arch;
         this.inputStorage = inputStorage;
@@ -41,5 +43,10 @@ public class ABIDescriptor {
         this.volatileStorage = volatileStorage;
         this.stackAlignment = stackAlignment;
         this.shadowSpace = shadowSpace;
+    }
+
+    @Override
+    public int shadowSpaceBytes() {
+        return shadowSpace;
     }
 }

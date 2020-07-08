@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2019, Arm Limited. All rights reserved.
+ * Copyright (c) 2019, 2020, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,6 @@ import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
  */
 public class CallArranger {
     private static final int STACK_SLOT_SIZE = 8;
-    private static final int MAX_AGGREGATE_REGS_SIZE = 2;
     public static final int MAX_REGISTER_ARGUMENTS = 8;
 
     private static final VMStorage INDIRECT_RESULT = r8;
@@ -120,6 +119,8 @@ public class CallArranger {
             csb.addArgumentBindings(carrier, layout, argCalc.getBindings(carrier, layout));
         }
 
+        csb.setTrivial(SharedUtils.isTrivial(cDesc));
+
         return new Bindings(csb.build(), returnInMemory);
     }
 
@@ -148,93 +149,8 @@ public class CallArranger {
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
         return returnLayout
             .filter(GroupLayout.class::isInstance)
-            .filter(g -> !isRegisterAggregate(g) && !isHomogeneousFloatAggregate(g))
+            .filter(g -> TypeClass.classifyLayout(g) == TypeClass.STRUCT_REFERENCE)
             .isPresent();
-    }
-
-    private enum TypeClass {
-        STRUCT_REGISTER,
-        STRUCT_REFERENCE,
-        STRUCT_HFA,
-        POINTER,
-        INTEGER,
-        FLOAT,
-    }
-
-    private static TypeClass classifyValueType(ValueLayout type) {
-        AArch64.ArgumentClass clazz = AArch64Linker.argumentClassFor(type);
-        if (clazz == null) {
-            //padding not allowed here
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
-
-        if (clazz == AArch64.ArgumentClass.INTEGER) {
-            return TypeClass.INTEGER;
-        } else if(clazz == AArch64.ArgumentClass.POINTER) {
-            return TypeClass.POINTER;
-        } else if (clazz == AArch64.ArgumentClass.VECTOR) {
-            return TypeClass.FLOAT;
-        }
-        throw new IllegalArgumentException("Unknown ABI class: " + clazz);
-    }
-
-    static boolean isRegisterAggregate(MemoryLayout type) {
-        return type.bitSize() <= MAX_AGGREGATE_REGS_SIZE * 64;
-    }
-
-    static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
-        if (!(type instanceof GroupLayout))
-            return false;
-
-        GroupLayout groupLayout = (GroupLayout)type;
-
-        final int numElements = groupLayout.memberLayouts().size();
-        if (numElements > 4 || numElements == 0)
-            return false;
-
-        MemoryLayout baseType = groupLayout.memberLayouts().get(0);
-
-        if (!(baseType instanceof ValueLayout))
-            return false;
-
-        AArch64.ArgumentClass baseArgClass = AArch64Linker.argumentClassFor(baseType);
-        if (baseArgClass != AArch64.ArgumentClass.VECTOR)
-           return false;
-
-        for (MemoryLayout elem : groupLayout.memberLayouts()) {
-            if (!(elem instanceof ValueLayout))
-                return false;
-
-            AArch64.ArgumentClass argClass = AArch64Linker.argumentClassFor(elem);
-            if (elem.bitSize() != baseType.bitSize() ||
-                    elem.bitAlignment() != baseType.bitAlignment() ||
-                    baseArgClass != argClass) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static TypeClass classifyStructType(MemoryLayout layout) {
-        if (isHomogeneousFloatAggregate(layout)) {
-            return TypeClass.STRUCT_HFA;
-        } else if (isRegisterAggregate(layout)) {
-            return TypeClass.STRUCT_REGISTER;
-        }
-        return TypeClass.STRUCT_REFERENCE;
-    }
-
-    private static TypeClass classifyType(MemoryLayout type) {
-        if (type instanceof ValueLayout) {
-            return classifyValueType((ValueLayout) type);
-        } else if (type instanceof  GroupLayout) {
-            return classifyStructType(type);
-        } else if (type instanceof SequenceLayout) {
-            return TypeClass.INTEGER;
-        } else {
-            throw new IllegalArgumentException("Unhandled type " + type);
-        }
     }
 
     static class StorageCalculator {
@@ -360,7 +276,7 @@ public class CallArranger {
 
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyType(layout);
+            TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
                 case STRUCT_REGISTER: {
@@ -460,7 +376,7 @@ public class CallArranger {
 
         @Override
         List<Binding> getBindings(Class<?> carrier, MemoryLayout layout) {
-            TypeClass argumentClass = classifyType(layout);
+            TypeClass argumentClass = TypeClass.classifyLayout(layout);
             Binding.Builder bindings = Binding.builder();
             switch (argumentClass) {
                 case STRUCT_REGISTER: {

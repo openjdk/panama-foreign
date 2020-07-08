@@ -213,7 +213,8 @@ public class SysVVaList implements VaList {
     private Object read(Class<?> carrier, MemoryLayout layout) {
         checkCompatibleType(carrier, layout, SysVx64Linker.ADDRESS_SIZE);
         TypeClass typeClass = TypeClass.classifyLayout(layout);
-        if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass)) {
+        if (isRegOverflow(currentGPOffset(), currentFPOffset(), typeClass)
+                || typeClass.inMemory()) {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
@@ -366,7 +367,8 @@ public class SysVVaList implements VaList {
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
             checkCompatibleType(carrier, layout, SysVx64Linker.ADDRESS_SIZE);
             TypeClass typeClass = TypeClass.classifyLayout(layout);
-            if (isRegOverflow(currentGPOffset, currentFPOffset, typeClass)) {
+            if (isRegOverflow(currentGPOffset, currentFPOffset, typeClass)
+                    || typeClass.inMemory()) {
                 // stack it!
                 stackArgs.add(new SimpleVaArg(carrier, layout, value));
             } else {
@@ -424,8 +426,14 @@ public class SysVVaList implements VaList {
                     if (arg.layout.byteSize() > 8) {
                         maOverflowArgArea = Utils.alignUp(maOverflowArgArea, Math.min(16, arg.layout.byteSize()));
                     }
-                    VarHandle writer = arg.varHandle();
-                    writer.set(maOverflowArgArea, arg.value);
+                    if (arg.value instanceof MemorySegment) {
+                        MemorySegment slice
+                            = stackArgsSegment.asSlice(maOverflowArgArea.segmentOffset(), arg.layout.byteSize());
+                        slice.copyFrom((MemorySegment) arg.value);
+                    } else {
+                        VarHandle writer = arg.varHandle();
+                        writer.set(maOverflowArgArea, arg.value);
+                    }
                     maOverflowArgArea = maOverflowArgArea.addOffset(arg.layout.byteSize());
                 }
                 stackArgsPtr = stackArgsSegment.baseAddress();

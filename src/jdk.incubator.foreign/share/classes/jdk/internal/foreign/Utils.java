@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -143,4 +144,5 @@ public final class Utils {
         if (!layoutType.isInstance(layout))
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
+
 }

@@ -62,6 +62,8 @@ public class CallOverhead {
     static final MethodHandle identity_memory_address;
     static final MethodHandle args5;
     static final MethodHandle args10;
+    static final MethodHandle func_trivial;
+    static final MethodHandle identity_trivial;
 
     static final MemoryLayout POINT_LAYOUT = MemoryLayout.ofStruct(
         C_LONGLONG, C_LONGLONG
@@ -74,19 +76,27 @@ public class CallOverhead {
 
         try {
             LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
-            func = abi.downcallHandle(ll.lookup("func"),
-                    MethodType.methodType(void.class),
-                    FunctionDescriptor.ofVoid());
-            identity = abi.downcallHandle(ll.lookup("identity"),
-                    MethodType.methodType(int.class, int.class),
-                    FunctionDescriptor.of(C_INT, C_INT));
+            {
+                MemoryAddress addr = ll.lookup("func");
+                MethodType mt = MethodType.methodType(void.class);
+                FunctionDescriptor fd = FunctionDescriptor.ofVoid();
+                func = abi.downcallHandle(addr, mt, fd);
+                func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            }
+            {
+                MemoryAddress addr = ll.lookup("identity");
+                MethodType mt = MethodType.methodType(int.class, int.class);
+                FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
+                identity = abi.downcallHandle(addr, mt, fd);
+                identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            }
             identity_struct = abi.downcallHandle(ll.lookup("identity_struct"),
                     MethodType.methodType(MemorySegment.class, MemorySegment.class),
                     FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
             identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address"),
                     MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                     FunctionDescriptor.of(C_POINTER, C_POINTER));
-            args5 = abi.downcallHandle(ll.lookup("args5"), // just reuse identity
+            args5 = abi.downcallHandle(ll.lookup("args5"),
                     MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
                     FunctionDescriptor.ofVoid(C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG));
             args10 = abi.downcallHandle(ll.lookup("args10"),
@@ -119,6 +129,11 @@ public class CallOverhead {
     }
 
     @Benchmark
+    public void panama_blank_trivial() throws Throwable {
+        func_trivial.invokeExact();
+    }
+
+    @Benchmark
     public int jni_identity() throws Throwable {
         return identity(10);
     }
@@ -132,6 +147,11 @@ public class CallOverhead {
     @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
     public int panama_identity_NO_SPEC() throws Throwable {
         return (int) identity.invokeExact(10);
+    }
+
+    @Benchmark
+    public int panama_identity_trivial() throws Throwable {
+        return (int) identity_trivial.invokeExact(10);
     }
 
     @Benchmark

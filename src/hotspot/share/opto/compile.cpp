@@ -499,12 +499,13 @@ debug_only( int Compile::_debug_idx = 100000; )
 
 
 Compile::Compile( ciEnv* ci_env, ciMethod* target, int osr_bci,
-                  bool subsume_loads, bool do_escape_analysis, bool eliminate_boxing, DirectiveSet* directive)
+                  bool subsume_loads, bool do_escape_analysis, bool eliminate_boxing, bool install_code, DirectiveSet* directive)
                 : Phase(Compiler),
                   _compile_id(ci_env->compile_id()),
                   _save_argument_registers(false),
                   _subsume_loads(subsume_loads),
                   _do_escape_analysis(do_escape_analysis),
+                  _install_code(install_code),
                   _eliminate_boxing(eliminate_boxing),
                   _method(target),
                   _entry_bci(osr_bci),
@@ -544,6 +545,7 @@ Compile::Compile( ciEnv* ci_env, ciMethod* target, int osr_bci,
                   _boxing_late_inlines(comp_arena(), 2, 0, NULL),
                   _late_inlines_pos(0),
                   _number_of_mh_late_inlines(0),
+                  _native_stubs(NULL),
                   _print_inlining_stream(NULL),
                   _print_inlining_list(NULL),
                   _print_inlining_idx(0),
@@ -791,6 +793,7 @@ Compile::Compile( ciEnv* ci_env,
     _save_argument_registers(save_arg_registers),
     _subsume_loads(true),
     _do_escape_analysis(false),
+    _install_code(true),
     _eliminate_boxing(false),
     _method(NULL),
     _entry_bci(InvocationEntryBci),
@@ -825,6 +828,7 @@ Compile::Compile( ciEnv* ci_env,
     _for_igvn(NULL),
     _warm_calls(NULL),
     _number_of_mh_late_inlines(0),
+    _native_stubs(NULL),
     _print_inlining_stream(NULL),
     _print_inlining_list(NULL),
     _print_inlining_idx(0),
@@ -1001,9 +1005,11 @@ void Compile::Init(int aliaslevel) {
   _expensive_nodes = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
   _range_check_casts = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
   _opaque4_nodes = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
+  _native_stubs = new(comp_arena()) GrowableArray<address>(comp_arena(), 1,  0, NULL);
   register_library_intrinsics();
 #ifdef ASSERT
   _type_verify_symmetry = true;
+  _phase_optimize_finished = false;
 #endif
 }
 
@@ -2240,6 +2246,7 @@ void Compile::Optimize() {
  }
 
  print_method(PHASE_OPTIMIZE_FINISHED, 2);
+ DEBUG_ONLY(set_phase_optimize_finished();)
 }
 
 //---------------------------- Bitwise operation packing optimization ---------------------------
@@ -2684,8 +2691,7 @@ struct Final_Reshape_Counts : public StackObj {
 
   Final_Reshape_Counts() :
     _call_count(0), _float_count(0), _double_count(0),
-    _java_call_count(0), _inner_loop_count(0),
-    _visited( Thread::current()->resource_area() ) { }
+    _java_call_count(0), _inner_loop_count(0) { }
 
   void inc_call_count  () { _call_count  ++; }
   void inc_float_count () { _float_count ++; }
@@ -2868,6 +2874,7 @@ void Compile::final_graph_reshaping_main_switch(Node* n, Final_Reshape_Counts& f
     frc.inc_java_call_count(); // Count java call site;
   case Op_CallRuntime:
   case Op_CallLeaf:
+  case Op_CallNative:
   case Op_CallLeafNoFP: {
     assert (n->is_Call(), "");
     CallNode *call = n->as_Call();
@@ -3505,8 +3512,7 @@ void Compile::final_graph_reshaping_main_switch(Node* n, Final_Reshape_Counts& f
 // Replacing Opaque nodes with their input in final_graph_reshaping_impl(),
 // requires that the walk visits a node's inputs before visiting the node.
 void Compile::final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Reshape_Counts &frc ) {
-  ResourceArea *area = Thread::current()->resource_area();
-  Unique_Node_List sfpt(area);
+  Unique_Node_List sfpt;
 
   frc._visited.set(root->_idx); // first, mark node as visited
   uint cnt = root->req();
@@ -3868,14 +3874,13 @@ bool Compile::needs_clinit_barrier(ciInstanceKlass* holder, ciMethod* accessing_
 // between Use-Def edges and Def-Use edges in the graph.
 void Compile::verify_graph_edges(bool no_dead_code) {
   if (VerifyGraphEdges) {
-    ResourceArea *area = Thread::current()->resource_area();
-    Unique_Node_List visited(area);
+    Unique_Node_List visited;
     // Call recursive graph walk to check edges
     _root->verify_edges(visited);
     if (no_dead_code) {
       // Now make sure that no visited node is used by an unvisited node.
       bool dead_nodes = false;
-      Unique_Node_List checked(area);
+      Unique_Node_List checked;
       while (visited.size() > 0) {
         Node* n = visited.pop();
         checked.push(n);
@@ -4662,3 +4667,6 @@ void Compile::igv_print_method_to_network(const char* phase_name) {
 }
 #endif
 
+void Compile::add_native_stub(address stubAddress) {
+  _native_stubs->append(stubAddress);
+}

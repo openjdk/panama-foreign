@@ -26,8 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -293,7 +291,7 @@ public class CSupport {
     /**
      * The {@code va_list} native type.
      */
-    public static final MemoryLayout C_VA_LIST = Utils.pick(SysV.C_VA_LIST, Win64.C_VA_LIST, null);
+    public static final MemoryLayout C_VA_LIST = Utils.pick(SysV.C_VA_LIST, Win64.C_VA_LIST, AArch64.C_VA_LIST);
 
     /**
      * This class defines layout constants modelling standard primitive types supported by the x64 SystemV ABI.
@@ -304,17 +302,30 @@ public class CSupport {
         }
 
         /**
-         * The name of the SysV linker ({@see ForeignLinker#name})
+         * The name of the SysV linker
+         * @see ForeignLinker#name
          */
         public static final String NAME = "SysV";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public final static String CLASS_ATTRIBUTE_NAME = "abi/sysv/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for integral values */
             INTEGER,
+            /** Classification constant for floating point values */
             SSE,
+            /** Classification constant for x87 floating point values */
             X87,
+            /** Classification constant for {@code complex long double} values */
             COMPLEX_87,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -400,17 +411,32 @@ public class CSupport {
         }
 
         /**
-         * The name of the Windows linker ({@see ForeignLinker#name})
+         * The name of the Windows linker
+         * @see ForeignLinker#name
          */
         public final static String NAME = "Windows";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used to mark variadic parameters. The
+         * attribute value must be a boolean.
+         */
         public final static String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public final static String CLASS_ATTRIBUTE_NAME = "abi/windows/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for integral values */
             INTEGER,
+            /** Classification constant for floating point values */
             FLOAT,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -479,8 +505,14 @@ public class CSupport {
          */
         public static final MemoryLayout C_VA_LIST = Win64.C_POINTER;
 
-        public static ValueLayout asVarArg(ValueLayout l) {
-            return l.withAttribute(VARARGS_ATTRIBUTE_NAME, "true");
+        /**
+         * Return a new memory layout which describes a variadic parameter to be passed to a function.
+         * @param layout the original parameter layout.
+         * @return a layout which is the same as {@code layout}, except for the extra attribute {@link #VARARGS_ATTRIBUTE_NAME},
+         * which is set to {@code true}.
+         */
+        public static ValueLayout asVarArg(ValueLayout layout) {
+            return layout.withAttribute(VARARGS_ATTRIBUTE_NAME, true);
         }
     }
 
@@ -494,15 +526,26 @@ public class CSupport {
         }
 
         /**
-         * The name of the AArch64 linker ({@see ForeignLinker#name})
+         * The name of the AArch64 linker
+         * @see ForeignLinker#name
          */
         public final static String NAME = "AArch64";
 
+        /**
+         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
+         * attribute value must be an enum constant from {@link ArgumentClass}.
+         */
         public static final String CLASS_ATTRIBUTE_NAME = "abi/aarch64/class";
 
+        /**
+         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
+         */
         public enum ArgumentClass {
+            /** Classification constant for machine integral values */
             INTEGER,
+            /** Classification constant for machine floating point values */
             VECTOR,
+            /** Classification constant for machine pointer values */
             POINTER;
         }
 
@@ -565,10 +608,12 @@ public class CSupport {
          */
         public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
-    }
 
-    private final static VarHandle byteArrHandle =
-            MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
+        /**
+         * The {@code va_list} native type, as it is passed to a function.
+         */
+        public static final MemoryLayout C_VA_LIST = AArch64.C_POINTER;
+    }
 
     /**
      * Convert a Java string into a null-terminated C string, using the
@@ -668,7 +713,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
+        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
     }
 
     /**
@@ -690,7 +735,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
+        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
     }
 
     /**
@@ -705,10 +750,10 @@ public class CSupport {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
     public static String toJavaString(MemoryAddress addr) {
-        return toJavaStringInternal(addr, Charset.defaultCharset());
+        return SharedUtils.toJavaStringInternal(addr, Charset.defaultCharset());
     }
 
     /**
@@ -724,35 +769,16 @@ public class CSupport {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
-     * associated with {@code addr}, or if {@code addr} is associated with a segment that is </em>not alive<em>.
+     * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
     public static String toJavaString(MemoryAddress addr, Charset charset) {
-        return toJavaStringInternal(addr, charset);
-    }
-
-    private static String toJavaStringInternal(MemoryAddress addr, Charset charset) {
-        int len = strlen(addr);
-        byte[] bytes = new byte[len];
-        MemorySegment.ofArray(bytes)
-                .copyFrom(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, len, null, null, null));
-        return new String(bytes, charset);
-    }
-
-    private static int strlen(MemoryAddress address) {
-        // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
-        for (int offset = 0; offset >= 0; offset++) {
-            byte curr = (byte) byteArrHandle.get(address, (long) offset);
-            if (curr == 0) {
-                return offset;
-            }
-        }
-        throw new IllegalArgumentException("String too large");
+        return SharedUtils.toJavaStringInternal(addr, charset);
     }
 
     private static void copy(MemoryAddress addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
         addr.segment().copyFrom(heapSegment);
-        byteArrHandle.set(addr, (long)bytes.length, (byte)0);
+        MemoryAccess.setByteAtOffset(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes) {

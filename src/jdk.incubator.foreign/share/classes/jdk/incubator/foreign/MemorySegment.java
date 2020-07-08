@@ -404,6 +404,72 @@ for (long l = 0; l < segment.byteSize(); l++) {
     byte[] toByteArray();
 
     /**
+     * Copy the contents of this memory segment into a fresh short array.
+     * @return a fresh short array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link short[]} instance, e.g. because {@code byteSize() % 2 != 0},
+     * or {@code byteSize() / 2 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    short[] toShortArray();
+
+    /**
+     * Copy the contents of this memory segment into a fresh char array.
+     * @return a fresh char array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link char[]} instance, e.g. because {@code byteSize() % 2 != 0},
+     * or {@code byteSize() / 2 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    char[] toCharArray();
+
+    /**
+     * Copy the contents of this memory segment into a fresh int array.
+     * @return a fresh int array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link int[]} instance, e.g. because {@code byteSize() % 4 != 0},
+     * or {@code byteSize() / 4 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    int[] toIntArray();
+
+    /**
+     * Copy the contents of this memory segment into a fresh float array.
+     * @return a fresh float array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link float[]} instance, e.g. because {@code byteSize() % 4 != 0},
+     * or {@code byteSize() / 4 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    float[] toFloatArray();
+
+    /**
+     * Copy the contents of this memory segment into a fresh long array.
+     * @return a fresh long array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link long[]} instance, e.g. because {@code byteSize() % 8 != 0},
+     * or {@code byteSize() / 8 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    long[] toLongArray();
+
+    /**
+     * Copy the contents of this memory segment into a fresh double array.
+     * @return a fresh double array copy of this memory segment.
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
+     * segment's contents cannot be copied into a {@link double[]} instance, e.g. because {@code byteSize() % 8 != 0},
+     * or {@code byteSize() / 8 > Integer#MAX_VALUE}.
+     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
+     * thread owning this segment.
+     */
+    double[] toDoubleArray();
+
+    /**
      * Creates a new buffer memory segment that models the memory associated with the given byte
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).

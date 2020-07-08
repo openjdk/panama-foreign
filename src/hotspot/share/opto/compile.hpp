@@ -246,6 +246,7 @@ class Compile : public Phase {
   const bool            _save_argument_registers; // save/restore arg regs for trampolines
   const bool            _subsume_loads;         // Load can be matched as part of a larger op.
   const bool            _do_escape_analysis;    // Do escape analysis.
+  const bool            _install_code;          // Install the code that was compiled
   const bool            _eliminate_boxing;      // Do boxing elimination.
   ciMethod*             _method;                // The method being compiled.
   int                   _entry_bci;             // entry bci for osr methods.
@@ -327,7 +328,8 @@ class Compile : public Phase {
   VectorSet             _dead_node_list;        // Set of dead nodes
   uint                  _dead_node_count;       // Number of dead nodes; VectorSet::Size() is O(N).
                                                 // So use this to keep count and make the call O(1).
-  DEBUG_ONLY( Unique_Node_List* _modified_nodes; )  // List of nodes which inputs were modified
+  DEBUG_ONLY(Unique_Node_List* _modified_nodes;)   // List of nodes which inputs were modified
+  DEBUG_ONLY(bool       _phase_optimize_finished;) // Used for live node verification while creating new nodes
 
   debug_only(static int _debug_idx;)            // Monotonic counter (not reset), use -XX:BreakAtNode=<idx>
   Arena                 _node_arena;            // Arena for new-space Nodes
@@ -383,6 +385,7 @@ class Compile : public Phase {
   int                           _late_inlines_pos;    // Where in the queue should the next late inlining candidate go (emulate depth first inlining)
   uint                          _number_of_mh_late_inlines; // number of method handle late inlining still pending
 
+  GrowableArray<address>*       _native_stubs;
 
   // Inlining may not happen in parse order which would make
   // PrintInlining output confusing. Keep track of PrintInlining
@@ -506,7 +509,7 @@ class Compile : public Phase {
   /** Do aggressive boxing elimination. */
   bool              aggressive_unboxing() const { return _eliminate_boxing && AggressiveUnboxing; }
   bool              save_argument_registers() const { return _save_argument_registers; }
-
+  bool              should_install_code() const { return _install_code; }
 
   // Other fixed compilation parameters.
   ciMethod*         method() const              { return _method; }
@@ -784,6 +787,8 @@ class Compile : public Phase {
             return (uint) val;
                                            }
 #ifdef ASSERT
+  void         set_phase_optimize_finished() { _phase_optimize_finished = true; }
+  bool         phase_optimize_finished() const { return _phase_optimize_finished; }
   uint         count_live_nodes_by_graph_walk();
   void         print_missing_nodes();
 #endif
@@ -942,6 +947,10 @@ class Compile : public Phase {
     _boxing_late_inlines.push(cg);
   }
 
+  void add_native_stub(address stub);
+
+  GrowableArray<address>* native_stubs() const { return _native_stubs; }
+
   void remove_useless_late_inlines(GrowableArray<CallGenerator*>* inlines, Unique_Node_List &useful);
 
   void process_print_inlining();
@@ -1005,7 +1014,7 @@ class Compile : public Phase {
   // continuation.
   Compile(ciEnv* ci_env, ciMethod* target,
           int entry_bci, bool subsume_loads, bool do_escape_analysis,
-          bool eliminate_boxing, DirectiveSet* directive);
+          bool eliminate_boxing, bool install_code, DirectiveSet* directive);
 
   // Second major entry point.  From the TypeFunc signature, generate code
   // to pass arguments from the Java calling convention to the C calling

@@ -34,8 +34,6 @@
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -48,8 +46,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import jdk.incubator.foreign.CSupport;
@@ -57,10 +53,13 @@ import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
+
+import static jdk.incubator.foreign.MemoryAccess.*;
+
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.CSupport.*;
@@ -70,17 +69,6 @@ import static org.testng.Assert.*;
 public class StdLibTest extends NativeTestHelper {
 
     final static ForeignLinker abi = CSupport.getSystemLinker();
-
-    final static VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
-    final static VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
-    final static VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
-    final static VarHandle byteArrHandle = arrayHandle(C_CHAR, byte.class);
-    final static VarHandle intArrHandle = arrayHandle(C_INT, int.class);
-
-    static VarHandle arrayHandle(MemoryLayout elemLayout, Class<?> elemCarrier) {
-        return MemoryLayout.ofSequence(1, elemLayout)
-                .varHandle(elemCarrier, MemoryLayout.PathElement.sequenceElement());
-    }
 
     private StdLibHelper stdLibHelper = new StdLibHelper();
 
@@ -245,9 +233,9 @@ public class StdLibTest extends NativeTestHelper {
                  MemorySegment other = toCString(s2)) {
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
-                    byteArrHandle.set(buf.baseAddress(), i, (byte)chars[(int)i]);
+                    setByteAtOffset(buf.baseAddress(), i, (byte)chars[(int)i]);
                 }
-                byteArrHandle.set(buf.baseAddress(), (long)chars.length, (byte)'\0');
+                setByteAtOffset(buf.baseAddress(), chars.length, (byte)'\0');
                 return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())));
             }
         }
@@ -273,7 +261,7 @@ public class StdLibTest extends NativeTestHelper {
 
         Tm gmtime(long arg) throws Throwable {
             try (MemorySegment time = MemorySegment.allocateNative(8)) {
-                longHandle.set(time.baseAddress(), arg);
+                setLong(time.baseAddress(), arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.baseAddress()));
             }
         }
@@ -291,58 +279,55 @@ public class StdLibTest extends NativeTestHelper {
             }
 
             int sec() {
-                return (int)intHandle.get(base);
+                return getIntAtOffset(base, 0);
             }
             int min() {
-                return (int)intHandle.get(base.addOffset(4));
+                return getIntAtOffset(base, 4);
             }
             int hour() {
-                return (int)intHandle.get(base.addOffset(8));
+                return getIntAtOffset(base, 8);
             }
             int mday() {
-                return (int)intHandle.get(base.addOffset(12));
+                return getIntAtOffset(base, 12);
             }
             int mon() {
-                return (int)intHandle.get(base.addOffset(16));
+                return getIntAtOffset(base, 16);
             }
             int year() {
-                return (int)intHandle.get(base.addOffset(20));
+                return getIntAtOffset(base, 20);
             }
             int wday() {
-                return (int)intHandle.get(base.addOffset(24));
+                return getIntAtOffset(base, 24);
             }
             int yday() {
-                return (int)intHandle.get(base.addOffset(28));
+                return getIntAtOffset(base, 28);
             }
             boolean isdst() {
-                byte b = (byte)byteHandle.get(base.addOffset(32));
+                byte b = getByteAtOffset(base, 32);
                 return b != 0;
             }
         }
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            SequenceLayout seq = MemoryLayout.ofSequence(arr.length, C_INT);
+            try (NativeScope scope = NativeScope.unboundedScope()) {
 
-            try (MemorySegment nativeArr = MemorySegment.allocateNative(seq)) {
-
-                IntStream.range(0, arr.length)
-                        .forEach(i -> intArrHandle.set(nativeArr.baseAddress(), i, arr[i]));
+                MemorySegment nativeArr = scope.allocateArray(C_INT, arr).segment();
 
                 //call qsort
-                try (MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction)) {
-                    qsort.invokeExact(nativeArr.baseAddress(), seq.elementCount().getAsLong(), C_INT.byteSize(), qsortUpcallStub.baseAddress());
-                }
+                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
+                scope.register(qsortUpcallStub);
+
+                qsort.invokeExact(nativeArr.baseAddress(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.baseAddress());
 
                 //convert back to Java array
-                return LongStream.range(0, arr.length)
-                        .mapToInt(i -> (int)intArrHandle.get(nativeArr.baseAddress(), i))
-                        .toArray();
+                return nativeArr.toIntArray();
             }
         }
 
         static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
-            return (int)intHandle.get(addr1.rebase(base)) - (int)intHandle.get(addr2.rebase(base));
+            return getIntAtOffset(base.baseAddress(), addr1.rebase(base).segmentOffset()) -
+                   getIntAtOffset(base.baseAddress(), addr2.rebase(base).segmentOffset());
         }
 
         int rand() throws Throwable {

@@ -30,6 +30,7 @@
 
 
 import jdk.incubator.foreign.MappedMemorySegment;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -131,15 +132,6 @@ public class TestByteBuffer {
 
     static VarHandle indexHandle = tuples.varHandle(int.class, PathElement.sequenceElement(), PathElement.groupElement("index"));
     static VarHandle valueHandle = tuples.varHandle(float.class, PathElement.sequenceElement(), PathElement.groupElement("value"));
-
-    static VarHandle byteHandle = bytes.varHandle(byte.class, PathElement.sequenceElement());
-    static VarHandle charHandle = chars.varHandle(char.class, PathElement.sequenceElement());
-    static VarHandle shortHandle = shorts.varHandle(short.class, PathElement.sequenceElement());
-    static VarHandle intHandle = ints.varHandle(int.class, PathElement.sequenceElement());
-    static VarHandle floatHandle = floats.varHandle(float.class, PathElement.sequenceElement());
-    static VarHandle longHandle = longs.varHandle(long.class, PathElement.sequenceElement());
-    static VarHandle doubleHandle = doubles.varHandle(double.class, PathElement.sequenceElement());
-
 
     static void initTuples(MemoryAddress base, long count) {
         for (long i = 0; i < count ; i++) {
@@ -561,7 +553,7 @@ public class TestByteBuffer {
 
         s1.close(); // memory freed
 
-        intHandle.set(s2.baseAddress(), 0L, 10); // Dead access!
+        MemoryAccess.setInt(s2.baseAddress(), 10); // Dead access!
     }
 
     @DataProvider(name = "bufferOps")
@@ -622,34 +614,34 @@ public class TestByteBuffer {
     @DataProvider(name = "resizeOps")
     public Object[][] resizeOps() {
         Consumer<MemoryAddress> byteInitializer =
-                (base) -> initBytes(base, bytes, (addr, pos) -> byteHandle.set(addr, pos, (byte)(long)pos));
+                (base) -> initBytes(base, bytes, (addr, pos) -> MemoryAccess.setByteAtIndex_BE(addr, pos, (byte)(long)pos));
         Consumer<MemoryAddress> charInitializer =
-                (base) -> initBytes(base, chars, (addr, pos) -> charHandle.set(addr, pos, (char)(long)pos));
+                (base) -> initBytes(base, chars, (addr, pos) -> MemoryAccess.setCharAtIndex_BE(addr, pos, (char)(long)pos));
         Consumer<MemoryAddress> shortInitializer =
-                (base) -> initBytes(base, shorts, (addr, pos) -> shortHandle.set(addr, pos, (short)(long)pos));
+                (base) -> initBytes(base, shorts, (addr, pos) -> MemoryAccess.setShortAtIndex_BE(addr, pos, (short)(long)pos));
         Consumer<MemoryAddress> intInitializer =
-                (base) -> initBytes(base, ints, (addr, pos) -> intHandle.set(addr, pos, (int)(long)pos));
+                (base) -> initBytes(base, ints, (addr, pos) -> MemoryAccess.setIntAtIndex_BE(addr, pos, (int)(long)pos));
         Consumer<MemoryAddress> floatInitializer =
-                (base) -> initBytes(base, floats, (addr, pos) -> floatHandle.set(addr, pos, (float)(long)pos));
+                (base) -> initBytes(base, floats, (addr, pos) -> MemoryAccess.setFloatAtIndex_BE(addr, pos, (float)(long)pos));
         Consumer<MemoryAddress> longInitializer =
-                (base) -> initBytes(base, longs, (addr, pos) -> longHandle.set(addr, pos, (long)pos));
+                (base) -> initBytes(base, longs, (addr, pos) -> MemoryAccess.setLongAtIndex_BE(addr, pos, pos));
         Consumer<MemoryAddress> doubleInitializer =
-                (base) -> initBytes(base, doubles, (addr, pos) -> doubleHandle.set(addr, pos, (double)(long)pos));
+                (base) -> initBytes(base, doubles, (addr, pos) -> MemoryAccess.setDoubleAtIndex_BE(addr, pos, (double)(long)pos));
 
         Consumer<MemoryAddress> byteChecker =
-                (base) -> checkBytes(base, bytes, Function.identity(), byteHandle::get, ByteBuffer::get);
+                (base) -> checkBytes(base, bytes, Function.identity(), MemoryAccess::getByteAtIndex_BE, ByteBuffer::get);
         Consumer<MemoryAddress> charChecker =
-                (base) -> checkBytes(base, chars, ByteBuffer::asCharBuffer, charHandle::get, CharBuffer::get);
+                (base) -> checkBytes(base, chars, ByteBuffer::asCharBuffer, MemoryAccess::getCharAtIndex_BE, CharBuffer::get);
         Consumer<MemoryAddress> shortChecker =
-                (base) -> checkBytes(base, shorts, ByteBuffer::asShortBuffer, shortHandle::get, ShortBuffer::get);
+                (base) -> checkBytes(base, shorts, ByteBuffer::asShortBuffer, MemoryAccess::getShortAtIndex_BE, ShortBuffer::get);
         Consumer<MemoryAddress> intChecker =
-                (base) -> checkBytes(base, ints, ByteBuffer::asIntBuffer, intHandle::get, IntBuffer::get);
+                (base) -> checkBytes(base, ints, ByteBuffer::asIntBuffer, MemoryAccess::getIntAtIndex_BE, IntBuffer::get);
         Consumer<MemoryAddress> floatChecker =
-                (base) -> checkBytes(base, floats, ByteBuffer::asFloatBuffer, floatHandle::get, FloatBuffer::get);
+                (base) -> checkBytes(base, floats, ByteBuffer::asFloatBuffer, MemoryAccess::getFloatAtIndex_BE, FloatBuffer::get);
         Consumer<MemoryAddress> longChecker =
-                (base) -> checkBytes(base, longs, ByteBuffer::asLongBuffer, longHandle::get, LongBuffer::get);
+                (base) -> checkBytes(base, longs, ByteBuffer::asLongBuffer, MemoryAccess::getLongAtIndex_BE, LongBuffer::get);
         Consumer<MemoryAddress> doubleChecker =
-                (base) -> checkBytes(base, doubles, ByteBuffer::asDoubleBuffer, doubleHandle::get, DoubleBuffer::get);
+                (base) -> checkBytes(base, doubles, ByteBuffer::asDoubleBuffer, MemoryAccess::getDoubleAtIndex_BE, DoubleBuffer::get);
 
         return new Object[][]{
                 {byteChecker, byteInitializer, bytes},

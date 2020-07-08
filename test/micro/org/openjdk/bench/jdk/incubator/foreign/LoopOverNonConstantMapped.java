@@ -22,6 +22,7 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -140,6 +141,15 @@ public class LoopOverNonConstantMapped {
             sum += (int) VH_int.get(base, (long) i);
         }
         return sum;
+    }
+
+    @Benchmark
+    public int segment_loop_static() {
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i ++) {
+            res += MemoryAccess.getIntAtIndex(segment.baseAddress(), i);
+        }
+        return res;
     }
 
     @Benchmark

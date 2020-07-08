@@ -459,6 +459,10 @@ int MachCallRuntimeNode::ret_addr_offset() {
   return offset;
 }
 
+int MachCallNativeNode::ret_addr_offset() {
+  int offset = 13; // movq r10,#addr; callq (r10)
+  return offset;
+}
 //
 // Compute padding required for nodes which need alignment
 //
@@ -1645,10 +1649,7 @@ bool Matcher::const_oop_prefer_decode() {
 }
 
 bool Matcher::const_klass_prefer_decode() {
-  // TODO: Either support matching DecodeNKlass (heap-based) in operand
-  //       or condisider the following:
-  // Prefer ConNKlass+DecodeNKlass over ConP in simple compressed klass mode.
-  //return CompressedKlassPointers::base() == NULL;
+  // Prefer ConP over ConNKlass+DecodeNKlass.
   return true;
 }
 
@@ -12557,6 +12558,20 @@ instruct CallLeafDirect(method meth)
   ins_cost(300);
   format %{ "call_leaf,runtime " %}
   ins_encode(clear_avx, Java_To_Runtime(meth));
+  ins_pipe(pipe_slow);
+%}
+
+//
+instruct CallNativeDirect(method meth)
+%{
+  match(CallNative);
+  effect(USE meth);
+
+  ins_cost(300);
+  format %{ "call_native " %}
+  ins_encode %{
+    __ call(RuntimeAddress((address) $meth$$method));
+  %}
   ins_pipe(pipe_slow);
 %}
 

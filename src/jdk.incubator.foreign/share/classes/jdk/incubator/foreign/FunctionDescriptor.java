@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,10 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,13 +42,55 @@ import java.util.stream.Stream;
  * is used to model the signature of native functions.
  */
 public final class FunctionDescriptor implements Constable {
+
+    /**
+     * The name of the function descriptor attribute (see {@link #attributes()} used to mark trivial functions. The
+     * attribute value must be a boolean.
+     */
+    public static final String TRIVIAL_ATTRIBUTE_NAME = "abi/trivial";
     
     private final MemoryLayout resLayout;
     private final MemoryLayout[] argLayouts;
+    private final Map<String, Constable> attributes;
 
-    private FunctionDescriptor(MemoryLayout resLayout, MemoryLayout... argLayouts) {
+    private FunctionDescriptor(MemoryLayout resLayout, Map<String, Constable> attributes, MemoryLayout... argLayouts) {
         this.resLayout = resLayout;
+        this.attributes = Collections.unmodifiableMap(attributes);
         this.argLayouts = argLayouts;
+    }
+
+    /**
+     * Returns the attribute with the given name (if it exists).
+     *
+     * @param name the attribute name
+     * @return the attribute with the given name (if it exists).
+     */
+    public Optional<Constable> attribute(String name) {
+        return Optional.ofNullable(attributes.get(name));
+    }
+
+    /**
+     * Returns a stream of the attribute names associated with this function descriptor.
+     *
+     * @return a stream of the attribute names associated with this function descriptor.
+     */
+    public Stream<String> attributes() {
+        return attributes.keySet().stream();
+    }
+
+    /**
+     * Returns a new function descriptor which features the same attributes as this descriptor, plus the newly specified attribute.
+     * If this descriptor already contains an attribute with the same name, the existing attribute value is overwritten in the returned
+     * descriptor.
+     *
+     * @param name the attribute name.
+     * @param value the attribute value.
+     * @return a new function descriptor which features the same attributes as this descriptor, plus the newly specified attribute.
+     */
+    public FunctionDescriptor withAttribute(String name, Constable value) {
+        Map<String, Constable> newAttributes = new HashMap<>(attributes);
+        newAttributes.put(name, value);
+        return new FunctionDescriptor(resLayout, newAttributes, argLayouts);
     }
 
     /**
@@ -71,7 +116,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(resLayout, argLayouts);
+        return new FunctionDescriptor(resLayout, Map.of(), argLayouts);
     }
 
     /**
@@ -80,7 +125,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor.
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
-        return new FunctionDescriptor(null, argLayouts);
+        return new FunctionDescriptor(null, Map.of(), argLayouts);
     }
 
     /**
@@ -92,7 +137,7 @@ public final class FunctionDescriptor implements Constable {
     public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
         MemoryLayout[] newLayouts = Arrays.copyOf(argLayouts, argLayouts.length + addedLayouts.length);
         System.arraycopy(addedLayouts, 0, newLayouts, argLayouts.length, addedLayouts.length);
-        return new FunctionDescriptor(resLayout, newLayouts);
+        return new FunctionDescriptor(resLayout, attributes, newLayouts);
     }
 
     /**
@@ -101,7 +146,7 @@ public final class FunctionDescriptor implements Constable {
      * @return the new function descriptor
      */
     public FunctionDescriptor changeReturnLayout(MemoryLayout newReturn) {
-        return new FunctionDescriptor(newReturn, argLayouts);
+        return new FunctionDescriptor(newReturn, attributes, argLayouts);
     }
 
     /**

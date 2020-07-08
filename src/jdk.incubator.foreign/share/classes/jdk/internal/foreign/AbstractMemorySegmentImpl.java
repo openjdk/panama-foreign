@@ -47,6 +47,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
@@ -132,6 +134,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    public void copyFromSwap(MemorySegment src, long elemSize) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkRange(0, size, true);
+        that.checkRange(0, size, false);
+        UNSAFE.copySwapMemory(
+                that.base(), that.min(),
+                base(), min(), size, elemSize);
+    }
+
     private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
             .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
@@ -184,7 +196,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (!isSet(READ)) {
             throw unsupportedAccessMode(READ);
         }
-        checkIntSize("ByteBuffer");
+        checkArraySize("ByteBuffer", 1);
         ByteBuffer _bb = makeByteBuffer();
         if (!isSet(WRITE)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
@@ -277,9 +289,43 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final byte[] toByteArray() {
-        checkIntSize("byte[]");
-        byte[] arr = new byte[(int)length];
-        MemorySegment arrSegment = MemorySegment.ofArray(arr);
+        return toArray(byte[].class, 1, byte[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final short[] toShortArray() {
+        return toArray(short[].class, 2, short[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final char[] toCharArray() {
+        return toArray(char[].class, 2, char[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final int[] toIntArray() {
+        return toArray(int[].class, 4, int[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final float[] toFloatArray() {
+        return toArray(float[].class, 4, float[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final long[] toLongArray() {
+        return toArray(long[].class, 8, long[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
+    public final double[] toDoubleArray() {
+        return toArray(double[].class, 8, double[]::new, MemorySegment::ofArray);
+    }
+
+    private <Z> Z toArray(Class<Z> arrayClass, int elemSize, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
+        int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
+        Z arr = arrayFactory.apply(size);
+        MemorySegment arrSegment = segmentFactory.apply(arr);
         arrSegment.copyFrom(this);
         return arr;
     }
@@ -309,10 +355,15 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return (this.mask & mask) != 0;
     }
 
-    private void checkIntSize(String typeName) {
-        if (length > (Integer.MAX_VALUE - 8)) { //conservative check
+    private int checkArraySize(String typeName, int elemSize) {
+        if (length % elemSize != 0) {
+            throw new UnsupportedOperationException(String.format("Segment size is not a multiple of %d. Size: %d", elemSize, length));
+        }
+        long arraySize = length / elemSize;
+        if (arraySize > (Integer.MAX_VALUE - 8)) { //conservative check
             throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
         }
+        return (int)arraySize;
     }
 
     private void checkBounds(long offset, long length) {

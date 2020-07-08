@@ -35,6 +35,7 @@
 #include "gc/shared/barrierSet.hpp"
 #include "gc/shared/c2/barrierSetC2.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/allocation.hpp"
 #include "opto/ad.hpp"
 #include "opto/block.hpp"
 #include "opto/c2compiler.hpp"
@@ -1444,6 +1445,7 @@ void PhaseOutput::fill_buffer(CodeBuffer* cb, uint* blk_starts) {
           current_offset = cb->insts_size();
         }
 
+        bool observe_safepoint = is_sfn;
         // Remember the start of the last call in a basic block
         if (is_mcall) {
           MachCallNode *mcall = mach->as_MachCall();
@@ -1454,15 +1456,11 @@ void PhaseOutput::fill_buffer(CodeBuffer* cb, uint* blk_starts) {
           // Save the return address
           call_returns[block->_pre_order] = current_offset + mcall->ret_addr_offset();
 
-          if (mcall->is_MachCallLeaf()) {
-            is_mcall = false;
-            is_sfn = false;
-          }
+          observe_safepoint = mcall->guaranteed_safepoint();
         }
 
         // sfn will be valid whenever mcall is valid now because of inheritance
-        if (is_sfn || is_mcall) {
-
+        if (observe_safepoint) {
           // Handle special safepoint nodes for synchronization
           if (!is_mcall) {
             MachSafePointNode *sfn = mach->as_MachSafePoint();
@@ -3260,7 +3258,9 @@ uint PhaseOutput::scratch_emit_size(const Node* n) {
 }
 
 void PhaseOutput::install() {
-  if (C->stub_function() != NULL) {
+  if (!C->should_install_code()) {
+    return;
+  } else if (C->stub_function() != NULL) {
     install_stub(C->stub_name(),
                  C->save_argument_registers());
   } else {
@@ -3297,6 +3297,16 @@ void PhaseOutput::install_code(ciMethod*         target,
       _code_offsets.set_value(CodeOffsets::OSR_Entry, 0);
     }
 
+    address* native_stubs = NULL;
+    int num_stubs = 0;
+    if (!C->native_stubs()->is_empty()) {
+      num_stubs = C->native_stubs()->length();
+      native_stubs = NEW_C_HEAP_ARRAY(address, num_stubs, mtInternal);
+      for (int i = 0; i < num_stubs; i++) {
+        native_stubs[i] = C->native_stubs()->at(i);
+      }
+    }
+
     C->env()->register_method(target,
                                      entry_bci,
                                      &_code_offsets,
@@ -3309,7 +3319,9 @@ void PhaseOutput::install_code(ciMethod*         target,
                                      compiler,
                                      has_unsafe_access,
                                      SharedRuntime::is_wide_vector(C->max_vector_size()),
-                                     C->rtm_state());
+                                     C->rtm_state(),
+                                     native_stubs,
+                                     num_stubs);
 
     if (C->log() != NULL) { // Print code cache state into compiler log
       C->log()->code_cache_state();
