@@ -30,7 +30,7 @@ import java.nio.file.DirectoryStream;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
-import jdk.incubator.jbind.core.CString;
+import jdk.incubator.foreign.CSupport;
 
 /**
  * Unix system and library calls.
@@ -64,7 +64,7 @@ public abstract class UnixNativeDispatcher {
 
     public static UnixFileAttributes statFFI(String path) {
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress file = CString.toCString(path, scope);
+            MemoryAddress file = CSupport.toCString(path, scope);
             LibC.stat64 buffer = LibC.stat64.allocate(scope::allocate);
             LibC.stat64(file, buffer.ptr());
             return new UnixFileAttributes(buffer);
@@ -73,7 +73,7 @@ public abstract class UnixNativeDispatcher {
 
     public static long opendirFFI(String path) {
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress dir = LibC.opendir(CString.toCString(path, scope));
+            MemoryAddress dir = LibC.opendir(CSupport.toCString(path, scope));
             if (dir.equals(MemoryAddress.NULL)) {
                 throw new RuntimeException();
             }
@@ -101,7 +101,7 @@ public abstract class UnixNativeDispatcher {
             return null;
         }
 
-        return CString.toJavaString(LibC.dirent.at(pdir).d_name$ptr());
+        return CSupport.toJavaString(LibC.dirent.at(pdir).d_name$ptr());
     }
 
     public static MemoryAddress resizePointer(MemoryAddress addr, long size) {
