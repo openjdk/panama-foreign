@@ -33,16 +33,16 @@ import static jdk.incubator.foreign.CSupport.*;
  * @test
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextract -t test.jextract.printf -- printf.h
+ * @run driver JtregJextract -t test.jextract.printf -l Printf -- printf.h
  * @run testng/othervm -Dforeign.restricted=permit Test8244959
  */
 public class Test8244959 {
     @Test
     public void testsPrintf() {
         try (MemorySegment s = MemorySegment.allocateNative(1024)) {
-            sprintf(s.baseAddress(),
-                toCString("%hhd %c %.2f %.2f %ld %ld %d %hd %d %d %lld %c").baseAddress(),
-                (byte) 1, 'b', -1.25f, 5.5d, -200l, Long.MAX_VALUE, (byte) -2, (short) 2, 3, (short) -4, 5l, 'a');
+            my_sprintf(s.baseAddress(),
+                toCString("%hhd %c %.2f %.2f %lld %lld %d %hd %d %d %lld %c").baseAddress(), 12,
+                (byte) 1, 'b', -1.25f, 5.5d, -200L, Long.MAX_VALUE, (byte) -2, (short) 2, 3, (short) -4, 5L, 'a');
             String str = toJavaString(s.baseAddress());
             assertEquals(str, "1 b -1.25 5.50 -200 " + Long.MAX_VALUE + " -2 2 3 -4 5 a");
         }

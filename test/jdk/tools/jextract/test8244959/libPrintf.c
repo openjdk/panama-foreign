@@ -21,20 +21,15 @@
  * questions.
  */
 
-struct Foo {
-    unsigned int a:1;
-    unsigned int b:1;
-    unsigned int c:30;
-};
+#include "printf.h"
 
-struct Bar {
-    unsigned int x:1;
-    unsigned int y:31;
-    struct Foo z[1];
-};
+#include <stdio.h>
+#include <stdarg.h>
 
-struct Baz {
-    unsigned long long x:1;
-    unsigned long long y:63;
-    struct Bar z[1];
-};
+EXPORT int my_sprintf(char *buf, const char *fmt, int arg_num, ...) {
+    va_list list;
+    va_start(list, arg_num);
+    int result = vsprintf(buf, fmt, list);
+    va_end(list);
+    return result;
+}
