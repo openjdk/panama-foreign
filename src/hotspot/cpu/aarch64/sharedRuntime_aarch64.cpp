@@ -26,6 +26,7 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
+#include "code/codeCache.hpp"
 #include "code/debugInfoRec.hpp"
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
@@ -3046,3 +3047,10 @@ void OptoRuntime::generate_exception_blob() {
   _exception_blob =  ExceptionBlob::create(&buffer, oop_maps, SimpleRuntimeFrame::framesize >> 1);
 }
 #endif // COMPILER2
+
+address SharedRuntime::make_native_invoker(address call_target,
+                                           int shadow_space_bytes,
+                                           const GrowableArray<VMReg>& input_registers,
+                                           const GrowableArray<VMReg>& output_registers) {
+  return NULL;
+}
