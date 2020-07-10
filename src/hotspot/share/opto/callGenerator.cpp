@@ -862,6 +862,7 @@ JVMState* NativeCallGenerator::generate(JVMState* jvms) {
   GraphKit kit(jvms);
 
   Node* call = kit.make_native_call(tf(), method()->arg_size(), _nep); // -fallback, - nep
+  if (call == NULL) return NULL;
 
   kit.C->print_inlining_update(this);
   address addr = _nep->entry_point();
