@@ -35,6 +35,8 @@
 #include "logging/logTag.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "prims/universalNativeInvoker.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/handles.inline.hpp"

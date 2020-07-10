@@ -205,7 +205,7 @@ public class TestVarHandleCombinators {
                 { boolean.class },
                 { Object.class },
                 { int[].class },
-                { MemoryAddress.class }
+                { MemorySegment.class }
         };
     }
 

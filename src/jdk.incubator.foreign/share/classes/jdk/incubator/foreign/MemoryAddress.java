@@ -132,5 +132,4 @@ public interface MemoryAddress {
                 NULL :
                 new MemoryAddressImpl(value);
     }
-
 }
