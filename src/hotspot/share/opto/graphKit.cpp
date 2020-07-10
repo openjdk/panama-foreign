@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "ci/ciUtilities.hpp"
+#include "classfile/javaClasses.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
 #include "ci/ciObjArray.hpp"
 #include "asm/register.hpp"
