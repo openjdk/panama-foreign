@@ -2628,6 +2628,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
     call_addr = SharedRuntime::make_native_invoker(call_addr,
                                                    nep->shadow_space(),
                                                    arg_regs, ret_regs);
+    if (call_addr == NULL) return NULL;
     C->add_native_stub(call_addr);
   }
   assert(call_addr != NULL, "sanity");
