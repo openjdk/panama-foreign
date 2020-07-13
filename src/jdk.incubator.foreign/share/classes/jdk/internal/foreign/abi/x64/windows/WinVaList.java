@@ -63,18 +63,12 @@ class WinVaList implements VaList {
 
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
-    private final MemorySegment segment;
     private MemoryAddress ptr;
-    private final List<MemorySegment> copies;
+    private final List<MemorySegment> attachedSegments;
 
-    WinVaList(MemorySegment segment) {
-        this(segment, new ArrayList<>());
-    }
-
-    WinVaList(MemorySegment segment, List<MemorySegment> copies) {
-        this.segment = segment;
-        this.ptr = segment.baseAddress();
-        this.copies = copies;
+    private WinVaList(MemoryAddress ptr, List<MemorySegment> attachedSegments) {
+        this.ptr = ptr;
+        this.attachedSegments = attachedSegments;
     }
 
     public static final VaList empty() {
@@ -124,7 +118,7 @@ class WinVaList implements VaList {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(ptr);
                     try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
-                                                                            segment.ownerThread(), null, null)) {
+                                                                            ptr.segment().ownerThread(), null, null)) {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(struct);
                         yield seg;
@@ -132,7 +126,7 @@ class WinVaList implements VaList {
                 }
                 case STRUCT_REGISTER -> {
                     MemorySegment struct = allocator.allocate(layout);
-                    struct.copyFrom(segment.asSlice(ptr.segmentOffset(), layout.byteSize()));
+                    struct.copyFrom(ptr.segment().asSlice(ptr.segmentOffset(), layout.byteSize()));
                     yield struct;
                 }
                 default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
@@ -151,7 +145,8 @@ class WinVaList implements VaList {
     }
 
     static WinVaList ofAddress(MemoryAddress addr) {
-        return new WinVaList(MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null));
+        MemorySegment segment = MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null);
+        return new WinVaList(segment.baseAddress(), List.of(segment));
     }
 
     static Builder builder(SharedUtils.Allocator allocator) {
@@ -160,18 +155,17 @@ class WinVaList implements VaList {
 
     @Override
     public void close() {
-        segment.close();
-        copies.forEach(MemorySegment::close);
+        attachedSegments.forEach(MemorySegment::close);
     }
 
     @Override
     public VaList copy() {
-        return WinVaList.ofAddress(ptr);
+        return new WinVaList(ptr, List.of());
     }
 
     @Override
     public VaList copy(NativeScope scope) {
-        return copy();
+        return copy(); // no need to allocate when copying on Windows
     }
 
     @Override
@@ -181,7 +175,7 @@ class WinVaList implements VaList {
 
     @Override
     public boolean isAlive() {
-        return segment.isAlive();
+        return ptr.segment().isAlive();
     }
 
     static class Builder implements VaList.Builder {
@@ -229,8 +223,8 @@ class WinVaList implements VaList {
                 return EMPTY;
             }
             MemorySegment ms = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
-            List<MemorySegment> copies = new ArrayList<>();
-
+            List<MemorySegment> attachedSegments = new ArrayList<>();
+            attachedSegments.add(ms);
             MemoryAddress addr = ms.baseAddress();
             for (SimpleVaArg arg : args) {
                 if (arg.carrier == MemorySegment.class) {
@@ -240,7 +234,7 @@ class WinVaList implements VaList {
                         case STRUCT_REFERENCE -> {
                             MemorySegment copy = allocator.allocate(arg.layout);
                             copy.copyFrom(msArg); // by-value
-                            copies.add(copy);
+                            attachedSegments.add(copy);
                             VH_address.set(addr, copy.baseAddress());
                         }
                         case STRUCT_REGISTER -> {
@@ -256,7 +250,7 @@ class WinVaList implements VaList {
                 addr = addr.addOffset(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(ms, copies);
+            return new WinVaList(ms.baseAddress(), attachedSegments);
         }
     }
 }

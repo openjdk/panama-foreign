@@ -329,6 +329,29 @@ public class VaListTest {
         }
     }
 
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosed() {
+        VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                        .vargFromInt(C_INT, 8));
+        try (VaList copy = list.copy()) {
+            list.close();
+
+            copy.vargAsInt(C_INT); // should throw
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosedScope() {
+        VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                        .vargFromInt(C_INT, 8));
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            VaList copy = list.copy(scope);
+            list.close();
+
+            copy.vargAsInt(C_INT); // should throw
+        }
+    }
+
     @DataProvider
     public static Object[][] upcalls() {
         return new Object[][]{
