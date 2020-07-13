@@ -32,6 +32,4 @@
  */
 module jdk.incubator.foreign {
     exports jdk.incubator.foreign;
-    exports jdk.internal.foreign.abi to jdk.incubator.jextract;
-    exports jdk.internal.foreign to jdk.incubator.jextract;
 }

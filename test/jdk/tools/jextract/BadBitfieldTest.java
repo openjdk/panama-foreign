@@ -27,7 +27,7 @@
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build BadBitfieldTest
- * @run testng BadBitfieldTest
+ * @run testng/othervm -Dforeign.restricted=permit BadBitfieldTest
  */
 
 /*
