@@ -31,7 +31,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.foreign.MemoryAddressImpl;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -157,7 +156,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
-            return MemoryAddressImpl.ofLongUnchecked(p.toRawLongValue(), Index_h.CXToken$LAYOUT.byteSize()).segment();
+            return MemorySegment.ofNativeRestricted(p, Index_h.CXToken$LAYOUT.byteSize(), null, null, null);
         }
 
         public Token getToken(int index) {

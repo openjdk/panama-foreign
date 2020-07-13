@@ -33,8 +33,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
-import jdk.internal.foreign.abi.SharedUtils;
-
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -42,7 +40,7 @@ import java.util.function.Supplier;
  * General Layout utility functions
  */
 public final class LayoutUtils {
-    private static ForeignLinker abi = SharedUtils.getSystemLinker();
+    private static ForeignLinker abi = CSupport.getSystemLinker();
     private LayoutUtils() {}
 
     public static String getName(Type type) {

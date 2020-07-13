@@ -24,7 +24,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng/othervm -ea TestTypedef
+ * @run testng/othervm -ea -Dforeign.restricted=permit TestTypedef
  */
 
 import java.util.Set;

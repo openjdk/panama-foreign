@@ -25,7 +25,7 @@
  * @test
  * @bug 8239808
  * @build JextractApiTestBase
- * @run testng TestAttributes
+ * @run testng/othervm -Dforeign.restricted=permit TestAttributes
  */
 
 import java.lang.constant.Constable;

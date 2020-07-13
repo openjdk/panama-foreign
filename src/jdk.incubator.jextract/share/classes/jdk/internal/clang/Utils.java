@@ -27,16 +27,10 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.abi.SharedUtils;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 
 public class Utils {
@@ -46,25 +40,6 @@ public class Utils {
     public static final VarHandle LONG_VH = CSupport.C_LONGLONG.varHandle(long.class);
     public static final VarHandle POINTER_VH = MemoryHandles.asAddressVarHandle(CSupport.C_POINTER.varHandle(long.class));
     public static final VarHandle POINTER_ARR_VH = MemoryHandles.withStride(POINTER_VH, 8);
-
-    private static final MethodHandle STRLEN;
-    private static final MethodHandle STRCPY;
-
-    static {
-        try {
-            STRLEN = SharedUtils.getSystemLinker().downcallHandle(
-                    LibraryLookup.ofDefault().lookup("strlen"),
-                    MethodType.methodType(int.class, MemoryAddress.class),
-                    FunctionDescriptor.of(CSupport.C_INT, CSupport.C_POINTER));
-
-            STRCPY = SharedUtils.getSystemLinker().downcallHandle(
-                    LibraryLookup.ofDefault().lookup("strcpy"),
-                    MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                    FunctionDescriptor.of(CSupport.C_POINTER, CSupport.C_POINTER, CSupport.C_POINTER));
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
 
     static int getInt(MemoryAddress addr) {
         return (int)INT_VH.get(addr);
@@ -109,34 +84,8 @@ public class Utils {
         return segment;
     }
 
-    static int strlen(MemoryAddress str) {
-        try {
-            return (int)STRLEN.invokeExact(str);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
-    static MemoryAddress strcpy(MemoryAddress dest, MemoryAddress src) {
-        try {
-            return (MemoryAddress)STRCPY.invokeExact(dest, src);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
     static String toJavaString(MemoryAddress address) {
-        try (MemorySegment str = MemorySegment.allocateNative(strlen(address) + 1)) {
-            strcpy(str.baseAddress(), address);
-            StringBuilder buf = new StringBuilder();
-            byte curr = (byte)BYTE_ARR_VH.get(str.baseAddress(), 0);
-            long offset = 0;
-            while (curr != 0) {
-                buf.append((char)curr); // interpreting as UTF-16 ?
-                curr = (byte)BYTE_ARR_VH.get(str.baseAddress(), ++offset);
-            }
-            return buf.toString();
-        }
+        return CSupport.toJavaStringRestricted(address);
     }
 
     static MemorySegment toNativeStringArray(String[] ar) {

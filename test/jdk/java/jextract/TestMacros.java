@@ -25,7 +25,7 @@
  * @test
  * @bug 8239128
  * @build JextractApiTestBase
- * @run testng TestMacros
+ * @run testng/othervm -Dforeign.restricted=permit TestMacros
  */
 
 import java.nio.file.Path;

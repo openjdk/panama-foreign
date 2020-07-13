@@ -32,7 +32,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -50,7 +49,7 @@ public class LibClang {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                ForeignLinker abi = SharedUtils.getSystemLinker();
+                ForeignLinker abi = CSupport.getSystemLinker();
                 String putenv = abi.name().equals(CSupport.Win64.NAME) ?
                         "_putenv" : "putenv";
                 MethodHandle PUT_ENV = abi.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),

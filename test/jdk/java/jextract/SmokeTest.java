@@ -24,7 +24,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng SmokeTest
+ * @run testng/othervm -Dforeign.restricted=permit SmokeTest
  */
 
 import jdk.incubator.jextract.Declaration;

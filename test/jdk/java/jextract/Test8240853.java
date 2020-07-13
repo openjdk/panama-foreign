@@ -24,7 +24,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng Test8240853
+ * @run testng/othervm -Dforeign.restricted=permit Test8240853
  */
 
 import jdk.incubator.jextract.Declaration;
