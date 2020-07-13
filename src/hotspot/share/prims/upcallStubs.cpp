@@ -24,6 +24,7 @@
 #include "precompiled.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
+#include "code/codeCache.hpp"
 
 JVM_ENTRY(static jboolean, UH_FreeUpcallStub0(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
