@@ -56,6 +56,8 @@ public class CSupport {
     /**
      * An interface that models a C {@code va_list}.
      *
+     * A va list is a stateful cursor used to iterate over a set of variadic arguments.
+     *
      * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
      * arguments to variadic calls are erased by way of 'default argument promotions',
      * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
@@ -67,7 +69,7 @@ public class CSupport {
     public interface VaList extends AutoCloseable {
 
         /**
-         * Reads a value into an {@code int}
+         * Reads the next value into an {@code int} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code int}
@@ -77,7 +79,7 @@ public class CSupport {
         int vargAsInt(MemoryLayout layout);
 
         /**
-         * Reads a value into a {@code long}
+         * Reads the next value into a {@code long} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code long}
@@ -87,7 +89,7 @@ public class CSupport {
         long vargAsLong(MemoryLayout layout);
 
         /**
-         * Reads a value into a {@code double}
+         * Reads the next value into a {@code double} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code double}
@@ -97,7 +99,7 @@ public class CSupport {
         double vargAsDouble(MemoryLayout layout);
 
         /**
-         * Reads a value into a {@code MemoryAddress}
+         * Reads the next value into a {@code MemoryAddress} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
@@ -107,7 +109,10 @@ public class CSupport {
         MemoryAddress vargAsAddress(MemoryLayout layout);
 
         /**
-         * Reads a value into a {@code MemorySegment}
+         * Reads the next value into a {@code MemorySegment}, and advances this va list's position.
+         *
+         * The memory segment returned by this method will be allocated using
+         * {@link MemorySegment#allocateNative(long, long)}, and will have to be closed separately.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
@@ -117,7 +122,9 @@ public class CSupport {
         MemorySegment vargAsSegment(MemoryLayout layout);
 
         /**
-         * Reads a value into a {@code MemorySegment}, using the given {@code NativeScope} to allocate said segment.
+         * Reads the next value into a {@code MemorySegment}, and advances this va list's position.
+         *
+         * The memory segment returned by this method will be allocated using the given {@code NativeScope}.
          *
          * @param layout the layout of the value
          * @param scope the scope to allocate the segment in
@@ -128,7 +135,7 @@ public class CSupport {
         MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
 
         /**
-         * Skips a number of va arguments with the given memory layouts.
+         * Skips a number of arguments with the given memory layouts, and advancing this va list's position.
          *
          * @param layouts the layout of the value
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
@@ -138,8 +145,7 @@ public class CSupport {
 
         /**
          * A predicate used to check if the memory associated with the C {@code va_list} modelled
-         * by this instance is still valid; or, in other words, if {@code close()} has been called on this
-         * instance.
+         * by this instance is still valid to use.
          *
          * @return true, if the memory associated with the C {@code va_list} modelled by this instance is still valid
          * @see #close()
@@ -147,19 +153,30 @@ public class CSupport {
         boolean isAlive();
 
         /**
-         * Releases the underlying C {@code va_list} modelled by this instance. As a result, subsequent attempts to call
-         * operations on this instance (e.g. {@link #copy()} will fail with an exception.
+         * Releases the underlying C {@code va_list} modelled by this instance, and any native memory that is attached
+         * to this va list that holds its elements (see {@link VaList#make(Consumer)}).
+         *
+         * For some {@code VaList} instances, calling this method will have no effect. For instance: on Windows, a copy
+         * of a va list does not need any native memory, so nothing has to be released. After calling {@code close()} on
+         * such an instance {@link #isAlive()} will still return {@code true}.
          *
          * @see #isAlive()
          */
         void close();
 
         /**
-         * Copies this C {@code va_list}.
+         * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
+         * starting from the current position, without affecting the state of the original va list, essentially
+         * allowing the elements to be traversed multiple times.
          *
-         * @apiNote that this method only copies the va list 'view' and not any argument space it may manage.
-         * That means that if this va list was created with the {@link #make(Consumer)} method, closing
-         * this va list will also free the argument space, and make the copy unusable.
+         * If this method needs to allocate native memory for the copy, it will use
+         * {@link MemorySegment#allocateNative(long, long)} to do so. {@link #close()} will have to be called on the
+         * returned va list instance to release the allocated memory.
+         *
+         * This method only copies the va list cursor itself and not the memory that may be attached to the
+         * va list which holds its elements. That means that if this va list was created with the
+         * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
+         * elements, making the copy unusable.
          *
          * @return a copy of this C {@code va_list}.
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
@@ -168,11 +185,17 @@ public class CSupport {
         VaList copy();
 
         /**
-         * Copies this C {@code va_list}, using the given {@code NativeScope} to allocate the copy (if needed).
+         * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
+         * starting from the current position, without affecting the state of the original va list, essentially
+         * allowing the elements to be traversed multiple times.
          *
-         * @apiNote this method only copies the va list 'view' and not any argument space it may manage.
-         * That means that if this va list was created with the {@link #make(Consumer)} method, closing
-         * this va list will also free the argument space, and make the copy unusable.
+         * If this method needs to allocate native memory for the copy, it will use
+         * the given {@code NativeScope} to do so.
+         *
+         * This method only copies the va list cursor itself and not the memory that may be attached to the
+         * va list which holds its elements. That means that if this va list was created with the
+         * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
+         * elements, making the copy unusable.
          *
          * @param scope the scope to allocate the copy in
          * @return a copy of this C {@code va_list}.
@@ -201,13 +224,17 @@ public class CSupport {
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
          *
-         * Note that when there are no arguments added to the created va list,
+         * If this method needs to allocate native memory for the va list, it will use
+         * {@link MemorySegment#allocateNative(long, long)} to do so.
+         *
+         * This method will allocate native memory to hold the elements in the va list. This memory
+         * will be 'attached' to the returned va list instance, and will be released when {@link VaList#close()}
+         * is called.
+         *
+         * Note that when there are no elements added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
          *
-         * Va lists created with this method also implicitly manage an off-heap 'argument space' that holds
-         * the arguments in the va list. Closing the returned va list will also free the argument space.
-         *
-         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
+         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
          *                of the underlying C {@code va_list}.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
@@ -216,13 +243,18 @@ public class CSupport {
         }
 
         /**
-         * Constructs a new {@code VaList} using a builder (see {@link Builder}), and using the given
-         * {@code NativeScope} to do all needed allocations.
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}).
          *
-         * Note that when there are no arguments added to the created va list,
+         * If this method needs to allocate native memory for the va list, it will use
+         * the given {@code NativeScope} to do so.
+         *
+         * This method will allocate native memory to hold the elements in the va list. This memory
+         * will be managed by the given {@code NativeScope}, and will be released when the scope is closed.
+         *
+         * Note that when there are no elements added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
          *
-         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the contents
+         * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
          *                of the underlying C {@code va_list}.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
