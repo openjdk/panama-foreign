@@ -40,6 +40,12 @@ class HeaderBuilder extends JavaSourceBuilder {
         super(className, pkgName, constantHelper);
     }
 
+    private String getArrayTypeName(Class<?> type) {
+        assert type.isArray();
+        Class<?> elemType = type.getComponentType();
+        return elemType.isArray()? getArrayTypeName(elemType) + "[]" : elemType.getName() + "[]";
+    }
+
     public void addFunctionalInterface(String name, MethodType mtype,  FunctionDescriptor fDesc) {
         incrAlign();
         indent();
@@ -48,8 +54,13 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
         sb.append(mtype.returnType().getName() + " apply(");
         String delim = "";
-        for (int i = 0 ; i < mtype.parameterCount() ; i++) {
-            sb.append(delim + mtype.parameterType(i).getName() + " x" + i);
+        for (int i = 0 ; i < mtype.parameterCount(); i++) {
+            Class<?> paramType = mtype.parameterType(i);
+            if (paramType.isArray()) {
+                sb.append(delim + getArrayTypeName(paramType) + " x" + i);
+            } else {
+                sb.append(delim + paramType.getName() + " x" + i);
+            }
             delim = ", ";
         }
         sb.append(");\n");
@@ -74,7 +85,8 @@ class HeaderBuilder extends JavaSourceBuilder {
                 pName = "x" + i;
             }
             pNames.add(pName);
-            sb.append(delim + mtype.parameterType(i).getName() + " " + pName);
+            Class<?> paramType = mtype.parameterType(i);
+            sb.append(delim + (paramType.isArray()? getArrayTypeName(paramType) : paramType.getName()) + " " + pName);
             delim = ", ";
         }
         if (varargs) {
