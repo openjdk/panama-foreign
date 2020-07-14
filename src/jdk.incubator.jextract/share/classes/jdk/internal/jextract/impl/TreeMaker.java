@@ -251,8 +251,10 @@ class TreeMaker {
     }
 
     private Declaration.Typedef createTypedef(Cursor c) {
-        Type.Delegated typedef = (Type.Delegated) toType(c);
-        Type canonicalType = typedef.type();
+        Type cursorType = toType(c);
+        Type canonicalType = cursorType instanceof Type.Function
+            ? cursorType
+            : ((Type.Delegated) cursorType).type(); // normal typedef
         if (canonicalType instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) canonicalType).tree();
             if (s.name().equals(c.spelling())) {
