@@ -135,7 +135,7 @@ public class CSupport {
         MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
 
         /**
-         * Skips a number of arguments with the given memory layouts, and advancing this va list's position.
+         * Skips a number of elements with the given memory layouts, and advances this va list's position.
          *
          * @param layouts the layout of the value
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
