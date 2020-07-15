@@ -48,7 +48,7 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
         sb.append(mtype.returnType().getName() + " apply(");
         String delim = "";
-        for (int i = 0 ; i < mtype.parameterCount() ; i++) {
+        for (int i = 0 ; i < mtype.parameterCount(); i++) {
             sb.append(delim + mtype.parameterType(i).getName() + " x" + i);
             delim = ", ";
         }
