@@ -21,9 +21,31 @@
  * questions.
  */
 
-struct Foo {
-    struct {
-        int a : 7;
-        int b : 25;
-    };
-};
+import jdk.incubator.jextract.Declaration;
+import org.testng.annotations.Test;
+
+/*
+ * @test
+ * @library .. /test/lib
+ * @modules jdk.incubator.jextract
+ * @build JextractApiTestBase
+ * @bug 8249536
+ * @summary jextract throw IllegalStateException for bitfields in nested anonymous structs
+ * @run testng/othervm -Dforeign.restricted=permit TestNestedBitfields
+ */
+public class TestNestedBitfields extends JextractApiTestBase {
+
+    @Test
+    public void testNestedBitfields() {
+        Declaration.Scoped d = parse("nestedbitfields.h");
+        Declaration.Scoped foo = checkStruct(d, "Foo", "");
+        Declaration.Scoped foo$anon = checkStruct(foo, "", "");
+        checkBitfields(foo$anon, "", "a", "b");
+
+        Declaration.Scoped bar = checkStruct(d, "Bar", "");
+        Declaration.Scoped bar$anon = checkStruct(bar, "", "");
+        Declaration.Scoped bar$anon$anon = checkStruct(bar$anon, "", "");
+        checkBitfields(bar$anon$anon, "", "a", "b");
+    }
+}
+

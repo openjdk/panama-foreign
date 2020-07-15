@@ -21,26 +21,19 @@
  * questions.
  */
 
-import org.testng.annotations.Test;
+struct Foo {
+    struct {
+        int a : 7;
+        int b : 25;
+    };
+};
 
-import java.nio.file.Path;
+struct Bar {
+    struct {
+        struct {
+            int a : 7;
+            int b : 25;
+        };
+    };
+};
 
-/*
- * @test
- * @library .. /test/lib
- * @modules jdk.incubator.jextract
- * @build JextractToolRunner
- * @bug 8249536
- * @summary jextract throw IllegalStateException for bitfields in nested anonymous structs
- * @run testng/othervm -Dforeign.restricted=permit TestNestedBitfields
- */
-public class TestNestedBitfields extends JextractToolRunner {
-    @Test
-    public void testNestedBitfields() {
-        Path outputPath = getOutputFilePath("outputNestedBitfields");
-        Path headerFile = getInputFilePath("nestedbitfields.h");
-        run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
-        // nothing is generated that we can check, so we just check that jextract ran successfully
-        deleteDir(outputPath);
-    }
-}
