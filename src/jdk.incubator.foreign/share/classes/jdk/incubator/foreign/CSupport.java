@@ -55,62 +55,66 @@ public class CSupport {
 
     /**
      * An interface that models a C {@code va_list}.
-     *
+     * <p>
      * A va list is a stateful cursor used to iterate over a set of variadic arguments.
-     *
+     * <p>
      * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
      * arguments to variadic calls are erased by way of 'default argument promotions',
      * which erases integral types by way of integer promotion (see C standard 6.3.1.1 - item 2),
      * and which erases all {@code float} arguments to {@code double}.
-     *
+     * <p>
      * As such, this interface only supports reading {@code int}, {@code double},
      * and any other type that fits into a {@code long}.
      */
     public interface VaList extends AutoCloseable {
 
         /**
-         * Reads the next value into an {@code int} and advances this va list's position.
+         * Reads the next value as an {@code int} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code int}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code int}
          */
         int vargAsInt(MemoryLayout layout);
 
         /**
-         * Reads the next value into a {@code long} and advances this va list's position.
+         * Reads the next value as a {@code long} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code long}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code long}
          */
         long vargAsLong(MemoryLayout layout);
 
         /**
-         * Reads the next value into a {@code double} and advances this va list's position.
+         * Reads the next value as a {@code double} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code double}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code double}
          */
         double vargAsDouble(MemoryLayout layout);
 
         /**
-         * Reads the next value into a {@code MemoryAddress} and advances this va list's position.
+         * Reads the next value as a {@code MemoryAddress} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemoryAddress}
          */
         MemoryAddress vargAsAddress(MemoryLayout layout);
 
         /**
-         * Reads the next value into a {@code MemorySegment}, and advances this va list's position.
-         *
+         * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
+         * <p>
          * The memory segment returned by this method will be allocated using
          * {@link MemorySegment#allocateNative(long, long)}, and will have to be closed separately.
          *
@@ -118,12 +122,13 @@ public class CSupport {
          * @return the value read as an {@code MemorySegment}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
         MemorySegment vargAsSegment(MemoryLayout layout);
 
         /**
-         * Reads the next value into a {@code MemorySegment}, and advances this va list's position.
-         *
+         * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
+         * <p>
          * The memory segment returned by this method will be allocated using the given {@code NativeScope}.
          *
          * @param layout the layout of the value
@@ -131,6 +136,7 @@ public class CSupport {
          * @return the value read as an {@code MemorySegment}
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
         MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
 
@@ -155,7 +161,7 @@ public class CSupport {
         /**
          * Releases the underlying C {@code va_list} modelled by this instance, and any native memory that is attached
          * to this va list that holds its elements (see {@link VaList#make(Consumer)}).
-         *
+         * <p>
          * For some {@code VaList} instances, calling this method will have no effect. For instance: on Windows, a copy
          * of a va list does not need any native memory, so nothing has to be released. After calling {@code close()} on
          * such an instance {@link #isAlive()} will still return {@code true}.
@@ -168,11 +174,11 @@ public class CSupport {
          * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
          * starting from the current position, without affecting the state of the original va list, essentially
          * allowing the elements to be traversed multiple times.
-         *
+         * <p>
          * If this method needs to allocate native memory for the copy, it will use
          * {@link MemorySegment#allocateNative(long, long)} to do so. {@link #close()} will have to be called on the
          * returned va list instance to release the allocated memory.
-         *
+         * <p>
          * This method only copies the va list cursor itself and not the memory that may be attached to the
          * va list which holds its elements. That means that if this va list was created with the
          * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
@@ -188,10 +194,10 @@ public class CSupport {
          * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
          * starting from the current position, without affecting the state of the original va list, essentially
          * allowing the elements to be traversed multiple times.
-         *
+         * <p>
          * If this method needs to allocate native memory for the copy, it will use
          * the given {@code NativeScope} to do so.
-         *
+         * <p>
          * This method only copies the va list cursor itself and not the memory that may be attached to the
          * va list which holds its elements. That means that if this va list was created with the
          * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
@@ -223,14 +229,14 @@ public class CSupport {
 
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
-         *
+         * <p>
          * If this method needs to allocate native memory for the va list, it will use
          * {@link MemorySegment#allocateNative(long, long)} to do so.
-         *
+         * <p>
          * This method will allocate native memory to hold the elements in the va list. This memory
          * will be 'attached' to the returned va list instance, and will be released when {@link VaList#close()}
          * is called.
-         *
+         * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
          *
@@ -244,13 +250,13 @@ public class CSupport {
 
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
-         *
+         * <p>
          * If this method needs to allocate native memory for the va list, it will use
          * the given {@code NativeScope} to do so.
-         *
+         * <p>
          * This method will allocate native memory to hold the elements in the va list. This memory
          * will be managed by the given {@code NativeScope}, and will be released when the scope is closed.
-         *
+         * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
          *
@@ -264,7 +270,7 @@ public class CSupport {
 
         /**
          * Returns an empty C {@code va_list} constant.
-         *
+         * <p>
          * The returned {@code VaList} can not be closed.
          *
          * @return a {@code VaList} modelling an empty C {@code va_list}.
@@ -284,6 +290,7 @@ public class CSupport {
              * @param layout the native layout of the value.
              * @param value the value, represented as an {@code int}.
              * @return this builder.
+             * @throws IllegalArgumentException if the given memory layout is not compatible with {@code int}
              */
             Builder vargFromInt(MemoryLayout layout, int value);
 
@@ -293,6 +300,7 @@ public class CSupport {
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code long}.
              * @return this builder.
+             * @throws IllegalArgumentException if the given memory layout is not compatible with {@code long}
              */
             Builder vargFromLong(MemoryLayout layout, long value);
 
@@ -302,6 +310,7 @@ public class CSupport {
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code double}.
              * @return this builder.
+             * @throws IllegalArgumentException if the given memory layout is not compatible with {@code double}
              */
             Builder vargFromDouble(MemoryLayout layout, double value);
 
@@ -311,6 +320,7 @@ public class CSupport {
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code MemoryAddress}.
              * @return this builder.
+             * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemoryAddress}
              */
             Builder vargFromAddress(MemoryLayout layout, MemoryAddress value);
 
@@ -320,6 +330,7 @@ public class CSupport {
              * @param layout the native layout of the value.
              * @param value the value, represented as a {@code MemorySegment}.
              * @return this builder.
+             * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
              */
             Builder vargFromSegment(MemoryLayout layout, MemorySegment value);
         }
