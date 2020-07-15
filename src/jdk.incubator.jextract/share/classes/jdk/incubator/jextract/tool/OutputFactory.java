@@ -267,7 +267,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
                 name = Utils.javaSafeIdentifier(name);
                 //generate functional interface
-                MethodType fitype = typeTranslator.getMethodType(f);
+                if (f.varargs()) {
+                    System.err.println("WARNING: varargs in callbacks is not supported");
+                }
+                MethodType fitype = typeTranslator.getMethodType(f, false);
                 builder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow());
                 i++;
             }

@@ -44,7 +44,7 @@ public class Test8249300 extends JextractToolRunner {
             Class<?> headerClass = loader.loadClass("test8249300_h");
             checkMethod(headerClass, "func", void.class, MemoryAddress.class);
             Class<?> fiClass = loader.loadClass("test8249300_h$func$f");
-            checkMethod(fiClass, "apply", void.class, Object[].class);
+            checkMethod(fiClass, "apply", void.class);
         } finally {
             deleteDir(outputPath);
         }
