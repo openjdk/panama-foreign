@@ -162,9 +162,8 @@ public class CSupport {
          * Releases the underlying C {@code va_list} modelled by this instance, and any native memory that is attached
          * to this va list that holds its elements (see {@link VaList#make(Consumer)}).
          * <p>
-         * For some {@code VaList} instances, calling this method will have no effect. For instance: on Windows, a copy
-         * of a va list does not need any native memory, so nothing has to be released. After calling {@code close()} on
-         * such an instance {@link #isAlive()} will still return {@code true}.
+         * After calling this method, {@link #isAlive()} will return {@code false} and further attempts to read values
+         * from this va list will result in an exception.
          *
          * @see #isAlive()
          */

@@ -318,12 +318,15 @@ public class VaListTest {
     public void testScopedCopy() {
         try (VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
                                              .vargFromInt(C_INT, 8))) {
+            VaList copy;
             try (NativeScope scope = NativeScope.unboundedScope()) {
-                VaList copy = list.copy(scope);
+                copy = list.copy(scope);
 
                 assertEquals(copy.vargAsInt(C_INT), 4);
                 assertEquals(copy.vargAsInt(C_INT), 8);
             }
+            assertFalse(copy.isAlive());
+
             assertEquals(list.vargAsInt(C_INT), 4);
             assertEquals(list.vargAsInt(C_INT), 8);
         }

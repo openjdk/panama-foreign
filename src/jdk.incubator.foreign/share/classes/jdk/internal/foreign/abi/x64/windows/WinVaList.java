@@ -65,10 +65,12 @@ class WinVaList implements VaList {
 
     private MemoryAddress ptr;
     private final List<MemorySegment> attachedSegments;
+    private final MemorySegment livenessCheck;
 
-    private WinVaList(MemoryAddress ptr, List<MemorySegment> attachedSegments) {
+    private WinVaList(MemoryAddress ptr, List<MemorySegment> attachedSegments, MemorySegment livenessCheck) {
         this.ptr = ptr;
         this.attachedSegments = attachedSegments;
+        this.livenessCheck = livenessCheck;
     }
 
     public static final VaList empty() {
@@ -146,7 +148,7 @@ class WinVaList implements VaList {
 
     static WinVaList ofAddress(MemoryAddress addr) {
         MemorySegment segment = MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null);
-        return new WinVaList(segment.baseAddress(), List.of(segment));
+        return new WinVaList(segment.baseAddress(), List.of(segment), null);
     }
 
     static Builder builder(SharedUtils.Allocator allocator) {
@@ -155,17 +157,24 @@ class WinVaList implements VaList {
 
     @Override
     public void close() {
+        if (livenessCheck != null)
+            livenessCheck.close();
         attachedSegments.forEach(MemorySegment::close);
     }
 
     @Override
     public VaList copy() {
-        return new WinVaList(ptr, List.of());
+        MemorySegment liveness = MemorySegment.ofNativeRestricted(
+                MemoryAddress.NULL, 1, ptr.segment().ownerThread(), null, null);
+        return new WinVaList(ptr, List.of(), liveness);
     }
 
     @Override
     public VaList copy(NativeScope scope) {
-        return copy(); // no need to allocate when copying on Windows
+        MemorySegment liveness = MemorySegment.ofNativeRestricted(
+                MemoryAddress.NULL, 1, ptr.segment().ownerThread(), null, null);
+        liveness = scope.register(liveness);
+        return new WinVaList(ptr, List.of(), liveness);
     }
 
     @Override
@@ -175,6 +184,8 @@ class WinVaList implements VaList {
 
     @Override
     public boolean isAlive() {
+        if (livenessCheck != null)
+            return livenessCheck.isAlive();
         return ptr.segment().isAlive();
     }
 
@@ -250,7 +261,7 @@ class WinVaList implements VaList {
                 addr = addr.addOffset(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(ms.baseAddress(), attachedSegments);
+            return new WinVaList(ms.baseAddress(), attachedSegments, null);
         }
     }
 }
