@@ -36,6 +36,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -53,6 +54,8 @@ import static jdk.incubator.foreign.CSupport.C_VA_LIST;
 import static jdk.incubator.foreign.CSupport.Win64.asVarArg;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public class VaListTest {
 
@@ -276,6 +279,96 @@ public class VaListTest {
     public void testEmptyVaListFromBuilderNotCloseable() {
         VaList list = VaList.make(b -> {});
         list.close();
+    }
+
+    @Test
+    public void testScopedVaList() throws Throwable {
+        VaList listLeaked;
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            VaList list = CSupport.VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                                     .vargFromInt(C_INT, 8),
+                                               scope);
+            int x = (int) MH_sumInts.invokeExact(2, list);
+            assertEquals(x, 12);
+            listLeaked = list;
+        }
+        assertFalse(listLeaked.isAlive());
+    }
+
+    @Test
+    public void testScopeMSRead() {
+        MemorySegment pointOut;
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT)) {
+                VH_Point_x.set(pointIn.baseAddress(), 3);
+                VH_Point_y.set(pointIn.baseAddress(), 6);
+                try (VaList list = CSupport.VaList.make(b -> b.vargFromSegment(Point_LAYOUT, pointIn))) {
+                    pointOut = list.vargAsSegment(Point_LAYOUT, scope);
+                    assertEquals((int) VH_Point_x.get(pointOut.baseAddress()), 3);
+                    assertEquals((int) VH_Point_y.get(pointOut.baseAddress()), 6);
+                }
+                assertTrue(pointOut.isAlive()); // after VaList freed
+            }
+            assertTrue(pointOut.isAlive()); // after input MS freed
+        }
+        assertFalse(pointOut.isAlive()); // after scope freed
+    }
+
+    @Test
+    public void testCopy() {
+        try (VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                             .vargFromInt(C_INT, 8))) {
+            VaList  copy = list.copy();
+            assertEquals(copy.vargAsInt(C_INT), 4);
+            assertEquals(copy.vargAsInt(C_INT), 8);
+            copy.close();
+
+            assertFalse(copy.isAlive());
+
+            assertEquals(list.vargAsInt(C_INT), 4);
+            assertEquals(list.vargAsInt(C_INT), 8);
+        }
+    }
+
+    @Test
+    public void testScopedCopy() {
+        try (VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                             .vargFromInt(C_INT, 8))) {
+            VaList copy;
+            try (NativeScope scope = NativeScope.unboundedScope()) {
+                copy = list.copy(scope);
+
+                assertEquals(copy.vargAsInt(C_INT), 4);
+                assertEquals(copy.vargAsInt(C_INT), 8);
+            }
+            assertFalse(copy.isAlive());
+
+            assertEquals(list.vargAsInt(C_INT), 4);
+            assertEquals(list.vargAsInt(C_INT), 8);
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosed() {
+        VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                        .vargFromInt(C_INT, 8));
+        try (VaList copy = list.copy()) {
+            list.close();
+
+            copy.vargAsInt(C_INT); // should throw
+        }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosedScope() {
+        VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                        .vargFromInt(C_INT, 8));
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            VaList copy = list.copy(scope);
+            list.close();
+
+            copy.vargAsInt(C_INT); // should throw
+        }
     }
 
     @DataProvider
