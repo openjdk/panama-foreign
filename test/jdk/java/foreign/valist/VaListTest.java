@@ -313,7 +313,7 @@ public class VaListTest {
         }
         assertFalse(pointOut.isAlive()); // after scope freed
     }
-    
+
     @Test
     public void testCopy() {
         try (VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
