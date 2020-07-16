@@ -25,12 +25,12 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.CSupport.VaList;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static jdk.incubator.foreign.CSupport.Win64.C_POINTER;
-import static jdk.incubator.foreign.MemorySegment.CLOSE;
-import static jdk.incubator.foreign.MemorySegment.READ;
 
 // see vadefs.h (VC header)
 //
@@ -65,18 +63,14 @@ class WinVaList implements VaList {
 
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
-    private final MemorySegment segment;
     private MemoryAddress ptr;
-    private final List<MemorySegment> copies;
+    private final List<MemorySegment> attachedSegments;
+    private final MemorySegment livenessCheck;
 
-    WinVaList(MemorySegment segment) {
-        this(segment, new ArrayList<>());
-    }
-
-    WinVaList(MemorySegment segment, List<MemorySegment> copies) {
-        this.segment = segment;
-        this.ptr = segment.baseAddress();
-        this.copies = copies;
+    private WinVaList(MemoryAddress ptr, List<MemorySegment> attachedSegments, MemorySegment livenessCheck) {
+        this.ptr = ptr;
+        this.attachedSegments = attachedSegments;
+        this.livenessCheck = livenessCheck;
     }
 
     public static final VaList empty() {
@@ -108,7 +102,16 @@ class WinVaList implements VaList {
         return (MemorySegment) read(MemorySegment.class, layout);
     }
 
+    @Override
+    public MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope) {
+        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofScope(scope));
+    }
+
     private Object read(Class<?> carrier, MemoryLayout layout) {
+        return read(carrier, layout, MemorySegment::allocateNative);
+    }
+
+    private Object read(Class<?> carrier, MemoryLayout layout, SharedUtils.Allocator allocator) {
         SharedUtils.checkCompatibleType(carrier, layout, Windowsx64Linker.ADDRESS_SIZE);
         Object res;
         if (carrier == MemorySegment.class) {
@@ -117,15 +120,15 @@ class WinVaList implements VaList {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(ptr);
                     try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
-                                                                            segment.ownerThread(), null, null)) {
-                        MemorySegment seg = MemorySegment.allocateNative(layout.byteSize());
+                                                                            ptr.segment().ownerThread(), null, null)) {
+                        MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(struct);
                         yield seg;
                     }
                 }
                 case STRUCT_REGISTER -> {
-                    MemorySegment struct = MemorySegment.allocateNative(layout);
-                    struct.copyFrom(segment.asSlice(ptr.segmentOffset(), layout.byteSize()));
+                    MemorySegment struct = allocator.allocate(layout);
+                    struct.copyFrom(ptr.segment().asSlice(ptr.segmentOffset(), layout.byteSize()));
                     yield struct;
                 }
                 default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
@@ -144,22 +147,34 @@ class WinVaList implements VaList {
     }
 
     static WinVaList ofAddress(MemoryAddress addr) {
-        return new WinVaList(MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null));
+        MemorySegment segment = MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null);
+        return new WinVaList(segment.baseAddress(), List.of(segment), null);
     }
 
-    static Builder builder() {
-        return new Builder();
+    static Builder builder(SharedUtils.Allocator allocator) {
+        return new Builder(allocator);
     }
 
     @Override
     public void close() {
-        segment.close();
-        copies.forEach(MemorySegment::close);
+        if (livenessCheck != null)
+            livenessCheck.close();
+        attachedSegments.forEach(MemorySegment::close);
     }
 
     @Override
     public VaList copy() {
-        return WinVaList.ofAddress(ptr);
+        MemorySegment liveness = MemorySegment.ofNativeRestricted(
+                MemoryAddress.NULL, 1, ptr.segment().ownerThread(), null, null);
+        return new WinVaList(ptr, List.of(), liveness);
+    }
+
+    @Override
+    public VaList copy(NativeScope scope) {
+        MemorySegment liveness = MemorySegment.ofNativeRestricted(
+                MemoryAddress.NULL, 1, ptr.segment().ownerThread(), null, null);
+        liveness = scope.register(liveness);
+        return new WinVaList(ptr, List.of(), liveness);
     }
 
     @Override
@@ -169,12 +184,19 @@ class WinVaList implements VaList {
 
     @Override
     public boolean isAlive() {
-        return segment.isAlive();
+        if (livenessCheck != null)
+            return livenessCheck.isAlive();
+        return ptr.segment().isAlive();
     }
 
     static class Builder implements VaList.Builder {
 
+        private final SharedUtils.Allocator allocator;
         private final List<SimpleVaArg> args = new ArrayList<>();
+
+        public Builder(SharedUtils.Allocator allocator) {
+            this.allocator = allocator;
+        }
 
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
             SharedUtils.checkCompatibleType(carrier, layout, Windowsx64Linker.ADDRESS_SIZE);
@@ -211,9 +233,9 @@ class WinVaList implements VaList {
             if (args.isEmpty()) {
                 return EMPTY;
             }
-            MemorySegment ms = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size());
-            List<MemorySegment> copies = new ArrayList<>();
-
+            MemorySegment ms = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
+            List<MemorySegment> attachedSegments = new ArrayList<>();
+            attachedSegments.add(ms);
             MemoryAddress addr = ms.baseAddress();
             for (SimpleVaArg arg : args) {
                 if (arg.carrier == MemorySegment.class) {
@@ -221,9 +243,9 @@ class WinVaList implements VaList {
                     TypeClass typeClass = TypeClass.typeClassFor(arg.layout);
                     switch (typeClass) {
                         case STRUCT_REFERENCE -> {
-                            MemorySegment copy = MemorySegment.allocateNative(arg.layout);
+                            MemorySegment copy = allocator.allocate(arg.layout);
                             copy.copyFrom(msArg); // by-value
-                            copies.add(copy);
+                            attachedSegments.add(copy);
                             VH_address.set(addr, copy.baseAddress());
                         }
                         case STRUCT_REGISTER -> {
@@ -239,7 +261,7 @@ class WinVaList implements VaList {
                 addr = addr.addOffset(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(ms.withAccessModes(CLOSE | READ), copies);
+            return new WinVaList(ms.baseAddress(), attachedSegments, null);
         }
     }
 }

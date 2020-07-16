@@ -33,6 +33,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -279,12 +280,12 @@ public class SharedUtils {
     }
 
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, Allocator allocator) {
         String name = CSupport.getSystemLinker().name();
         return switch(name) {
-            case Win64.NAME -> Windowsx64Linker.newVaList(actions);
-            case SysV.NAME -> SysVx64Linker.newVaList(actions);
-            case AArch64.NAME -> AArch64Linker.newVaList(actions);
+            case Win64.NAME -> Windowsx64Linker.newVaList(actions, allocator);
+            case SysV.NAME -> SysVx64Linker.newVaList(actions, allocator);
+            case AArch64.NAME -> AArch64Linker.newVaList(actions, allocator);
             default -> throw new IllegalStateException("Unknown linker name: " + name);
         };
     }
@@ -356,6 +357,22 @@ public class SharedUtils {
                 .orElse(false);
     }
 
+    public interface Allocator {
+        default MemorySegment allocate(MemoryLayout layout) {
+            return allocate(layout.byteSize(), layout.byteAlignment());
+        }
+
+        default MemorySegment allocate(long size) {
+            return allocate(size, 1);
+        }
+
+        MemorySegment allocate(long size, long align);
+
+        static Allocator ofScope(NativeScope scope) {
+            return (size, align) -> scope.allocate(size, align).segment();
+        }
+    }
+
     public static class SimpleVaArg {
         public final Class<?> carrier;
         public final MemoryLayout layout;
@@ -412,6 +429,11 @@ public class SharedUtils {
         }
 
         @Override
+        public MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope) {
+            throw uoe();
+        }
+
+        @Override
         public void skip(MemoryLayout... layouts) {
             throw uoe();
         }
@@ -429,6 +451,11 @@ public class SharedUtils {
         @Override
         public VaList copy() {
             return this;
+        }
+
+        @Override
+        public VaList copy(NativeScope scope) {
+            throw uoe();
         }
 
         @Override

@@ -77,8 +77,8 @@ public class SysVx64Linker implements ForeignLinker {
         return instance;
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions) {
-        SysVVaList.Builder builder = SysVVaList.builder();
+    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
+        SysVVaList.Builder builder = SysVVaList.builder(allocator);
         actions.accept(builder);
         return builder.build();
     }
