@@ -313,6 +313,22 @@ public class VaListTest {
         }
         assertFalse(pointOut.isAlive()); // after scope freed
     }
+    
+    @Test
+    public void testCopy() {
+        try (VaList list = VaList.make(b -> b.vargFromInt(C_INT, 4)
+                                             .vargFromInt(C_INT, 8))) {
+            VaList  copy = list.copy();
+            assertEquals(copy.vargAsInt(C_INT), 4);
+            assertEquals(copy.vargAsInt(C_INT), 8);
+            copy.close();
+
+            assertFalse(copy.isAlive());
+
+            assertEquals(list.vargAsInt(C_INT), 4);
+            assertEquals(list.vargAsInt(C_INT), 8);
+        }
+    }
 
     @Test
     public void testScopedCopy() {
