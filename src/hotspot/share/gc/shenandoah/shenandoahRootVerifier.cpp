@@ -78,14 +78,13 @@ void ShenandoahRootVerifier::oops_do(OopClosure* oops) {
     shenandoah_assert_safepoint();
     Universe::oops_do(oops);
     Management::oops_do(oops);
-    JvmtiExport::oops_do(oops);
     ObjectSynchronizer::oops_do(oops);
   }
 
   if (verify(JNIHandleRoots)) {
     shenandoah_assert_safepoint();
     JNIHandles::oops_do(oops);
-    OopStorageSet::vm_global()->oops_do(oops);
+    Universe::vm_global()->oops_do(oops);
   }
 
   if (verify(WeakRoots)) {
@@ -124,10 +123,9 @@ void ShenandoahRootVerifier::roots_do(OopClosure* oops) {
 
   Universe::oops_do(oops);
   Management::oops_do(oops);
-  JvmtiExport::oops_do(oops);
   JNIHandles::oops_do(oops);
   ObjectSynchronizer::oops_do(oops);
-  OopStorageSet::vm_global()->oops_do(oops);
+  Universe::vm_global()->oops_do(oops);
 
   AlwaysTrueClosure always_true;
   WeakProcessor::weak_oops_do(&always_true, oops);
@@ -152,10 +150,9 @@ void ShenandoahRootVerifier::strong_roots_do(OopClosure* oops) {
 
   Universe::oops_do(oops);
   Management::oops_do(oops);
-  JvmtiExport::oops_do(oops);
   JNIHandles::oops_do(oops);
   ObjectSynchronizer::oops_do(oops);
-  OopStorageSet::vm_global()->oops_do(oops);
+  Universe::vm_global()->oops_do(oops);
 
   // Do thread roots the last. This allows verification code to find
   // any broken objects from those special roots first, not the accidental
