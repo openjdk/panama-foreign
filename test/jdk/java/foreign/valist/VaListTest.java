@@ -196,12 +196,12 @@ public class VaListTest {
 
     @DataProvider
     @SuppressWarnings("unchecked")
-    public static Object[][] getInt() {
+    public static Object[][] pointers() {
         Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
             list -> {
                 MemoryAddress ma = list.vargAsAddress(layout);
                 MemorySegment accessibleSegment = MemorySegment.ofNativeRestricted(ma,
-                        C_INT.byteSize(), Thread.currentThread(), null, null);
+                        4, Thread.currentThread(), null, null);
                 return MemoryAccess.getInt(accessibleSegment.baseAddress());
             };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
@@ -213,14 +213,14 @@ public class VaListTest {
         };
     }
 
-    @Test(dataProvider = "getInt")
+    @Test(dataProvider = "pointers")
     public void testVaListMemoryAddress(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                        Function<VaList, Integer> getInt,
+                                        Function<VaList, Integer> getFromPointer,
                                         MemoryLayout pointerLayout) {
         try (MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT)) {
             MemoryAccess.setInt(msInt.baseAddress(), 10);
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.baseAddress()))) {
-                int x = getInt.apply(vaList);
+                int x = getFromPointer.apply(vaList);
                 assertEquals(x, 10);
             }
         }
@@ -232,7 +232,7 @@ public class VaListTest {
 
     @DataProvider
     @SuppressWarnings("unchecked")
-    public static Object[][] winStructByValue() {
+    public static Object[][] structs() {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructJavaFact
             = (pointLayout, VH_Point_x, VH_Point_y) ->
                 list -> {
@@ -266,10 +266,10 @@ public class VaListTest {
         };
     }
 
-    @Test(dataProvider = "winStructByValue")
-    public void testWinStructByValue(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                     Function<VaList, Integer> sumStruct,
-                                     MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
+    @Test(dataProvider = "structs")
+    public void testStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                           Function<VaList, Integer> sumStruct,
+                           MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT)) {
             VH_Point_x.set(struct.baseAddress(), 5);
             VH_Point_y.set(struct.baseAddress(), 10);
@@ -283,7 +283,7 @@ public class VaListTest {
 
     @DataProvider
     @SuppressWarnings("unchecked")
-    public static Object[][] winStructByReference() {
+    public static Object[][] bigStructs() {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
             = (BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y) ->
                 list -> {
@@ -317,10 +317,10 @@ public class VaListTest {
         };
     }
 
-    @Test(dataProvider = "winStructByReference")
-    public void testWinStructByReference(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                         Function<VaList, Long> sumBigStruct,
-                                         MemoryLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
+    @Test(dataProvider = "bigStructs")
+    public void testBigStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                              Function<VaList, Long> sumBigStruct,
+                              MemoryLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT)) {
             VH_BigPoint_x.set(struct.baseAddress(), 5);
             VH_BigPoint_y.set(struct.baseAddress(), 10);
@@ -334,7 +334,7 @@ public class VaListTest {
 
     @DataProvider
     @SuppressWarnings("unchecked")
-    public static Object[][] floatStructByValue() {
+    public static Object[][] floatStructs() {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructJavaFact
             = (FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y) ->
                 list -> {
@@ -368,11 +368,11 @@ public class VaListTest {
         };
     }
 
-    @Test(dataProvider = "floatStructByValue")
-    public void testFloatStructByValue(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                       Function<VaList, Float> sumFloatStruct,
-                                       MemoryLayout FloatPoint_LAYOUT,
-                                       VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
+    @Test(dataProvider = "floatStructs")
+    public void testFloatStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                Function<VaList, Float> sumFloatStruct,
+                                MemoryLayout FloatPoint_LAYOUT,
+                                VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT)) {
             VH_FloatPoint_x.set(struct.baseAddress(), 1.234f);
             VH_FloatPoint_y.set(struct.baseAddress(), 3.142f);
@@ -390,7 +390,7 @@ public class VaListTest {
 
     @DataProvider
     @SuppressWarnings("unchecked")
-    public static Object[][] hugeStructByValue() {
+    public static Object[][] hugeStructs() {
         QuadFunc<MemoryLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
             = (HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
                 list -> {
@@ -428,11 +428,11 @@ public class VaListTest {
         };
     }
 
-    @Test(dataProvider = "hugeStructByValue")
-    public void testHugeStructByValue(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                      Function<VaList, Long> sumHugeStruct,
-                                      MemoryLayout HugePoint_LAYOUT,
-                                      VarHandle VH_HugePoint_x, VarHandle VH_HugePoint_y, VarHandle VH_HugePoint_z) {
+    @Test(dataProvider = "hugeStructs")
+    public void testHugeStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                               Function<VaList, Long> sumHugeStruct,
+                               MemoryLayout HugePoint_LAYOUT,
+                               VarHandle VH_HugePoint_x, VarHandle VH_HugePoint_y, VarHandle VH_HugePoint_z) {
         // On AArch64 a struct needs to be larger than 16 bytes to be
         // passed by reference.
         try (MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT)) {
@@ -564,7 +564,7 @@ public class VaListTest {
         assertFalse(listLeaked.isAlive());
     }
 
-    @Test(dataProvider = "winStructByValue")
+    @Test(dataProvider = "structs")
     public void testScopeMSRead(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                 Function<VaList, Integer> sumStruct, // ignored
                                 MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
