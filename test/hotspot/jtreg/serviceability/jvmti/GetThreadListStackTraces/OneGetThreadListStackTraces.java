@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, NTT DATA.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,29 +22,21 @@
  * questions.
  */
 
-/*
+/**
  * @test
- * @bug 6346732 6705893
- * @summary should be able to assign null and undefined
- * value to JavaScript global variables.
- * @modules jdk.scripting.nashorn
+ * @bug 8242428
+ * @summary Verifies JVMTI GetThreadListStackTraces API with thread_count = 1
+ * @library /test/lib
+ * @run main/othervm/native -agentlib:OneGetThreadListStackTraces OneGetThreadListStackTraces
+ *
  */
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
+public class OneGetThreadListStackTraces {
 
-public class NullUndefinedVarTest {
+    private static native void checkCallStacks(Thread thread);
 
-        public static void main(String[] args) throws Exception {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine jsengine = Helper.getJsEngine(manager);
-            if (jsengine == null) {
-                System.out.println("Warning: No js engine found; test vacuously passes.");
-                return;
-            }
-            jsengine.eval("var n = null; " +
-                          "if (n !== null) throw 'expecting null';" +
-                          "var u = undefined; " +
-                          "if (u !== undefined) throw 'undefined expected';");
-        }
+    public static void main(String[] args) throws Exception {
+        /* Check call stack native */
+        checkCallStacks(Thread.currentThread());
+    }
 }
