@@ -60,11 +60,11 @@ static void prepAttributes(JNIEnv* env, struct stat* buf, jobject attrs) {
 }
 
 /*
- * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher
+ * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher
  * Method:    opendirJNI
  * Signature: (Ljava/lang/String;)J
  */
-JNIEXPORT jlong JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher_opendirJNI
+JNIEXPORT jlong JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher_opendirJNI
   (JNIEnv *env, jclass cls, jstring path)
 {
   const char *p = (*env)->GetStringUTFChars(env, path, NULL);
@@ -74,11 +74,11 @@ JNIEXPORT jlong JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support
 }
 
 /*
- * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher
+ * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher
  * Method:    readdirJNI
  * Signature: (J)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher_readdirJNI
+JNIEXPORT jstring JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher_readdirJNI
   (JNIEnv *env, jclass cls, jlong dir)
 {
   DIR * dirp = (DIR*) dir;
@@ -90,11 +90,11 @@ JNIEXPORT jstring JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_suppo
 }
 
 /*
- * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher
+ * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher
  * Method:    closedirJNI
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher_closedirJNI
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher_closedirJNI
   (JNIEnv *env, jclass cls, jlong dir)
 {
   DIR * dirp = (DIR*) dir;
@@ -102,11 +102,11 @@ JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_
 }
 
 /*
- * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher
+ * Class:     org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher
  * Method:    statJNI
  * Signature: (Ljava/lang/String;Lorg/openjdk/bench/jdk/incubator/foreign/nio/support/UnixFileAttributes;)V
  */
-JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher_statJNI
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher_statJNI
   (JNIEnv *env, jclass cls, jstring path, jobject attrs)
 {
   struct stat data;
@@ -116,7 +116,7 @@ JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_
   prepAttributes(env, &data, attrs);
 }
 
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_UnixNativeDispatcher_initJNI
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_nio_support_NativeDispatcher_initJNI
   (JNIEnv* env, jclass this)
 {
     jclass clazz;

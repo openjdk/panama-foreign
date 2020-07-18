@@ -44,8 +44,9 @@ import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.MemoryAddress;
 import org.openjdk.bench.jdk.incubator.foreign.nio.support.LibC;
+import org.openjdk.bench.jdk.incubator.foreign.nio.support.FFINativeDispatcher;
+import org.openjdk.bench.jdk.incubator.foreign.nio.support.NativeDispatcher;
 import org.openjdk.bench.jdk.incubator.foreign.nio.support.UnixFileAttributes;
-import org.openjdk.bench.jdk.incubator.foreign.nio.support.UnixNativeDispatcher;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -86,30 +87,30 @@ public class NativeIO {
     @Benchmark
     public void getcwdinfoJNI() {
         long usage = 0;
-        long dir = UnixNativeDispatcher.opendirJNI(".");
-        String p = UnixNativeDispatcher.readdirJNI(dir);
+        var dir = NativeDispatcher.opendirJNI(".");
+        String p = NativeDispatcher.readdirJNI(dir);
         while (p != null) {
-            UnixFileAttributes attrs = UnixNativeDispatcher.statJNI(p);
-            p = UnixNativeDispatcher.readdirJNI(dir);
+            UnixFileAttributes attrs = NativeDispatcher.statJNI(p);
+            p = NativeDispatcher.readdirJNI(dir);
             usage += attrs.size();
         }
-        UnixNativeDispatcher.closedirJNI(dir);
+        NativeDispatcher.closedirJNI(dir);
     }
 
     @Benchmark
     public void getcwdinfoFFI() {
         long usage = 0;
-        long dir = UnixNativeDispatcher.opendirFFI(".");
-        String p = UnixNativeDispatcher.readdirFFI(dir);
+        var dir = FFINativeDispatcher.opendirFFI(".");
+        String p = FFINativeDispatcher.readdirFFI(dir);
         while (p != null) {
-            UnixFileAttributes attrs = UnixNativeDispatcher.statFFI(p);
-            p = UnixNativeDispatcher.readdirFFI(dir);
+            UnixFileAttributes attrs = FFINativeDispatcher.statFFI(p);
+            p = FFINativeDispatcher.readdirFFI(dir);
             usage += attrs.size();
         }
-        UnixNativeDispatcher.closedirFFI(dir);
+        FFINativeDispatcher.closedirFFI(dir);
     }
 
-    private void getcwdinfo(UnixNativeDispatcher instance) throws IOException {
+    private void getcwdinfo(NativeDispatcher instance) throws IOException {
         long usage = 0;
         try (DirectoryStream<String> dir = instance.newDirectoryStream(".")) {
             for (String p: dir) {
@@ -121,11 +122,11 @@ public class NativeIO {
 
     @Benchmark
     public void getcwdinfoWrapJNI() throws IOException {
-        getcwdinfo(UnixNativeDispatcher.JNI);
+        getcwdinfo(NativeDispatcher.JNI);
     }
 
     @Benchmark
     public void getcwdinfoWrapFFI() throws IOException {
-        getcwdinfo(UnixNativeDispatcher.FFI);
+        getcwdinfo(NativeDispatcher.FFI);
     }
 }

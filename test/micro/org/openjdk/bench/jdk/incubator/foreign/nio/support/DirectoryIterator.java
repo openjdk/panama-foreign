@@ -26,10 +26,11 @@ package org.openjdk.bench.jdk.incubator.foreign.nio.support;
 import java.nio.file.DirectoryStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import jdk.incubator.foreign.MemoryAddress;
 
 public class DirectoryIterator implements DirectoryStream<String>, Iterator<String> {
-    private final UnixNativeDispatcher dispatcher;
-    private final long dir;
+    private final NativeDispatcher dispatcher;
+    private MemoryAddress dir;
 
     // true when at EOF
     private boolean atEof;
@@ -37,7 +38,7 @@ public class DirectoryIterator implements DirectoryStream<String>, Iterator<Stri
     // next entry to return
     private String nextEntry;
 
-    DirectoryIterator(UnixNativeDispatcher dispatcher, String path) {
+    DirectoryIterator(NativeDispatcher dispatcher, String path) {
         super();
         this.dispatcher = dispatcher;
         this.dir = dispatcher.opendir(path);

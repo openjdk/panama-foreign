@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,73 +36,26 @@ import jdk.incubator.foreign.CSupport;
  * Unix system and library calls.
  */
 
-public abstract class UnixNativeDispatcher {
+public abstract class NativeDispatcher {
     static final int PATH_MAX = 1024;
 
-    public abstract long opendir(String path);
-    public abstract String readdir(long dir);
-    public abstract void closedir(long dir);
+    public abstract MemoryAddress opendir(String path);
+    public abstract String readdir(MemoryAddress dir);
+    public abstract void closedir(MemoryAddress dir);
     public abstract UnixFileAttributes readAttributes(String path);
 
     public DirectoryStream<String> newDirectoryStream(String path) {
         return new DirectoryIterator(this, path);
     }
 
-    public static final UnixNativeDispatcher FFI  = new UnixNativeDispatcher() {
-        public long opendir(String path) { return opendirFFI(path); }
-        public String readdir(long dir) { return readdirFFI(dir); }
-        public void closedir(long dir) { closedirFFI(dir); }
-        public UnixFileAttributes readAttributes(String path) { return statFFI(path); }
-    };
+    public static final NativeDispatcher FFI  = new FFINativeDispatcher();
 
-    public static final UnixNativeDispatcher JNI = new UnixNativeDispatcher() {
-        public long opendir(String path) { return opendirJNI(path); }
-        public String readdir(long dir) { return readdirJNI(dir); }
-        public void closedir(long dir) { closedirJNI(dir); }
+    public static final NativeDispatcher JNI = new NativeDispatcher() {
+        public MemoryAddress opendir(String path) { return MemoryAddress.ofLong(opendirJNI(path)); }
+        public String readdir(MemoryAddress dir) { return readdirJNI(dir.toRawLongValue()); }
+        public void closedir(MemoryAddress dir) { closedirJNI(dir.toRawLongValue()); }
         public UnixFileAttributes readAttributes(String path) { return statJNI(path); }
     };
-
-    public static UnixFileAttributes statFFI(String path) {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress file = CSupport.toCString(path, scope);
-            LibC.stat64 buffer = LibC.stat64.allocate(scope::allocate);
-            LibC.stat64(file, buffer.ptr());
-            return new UnixFileAttributes(buffer);
-        }
-    }
-
-    public static long opendirFFI(String path) {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress dir = LibC.opendir(CSupport.toCString(path, scope));
-            if (dir.equals(MemoryAddress.NULL)) {
-                throw new RuntimeException();
-            }
-            return dir.toRawLongValue();
-        }
-    }
-
-    /**
-     * closedir(DIR* dirp)
-     */
-    public static void closedirFFI(long dir) {
-        MemoryAddress dirp = MemoryAddress.ofLong(dir);
-        LibC.closedir(dirp);
-    }
-
-    /**
-     * struct dirent* readdir(DIR *dirp)
-     *
-     * @return  dirent->d_name
-     */
-    public static String readdirFFI(long dir) {
-        MemoryAddress dirp = MemoryAddress.ofLong(dir);
-        MemoryAddress pdir = resizePointer(LibC.readdir(dirp), LibC.dirent.sizeof());
-        if (pdir.equals(MemoryAddress.NULL)) {
-            return null;
-        }
-
-        return CSupport.toJavaString(LibC.dirent.at(pdir).d_name$ptr());
-    }
 
     public static MemoryAddress resizePointer(MemoryAddress addr, long size) {
         if (addr.segment() == null) {
@@ -125,7 +78,7 @@ public abstract class UnixNativeDispatcher {
     static native int initJNI();
 
     static {
-        System.loadLibrary("UnixNativeDispatcher");
+        System.loadLibrary("NativeDispatcher");
         initJNI();
     }
 }

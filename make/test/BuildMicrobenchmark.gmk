@@ -38,7 +38,14 @@ endif
 
 #### Variables
 
-MICROBENCHMARK_SRC := $(TOPDIR)/test/micro
+# Add platform specific code first to allow override
+MICROBENCHMARK_SRC := $(wildcard $(TOPDIR)/test/os/$(OPENJDK_TARGET_OS)/micro)
+ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_TYPE))
+  MICROBENCHMARK_SRC += $(wildcard $(TOPDIR)/test/os/$(OPENJDK_TARGET_OS_TYPE)/micro)
+endif
+# Add common code for all platform
+MICROBENCHMARK_SRC += $(TOPDIR)/test/micro
+$(info BENCHMARK_SRC: $(MICROBENCHMARK_SRC))
 MICROBENCHMARK_IMAGE_DIR := $(TEST_IMAGE_DIR)/micro
 MICROBENCHMARK_JAR := $(MICROBENCHMARK_IMAGE_DIR)/benchmarks.jar
 
