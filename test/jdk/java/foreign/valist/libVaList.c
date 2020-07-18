@@ -94,9 +94,7 @@ EXPORT float sumFloatStruct(va_list list) {
     return point.x + point.y;
 }
 
-EXPORT void sumStack(long long* longSum, double* doubleSum, int numArgs, ...) { // numArgs required by spec
-    va_list list;
-    va_start(list, numArgs);
+EXPORT void sumStack(long long* longSum, double* doubleSum, va_list list) {
     long long lSum = 0;
     for (int i = 0; i < 16; i++) {
         lSum += va_arg(list, long long);
@@ -107,7 +105,6 @@ EXPORT void sumStack(long long* longSum, double* doubleSum, int numArgs, ...) { 
         dSum += va_arg(list, double);
     }
     *doubleSum = dSum;
-    va_end(list);
 }
 
 // ###### Up calls

@@ -24,25 +24,44 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign.abi
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.sysv
  * @run testng/othervm -Dforeign.restricted=permit VaListTest
  */
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CSupport.AArch64;
+import jdk.incubator.foreign.CSupport.SysV;
 import jdk.incubator.foreign.CSupport.VaList;
+import jdk.incubator.foreign.CSupport.Win64;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
+import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
+import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 import static jdk.incubator.foreign.CSupport.C_DOUBLE;
 import static jdk.incubator.foreign.CSupport.C_FLOAT;
@@ -50,16 +69,16 @@ import static jdk.incubator.foreign.CSupport.C_INT;
 import static jdk.incubator.foreign.CSupport.C_LONGLONG;
 import static jdk.incubator.foreign.CSupport.C_POINTER;
 import static jdk.incubator.foreign.CSupport.C_VA_LIST;
-import static jdk.incubator.foreign.CSupport.Win64.asVarArg;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
+import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public class VaListTest {
 
     private static final ForeignLinker abi = CSupport.getSystemLinker();
     private static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
-
-    private static final VarHandle VH_int = C_INT.varHandle(int.class);
 
     private static final MethodHandle MH_sumInts = link("sumInts",
             MethodType.methodType(int.class, int.class, VaList.class),
@@ -83,29 +102,8 @@ public class VaListTest {
             MethodType.methodType(float.class, VaList.class),
             FunctionDescriptor.of(C_FLOAT, C_VA_LIST));
     private static final MethodHandle MH_sumStack = link("sumStack",
-            MethodType.methodType(void.class, MemoryAddress.class, MemoryAddress.class, int.class,
-                long.class, long.class, long.class, long.class,
-                long.class, long.class, long.class, long.class,
-                long.class, long.class, long.class, long.class,
-                long.class, long.class, long.class, long.class,
-                double.class, double.class, double.class, double.class,
-                double.class, double.class, double.class, double.class,
-                double.class, double.class, double.class, double.class,
-                double.class, double.class, double.class, double.class
-            ),
-            FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT,
-                asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG),
-                asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG),
-                asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG),
-                asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG), asVarArg(C_LONGLONG),
-                asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE),
-                asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE),
-                asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE),
-                asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE), asVarArg(C_DOUBLE)
-            ));
-
-    private static final VarHandle VH_long = C_LONGLONG.varHandle(long.class);
-    private static final VarHandle VH_double = C_DOUBLE.varHandle(double.class);
+            MethodType.methodType(void.class, MemoryAddress.class, MemoryAddress.class, VaList.class),
+            FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_VA_LIST));
 
     private static MethodHandle link(String symbol, MethodType mt, FunctionDescriptor fd) {
         try {
@@ -122,107 +120,319 @@ public class VaListTest {
 
     }
 
-    private static final GroupLayout BigPoint_LAYOUT = MemoryLayout.ofStruct(
-        C_LONGLONG.withName("x"),
-        C_LONGLONG.withName("y")
-    );
-    private static final VarHandle VH_BigPoint_x = BigPoint_LAYOUT.varHandle(long.class, groupElement("x"));
-    private static final VarHandle VH_BigPoint_y = BigPoint_LAYOUT.varHandle(long.class, groupElement("y"));
-    private static final GroupLayout Point_LAYOUT = MemoryLayout.ofStruct(
-        C_INT.withName("x"),
-        C_INT.withName("y")
-    );
-    private static final VarHandle VH_Point_x = Point_LAYOUT.varHandle(int.class, groupElement("x"));
-    private static final VarHandle VH_Point_y = Point_LAYOUT.varHandle(int.class, groupElement("y"));
-    private static final GroupLayout FloatPoint_LAYOUT = MemoryLayout.ofStruct(
-        C_FLOAT.withName("x"),
-        C_FLOAT.withName("y")
-    );
-    private static final VarHandle VH_FloatPoint_x = FloatPoint_LAYOUT.varHandle(float.class, groupElement("x"));
-    private static final VarHandle VH_FloatPoint_y = FloatPoint_LAYOUT.varHandle(float.class, groupElement("y"));
-    private static final GroupLayout HugePoint_LAYOUT = MemoryLayout.ofStruct(
-        C_LONGLONG.withName("x"),
-        C_LONGLONG.withName("y"),
-        C_LONGLONG.withName("z")
-    );
-    private static final VarHandle VH_HugePoint_x = HugePoint_LAYOUT.varHandle(long.class, groupElement("x"));
-    private static final VarHandle VH_HugePoint_y = HugePoint_LAYOUT.varHandle(long.class, groupElement("y"));
-    private static final VarHandle VH_HugePoint_z = HugePoint_LAYOUT.varHandle(long.class, groupElement("z"));
+    private static final Function<Consumer<VaList.Builder>, VaList> winVaListFactory
+        = actions -> Windowsx64Linker.newVaList(actions, MemorySegment::allocateNative);
+    private static final Function<Consumer<VaList.Builder>, VaList> sysvVaListFactory
+        = actions -> SysVx64Linker.newVaList(actions, MemorySegment::allocateNative);
+    private static final Function<Consumer<VaList.Builder>, VaList> aarch64VaListFactory
+        = actions -> AArch64Linker.newVaList(actions, MemorySegment::allocateNative);
+    private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
+        = CSupport.VaList::make;
 
-    @Test
-    public void testIntSum() throws Throwable {
-        try (VaList vaList = VaList.make(b ->
-                b.vargFromInt(C_INT, 10)
-                 .vargFromInt(C_INT, 15)
-                 .vargFromInt(C_INT, 20))) {
-            int x = (int) MH_sumInts.invokeExact(3, vaList);
+    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
+        = (actions, scope) -> Windowsx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> sysvVaListScopedFactory
+        = (actions, scope) -> SysVx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> aarch64VaListScopedFactory
+        = (actions, scope) -> AArch64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+    private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> platformVaListScopedFactory
+        = CSupport.VaList::make;
+
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] sumInts() {
+        Function<MemoryLayout, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
+            (num, list) -> IntStream.generate(() -> list.vargAsInt(layout)).limit(num).sum();
+        BiFunction<Integer, VaList, Integer> sumIntsNative
+            = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
+        return new Object[][]{
+            { winVaListFactory,      sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
+            { sysvVaListFactory,     sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
+            { aarch64VaListFactory,  sumIntsJavaFact.apply(AArch64.C_INT), AArch64.C_INT },
+            { platformVaListFactory, sumIntsNative,                        C_INT         },
+        };
+    }
+
+    @Test(dataProvider = "sumInts")
+    public void testIntSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                           BiFunction<Integer, VaList, Integer> sumInts,
+                           MemoryLayout intLayout) {
+        try (VaList vaList = vaListFactory.apply(b ->
+                b.vargFromInt(intLayout, 10)
+                 .vargFromInt(intLayout, 15)
+                 .vargFromInt(intLayout, 20))) {
+            int x = sumInts.apply(3, vaList);
             assertEquals(x, 45);
         }
     }
 
-    @Test
-    public void testDoubleSum() throws Throwable {
-        try (VaList vaList = VaList.make(b ->
-                b.vargFromDouble(C_DOUBLE, 3.0D)
-                 .vargFromDouble(C_DOUBLE, 4.0D)
-                 .vargFromDouble(C_DOUBLE, 5.0D))) {
-            double x = (double) MH_sumDoubles.invokeExact(3, vaList);
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] sumDoubles() {
+        Function<MemoryLayout, BiFunction<Integer, VaList, Double>> sumDoublesJavaFact  = layout ->
+            (num, list) -> DoubleStream.generate(() -> list.vargAsDouble(layout)).limit(num).sum();
+        BiFunction<Integer, VaList, Double> sumDoublesNative
+            = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumDoubles);
+        return new Object[][]{
+            { winVaListFactory,      sumDoublesJavaFact.apply(Win64.C_DOUBLE),   Win64.C_DOUBLE   },
+            { sysvVaListFactory,     sumDoublesJavaFact.apply(SysV.C_DOUBLE),    SysV.C_DOUBLE    },
+            { aarch64VaListFactory,  sumDoublesJavaFact.apply(AArch64.C_DOUBLE), AArch64.C_DOUBLE },
+            { platformVaListFactory, sumDoublesNative,                           C_DOUBLE         },
+        };
+    }
+
+    @Test(dataProvider = "sumDoubles")
+    public void testDoubleSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                              BiFunction<Integer, VaList, Double> sumDoubles,
+                              MemoryLayout doubleLayout) {
+        try (VaList vaList = vaListFactory.apply(b ->
+                b.vargFromDouble(doubleLayout, 3.0D)
+                 .vargFromDouble(doubleLayout, 4.0D)
+                 .vargFromDouble(doubleLayout, 5.0D))) {
+            double x = sumDoubles.apply(3, vaList);
             assertEquals(x, 12.0D);
         }
     }
 
-    @Test
-    public void testVaListMemoryAddress() throws Throwable {
-        try (MemorySegment msInt = MemorySegment.allocateNative(C_INT)) {
-            VH_int.set(msInt.baseAddress(), 10);
-            try (VaList vaList = VaList.make(b -> b.vargFromAddress(C_POINTER, msInt.baseAddress()))) {
-                int x = (int) MH_getInt.invokeExact(vaList);
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] pointers() {
+        Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
+            list -> {
+                MemoryAddress ma = list.vargAsAddress(layout);
+                MemorySegment accessibleSegment = MemorySegment.ofNativeRestricted(ma,
+                        4, Thread.currentThread(), null, null);
+                return MemoryAccess.getInt(accessibleSegment.baseAddress());
+            };
+        Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
+        return new Object[][]{
+            { winVaListFactory,      getIntJavaFact.apply(Win64.C_POINTER),   Win64.C_POINTER   },
+            { sysvVaListFactory,     getIntJavaFact.apply(SysV.C_POINTER),    SysV.C_POINTER    },
+            { aarch64VaListFactory,  getIntJavaFact.apply(AArch64.C_POINTER), AArch64.C_POINTER },
+            { platformVaListFactory, getIntNative,                            C_POINTER         },
+        };
+    }
+
+    @Test(dataProvider = "pointers")
+    public void testVaListMemoryAddress(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                        Function<VaList, Integer> getFromPointer,
+                                        MemoryLayout pointerLayout) {
+        try (MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT)) {
+            MemoryAccess.setInt(msInt.baseAddress(), 10);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.baseAddress()))) {
+                int x = getFromPointer.apply(vaList);
                 assertEquals(x, 10);
             }
         }
     }
 
-    @Test
-    public void testWinStructByValue() throws Throwable {
+    interface TriFunction<S, T, U, R> {
+        R apply(S s, T t, U u);
+    }
+
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] structs() {
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructJavaFact
+            = (pointLayout, VH_Point_x, VH_Point_y) ->
+                list -> {
+                    MemorySegment struct = list.vargAsSegment(pointLayout);
+                    int x = (int) VH_Point_x.get(struct.baseAddress());
+                    int y = (int) VH_Point_y.get(struct.baseAddress());
+                    return x + y;
+                };
+
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructNativeFact
+            = (pointLayout, VH_Point_x, VH_Point_y) ->
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumStruct);
+
+        TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
+                TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Integer>>, Object[]> argsFact
+            = (vaListFact, intLayout, sumStructFact) -> {
+                GroupLayout pointLayout =  MemoryLayout.ofStruct(
+                    intLayout.withName("x"),
+                    intLayout.withName("y")
+                );
+                VarHandle VH_Point_x = pointLayout.varHandle(int.class, groupElement("x"));
+                VarHandle VH_Point_y = pointLayout.varHandle(int.class, groupElement("y"));
+                return new Object[] { vaListFact, sumStructFact.apply(pointLayout, VH_Point_x, VH_Point_y),
+                                      pointLayout, VH_Point_x, VH_Point_y  };
+            };
+        return new Object[][]{
+            argsFact.apply(winVaListFactory,      Win64.C_INT,   sumStructJavaFact),
+            argsFact.apply(sysvVaListFactory,     SysV.C_INT,    sumStructJavaFact),
+            argsFact.apply(aarch64VaListFactory,  AArch64.C_INT, sumStructJavaFact),
+            argsFact.apply(platformVaListFactory, C_INT,         sumStructNativeFact),
+        };
+    }
+
+    @Test(dataProvider = "structs")
+    public void testStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                           Function<VaList, Integer> sumStruct,
+                           MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT)) {
             VH_Point_x.set(struct.baseAddress(), 5);
             VH_Point_y.set(struct.baseAddress(), 10);
 
-            try (VaList vaList = VaList.make(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
-                int sum = (int) MH_sumStruct.invokeExact(vaList);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
+                int sum = sumStruct.apply(vaList);
                 assertEquals(sum, 15);
             }
         }
     }
 
-    @Test
-    public void testWinStructByReference() throws Throwable {
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] bigStructs() {
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
+            = (BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y) ->
+                list -> {
+                    MemorySegment struct = list.vargAsSegment(BigPoint_LAYOUT);
+                    long x = (long) VH_BigPoint_x.get(struct.baseAddress());
+                    long y = (long) VH_BigPoint_y.get(struct.baseAddress());
+                    return x + y;
+                };
+
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
+            = (pointLayout, VH_BigPoint_x, VH_BigPoint_y) ->
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumBigStruct);
+
+        TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
+                TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
+            = (vaListFact, longLongLayout, sumBigStructFact) -> {
+                GroupLayout BigPoint_LAYOUT =  MemoryLayout.ofStruct(
+                    longLongLayout.withName("x"),
+                    longLongLayout.withName("y")
+                );
+                VarHandle VH_BigPoint_x = BigPoint_LAYOUT.varHandle(long.class, groupElement("x"));
+                VarHandle VH_BigPoint_y = BigPoint_LAYOUT.varHandle(long.class, groupElement("y"));
+                return new Object[] { vaListFact, sumBigStructFact.apply(BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y),
+                                      BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y  };
+            };
+        return new Object[][]{
+            argsFact.apply(winVaListFactory,      Win64.C_LONGLONG,   sumStructJavaFact),
+            argsFact.apply(sysvVaListFactory,     SysV.C_LONGLONG,    sumStructJavaFact),
+            argsFact.apply(aarch64VaListFactory,  AArch64.C_LONGLONG, sumStructJavaFact),
+            argsFact.apply(platformVaListFactory, C_LONGLONG,         sumStructNativeFact),
+        };
+    }
+
+    @Test(dataProvider = "bigStructs")
+    public void testBigStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                              Function<VaList, Long> sumBigStruct,
+                              MemoryLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT)) {
             VH_BigPoint_x.set(struct.baseAddress(), 5);
             VH_BigPoint_y.set(struct.baseAddress(), 10);
 
-            try (VaList vaList = VaList.make(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
-                long sum = (long) MH_sumBigStruct.invokeExact(vaList);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
+                long sum = sumBigStruct.apply(vaList);
                 assertEquals(sum, 15);
             }
         }
     }
 
-    @Test
-    public void testFloatStructByValue() throws Throwable {
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] floatStructs() {
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructJavaFact
+            = (FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y) ->
+                list -> {
+                    MemorySegment struct = list.vargAsSegment(FloatPoint_LAYOUT);
+                    float x = (float) VH_FloatPoint_x.get(struct.baseAddress());
+                    float y = (float) VH_FloatPoint_y.get(struct.baseAddress());
+                    return x + y;
+                };
+
+        TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructNativeFact
+            = (pointLayout, VH_FloatPoint_x, VH_FloatPoint_y) ->
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumFloatStruct);
+
+        TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
+                TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Float>>, Object[]> argsFact
+            = (vaListFact, floatLayout, sumFloatStructFact) -> {
+                GroupLayout FloatPoint_LAYOUT = MemoryLayout.ofStruct(
+                    floatLayout.withName("x"),
+                    floatLayout.withName("y")
+                );
+                VarHandle VH_FloatPoint_x = FloatPoint_LAYOUT.varHandle(float.class, groupElement("x"));
+                VarHandle VH_FloatPoint_y = FloatPoint_LAYOUT.varHandle(float.class, groupElement("y"));
+                return new Object[] { vaListFact, sumFloatStructFact.apply(FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y),
+                                      FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y  };
+            };
+        return new Object[][]{
+            argsFact.apply(winVaListFactory,      Win64.C_FLOAT,   sumStructJavaFact),
+            argsFact.apply(sysvVaListFactory,     SysV.C_FLOAT,    sumStructJavaFact),
+            argsFact.apply(aarch64VaListFactory,  AArch64.C_FLOAT, sumStructJavaFact),
+            argsFact.apply(platformVaListFactory, C_FLOAT,         sumStructNativeFact),
+        };
+    }
+
+    @Test(dataProvider = "floatStructs")
+    public void testFloatStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                Function<VaList, Float> sumFloatStruct,
+                                MemoryLayout FloatPoint_LAYOUT,
+                                VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT)) {
             VH_FloatPoint_x.set(struct.baseAddress(), 1.234f);
             VH_FloatPoint_y.set(struct.baseAddress(), 3.142f);
 
-            try (VaList vaList = VaList.make(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct))) {
-                float sum = (float) MH_sumFloatStruct.invokeExact(vaList);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct))) {
+                float sum = sumFloatStruct.apply(vaList);
                 assertEquals(sum, 4.376f, 0.00001f);
             }
         }
     }
 
-    @Test
-    public void testHugeStructByValue() throws Throwable {
+    interface QuadFunc<T0, T1, T2, T3, R> {
+        R apply(T0 t0, T1 t1, T2 t2, T3 t3);
+    }
+
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] hugeStructs() {
+        QuadFunc<MemoryLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
+            = (HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
+                list -> {
+                    MemorySegment struct = list.vargAsSegment(HugePoint_LAYOUT);
+                    long x = (long) VH_HugePoint_x.get(struct.baseAddress());
+                    long y = (long) VH_HugePoint_y.get(struct.baseAddress());
+                    long z = (long) VH_HugePoint_z.get(struct.baseAddress());
+                    return x + y + z;
+                };
+
+        QuadFunc<MemoryLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructNativeFact
+            = (pointLayout, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
+                MethodHandleProxies.asInterfaceInstance(Function.class, MH_sumHugeStruct);
+
+        TriFunction<Function<Consumer<VaList.Builder>, VaList>, MemoryLayout,
+                QuadFunc<MemoryLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>>, Object[]> argsFact
+            = (vaListFact, longLongLayout, sumBigStructFact) -> {
+                GroupLayout HugePoint_LAYOUT = MemoryLayout.ofStruct(
+                    longLongLayout.withName("x"),
+                    longLongLayout.withName("y"),
+                    longLongLayout.withName("z")
+                );
+                VarHandle VH_HugePoint_x = HugePoint_LAYOUT.varHandle(long.class, groupElement("x"));
+                VarHandle VH_HugePoint_y = HugePoint_LAYOUT.varHandle(long.class, groupElement("y"));
+                VarHandle VH_HugePoint_z = HugePoint_LAYOUT.varHandle(long.class, groupElement("z"));
+                return new Object[] { vaListFact,
+                                      sumBigStructFact.apply(HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z),
+                                      HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z  };
+            };
+        return new Object[][]{
+            argsFact.apply(winVaListFactory,      Win64.C_LONGLONG,   sumStructJavaFact),
+            argsFact.apply(sysvVaListFactory,     SysV.C_LONGLONG,    sumStructJavaFact),
+            argsFact.apply(aarch64VaListFactory,  AArch64.C_LONGLONG, sumStructJavaFact),
+            argsFact.apply(platformVaListFactory, C_LONGLONG,         sumStructNativeFact),
+        };
+    }
+
+    @Test(dataProvider = "hugeStructs")
+    public void testHugeStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                               Function<VaList, Long> sumHugeStruct,
+                               MemoryLayout HugePoint_LAYOUT,
+                               VarHandle VH_HugePoint_x, VarHandle VH_HugePoint_y, VarHandle VH_HugePoint_z) {
         // On AArch64 a struct needs to be larger than 16 bytes to be
         // passed by reference.
         try (MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT)) {
@@ -230,26 +440,66 @@ public class VaListTest {
             VH_HugePoint_y.set(struct.baseAddress(), 2);
             VH_HugePoint_z.set(struct.baseAddress(), 3);
 
-            try (VaList vaList = VaList.make(b -> b.vargFromSegment(HugePoint_LAYOUT, struct))) {
-                long sum = (long) MH_sumHugeStruct.invokeExact(vaList);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(HugePoint_LAYOUT, struct))) {
+                long sum = sumHugeStruct.apply(vaList);
                 assertEquals(sum, 6);
             }
         }
     }
 
-    @Test
-    public void testStack() throws Throwable {
-       try (MemorySegment longSum = MemorySegment.allocateNative(C_LONGLONG);
-            MemorySegment doubleSum = MemorySegment.allocateNative(C_DOUBLE)) {
-            VH_long.set(longSum.baseAddress(), 0L);
-            VH_double.set(doubleSum.baseAddress(), 0D);
+    public interface SumStackFunc {
+        void invoke(MemoryAddress longSum, MemoryAddress doubleSum, VaList list);
+    }
 
-            MH_sumStack.invokeExact(longSum.baseAddress(), doubleSum.baseAddress(), 32,
-                1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L,
-                1D, 2D, 3D, 4D, 5D, 6D, 7D, 8D, 9D, 10D, 11D, 12D, 13D, 14D, 15D, 16D);
+    @DataProvider
+    public static Object[][] sumStack() {
+        BiFunction<MemoryLayout, MemoryLayout, SumStackFunc> sumStackJavaFact = (longLayout, doubleLayout) ->
+            (longSum, doubleSum, list) -> {
+                long lSum = 0L;
+                for (int i = 0; i < 16; i++) {
+                    lSum += list.vargAsLong(longLayout);
+                }
+                MemoryAccess.setLong(longSum, lSum);
+                double dSum = 0D;
+                for (int i = 0; i < 16; i++) {
+                    dSum += list.vargAsDouble(doubleLayout);
+                }
+                MemoryAccess.setDouble(doubleSum, dSum);
+            };
+        SumStackFunc sumStackNative = MethodHandleProxies.asInterfaceInstance(SumStackFunc.class, MH_sumStack);
+        return new Object[][]{
+            { winVaListFactory,      sumStackJavaFact.apply(Win64.C_LONGLONG, Win64.C_DOUBLE),     Win64.C_LONGLONG,   Win64.C_DOUBLE   },
+            { sysvVaListFactory,     sumStackJavaFact.apply(SysV.C_LONGLONG, SysV.C_DOUBLE),       SysV.C_LONGLONG,    SysV.C_DOUBLE    },
+            { aarch64VaListFactory,  sumStackJavaFact.apply(AArch64.C_LONGLONG, AArch64.C_DOUBLE), AArch64.C_LONGLONG, AArch64.C_DOUBLE },
+            { platformVaListFactory, sumStackNative,                                               C_LONGLONG,         C_DOUBLE         },
+        };
+    }
 
-            long lSum = (long) VH_long.get(longSum.baseAddress());
-            double dSum = (double) VH_double.get(doubleSum.baseAddress());
+    @Test(dataProvider = "sumStack")
+    public void testStack(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                          SumStackFunc sumStack,
+                          MemoryLayout longLayout,
+                          MemoryLayout doubleLayout) {
+       try (MemorySegment longSum = MemorySegment.allocateNative(longLayout);
+            MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout)) {
+            MemoryAccess.setLong(longSum.baseAddress(), 0L);
+            MemoryAccess.setDouble(doubleSum.baseAddress(), 0D);
+
+            VaList list = vaListFactory.apply(b -> {
+                for (long l = 1; l <= 16L; l++) {
+                    b.vargFromLong(longLayout, l);
+                }
+                for (double d = 1; d <= 16D; d++) {
+                    b.vargFromDouble(doubleLayout, d);
+                }
+            });
+
+            try (list) {
+                sumStack.invoke(longSum.baseAddress(), doubleSum.baseAddress(), list);
+            }
+
+            long lSum = MemoryAccess.getLong(longSum.baseAddress());
+            double dSum = MemoryAccess.getDouble(doubleSum.baseAddress());
 
             assertEquals(lSum, 136L);
             assertEquals(dSum, 136D);
@@ -264,22 +514,176 @@ public class VaListTest {
         }
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class,
-          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
-    public void testEmptyNotCloseable() {
-        VaList list = VaList.empty();
-        list.close();
+    @DataProvider
+    public Object[][] emptyVaLists() {
+        return new Object[][] {
+            { Windowsx64Linker.emptyVaList()      },
+            { winVaListFactory.apply(b -> {})     },
+            { SysVx64Linker.emptyVaList()         },
+            { sysvVaListFactory.apply(b -> {})    },
+            { AArch64Linker.emptyVaList()         },
+            { aarch64VaListFactory.apply(b -> {}) },
+        };
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class,
-          expectedExceptionsMessageRegExp = ".*Empty VaList.*")
-    public void testEmptyVaListFromBuilderNotCloseable() {
-        VaList list = VaList.make(b -> {});
-        list.close();
+          expectedExceptionsMessageRegExp = ".*Empty VaList.*",
+          dataProvider = "emptyVaLists")
+    public void testEmptyNotCloseable(VaList emptyList) {
+        emptyList.close();
+    }
+
+    @DataProvider
+    @SuppressWarnings("unchecked")
+    public static Object[][] sumIntsScoped() {
+        Function<MemoryLayout, BiFunction<Integer, VaList, Integer>> sumIntsJavaFact = layout ->
+            (num, list) -> IntStream.generate(() -> list.vargAsInt(layout)).limit(num).sum();
+        BiFunction<Integer, VaList, Integer> sumIntsNative
+            = MethodHandleProxies.asInterfaceInstance(BiFunction.class, MH_sumInts);
+        return new Object[][]{
+            { winVaListScopedFactory,      sumIntsJavaFact.apply(Win64.C_INT),   Win64.C_INT   },
+            { sysvVaListScopedFactory,     sumIntsJavaFact.apply(SysV.C_INT),    SysV.C_INT    },
+            { aarch64VaListScopedFactory,  sumIntsJavaFact.apply(AArch64.C_INT), AArch64.C_INT },
+            { platformVaListScopedFactory, sumIntsNative,                        C_INT         },
+        };
+    }
+
+    @Test(dataProvider = "sumIntsScoped")
+    public void testScopedVaList(BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> vaListFactory,
+                                 BiFunction<Integer, VaList, Integer> sumInts,
+                                 MemoryLayout intLayout) {
+        VaList listLeaked;
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                                                    .vargFromInt(intLayout, 8),
+                                               scope);
+            int x = sumInts.apply(2, list);
+            assertEquals(x, 12);
+            listLeaked = list;
+        }
+        assertFalse(listLeaked.isAlive());
+    }
+
+    @Test(dataProvider = "structs")
+    public void testScopeMSRead(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                Function<VaList, Integer> sumStruct, // ignored
+                                MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
+        MemorySegment pointOut;
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT)) {
+                VH_Point_x.set(pointIn.baseAddress(), 3);
+                VH_Point_y.set(pointIn.baseAddress(), 6);
+                try (VaList list = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, pointIn))) {
+                    pointOut = list.vargAsSegment(Point_LAYOUT, scope);
+                    assertEquals((int) VH_Point_x.get(pointOut.baseAddress()), 3);
+                    assertEquals((int) VH_Point_y.get(pointOut.baseAddress()), 6);
+                }
+                assertTrue(pointOut.isAlive()); // after VaList freed
+            }
+            assertTrue(pointOut.isAlive()); // after input MS freed
+        }
+        assertFalse(pointOut.isAlive()); // after scope freed
+    }
+
+    @DataProvider
+    public Object[][] copy() {
+        return new Object[][] {
+            { winVaListFactory,      Win64.C_INT   },
+            { sysvVaListFactory,     SysV.C_INT    },
+            { aarch64VaListFactory,  AArch64.C_INT },
+        };
+    }
+
+    @Test(dataProvider = "copy")
+    public void testCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, MemoryLayout intLayout) {
+        try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                                                     .vargFromInt(intLayout, 8))) {
+            VaList  copy = list.copy();
+            assertEquals(copy.vargAsInt(intLayout), 4);
+            assertEquals(copy.vargAsInt(intLayout), 8);
+            copy.close();
+
+            assertFalse(copy.isAlive());
+
+            assertEquals(list.vargAsInt(intLayout), 4);
+            assertEquals(list.vargAsInt(intLayout), 8);
+        }
+    }
+
+    @Test(dataProvider = "copy")
+    public void testScopedCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, MemoryLayout intLayout) {
+        try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                                                     .vargFromInt(intLayout, 8))) {
+            VaList copy;
+            try (NativeScope scope = NativeScope.unboundedScope()) {
+                copy = list.copy(scope);
+
+                assertEquals(copy.vargAsInt(intLayout), 4);
+                assertEquals(copy.vargAsInt(intLayout), 8);
+            }
+            assertFalse(copy.isAlive());
+
+            assertEquals(list.vargAsInt(intLayout), 4);
+            assertEquals(list.vargAsInt(intLayout), 8);
+        }
+    }
+
+    @Test(dataProvider = "copy",
+          expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosed(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                                    MemoryLayout intLayout) {
+        VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                                                .vargFromInt(intLayout, 8));
+        try (VaList copy = list.copy()) {
+            list.close();
+
+            copy.vargAsInt(intLayout); // should throw
+        }
+    }
+
+    @Test(dataProvider = "copy",
+          expectedExceptions = IllegalStateException.class)
+    public void testCopyUnusableAfterOriginalClosedScope(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
+                                                         MemoryLayout intLayout) {
+        VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                                                .vargFromInt(intLayout, 8));
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            VaList copy = list.copy(scope);
+            list.close();
+
+            copy.vargAsInt(intLayout); // should throw
+        }
     }
 
     @DataProvider
     public static Object[][] upcalls() {
+        GroupLayout BigPoint_LAYOUT = MemoryLayout.ofStruct(
+            C_LONGLONG.withName("x"),
+            C_LONGLONG.withName("y")
+        );
+        VarHandle VH_BigPoint_x = BigPoint_LAYOUT.varHandle(long.class, groupElement("x"));
+        VarHandle VH_BigPoint_y = BigPoint_LAYOUT.varHandle(long.class, groupElement("y"));
+        GroupLayout Point_LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("x"),
+            C_INT.withName("y")
+        );
+        VarHandle VH_Point_x = Point_LAYOUT.varHandle(int.class, groupElement("x"));
+        VarHandle VH_Point_y = Point_LAYOUT.varHandle(int.class, groupElement("y"));
+        GroupLayout FloatPoint_LAYOUT = MemoryLayout.ofStruct(
+            C_FLOAT.withName("x"),
+            C_FLOAT.withName("y")
+        );
+        VarHandle VH_FloatPoint_x = FloatPoint_LAYOUT.varHandle(float.class, groupElement("x"));
+        VarHandle VH_FloatPoint_y = FloatPoint_LAYOUT.varHandle(float.class, groupElement("y"));
+        GroupLayout HugePoint_LAYOUT = MemoryLayout.ofStruct(
+            C_LONGLONG.withName("x"),
+            C_LONGLONG.withName("y"),
+            C_LONGLONG.withName("z")
+        );
+        VarHandle VH_HugePoint_x = HugePoint_LAYOUT.varHandle(long.class, groupElement("x"));
+        VarHandle VH_HugePoint_y = HugePoint_LAYOUT.varHandle(long.class, groupElement("y"));
+        VarHandle VH_HugePoint_z = HugePoint_LAYOUT.varHandle(long.class, groupElement("z"));
+
         return new Object[][]{
             { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT)) {
@@ -326,7 +730,7 @@ public class VaListTest {
                 MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
                 MemorySegment ms = MemorySegment.ofNativeRestricted(intPtr, C_INT.byteSize(),
                                                                     Thread.currentThread(), null, null);
-                int x = (int) VH_int.get(ms.baseAddress());
+                int x = MemoryAccess.getInt(ms.baseAddress());
                 assertEquals(x, 10);
             })},
             { linkVaListCB("upcallDoubles"), VaListConsumer.mh(vaList -> {
@@ -341,38 +745,12 @@ public class VaListTest {
             })},
             { linkVaListCB("upcallStack"), VaListConsumer.mh(vaList -> {
                 // skip all registers
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 1L); // 1st windows arg read from shadow space
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 2L); // 2nd windows arg read from shadow space
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 3L); // windows 1st stack arg (int/float)
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 4L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 5L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 6L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 7L); // sysv 1st int stack arg
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 8L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 9L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 10L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 11L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 12L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 13L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 14L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 15L);
-                assertEquals(vaList.vargAsLong(C_LONGLONG), 16L);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 1.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 2.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 3.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 4.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 5.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 6.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 7.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 8.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 9.0D); // sysv 1st float stack arg
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 10.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 11.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 12.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 13.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 14.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 15.0D);
-                assertEquals(vaList.vargAsDouble(C_DOUBLE), 16.0D);
+                for (long l = 1; l <= 16; l++) {
+                    assertEquals(vaList.vargAsLong(C_LONGLONG), l);
+                }
+                for (double d = 1; d <= 16; d++) {
+                    assertEquals(vaList.vargAsDouble(C_DOUBLE), d);
+                }
 
                 // test some arbitrary values on the stack
                 assertEquals((byte) vaList.vargAsInt(C_INT), (byte) 1);
