@@ -28,6 +28,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
@@ -176,6 +177,13 @@ public class TestNative {
     }
 
     @Test
+    public void testDefaultAccessModesEverthing() {
+        MemorySegment everything = MemorySegment.ofNativeRestricted();
+        assertTrue(everything.hasAccessModes(READ | WRITE));
+        assertEquals(everything.accessModes(), READ | WRITE);
+    }
+
+    @Test
     public void testMallocSegment() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
         assertNull(addr.segment());
@@ -184,6 +192,17 @@ public class TestNative {
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());
+    }
+
+    @Test
+    public void testEverythingSegment() {
+        MemoryAddress addr = MemoryAddress.ofLong(allocate(4));
+        assertNull(addr.segment());
+        MemorySegment everything = MemorySegment.ofNativeRestricted();
+        MemoryAddress ptr = addr.rebase(everything);
+        MemoryAccess.setInt(ptr, 42);
+        assertEquals(MemoryAccess.getInt(ptr), 42);
+        free(addr.toRawLongValue());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
