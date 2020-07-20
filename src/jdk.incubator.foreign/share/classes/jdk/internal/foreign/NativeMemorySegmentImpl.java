@@ -42,6 +42,9 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
+    public static final MemorySegment EVERYTHING = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL,
+            Long.MAX_VALUE, null, null, null).withAccessModes(READ | WRITE);
+
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     // The maximum alignment supported by malloc - typically 16 on
