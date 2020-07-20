@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.MemoryAddress;
-import org.openjdk.bench.jdk.incubator.foreign.nio.support.LibC;
 import org.openjdk.bench.jdk.incubator.foreign.nio.support.FFINativeDispatcher;
 import org.openjdk.bench.jdk.incubator.foreign.nio.support.NativeDispatcher;
 import org.openjdk.bench.jdk.incubator.foreign.nio.support.UnixFileAttributes;
@@ -64,23 +63,6 @@ public class NativeIO {
                 PosixFileAttributes attrs = Files.readAttributes(p, PosixFileAttributes.class);
                 usage += attrs.size();
             }
-        }
-    }
-
-    @Benchmark
-    public void getcwdinfoLibC() {
-        long usage = 0;
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress pDIR = LibC.opendir(CSupport.toCString(".", scope));
-            MemoryAddress pent = LibC.readdir(pDIR);
-            MemoryAddress buffer = scope.allocate(LibC.stat64.$LAYOUT);
-            while (pent != MemoryAddress.NULL) {
-                LibC.stat64(pent.addOffset(LibC.dirent.d_name$OFFSET), buffer);
-                UnixFileAttributes attrs = UnixFileAttributes.from(buffer);
-                usage += attrs.size();
-                pent = LibC.readdir(pDIR);
-            }
-            LibC.closedir(pDIR);
         }
     }
 
