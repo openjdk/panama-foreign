@@ -1,0 +1,3 @@
+--src-dump-dir=../../../../../../../..
+-d output
+-t org.openjdk.bench.jdk.incubator.foreign.nio.support
