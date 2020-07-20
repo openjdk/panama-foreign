@@ -22,6 +22,7 @@
  */
 
 import java.io.IOException;
+import java.io.File;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,6 +63,16 @@ public class JtregJextract {
             String opt = args[i++];
             if ("--".equals(opt)) {
                 break;
+            }
+
+            if ("-libpath".equals(opt)) {
+                String lib = args[i];
+                jextrOpts.add("-l");
+                String libpath = System.getProperty("test.nativepath") + File.separator + System.mapLibraryName(lib);
+                System.err.println("jextract driver libpath passed: " + libpath);
+                jextrOpts.add(libpath);
+                i++;
+                continue;
             }
 
             if ("-d".equals(opt)) {

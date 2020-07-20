@@ -150,11 +150,17 @@ public class Main {
         if (librariesSpecified) {
             for (Object arg : optionSet.valuesOf("l")) {
                 String lib = (String)arg;
-                if (lib.indexOf(File.separatorChar) != -1) {
-                    err.println(format("l.name.should.not.be.path", lib));
-                    return OPTION_ERROR;
+                if (lib.indexOf(File.separatorChar) == -1) {
+                    builder.addLibraryName(lib);
+                } else {
+                    Path libPath = Paths.get(lib);
+                    if (libPath.isAbsolute() && Files.isRegularFile(libPath)) {
+                        builder.addLibraryName(lib);
+                    } else {
+                        err.println(format("l.option.value.invalid", lib));
+                        return OPTION_ERROR;
+                    }
                 }
-                builder.addLibraryName(lib);
             }
         }
 
