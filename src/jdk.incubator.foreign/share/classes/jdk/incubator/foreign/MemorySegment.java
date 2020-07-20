@@ -679,6 +679,29 @@ allocateNative(bytesSize, 1);
     }
 
     /**
+     * Returns a native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
+     * This method can be very useful when dereferencing memory addresses obtained when interacting with native libraries.
+     * The segment will feature the {@link #READ} and {@link #WRITE} <a href="#access-modes">access modes</a>.
+     * Equivalent to (but likely more efficient than) the following code:
+     * <pre>{@code
+    MemorySegment.ofNativeRestricted(MemoryAddress.NULL, Long.MAX_VALUE, null, null, null)
+                 .withAccessModes(READ | WRITE);
+     * }</pre>
+     * <p>
+     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @return a memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
+     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
+     */
+    static MemorySegment ofNativeRestricted() {
+        Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
+        return NativeMemorySegmentImpl.EVERYTHING;
+    }
+
+    /**
      * Returns a new native memory segment with given base address and size; the returned segment has its own temporal
      * bounds, and can therefore be closed; closing such a segment can optionally result in calling an user-provided cleanup
      * action. This method can be very useful when interacting with custom native memory sources (e.g. custom allocators,
