@@ -62,7 +62,7 @@ public class TranslationUnit implements AutoCloseable {
 
     public final void save(Path path) throws TranslationUnitSaveException {
         try (MemorySegment pathStr = Utils.toNativeString(path.toAbsolutePath().toString())) {
-            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.baseAddress(), 0));
+            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.address(), 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
             }
@@ -86,15 +86,15 @@ public class TranslationUnit implements AutoCloseable {
                     null :
                     scope.track(MemorySegment.allocateNative(MemoryLayout.ofSequence(inMemoryFiles.length, Index_h.CXUnsavedFile$LAYOUT)));
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemoryAddress start = files.baseAddress().addOffset(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
-                Utils.setPointer(start.addOffset(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).baseAddress());
-                Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).baseAddress());
+                MemoryAddress start = files.address().addOffset(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
+                Utils.setPointer(start.addOffset(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).address());
+                Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).address());
                 Utils.setLong(start.addOffset(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
                         tu,
                         inMemoryFiles.length,
-                        files == null ? MemoryAddress.NULL : files.baseAddress(),
+                        files == null ? MemoryAddress.NULL : files.address(),
                         Index_h.clang_defaultReparseOptions(tu)));
 
             if (code != ErrorCode.Success) {
@@ -120,8 +120,8 @@ public class TranslationUnit implements AutoCloseable {
     public Tokens tokenize(SourceRange range) {
         MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
         MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
-        Index_h.clang_tokenize(tu, range.range, p.baseAddress(), pCnt.baseAddress());
-        Tokens rv = new Tokens(Utils.getPointer(p.baseAddress()), Utils.getInt(pCnt.baseAddress()));
+        Index_h.clang_tokenize(tu, range.range, p.address(), pCnt.address());
+        Tokens rv = new Tokens(Utils.getPointer(p.address()), Utils.getInt(pCnt.address()));
         return rv;
     }
 

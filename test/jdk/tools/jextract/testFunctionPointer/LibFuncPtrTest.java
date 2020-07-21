@@ -38,7 +38,7 @@ public class LibFuncPtrTest {
     @Test
     public void test() {
         try (var handle = func$f.allocate(x -> x*x)) {
-            assertEquals(func(handle.baseAddress(), 35), 35 * 35 + 35);
+            assertEquals(func(handle.address(), 35), 35 * 35 + 35);
         } //deallocate
     }
 }

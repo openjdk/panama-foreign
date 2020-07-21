@@ -57,12 +57,12 @@ public class LibTest8246400Test {
             sum = add(v1.segment(), v2.segment());
             sum = scope.register(sum);
 
-            assertEquals(Vector.x$get(sum.baseAddress()), 1.0, 0.1);
-            assertEquals(Vector.y$get(sum.baseAddress()), 1.0, 0.1);
+            assertEquals(Vector.x$get(sum.address()), 1.0, 0.1);
+            assertEquals(Vector.y$get(sum.address()), 1.0, 0.1);
 
             callback = cosine_similarity$dot.allocate((a, b) -> {
-                return (Vector.x$get(a.baseAddress()) * Vector.x$get(b.baseAddress())) +
-                    (Vector.y$get(a.baseAddress()) * Vector.y$get(b.baseAddress()));
+                return (Vector.x$get(a.address()) * Vector.x$get(b.address())) +
+                    (Vector.y$get(a.address()) * Vector.y$get(b.address()));
             }, scope);
 
             var value = cosine_similarity(v1.segment(), v2.segment(), callback);

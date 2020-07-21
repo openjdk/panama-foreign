@@ -109,7 +109,7 @@ public final class Type {
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
         try (MemorySegment cfname = Utils.toNativeString(fieldName)) {
-            return Index_h.clang_Type_getOffsetOf(type, cfname.baseAddress());
+            return Index_h.clang_Type_getOffsetOf(type, cfname.address());
         }
     }
 

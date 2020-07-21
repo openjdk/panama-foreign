@@ -182,7 +182,7 @@ public class TestClassGeneration extends JextractToolRunner {
         MemoryAddress addr = MemorySegment.ofNativeRestricted(
                 (MemoryAddress)addr_getter.invoke(null),
                 expectedLayout.byteSize(),
-                null, null, null).baseAddress();
+                null, null, null).address();
 
         Method vh_getter = checkMethod(cls, name + "$VH", VarHandle.class);
         VarHandle vh = (VarHandle) vh_getter.invoke(null);
@@ -207,7 +207,7 @@ public class TestClassGeneration extends JextractToolRunner {
 
             Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemoryAddress.class);
             Method setter = checkMethod(structCls, memberName + "$set", void.class, MemoryAddress.class, expectedType);
-            MemoryAddress addr = struct.baseAddress();
+            MemoryAddress addr = struct.address();
             setter.invoke(null, addr, testValue);
             assertEquals(getter.invoke(null, addr), testValue);
         }

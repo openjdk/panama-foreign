@@ -96,7 +96,7 @@ public class ConstantHelper {
     private static final DirectMethodHandleDesc MH_MemorySegment_baseAddress = MethodHandleDesc.ofMethod(
             Kind.INTERFACE_VIRTUAL,
             desc(MemorySegment.class),
-            "baseAddress",
+            "address",
             desc(methodType(MemoryAddress.class))
     );
 

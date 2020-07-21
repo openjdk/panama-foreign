@@ -76,7 +76,7 @@ public class Utils {
     static MemorySegment toNativeString(String value, int length) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(length, CSupport.C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
-        MemoryAddress addr = segment.baseAddress();
+        MemoryAddress addr = segment.address();
         for (int i = 0 ; i < value.length() ; i++) {
             BYTE_ARR_VH.set(addr, i, (byte)value.charAt(i));
         }
@@ -95,7 +95,7 @@ public class Utils {
 
         MemorySegment segment = MemorySegment.allocateNative(MemoryLayout.ofSequence(ar.length, CSupport.C_POINTER));
         for (int i = 0; i < ar.length; i++) {
-            POINTER_ARR_VH.set(segment.baseAddress(), i, toNativeString(ar[i]).baseAddress());
+            POINTER_ARR_VH.set(segment.address(), i, toNativeString(ar[i]).address());
         }
 
         return segment;

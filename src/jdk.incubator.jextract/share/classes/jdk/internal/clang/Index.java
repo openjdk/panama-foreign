@@ -85,14 +85,14 @@ public class Index implements AutoCloseable {
              MemorySegment outAddress = MemorySegment.allocateNative(CSupport.C_POINTER)) {
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
-                    src.baseAddress(),
-                    cargs == null ? MemoryAddress.NULL : cargs.baseAddress(),
+                    src.address(),
+                    cargs == null ? MemoryAddress.NULL : cargs.address(),
                     args.length, MemoryAddress.NULL,
                     0,
                     options,
-                    outAddress.baseAddress()));
+                    outAddress.address()));
 
-            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress.baseAddress());
+            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress.address());
             TranslationUnit rv = new TranslationUnit(tu);
             // even if we failed to parse, we might still have diagnostics
             rv.processDiagnostics(dh);

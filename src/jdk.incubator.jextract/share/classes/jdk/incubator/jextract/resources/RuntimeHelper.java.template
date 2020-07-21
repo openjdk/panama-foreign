@@ -60,7 +60,7 @@ public class RuntimeHelper {
         return lookup(LIBRARIES, name).map(a ->
             MemorySegment.ofNativeRestricted(
                  a, layout.byteSize(), null, null, a
-            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).baseAddress()).orElse(null);
+            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).address()).orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
@@ -90,7 +90,7 @@ public class RuntimeHelper {
 
     public static MemoryAddress asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
         return MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
-               Thread.currentThread(), null, null).baseAddress();
+               Thread.currentThread(), null, null).address();
     }
 
     public static MemoryAddress asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
@@ -98,7 +98,7 @@ public class RuntimeHelper {
         if (seg == null) {
             throw new IllegalArgumentException("no underlying segment for the address");
         }
-        return seg.asSlice(addr.segmentOffset(), numElements * layout.byteSize()).baseAddress();
+        return seg.asSlice(addr.segmentOffset(), numElements * layout.byteSize()).address();
     }
 
     private static class VarargsInvoker {

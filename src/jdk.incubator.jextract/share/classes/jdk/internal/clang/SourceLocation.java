@@ -55,16 +55,16 @@ public class SourceLocation {
              MemorySegment col = MemorySegment.allocateNative(CSupport.C_INT);
              MemorySegment offset = MemorySegment.allocateNative(CSupport.C_INT)) {
 
-            fn.get(loc, file.baseAddress(), line.baseAddress(), col.baseAddress(), offset.baseAddress());
-            MemoryAddress fname = Utils.getPointer(file.baseAddress());
+            fn.get(loc, file.address(), line.address(), col.address(), offset.address());
+            MemoryAddress fname = Utils.getPointer(file.address());
 
 
             String str = fname == MemoryAddress.NULL ?
                     null :
                     LibClang.CXStrToString(Index_h.clang_getFileName(fname));
 
-            return new Location(str, Utils.getInt(line.baseAddress()),
-                Utils.getInt(col.baseAddress()), Utils.getInt(offset.baseAddress()));
+            return new Location(str, Utils.getInt(line.address()),
+                Utils.getInt(col.address()), Utils.getInt(offset.address()));
         }
     }
 

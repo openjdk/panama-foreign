@@ -120,7 +120,7 @@ public class StructBuilder extends JavaSourceBuilder {
         sb.append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
         sb.append(", ");
         sb.append(layout.byteSize());
-        sb.append(").baseAddress();\n");
+        sb.append(").address();\n");
         decrAlign();
         indent();
         sb.append("}\n");

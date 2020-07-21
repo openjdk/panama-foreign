@@ -90,7 +90,7 @@ public class RuntimeHelper {
         return lookup(LIBRARIES, name).map(a ->
             MemorySegment.ofNativeRestricted(
                 a, layout.byteSize(), null, null, a
-            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).baseAddress()).orElse(null);
+            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).address()).orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc) {
@@ -101,7 +101,7 @@ public class RuntimeHelper {
     }
 
     public static final MemoryAddress upcallStub(MethodHandle handle, FunctionDescriptor fdesc) {
-        return ABI.upcallStub(handle, fdesc).baseAddress();
+        return ABI.upcallStub(handle, fdesc).address();
     }
 
     public static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
