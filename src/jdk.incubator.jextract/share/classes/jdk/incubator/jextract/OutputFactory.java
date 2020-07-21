@@ -22,11 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Primitive;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
@@ -101,7 +99,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return !functions.add(tree);
     }
 
-    static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String clsName, String pkgName, List<String> libraryNames) {
+    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, String pkgName, List<String> libraryNames) {
+        String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
         String qualName = pkgName.isEmpty() ? clsName : pkgName + "." + clsName;
         ConstantHelper constantHelper = new ConstantHelper(qualName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),

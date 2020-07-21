@@ -22,21 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
-import jdk.incubator.jextract.Type;
 
 /**
  * A helper class to generate header interface class in source form.
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-class HeaderBuilder extends JavaSourceBuilder {
-    HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
+public class HeaderBuilder extends JavaSourceBuilder {
+    public HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
     }
 

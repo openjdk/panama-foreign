@@ -23,12 +23,13 @@
  * questions.
  */
 
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 
 public class Filter {
+    private Filter() {}
 
     public static Declaration.Scoped filter(Declaration.Scoped decl, String... validNames) {
         Declaration[] newMembers = decl.members().stream()
@@ -37,7 +38,7 @@ public class Filter {
         return Declaration.toplevel(decl.pos(), newMembers);
     }
 
-    static boolean filterDecl(Declaration d, String... validNames) {
+    private static boolean filterDecl(Declaration d, String... validNames) {
         if (d.pos() == Position.NO_POSITION) {
             return false;
         } else {
