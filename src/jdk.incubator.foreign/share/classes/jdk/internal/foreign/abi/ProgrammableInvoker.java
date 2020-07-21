@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
@@ -107,12 +108,12 @@ public class ProgrammableInvoker {
 
     private final long bufferCopySize;
 
-    public ProgrammableInvoker(ABIDescriptor abi, MemoryAddress addr, CallingSequence callingSequence) {
+    public ProgrammableInvoker(ABIDescriptor abi, Addressable addr, CallingSequence callingSequence) {
         this.abi = abi;
         this.layout = BufferLayout.of(abi);
         this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
 
-        this.addr = addr;
+        this.addr = addr.address();
         this.callingSequence = callingSequence;
 
         this.stackArgsBytes = callingSequence.argMoveBindings()

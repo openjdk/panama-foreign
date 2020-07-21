@@ -77,14 +77,14 @@ public class CallOverhead {
         try {
             LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
             {
-                MemoryAddress addr = ll.lookup("func");
+                LibraryLookup.Symbol addr = ll.lookup("func");
                 MethodType mt = MethodType.methodType(void.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid();
                 func = abi.downcallHandle(addr, mt, fd);
                 func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
             }
             {
-                MemoryAddress addr = ll.lookup("identity");
+                LibraryLookup.Symbol addr = ll.lookup("identity");
                 MethodType mt = MethodType.methodType(int.class, int.class);
                 FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
                 identity = abi.downcallHandle(addr, mt, fd);
