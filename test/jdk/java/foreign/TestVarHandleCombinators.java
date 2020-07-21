@@ -49,7 +49,7 @@ public class TestVarHandleCombinators {
 
         byte[] arr = { 0, 0, -1, 0 };
         MemorySegment segment = MemorySegment.ofArray(arr);
-        MemoryAddress addr = segment.baseAddress();
+        MemoryAddress addr = segment.address();
 
         assertEquals((byte) vh.get(addr, 2), (byte) -1);
     }
@@ -59,7 +59,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 4, ByteOrder.nativeOrder());
         vh = MemoryHandles.withStride(vh, 2);
         MemorySegment segment = MemorySegment.ofArray(new byte[4]);
-        vh.get(segment.baseAddress(), 1L); //should throw
+        vh.get(segment.address(), 1L); //should throw
     }
 
     public void testZeroStrideElement() {
@@ -67,7 +67,7 @@ public class TestVarHandleCombinators {
         VarHandle strided_vh = MemoryHandles.withStride(vh, 0);
         MemorySegment segment = MemorySegment.ofArray(new int[] { 42 });
         for (int i = 0 ; i < 100 ; i++) {
-            assertEquals((int)vh.get(segment.baseAddress()), strided_vh.get(segment.baseAddress(), (long)i));
+            assertEquals((int)vh.get(segment.address()), strided_vh.get(segment.address(), (long)i));
         }
     }
 
@@ -92,7 +92,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 2, ByteOrder.nativeOrder());
 
         MemorySegment segment = MemorySegment.allocateNative(1, 2);
-        MemoryAddress address = segment.baseAddress();
+        MemoryAddress address = segment.address();
 
         vh.set(address, (byte) 10); // fine, memory region is aligned
         assertEquals((byte) vh.get(address), (byte) 10);
@@ -104,7 +104,7 @@ public class TestVarHandleCombinators {
         vh = MemoryHandles.withOffset(vh, 1); // offset by 1 byte
 
         MemorySegment segment = MemorySegment.allocateNative(2, 2);
-        MemoryAddress address = segment.baseAddress();
+        MemoryAddress address = segment.address();
 
         vh.set(address, (byte) 10); // should be bad align
     }
@@ -114,7 +114,7 @@ public class TestVarHandleCombinators {
         VarHandle offset_vh = MemoryHandles.withOffset(vh, 0);
         MemorySegment segment = MemorySegment.ofArray(new int[] { 42 });
         for (int i = 0 ; i < 100 ; i++) {
-            assertEquals((int)vh.get(segment.baseAddress()), offset_vh.get(segment.baseAddress(), (long)i));
+            assertEquals((int)vh.get(segment.address()), offset_vh.get(segment.address(), (long)i));
         }
     }
 
@@ -129,7 +129,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 4, ByteOrder.nativeOrder());
         vh = MemoryHandles.withOffset(vh, 2);
         MemorySegment segment = MemorySegment.ofArray(new byte[4]);
-        vh.get(segment.baseAddress()); //should throw
+        vh.get(segment.address()); //should throw
     }
 
     @Test
@@ -138,7 +138,7 @@ public class TestVarHandleCombinators {
         vh = MemoryHandles.withOffset(vh, 1);
 
         MemorySegment segment = MemorySegment.ofArray(new byte[2]);
-        MemoryAddress address = segment.baseAddress();
+        MemoryAddress address = segment.address();
 
         vh.set(address, (byte) 10);
         assertEquals((byte) vh.get(address), (byte) 10);
@@ -149,7 +149,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(short.class, 2, ByteOrder.LITTLE_ENDIAN);
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
-        MemoryAddress address = segment.baseAddress();
+        MemoryAddress address = segment.address();
 
         vh.set(address, (short) 0xFF);
         assertEquals(arr[0], (byte) 0xFF);
@@ -161,7 +161,7 @@ public class TestVarHandleCombinators {
         VarHandle vh = MemoryHandles.varHandle(short.class, 2, ByteOrder.BIG_ENDIAN);
         byte[] arr = new byte[2];
         MemorySegment segment = MemorySegment.ofArray(arr);
-        MemoryAddress address = segment.baseAddress();
+        MemoryAddress address = segment.address();
 
         vh.set(address, (short) 0xFF);
         assertEquals(arr[0], (byte) 0);
@@ -183,9 +183,9 @@ public class TestVarHandleCombinators {
         try (MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8)) {
             for (long i = 0; i < outer_size; i++) {
                 for (long j = 0; j < inner_size; j++) {
-                    outer_vh.set(segment.baseAddress(), i, j, count);
+                    outer_vh.set(segment.address(), i, j, count);
                     assertEquals(
-                            (int)inner_vh.get(segment.baseAddress().addOffset(i * inner_size * 8), j),
+                            (int)inner_vh.get(segment.address().addOffset(i * inner_size * 8), j),
                             count);
                     count++;
                 }

@@ -47,7 +47,7 @@ public class TestMismatch {
 
     // stores a increasing sequence of values into the memory of the given segment
     static MemorySegment initializeSegment(MemorySegment segment) {
-        MemoryAddress addr = segment.baseAddress();
+        MemoryAddress addr = segment.address();
         for (int i = 0 ; i < segment.byteSize() ; i++) {
             BYTE_HANDLE.set(addr.addOffset(i), (byte)i);
         }
@@ -81,7 +81,7 @@ public class TestMismatch {
 
         for (long i = s2.byteSize() -1 ; i >= 0; i--) {
             long expectedMismatchOffset = i;
-            BYTE_HANDLE.set(s2.baseAddress().addOffset(i), (byte) 0xFF);
+            BYTE_HANDLE.set(s2.address().addOffset(i), (byte) 0xFF);
 
             if (s1.byteSize() == s2.byteSize()) {
                 assertEquals(s1.mismatch(s2), expectedMismatchOffset);
@@ -135,7 +135,7 @@ public class TestMismatch {
 
     private void testLargeMismatchAcrossMaxBoundary(MemorySegment s1, MemorySegment s2) {
         for (long i = s2.byteSize() -1 ; i >= Integer.MAX_VALUE - 10L; i--) {
-            BYTE_HANDLE.set(s2.baseAddress().addOffset(i), (byte) 0xFF);
+            BYTE_HANDLE.set(s2.address().addOffset(i), (byte) 0xFF);
             long expectedMismatchOffset = i;
             assertEquals(s1.mismatch(s2), expectedMismatchOffset);
             assertEquals(s2.mismatch(s1), expectedMismatchOffset);

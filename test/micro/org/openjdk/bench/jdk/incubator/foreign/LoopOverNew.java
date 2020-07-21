@@ -22,7 +22,6 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -74,7 +73,7 @@ public class LoopOverNew {
     public void segment_loop() {
         MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.baseAddress(), (long) i, i);
+            VH_int.set(segment.address(), (long) i, i);
         }
         segment.close();
     }

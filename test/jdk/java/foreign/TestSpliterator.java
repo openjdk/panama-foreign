@@ -63,7 +63,7 @@ public class TestSpliterator {
         //setup
         MemorySegment segment = MemorySegment.allocateNative(layout);
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
-            INT_HANDLE.set(segment.baseAddress(), (long) i, i);
+            INT_HANDLE.set(segment.address(), (long) i, i);
         }
         long expected = LongStream.range(0, layout.elementCount().getAsLong()).sum();
         //serial
@@ -88,7 +88,7 @@ public class TestSpliterator {
         //setup
         MemorySegment segment = MemorySegment.allocateNative(layout);
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
-            INT_HANDLE.set(segment.baseAddress(), (long) i, i);
+            INT_HANDLE.set(segment.address(), (long) i, i);
         }
         long expected = LongStream.range(0, layout.elementCount().getAsLong()).sum();
 
@@ -100,12 +100,12 @@ public class TestSpliterator {
     }
 
     static long sumSingle(long acc, MemorySegment segment) {
-        return acc + (int)INT_HANDLE.get(segment.baseAddress(), 0L);
+        return acc + (int)INT_HANDLE.get(segment.address(), 0L);
     }
 
     static long sum(long start, MemorySegment segment) {
         long sum = start;
-        MemoryAddress base = segment.baseAddress();
+        MemoryAddress base = segment.address();
         int length = (int)segment.byteSize();
         for (int i = 0 ; i < length / CARRIER_SIZE ; i++) {
             sum += (int)INT_HANDLE.get(base, (long)i);
