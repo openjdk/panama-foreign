@@ -48,7 +48,7 @@ public class TestRebase {
     public void testRebase(SegmentSlice s1, SegmentSlice s2) {
         if (s1.contains(s2)) {
             //check that an address and its rebased counterpart point to same element
-            MemoryAddress base = s2.segment.baseAddress();
+            MemoryAddress base = s2.segment.address();
             MemoryAddress rebased = base.rebase(s1.segment);
             for (int i = 0; i < s2.size(); i++) {
                 int expected = (int) BYTE_VH.get(base.addOffset(i));
@@ -58,14 +58,14 @@ public class TestRebase {
         } else if (s1.kind != s2.kind) {
             // check that rebase s1 to s2 fails
             try {
-                s1.segment.baseAddress().rebase(s2.segment);
+                s1.segment.address().rebase(s2.segment);
                 fail("Rebase unexpectedly passed!");
             } catch (IllegalArgumentException ex) {
                 assertTrue(true);
             }
         } else if (!s2.contains(s1)) {
             //disjoint segments - check that rebased address is out of bounds
-            MemoryAddress base = s2.segment.baseAddress();
+            MemoryAddress base = s2.segment.address();
             MemoryAddress rebased = base.rebase(s1.segment);
             for (int i = 0; i < s2.size(); i++) {
                 BYTE_VH.get(base.addOffset(i));
@@ -127,7 +127,7 @@ public class TestRebase {
             //init root segment
             MemorySegment segment = kind.makeSegment(16);
             for (int i = 0 ; i < 16 ; i++) {
-                BYTE_VH.set(segment.baseAddress().addOffset(i), (byte)i);
+                BYTE_VH.set(segment.address().addOffset(i), (byte)i);
             }
             //compute all slices
             for (int size : sizes) {

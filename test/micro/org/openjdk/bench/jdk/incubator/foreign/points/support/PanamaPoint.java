@@ -81,7 +81,7 @@ public class PanamaPoint implements AutoCloseable {
     }
 
     public PanamaPoint(MemorySegment segment) {
-        this.address = segment.baseAddress();
+        this.address = segment.address();
     }
 
     public void setX(int x) {

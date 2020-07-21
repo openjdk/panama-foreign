@@ -64,9 +64,9 @@ public class TestAddressHandle {
         VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
         try (MemorySegment segment = MemorySegment.allocateNative(8)) {
             MemoryAddress target = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
-                    segment.baseAddress().addOffset(8 - byteSize) :
-                    segment.baseAddress();
-            longHandle.set(segment.baseAddress(), 42L);
+                    segment.address().addOffset(8 - byteSize) :
+                    segment.address();
+            longHandle.set(segment.address(), 42L);
             MemoryAddress address = (MemoryAddress)addrHandle.get(target);
             assertEquals(address.toRawLongValue(), 42L);
             try {
@@ -76,7 +76,7 @@ public class TestAddressHandle {
                 assertTrue(true);
             }
             addrHandle.set(target, address.addOffset(1));
-            long result = (long)longHandle.get(segment.baseAddress());
+            long result = (long)longHandle.get(segment.address());
             assertEquals(43L, result);
         }
     }
@@ -85,8 +85,8 @@ public class TestAddressHandle {
     public void testNull(VarHandle addrHandle, int byteSize) {
         VarHandle longHandle = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
         try (MemorySegment segment = MemorySegment.allocateNative(8)) {
-            longHandle.set(segment.baseAddress(), 0L);
-            MemoryAddress address = (MemoryAddress)addrHandle.get(segment.baseAddress());
+            longHandle.set(segment.address(), 0L);
+            MemoryAddress address = (MemoryAddress)addrHandle.get(segment.address());
             assertTrue(address == MemoryAddress.NULL);
         }
     }

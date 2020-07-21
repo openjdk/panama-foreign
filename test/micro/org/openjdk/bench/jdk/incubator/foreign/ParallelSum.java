@@ -44,12 +44,10 @@ import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.StreamSupport;
@@ -87,7 +85,7 @@ public class ParallelSum {
         }
         segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.baseAddress(), (long) i, i);
+            VH_int.set(segment.address(), (long) i, i);
         }
     }
 
@@ -100,7 +98,7 @@ public class ParallelSum {
     @Benchmark
     public int segment_serial() {
         int res = 0;
-        MemoryAddress base = segment.baseAddress();
+        MemoryAddress base = segment.address();
         for (int i = 0; i < ELEM_SIZE; i++) {
             res += (int)VH_int.get(base, (long) i);
         }
@@ -139,11 +137,11 @@ public class ParallelSum {
     }
 
     final static ToIntFunction<MemorySegment> SEGMENT_TO_INT = slice ->
-            (int) VH_int.get(slice.baseAddress(), 0L);
+            (int) VH_int.get(slice.address(), 0L);
 
     final static ToIntFunction<MemorySegment> SEGMENT_TO_INT_BULK = slice -> {
         int res = 0;
-        MemoryAddress base = slice.baseAddress();
+        MemoryAddress base = slice.address();
         for (int i = 0; i < BULK_FACTOR ; i++) {
             res += (int)VH_int.get(base, (long) i);
         }
@@ -179,10 +177,10 @@ public class ParallelSum {
     }
 
     final static Predicate<MemorySegment> FIND_SINGLE = slice ->
-            (int)VH_int.get(slice.baseAddress(), 0L) == (ELEM_SIZE - 1);
+            (int)VH_int.get(slice.address(), 0L) == (ELEM_SIZE - 1);
 
     final static Predicate<MemorySegment> FIND_BULK = slice -> {
-        MemoryAddress base = slice.baseAddress();
+        MemoryAddress base = slice.address();
         for (int i = 0; i < BULK_FACTOR ; i++) {
             if ((int)VH_int.get(base, (long)i) == (ELEM_SIZE - 1)) {
                 return true;

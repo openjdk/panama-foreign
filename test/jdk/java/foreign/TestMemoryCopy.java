@@ -46,8 +46,8 @@ public class TestMemoryCopy {
 
     @Test(dataProvider = "slices")
     public void testCopy(SegmentSlice s1, SegmentSlice s2) {
-        MemoryAddress addr1 = s1.segment.baseAddress();
-        MemoryAddress addr2 = s2.segment.baseAddress();
+        MemoryAddress addr1 = s1.segment.address();
+        MemoryAddress addr2 = s2.segment.address();
         int size = Math.min(s1.size(), s2.size());
         //prepare source and target segments
         for (int i = 0 ; i < size ; i++) {

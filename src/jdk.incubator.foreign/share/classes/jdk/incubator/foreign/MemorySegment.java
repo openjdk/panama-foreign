@@ -158,7 +158,7 @@ MemorySegment segment = ...
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
 int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
-                       .mapToInt(s -> (int)VH_int.get(s.baseAddress()))
+                       .mapToInt(s -> (int)VH_int.get(s.address()))
                        .sum();
  * }</pre></blockquote>
  *
@@ -169,15 +169,16 @@ int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOU
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface MemorySegment extends AutoCloseable {
+public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * The base memory address associated with this memory segment. The returned address is
-     * a <em>checked</em> memory address and can therefore be used in derefrence operations
+     * a <em>checked</em> memory address and can therefore be used in dereference operations
      * (see {@link MemoryAddress}).
      * @return The base memory address.
      */
-    MemoryAddress baseAddress();
+    @Override
+    MemoryAddress address();
 
     /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
@@ -306,7 +307,7 @@ public interface MemorySegment extends AutoCloseable {
 byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
          .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 for (long l = 0; l < segment.byteSize(); l++) {
-     byteHandle.set(segment.baseAddress(), l, value);
+     byteHandle.set(segment.address(), l, value);
 }
      * }</pre>
      *
@@ -349,7 +350,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
      * this segment and a given other segment. The offset is relative to the
-     * {@link #baseAddress() base address} of each segment and will be in the
+     * {@link #address() base address} of each segment and will be in the
      * range of 0 (inclusive) up to the {@link #byteSize() size} (in bytes) of
      * the smaller memory segment (exclusive).
      * <p>

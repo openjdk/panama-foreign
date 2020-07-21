@@ -161,7 +161,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
         long i = 0;
         if (length > 7) {
-            if ((byte) BYTE_HANDLE.get(this.baseAddress(), 0) != (byte) BYTE_HANDLE.get(that.baseAddress(), 0)) {
+            if ((byte) BYTE_HANDLE.get(this.address(), 0) != (byte) BYTE_HANDLE.get(that.address(), 0)) {
                 return 0;
             }
             i = ArraysSupport.vectorizedMismatchLargeForBytes(
@@ -175,8 +175,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             assert remaining < 8 : "remaining greater than 7: " + remaining;
             i = length - remaining;
         }
-        MemoryAddress thisAddress = this.baseAddress();
-        MemoryAddress thatAddress = that.baseAddress();
+        MemoryAddress thisAddress = this.address();
+        MemoryAddress thatAddress = that.address();
         for (; i < length; i++) {
             if ((byte) BYTE_HANDLE.get(thisAddress, i) != (byte) BYTE_HANDLE.get(thatAddress, i)) {
                 return i;
@@ -187,7 +187,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     @ForceInline
-    public final MemoryAddress baseAddress() {
+    public final MemoryAddress address() {
         return new MemoryAddressImpl(this, 0);
     }
 

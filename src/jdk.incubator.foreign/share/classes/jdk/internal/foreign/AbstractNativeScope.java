@@ -97,17 +97,17 @@ public abstract class AbstractNativeScope extends NativeScope {
             if (bytesSize > MAX_ALLOC_SIZE) {
                 MemorySegment segment = newSegment(bytesSize, bytesAlignment);
                 return segment.withAccessModes(SCOPE_MASK)
-                        .baseAddress();
+                        .address();
             }
             for (int i = 0; i < 2; i++) {
-                long min = ((MemoryAddressImpl) segment.baseAddress()).unsafeGetOffset();
+                long min = ((MemoryAddressImpl) segment.address()).unsafeGetOffset();
                 long start = Utils.alignUp(min + sp, bytesAlignment) - min;
                 try {
                     MemorySegment slice = segment.asSlice(start, bytesSize)
                             .withAccessModes(SCOPE_MASK);
                     sp = start + bytesSize;
                     size += Utils.alignUp(bytesSize, bytesAlignment);
-                    return slice.baseAddress();
+                    return slice.address();
                 } catch (IndexOutOfBoundsException ex) {
                     sp = 0L;
                     segment = newSegment(BLOCK_SIZE, 1L);
@@ -139,13 +139,13 @@ public abstract class AbstractNativeScope extends NativeScope {
         @Override
         public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
             checkOwnerThread();
-            long min = ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset();
+            long min = ((MemoryAddressImpl)segment.address()).unsafeGetOffset();
             long start = Utils.alignUp(min + sp, bytesAlignment) - min;
             try {
                 MemorySegment slice = segment.asSlice(start, bytesSize)
                         .withAccessModes(SCOPE_MASK);
                 sp = start + bytesSize;
-                return slice.baseAddress();
+                return slice.address();
             } catch (IndexOutOfBoundsException ex) {
                 throw new OutOfMemoryError("Not enough space left to allocate");
             }

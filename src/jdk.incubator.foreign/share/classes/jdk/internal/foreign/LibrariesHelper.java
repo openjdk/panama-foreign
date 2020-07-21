@@ -119,7 +119,7 @@ public final class LibrariesHelper {
             long addr = library.lookup(name);
             return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(addr),
                     0, null, null, this)
-                    .baseAddress();
+                    .address();
         }
 
         static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary);

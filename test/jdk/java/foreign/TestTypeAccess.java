@@ -60,28 +60,28 @@ public class TestTypeAccess {
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueGetAsString() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
-            String address = (String)ADDR_HANDLE.get(s.baseAddress());
+            String address = (String)ADDR_HANDLE.get(s.address());
         }
     }
 
     @Test(expectedExceptions=ClassCastException.class)
     public void testMemoryAddressValueSetAsString() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
-            ADDR_HANDLE.set(s.baseAddress(), "string");
+            ADDR_HANDLE.set(s.address(), "string");
         }
     }
 
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueGetAsPrimitive() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
-            int address = (int)ADDR_HANDLE.get(s.baseAddress());
+            int address = (int)ADDR_HANDLE.get(s.address());
         }
     }
 
     @Test(expectedExceptions=WrongMethodTypeException.class)
     public void testMemoryAddressValueSetAsPrimitive() {
         try (MemorySegment s = MemorySegment.allocateNative(8)) {
-            ADDR_HANDLE.set(s.baseAddress(), 1);
+            ADDR_HANDLE.set(s.address(), 1);
         }
     }
 

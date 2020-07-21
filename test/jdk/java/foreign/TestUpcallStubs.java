@@ -64,7 +64,7 @@ public class TestUpcallStubs {
     public void testNoAccess() {
         try (MemorySegment stub = getStub()) {
             VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub.baseAddress(), 10);
+            vh.set(stub.address(), 10);
         }
     }
 
@@ -86,7 +86,7 @@ public class TestUpcallStubs {
     public static Object[][] badAddresses() {
         return new Object[][]{
             { MemoryAddress.ofLong(42) /* random address */ },
-            { MemorySegment.ofArray(new int []{ 1, 2, 3 }).baseAddress() /* heap address */ }
+            { MemorySegment.ofArray(new int []{ 1, 2, 3 }).address() /* heap address */ }
         };
     }
 
