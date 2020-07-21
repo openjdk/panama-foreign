@@ -94,7 +94,7 @@ public class TestSegments {
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
         try (MemorySegment segment = MemorySegment.allocateNative(1000)) {
             for (long i = 0 ; i < segment.byteSize() ; i++) {
-                assertEquals(0, (byte)byteHandle.get(segment.baseAddress(), i));
+                assertEquals(0, (byte)byteHandle.get(segment.address(), i));
             }
         }
     }
@@ -127,17 +127,17 @@ public class TestSegments {
         try (MemorySegment segment = MemorySegment.allocateNative(10)) {
             //init
             for (byte i = 0 ; i < segment.byteSize() ; i++) {
-                byteHandle.set(segment.baseAddress(), (long)i, i);
+                byteHandle.set(segment.address(), (long)i, i);
             }
             long start = 0;
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             MemoryAddress last = base.addOffset(10);
             while (!base.equals(last)) {
                 MemorySegment slice = segment.asSlice(base.segmentOffset(), 10 - start);
                 for (long i = start ; i < 10 ; i++) {
                     assertEquals(
-                            byteHandle.get(segment.baseAddress(), i),
-                            byteHandle.get(slice.baseAddress(), i - start)
+                            byteHandle.get(segment.address(), i),
+                            byteHandle.get(slice.address(), i - start)
                     );
                 }
                 base = base.addOffset(1);
@@ -197,20 +197,20 @@ public class TestSegments {
             try (MemorySegment segment = memorySegmentSupplier.get()) {
                 segment.fill(value);
                 for (long l = 0; l < segment.byteSize(); l++) {
-                    assertEquals((byte) byteHandle.get(segment.baseAddress(), l), value);
+                    assertEquals((byte) byteHandle.get(segment.address(), l), value);
                 }
 
                 // fill a slice
                 var sliceSegment = segment.asSlice(1, segment.byteSize() - 2).fill((byte) ~value);
                 for (long l = 0; l < sliceSegment.byteSize(); l++) {
-                    assertEquals((byte) byteHandle.get(sliceSegment.baseAddress(), l), ~value);
+                    assertEquals((byte) byteHandle.get(sliceSegment.address(), l), ~value);
                 }
                 // assert enclosing slice
-                assertEquals((byte) byteHandle.get(segment.baseAddress(), 0L), value);
+                assertEquals((byte) byteHandle.get(segment.address(), 0L), value);
                 for (long l = 1; l < segment.byteSize() - 2; l++) {
-                    assertEquals((byte) byteHandle.get(segment.baseAddress(), l), (byte) ~value);
+                    assertEquals((byte) byteHandle.get(segment.address(), l), (byte) ~value);
                 }
-                assertEquals((byte) byteHandle.get(segment.baseAddress(), segment.byteSize() - 1L), value);
+                assertEquals((byte) byteHandle.get(segment.address(), segment.byteSize() - 1L), value);
             }
         }
     }
@@ -436,13 +436,13 @@ public class TestSegments {
         READ(MemorySegment.READ) {
             @Override
             void run(MemorySegment segment) {
-                INT_HANDLE.get(segment.baseAddress());
+                INT_HANDLE.get(segment.address());
             }
         },
         WRITE(MemorySegment.WRITE) {
             @Override
             void run(MemorySegment segment) {
-                INT_HANDLE.set(segment.baseAddress(), 42);
+                INT_HANDLE.set(segment.address(), 42);
             }
         },
         HANDOFF(MemorySegment.HANDOFF) {

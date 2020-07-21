@@ -348,13 +348,13 @@ public class CallGeneratorHelper extends NativeTestHelper {
             if (check) {
                 checks.add(o -> {
                     try {
-                        assertEquals((MemoryAddress)o, segment.baseAddress());
+                        assertEquals((MemoryAddress)o, segment.address());
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);
                     }
                 });
             }
-            return segment.baseAddress();
+            return segment.address();
         } else if (layout instanceof ValueLayout) {
             if (isIntegral(layout)) {
                 if (check) {
@@ -387,7 +387,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
                 value = ((MemoryAddress)value).toRawLongValue();
             }
             //set value
-            accessor.set(str.baseAddress(), value);
+            accessor.set(str.address(), value);
             //add check
             if (check) {
                 assertTrue(fieldsCheck.size() == 1);
@@ -395,9 +395,9 @@ public class CallGeneratorHelper extends NativeTestHelper {
                     MemorySegment actual = (MemorySegment)o;
                     try {
                         if (isPointer(l)) {
-                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual.baseAddress())));
+                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual.address())));
                         } else {
-                            fieldsCheck.get(0).accept(accessor.get(actual.baseAddress()));
+                            fieldsCheck.get(0).accept(accessor.get(actual.address()));
                         }
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);

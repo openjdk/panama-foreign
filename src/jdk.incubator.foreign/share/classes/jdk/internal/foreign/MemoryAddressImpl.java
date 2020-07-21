@@ -90,7 +90,7 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
             throw new IllegalArgumentException("Invalid rebase target: " + segment);
         }
         return new MemoryAddressImpl((AbstractMemorySegmentImpl)segment,
-                unsafeGetOffset() - ((MemoryAddressImpl)segment.baseAddress()).unsafeGetOffset());
+                unsafeGetOffset() - ((MemoryAddressImpl)segment.address()).unsafeGetOffset());
     }
 
     // MemoryAddressProxy methods
@@ -140,6 +140,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(value), byteSize, null, null, null).baseAddress();
+                MemoryAddress.ofLong(value), byteSize, null, null, null).address();
     }
 }
