@@ -74,7 +74,7 @@ public class LoopOverNonConstant {
         }
         segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.baseAddress(), (long) i, i);
+            VH_int.set(segment.address(), (long) i, i);
         }
         byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
@@ -98,7 +98,7 @@ public class LoopOverNonConstant {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public int segment_get() {
-        return (int) VH_int.get(segment.baseAddress(), 0L);
+        return (int) VH_int.get(segment.address(), 0L);
     }
 
     @Benchmark
@@ -120,7 +120,7 @@ public class LoopOverNonConstant {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.getIntAtIndex(segment.baseAddress(), i);
+            res += MemoryAccess.getIntAtIndex(segment.address(), i);
         }
         return res;
     }
@@ -128,7 +128,7 @@ public class LoopOverNonConstant {
     @Benchmark
     public int segment_loop() {
         int sum = 0;
-        MemoryAddress base = segment.baseAddress();
+        MemoryAddress base = segment.address();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }
@@ -138,7 +138,7 @@ public class LoopOverNonConstant {
     @Benchmark
     public int segment_loop_slice() {
         int sum = 0;
-        MemoryAddress base = segment.asSlice(0, segment.byteSize()).baseAddress();
+        MemoryAddress base = segment.asSlice(0, segment.byteSize()).address();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }
@@ -148,7 +148,7 @@ public class LoopOverNonConstant {
     @Benchmark
     public int segment_loop_readonly() {
         int sum = 0;
-        MemoryAddress base = segment.withAccessModes(MemorySegment.READ).baseAddress();
+        MemoryAddress base = segment.withAccessModes(MemorySegment.READ).address();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }

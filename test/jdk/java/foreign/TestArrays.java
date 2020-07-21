@@ -39,7 +39,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
 
 import org.testng.annotations.*;
 
@@ -103,8 +102,8 @@ public class TestArrays {
     @Test(dataProvider = "arrays")
     public void testArrays(Consumer<MemoryAddress> init, Consumer<MemoryAddress> checker, MemoryLayout layout) {
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            init.accept(segment.baseAddress());
-            checker.accept(segment.baseAddress());
+            init.accept(segment.address());
+            checker.accept(segment.address());
         }
     }
 

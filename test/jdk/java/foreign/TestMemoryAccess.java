@@ -85,7 +85,7 @@ public class TestMemoryAccess {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             try {
                 checker.check(handle, addr);
                 if (isRO) {
@@ -117,7 +117,7 @@ public class TestMemoryAccess {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
                     checker.check(handle, addr, i);
@@ -186,7 +186,7 @@ public class TestMemoryAccess {
         MemoryAddress outer_address;
         try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
                     for (int j = 0; j < ((SequenceLayout) seq.elementLayout()).elementCount().getAsLong(); j++) {
