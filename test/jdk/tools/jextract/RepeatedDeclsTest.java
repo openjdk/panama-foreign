@@ -21,12 +21,12 @@
  * questions.
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CSupport;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import static org.testng.Assert.assertNotNull;
@@ -56,10 +56,10 @@ public class RepeatedDeclsTest extends JextractToolRunner {
             assertNotNull(findMethod(cls, "func2", int.class));
 
             // check a method for "void func3(int*)"
-            assertNotNull(findMethod(cls, "func3", MemoryAddress.class));
+            assertNotNull(findMethod(cls, "func3", Addressable.class));
 
             // check a method for "void func4(int*)"
-            assertNotNull(findMethod(cls, "func4", MemoryAddress.class));
+            assertNotNull(findMethod(cls, "func4", Addressable.class));
 
             // check a method for "void func5(int)"
             assertNotNull(findMethod(cls, "func5", int.class));

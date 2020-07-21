@@ -243,21 +243,22 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
+        MethodType sigtype = typeTranslator.getMethodType(funcTree.type(), true, false);
+        MethodType mhtype = typeTranslator.getMethodType(funcTree.type(), false, false);
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
             return null;
         }
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
-        builder.addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
+        builder.addMethodHandleGetter(mhName, funcTree.name(), mhtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
                                           .stream()
                                           .map(Declaration.Variable::name)
                                           .map(p -> !p.isEmpty() ? Utils.javaSafeIdentifier(p) : p)
                                           .collect(Collectors.toList());
-        builder.addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+        builder.addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), sigtype, mhtype,
                 Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
@@ -269,7 +270,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 if (f.varargs()) {
                     System.err.println("WARNING: varargs in callbacks is not supported");
                 }
-                MethodType fitype = typeTranslator.getMethodType(f, false);
+                MethodType fitype = typeTranslator.getMethodType(f, false, true);
                 builder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow());
                 i++;
             }

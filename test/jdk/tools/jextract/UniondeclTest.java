@@ -21,11 +21,11 @@
  * questions.
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CSupport;
 import org.testng.annotations.Test;
 import java.nio.file.Path;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAddress;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -45,7 +45,7 @@ public class UniondeclTest extends JextractToolRunner {
         try(Loader loader = classLoader(uniondeclOutput)) {
             Class<?> cls = loader.loadClass("uniondecl_h");
             // check a method for "void func(IntOrFloat*)"
-            assertNotNull(findMethod(cls, "func", MemoryAddress.class));
+            assertNotNull(findMethod(cls, "func", Addressable.class));
             // check IntOrFloat layout
             Class<?> intOrFloatCls = loader.loadClass("uniondecl_h$IntOrFloat");
             GroupLayout intOrFloatLayout = (GroupLayout)findLayout(intOrFloatCls);
