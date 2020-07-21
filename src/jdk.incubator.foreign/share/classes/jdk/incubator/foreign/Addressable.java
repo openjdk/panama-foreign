@@ -2,7 +2,7 @@ package jdk.incubator.foreign;
 
 /**
  * Represents a type which is <em>addressable</em>. An addressable type is one which can projected down to
- * a memory address instance (see {@link #address()}. Examples of addressable types are {@link MemorySegment},
+ * a memory address instance (see {@link #address()}). Examples of addressable types are {@link MemorySegment},
  * and {@link MemoryAddress}.
  *
  * @apiNote In the future, if the Java language permits, {@link Addressable}
