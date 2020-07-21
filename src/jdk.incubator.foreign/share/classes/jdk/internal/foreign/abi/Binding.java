@@ -215,7 +215,7 @@ public abstract class Binding {
                     methodType(long.class));
             MH_BOX_ADDRESS = lookup.findStatic(MemoryAddress.class, "ofLong",
                     methodType(MemoryAddress.class, long.class));
-            MH_BASE_ADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
+            MH_BASE_ADDRESS = lookup.findVirtual(MemorySegment.class, "address",
                     methodType(MemoryAddress.class));
             MH_COPY_BUFFER = lookup.findStatic(Binding.class, "copyBuffer",
                     methodType(MemorySegment.class, MemorySegment.class, long.class, long.class, NativeScope.class));
@@ -518,7 +518,7 @@ public abstract class Binding {
         @Override
         public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemoryAddress baseAddress = operand.baseAddress();
+            MemoryAddress baseAddress = operand.address();
             MemoryAddress readAddress = baseAddress.addOffset(offset);
             stack.push(SharedUtils.read(readAddress, type));
         }
@@ -527,7 +527,7 @@ public abstract class Binding {
         public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
             Object value = stack.pop();
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemoryAddress baseAddress = operand.baseAddress();
+            MemoryAddress baseAddress = operand.address();
             MemoryAddress writeAddress = baseAddress.addOffset(offset);
             SharedUtils.write(writeAddress, type, value);
         }
@@ -833,12 +833,12 @@ public abstract class Binding {
 
         @Override
         public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
-            stack.push(((MemorySegment) stack.pop()).baseAddress());
+            stack.push(((MemorySegment) stack.pop()).address());
         }
 
         @Override
         public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
-            stack.push(((MemorySegment) stack.pop()).baseAddress());
+            stack.push(((MemorySegment) stack.pop()).address());
         }
 
         @Override

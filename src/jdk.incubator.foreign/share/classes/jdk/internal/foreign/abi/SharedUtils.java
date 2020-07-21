@@ -79,7 +79,7 @@ public class SharedUtils {
             var lookup = MethodHandles.lookup();
             MH_ALLOC_BUFFER = lookup.findStatic(SharedUtils.class, "allocateNative",
                     methodType(MemorySegment.class, MemoryLayout.class));
-            MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "baseAddress",
+            MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "address",
                     methodType(MemoryAddress.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));

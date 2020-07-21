@@ -42,7 +42,7 @@
 static final VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
 
 try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
-    MemoryAddress base = segment.baseAddress();
+    MemoryAddress base = segment.address();
     for (long i = 0 ; i < 10 ; i++) {
        intHandle.set(base.addOffset(i * 4), (int)i);
     }

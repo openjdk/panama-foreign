@@ -140,6 +140,6 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
 
     public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(value), byteSize, null, null, null).baseAddress();
+                MemoryAddress.ofLong(value), byteSize, null, null, null).address();
     }
 }

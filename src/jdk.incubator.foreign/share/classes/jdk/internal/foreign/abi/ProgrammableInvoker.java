@@ -266,11 +266,11 @@ public class ProgrammableInvoker {
     Object invokeMoves(Object[] args, Binding.Move[] argBindings, Binding.Move[] returnBindings) {
         MemorySegment stackArgsSeg = null;
         try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
-            MemoryAddress argsPtr = argBuffer.baseAddress();
+            MemoryAddress argsPtr = argBuffer.address();
             MemoryAddress stackArgs;
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
-                stackArgs = stackArgsSeg.baseAddress();
+                stackArgs = stackArgsSeg.address();
             } else {
                 stackArgs = MemoryAddressImpl.NULL;
             }

@@ -101,7 +101,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid()).baseAddress();
+        dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid()).address();
     }
 
     @AfterClass
@@ -196,7 +196,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemoryAddress stub = abi.upcallStub(mh, func).baseAddress();
+        MemoryAddress stub = abi.upcallStub(mh, func).address();
         return stub;
     }
 
@@ -206,7 +206,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (MemoryLayout field : g.memberLayouts()) {
             if (field instanceof ValueLayout) {
                 VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
-                assertEquals(vh.get(actual.baseAddress()), vh.get(expected.baseAddress()));
+                assertEquals(vh.get(actual.address()), vh.get(expected.address()));
             }
         }
     }

@@ -871,7 +871,7 @@ public class CSupport {
 
     private static MemorySegment toCString(byte[] bytes) {
         MemorySegment segment = MemorySegment.allocateNative(bytes.length + 1, 1L);
-        MemoryAddress addr = segment.baseAddress();
+        MemoryAddress addr = segment.address();
         copy(addr, bytes);
         return segment;
     }

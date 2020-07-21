@@ -111,7 +111,7 @@ public class TestNativeScope {
                 //check size
                 assertEquals(address.segment().byteSize(), i);
                 //check alignment
-                assertTrue(address.segment().baseAddress().toRawLongValue() % i == 0);
+                assertTrue(address.segment().address().toRawLongValue() % i == 0);
             }
         }
     }
