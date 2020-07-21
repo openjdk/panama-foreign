@@ -39,7 +39,7 @@ public class Test8244938 {
     public void testNestedStructReturn() {
          var seg = func();
          assertEquals(seg.byteSize(), Point.sizeof());
-         var addr = seg.baseAddress();
+         var addr = seg.address();
          assertEquals(Point.k$get(addr), 44);
          var point2dAddr = Point.point2d$addr(addr);
          assertEquals(Point2D.i$get(point2dAddr), 567);

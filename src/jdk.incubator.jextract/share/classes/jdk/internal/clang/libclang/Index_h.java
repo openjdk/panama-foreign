@@ -65,10 +65,10 @@ public final class Index_h {
     );
     public static final VarHandle CXString$private_flags = CXString$LAYOUT.varHandle(int.class, PathElement.groupElement("private_flags"));
     public static final int CXString$private_flags$get(MemorySegment seg) {
-        return (int)CXString$private_flags.get(seg.baseAddress());
+        return (int)CXString$private_flags.get(seg.address());
     }
     public static final void CXString$private_flags$set(MemorySegment seg, int x) {
-        CXString$private_flags.set(seg.baseAddress(), x);
+        CXString$private_flags.set(seg.address(), x);
     }
     public static final MemoryLayout CXStringSet$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("Strings"),
@@ -77,10 +77,10 @@ public final class Index_h {
     );
     public static final VarHandle CXStringSet$Count = CXStringSet$LAYOUT.varHandle(int.class, PathElement.groupElement("Count"));
     public static final int CXStringSet$Count$get(MemorySegment seg) {
-        return (int)CXStringSet$Count.get(seg.baseAddress());
+        return (int)CXStringSet$Count.get(seg.address());
     }
     public static final void CXStringSet$Count$set(MemorySegment seg, int x) {
-        CXStringSet$Count.set(seg.baseAddress(), x);
+        CXStringSet$Count.set(seg.address(), x);
     }
     public static final MethodHandle clang_getCString = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCString",
@@ -316,10 +316,10 @@ public final class Index_h {
     ).withName("CXUnsavedFile");
     public static final VarHandle CXUnsavedFile$Length = CXUnsavedFile$LAYOUT.varHandle(long.class, PathElement.groupElement("Length"));
     public static final long CXUnsavedFile$Length$get(MemorySegment seg) {
-        return (long)CXUnsavedFile$Length.get(seg.baseAddress());
+        return (long)CXUnsavedFile$Length.get(seg.address());
     }
     public static final void CXUnsavedFile$Length$set(MemorySegment seg, long x) {
-        CXUnsavedFile$Length.set(seg.baseAddress(), x);
+        CXUnsavedFile$Length.set(seg.address(), x);
     }
     public static final int CXAvailability_Available = (int)0L;
     public static final int CXAvailability_Deprecated = (int)1L;
@@ -332,24 +332,24 @@ public final class Index_h {
     ).withName("CXVersion");
     public static final VarHandle CXVersion$Major = CXVersion$LAYOUT.varHandle(int.class, PathElement.groupElement("Major"));
     public static final int CXVersion$Major$get(MemorySegment seg) {
-        return (int)CXVersion$Major.get(seg.baseAddress());
+        return (int)CXVersion$Major.get(seg.address());
     }
     public static final void CXVersion$Major$set(MemorySegment seg, int x) {
-        CXVersion$Major.set(seg.baseAddress(), x);
+        CXVersion$Major.set(seg.address(), x);
     }
     public static final VarHandle CXVersion$Minor = CXVersion$LAYOUT.varHandle(int.class, PathElement.groupElement("Minor"));
     public static final int CXVersion$Minor$get(MemorySegment seg) {
-        return (int)CXVersion$Minor.get(seg.baseAddress());
+        return (int)CXVersion$Minor.get(seg.address());
     }
     public static final void CXVersion$Minor$set(MemorySegment seg, int x) {
-        CXVersion$Minor.set(seg.baseAddress(), x);
+        CXVersion$Minor.set(seg.address(), x);
     }
     public static final VarHandle CXVersion$Subminor = CXVersion$LAYOUT.varHandle(int.class, PathElement.groupElement("Subminor"));
     public static final int CXVersion$Subminor$get(MemorySegment seg) {
-        return (int)CXVersion$Subminor.get(seg.baseAddress());
+        return (int)CXVersion$Subminor.get(seg.address());
     }
     public static final void CXVersion$Subminor$set(MemorySegment seg, int x) {
-        CXVersion$Subminor.set(seg.baseAddress(), x);
+        CXVersion$Subminor.set(seg.address(), x);
     }
     public static final int CXCursor_ExceptionSpecificationKind_None = (int)0L;
     public static final int CXCursor_ExceptionSpecificationKind_DynamicNone = (int)1L;
@@ -574,10 +574,10 @@ public final class Index_h {
     );
     public static final VarHandle CXSourceLocation$int_data = CXSourceLocation$LAYOUT.varHandle(int.class, PathElement.groupElement("int_data"));
     public static final int CXSourceLocation$int_data$get(MemorySegment seg) {
-        return (int)CXSourceLocation$int_data.get(seg.baseAddress());
+        return (int)CXSourceLocation$int_data.get(seg.address());
     }
     public static final void CXSourceLocation$int_data$set(MemorySegment seg, int x) {
-        CXSourceLocation$int_data.set(seg.baseAddress(), x);
+        CXSourceLocation$int_data.set(seg.address(), x);
     }
     public static final MemoryLayout CXSourceRange$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofSequence(2, CSupport.C_POINTER).withName("ptr_data"),
@@ -586,17 +586,17 @@ public final class Index_h {
     );
     public static final VarHandle CXSourceRange$begin_int_data = CXSourceRange$LAYOUT.varHandle(int.class, PathElement.groupElement("begin_int_data"));
     public static final int CXSourceRange$begin_int_data$get(MemorySegment seg) {
-        return (int)CXSourceRange$begin_int_data.get(seg.baseAddress());
+        return (int)CXSourceRange$begin_int_data.get(seg.address());
     }
     public static final void CXSourceRange$begin_int_data$set(MemorySegment seg, int x) {
-        CXSourceRange$begin_int_data.set(seg.baseAddress(), x);
+        CXSourceRange$begin_int_data.set(seg.address(), x);
     }
     public static final VarHandle CXSourceRange$end_int_data = CXSourceRange$LAYOUT.varHandle(int.class, PathElement.groupElement("end_int_data"));
     public static final int CXSourceRange$end_int_data$get(MemorySegment seg) {
-        return (int)CXSourceRange$end_int_data.get(seg.baseAddress());
+        return (int)CXSourceRange$end_int_data.get(seg.address());
     }
     public static final void CXSourceRange$end_int_data$set(MemorySegment seg, int x) {
-        CXSourceRange$end_int_data.set(seg.baseAddress(), x);
+        CXSourceRange$end_int_data.set(seg.address(), x);
     }
     public static final MethodHandle clang_getNullLocation = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNullLocation",
@@ -958,10 +958,10 @@ public final class Index_h {
     );
     public static final VarHandle CXSourceRangeList$count = CXSourceRangeList$LAYOUT.varHandle(int.class, PathElement.groupElement("count"));
     public static final int CXSourceRangeList$count$get(MemorySegment seg) {
-        return (int)CXSourceRangeList$count.get(seg.baseAddress());
+        return (int)CXSourceRangeList$count.get(seg.address());
     }
     public static final void CXSourceRangeList$count$set(MemorySegment seg, int x) {
-        CXSourceRangeList$count.set(seg.baseAddress(), x);
+        CXSourceRangeList$count.set(seg.address(), x);
     }
     public static final MethodHandle clang_getSkippedRanges = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getSkippedRanges",
@@ -1660,17 +1660,17 @@ public final class Index_h {
     ).withName("CXTUResourceUsageEntry");
     public static final VarHandle CXTUResourceUsageEntry$kind = CXTUResourceUsageEntry$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXTUResourceUsageEntry$kind$get(MemorySegment seg) {
-        return (int)CXTUResourceUsageEntry$kind.get(seg.baseAddress());
+        return (int)CXTUResourceUsageEntry$kind.get(seg.address());
     }
     public static final void CXTUResourceUsageEntry$kind$set(MemorySegment seg, int x) {
-        CXTUResourceUsageEntry$kind.set(seg.baseAddress(), x);
+        CXTUResourceUsageEntry$kind.set(seg.address(), x);
     }
     public static final VarHandle CXTUResourceUsageEntry$amount = CXTUResourceUsageEntry$LAYOUT.varHandle(long.class, PathElement.groupElement("amount"));
     public static final long CXTUResourceUsageEntry$amount$get(MemorySegment seg) {
-        return (long)CXTUResourceUsageEntry$amount.get(seg.baseAddress());
+        return (long)CXTUResourceUsageEntry$amount.get(seg.address());
     }
     public static final void CXTUResourceUsageEntry$amount$set(MemorySegment seg, long x) {
-        CXTUResourceUsageEntry$amount.set(seg.baseAddress(), x);
+        CXTUResourceUsageEntry$amount.set(seg.address(), x);
     }
     public static final MemoryLayout CXTUResourceUsage$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("data"),
@@ -1680,10 +1680,10 @@ public final class Index_h {
     ).withName("CXTUResourceUsage");
     public static final VarHandle CXTUResourceUsage$numEntries = CXTUResourceUsage$LAYOUT.varHandle(int.class, PathElement.groupElement("numEntries"));
     public static final int CXTUResourceUsage$numEntries$get(MemorySegment seg) {
-        return (int)CXTUResourceUsage$numEntries.get(seg.baseAddress());
+        return (int)CXTUResourceUsage$numEntries.get(seg.address());
     }
     public static final void CXTUResourceUsage$numEntries$set(MemorySegment seg, int x) {
-        CXTUResourceUsage$numEntries.set(seg.baseAddress(), x);
+        CXTUResourceUsage$numEntries.set(seg.address(), x);
     }
     public static final MethodHandle clang_getCXTUResourceUsage = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCXTUResourceUsage",
@@ -2045,17 +2045,17 @@ public final class Index_h {
     );
     public static final VarHandle CXCursor$kind = CXCursor$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXCursor$kind$get(MemorySegment seg) {
-        return (int)CXCursor$kind.get(seg.baseAddress());
+        return (int)CXCursor$kind.get(seg.address());
     }
     public static final void CXCursor$kind$set(MemorySegment seg, int x) {
-        CXCursor$kind.set(seg.baseAddress(), x);
+        CXCursor$kind.set(seg.address(), x);
     }
     public static final VarHandle CXCursor$xdata = CXCursor$LAYOUT.varHandle(int.class, PathElement.groupElement("xdata"));
     public static final int CXCursor$xdata$get(MemorySegment seg) {
-        return (int)CXCursor$xdata.get(seg.baseAddress());
+        return (int)CXCursor$xdata.get(seg.address());
     }
     public static final void CXCursor$xdata$set(MemorySegment seg, int x) {
-        CXCursor$xdata.set(seg.baseAddress(), x);
+        CXCursor$xdata.set(seg.address(), x);
     }
     public static final MethodHandle clang_getNullCursor = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getNullCursor",
@@ -2423,10 +2423,10 @@ public final class Index_h {
     ).withName("CXPlatformAvailability");
     public static final VarHandle CXPlatformAvailability$Unavailable = CXPlatformAvailability$LAYOUT.varHandle(int.class, PathElement.groupElement("Unavailable"));
     public static final int CXPlatformAvailability$Unavailable$get(MemorySegment seg) {
-        return (int)CXPlatformAvailability$Unavailable.get(seg.baseAddress());
+        return (int)CXPlatformAvailability$Unavailable.get(seg.address());
     }
     public static final void CXPlatformAvailability$Unavailable$set(MemorySegment seg, int x) {
-        CXPlatformAvailability$Unavailable.set(seg.baseAddress(), x);
+        CXPlatformAvailability$Unavailable.set(seg.address(), x);
     }
     public static final MethodHandle clang_getCursorPlatformAvailability = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorPlatformAvailability",
@@ -2899,10 +2899,10 @@ public final class Index_h {
     );
     public static final VarHandle CXType$kind = CXType$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXType$kind$get(MemorySegment seg) {
-        return (int)CXType$kind.get(seg.baseAddress());
+        return (int)CXType$kind.get(seg.address());
     }
     public static final void CXType$kind$set(MemorySegment seg, int x) {
-        CXType$kind.set(seg.baseAddress(), x);
+        CXType$kind.set(seg.address(), x);
     }
     public static final MethodHandle clang_getCursorType = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCursorType",
@@ -5772,10 +5772,10 @@ public final class Index_h {
     );
     public static final VarHandle CXCompletionResult$CursorKind = CXCompletionResult$LAYOUT.varHandle(int.class, PathElement.groupElement("CursorKind"));
     public static final int CXCompletionResult$CursorKind$get(MemorySegment seg) {
-        return (int)CXCompletionResult$CursorKind.get(seg.baseAddress());
+        return (int)CXCompletionResult$CursorKind.get(seg.address());
     }
     public static final void CXCompletionResult$CursorKind$set(MemorySegment seg, int x) {
-        CXCompletionResult$CursorKind.set(seg.baseAddress(), x);
+        CXCompletionResult$CursorKind.set(seg.address(), x);
     }
     public static final int CXCompletionChunk_Optional = (int)0L;
     public static final int CXCompletionChunk_TypedText = (int)1L;
@@ -5984,10 +5984,10 @@ public final class Index_h {
     );
     public static final VarHandle CXCodeCompleteResults$NumResults = CXCodeCompleteResults$LAYOUT.varHandle(int.class, PathElement.groupElement("NumResults"));
     public static final int CXCodeCompleteResults$NumResults$get(MemorySegment seg) {
-        return (int)CXCodeCompleteResults$NumResults.get(seg.baseAddress());
+        return (int)CXCodeCompleteResults$NumResults.get(seg.address());
     }
     public static final void CXCodeCompleteResults$NumResults$set(MemorySegment seg, int x) {
-        CXCodeCompleteResults$NumResults.set(seg.baseAddress(), x);
+        CXCodeCompleteResults$NumResults.set(seg.address(), x);
     }
     public static final MethodHandle clang_getCompletionNumFixIts = RuntimeHelper.downcallHandle(
         LIBRARIES, "clang_getCompletionNumFixIts",
@@ -6537,10 +6537,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxLoc$int_data = CXIdxLoc$LAYOUT.varHandle(int.class, PathElement.groupElement("int_data"));
     public static final int CXIdxLoc$int_data$get(MemorySegment seg) {
-        return (int)CXIdxLoc$int_data.get(seg.baseAddress());
+        return (int)CXIdxLoc$int_data.get(seg.address());
     }
     public static final void CXIdxLoc$int_data$set(MemorySegment seg, int x) {
-        CXIdxLoc$int_data.set(seg.baseAddress(), x);
+        CXIdxLoc$int_data.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxIncludedFileInfo$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofStruct(
@@ -6557,24 +6557,24 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxIncludedFileInfo$isImport = CXIdxIncludedFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isImport"));
     public static final int CXIdxIncludedFileInfo$isImport$get(MemorySegment seg) {
-        return (int)CXIdxIncludedFileInfo$isImport.get(seg.baseAddress());
+        return (int)CXIdxIncludedFileInfo$isImport.get(seg.address());
     }
     public static final void CXIdxIncludedFileInfo$isImport$set(MemorySegment seg, int x) {
-        CXIdxIncludedFileInfo$isImport.set(seg.baseAddress(), x);
+        CXIdxIncludedFileInfo$isImport.set(seg.address(), x);
     }
     public static final VarHandle CXIdxIncludedFileInfo$isAngled = CXIdxIncludedFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isAngled"));
     public static final int CXIdxIncludedFileInfo$isAngled$get(MemorySegment seg) {
-        return (int)CXIdxIncludedFileInfo$isAngled.get(seg.baseAddress());
+        return (int)CXIdxIncludedFileInfo$isAngled.get(seg.address());
     }
     public static final void CXIdxIncludedFileInfo$isAngled$set(MemorySegment seg, int x) {
-        CXIdxIncludedFileInfo$isAngled.set(seg.baseAddress(), x);
+        CXIdxIncludedFileInfo$isAngled.set(seg.address(), x);
     }
     public static final VarHandle CXIdxIncludedFileInfo$isModuleImport = CXIdxIncludedFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isModuleImport"));
     public static final int CXIdxIncludedFileInfo$isModuleImport$get(MemorySegment seg) {
-        return (int)CXIdxIncludedFileInfo$isModuleImport.get(seg.baseAddress());
+        return (int)CXIdxIncludedFileInfo$isModuleImport.get(seg.address());
     }
     public static final void CXIdxIncludedFileInfo$isModuleImport$set(MemorySegment seg, int x) {
-        CXIdxIncludedFileInfo$isModuleImport.set(seg.baseAddress(), x);
+        CXIdxIncludedFileInfo$isModuleImport.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxImportedASTFileInfo$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("file"),
@@ -6589,10 +6589,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxImportedASTFileInfo$isImplicit = CXIdxImportedASTFileInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isImplicit"));
     public static final int CXIdxImportedASTFileInfo$isImplicit$get(MemorySegment seg) {
-        return (int)CXIdxImportedASTFileInfo$isImplicit.get(seg.baseAddress());
+        return (int)CXIdxImportedASTFileInfo$isImplicit.get(seg.address());
     }
     public static final void CXIdxImportedASTFileInfo$isImplicit$set(MemorySegment seg, int x) {
-        CXIdxImportedASTFileInfo$isImplicit.set(seg.baseAddress(), x);
+        CXIdxImportedASTFileInfo$isImplicit.set(seg.address(), x);
     }
     public static final int CXIdxEntity_Unexposed = (int)0L;
     public static final int CXIdxEntity_Typedef = (int)1L;
@@ -6650,10 +6650,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxAttrInfo$kind = CXIdxAttrInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXIdxAttrInfo$kind$get(MemorySegment seg) {
-        return (int)CXIdxAttrInfo$kind.get(seg.baseAddress());
+        return (int)CXIdxAttrInfo$kind.get(seg.address());
     }
     public static final void CXIdxAttrInfo$kind$set(MemorySegment seg, int x) {
-        CXIdxAttrInfo$kind.set(seg.baseAddress(), x);
+        CXIdxAttrInfo$kind.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxEntityInfo$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_INT.withName("kind"),
@@ -6673,31 +6673,31 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxEntityInfo$kind = CXIdxEntityInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXIdxEntityInfo$kind$get(MemorySegment seg) {
-        return (int)CXIdxEntityInfo$kind.get(seg.baseAddress());
+        return (int)CXIdxEntityInfo$kind.get(seg.address());
     }
     public static final void CXIdxEntityInfo$kind$set(MemorySegment seg, int x) {
-        CXIdxEntityInfo$kind.set(seg.baseAddress(), x);
+        CXIdxEntityInfo$kind.set(seg.address(), x);
     }
     public static final VarHandle CXIdxEntityInfo$templateKind = CXIdxEntityInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("templateKind"));
     public static final int CXIdxEntityInfo$templateKind$get(MemorySegment seg) {
-        return (int)CXIdxEntityInfo$templateKind.get(seg.baseAddress());
+        return (int)CXIdxEntityInfo$templateKind.get(seg.address());
     }
     public static final void CXIdxEntityInfo$templateKind$set(MemorySegment seg, int x) {
-        CXIdxEntityInfo$templateKind.set(seg.baseAddress(), x);
+        CXIdxEntityInfo$templateKind.set(seg.address(), x);
     }
     public static final VarHandle CXIdxEntityInfo$lang = CXIdxEntityInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("lang"));
     public static final int CXIdxEntityInfo$lang$get(MemorySegment seg) {
-        return (int)CXIdxEntityInfo$lang.get(seg.baseAddress());
+        return (int)CXIdxEntityInfo$lang.get(seg.address());
     }
     public static final void CXIdxEntityInfo$lang$set(MemorySegment seg, int x) {
-        CXIdxEntityInfo$lang.set(seg.baseAddress(), x);
+        CXIdxEntityInfo$lang.set(seg.address(), x);
     }
     public static final VarHandle CXIdxEntityInfo$numAttributes = CXIdxEntityInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numAttributes"));
     public static final int CXIdxEntityInfo$numAttributes$get(MemorySegment seg) {
-        return (int)CXIdxEntityInfo$numAttributes.get(seg.baseAddress());
+        return (int)CXIdxEntityInfo$numAttributes.get(seg.address());
     }
     public static final void CXIdxEntityInfo$numAttributes$set(MemorySegment seg, int x) {
-        CXIdxEntityInfo$numAttributes.set(seg.baseAddress(), x);
+        CXIdxEntityInfo$numAttributes.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxContainerInfo$LAYOUT = MemoryLayout.ofStruct(
         MemoryLayout.ofStruct(
@@ -6748,45 +6748,45 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxDeclInfo$isRedeclaration = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isRedeclaration"));
     public static final int CXIdxDeclInfo$isRedeclaration$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$isRedeclaration.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$isRedeclaration.get(seg.address());
     }
     public static final void CXIdxDeclInfo$isRedeclaration$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$isRedeclaration.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$isRedeclaration.set(seg.address(), x);
     }
     public static final VarHandle CXIdxDeclInfo$isDefinition = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isDefinition"));
     public static final int CXIdxDeclInfo$isDefinition$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$isDefinition.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$isDefinition.get(seg.address());
     }
     public static final void CXIdxDeclInfo$isDefinition$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$isDefinition.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$isDefinition.set(seg.address(), x);
     }
     public static final VarHandle CXIdxDeclInfo$isContainer = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isContainer"));
     public static final int CXIdxDeclInfo$isContainer$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$isContainer.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$isContainer.get(seg.address());
     }
     public static final void CXIdxDeclInfo$isContainer$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$isContainer.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$isContainer.set(seg.address(), x);
     }
     public static final VarHandle CXIdxDeclInfo$isImplicit = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("isImplicit"));
     public static final int CXIdxDeclInfo$isImplicit$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$isImplicit.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$isImplicit.get(seg.address());
     }
     public static final void CXIdxDeclInfo$isImplicit$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$isImplicit.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$isImplicit.set(seg.address(), x);
     }
     public static final VarHandle CXIdxDeclInfo$numAttributes = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numAttributes"));
     public static final int CXIdxDeclInfo$numAttributes$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$numAttributes.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$numAttributes.get(seg.address());
     }
     public static final void CXIdxDeclInfo$numAttributes$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$numAttributes.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$numAttributes.set(seg.address(), x);
     }
     public static final VarHandle CXIdxDeclInfo$flags = CXIdxDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("flags"));
     public static final int CXIdxDeclInfo$flags$get(MemorySegment seg) {
-        return (int)CXIdxDeclInfo$flags.get(seg.baseAddress());
+        return (int)CXIdxDeclInfo$flags.get(seg.address());
     }
     public static final void CXIdxDeclInfo$flags$set(MemorySegment seg, int x) {
-        CXIdxDeclInfo$flags.set(seg.baseAddress(), x);
+        CXIdxDeclInfo$flags.set(seg.address(), x);
     }
     public static final int CXIdxObjCContainer_ForwardRef = (int)0L;
     public static final int CXIdxObjCContainer_Interface = (int)1L;
@@ -6798,10 +6798,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxObjCContainerDeclInfo$kind = CXIdxObjCContainerDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXIdxObjCContainerDeclInfo$kind$get(MemorySegment seg) {
-        return (int)CXIdxObjCContainerDeclInfo$kind.get(seg.baseAddress());
+        return (int)CXIdxObjCContainerDeclInfo$kind.get(seg.address());
     }
     public static final void CXIdxObjCContainerDeclInfo$kind$set(MemorySegment seg, int x) {
-        CXIdxObjCContainerDeclInfo$kind.set(seg.baseAddress(), x);
+        CXIdxObjCContainerDeclInfo$kind.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxBaseClassInfo$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("base"),
@@ -6836,10 +6836,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxObjCProtocolRefListInfo$numProtocols = CXIdxObjCProtocolRefListInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numProtocols"));
     public static final int CXIdxObjCProtocolRefListInfo$numProtocols$get(MemorySegment seg) {
-        return (int)CXIdxObjCProtocolRefListInfo$numProtocols.get(seg.baseAddress());
+        return (int)CXIdxObjCProtocolRefListInfo$numProtocols.get(seg.address());
     }
     public static final void CXIdxObjCProtocolRefListInfo$numProtocols$set(MemorySegment seg, int x) {
-        CXIdxObjCProtocolRefListInfo$numProtocols.set(seg.baseAddress(), x);
+        CXIdxObjCProtocolRefListInfo$numProtocols.set(seg.address(), x);
     }
     public static final MemoryLayout CXIdxObjCInterfaceDeclInfo$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("containerInfo"),
@@ -6874,10 +6874,10 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxCXXClassDeclInfo$numBases = CXIdxCXXClassDeclInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("numBases"));
     public static final int CXIdxCXXClassDeclInfo$numBases$get(MemorySegment seg) {
-        return (int)CXIdxCXXClassDeclInfo$numBases.get(seg.baseAddress());
+        return (int)CXIdxCXXClassDeclInfo$numBases.get(seg.address());
     }
     public static final void CXIdxCXXClassDeclInfo$numBases$set(MemorySegment seg, int x) {
-        CXIdxCXXClassDeclInfo$numBases.set(seg.baseAddress(), x);
+        CXIdxCXXClassDeclInfo$numBases.set(seg.address(), x);
     }
     public static final int CXIdxEntityRef_Direct = (int)1L;
     public static final int CXIdxEntityRef_Implicit = (int)2L;
@@ -6912,17 +6912,17 @@ public final class Index_h {
     );
     public static final VarHandle CXIdxEntityRefInfo$kind = CXIdxEntityRefInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("kind"));
     public static final int CXIdxEntityRefInfo$kind$get(MemorySegment seg) {
-        return (int)CXIdxEntityRefInfo$kind.get(seg.baseAddress());
+        return (int)CXIdxEntityRefInfo$kind.get(seg.address());
     }
     public static final void CXIdxEntityRefInfo$kind$set(MemorySegment seg, int x) {
-        CXIdxEntityRefInfo$kind.set(seg.baseAddress(), x);
+        CXIdxEntityRefInfo$kind.set(seg.address(), x);
     }
     public static final VarHandle CXIdxEntityRefInfo$role = CXIdxEntityRefInfo$LAYOUT.varHandle(int.class, PathElement.groupElement("role"));
     public static final int CXIdxEntityRefInfo$role$get(MemorySegment seg) {
-        return (int)CXIdxEntityRefInfo$role.get(seg.baseAddress());
+        return (int)CXIdxEntityRefInfo$role.get(seg.address());
     }
     public static final void CXIdxEntityRefInfo$role$set(MemorySegment seg, int x) {
-        CXIdxEntityRefInfo$role.set(seg.baseAddress(), x);
+        CXIdxEntityRefInfo$role.set(seg.address(), x);
     }
     public static final MemoryLayout IndexerCallbacks$LAYOUT = MemoryLayout.ofStruct(
         CSupport.C_POINTER.withName("abortQuery"),
