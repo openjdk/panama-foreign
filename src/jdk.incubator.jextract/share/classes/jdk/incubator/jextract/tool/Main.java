@@ -25,8 +25,7 @@
 
 package jdk.incubator.jextract.tool;
 
-import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.JextractTask;
+import jdk.incubator.jextract.*;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
@@ -193,7 +192,7 @@ public class Main {
 
             JavaFileObject[] files = OutputFactory.generateWrapped(
                 toplevel,
-                Utils.javaSafeIdentifier(header.getFileName().toString().replace(".h", "_h"), true),
+                header.getFileName().toString(),
                 options.targetPackage,
                 options.libraryNames);
             jextractTask.write(output, files);

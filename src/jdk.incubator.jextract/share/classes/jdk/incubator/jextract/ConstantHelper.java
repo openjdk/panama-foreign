@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
@@ -63,7 +63,7 @@ import static java.lang.invoke.MethodHandleInfo.*;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-class ConstantHelper {
+public class ConstantHelper {
 
     private static final String INTR_OBJECT = Type.getInternalName(Object.class);
 
@@ -142,7 +142,7 @@ class ConstantHelper {
             Map.entry(MemoryAddress.class,      desc(Long.TYPE))
     );
 
-    ConstantHelper(String parentClassName, ClassDesc runtimeHelper, ClassDesc cString, String[] libraryNames) {
+    public ConstantHelper(String parentClassName, ClassDesc runtimeHelper, ClassDesc cString, String[] libraryNames) {
         this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         String className = parentClassName + "$constants";
         this.CD_constantsHelper = ClassDesc.of(className);

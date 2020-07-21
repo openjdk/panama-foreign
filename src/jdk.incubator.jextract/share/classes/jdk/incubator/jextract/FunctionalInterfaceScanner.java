@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
