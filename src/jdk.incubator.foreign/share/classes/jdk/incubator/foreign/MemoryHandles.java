@@ -362,8 +362,8 @@ public final class MemoryHandles {
     MemorySegment segment = MemorySegment.allocateNative(2);
     VarHandle SHORT_VH = MemoryLayouts.JAVA_SHORT.varHandle(short.class);
     VarHandle INT_VH = MemoryHandles.asUnsigned(SHORT_VH, int.class);
-    SHORT_VH.set(segment.baseAddress(), (short)-1);
-    INT_VH.get(segment.baseAddress()); // returns 65535
+    SHORT_VH.set(segment.address(), (short)-1);
+    INT_VH.get(segment.address()); // returns 65535
      * }</pre></blockquote>
      * <p>
      * When calling e.g. {@link VarHandle#set(Object...)} on the resulting var

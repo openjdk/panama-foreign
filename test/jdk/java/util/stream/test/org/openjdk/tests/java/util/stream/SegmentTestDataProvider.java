@@ -48,7 +48,7 @@ public class SegmentTestDataProvider {
     static VarHandle DOUBLE_HANDLE = MemoryLayouts.JAVA_DOUBLE.varHandle(double.class);
 
     static boolean compareSegmentsByte(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Byte> mapper = segment -> (byte)BYTE_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Byte> mapper = segment -> (byte)BYTE_HANDLE.get(segment.address());
         List<Byte> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -59,7 +59,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsChar(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Character> mapper = segment -> (char)CHAR_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Character> mapper = segment -> (char)CHAR_HANDLE.get(segment.address());
         List<Character> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -70,7 +70,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsShort(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Short> mapper = segment -> (short)SHORT_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Short> mapper = segment -> (short)SHORT_HANDLE.get(segment.address());
         List<Short> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -81,7 +81,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsInt(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Integer> mapper = segment -> (int)INT_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Integer> mapper = segment -> (int)INT_HANDLE.get(segment.address());
         List<Integer> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -92,7 +92,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsLong(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Long> mapper = segment -> (long)LONG_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Long> mapper = segment -> (long)LONG_HANDLE.get(segment.address());
         List<Long> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -103,7 +103,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsFloat(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Float> mapper = segment -> (float)FLOAT_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Float> mapper = segment -> (float)FLOAT_HANDLE.get(segment.address());
         List<Float> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -122,7 +122,7 @@ public class SegmentTestDataProvider {
     }
 
     static boolean compareSegmentsDouble(Collection<MemorySegment> segments1, Collection<MemorySegment> segments2, boolean isOrdered) {
-        Function<MemorySegment, Double> mapper = segment -> (double)DOUBLE_HANDLE.get(segment.baseAddress());
+        Function<MemorySegment, Double> mapper = segment -> (double)DOUBLE_HANDLE.get(segment.address());
         List<Double> list1 = segments1.stream()
                 .map(mapper)
                 .collect(Collectors.toList());
@@ -134,7 +134,7 @@ public class SegmentTestDataProvider {
 
     static void initSegment(MemorySegment segment) {
         for (int i = 0 ; i < segment.byteSize() ; i++) {
-            BYTE_HANDLE.set(segment.baseAddress(), (byte)i);
+            BYTE_HANDLE.set(segment.address(), (byte)i);
         }
     }
 

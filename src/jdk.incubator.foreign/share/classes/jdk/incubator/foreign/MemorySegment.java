@@ -158,7 +158,7 @@ MemorySegment segment = ...
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
 int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
-                       .mapToInt(s -> (int)VH_int.get(s.baseAddress()))
+                       .mapToInt(s -> (int)VH_int.get(s.address()))
                        .sum();
  * }</pre></blockquote>
  *
@@ -307,7 +307,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
          .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 for (long l = 0; l < segment.byteSize(); l++) {
-     byteHandle.set(segment.baseAddress(), l, value);
+     byteHandle.set(segment.address(), l, value);
 }
      * }</pre>
      *
