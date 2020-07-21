@@ -133,4 +133,13 @@ public final class MemoryAddressImpl implements MemoryAddress, MemoryAddressProx
     public String toString() {
         return "MemoryAddress{ region: " + segment + " offset=0x" + Long.toHexString(offset) + " }";
     }
+
+    public static MemoryAddress ofLongUnchecked(long value) {
+        return ofLongUnchecked(value, Long.MAX_VALUE);
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                MemoryAddress.ofLong(value), byteSize, null, null, null).baseAddress();
+    }
 }

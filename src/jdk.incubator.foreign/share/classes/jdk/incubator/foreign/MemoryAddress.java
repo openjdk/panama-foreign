@@ -138,5 +138,4 @@ public interface MemoryAddress extends Addressable {
                 NULL :
                 new MemoryAddressImpl(value);
     }
-
 }
