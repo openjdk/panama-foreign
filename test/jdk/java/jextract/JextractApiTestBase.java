@@ -43,9 +43,8 @@ public class JextractApiTestBase {
             System.getProperty("os.name", "unknown").startsWith("Windows");
 
     public static  Declaration.Scoped parse(String headerFilename, String... parseOptions) {
-        Path header = Paths.get(System.getProperty("test.src.path", "."), headerFilename);
+        Path header = Paths.get(System.getProperty("test.src", "."), headerFilename);
         var task = JextractTask.newTask(false, header);
-        Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         return task.parse(parseOptions);
     }
 
