@@ -103,7 +103,7 @@ public class ProgrammableInvoker {
 
     private final CallingSequence callingSequence;
 
-    private final MemoryAddress addr;
+    private final Addressable addr;
     private final long stubAddress;
 
     private final long bufferCopySize;
@@ -113,7 +113,7 @@ public class ProgrammableInvoker {
         this.layout = BufferLayout.of(abi);
         this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
 
-        this.addr = addr.address();
+        this.addr = addr;
         this.callingSequence = callingSequence;
 
         this.stackArgsBytes = callingSequence.argMoveBindings()
@@ -162,7 +162,7 @@ public class ProgrammableInvoker {
         boolean isSimple = !(retMoves.length > 1);
         if (USE_INTRINSICS && isSimple) {
             NativeEntryPoint nep = NativeEntryPoint.make(
-                addr.toRawLongValue(),
+                addr.address().toRawLongValue(),
                 "native_call",
                 abi,
                 toStorageArray(argMoves),
@@ -276,7 +276,7 @@ public class ProgrammableInvoker {
                 stackArgs = MemoryAddressImpl.NULL;
             }
 
-            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.toRawLongValue());
+            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.address().toRawLongValue());
             VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
             VH_LONG.set(argsPtr.addOffset(layout.stack_args), stackArgs.toRawLongValue());
 
