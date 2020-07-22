@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
@@ -102,12 +103,12 @@ public class ProgrammableInvoker {
 
     private final CallingSequence callingSequence;
 
-    private final MemoryAddress addr;
+    private final Addressable addr;
     private final long stubAddress;
 
     private final long bufferCopySize;
 
-    public ProgrammableInvoker(ABIDescriptor abi, MemoryAddress addr, CallingSequence callingSequence) {
+    public ProgrammableInvoker(ABIDescriptor abi, Addressable addr, CallingSequence callingSequence) {
         this.abi = abi;
         this.layout = BufferLayout.of(abi);
         this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
@@ -161,7 +162,7 @@ public class ProgrammableInvoker {
         boolean isSimple = !(retMoves.length > 1);
         if (USE_INTRINSICS && isSimple) {
             NativeEntryPoint nep = NativeEntryPoint.make(
-                addr.toRawLongValue(),
+                addr.address().toRawLongValue(),
                 "native_call",
                 abi,
                 toStorageArray(argMoves),
@@ -275,7 +276,7 @@ public class ProgrammableInvoker {
                 stackArgs = MemoryAddressImpl.NULL;
             }
 
-            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.toRawLongValue());
+            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.address().toRawLongValue());
             VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
             VH_LONG.set(argsPtr.addOffset(layout.stack_args), stackArgs.toRawLongValue());
 

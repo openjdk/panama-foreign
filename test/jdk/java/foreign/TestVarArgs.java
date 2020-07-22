@@ -64,7 +64,7 @@ public class TestVarArgs extends NativeTestHelper {
     static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
 
     static final ForeignLinker abi = CSupport.getSystemLinker();
-    static final MemoryAddress varargsAddr;
+    static final LibraryLookup.Symbol varargsAddr;
 
     static {
         try {

@@ -55,10 +55,10 @@ public class TestLibraryLookup {
 
     @Test
     public void testSimpleLookup() throws Throwable {
-        MemoryAddress symbol = null;
+        LibraryLookup.Symbol symbol = null;
         LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
         symbol = lookup.lookup("f");
-        assertTrue(symbol.segment().isAlive());
+        assertEquals(symbol.name(), "f");
         assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
         lookup = null;
         symbol = null;
@@ -67,12 +67,11 @@ public class TestLibraryLookup {
 
     @Test
     public void testMultiLookupSameLoader() throws Throwable {
-        List<MemoryAddress> symbols = new ArrayList<>();
+        List<LibraryLookup.Symbol> symbols = new ArrayList<>();
         List<LibraryLookup> lookups = new ArrayList<>();
         for (int i = 0 ; i < 5 ; i++) {
             LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-            MemoryAddress symbol = lookup.lookup("f");
-            assertTrue(symbol.segment().isAlive());
+            LibraryLookup.Symbol symbol = lookup.lookup("f");
             lookups.add(lookup);
             symbols.add(symbol);
             assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
@@ -130,7 +129,7 @@ public class TestLibraryLookup {
 
     static class Holder {
         public static LibraryLookup lookup;
-        public static MemoryAddress symbol;
+        public static LibraryLookup.Symbol symbol;
 
         static {
             try {

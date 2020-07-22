@@ -175,7 +175,7 @@ public class StdLibTest extends NativeTestHelper {
         final static FunctionDescriptor qsortComparFunction;
         final static MethodHandle rand;
         final static MethodHandle vprintf;
-        final static MemoryAddress printfAddr;
+        final static LibraryLookup.Symbol printfAddr;
         final static FunctionDescriptor printfBase;
 
         static {
