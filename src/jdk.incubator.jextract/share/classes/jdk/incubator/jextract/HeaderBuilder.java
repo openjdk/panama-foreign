@@ -26,6 +26,8 @@ package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
+
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,10 +63,10 @@ public class HeaderBuilder extends JavaSourceBuilder {
         indent();
     }
 
-    public void addStaticFunctionWrapper(String javaName, String nativeName, MethodType sigtype, MethodType mhtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+    public void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + sigtype.returnType().getName() + " " + javaName + " (");
+        sb.append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -73,12 +75,16 @@ public class HeaderBuilder extends JavaSourceBuilder {
             if (pName.isEmpty()) {
                 pName = "x" + i;
             }
-            if (sigtype.parameterType(i).equals(Addressable.class)) {
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
                 pExprs.add(pName + ".address()");
             } else {
                 pExprs.add(pName);
             }
-            sb.append(delim + sigtype.parameterType(i).getName() + " " + pName);
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            sb.append(delim + pType.getName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
@@ -95,10 +101,10 @@ public class HeaderBuilder extends JavaSourceBuilder {
         sb.append("try {\n");
         incrAlign();
         indent();
-        if (!sigtype.returnType().equals(void.class)) {
-            sb.append("return (" + sigtype.returnType().getName() + ")");
+        if (!mtype.returnType().equals(void.class)) {
+            sb.append("return (" + mtype.returnType().getName() + ")");
         }
-        sb.append(methodHandleGetCallString(javaName, nativeName, mhtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
+        sb.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
         decrAlign();
         indent();
         sb.append("} catch (Throwable ex) {\n");

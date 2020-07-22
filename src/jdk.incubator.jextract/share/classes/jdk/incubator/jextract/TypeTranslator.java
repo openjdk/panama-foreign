@@ -25,7 +25,6 @@
 
 package jdk.incubator.jextract;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.foreign.MemoryAddress;
@@ -34,9 +33,9 @@ import jdk.incubator.foreign.MemorySegment;
 
 import java.lang.invoke.MethodType;
 
-public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
+public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
     @Override
-    public Class<?> visitPrimitive(Type.Primitive t, Boolean allowAddressable) {
+    public Class<?> visitPrimitive(Type.Primitive t, Void aVoid) {
         if (t.kind().layout().isEmpty()) {
             return void.class;
         } else {
@@ -85,19 +84,19 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
     }
 
     @Override
-    public Class<?> visitDelegated(Type.Delegated t, Boolean allowAddressable) {
+    public Class<?> visitDelegated(Type.Delegated t, Void aVoid) {
         return t.kind() == Type.Delegated.Kind.POINTER ?
-                (allowAddressable ? Addressable.class : MemoryAddress.class) :
-                t.type().accept(this, allowAddressable);
+                MemoryAddress.class :
+                t.type().accept(this, null);
     }
 
     @Override
-    public Class<?> visitFunction(Type.Function t, Boolean allowAddressable) {
+    public Class<?> visitFunction(Type.Function t, Void aVoid) {
         return MemoryAddress.class; // function pointer
     }
 
     @Override
-    public Class<?> visitDeclared(Type.Declared t, Boolean allowAddressable) {
+    public Class<?> visitDeclared(Type.Declared t, Void aVoid) {
         switch (t.tree().kind()) {
             case UNION:
             case STRUCT:
@@ -110,7 +109,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
     }
 
     @Override
-    public Class<?> visitArray(Type.Array t, Boolean allowAddressable) {
+    public Class<?> visitArray(Type.Array t, Void aVoid) {
         if (t.kind() == Type.Array.Kind.VECTOR) {
             throw new UnsupportedOperationException();
         } else {
@@ -119,24 +118,24 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Boolean> {
     }
 
     @Override
-    public Class<?> visitType(Type t, Boolean allowAddressable) {
+    public Class<?> visitType(Type t, Void aVoid) {
         throw new UnsupportedOperationException();
     }
 
     Class<?> getJavaType(Type t) {
-        return t.accept(this, false);
+        return t.accept(this, null);
     }
 
-    Class<?> getJavaType(Type t, boolean allowAddressable) {
-        return t.accept(this, allowAddressable);
+    MethodType getMethodType(Type.Function type) {
+        return getMethodType(type, true);
     }
 
-    MethodType getMethodType(Type.Function type, boolean allowAddressable, boolean upcall) {
-        MethodType mtype = MethodType.methodType(getJavaType(type.returnType(), false));
+    MethodType getMethodType(Type.Function type, boolean varargsCheck) {
+        MethodType mtype = MethodType.methodType(getJavaType(type.returnType()));
         for (Type arg : type.argumentTypes()) {
-            mtype = mtype.appendParameterTypes(getJavaType(arg, allowAddressable));
+            mtype = mtype.appendParameterTypes(getJavaType(arg));
         }
-        if (!upcall && type.varargs()) {
+        if (varargsCheck && type.varargs()) {
             mtype = mtype.appendParameterTypes(Object[].class);
         }
         return mtype;
