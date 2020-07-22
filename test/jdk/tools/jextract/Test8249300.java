@@ -22,7 +22,8 @@
  */
 
 import java.nio.file.Path;
-import jdk.incubator.foreign.MemoryAddress;
+
+import jdk.incubator.foreign.Addressable;
 import org.testng.annotations.Test;
 
 /*
@@ -42,7 +43,7 @@ public class Test8249300 extends JextractToolRunner {
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
             Class<?> headerClass = loader.loadClass("test8249300_h");
-            checkMethod(headerClass, "func", void.class, MemoryAddress.class);
+            checkMethod(headerClass, "func", void.class, Addressable.class);
             Class<?> fiClass = loader.loadClass("test8249300_h$func$f");
             checkMethod(fiClass, "apply", void.class);
         } finally {

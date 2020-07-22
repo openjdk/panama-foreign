@@ -24,6 +24,8 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 
 import org.testng.annotations.Test;
@@ -68,7 +70,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
             // check a method for "void func(int)"
             assertNotNull(findMethod(cls, "func", int.class));
             // check a method for "int printf(MemoryAddress, Object[])"
-            assertNotNull(findMethod(cls, "printf", MemoryAddress.class, Object[].class));
+            assertNotNull(findMethod(cls, "printf", Addressable.class, Object[].class));
         } finally {
             deleteDir(helloOutput);
         }
@@ -84,7 +86,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
             // check a method for "void func(int)"
             assertNotNull(findMethod(cls, "func", int.class));
             // check a method for "int printf(MemoryAddress, Object[])"
-            assertNotNull(findMethod(cls, "printf", MemoryAddress.class, Object[].class));
+            assertNotNull(findMethod(cls, "printf", Addressable.class, Object[].class));
         } finally {
             deleteDir(helloOutput);
         }
