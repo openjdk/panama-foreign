@@ -370,6 +370,24 @@ public interface MemoryLayout extends Constable {
     /**
      * Creates a memory access var handle that can be used to dereference memory at the layout selected by a given layout path,
      * where the path is considered rooted in this layout.
+     * <p>
+     * The final memory location accessed by the returned memory access var handle can be computed as follows:
+     *
+     * <blockquote><pre>{@code
+    address = base + offset
+     * }</pre></blockquote>
+     *
+     * where {@code base} denotes the base address expressed by the {@link MemorySegment} access coordinate
+     * (see {@link MemorySegment#address()} and {@link MemoryAddress#toRawLongValue()}) and {@code offset}
+     * can be expressed in the following form:
+     *
+     * <blockquote><pre>{@code
+    offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as optional {@code long}
+     * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
+     * <em>static</em> stride constants which are derived from the layout path.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
