@@ -103,6 +103,12 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return asSliceNoCheck(offset, newSize);
     }
 
+    @Override
+    public AbstractMemorySegmentImpl asSlice(long offset) {
+        checkBounds(offset, 0);
+        return asSliceNoCheck(offset, length - offset);
+    }
+
     private AbstractMemorySegmentImpl asSliceNoCheck(long offset, long newSize) {
         return dup(offset, newSize, mask, scope);
     }
@@ -119,7 +125,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final MemorySegment fill(byte value){
-        checkRange(0, length, true);
+        checkAccess(0, length, false);
         UNSAFE.setMemory(base(), min(), length, value);
         return this;
     }
@@ -127,8 +133,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     public void copyFrom(MemorySegment src) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
         long size = that.byteSize();
-        checkRange(0, size, true);
-        that.checkRange(0, size, false);
+        checkAccess(0, size, false);
+        that.checkAccess(0, size, true);
         UNSAFE.copyMemory(
                 that.base(), that.min(),
                 base(), min(), size);
@@ -143,15 +149,15 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         final long thisSize = this.byteSize();
         final long thatSize = that.byteSize();
         final long length = Math.min(thisSize, thatSize);
-        this.checkRange(0, length, false);
-        that.checkRange(0, length, false);
+        this.checkAccess(0, length, true);
+        that.checkAccess(0, length, true);
         if (this == other) {
             return -1;
         }
 
         long i = 0;
         if (length > 7) {
-            if ((byte) BYTE_HANDLE.get(this.address(), 0) != (byte) BYTE_HANDLE.get(that.address(), 0)) {
+            if ((byte) BYTE_HANDLE.get(this, 0) != (byte) BYTE_HANDLE.get(that, 0)) {
                 return 0;
             }
             i = ArraysSupport.vectorizedMismatchLargeForBytes(
@@ -165,10 +171,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             assert remaining < 8 : "remaining greater than 7: " + remaining;
             i = length - remaining;
         }
-        MemoryAddress thisAddress = this.address();
-        MemoryAddress thatAddress = that.address();
         for (; i < length; i++) {
-            if ((byte) BYTE_HANDLE.get(thisAddress, i) != (byte) BYTE_HANDLE.get(thatAddress, i)) {
+            if ((byte) BYTE_HANDLE.get(this, i) != (byte) BYTE_HANDLE.get(that, i)) {
                 return i;
             }
         }
@@ -178,7 +182,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     @Override
     @ForceInline
     public final MemoryAddress address() {
-        return new MemoryAddressImpl(this, 0);
+        checkValidState();
+        return new MemoryAddressImpl(base(), min());
     }
 
     @Override
@@ -316,18 +321,30 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         return arr;
     }
 
-    boolean isSmall() {
+    @Override
+    public boolean isSmall() {
         return isSet(SMALL);
     }
 
-    void checkRange(long offset, long length, boolean writeAccess) {
+    @Override
+    public void checkAccess(long offset, long length, boolean readOnly) {
         scope.checkValidState();
-        if (writeAccess && !isSet(WRITE)) {
+        if (!readOnly && !isSet(WRITE)) {
             throw unsupportedAccessMode(WRITE);
-        } else if (!writeAccess && !isSet(READ)) {
+        } else if (readOnly && !isSet(READ)) {
             throw unsupportedAccessMode(READ);
         }
         checkBounds(offset, length);
+    }
+
+    @Override
+    public long unsafeGetOffset() {
+        return min();
+    }
+
+    @Override
+    public Object unsafeGetBase() {
+        return base();
     }
 
     @Override
