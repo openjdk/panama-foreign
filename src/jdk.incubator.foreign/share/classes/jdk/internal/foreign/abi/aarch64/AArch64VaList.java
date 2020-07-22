@@ -136,13 +136,13 @@ public class AArch64VaList implements VaList {
                 MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null,
                 () -> U.freeMemory(ptr), null);
         cleaner.register(AArch64VaList.class, ms::close);
-        MemoryAddress base = ms.baseAddress();
+        MemoryAddress base = ms.address();
         VH_stack.set(base, MemoryAddress.NULL);
         VH_gr_top.set(base, MemoryAddress.NULL);
         VH_vr_top.set(base, MemoryAddress.NULL);
         VH_gr_offs.set(base, 0);
         VH_vr_offs.set(base, 0);
-        return ms.withAccessModes(0).baseAddress();
+        return ms.withAccessModes(0).address();
     }
 
     public static CSupport.VaList empty() {
@@ -154,7 +154,7 @@ public class AArch64VaList implements VaList {
     }
 
     private static MemoryAddress grTop(MemorySegment segment) {
-        return (MemoryAddress) VH_gr_top.get(segment.baseAddress());
+        return (MemoryAddress) VH_gr_top.get(segment.address());
     }
 
     private MemoryAddress vrTop() {
@@ -162,37 +162,37 @@ public class AArch64VaList implements VaList {
     }
 
     private static MemoryAddress vrTop(MemorySegment segment) {
-        return (MemoryAddress) VH_vr_top.get(segment.baseAddress());
+        return (MemoryAddress) VH_vr_top.get(segment.address());
     }
 
     private int grOffs() {
-        final int offs = (int) VH_gr_offs.get(segment.baseAddress());
+        final int offs = (int) VH_gr_offs.get(segment.address());
         assert offs <= 0;
         return offs;
     }
 
     private int vrOffs() {
-        final int offs = (int) VH_vr_offs.get(segment.baseAddress());
+        final int offs = (int) VH_vr_offs.get(segment.address());
         assert offs <= 0;
         return offs;
     }
 
     private MemoryAddress stackPtr() {
-        return (MemoryAddress) VH_stack.get(segment.baseAddress());
+        return (MemoryAddress) VH_stack.get(segment.address());
     }
 
     private void stackPtr(MemoryAddress ptr) {
-        VH_stack.set(segment.baseAddress(), ptr);
+        VH_stack.set(segment.address(), ptr);
     }
 
     private void consumeGPSlots(int num) {
-        final int old = (int) VH_gr_offs.get(segment.baseAddress());
-        VH_gr_offs.set(segment.baseAddress(), old + num * GP_SLOT_SIZE);
+        final int old = (int) VH_gr_offs.get(segment.address());
+        VH_gr_offs.set(segment.address(), old + num * GP_SLOT_SIZE);
     }
 
     private void consumeFPSlots(int num) {
-        final int old = (int) VH_vr_offs.get(segment.baseAddress());
-        VH_vr_offs.set(segment.baseAddress(), old + num * FP_SLOT_SIZE);
+        final int old = (int) VH_vr_offs.get(segment.address());
+        VH_vr_offs.set(segment.address(), old + num * FP_SLOT_SIZE);
     }
 
     private long currentGPOffset() {
@@ -277,7 +277,7 @@ public class AArch64VaList implements VaList {
                     try (MemorySegment slice = MemorySegment.ofNativeRestricted(
                              stackPtr(), layout.byteSize(),
                              segment.ownerThread(), null, null)) {
-                        Object res = reader.get(slice.baseAddress());
+                        Object res = reader.get(slice.address());
                         postAlignStack(layout);
                         yield res;
                     }
@@ -319,7 +319,7 @@ public class AArch64VaList implements VaList {
                     VarHandle ptrReader
                         = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class, AArch64.C_POINTER);
                     MemoryAddress ptr = (MemoryAddress) ptrReader.get(
-                        gpRegsArea.baseAddress().addOffset(currentGPOffset()));
+                        gpRegsArea.address().addOffset(currentGPOffset()));
                     consumeGPSlots(1);
 
                     try (MemorySegment slice = MemorySegment.ofNativeRestricted(
@@ -331,13 +331,13 @@ public class AArch64VaList implements VaList {
                 }
                 case POINTER, INTEGER -> {
                     VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                    Object res = reader.get(gpRegsArea.baseAddress().addOffset(currentGPOffset()));
+                    Object res = reader.get(gpRegsArea.address().addOffset(currentGPOffset()));
                     consumeGPSlots(1);
                     yield res;
                 }
                 case FLOAT -> {
                     VarHandle reader = layout.varHandle(carrier);
-                    Object res = reader.get(fpRegsArea.baseAddress().addOffset(currentFPOffset()));
+                    Object res = reader.get(fpRegsArea.address().addOffset(currentFPOffset()));
                     consumeFPSlots(1);
                     yield res;
                 }
@@ -400,7 +400,7 @@ public class AArch64VaList implements VaList {
 
     @Override
     public MemoryAddress address() {
-        return segment.baseAddress();
+        return segment.address();
     }
 
     private static int numSlots(MemoryLayout layout) {
@@ -510,18 +510,18 @@ public class AArch64VaList implements VaList {
                         VarHandle writer
                             = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class,
                                                                AArch64.C_POINTER);
-                        writer.set(gpRegs.baseAddress().addOffset(currentGPOffset),
-                                   valueSegment.baseAddress());
+                        writer.set(gpRegs.address().addOffset(currentGPOffset),
+                                   valueSegment.address());
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case POINTER, INTEGER -> {
                         VarHandle writer = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                        writer.set(gpRegs.baseAddress().addOffset(currentGPOffset), value);
+                        writer.set(gpRegs.address().addOffset(currentGPOffset), value);
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case FLOAT -> {
                         VarHandle writer = layout.varHandle(carrier);
-                        writer.set(fpRegs.baseAddress().addOffset(currentFPOffset), value);
+                        writer.set(fpRegs.address().addOffset(currentFPOffset), value);
                         currentFPOffset += FP_SLOT_SIZE;
                     }
                 }
@@ -545,7 +545,7 @@ public class AArch64VaList implements VaList {
                 long stackArgsSize = stackArgs.stream()
                     .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), 8), Long::sum);
                 MemorySegment stackArgsSegment = allocator.allocate(stackArgsSize, 16);
-                MemoryAddress maStackArea = stackArgsSegment.baseAddress();
+                MemoryAddress maStackArea = stackArgsSegment.address();
                 for (SimpleVaArg arg : stackArgs) {
                     final long alignedSize = Utils.alignUp(arg.layout.byteSize(), 8);
                     maStackArea = Utils.alignUp(maStackArea, alignedSize);
@@ -553,13 +553,13 @@ public class AArch64VaList implements VaList {
                     writer.set(maStackArea, arg.value);
                     maStackArea = maStackArea.addOffset(alignedSize);
                 }
-                stackArgsPtr = stackArgsSegment.baseAddress();
+                stackArgsPtr = stackArgsSegment.address();
                 attachedSegments.add(stackArgsSegment);
             }
 
-            MemoryAddress vaListAddr = vaListSegment.baseAddress();
-            VH_gr_top.set(vaListAddr, gpRegs.baseAddress().addOffset(gpRegs.byteSize()));
-            VH_vr_top.set(vaListAddr, fpRegs.baseAddress().addOffset(fpRegs.byteSize()));
+            MemoryAddress vaListAddr = vaListSegment.address();
+            VH_gr_top.set(vaListAddr, gpRegs.address().addOffset(gpRegs.byteSize()));
+            VH_vr_top.set(vaListAddr, fpRegs.address().addOffset(fpRegs.byteSize()));
             VH_stack.set(vaListAddr, stackArgsPtr);
             VH_gr_offs.set(vaListAddr, -MAX_GP_OFFSET);
             VH_vr_offs.set(vaListAddr, -MAX_FP_OFFSET);

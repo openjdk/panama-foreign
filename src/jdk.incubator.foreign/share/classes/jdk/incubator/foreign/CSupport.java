@@ -66,7 +66,7 @@ public class CSupport {
      * As such, this interface only supports reading {@code int}, {@code double},
      * and any other type that fits into a {@code long}.
      */
-    public interface VaList extends AutoCloseable {
+    public interface VaList extends Addressable, AutoCloseable {
 
         /**
          * Reads the next value as an {@code int} and advances this va list's position.
@@ -214,6 +214,7 @@ public class CSupport {
          *
          * @return the memory address of the C {@code va_list} associated with this instance.
          */
+        @Override
         MemoryAddress address();
 
         /**
@@ -261,6 +262,7 @@ public class CSupport {
          *
          * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
          *                of the underlying C {@code va_list}.
+         * @param scope the scope to be used for the valist allocation.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
         static VaList make(Consumer<VaList.Builder> actions, NativeScope scope) {
@@ -871,7 +873,7 @@ public class CSupport {
 
     private static MemorySegment toCString(byte[] bytes) {
         MemorySegment segment = MemorySegment.allocateNative(bytes.length + 1, 1L);
-        MemoryAddress addr = segment.baseAddress();
+        MemoryAddress addr = segment.address();
         copy(addr, bytes);
         return segment;
     }

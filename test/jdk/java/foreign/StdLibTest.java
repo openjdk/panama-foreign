@@ -175,7 +175,7 @@ public class StdLibTest extends NativeTestHelper {
         final static FunctionDescriptor qsortComparFunction;
         final static MethodHandle rand;
         final static MethodHandle vprintf;
-        final static MemoryAddress printfAddr;
+        final static LibraryLookup.Symbol printfAddr;
         final static FunctionDescriptor printfBase;
 
         static {
@@ -233,36 +233,36 @@ public class StdLibTest extends NativeTestHelper {
                  MemorySegment other = toCString(s2)) {
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
-                    setByteAtOffset(buf.baseAddress(), i, (byte)chars[(int)i]);
+                    setByteAtOffset(buf.address(), i, (byte)chars[(int)i]);
                 }
-                setByteAtOffset(buf.baseAddress(), chars.length, (byte)'\0');
-                return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.baseAddress(), other.baseAddress())));
+                setByteAtOffset(buf.address(), chars.length, (byte)'\0');
+                return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.address(), other.address())));
             }
         }
 
         int strcmp(String s1, String s2) throws Throwable {
             try (MemorySegment ns1 = toCString(s1) ;
                  MemorySegment ns2 = toCString(s2)) {
-                return (int)strcmp.invokeExact(ns1.baseAddress(), ns2.baseAddress());
+                return (int)strcmp.invokeExact(ns1.address(), ns2.address());
             }
         }
 
         int puts(String msg) throws Throwable {
             try (MemorySegment s = toCString(msg)) {
-                return (int)puts.invokeExact(s.baseAddress());
+                return (int)puts.invokeExact(s.address());
             }
         }
 
         int strlen(String msg) throws Throwable {
             try (MemorySegment s = toCString(msg)) {
-                return (int)strlen.invokeExact(s.baseAddress());
+                return (int)strlen.invokeExact(s.address());
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
             try (MemorySegment time = MemorySegment.allocateNative(8)) {
-                setLong(time.baseAddress(), arg);
-                return new Tm((MemoryAddress)gmtime.invokeExact(time.baseAddress()));
+                setLong(time.address(), arg);
+                return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
             }
         }
 
@@ -275,7 +275,7 @@ public class StdLibTest extends NativeTestHelper {
 
             Tm(MemoryAddress base) {
                 this.base = MemorySegment.ofNativeRestricted(base, SIZE, Thread.currentThread(),
-                        null, null).baseAddress();
+                        null, null).address();
             }
 
             int sec() {
@@ -318,7 +318,7 @@ public class StdLibTest extends NativeTestHelper {
                 MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
                 scope.register(qsortUpcallStub);
 
-                qsort.invokeExact(nativeArr.baseAddress(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.baseAddress());
+                qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.address());
 
                 //convert back to Java array
                 return nativeArr.toIntArray();
@@ -326,8 +326,8 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
-            return getIntAtOffset(base.baseAddress(), addr1.rebase(base).segmentOffset()) -
-                   getIntAtOffset(base.baseAddress(), addr2.rebase(base).segmentOffset());
+            return getIntAtOffset(base.address(), addr1.rebase(base).segmentOffset()) -
+                   getIntAtOffset(base.address(), addr2.rebase(base).segmentOffset());
         }
 
         int rand() throws Throwable {
@@ -336,7 +336,7 @@ public class StdLibTest extends NativeTestHelper {
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
             try (MemorySegment formatStr = toCString(format)) {
-                return (int)specializedPrintf(args).invokeExact(formatStr.baseAddress(),
+                return (int)specializedPrintf(args).invokeExact(formatStr.address(),
                         args.stream().map(a -> a.nativeValue).toArray());
             }
         }
@@ -344,7 +344,7 @@ public class StdLibTest extends NativeTestHelper {
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
             try (MemorySegment formatStr = toCString(format)) {
                 VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)));
-                int result = (int)vprintf.invokeExact(formatStr.baseAddress(), vaList);
+                int result = (int)vprintf.invokeExact(formatStr.address(), vaList);
                 try {
                     vaList.close();
                 }
@@ -425,7 +425,7 @@ public class StdLibTest extends NativeTestHelper {
     enum PrintfArg implements Consumer<VaList.Builder> {
 
         INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42, VaList.Builder::vargFromInt),
-        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").baseAddress(), "str", VaList.Builder::vargFromAddress),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").address(), "str", VaList.Builder::vargFromAddress),
         CHAR(byte.class, asVarArg(C_CHAR), "%c", (byte) 'h', 'h', (builder, layout, value) -> builder.vargFromInt(C_INT, (int)value)),
         DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
 

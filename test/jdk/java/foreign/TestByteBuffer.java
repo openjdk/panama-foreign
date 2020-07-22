@@ -168,7 +168,7 @@ public class TestByteBuffer {
             ByteBuffer bb = resizedSegment.asByteBuffer();
             Z z = bufFactory.apply(bb);
             for (long j = i ; j < limit ; j++) {
-                Object handleValue = handleExtractor.apply(resizedSegment.baseAddress(), j - i);
+                Object handleValue = handleExtractor.apply(resizedSegment.address(), j - i);
                 Object bufferValue = bufferExtractor.apply(z);
                 if (handleValue instanceof Number) {
                     assertEquals(((Number)handleValue).longValue(), j);
@@ -184,7 +184,7 @@ public class TestByteBuffer {
     @Test
     public void testOffheap() {
         try (MemorySegment segment = MemorySegment.allocateNative(tuples)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             initTuples(base, tuples.elementCount().getAsLong());
 
             ByteBuffer bb = segment.asByteBuffer();
@@ -196,7 +196,7 @@ public class TestByteBuffer {
     public void testHeap() {
         byte[] arr = new byte[(int) tuples.byteSize()];
         MemorySegment region = MemorySegment.ofArray(arr);
-        MemoryAddress base = region.baseAddress();
+        MemoryAddress base = region.address();
         initTuples(base, tuples.elementCount().getAsLong());
 
         ByteBuffer bb = region.asByteBuffer();
@@ -213,7 +213,7 @@ public class TestByteBuffer {
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
             withMappedBuffer(channel, FileChannel.MapMode.READ_WRITE, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
-                MemoryAddress base = segment.baseAddress();
+                MemoryAddress base = segment.address();
                 initTuples(base, tuples.elementCount().getAsLong());
                 mbb.force();
             });
@@ -223,7 +223,7 @@ public class TestByteBuffer {
         try (FileChannel channel = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
             withMappedBuffer(channel, FileChannel.MapMode.READ_ONLY, 0, tuples.byteSize(), mbb -> {
                 MemorySegment segment = MemorySegment.ofByteBuffer(mbb);
-                MemoryAddress base = segment.baseAddress();
+                MemoryAddress base = segment.address();
                 checkTuples(base, mbb, tuples.elementCount().getAsLong());
             });
         }
@@ -250,14 +250,14 @@ public class TestByteBuffer {
 
         //write to channel
         try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             initTuples(base, tuples.elementCount().getAsLong());
             segment.force();
         }
 
         //read from channel
         try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             checkTuples(base, segment.asByteBuffer(), tuples.elementCount().getAsLong());
         }
     }
@@ -274,7 +274,7 @@ public class TestByteBuffer {
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
             //write to channel
             try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
-                MemoryAddress base = segment.baseAddress();
+                MemoryAddress base = segment.address();
                 initTuples(base, 1);
                 segment.force();
             }
@@ -284,7 +284,7 @@ public class TestByteBuffer {
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
             //read from channel
             try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
-                MemoryAddress base = segment.baseAddress();
+                MemoryAddress base = segment.address();
                 checkTuples(base, segment.asByteBuffer(), 1);
             }
         }
@@ -313,7 +313,7 @@ public class TestByteBuffer {
     public void testScopedBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         Buffer bb;
         try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             bb = bufferFactory.apply(segment.asByteBuffer());
         }
         //outside of scope!!
@@ -379,7 +379,7 @@ public class TestByteBuffer {
     @Test(dataProvider = "bufferOps")
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, Map<Method, Object[]> members) {
         try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             Buffer bb = bufferFactory.apply(segment.asByteBuffer());
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
@@ -392,7 +392,7 @@ public class TestByteBuffer {
     @Test(dataProvider="resizeOps")
     public void testResizeOffheap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
-            MemoryAddress base = segment.baseAddress();
+            MemoryAddress base = segment.address();
             initializer.accept(base);
             checker.accept(base);
         }
@@ -402,7 +402,7 @@ public class TestByteBuffer {
     public void testResizeHeap(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         checkByteArrayAlignment(seq.elementLayout());
         int capacity = (int)seq.byteSize();
-        MemoryAddress base = MemorySegment.ofArray(new byte[capacity]).baseAddress();
+        MemoryAddress base = MemorySegment.ofArray(new byte[capacity]).address();
         initializer.accept(base);
         checker.accept(base);
     }
@@ -411,7 +411,7 @@ public class TestByteBuffer {
     public void testResizeBuffer(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         checkByteArrayAlignment(seq.elementLayout());
         int capacity = (int)seq.byteSize();
-        MemoryAddress base = MemorySegment.ofByteBuffer(ByteBuffer.wrap(new byte[capacity])).baseAddress();
+        MemoryAddress base = MemorySegment.ofByteBuffer(ByteBuffer.wrap(new byte[capacity])).address();
         initializer.accept(base);
         checker.accept(base);
     }
@@ -422,18 +422,18 @@ public class TestByteBuffer {
         int capacity = (int)seq.byteSize();
         byte[] arr = new byte[capacity];
         MemorySegment segment = MemorySegment.ofArray(arr);
-        MemoryAddress first = segment.baseAddress();
+        MemoryAddress first = segment.address();
         initializer.accept(first);
-        MemoryAddress second = MemorySegment.ofByteBuffer(segment.asByteBuffer()).baseAddress();
+        MemoryAddress second = MemorySegment.ofByteBuffer(segment.asByteBuffer()).address();
         checker.accept(second);
     }
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
-            MemoryAddress first = segment.baseAddress();
+            MemoryAddress first = segment.address();
             initializer.accept(first);
-            MemoryAddress second = MemorySegment.ofByteBuffer(segment.asByteBuffer()).baseAddress();
+            MemoryAddress second = MemorySegment.ofByteBuffer(segment.asByteBuffer()).address();
             checker.accept(second);
         }
     }
@@ -487,9 +487,9 @@ public class TestByteBuffer {
         int bytes = (int)seq.byteSize();
         try (MemorySegment nativeArray = MemorySegment.allocateNative(bytes);
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
-            initializer.accept(heapArray.baseAddress());
+            initializer.accept(heapArray.address());
             nativeArray.copyFrom(heapArray);
-            checker.accept(nativeArray.baseAddress());
+            checker.accept(nativeArray.address());
         }
     }
 
@@ -499,9 +499,9 @@ public class TestByteBuffer {
         int bytes = (int)seq.byteSize();
         try (MemorySegment nativeArray = MemorySegment.allocateNative(seq);
              MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
-            initializer.accept(nativeArray.baseAddress());
+            initializer.accept(nativeArray.address());
             heapArray.copyFrom(nativeArray);
-            checker.accept(heapArray.baseAddress());
+            checker.accept(heapArray.address());
         }
     }
 
@@ -553,7 +553,7 @@ public class TestByteBuffer {
 
         s1.close(); // memory freed
 
-        MemoryAccess.setInt(s2.baseAddress(), 10); // Dead access!
+        MemoryAccess.setInt(s2.address(), 10); // Dead access!
     }
 
     @DataProvider(name = "bufferOps")

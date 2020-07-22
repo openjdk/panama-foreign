@@ -115,11 +115,19 @@ public final class LibrariesHelper {
         }
 
         @Override
-        public MemoryAddress lookup(String name) throws NoSuchMethodException {
-            long addr = library.lookup(name);
-            return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(addr),
-                    0, null, null, this)
-                    .baseAddress();
+        public Symbol lookup(String name) throws NoSuchMethodException {
+            MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
+            return new Symbol() { // inner class - retains a link to enclosing lookup
+                @Override
+                public String name() {
+                    return name;
+                }
+
+                @Override
+                public MemoryAddress address() {
+                    return addr;
+                }
+            };
         }
 
         static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary);

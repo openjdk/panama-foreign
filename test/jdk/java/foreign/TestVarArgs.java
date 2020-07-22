@@ -64,7 +64,7 @@ public class TestVarArgs extends NativeTestHelper {
     static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
 
     static final ForeignLinker abi = CSupport.getSystemLinker();
-    static final MemoryAddress varargsAddr;
+    static final LibraryLookup.Symbol varargsAddr;
 
     static {
         try {
@@ -82,13 +82,13 @@ public class TestVarArgs extends NativeTestHelper {
             MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo);
             MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT))) {
 
-            MemoryAddress callInfoPtr = callInfo.baseAddress();
+            MemoryAddress callInfoPtr = callInfo.address();
 
-            VH_CallInfo_writeback.set(callInfoPtr, writeBack.baseAddress().toRawLongValue());
-            VH_CallInfo_argIDs.set(callInfoPtr, argIDs.baseAddress().toRawLongValue());
+            VH_CallInfo_writeback.set(callInfoPtr, writeBack.address().toRawLongValue());
+            VH_CallInfo_argIDs.set(callInfoPtr, argIDs.address().toRawLongValue());
 
             for (int i = 0; i < args.size(); i++) {
-                VH_IntArray.set(argIDs.baseAddress(), (long) i, args.get(i).id.ordinal());
+                VH_IntArray.set(argIDs.address(), (long) i, args.get(i).id.ordinal());
             }
 
             List<MemoryLayout> argLayouts = new ArrayList<>();
@@ -116,7 +116,7 @@ public class TestVarArgs extends NativeTestHelper {
 
             for (int i = 0; i < args.size(); i++) {
                 VarArg a = args.get(i);
-                MemoryAddress writtenPtr = writeBack.baseAddress().addOffset(i * WRITEBACK_BYTES_PER_ARG);
+                MemoryAddress writtenPtr = writeBack.address().addOffset(i * WRITEBACK_BYTES_PER_ARG);
                 Object written = a.vh.get(writtenPtr);
                 assertEquals(written, a.value);
             }

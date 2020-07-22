@@ -43,7 +43,7 @@ public interface ForeignLinker {
      * @param function the function descriptor.
      * @return the downcall method handle.
      */
-    MethodHandle downcallHandle(MemoryAddress symbol, MethodType type, FunctionDescriptor function);
+    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
      * Allocates a native stub segment which contains executable code to upcall into a given method handle.

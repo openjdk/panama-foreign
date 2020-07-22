@@ -51,7 +51,7 @@ public class TestMemoryAlignment {
         assertEquals(aligned.bitAlignment(), align); //unreasonable alignment here, to make sure access throws
         VarHandle vh = aligned.varHandle(int.class);
         try (MemorySegment segment = MemorySegment.allocateNative(aligned)) {
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             vh.set(addr, -42);
             int val = (int)vh.get(addr);
             assertEquals(val, -42);
@@ -67,7 +67,7 @@ public class TestMemoryAlignment {
         assertEquals(alignedGroup.bitAlignment(), align);
         VarHandle vh = aligned.varHandle(int.class);
         try (MemorySegment segment = MemorySegment.allocateNative(alignedGroup)) {
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             vh.set(addr.addOffset(1L), -42);
             assertEquals(align, 8); //this is the only case where access is aligned
         } catch (IllegalStateException ex) {
@@ -94,7 +94,7 @@ public class TestMemoryAlignment {
         try {
             VarHandle vh = layout.varHandle(int.class, PathElement.sequenceElement());
             try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-                MemoryAddress addr = segment.baseAddress();
+                MemoryAddress addr = segment.address();
                 for (long i = 0 ; i < 5 ; i++) {
                     vh.set(addr, i, -42);
                 }
@@ -118,7 +118,7 @@ public class TestMemoryAlignment {
         VarHandle vh_s = g.varHandle(short.class, PathElement.groupElement("b"));
         VarHandle vh_i = g.varHandle(int.class, PathElement.groupElement("c"));
         try (MemorySegment segment = MemorySegment.allocateNative(g)) {
-            MemoryAddress addr = segment.baseAddress();
+            MemoryAddress addr = segment.address();
             vh_c.set(addr, Byte.MIN_VALUE);
             assertEquals(vh_c.get(addr), Byte.MIN_VALUE);
             vh_s.set(addr, Short.MIN_VALUE);

@@ -52,7 +52,7 @@ public class TestSlices {
             //init
             for (long i = 0 ; i < 2 ; i++) {
                 for (long j = 0 ; j < 5 ; j++) {
-                    VH_ALL.set(segment.baseAddress(), i, j, (int)j + 1 + ((int)i * 5));
+                    VH_ALL.set(segment.address(), i, j, (int)j + 1 + ((int)i * 5));
                 }
             }
 
@@ -64,7 +64,7 @@ public class TestSlices {
         int index = 0;
         for (long i = 0 ; i < i_max ; i++) {
             for (long j = 0 ; j < j_max ; j++) {
-                int x = (int) handle.get(segment.baseAddress(), i, j);
+                int x = (int) handle.get(segment.address(), i, j);
                 assertEquals(x, values[index++]);
             }
         }

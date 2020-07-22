@@ -147,7 +147,7 @@ public class TestNative {
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemoryAddress> checker, Consumer<MemoryAddress> initializer, SequenceLayout seq) {
         try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
-            MemoryAddress address = segment.baseAddress();
+            MemoryAddress address = segment.address();
             initializer.accept(address);
             checker.accept(address);
         }
@@ -208,7 +208,7 @@ public class TestNative {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
         try (MemorySegment segment = MemorySegment.allocateNative(4)) {
-            MemorySegment.ofNativeRestricted(segment.baseAddress(), 0, null, null, null);
+            MemorySegment.ofNativeRestricted(segment.address(), 0, null, null, null);
         }
     }
 

@@ -30,7 +30,7 @@ import jdk.internal.foreign.MemoryAddressImpl;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
- * {@link MemorySegment#baseAddress()} method; such addresses are said to be <em>checked</em>, and can be expressed
+ * {@link MemorySegment#address()} method; such addresses are said to be <em>checked</em>, and can be expressed
  * as <em>offsets</em> into some underlying memory segment (see {@link #segment()} and {@link #segmentOffset()}).
  * Since checked memory addresses feature both spatial and temporal bounds, these addresses can <em>safely</em> be
  * dereferenced using a memory access var handle (see {@link MemoryHandles}).
@@ -54,7 +54,13 @@ import jdk.internal.foreign.MemoryAddressImpl;
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface MemoryAddress {
+public interface MemoryAddress extends Addressable {
+
+    @Override
+    default MemoryAddress address() {
+        return this;
+    }
+
     /**
      * Creates a new memory address with given offset (in bytes), which might be negative, from current one.
      * @param offset specified offset (in bytes), relative to this address, which should be used to create the new address.

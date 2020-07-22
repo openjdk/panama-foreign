@@ -202,7 +202,7 @@ public class VaListTest {
                 MemoryAddress ma = list.vargAsAddress(layout);
                 MemorySegment accessibleSegment = MemorySegment.ofNativeRestricted(ma,
                         4, Thread.currentThread(), null, null);
-                return MemoryAccess.getInt(accessibleSegment.baseAddress());
+                return MemoryAccess.getInt(accessibleSegment.address());
             };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
@@ -218,8 +218,8 @@ public class VaListTest {
                                         Function<VaList, Integer> getFromPointer,
                                         MemoryLayout pointerLayout) {
         try (MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT)) {
-            MemoryAccess.setInt(msInt.baseAddress(), 10);
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.baseAddress()))) {
+            MemoryAccess.setInt(msInt.address(), 10);
+            try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()))) {
                 int x = getFromPointer.apply(vaList);
                 assertEquals(x, 10);
             }
@@ -237,8 +237,8 @@ public class VaListTest {
             = (pointLayout, VH_Point_x, VH_Point_y) ->
                 list -> {
                     MemorySegment struct = list.vargAsSegment(pointLayout);
-                    int x = (int) VH_Point_x.get(struct.baseAddress());
-                    int y = (int) VH_Point_y.get(struct.baseAddress());
+                    int x = (int) VH_Point_x.get(struct.address());
+                    int y = (int) VH_Point_y.get(struct.address());
                     return x + y;
                 };
 
@@ -271,8 +271,8 @@ public class VaListTest {
                            Function<VaList, Integer> sumStruct,
                            MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT)) {
-            VH_Point_x.set(struct.baseAddress(), 5);
-            VH_Point_y.set(struct.baseAddress(), 10);
+            VH_Point_x.set(struct.address(), 5);
+            VH_Point_y.set(struct.address(), 10);
 
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
                 int sum = sumStruct.apply(vaList);
@@ -288,8 +288,8 @@ public class VaListTest {
             = (BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y) ->
                 list -> {
                     MemorySegment struct = list.vargAsSegment(BigPoint_LAYOUT);
-                    long x = (long) VH_BigPoint_x.get(struct.baseAddress());
-                    long y = (long) VH_BigPoint_y.get(struct.baseAddress());
+                    long x = (long) VH_BigPoint_x.get(struct.address());
+                    long y = (long) VH_BigPoint_y.get(struct.address());
                     return x + y;
                 };
 
@@ -322,8 +322,8 @@ public class VaListTest {
                               Function<VaList, Long> sumBigStruct,
                               MemoryLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT)) {
-            VH_BigPoint_x.set(struct.baseAddress(), 5);
-            VH_BigPoint_y.set(struct.baseAddress(), 10);
+            VH_BigPoint_x.set(struct.address(), 5);
+            VH_BigPoint_y.set(struct.address(), 10);
 
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
                 long sum = sumBigStruct.apply(vaList);
@@ -339,8 +339,8 @@ public class VaListTest {
             = (FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y) ->
                 list -> {
                     MemorySegment struct = list.vargAsSegment(FloatPoint_LAYOUT);
-                    float x = (float) VH_FloatPoint_x.get(struct.baseAddress());
-                    float y = (float) VH_FloatPoint_y.get(struct.baseAddress());
+                    float x = (float) VH_FloatPoint_x.get(struct.address());
+                    float y = (float) VH_FloatPoint_y.get(struct.address());
                     return x + y;
                 };
 
@@ -374,8 +374,8 @@ public class VaListTest {
                                 MemoryLayout FloatPoint_LAYOUT,
                                 VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT)) {
-            VH_FloatPoint_x.set(struct.baseAddress(), 1.234f);
-            VH_FloatPoint_y.set(struct.baseAddress(), 3.142f);
+            VH_FloatPoint_x.set(struct.address(), 1.234f);
+            VH_FloatPoint_y.set(struct.address(), 3.142f);
 
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct))) {
                 float sum = sumFloatStruct.apply(vaList);
@@ -395,9 +395,9 @@ public class VaListTest {
             = (HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
                 list -> {
                     MemorySegment struct = list.vargAsSegment(HugePoint_LAYOUT);
-                    long x = (long) VH_HugePoint_x.get(struct.baseAddress());
-                    long y = (long) VH_HugePoint_y.get(struct.baseAddress());
-                    long z = (long) VH_HugePoint_z.get(struct.baseAddress());
+                    long x = (long) VH_HugePoint_x.get(struct.address());
+                    long y = (long) VH_HugePoint_y.get(struct.address());
+                    long z = (long) VH_HugePoint_z.get(struct.address());
                     return x + y + z;
                 };
 
@@ -436,9 +436,9 @@ public class VaListTest {
         // On AArch64 a struct needs to be larger than 16 bytes to be
         // passed by reference.
         try (MemorySegment struct = MemorySegment.allocateNative(HugePoint_LAYOUT)) {
-            VH_HugePoint_x.set(struct.baseAddress(), 1);
-            VH_HugePoint_y.set(struct.baseAddress(), 2);
-            VH_HugePoint_z.set(struct.baseAddress(), 3);
+            VH_HugePoint_x.set(struct.address(), 1);
+            VH_HugePoint_y.set(struct.address(), 2);
+            VH_HugePoint_z.set(struct.address(), 3);
 
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(HugePoint_LAYOUT, struct))) {
                 long sum = sumHugeStruct.apply(vaList);
@@ -482,8 +482,8 @@ public class VaListTest {
                           MemoryLayout doubleLayout) {
        try (MemorySegment longSum = MemorySegment.allocateNative(longLayout);
             MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout)) {
-            MemoryAccess.setLong(longSum.baseAddress(), 0L);
-            MemoryAccess.setDouble(doubleSum.baseAddress(), 0D);
+            MemoryAccess.setLong(longSum.address(), 0L);
+            MemoryAccess.setDouble(doubleSum.address(), 0D);
 
             VaList list = vaListFactory.apply(b -> {
                 for (long l = 1; l <= 16L; l++) {
@@ -495,11 +495,11 @@ public class VaListTest {
             });
 
             try (list) {
-                sumStack.invoke(longSum.baseAddress(), doubleSum.baseAddress(), list);
+                sumStack.invoke(longSum.address(), doubleSum.address(), list);
             }
 
-            long lSum = MemoryAccess.getLong(longSum.baseAddress());
-            double dSum = MemoryAccess.getDouble(doubleSum.baseAddress());
+            long lSum = MemoryAccess.getLong(longSum.address());
+            double dSum = MemoryAccess.getDouble(doubleSum.address());
 
             assertEquals(lSum, 136L);
             assertEquals(dSum, 136D);
@@ -510,7 +510,7 @@ public class VaListTest {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_VA_LIST);
         try (MemorySegment stub = abi.upcallStub(callback, desc)) {
-            target.invokeExact(stub.baseAddress());
+            target.invokeExact(stub.address());
         }
     }
 
@@ -571,12 +571,12 @@ public class VaListTest {
         MemorySegment pointOut;
         try (NativeScope scope = NativeScope.unboundedScope()) {
             try (MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT)) {
-                VH_Point_x.set(pointIn.baseAddress(), 3);
-                VH_Point_y.set(pointIn.baseAddress(), 6);
+                VH_Point_x.set(pointIn.address(), 3);
+                VH_Point_y.set(pointIn.address(), 6);
                 try (VaList list = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, pointIn))) {
                     pointOut = list.vargAsSegment(Point_LAYOUT, scope);
-                    assertEquals((int) VH_Point_x.get(pointOut.baseAddress()), 3);
-                    assertEquals((int) VH_Point_y.get(pointOut.baseAddress()), 6);
+                    assertEquals((int) VH_Point_x.get(pointOut.address()), 3);
+                    assertEquals((int) VH_Point_y.get(pointOut.address()), 6);
                 }
                 assertTrue(pointOut.isAlive()); // after VaList freed
             }
@@ -687,50 +687,50 @@ public class VaListTest {
         return new Object[][]{
             { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT)) {
-                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
-                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                    assertEquals((long) VH_BigPoint_x.get(struct.address()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.address()), 16);
                 }
             })},
             { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                 VaList copy = vaList.copy();
                 try (MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT)) {
-                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
-                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                    assertEquals((long) VH_BigPoint_x.get(struct.address()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.address()), 16);
 
-                    VH_BigPoint_x.set(struct.baseAddress(), 0);
-                    VH_BigPoint_y.set(struct.baseAddress(), 0);
+                    VH_BigPoint_x.set(struct.address(), 0);
+                    VH_BigPoint_y.set(struct.address(), 0);
                 }
 
                 // should be independent
                 try (MemorySegment struct = copy.vargAsSegment(BigPoint_LAYOUT)) {
-                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 8);
-                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 16);
+                    assertEquals((long) VH_BigPoint_x.get(struct.address()), 8);
+                    assertEquals((long) VH_BigPoint_y.get(struct.address()), 16);
                 }
             })},
             { linkVaListCB("upcallStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.vargAsSegment(Point_LAYOUT)) {
-                    assertEquals((int) VH_Point_x.get(struct.baseAddress()), 5);
-                    assertEquals((int) VH_Point_y.get(struct.baseAddress()), 10);
+                    assertEquals((int) VH_Point_x.get(struct.address()), 5);
+                    assertEquals((int) VH_Point_y.get(struct.address()), 10);
                 }
             })},
             { linkVaListCB("upcallHugeStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.vargAsSegment(HugePoint_LAYOUT)) {
-                    assertEquals((long) VH_HugePoint_x.get(struct.baseAddress()), 1);
-                    assertEquals((long) VH_HugePoint_y.get(struct.baseAddress()), 2);
-                    assertEquals((long) VH_HugePoint_z.get(struct.baseAddress()), 3);
+                    assertEquals((long) VH_HugePoint_x.get(struct.address()), 1);
+                    assertEquals((long) VH_HugePoint_y.get(struct.address()), 2);
+                    assertEquals((long) VH_HugePoint_z.get(struct.address()), 3);
                 }
             })},
             { linkVaListCB("upcallFloatStruct"), VaListConsumer.mh(vaList -> {
                 try (MemorySegment struct = vaList.vargAsSegment(FloatPoint_LAYOUT)) {
-                    assertEquals((float) VH_FloatPoint_x.get(struct.baseAddress()), 1.0f);
-                    assertEquals((float) VH_FloatPoint_y.get(struct.baseAddress()), 2.0f);
+                    assertEquals((float) VH_FloatPoint_x.get(struct.address()), 1.0f);
+                    assertEquals((float) VH_FloatPoint_y.get(struct.address()), 2.0f);
                 }
             })},
             { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                 MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
                 MemorySegment ms = MemorySegment.ofNativeRestricted(intPtr, C_INT.byteSize(),
                                                                     Thread.currentThread(), null, null);
-                int x = MemoryAccess.getInt(ms.baseAddress());
+                int x = MemoryAccess.getInt(ms.address());
                 assertEquals(x, 10);
             })},
             { linkVaListCB("upcallDoubles"), VaListConsumer.mh(vaList -> {
@@ -769,23 +769,23 @@ public class VaListTest {
                 assertEquals(vaList.vargAsDouble(C_DOUBLE), 14.0D);
 
                 try (MemorySegment point = vaList.vargAsSegment(Point_LAYOUT)) {
-                    assertEquals((int) VH_Point_x.get(point.baseAddress()), 5);
-                    assertEquals((int) VH_Point_y.get(point.baseAddress()), 10);
+                    assertEquals((int) VH_Point_x.get(point.address()), 5);
+                    assertEquals((int) VH_Point_y.get(point.address()), 10);
                 }
 
                 VaList copy = vaList.copy();
                 try (MemorySegment bigPoint = vaList.vargAsSegment(BigPoint_LAYOUT)) {
-                    assertEquals((long) VH_BigPoint_x.get(bigPoint.baseAddress()), 15);
-                    assertEquals((long) VH_BigPoint_y.get(bigPoint.baseAddress()), 20);
+                    assertEquals((long) VH_BigPoint_x.get(bigPoint.address()), 15);
+                    assertEquals((long) VH_BigPoint_y.get(bigPoint.address()), 20);
 
-                    VH_BigPoint_x.set(bigPoint.baseAddress(), 0);
-                    VH_BigPoint_y.set(bigPoint.baseAddress(), 0);
+                    VH_BigPoint_x.set(bigPoint.address(), 0);
+                    VH_BigPoint_y.set(bigPoint.address(), 0);
                 }
 
                 // should be independent
                 try (MemorySegment struct = copy.vargAsSegment(BigPoint_LAYOUT)) {
-                    assertEquals((long) VH_BigPoint_x.get(struct.baseAddress()), 15);
-                    assertEquals((long) VH_BigPoint_y.get(struct.baseAddress()), 20);
+                    assertEquals((long) VH_BigPoint_x.get(struct.address()), 15);
+                    assertEquals((long) VH_BigPoint_y.get(struct.address()), 20);
                 }
             })},
             // test skip

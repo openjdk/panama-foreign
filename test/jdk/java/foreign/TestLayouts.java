@@ -64,14 +64,14 @@ public class TestLayouts {
                 MemoryLayout.PathElement.sequenceElement());
         try (MemorySegment segment = MemorySegment.allocateNative(
                 layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr")))) {
-            size_handle.set(segment.baseAddress(), 4);
+            size_handle.set(segment.address(), 4);
             for (int i = 0 ; i < 4 ; i++) {
-                array_elem_handle.set(segment.baseAddress(), i, (double)i);
+                array_elem_handle.set(segment.address(), i, (double)i);
             }
             //check
-            assertEquals(4, (int)size_handle.get(segment.baseAddress()));
+            assertEquals(4, (int)size_handle.get(segment.address()));
             for (int i = 0 ; i < 4 ; i++) {
-                assertEquals((double)i, (double)array_elem_handle.get(segment.baseAddress(), i));
+                assertEquals((double)i, (double)array_elem_handle.get(segment.address(), i));
             }
         }
     }
@@ -90,14 +90,14 @@ public class TestLayouts {
                 MemoryLayout.PathElement.sequenceElement());
         try (MemorySegment segment = MemorySegment.allocateNative(
                 layout.map(l -> ((SequenceLayout)l).withElementCount(4), MemoryLayout.PathElement.groupElement("arr"), MemoryLayout.PathElement.sequenceElement()))) {
-            size_handle.set(segment.baseAddress(), 4);
+            size_handle.set(segment.address(), 4);
             for (int i = 0 ; i < 4 ; i++) {
-                array_elem_handle.set(segment.baseAddress(), i, (double)i);
+                array_elem_handle.set(segment.address(), i, (double)i);
             }
             //check
-            assertEquals(4, (int)size_handle.get(segment.baseAddress()));
+            assertEquals(4, (int)size_handle.get(segment.address()));
             for (int i = 0 ; i < 4 ; i++) {
-                assertEquals((double)i, (double)array_elem_handle.get(segment.baseAddress(), i));
+                assertEquals((double)i, (double)array_elem_handle.get(segment.address(), i));
             }
         }
     }
@@ -109,13 +109,13 @@ public class TestLayouts {
             VarHandle indexHandle = seq.varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
             // init segment
             for (int i = 0 ; i < 10 ; i++) {
-                indexHandle.set(segment.baseAddress(), (long)i, i);
+                indexHandle.set(segment.address(), (long)i, i);
             }
             //check statically indexed handles
             for (int i = 0 ; i < 10 ; i++) {
                 VarHandle preindexHandle = seq.varHandle(int.class, MemoryLayout.PathElement.sequenceElement(i));
-                int expected = (int)indexHandle.get(segment.baseAddress(), (long)i);
-                int found = (int)preindexHandle.get(segment.baseAddress());
+                int expected = (int)indexHandle.get(segment.address(), (long)i);
+                int found = (int)preindexHandle.get(segment.address());
                 assertEquals(expected, found);
             }
         }
