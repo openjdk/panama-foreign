@@ -75,10 +75,9 @@ public interface LibraryLookup {
     }
 
     /**
-     * Lookups a symbol with given name in this library. The returned address has the same temporal bounds
-     * as this lookup object.
+     * Lookups a symbol with given name in this library. The returned symbol maintains a strong reference to this lookup object.
      * @param name the symbol name.
-     * @return the library symbol (if any). The returned symbol maintains a strong reference to this lookup object.
+     * @return the library symbol (if any).
      * @throws NoSuchMethodException if no symbol with given name could be found.
      */
     Symbol lookup(String name) throws NoSuchMethodException;
