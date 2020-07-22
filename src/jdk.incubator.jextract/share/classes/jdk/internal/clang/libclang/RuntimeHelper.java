@@ -72,7 +72,7 @@ public class RuntimeHelper {
                 filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 
-    private static final Optional<MemoryAddress> lookup(LibraryLookup[] LIBRARIES, String sym) {
+    private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
         for (LibraryLookup l : LIBRARIES) {
             try {
                 return Optional.of(l.lookup(sym));
@@ -89,7 +89,7 @@ public class RuntimeHelper {
     public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(a ->
             MemorySegment.ofNativeRestricted(
-                a, layout.byteSize(), null, null, a
+                a.address(), layout.byteSize(), null, null, a
             ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE).address()).orElse(null);
     }
 
