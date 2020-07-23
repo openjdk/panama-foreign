@@ -31,6 +31,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
@@ -60,8 +61,8 @@ public class VarargsInvoker {
         }
     }
 
-    public static MethodHandle make(MemoryAddress symbol, MethodType type, FunctionDescriptor function) {
-        VarargsInvoker invoker = new VarargsInvoker(symbol, type, function);
+    public static MethodHandle make(Addressable symbol, MethodType type, FunctionDescriptor function) {
+        VarargsInvoker invoker = new VarargsInvoker(symbol.address(), type, function);
         return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount())
                 .asType(type);
     }

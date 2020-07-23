@@ -39,6 +39,7 @@ import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.LibraryLookup.Symbol;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -81,7 +82,7 @@ public class RuntimeHelper {
                 filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 
-    private static final Optional<MemoryAddress> lookup(LibraryLookup[] LIBRARIES, String sym) {
+    private static final Optional<Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
         for (LibraryLookup l : LIBRARIES) {
             try {
                 return Optional.of(l.lookup(sym));
@@ -97,7 +98,7 @@ public class RuntimeHelper {
 
     private static MemoryAddress uncheck(MemoryAddress addr, MemoryLayout layout) {
         try {
-            return MemorySegment.ofNativeRestricted(addr, layout.byteSize(), null, null, null).baseAddress();
+            return MemorySegment.ofNativeRestricted(addr, layout.byteSize(), null, null, null).address();
         } catch (Exception e) {
             return addr;
         }
@@ -105,12 +106,12 @@ public class RuntimeHelper {
 
     public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name)
-                .map(ptr -> uncheck(ptr, layout))
+                .map(sym -> uncheck(sym.address(), layout))
                 .orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean isVariadic) {
-        MemoryAddress symbol = lookup(LIBRARIES, name).orElse(null);
+        var symbol = lookup(LIBRARIES, name).orElse(null);
         if (symbol == null) return null;
 
         MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
