@@ -4340,7 +4340,7 @@ public final class Index_h {
     public interface clang_visitChildren$visitor {
         int apply(MemorySegment x0, MemorySegment x1, MemoryAddress x2);
     }
-    public static final MemoryAddress clang_visitChildren$visitor$make(clang_visitChildren$visitor fi) {
+    public static final MemoryAddress clang_visitChildren$visitor$allocate(clang_visitChildren$visitor fi) {
         return RuntimeHelper.upcallStub(clang_visitChildren$visitor.class, fi, clang_visitChildren$visitor$DESC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
     }
     public static final MethodHandle clang_getCursorUSR = RuntimeHelper.downcallHandle(
