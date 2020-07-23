@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.CSupport;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -64,24 +65,18 @@ public class ConstantsTest extends JextractToolRunner {
         deleteDir(dirPath);
     }
 
-
     @Test(dataProvider = "definedConstants")
-    public void checkConstantsSignatures(String name, Class<?> type, Object value) {
+    public void checkConstantsTypesAndValues(String name, Class<?> type, Consumer<Object> checker) throws ReflectiveOperationException {
         var f = findMethod(constants, name);
         assertNotNull(f);
         assertSame(f.getReturnType(), type);
-    }
-
-    @Test(dataProvider = "definedConstants")
-    public void checkConstantsValues(String name, Class<?> type, Consumer<Object> checker) throws ReflectiveOperationException {
-        Object actual = findMethod(constants, name).invoke(null);
+        Object actual = f.invoke(null);
         checker.accept(actual);
     }
 
     @Test(dataProvider = "missingConstants")
     public void checkMissingConstants(String name) {
-        assertTrue(Stream.of(constants.getDeclaredFields())
-                .noneMatch(m -> m.getName().equals(name)));
+        assertTrue(findMethod(constants, name) == null);
     }
 
     @DataProvider
@@ -100,12 +95,25 @@ public class ConstantsTest extends JextractToolRunner {
                 { "CHAR_VALUE", int.class, equalsTo(104) }, //integer char constants have type int
                 { "MULTICHAR_VALUE", int.class, equalsTo(26728) },  //integer char constants have type int
                 { "BOOL_VALUE", byte.class, equalsTo((byte)1) },
-                { "SUB", int.class, equalsTo( 7 ) }
+                { "SUB", int.class, equalsTo( 7 ) },
+                // pointer type values
+                { "STR", MemoryAddress.class, equalsToJavaStr("Hello") },
+                { "QUOTE", MemoryAddress.class, equalsToJavaStr("QUOTE") },
+                { "ZERO_PTR", MemoryAddress.class, equalsPtrContents(0) },
+                { "F_PTR", MemoryAddress.class, equalsPtrContents(0xFFFFFFFFFFFFFFFFL) },
         };
     }
 
     static Consumer<Object> equalsTo(Object expected) {
         return actual -> assertEquals(actual, expected);
+    }
+
+    static Consumer<MemoryAddress> equalsToJavaStr(String expected) {
+        return actual -> assertEquals(CSupport.toJavaString(actual), expected);
+    }
+
+    static Consumer<MemoryAddress> equalsPtrContents(long expected) {
+        return actual -> assertEquals(actual.toRawLongValue(), expected);
     }
 
     @DataProvider
@@ -118,12 +126,8 @@ public class ConstantsTest extends JextractToolRunner {
                 { "INTEGER_MAX_VALUE" },
                 { "CYCLIC_1" },
                 { "CYCLIC_2" },
-                { "UNUSED" },
-                // pointer type values
-                { "STR" },
-                { "QUOTE" },
-                { "ZERO_PTR" },
-                { "F_PTR" }
+                // array
+                { "ARRAY" }
         };
     }
 }

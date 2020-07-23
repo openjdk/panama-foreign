@@ -22,5 +22,3 @@
  */
 
 #define SUP 5 //this is used by the main test header file
-
-#define UNUSED "unused" //this should not be used
