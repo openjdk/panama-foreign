@@ -64,3 +64,5 @@
 
 #define ZERO_PTR (void*)0;
 #define F_PTR (void*) 0xFFFFFFFFFFFFFFFFLL; // all 1s
+
+#define ARRAY { 0, 1, 2, 3, 4, 5 }
