@@ -29,8 +29,6 @@ import java.lang.constant.Constable;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,9 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
@@ -52,29 +48,12 @@ import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 
 class TreeMaker {
-    private final Map<Cursor, Declaration> treeCache = new HashMap<>();
-
     public TreeMaker() {}
 
     TypeMaker typeMaker = new TypeMaker(this);
 
     public void freeze() {
         typeMaker.resolveTypeReferences();
-    }
-
-    private Declaration checkCache(Cursor c, Supplier<Declaration> factory) {
-        // The supplier function may lead to adding some other type, which will cause CME using computeIfAbsent.
-        // This implementation relax the constraint a bit only check for same key
-        Declaration rv;
-        if (treeCache.containsKey(c)) {
-            rv = treeCache.get(c);
-        } else {
-            rv = factory.get();
-            if (null != rv && treeCache.put(c, rv) != null) {
-                throw new ConcurrentModificationException();
-            }
-        }
-        return rv;
     }
 
     interface ScopedFactoryLayout {
@@ -99,10 +78,8 @@ class TreeMaker {
 
     public Declaration createTree(Cursor c) {
         Objects.requireNonNull(c);
-        return checkCache(c, () -> {
-            var rv = (DeclarationImpl) createTreeInternal(c);
-            return (rv == null) ? null : rv.withAttributes(collectAttributes(c));
-        });
+        var rv = (DeclarationImpl) createTreeInternal(c);
+        return (rv == null) ? null : rv.withAttributes(collectAttributes(c));
     }
 
     private Declaration createTreeInternal(Cursor c) {
