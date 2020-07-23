@@ -311,6 +311,7 @@ final class VarHandles {
      * to a single fixed offset to compute an effective offset from the given MemoryAddress for the access.
      *
      * @param carrier the Java carrier type.
+     * @param skipOffsetCheck if true, only the base part of the address will be checked for alignment.
      * @param alignmentMask alignment requirement to be checked upon access. In bytes. Expressed as a mask.
      * @param byteOrder the byte order.
      * @return the created VarHandle.

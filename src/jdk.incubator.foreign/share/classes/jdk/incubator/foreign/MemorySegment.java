@@ -285,7 +285,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * and whose new size is computed by subtracting the specified offset from this segment size.
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
      */
     MemorySegment asSlice(long offset);
 
@@ -295,7 +295,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * (see {@link MemoryAddress#segmentOffset(MemorySegment)}) from this segment size.
      * @param address The new segment base offset (relative to the current segment base address), specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
-     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
+     * @throws IndexOutOfBoundsException if {@code address.segmentOffset(this) < 0}, or {@code address.segmentOffset(this) > byteSize()}.
      */
     default MemorySegment asSlice(MemoryAddress address) {
         return asSlice(address.segmentOffset(this));

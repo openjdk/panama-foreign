@@ -39,7 +39,7 @@ abstract class MemoryAccessVarHandleBase extends VarHandle {
     /** alignment constraint (in bytes, expressed as a bit mask) **/
     final long alignmentMask;
 
-    /** alignment constraint (in bytes, expressed as a bit mask) **/
+    /** if true, only the base part of the address will be checked for alignment **/
     final boolean skipOffsetCheck;
 
     MemoryAccessVarHandleBase(VarForm form, boolean skipOffetCheck, boolean be, long length, long alignmentMask) {
