@@ -108,7 +108,7 @@ class Parser {
             });
 
         if (constantParser instanceof MacroParserImpl) {
-            decls.addAll(((MacroParserImpl)constantParser).reparseConstants());
+            decls.addAll(((MacroParserImpl)constantParser).macroTable.reparseConstants());
         }
         Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
         treeMaker.freeze();
