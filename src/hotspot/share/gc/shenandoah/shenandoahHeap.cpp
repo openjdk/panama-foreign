@@ -31,7 +31,6 @@
 #include "gc/shared/gcTraceTime.inline.hpp"
 #include "gc/shared/locationPrinter.inline.hpp"
 #include "gc/shared/memAllocator.hpp"
-#include "gc/shared/oopStorageSet.hpp"
 #include "gc/shared/plab.hpp"
 
 #include "gc/shenandoah/shenandoahBarrierSet.hpp"
@@ -1228,13 +1227,6 @@ void ShenandoahHeap::print_tracing_info() const {
     ls.cr();
 
     shenandoah_policy()->print_gc_stats(&ls);
-
-    ls.cr();
-    ls.cr();
-
-    if (ShenandoahPacing) {
-      pacer()->print_on(&ls);
-    }
 
     ls.cr();
     ls.cr();
