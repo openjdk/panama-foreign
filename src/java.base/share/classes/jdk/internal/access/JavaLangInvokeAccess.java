@@ -115,7 +115,7 @@ public interface JavaLangInvokeAccess {
      * Used by {@code jdk.internal.foreign.LayoutPath} and
      * {@code jdk.incubator.foreign.MemoryHandles}.
      */
-    VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipOffsetCheck, long alignmentMask,
+    VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
                                     ByteOrder order);
 
     /**

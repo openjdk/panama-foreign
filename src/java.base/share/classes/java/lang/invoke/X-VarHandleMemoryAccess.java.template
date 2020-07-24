@@ -41,8 +41,8 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     static final VarForm FORM = new VarForm(MemoryAccessVarHandle$Type$Helper.class, MemorySegmentProxy.class, $type$.class, long.class);
 
-    MemoryAccessVarHandle$Type$Helper(boolean skipOffetCheck, boolean be, long length, long alignmentMask) {
-        super(FORM, skipOffetCheck, be, length, alignmentMask);
+    MemoryAccessVarHandle$Type$Helper(boolean skipAlignmentMaskCheck, boolean be, long length, long alignmentMask) {
+        super(FORM, skipAlignmentMaskCheck, be, length, alignmentMask);
     }
 
     @Override
@@ -84,8 +84,8 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
     @ForceInline
-    static long offset(boolean skipOffsetCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
-        long address = offsetNoVMAlignCheck(skipOffsetCheck, bb, offset, alignmentMask);
+    static long offset(boolean skipAlignmentMaskCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
+        long address = offsetNoVMAlignCheck(skipAlignmentMaskCheck, bb, offset, alignmentMask);
         if ((address & VM_ALIGN) != 0) {
             throw MemoryAccessVarHandleBase.newIllegalStateExceptionForMisalignedAccess(address);
         }
@@ -93,10 +93,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
     @ForceInline
-    static long offsetNoVMAlignCheck(boolean skipOffsetCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
+    static long offsetNoVMAlignCheck(boolean skipAlignmentMaskCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
         long base = bb.unsafeGetOffset();
         long address = base + offset;
-        if (skipOffsetCheck) {
+        if (skipAlignmentMaskCheck) {
             //note: the offset portion has already been aligned-checked, by construction
             if ((base & alignmentMask) != 0) {
                 throw MemoryAccessVarHandleBase.newIllegalStateExceptionForMisalignedAccess(address);
@@ -116,18 +116,18 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #if[floatingPoint]
         $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 handle.be);
         return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
 #if[byte]
         return UNSAFE.get$Type$(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask));
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask));
 #else[byte]
         return UNSAFE.get$Type$Unaligned(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 handle.be);
 #end[byte]
 #end[floatingPoint]
@@ -140,19 +140,19 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #if[floatingPoint]
         UNSAFE.put$RawType$Unaligned(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 $Type$.$type$ToRaw$RawType$Bits(value),
                 handle.be);
 #else[floatingPoint]
 #if[byte]
         UNSAFE.put$Type$(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 value);
 #else[byte]
         UNSAFE.put$Type$Unaligned(
                 bb.unsafeGetBase(),
-                offsetNoVMAlignCheck(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offsetNoVMAlignCheck(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 value,
                 handle.be);
 #end[byte]
@@ -166,7 +166,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Volatile(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask)));
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -175,7 +175,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Volatile(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -186,7 +186,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask)));
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -195,7 +195,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Release(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 
@@ -206,7 +206,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.get$RawType$Opaque(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask)));
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
     @ForceInline
@@ -215,7 +215,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         UNSAFE.put$RawType$Opaque(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, value));
     }
 #if[CAS]
@@ -226,7 +226,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.compareAndSet$RawType$(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -237,7 +237,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -248,7 +248,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -259,7 +259,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.compareAndExchange$RawType$Release(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
@@ -269,7 +269,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Plain(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -279,7 +279,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -289,7 +289,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Acquire(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -299,7 +299,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
         return UNSAFE.weakCompareAndSet$RawType$Release(
                 bb.unsafeGetBase(),
-                offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
@@ -310,7 +310,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -321,7 +321,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Acquire(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 
@@ -332,7 +332,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return convEndian(handle.be,
                           UNSAFE.getAndSet$RawType$Release(
                                   bb.unsafeGetBase(),
-                                  offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                                  offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                   convEndian(handle.be, value)));
     }
 #end[CAS]
@@ -345,10 +345,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -359,10 +359,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -373,10 +373,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndAdd$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     delta);
         } else {
-            return getAndAddConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), delta);
+            return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
         }
     }
 
@@ -401,10 +401,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -415,10 +415,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -429,10 +429,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseOr$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -455,10 +455,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -469,10 +469,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -483,10 +483,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -510,10 +510,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -524,10 +524,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Release(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 
@@ -538,10 +538,10 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         if (handle.be == BE) {
             return UNSAFE.getAndBitwiseXor$RawType$Acquire(
                     bb.unsafeGetBase(),
-                    offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask),
+                    offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     value);
         } else {
-            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipOffsetCheck, bb, base, handle.alignmentMask), value);
+            return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
         }
     }
 

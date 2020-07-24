@@ -46,7 +46,7 @@ import java.util.Objects;
  * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraint and the
  * byte order associated to a memory access var handle. The resulting memory access var handle can then be combined in various ways
  * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
- * (of type {@link MemorySegment}), and one {@code long} coordinate types, which represents the offset, in bytes, relative
+ * (of type {@link MemorySegment}), and one {@code long} coordinate type, which represents the offset, in bytes, relative
  * to the segment, at which dereference should occur.
  * <p>
  * As an example, consider the memory layout expressed by a {@link SequenceLayout} instance constructed as follows:
@@ -61,11 +61,6 @@ GroupLayout seq = MemoryLayout.ofStruct(
 VarHandle handle = MemoryHandles.varHandle(int.class, ByteOrder.BIG_ENDIAN); //(MemorySegment, long) -> int
 handle = MemoryHandles.insertCoordinates(handle, 1, 4); //(MemorySegment) -> int
  * }</pre></blockquote>
- *
- * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as optional {@code long}
- * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
- * <em>static</em> constants which are can be acquired through the {@link MemoryHandles#withOffset(VarHandle, long)}
- * and the {@link MemoryHandles#withStride(VarHandle, long)} combinators, respectively.
  *
  * <h2><a id="memaccess-mode"></a>Alignment and access modes</h2>
  *

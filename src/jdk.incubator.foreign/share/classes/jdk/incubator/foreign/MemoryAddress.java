@@ -63,7 +63,18 @@ public interface MemoryAddress extends Addressable {
     MemoryAddress addOffset(long offset);
 
     /**
-     * Returns the offset of this memory address into the given segment.
+     * Returns the offset of this memory address into the given segment. More specifically, if both the segment's
+     * base address and this address are off-heap addresses, the result is computed as
+     * {@code this.toRawLongValue() - segment.address().toRawLongValue()}. Otherwise, if both addresses in the form
+     * {@code (B, O1)}, {@code (B, O2)}, where {@code B} is the same base heap object and {@code O1}, {@code O2}
+     * are byte offsets (relative to the base object) associated with this address and the segment's base address,
+     * the result is computed as {@code O1 - O2}.
+     * <p>
+     * If the segment's base address and this address are both heap addresses, but with different base objects, the result is undefined
+     * and an exception is thrown. Similarly, if the segment's base address is an heap address (resp. off-heap) and
+     * this address is an off-heap (resp. heap) address, the result is undefined and an exception is thrown.
+     * Otherwise, the result is a byte offset {@code SO}. If this address falls within the
+     * spatial bounds of the given segment, then {@code 0 <= SO < segment.byteSize()}; otherwise, {@code SO < 0 || SO > segment.byteSize()}.
      * @return the offset of this memory address into the given segment.
      * @param segment the segment relative to which this address offset should be computed
      * @throws IllegalArgumentException if {@code segment} is not compatible with this address; this can happen, for instance,
@@ -102,14 +113,12 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The <em>unchecked</em> memory address instance modelling the {@code NULL} address. This address is <em>not</em> backed by
-     * a memory segment and hence it cannot be dereferenced.
+     * The off-heap memory address instance modelling the {@code NULL} address.
      */
     MemoryAddress NULL = new MemoryAddressImpl(null,  0L);
 
     /**
-     * Obtain a new <em>unchecked</em> memory address instance from given long address. The returned address is <em>not</em> backed by
-     * a memory segment and hence it cannot be dereferenced.
+     * Obtain an off-heap memory address instance from given long address.
      * @param value the long address.
      * @return the new memory address instance.
      */
