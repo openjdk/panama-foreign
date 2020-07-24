@@ -170,14 +170,9 @@ class TreeMaker {
                 params.toArray(new Declaration.Variable[0]));
     }
 
-    public Declaration.Constant createMacro(Cursor c, Optional<MacroParserImpl.Macro> macro) {
+    public Declaration.Constant createMacro(Cursor c, MacroParserImpl.Macro parsedMacro) {
         checkCursorAny(c, CursorKind.MacroDefinition);
-        if (macro.isEmpty()) {
-            return null;
-        } else {
-            MacroParserImpl.Macro parsedMacro = macro.get();
-            return Declaration.constant(toPos(c), c.spelling(), parsedMacro.value, parsedMacro.type());
-        }
+        return Declaration.constant(toPos(c), c.spelling(), parsedMacro.value, parsedMacro.type());
     }
 
     public Declaration.Constant createEnumConstant(Cursor c) {

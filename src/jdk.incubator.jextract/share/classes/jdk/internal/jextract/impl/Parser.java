@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Position;
+import jdk.incubator.jextract.Type;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -40,7 +41,10 @@ import jdk.internal.clang.TranslationUnit;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 class Parser {
@@ -103,6 +107,9 @@ class Parser {
                 }
             });
 
+        if (constantParser instanceof DefaultConstantParser) {
+            decls.addAll(((DefaultConstantParser)constantParser).reparseConstants());
+        }
         Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
         treeMaker.freeze();
         index.close();
@@ -116,6 +123,7 @@ class Parser {
     class DefaultConstantParser implements JextractTask.ConstantParser {
 
         final MacroParserImpl macroParser;
+        final Map<String, UnparsedMacro> macrosToReparse = new LinkedHashMap<>();
 
         public DefaultConstantParser(MacroParserImpl macroParser) {
             this.macroParser = macroParser;
@@ -130,9 +138,88 @@ class Parser {
                 if (cursor.isMacroFunctionLike()) {
                     return Optional.empty();
                 } else {
-                    return Optional.ofNullable(treeMaker.createMacro(cursor, macroParser.eval(name, tokens)));
+                    Optional<MacroParserImpl.Macro> macro = macroParser.eval(name, tokens);
+                    if (macro.isEmpty()) {
+                        macrosToReparse.put(name, new UnparsedMacro(name, tokens, cursor));
+                    }
+                    return macro.map(m -> treeMaker.createMacro(cursor, m));
                 }
             }
         }
+
+        class UnparsedMacro {
+            final String name;
+            final String[] tokens;
+            final Cursor cursor;
+
+            public UnparsedMacro(String name, String[] tokens, Cursor cursor) {
+                this.name = name;
+                this.tokens = tokens;
+                this.cursor = cursor;
+            }
+
+            String constantDecl(boolean forcePtr) {
+                //we use __auto_type, so that clang will also do type inference for us
+                return (forcePtr) ?
+                        "__auto_type jextract$macro$ptr$" + name + " = (uintptr_t)" + name + ";" :
+                        "__auto_type jextract$macro$" + name + " = " + name + ";";
+            }
+        }
+
+        String macroDecl(Collection<UnparsedMacro> macros, boolean forcePtr) {
+            StringBuilder buf = new StringBuilder();
+            if (forcePtr) {
+                buf.append("#include <stdint.h>\n");
+            }
+            for (UnparsedMacro m : macros) {
+                buf.append(m.constantDecl(forcePtr));
+                buf.append("\n");
+            }
+            return buf.toString();
+        }
+
+        public List<Declaration.Constant> reparseConstants() {
+            //slow path
+            List<Declaration.Constant> macros = new ArrayList<>();
+            //step one, parse constant as is
+            int last = -1;
+            while (macrosToReparse.size() > 0 && macrosToReparse.size() != last) {
+                Map<String, Type> pendingTypes = new LinkedHashMap<>();
+                Map<String, UnparsedMacro> pendingMacros = new LinkedHashMap<>();
+                last = macrosToReparse.size();
+                List<MacroParserImpl.MacroResult> results = macroParser.reparse(macroDecl(macrosToReparse.values(), false));
+                for (MacroParserImpl.MacroResult result : results) {
+                    UnparsedMacro unparsedMacro = macrosToReparse.get(normalizeName(result.name));
+                    if (result.success()) {
+                        macros.add(treeMaker.createMacro(unparsedMacro.cursor, (MacroParserImpl.Macro) result));
+                        macrosToReparse.remove(normalizeName(result.name));
+                    } else if (result.type != null) {
+                        pendingMacros.put(normalizeName(result.name), unparsedMacro);
+                        pendingTypes.put(normalizeName(result.name), result.type);
+                    } else {
+                        // this is not a recoverable failure
+                        macrosToReparse.remove(normalizeName(result.name));
+                    }
+                }
+                if (!pendingMacros.isEmpty()) {
+                    //step two, attempt parsing pointer constant, by forcing it to uintptr_t
+                    results = macroParser.reparse(macroDecl(pendingMacros.values(), true));
+                    for (MacroParserImpl.MacroResult result : results) {
+                        UnparsedMacro unparsedMacro = pendingMacros.get(normalizeName(result.name));
+                        if (result.success()) {
+                            result = result.asType(pendingTypes.get(normalizeName(result.name)));
+                            macros.add(treeMaker.createMacro(unparsedMacro.cursor, (MacroParserImpl.Macro) result));
+                        }
+                        // never look at this again
+                        macrosToReparse.remove(normalizeName(result.name));
+                    }
+                }
+            }
+            return macros;
+        }
+    }
+
+    static String normalizeName(String name) {
+        return name.substring(name.lastIndexOf('$') + 1);
     }
 }

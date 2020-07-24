@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class MacroParserImpl {
@@ -66,37 +68,22 @@ class MacroParserImpl {
             //check for fast path
             Integer num = toNumber(tokens[1]);
             if (num != null) {
-                return Optional.of(Macro.longMacro(Type.primitive(Type.Primitive.Kind.Int), num));
+                return Optional.of(Macro.longMacro(macroName, Type.primitive(Type.Primitive.Kind.Int), num));
             }
         }
-        //slow path
-        try {
-            //step one, parse constant as is
-            MacroResult result = reparse(constantDecl(macroName, false));
-            if (!result.success()) {
-                //step two, attempt parsing pointer constant, by forcing it to uintptr_t
-                result = reparse(constantDecl(macroName, true)).asType(result.type);
-            }
-            return result.success() ?
-                    Optional.of((Macro)result) :
-                    Optional.empty();
-        } catch (BadMacroException ex) {
-            if (JextractTaskImpl.VERBOSE) {
-                System.err.println("Failed to handle macro " + macroName);
-                ex.printStackTrace(System.err);
-            }
-            return Optional.empty();
-        }
+        return Optional.empty();
     }
 
-    MacroResult reparse(String snippet) {
-        MacroResult rv = reparser.reparse(snippet)
-                .filter(c -> c.kind() == CursorKind.VarDecl &&
-                        c.spelling().contains("jextract$"))
-                .map(c -> compute(c))
-                .findAny().get();
-        typeMaker.resolveTypeReferences();
-        return rv;
+    List<MacroResult> reparse(String snippet) {
+        try {
+            return reparser.reparse(snippet)
+                    .filter(c -> c.kind() == CursorKind.VarDecl &&
+                            c.spelling().contains("jextract$"))
+                    .map(c -> compute(c))
+                    .collect(Collectors.toList());
+        } finally {
+            typeMaker.resolveTypeReferences();
+        }
     }
 
     private Integer toNumber(String str) {
@@ -108,39 +95,35 @@ class MacroParserImpl {
         }
     }
 
-    String constantDecl(String macroName, boolean forcePtr) {
-        //we use __auto_type, so that clang will also do type inference for us
-        return (forcePtr) ?
-                "#include <stdint.h> \n __auto_type jextract$macro$ptr$" + macroName + " = (uintptr_t)" + macroName + ";" :
-                "__auto_type jextract$macro$" + macroName + " = " + macroName + ";";
-    }
-
     MacroResult compute(Cursor decl) {
         try (EvalResult result = decl.eval()) {
             switch (result.getKind()) {
                 case Integral: {
                     long value = result.getAsInt();
-                    return Macro.longMacro(typeMaker.makeType(decl.type()), value);
+                    return Macro.longMacro(decl.spelling(), typeMaker.makeType(decl.type()), value);
                 }
                 case FloatingPoint: {
                     double value = result.getAsFloat();
-                    return Macro.doubleMacro(typeMaker.makeType(decl.type()), value);
+                    return Macro.doubleMacro(decl.spelling(), typeMaker.makeType(decl.type()), value);
                 }
                 case StrLiteral: {
                     String value = result.getAsString();
-                    return Macro.stringMacro(typeMaker.makeType(decl.type()), value);
+                    return Macro.stringMacro(decl.spelling(), typeMaker.makeType(decl.type()), value);
                 }
                 default:
-                    return new Failure(typeMaker.makeType(decl.type()));
+                    return new Failure(decl.spelling(), decl.type().equals(decl.type().canonicalType()) ?
+                            null : typeMaker.makeType(decl.type()));
             }
         }
     }
 
     static abstract class MacroResult {
-        private final Type type;
+        final Type type;
+        final String name;
 
-        MacroResult(Type type) {
+        MacroResult(String name, Type type) {
             this.type = type;
+            this.name = name;
         }
 
         public Type type() {
@@ -154,8 +137,8 @@ class MacroParserImpl {
 
     static class Failure extends MacroResult {
 
-        public Failure(Type type) {
-            super(type);
+        public Failure(String name, Type type) {
+            super(name, type);
         }
 
         @Override
@@ -165,15 +148,15 @@ class MacroParserImpl {
 
         @Override
         MacroResult asType(Type type) {
-            return new Failure(type);
+            return new Failure(name, type);
         }
     }
 
     public static class Macro extends MacroResult {
         Object value;
 
-        private Macro(Type type, Object value) {
-            super(type);
+        private Macro(String name, Type type, Object value) {
+            super(name, type);
             this.value = value;
         }
 
@@ -188,19 +171,19 @@ class MacroParserImpl {
 
         @Override
         MacroResult asType(Type type) {
-            return new Macro(type, value);
+            return new Macro(name, type, value);
         }
 
-        static Macro longMacro(Type type, long value) {
-            return new Macro(type, value);
+        static Macro longMacro(String name, Type type, long value) {
+            return new Macro(name, type, value);
         }
 
-        static Macro doubleMacro(Type type, double value) {
-            return new Macro(type, value);
+        static Macro doubleMacro(String name, Type type, double value) {
+            return new Macro(name, type, value);
         }
 
-        static Macro stringMacro(Type type, String value) {
-            return new Macro(type, value);
+        static Macro stringMacro(String name, Type type, String value) {
+            return new Macro(name, type, value);
         }
     }
 
@@ -230,6 +213,7 @@ class MacroParserImpl {
                 Stream.of(
                     // Avoid system search path, use bundled instead
                     "-nostdinc",
+                    "-ferror-limit=0",
                     // precompiled header
                     "-include-pch", precompiled.toAbsolutePath().toString()),
                 args.stream()).toArray(String[]::new);
@@ -247,13 +231,11 @@ class MacroParserImpl {
         }
 
         void processDiagnostics(String snippet, Diagnostic diag) {
-            if (diag.severity() > Diagnostic.CXDiagnostic_Warning) {
-                throw new BadMacroException(diag);
-            }
+            //System.out.println(diag.spelling());
         }
     }
 
-    private static class BadMacroException extends RuntimeException {
+    static class BadMacroException extends RuntimeException {
         static final long serialVersionUID = 1L;
 
         public BadMacroException(Diagnostic diag) {
