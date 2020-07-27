@@ -25,6 +25,7 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -71,7 +72,7 @@ public class ProgrammableInvoker {
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
-    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
+    private static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
 
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
@@ -267,38 +268,33 @@ public class ProgrammableInvoker {
     Object invokeMoves(Object[] args, Binding.Move[] argBindings, Binding.Move[] returnBindings) {
         MemorySegment stackArgsSeg = null;
         try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
-            MemoryAddress argsPtr = argBuffer.address();
-            MemoryAddress stackArgs;
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
-                stackArgs = stackArgsSeg.address();
-            } else {
-                stackArgs = MemoryAddressImpl.NULL;
             }
 
-            VH_LONG.set(argsPtr.addOffset(layout.arguments_next_pc), addr.address().toRawLongValue());
-            VH_LONG.set(argsPtr.addOffset(layout.stack_args_bytes), stackArgsBytes);
-            VH_LONG.set(argsPtr.addOffset(layout.stack_args), stackArgs.toRawLongValue());
+            VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr.address().toRawLongValue());
+            VH_LONG.set(argBuffer.asSlice(layout.stack_args_bytes), stackArgsBytes);
+            VH_LONG.set(argBuffer.asSlice(layout.stack_args), stackArgsSeg == null ? 0L : stackArgsSeg.address().toRawLongValue());
 
             for (int i = 0; i < argBindings.length; i++) {
                 Binding.Move binding = argBindings[i];
                 VMStorage storage = binding.storage();
-                MemoryAddress ptr = abi.arch.isStackType(storage.type())
-                    ? stackArgs.addOffset(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
-                    : argsPtr.addOffset(layout.argOffset(storage));
+                MemorySegment ptr = abi.arch.isStackType(storage.type())
+                    ? stackArgsSeg.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
+                    : argBuffer.asSlice(layout.argOffset(storage));
                 SharedUtils.writeOverSized(ptr, binding.type(), args[i]);
             }
 
             if (DEBUG) {
                 System.err.println("Buffer state before:");
-                layout.dump(abi.arch, argsPtr, System.err);
+                layout.dump(abi.arch, argBuffer, System.err);
             }
 
-            invokeNative(stubAddress, argsPtr.toRawLongValue());
+            invokeNative(stubAddress, argBuffer.address().toRawLongValue());
 
             if (DEBUG) {
                 System.err.println("Buffer state after:");
-                layout.dump(abi.arch, argsPtr, System.err);
+                layout.dump(abi.arch, argBuffer, System.err);
             }
 
             if (returnBindings.length == 0) {
@@ -306,13 +302,13 @@ public class ProgrammableInvoker {
             } else if (returnBindings.length == 1) {
                 Binding.Move move = returnBindings[0];
                 VMStorage storage = move.storage();
-                return SharedUtils.read(argsPtr.addOffset(layout.retOffset(storage)), move.type());
+                return SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
             } else { // length > 1
                 Object[] returns = new Object[returnBindings.length];
                 for (int i = 0; i < returnBindings.length; i++) {
                     Binding.Move move = returnBindings[i];
                     VMStorage storage = move.storage();
-                    returns[i] = SharedUtils.read(argsPtr.addOffset(layout.retOffset(storage)), move.type());
+                    returns[i] = SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
                 }
                 return returns;
             }

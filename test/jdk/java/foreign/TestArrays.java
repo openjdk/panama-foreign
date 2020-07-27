@@ -39,6 +39,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import org.testng.annotations.*;
 
@@ -83,15 +84,15 @@ public class TestArrays {
     static VarHandle longHandle = longs.varHandle(long.class, PathElement.sequenceElement());
     static VarHandle doubleHandle = doubles.varHandle(double.class, PathElement.sequenceElement());
 
-    static void initBytes(MemoryAddress base, SequenceLayout seq, BiConsumer<MemoryAddress, Long> handleSetter) {
+    static void initBytes(MemorySegment base, SequenceLayout seq, BiConsumer<MemorySegment, Long> handleSetter) {
         for (long i = 0; i < seq.elementCount().getAsLong() ; i++) {
             handleSetter.accept(base, i);
         }
     }
 
-    static void checkBytes(MemoryAddress base, SequenceLayout layout, Function<MemorySegment, Object> arrayFactory, BiFunction<MemoryAddress, Long, Object> handleGetter) {
+    static void checkBytes(MemorySegment base, SequenceLayout layout, Function<MemorySegment, Object> arrayFactory, BiFunction<MemorySegment, Long, Object> handleGetter) {
         int nelems = (int)layout.elementCount().getAsLong();
-        Object arr = arrayFactory.apply(base.segment());
+        Object arr = arrayFactory.apply(base);
         for (int i = 0; i < nelems; i++) {
             Object found = handleGetter.apply(base, (long) i);
             Object expected = java.lang.reflect.Array.get(arr, i);
@@ -100,10 +101,10 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "arrays")
-    public void testArrays(Consumer<MemoryAddress> init, Consumer<MemoryAddress> checker, MemoryLayout layout) {
+    public void testArrays(Consumer<MemorySegment> init, Consumer<MemorySegment> checker, MemoryLayout layout) {
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            init.accept(segment.address());
-            checker.accept(segment.address());
+            init.accept(segment);
+            checker.accept(segment);
         }
     }
 
@@ -152,34 +153,34 @@ public class TestArrays {
 
     @DataProvider(name = "arrays")
     public Object[][] nativeAccessOps() {
-        Consumer<MemoryAddress> byteInitializer =
+        Consumer<MemorySegment> byteInitializer =
                 (base) -> initBytes(base, bytes, (addr, pos) -> byteHandle.set(addr, pos, (byte)(long)pos));
-        Consumer<MemoryAddress> charInitializer =
+        Consumer<MemorySegment> charInitializer =
                 (base) -> initBytes(base, chars, (addr, pos) -> charHandle.set(addr, pos, (char)(long)pos));
-        Consumer<MemoryAddress> shortInitializer =
+        Consumer<MemorySegment> shortInitializer =
                 (base) -> initBytes(base, shorts, (addr, pos) -> shortHandle.set(addr, pos, (short)(long)pos));
-        Consumer<MemoryAddress> intInitializer =
+        Consumer<MemorySegment> intInitializer =
                 (base) -> initBytes(base, ints, (addr, pos) -> intHandle.set(addr, pos, (int)(long)pos));
-        Consumer<MemoryAddress> floatInitializer =
+        Consumer<MemorySegment> floatInitializer =
                 (base) -> initBytes(base, floats, (addr, pos) -> floatHandle.set(addr, pos, (float)(long)pos));
-        Consumer<MemoryAddress> longInitializer =
+        Consumer<MemorySegment> longInitializer =
                 (base) -> initBytes(base, longs, (addr, pos) -> longHandle.set(addr, pos, (long)pos));
-        Consumer<MemoryAddress> doubleInitializer =
+        Consumer<MemorySegment> doubleInitializer =
                 (base) -> initBytes(base, doubles, (addr, pos) -> doubleHandle.set(addr, pos, (double)(long)pos));
 
-        Consumer<MemoryAddress> byteChecker =
+        Consumer<MemorySegment> byteChecker =
                 (base) -> checkBytes(base, bytes, MemorySegment::toByteArray, (addr, pos) -> (byte)byteHandle.get(addr, pos));
-        Consumer<MemoryAddress> shortChecker =
+        Consumer<MemorySegment> shortChecker =
                 (base) -> checkBytes(base, shorts, MemorySegment::toShortArray, (addr, pos) -> (short)shortHandle.get(addr, pos));
-        Consumer<MemoryAddress> charChecker =
+        Consumer<MemorySegment> charChecker =
                 (base) -> checkBytes(base, chars, MemorySegment::toCharArray, (addr, pos) -> (char)charHandle.get(addr, pos));
-        Consumer<MemoryAddress> intChecker =
+        Consumer<MemorySegment> intChecker =
                 (base) -> checkBytes(base, ints, MemorySegment::toIntArray, (addr, pos) -> (int)intHandle.get(addr, pos));
-        Consumer<MemoryAddress> floatChecker =
+        Consumer<MemorySegment> floatChecker =
                 (base) -> checkBytes(base, floats, MemorySegment::toFloatArray, (addr, pos) -> (float)floatHandle.get(addr, pos));
-        Consumer<MemoryAddress> longChecker =
+        Consumer<MemorySegment> longChecker =
                 (base) -> checkBytes(base, longs, MemorySegment::toLongArray, (addr, pos) -> (long)longHandle.get(addr, pos));
-        Consumer<MemoryAddress> doubleChecker =
+        Consumer<MemorySegment> doubleChecker =
                 (base) -> checkBytes(base, doubles, MemorySegment::toDoubleArray, (addr, pos) -> (double)doubleHandle.get(addr, pos));
 
         return new Object[][]{

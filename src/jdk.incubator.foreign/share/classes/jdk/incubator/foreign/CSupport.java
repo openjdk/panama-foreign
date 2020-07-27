@@ -25,7 +25,7 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
@@ -757,7 +757,7 @@ public class CSupport {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null} or {@code scope == null}.
      */
-    public static MemoryAddress toCString(String str, NativeScope scope) {
+    public static MemorySegment toCString(String str, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -778,7 +778,7 @@ public class CSupport {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null}, {@code charset == null} or {@code scope == null}.
      */
-    public static MemoryAddress toCString(String str, Charset charset, NativeScope scope) {
+    public static MemorySegment toCString(String str, Charset charset, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -803,7 +803,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), Charset.defaultCharset());
+        return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), Charset.defaultCharset());
     }
 
     /**
@@ -825,7 +825,7 @@ public class CSupport {
      */
     public static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
         Utils.checkRestrictedAccess("CSupport.toJavaStringRestricted");
-        return SharedUtils.toJavaStringInternal(addr.rebase(AbstractMemorySegmentImpl.EVERYTHING), charset);
+        return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), charset);
     }
 
     /**
@@ -842,8 +842,8 @@ public class CSupport {
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
-    public static String toJavaString(MemoryAddress addr) {
-        return SharedUtils.toJavaStringInternal(addr, Charset.defaultCharset());
+    public static String toJavaString(MemorySegment addr) {
+        return SharedUtils.toJavaStringInternal(addr, 0L, Charset.defaultCharset());
     }
 
     /**
@@ -861,25 +861,24 @@ public class CSupport {
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
-    public static String toJavaString(MemoryAddress addr, Charset charset) {
-        return SharedUtils.toJavaStringInternal(addr, charset);
+    public static String toJavaString(MemorySegment addr, Charset charset) {
+        return SharedUtils.toJavaStringInternal(addr, 0L, charset);
     }
 
-    private static void copy(MemoryAddress addr, byte[] bytes) {
+    private static void copy(MemorySegment addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
-        addr.segment().copyFrom(heapSegment);
+        addr.copyFrom(heapSegment);
         MemoryAccess.setByteAtOffset(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes) {
         MemorySegment segment = MemorySegment.allocateNative(bytes.length + 1, 1L);
-        MemoryAddress addr = segment.address();
-        copy(addr, bytes);
+        copy(segment, bytes);
         return segment;
     }
 
-    private static MemoryAddress toCString(byte[] bytes, NativeScope scope) {
-        MemoryAddress addr = scope.allocate(bytes.length + 1, 1L);
+    private static MemorySegment toCString(byte[] bytes, NativeScope scope) {
+        MemorySegment addr = scope.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
     }
