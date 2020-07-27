@@ -22,24 +22,52 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign.points.support;
 
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ForeignLinker;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
+import static java.lang.invoke.MethodType.methodType;
+import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 
 public class PanamaPoint implements AutoCloseable {
 
     public static final MemoryLayout LAYOUT = MemoryLayout.ofStruct(
-        MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder()).withName("x"),
-        MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder()).withName("y")
+        C_INT.withName("x"),
+        C_INT.withName("y")
     );
 
     private static final VarHandle VH_x = LAYOUT.varHandle(int.class, groupElement("x"));
     private static final VarHandle VH_y = LAYOUT.varHandle(int.class, groupElement("y"));
+    private static final MethodHandle MH_distance;
+    private static final MethodHandle MH_distance_ptrs;
+
+    static {
+        try {
+            ForeignLinker abi = CSupport.getSystemLinker();
+            LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
+            MH_distance = abi.downcallHandle(
+                lookup.lookup("distance"),
+                methodType(double.class, MemorySegment.class, MemorySegment.class),
+                FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
+            );
+            MH_distance_ptrs = abi.downcallHandle(
+                lookup.lookup("distance_ptrs"),
+                methodType(double.class, MemoryAddress.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
+            );
+        } catch (NoSuchMethodException e) {
+            throw new BootstrapMethodError(e);
+        }
+    }
 
     private final MemorySegment segment;
 
@@ -71,6 +99,22 @@ public class PanamaPoint implements AutoCloseable {
 
     public int getY() {
         return (int) VH_y.get(segment);
+    }
+
+    public double distanceTo(PanamaPoint other) {
+        try {
+            return (double) MH_distance.invokeExact(segment, other.segment);
+        } catch (Throwable throwable) {
+            throw new InternalError(throwable);
+        }
+    }
+
+    public double distanceToPtrs(PanamaPoint other) {
+        try {
+            return (double) MH_distance_ptrs.invokeExact(segment.address(), other.segment.address());
+        } catch (Throwable throwable) {
+            throw new InternalError(throwable);
+        }
     }
 
     @Override

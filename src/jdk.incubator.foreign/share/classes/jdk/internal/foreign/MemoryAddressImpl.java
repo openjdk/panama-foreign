@@ -91,4 +91,13 @@ public final class MemoryAddressImpl implements MemoryAddress {
     public String toString() {
         return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
     }
+
+    public static MemoryAddress ofLongUnchecked(long value) {
+        return ofLongUnchecked(value, Long.MAX_VALUE);
+    }
+
+    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+                MemoryAddress.ofLong(value), byteSize, null, null, null).address();
+    }
 }
