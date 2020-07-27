@@ -68,17 +68,17 @@ public class TestNativeScope {
                 layout.withBitAlignment(layout.bitAlignment() * 8)
         };
         for (ValueLayout alignedLayout : layouts) {
-            List<MemoryAddress> addressList = new ArrayList<>();
+            List<MemorySegment> addressList = new ArrayList<>();
             int elems = ELEMS / ((int)alignedLayout.byteAlignment() / (int)layout.byteAlignment());
             try (NativeScope scope = scopeFactory.make((int)alignedLayout.byteSize() * ELEMS)) {
                 for (int i = 0 ; i < elems ; i++) {
-                    MemoryAddress address = allocationFunction.allocate(scope, alignedLayout, value);
-                    assertEquals(address.segment().byteSize(), alignedLayout.byteSize());
+                    MemorySegment address = allocationFunction.allocate(scope, alignedLayout, value);
+                    assertEquals(address.byteSize(), alignedLayout.byteSize());
                     addressList.add(address);
                     VarHandle handle = handleFactory.apply(alignedLayout);
                     assertEquals(value, handle.get(address));
                     try {
-                        address.segment().close();
+                        address.close();
                         fail();
                     } catch (UnsupportedOperationException uoe) {
                         //failure is expected
@@ -95,8 +95,8 @@ public class TestNativeScope {
                 }
             }
             // addresses should be invalid now
-            for (MemoryAddress address : addressList) {
-                assertFalse(address.segment().isAlive());
+            for (MemorySegment address : addressList) {
+                assertFalse(address.isAlive());
             }
         }
     }
@@ -107,11 +107,11 @@ public class TestNativeScope {
     public void testBigAllocationInUnboundedScope() {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
-                MemoryAddress address = scope.allocate(i);
+                MemorySegment address = scope.allocate(i);
                 //check size
-                assertEquals(address.segment().byteSize(), i);
+                assertEquals(address.byteSize(), i);
                 //check alignment
-                assertTrue(address.segment().address().toRawLongValue() % i == 0);
+                assertTrue(address.address().toRawLongValue() % i == 0);
             }
         }
     }
@@ -208,8 +208,8 @@ public class TestNativeScope {
     public <Z> void testArray(ScopeFactory scopeFactory, ValueLayout layout, AllocationFunction<Object> allocationFunction, ToArrayHelper<Z> arrayHelper) {
         Z arr = arrayHelper.array();
         try (NativeScope scope = scopeFactory.make(100)) {
-            MemoryAddress address = allocationFunction.allocate(scope, layout, arr);
-            Z found = arrayHelper.toArray(address.segment(), layout);
+            MemorySegment address = allocationFunction.allocate(scope, layout, arr);
+            Z found = arrayHelper.toArray(address, layout);
             assertEquals(found, arr);
         }
     }
@@ -387,7 +387,7 @@ public class TestNativeScope {
     }
 
     interface AllocationFunction<X> {
-        MemoryAddress allocate(NativeScope scope, ValueLayout layout, X value);
+        MemorySegment allocate(NativeScope scope, ValueLayout layout, X value);
     }
 
     interface ScopeFactory {

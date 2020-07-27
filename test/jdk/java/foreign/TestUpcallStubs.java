@@ -64,7 +64,7 @@ public class TestUpcallStubs {
     public void testNoAccess() {
         try (MemorySegment stub = getStub()) {
             VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub.address(), 10);
+            vh.set(stub, 10);
         }
     }
 

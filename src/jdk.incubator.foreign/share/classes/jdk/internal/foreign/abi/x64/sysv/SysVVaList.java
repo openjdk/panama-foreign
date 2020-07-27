@@ -137,15 +137,14 @@ public class SysVVaList implements VaList {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
+        MemorySegment base = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
                 MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null, () -> U.freeMemory(ptr), null);
-        cleaner.register(SysVVaList.class, ms::close);
-        MemoryAddress base = ms.address();
+        cleaner.register(SysVVaList.class, base::close);
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
         VH_reg_save_area.set(base, MemoryAddress.NULL);
-        return ms.withAccessModes(0).address();
+        return base.withAccessModes(0).address();
     }
 
     public static CSupport.VaList empty() {
@@ -153,27 +152,27 @@ public class SysVVaList implements VaList {
     }
 
     private int currentGPOffset() {
-        return (int) VH_gp_offset.get(segment.address());
+        return (int) VH_gp_offset.get(segment);
     }
 
     private void currentGPOffset(int i) {
-        VH_gp_offset.set(segment.address(), i);
+        VH_gp_offset.set(segment, i);
     }
 
     private int currentFPOffset() {
-        return (int) VH_fp_offset.get(segment.address());
+        return (int) VH_fp_offset.get(segment);
     }
 
     private void currentFPOffset(int i) {
-        VH_fp_offset.set(segment.address(), i);
+        VH_fp_offset.set(segment, i);
     }
 
     private MemoryAddress stackPtr() {
-        return (MemoryAddress) VH_overflow_arg_area.get(segment.address());
+        return (MemoryAddress) VH_overflow_arg_area.get(segment);
     }
 
     private void stackPtr(MemoryAddress ptr) {
-        VH_overflow_arg_area.set(segment.address(), ptr);
+        VH_overflow_arg_area.set(segment, ptr);
     }
 
     private MemorySegment regSaveArea() {
@@ -181,7 +180,7 @@ public class SysVVaList implements VaList {
     }
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
-        return MemorySegment.ofNativeRestricted((MemoryAddress) VH_reg_save_area.get(segment.address()),
+        return MemorySegment.ofNativeRestricted((MemoryAddress) VH_reg_save_area.get(segment),
             LAYOUT_REG_SAVE_AREA.byteSize(), segment.ownerThread(), null, null);
     }
 
@@ -249,7 +248,7 @@ public class SysVVaList implements VaList {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
                     try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr(), layout.byteSize(),
                                                                                 segment.ownerThread(), null, null)) {
-                        Object res = reader.get(slice.address());
+                        Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
                     }
@@ -278,13 +277,13 @@ public class SysVVaList implements VaList {
                 }
                 case POINTER, INTEGER -> {
                     VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                    Object res = reader.get(regSaveArea.address().addOffset(currentGPOffset()));
+                    Object res = reader.get(regSaveArea.asSlice(currentGPOffset()));
                     currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
                     yield res;
                 }
                 case FLOAT -> {
                     VarHandle reader = layout.varHandle(carrier);
-                    Object res = reader.get(regSaveArea.address().addOffset(currentFPOffset()));
+                    Object res = reader.get(regSaveArea.asSlice(currentFPOffset()));
                     currentFPOffset(currentFPOffset() + FP_SLOT_SIZE);
                     yield res;
                 }
@@ -429,12 +428,12 @@ public class SysVVaList implements VaList {
                     }
                     case POINTER, INTEGER -> {
                         VarHandle writer = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
-                        writer.set(reg_save_area.address().addOffset(currentGPOffset), value);
+                        writer.set(reg_save_area.asSlice(currentGPOffset), value);
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case FLOAT -> {
                         VarHandle writer = layout.varHandle(carrier);
-                        writer.set(reg_save_area.address().addOffset(currentFPOffset), value);
+                        writer.set(reg_save_area.asSlice(currentFPOffset), value);
                         currentFPOffset += FP_SLOT_SIZE;
                     }
                 }
@@ -457,29 +456,26 @@ public class SysVVaList implements VaList {
             if (!stackArgs.isEmpty()) {
                 long stackArgsSize = stackArgs.stream().reduce(0L, (acc, e) -> acc + e.layout.byteSize(), Long::sum);
                 MemorySegment stackArgsSegment = allocator.allocate(stackArgsSize, 16);
-                MemoryAddress maOverflowArgArea = stackArgsSegment.address();
+                MemorySegment maOverflowArgArea = stackArgsSegment;
                 for (SimpleVaArg arg : stackArgs) {
                     if (arg.layout.byteSize() > 8) {
                         maOverflowArgArea = Utils.alignUp(maOverflowArgArea, Math.min(16, arg.layout.byteSize()));
                     }
                     if (arg.value instanceof MemorySegment) {
-                        MemorySegment slice
-                            = stackArgsSegment.asSlice(maOverflowArgArea.segmentOffset(), arg.layout.byteSize());
-                        slice.copyFrom((MemorySegment) arg.value);
+                        maOverflowArgArea.copyFrom((MemorySegment) arg.value);
                     } else {
                         VarHandle writer = arg.varHandle();
                         writer.set(maOverflowArgArea, arg.value);
                     }
-                    maOverflowArgArea = maOverflowArgArea.addOffset(arg.layout.byteSize());
+                    maOverflowArgArea = maOverflowArgArea.asSlice(arg.layout.byteSize());
                 }
                 stackArgsPtr = stackArgsSegment.address();
                 attachedSegments.add(stackArgsSegment);
             }
 
-            MemoryAddress vaListAddr = vaListSegment.address();
-            VH_fp_offset.set(vaListAddr, (int) FP_OFFSET);
-            VH_overflow_arg_area.set(vaListAddr, stackArgsPtr);
-            VH_reg_save_area.set(vaListAddr, reg_save_area.address());
+            VH_fp_offset.set(vaListSegment, (int) FP_OFFSET);
+            VH_overflow_arg_area.set(vaListSegment, stackArgsPtr);
+            VH_reg_save_area.set(vaListSegment, reg_save_area.address());
             attachedSegments.add(reg_save_area);
             assert reg_save_area.ownerThread() == vaListSegment.ownerThread();
             return new SysVVaList(vaListSegment, reg_save_area, attachedSegments);

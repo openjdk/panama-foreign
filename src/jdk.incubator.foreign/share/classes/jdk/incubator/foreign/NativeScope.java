@@ -84,9 +84,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, byte value) {
+    public MemorySegment allocate(MemoryLayout layout, byte value) {
         VarHandle handle = layout.varHandle(byte.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -102,9 +102,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, short value) {
+    public MemorySegment allocate(MemoryLayout layout, short value) {
         VarHandle handle = layout.varHandle(short.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -120,9 +120,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, int value) {
+    public MemorySegment allocate(MemoryLayout layout, int value) {
         VarHandle handle = layout.varHandle(int.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -138,9 +138,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, float value) {
+    public MemorySegment allocate(MemoryLayout layout, float value) {
         VarHandle handle = layout.varHandle(float.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -156,9 +156,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, long value) {
+    public MemorySegment allocate(MemoryLayout layout, long value) {
         VarHandle handle = layout.varHandle(long.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -174,9 +174,9 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, double value) {
+    public MemorySegment allocate(MemoryLayout layout, double value) {
         VarHandle handle = layout.varHandle(double.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
@@ -192,7 +192,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, byte[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, byte[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -207,7 +207,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, short[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, short[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -222,7 +222,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, char[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, char[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -237,7 +237,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, int[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, int[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -252,7 +252,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, float[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, float[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -267,7 +267,7 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, long[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, long[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
@@ -282,18 +282,18 @@ public abstract class NativeScope implements AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, double[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, double[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
-    private <Z> MemoryAddress copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
+    private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
                                                         Function<Z, MemorySegment> heapSegmentFactory) {
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
+        MemorySegment addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
         if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
-            addr.segment().copyFrom(heapSegmentFactory.apply(array));
+            addr.copyFrom(heapSegmentFactory.apply(array));
         } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
+            ((AbstractMemorySegmentImpl)addr).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
         }
         return addr;
     }
@@ -306,7 +306,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      */
-    public MemoryAddress allocate(MemoryLayout layout) {
+    public MemorySegment allocate(MemoryLayout layout) {
         return allocate(layout.byteSize(), layout.byteAlignment());
     }
 
@@ -324,7 +324,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * size)}.
      */
-    public MemoryAddress allocateArray(MemoryLayout elementLayout, long size) {
+    public MemorySegment allocateArray(MemoryLayout elementLayout, long size) {
         return allocate(MemoryLayout.ofSequence(size, elementLayout));
     }
 
@@ -336,7 +336,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
-    public MemoryAddress allocate(long bytesSize) {
+    public MemorySegment allocate(long bytesSize) {
         return allocate(bytesSize, bytesSize);
     }
 
@@ -350,7 +350,7 @@ public abstract class NativeScope implements AutoCloseable {
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
-    public abstract MemoryAddress allocate(long bytesSize, long bytesAlignment);
+    public abstract MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
      * Register a segment on this scope, which will then reclaim ownership of said segment.

@@ -32,7 +32,6 @@ import jdk.incubator.foreign.ForeignLinker;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CSupport.*;

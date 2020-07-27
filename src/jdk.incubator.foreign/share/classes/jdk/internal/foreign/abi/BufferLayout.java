@@ -22,17 +22,16 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemorySegment;
 
 import java.io.PrintStream;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
 class BufferLayout {
-    static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
+    static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
 
     final long size;
     final long arguments_next_pc;
@@ -110,17 +109,17 @@ class BufferLayout {
         return retOffsets.get(storage);
     }
 
-    private static String getLongString(MemoryAddress buffer, long offset) {
-        return Long.toHexString((long) VH_LONG.get(buffer.addOffset(offset)));
+    private static String getLongString(MemorySegment buffer, long offset) {
+        return Long.toHexString((long) VH_LONG.get(buffer.asSlice(offset)));
     }
 
-    private static void dumpValues(jdk.internal.foreign.abi.Architecture arch, MemoryAddress buff, PrintStream stream,
+    private static void dumpValues(jdk.internal.foreign.abi.Architecture arch, MemorySegment buff, PrintStream stream,
                                    Map<jdk.internal.foreign.abi.VMStorage, Long> offsets) {
         for (var entry : offsets.entrySet()) {
             VMStorage storage = entry.getKey();
             stream.print(storage.name());
             stream.print("={ ");
-            MemoryAddress start = buff.addOffset(entry.getValue());
+            MemorySegment start = buff.asSlice(entry.getValue());
             for (int i = 0; i < arch.typeSize(storage.type()) / 8; i += 8) {
                 stream.print(getLongString(start, i));
                 stream.print(" ");
@@ -129,7 +128,7 @@ class BufferLayout {
         }
     }
 
-    void dump(Architecture arch, MemoryAddress buff, PrintStream stream) {
+    void dump(Architecture arch, MemorySegment buff, PrintStream stream) {
         stream.println("Next PC: " + getLongString(buff, arguments_next_pc));
         stream.println("Stack args bytes: " + getLongString(buff, stack_args_bytes));
         stream.println("Stack args ptr: " + getLongString(buff, stack_args));

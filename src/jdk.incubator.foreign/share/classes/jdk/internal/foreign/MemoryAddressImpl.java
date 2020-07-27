@@ -92,12 +92,12 @@ public final class MemoryAddressImpl implements MemoryAddress {
         return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
     }
 
-    public static MemoryAddress ofLongUnchecked(long value) {
+    public static MemorySegment ofLongUnchecked(long value) {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
-    public static MemoryAddress ofLongUnchecked(long value, long byteSize) {
+    public static MemorySegment ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(value), byteSize, null, null, null).address();
+                MemoryAddress.ofLong(value), byteSize, null, null, null);
     }
 }

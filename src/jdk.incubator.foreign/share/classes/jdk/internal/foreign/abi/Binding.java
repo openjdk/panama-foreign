@@ -282,7 +282,7 @@ public abstract class Binding {
     }
 
     private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment, NativeScope allocator) {
-        MemorySegment copy = allocator.allocate(size, alignment).segment();
+        MemorySegment copy = allocator.allocate(size, alignment);
         copy.copyFrom(operand.asSlice(0, size));
         return copy;
     }
@@ -518,8 +518,7 @@ public abstract class Binding {
         @Override
         public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemoryAddress baseAddress = operand.address();
-            MemoryAddress readAddress = baseAddress.addOffset(offset);
+            MemorySegment readAddress = operand.asSlice(offset);
             stack.push(SharedUtils.read(readAddress, type));
         }
 
@@ -527,30 +526,26 @@ public abstract class Binding {
         public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
             Object value = stack.pop();
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemoryAddress baseAddress = operand.address();
-            MemoryAddress writeAddress = baseAddress.addOffset(offset);
+            MemorySegment writeAddress = operand.asSlice(offset);
             SharedUtils.write(writeAddress, type, value);
         }
 
         private VarHandle varHandle() {
-            return MemoryHandles.withOffset(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), offset);
+            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), 1, offset);
         }
 
         @Override
         public MethodHandle specializeUnbox(MethodHandle specializedHandle, int insertPos) {
-            MethodHandle filter = filterArguments(
-                varHandle()
+            MethodHandle filter = varHandle()
                     .toMethodHandle(VarHandle.AccessMode.GET)
-                    .asType(methodType(type, MemoryAddress.class)), 0, MH_BASE_ADDRESS);
+                    .asType(methodType(type, MemorySegment.class));
             return filterArguments(specializedHandle, insertPos, filter);
         }
 
         @Override
         public MethodHandle specializeBox(MethodHandle returnFilter) {
             MethodHandle setter = varHandle().toMethodHandle(VarHandle.AccessMode.SET);
-            setter = filterArguments(
-                setter.asType(methodType(void.class, MemoryAddress.class, type)),
-                0, MH_BASE_ADDRESS);
+            setter = setter.asType(methodType(void.class, MemorySegment.class, type));
             return collectArguments(returnFilter, returnFilter.type().parameterCount(), setter);
         }
     }
@@ -619,7 +614,7 @@ public abstract class Binding {
         @Override
         public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment copy = scope.allocate(size, alignment).segment();
+            MemorySegment copy = scope.allocate(size, alignment);
             copy.copyFrom(operand.asSlice(0, size));
             stack.push(copy);
         }
@@ -627,9 +622,9 @@ public abstract class Binding {
         @Override
         public void box(Deque<Object> stack, BindingInterpreter.LoadFunc loadFunc) {
             MemoryAddress operand = (MemoryAddress) stack.pop();
-            operand = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+            MemorySegment segment = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
             MemorySegment copy = MemorySegment.allocateNative(size, alignment);
-            copy.copyFrom(operand.segment().asSlice(0, size));
+            copy.copyFrom(segment);
             stack.push(copy); // leaked
         }
 
@@ -769,7 +764,7 @@ public abstract class Binding {
 
         @Override
         public void unbox(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc, NativeScope scope) {
-            stack.push(((MemoryAddress) stack.pop()).toRawLongValue());
+            stack.push(((MemoryAddress)stack.pop()).toRawLongValue());
         }
 
         @Override

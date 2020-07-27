@@ -27,7 +27,6 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
@@ -72,6 +71,11 @@ public final class Utils {
     public static MemoryAddress alignUp(MemoryAddress ma, long alignment) {
         long offset = ma.toRawLongValue();
         return ma.addOffset(alignUp(offset, alignment) - offset);
+    }
+
+    public static MemorySegment alignUp(MemorySegment ms, long alignment) {
+        long offset = ms.address().toRawLongValue();
+        return ms.asSlice(alignUp(offset, alignment) - offset);
     }
 
     public static long bitsToBytesOrThrow(long bits, Supplier<RuntimeException> exFactory) {

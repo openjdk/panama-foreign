@@ -1,6 +1,5 @@
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 
@@ -92,22 +91,21 @@ public abstract class AbstractNativeScope extends NativeScope {
         }
 
         @Override
-        public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
             checkOwnerThread();
             if (bytesSize > MAX_ALLOC_SIZE) {
                 MemorySegment segment = newSegment(bytesSize, bytesAlignment);
-                return segment.withAccessModes(SCOPE_MASK)
-                        .address();
+                return segment.withAccessModes(SCOPE_MASK);
             }
             for (int i = 0; i < 2; i++) {
-                long min = ((MemoryAddressImpl) segment.address()).unsafeGetOffset();
+                long min = segment.address().toRawLongValue();
                 long start = Utils.alignUp(min + sp, bytesAlignment) - min;
                 try {
                     MemorySegment slice = segment.asSlice(start, bytesSize)
                             .withAccessModes(SCOPE_MASK);
                     sp = start + bytesSize;
                     size += Utils.alignUp(bytesSize, bytesAlignment);
-                    return slice.address();
+                    return slice;
                 } catch (IndexOutOfBoundsException ex) {
                     sp = 0L;
                     segment = newSegment(BLOCK_SIZE, 1L);
@@ -137,15 +135,15 @@ public abstract class AbstractNativeScope extends NativeScope {
         }
 
         @Override
-        public MemoryAddress allocate(long bytesSize, long bytesAlignment) {
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
             checkOwnerThread();
-            long min = ((MemoryAddressImpl)segment.address()).unsafeGetOffset();
+            long min = segment.address().toRawLongValue();
             long start = Utils.alignUp(min + sp, bytesAlignment) - min;
             try {
                 MemorySegment slice = segment.asSlice(start, bytesSize)
                         .withAccessModes(SCOPE_MASK);
                 sp = start + bytesSize;
-                return slice.address();
+                return slice;
             } catch (IndexOutOfBoundsException ex) {
                 throw new OutOfMemoryError("Not enough space left to allocate");
             }

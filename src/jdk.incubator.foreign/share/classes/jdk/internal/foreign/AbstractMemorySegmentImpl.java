@@ -143,8 +143,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     public void copyFromSwap(MemorySegment src, long elemSize) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
         long size = that.byteSize();
-        checkRange(0, size, true);
-        that.checkRange(0, size, false);
+        checkAccess(0, size, true);
+        that.checkAccess(0, size, false);
         UNSAFE.copySwapMemory(
                 that.base(), that.min(),
                 base(), min(), size, elemSize);
@@ -585,27 +585,4 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     };
 
-    public static final AbstractMemorySegmentImpl EVERYTHING = new AbstractMemorySegmentImpl(
-            Long.MAX_VALUE, READ | WRITE, MemoryScope.createUnchecked(null, null, null)
-    ) {
-        @Override
-        ByteBuffer makeByteBuffer() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        long min() {
-            return 0;
-        }
-
-        @Override
-        Object base() {
-            return null;
-        }
-
-        @Override
-        AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-            throw new UnsupportedOperationException();
-        }
-    };
 }
