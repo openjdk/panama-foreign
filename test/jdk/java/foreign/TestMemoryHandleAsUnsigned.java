@@ -59,10 +59,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            intHandle.set(segment.address(), intValue);
+            intHandle.set(segment, intValue);
             int expectedIntValue = Byte.toUnsignedInt(byteValue);
-            assertEquals((int) intHandle.get(segment.address()), expectedIntValue);
-            assertEquals((byte) byteHandle.get(segment.address()), byteValue);
+            assertEquals((int) intHandle.get(segment), expectedIntValue);
+            assertEquals((byte) byteHandle.get(segment), byteValue);
         }
     }
 
@@ -81,10 +81,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            longHandle.set(segment.address(), longValue);
+            longHandle.set(segment, longValue);
             long expectedLongValue = Byte.toUnsignedLong(byteValue);
-            assertEquals((long) longHandle.get(segment.address()), expectedLongValue);
-            assertEquals((byte) byteHandle.get(segment.address()), byteValue);
+            assertEquals((long) longHandle.get(segment), expectedLongValue);
+            assertEquals((byte) byteHandle.get(segment), byteValue);
         }
     }
 
@@ -103,10 +103,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = MemoryHandles.asUnsigned(shortHandle, int.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            intHandle.set(segment.address(), intValue);
+            intHandle.set(segment, intValue);
             int expectedIntValue = Short.toUnsignedInt(shortValue);
-            assertEquals((int) intHandle.get(segment.address()), expectedIntValue);
-            assertEquals((short) shortHandle.get(segment.address()), shortValue);
+            assertEquals((int) intHandle.get(segment), expectedIntValue);
+            assertEquals((short) shortHandle.get(segment), shortValue);
         }
     }
 
@@ -125,10 +125,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle longHandle = MemoryHandles.asUnsigned(shortHandle, long.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            longHandle.set(segment.address(), longValue);
+            longHandle.set(segment, longValue);
             long expectedLongValue = Short.toUnsignedLong(shortValue);
-            assertEquals((long) longHandle.get(segment.address()), expectedLongValue);
-            assertEquals((short) shortHandle.get(segment.address()), shortValue);
+            assertEquals((long) longHandle.get(segment), expectedLongValue);
+            assertEquals((short) shortHandle.get(segment), shortValue);
         }
     }
 
@@ -151,10 +151,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle longHandle = MemoryHandles.asUnsigned(intHandle, long.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            longHandle.set(segment.address(), longValue);
+            longHandle.set(segment, longValue);
             long expectedLongValue = Integer.toUnsignedLong(intValue);
-            assertEquals((long) longHandle.get(segment.address()), expectedLongValue);
-            assertEquals((int) intHandle.get(segment.address()), intValue);
+            assertEquals((long) longHandle.get(segment), expectedLongValue);
+            assertEquals((int) intHandle.get(segment), intValue);
         }
     }
 
@@ -165,10 +165,10 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
         try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            intHandle.set(segment.address(), 0L, (int) -1);
-            assertEquals((int) intHandle.get(segment.address(), 0L), 255);
-            intHandle.set(segment.address(), 1L, (int) 200);
-            assertEquals((int) intHandle.get(segment.address(), 1L), 200);
+            intHandle.set(segment, 0L, (int) -1);
+            assertEquals((int) intHandle.get(segment, 0L), 255);
+            intHandle.set(segment, 1L, (int) 200);
+            assertEquals((int) intHandle.get(segment, 1L), 200);
         }
     }
 
@@ -176,19 +176,18 @@ public class TestMemoryHandleAsUnsigned {
     public void testCoordinatesStride() {
         byte[] arr = { 0, 0, (byte) 129, 0 };
         MemorySegment segment = MemorySegment.ofArray(arr);
-        MemoryAddress addr = segment.address();
 
         {
-            VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
+            VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+                    .varHandle(byte.class, PathElement.sequenceElement());
             VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
-            VarHandle strideHandle = MemoryHandles.withStride(intHandle, 1);
-            assertEquals((int) strideHandle.get(addr, 2L), 129);
+            assertEquals((int) intHandle.get(segment, 2L), 129);
         }
         {
-            VarHandle byteHandle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
-            VarHandle strideHandle = MemoryHandles.withStride(byteHandle, 1);
-            VarHandle intHandle = MemoryHandles.asUnsigned(strideHandle, int.class);
-            assertEquals((int) intHandle.get(addr, 2L), 129);
+            VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+                    .varHandle(byte.class, PathElement.sequenceElement());
+            VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
+            assertEquals((int) intHandle.get(segment, 2L), 129);
         }
     }
 

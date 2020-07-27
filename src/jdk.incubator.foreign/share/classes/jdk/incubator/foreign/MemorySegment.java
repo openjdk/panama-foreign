@@ -176,6 +176,8 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * a <em>checked</em> memory address and can therefore be used in dereference operations
      * (see {@link MemoryAddress}).
      * @return The base memory address.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
      */
     @Override
     MemoryAddress address();
@@ -277,6 +279,27 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
      */
     MemorySegment asSlice(long offset, long newSize);
+
+    /**
+     * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
+     * and whose new size is computed by subtracting the specified offset from this segment size.
+     * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
+     * @return a new memory segment view with updated base/limit addresses.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
+     */
+    MemorySegment asSlice(long offset);
+
+    /**
+     * Obtains a new memory segment view whose base address is the address passed as argument,
+     * and whose new size is computed by subtracting the address offset relative to this segment
+     * (see {@link MemoryAddress#segmentOffset(MemorySegment)}) from this segment size.
+     * @param address The new segment base offset (relative to the current segment base address), specified in bytes.
+     * @return a new memory segment view with updated base/limit addresses.
+     * @throws IndexOutOfBoundsException if {@code address.segmentOffset(this) < 0}, or {@code address.segmentOffset(this) > byteSize()}.
+     */
+    default MemorySegment asSlice(MemoryAddress address) {
+        return asSlice(address.segmentOffset(this));
+    }
 
     /**
      * Is this segment alive?

@@ -58,19 +58,19 @@ public class PanamaPoint implements AutoCloseable {
     }
 
     public void setX(int x) {
-        VH_x.set(segment.address(), x);
+        VH_x.set(segment, x);
     }
 
     public int getX() {
-        return (int) VH_x.get(segment.address());
+        return (int) VH_x.get(segment);
     }
 
     public void setY(int y) {
-        VH_y.set(segment.address(), y);
+        VH_y.set(segment, y);
     }
 
     public int getY() {
-        return (int) VH_y.get(segment.address());
+        return (int) VH_y.get(segment);
     }
 
     @Override
