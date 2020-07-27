@@ -115,7 +115,7 @@ public class LoopOverNonConstantMapped {
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public int segment_get() {
-        return (int) VH_int.get(segment.address(), 0L);
+        return (int) VH_int.get(segment, 0L);
     }
 
     @Benchmark
@@ -136,9 +136,8 @@ public class LoopOverNonConstantMapped {
     @Benchmark
     public int segment_loop() {
         int sum = 0;
-        MemoryAddress base = segment.address();
         for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += (int) VH_int.get(base, (long) i);
+            sum += (int) VH_int.get(segment, (long) i);
         }
         return sum;
     }
@@ -147,7 +146,7 @@ public class LoopOverNonConstantMapped {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.getIntAtIndex(segment.address(), i);
+            res += MemoryAccess.getIntAtIndex(segment, i);
         }
         return res;
     }
@@ -155,7 +154,7 @@ public class LoopOverNonConstantMapped {
     @Benchmark
     public int segment_loop_slice() {
         int sum = 0;
-        MemoryAddress base = segment.asSlice(0, segment.byteSize()).address();
+        MemorySegment base = segment.asSlice(0, segment.byteSize());
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }
@@ -165,7 +164,7 @@ public class LoopOverNonConstantMapped {
     @Benchmark
     public int segment_loop_readonly() {
         int sum = 0;
-        MemoryAddress base = segment.withAccessModes(MemorySegment.READ).address();
+        MemorySegment base = segment.withAccessModes(MemorySegment.READ);
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }

@@ -68,7 +68,7 @@ public class PanamaPoint implements AutoCloseable {
         }
     }
 
-    private final MemoryAddress address;
+    private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
         this(MemorySegment.allocateNative(LAYOUT), x, y);
@@ -81,28 +81,28 @@ public class PanamaPoint implements AutoCloseable {
     }
 
     public PanamaPoint(MemorySegment segment) {
-        this.address = segment.address();
+        this.segment = segment;
     }
 
     public void setX(int x) {
-        VH_x.set(address, x);
+        VH_x.set(segment, x);
     }
 
     public int getX() {
-        return (int) VH_x.get(address);
+        return (int) VH_x.get(segment);
     }
 
     public void setY(int y) {
-        VH_y.set(address, y);
+        VH_y.set(segment, y);
     }
 
     public int getY() {
-        return (int) VH_y.get(address);
+        return (int) VH_y.get(segment);
     }
 
     public double distanceTo(PanamaPoint other) {
         try {
-            return (double) MH_distance.invokeExact(address.segment(), other.address.segment());
+            return (double) MH_distance.invokeExact(segment, other.segment);
         } catch (Throwable throwable) {
             throw new InternalError(throwable);
         }
@@ -110,7 +110,7 @@ public class PanamaPoint implements AutoCloseable {
 
     public double distanceToPtrs(PanamaPoint other) {
         try {
-            return (double) MH_distance_ptrs.invokeExact(address, other.address);
+            return (double) MH_distance_ptrs.invokeExact(segment.address(), other.segment.address());
         } catch (Throwable throwable) {
             throw new InternalError(throwable);
         }
@@ -118,6 +118,6 @@ public class PanamaPoint implements AutoCloseable {
 
     @Override
     public void close() {
-        address.segment().close();
+        segment.close();
     }
 }

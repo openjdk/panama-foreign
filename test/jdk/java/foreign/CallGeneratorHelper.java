@@ -329,22 +329,16 @@ public class CallGeneratorHelper extends NativeTestHelper {
 
     //helper methods
 
-    static void cleanup(Object arg) {
-        if (arg instanceof MemoryAddress) {
-            cleanup(((MemoryAddress)arg).segment());
-        } else if (arg instanceof MemorySegment) {
-            ((MemorySegment) arg).close();
-        }
-    }
-
     @SuppressWarnings("unchecked")
-    static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
+    static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check, List<MemorySegment> segments) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
             MemorySegment segment = MemorySegment.allocateNative(layout);
-            initStruct(segment, (GroupLayout)layout, checks, check);
+            initStruct(segment, (GroupLayout)layout, checks, check, segments);
+            segments.add(segment);
             return segment;
         } else if (isPointer(layout)) {
             MemorySegment segment = MemorySegment.allocateNative(1);
+            segments.add(segment);
             if (check) {
                 checks.add(o -> {
                     try {
@@ -377,17 +371,17 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-    static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
+    static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check, List<MemorySegment> segments) throws ReflectiveOperationException {
         for (MemoryLayout l : g.memberLayouts()) {
             if (l.isPadding()) continue;
             VarHandle accessor = g.varHandle(structFieldCarrier(l), MemoryLayout.PathElement.groupElement(l.name().get()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
-            Object value = makeArg(l, fieldsCheck, check);
+            Object value = makeArg(l, fieldsCheck, check, segments);
             if (isPointer(l)) {
                 value = ((MemoryAddress)value).toRawLongValue();
             }
             //set value
-            accessor.set(str.address(), value);
+            accessor.set(str, value);
             //add check
             if (check) {
                 assertTrue(fieldsCheck.size() == 1);
@@ -395,9 +389,9 @@ public class CallGeneratorHelper extends NativeTestHelper {
                     MemorySegment actual = (MemorySegment)o;
                     try {
                         if (isPointer(l)) {
-                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual.address())));
+                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual)));
                         } else {
-                            fieldsCheck.get(0).accept(accessor.get(actual.address()));
+                            fieldsCheck.get(0).accept(accessor.get(actual));
                         }
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);
