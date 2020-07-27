@@ -45,7 +45,7 @@ import java.util.function.Function;
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> native scope.
  * For this reason, using a bounded native scope is recommended in cases where programs might need to emulate native stack allocation.
  * <p>
- * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@code MemoryAddress} instances
+ * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@link MemorySegment} instances
  * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope.
  * <p>
  * To allow for more usability, it is possible for an native scope to reclaim ownership of an existing memory segments
@@ -75,11 +75,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
@@ -93,11 +93,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given short value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
@@ -111,11 +111,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given int value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
@@ -129,11 +129,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given float value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
@@ -147,11 +147,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given long value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
@@ -165,11 +165,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given double value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
@@ -183,11 +183,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
@@ -198,11 +198,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given short array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
@@ -213,11 +213,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given char array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
@@ -228,11 +228,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given int array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
@@ -243,11 +243,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given float array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
@@ -258,11 +258,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given long array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
@@ -273,11 +273,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given double array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
@@ -299,10 +299,10 @@ public abstract class NativeScope implements AutoCloseable {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout. The address returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned address must conform to the layout alignment constraints.
+     * Allocate a block of memory in this native scope with given layout. The segment returned by this method is
+     * associated with a segment which cannot be closed. Moreover, the returned segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      */
@@ -312,15 +312,15 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory corresponding to an array with given element layout and size.
-     * The address returned by this method is associated with a segment which cannot be closed.
-     * Moreover, the returned address must conform to the layout alignment constraints. This is equivalent to the
+     * The segment returned by this method is associated with a segment which cannot be closed.
+     * Moreover, the returned segment must conform to the layout alignment constraints. This is equivalent to the
      * following code:
      * <pre>{@code
     allocate(MemoryLayout.ofSequence(size, elementLayout));
      * }</pre>
      * @param elementLayout the array element layout.
      * @param size the array element count.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * size)}.
      */
@@ -329,10 +329,10 @@ public abstract class NativeScope implements AutoCloseable {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given size. The address returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned address must be aligned to {@code size}.
+     * Allocate a block of memory in this native scope with given size. The segment returned by this method is
+     * associated with a segment which cannot be closed. Moreover, the returned segment must be aligned to {@code size}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
@@ -342,11 +342,11 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given size and alignment constraint.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover,
-     * the returned address must be aligned to {@code alignment}.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover,
+     * the returned segment must be aligned to {@code alignment}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
@@ -372,7 +372,7 @@ public abstract class NativeScope implements AutoCloseable {
     public abstract MemorySegment register(MemorySegment segment);
 
     /**
-     * Close this native scope; calling this method will render any address obtained through this native scope
+     * Close this native scope; calling this method will render any segment obtained through this native scope
      * unusable and might release any backing memory resources associated with this native scope.
      */
     @Override
