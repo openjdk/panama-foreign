@@ -49,12 +49,12 @@ import java.util.Objects;
  * (of type {@link MemorySegment}), and one {@code long} coordinate type, which represents the offset, in bytes, relative
  * to the segment, at which dereference should occur.
  * <p>
- * As an example, consider the memory layout expressed by a {@link SequenceLayout} instance constructed as follows:
+ * As an example, consider the memory layout expressed by a {@link GroupLayout} instance constructed as follows:
  * <blockquote><pre>{@code
 GroupLayout seq = MemoryLayout.ofStruct(
         MemoryLayout.ofPaddingBits(32),
         MemoryLayout.ofValueBits(32, ByteOrder.BIG_ENDIAN).withName("value")
-));
+);
  * }</pre></blockquote>
  * To access the member layout named {@code value}, we can construct a memory access var handle as follows:
  * <blockquote><pre>{@code
