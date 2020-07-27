@@ -188,11 +188,11 @@ class MacroParserImpl implements JextractTask.ConstantParser {
                 return "jextract$macro$" + name;
             }
 
-            Success success(Type type, Object value) {
+            Entry success(Type type, Object value) {
                 throw new IllegalStateException();
             }
 
-            RecoverableFailure failure(Type type) {
+            Entry failure(Type type) {
                 throw new IllegalStateException();
             }
 
@@ -205,6 +205,10 @@ class MacroParserImpl implements JextractTask.ConstantParser {
             boolean isUnparsed() {
                 return false;
             }
+
+            void update() {
+                macrosByMangledName.put(mangledName(), this);
+            }
         }
 
         class Unparsed extends Entry {
@@ -213,20 +217,25 @@ class MacroParserImpl implements JextractTask.ConstantParser {
             }
 
             @Override
-            Success success(Type type, Object value) {
+            Entry success(Type type, Object value) {
                 return new Success(name, tokens, cursor, type, value);
             }
 
             @Override
-            RecoverableFailure failure(Type type) {
+            Entry failure(Type type) {
                 return type != null ?
                         new RecoverableFailure(name, tokens, cursor, type) :
-                        null;
+                        new UnparseableMacro(name, tokens, cursor);
             }
 
             @Override
             boolean isUnparsed() {
                 return true;
+            }
+
+            @Override
+            void update() {
+                throw new IllegalStateException();
             }
         }
 
@@ -240,13 +249,13 @@ class MacroParserImpl implements JextractTask.ConstantParser {
             }
 
             @Override
-            Success success(Type type, Object value) {
+            Entry success(Type type, Object value) {
                 return new Success(name, tokens, cursor, this.type, value);
             }
 
             @Override
-            RecoverableFailure failure(Type type) {
-                return null;
+            Entry failure(Type type) {
+                return new UnparseableMacro(name, tokens, cursor);
             }
 
             @Override
@@ -275,6 +284,18 @@ class MacroParserImpl implements JextractTask.ConstantParser {
             }
         }
 
+        class UnparseableMacro extends Entry {
+
+            UnparseableMacro(String name, String[] tokens, Cursor cursor) {
+                super(name, tokens, cursor);
+            }
+
+            @Override
+            void update() {
+                macrosByMangledName.remove(mangledName());
+            }
+        };
+
         void enterMacro(String name, String[] tokens, Cursor cursor) {
             Unparsed unparsed = new Unparsed(name, tokens, cursor);
             macrosByMangledName.put(unparsed.mangledName(), unparsed);
@@ -299,35 +320,27 @@ class MacroParserImpl implements JextractTask.ConstantParser {
         void updateTable(TypeMaker typeMaker, Cursor decl) {
             String mangledName = decl.spelling();
             Entry entry = macrosByMangledName.get(mangledName);
-            Entry newEntry;
             try (EvalResult result = decl.eval()) {
-                switch (result.getKind()) {
-                    case Integral: {
+                Entry newEntry = switch (result.getKind()) {
+                    case Integral -> {
                         long value = result.getAsInt();
-                        newEntry = entry.success(typeMaker.makeType(decl.type()), value);
-                        break;
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
                     }
-                    case FloatingPoint: {
+                    case FloatingPoint -> {
                         double value = result.getAsFloat();
-                        newEntry = entry.success(typeMaker.makeType(decl.type()), value);
-                        break;
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
                     }
-                    case StrLiteral: {
+                    case StrLiteral -> {
                         String value = result.getAsString();
-                        newEntry = entry.success(typeMaker.makeType(decl.type()), value);
-                        break;
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
                     }
-                    default: {
+                    default -> {
                         Type type = decl.type().equals(decl.type().canonicalType()) ?
                                 null : typeMaker.makeType(decl.type());
-                        newEntry = entry.failure(type);
+                        yield entry.failure(type);
                     }
-                }
-            }
-            if (newEntry != null) {
-                macrosByMangledName.put(newEntry.mangledName(), newEntry);
-            } else {
-                macrosByMangledName.remove(entry.mangledName());
+                };
+                newEntry.update();
             }
         }
 
