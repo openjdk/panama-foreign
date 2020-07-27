@@ -80,9 +80,9 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.
 
 ```
 
-## Embedding Python interpreter in your Java program (Mac OS)
+## Embedding Python interpreter in your Java program
 
-### jextract Python.h
+### jextract Python.h (Mac OS)
 
 ```sh
 
@@ -92,6 +92,48 @@ jextract \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/ \
   -t org.python \
    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h
+
+```
+
+### Shared Windows Utility script (used in all samples - shared_windows.ps1)
+
+```powershell
+
+$jdk = $Env:JAVA_HOME
+
+function find-tool($tool) {
+  if (Test-Path "$jdk\bin\$tool.exe") {
+    $func = {
+      & "$jdk\bin\$tool.exe" $args;
+      if ($LASTEXITCODE -ne 0) {
+        Write-Host "ERROR: $tool exited with non-zero exit code: $LASTEXITCODE"
+        exit
+      }
+    }.GetNewClosure()
+    & $func.Module Set-Variable jdk $jdk
+    return $func
+  } else {
+    Write-Host "ERROR: Could not find $tool executable in %JAVA_HOME%\bin."
+    exit
+  }
+}
+
+```
+
+### jextract Python.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path python install")]
+  [string]$pythonPath
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -I "$pythonPath\include" "-l" python3 "-t" "org.python" -J-Xmx2G -J"-Djextract.log=true" -J"-Djextract.debug=true" "--" "$pythonPath\include\Python.h"
 
 ```
 
@@ -121,7 +163,7 @@ public class PythonMain {
 
 ```
 
-### Running the Java code that calls Python interpreter
+### Running the Java code that calls Python interpreter (Mac OS)
 
 ```sh
 
@@ -131,9 +173,26 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 
 ```
 
-## Using readline library from Java code (Mac OS)
+### Running the Java code that calls Python interpreter (Windows)
 
-### jextract readline.h
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path python install")]
+  [string]$pythonPath
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=$pythonPath" PythonMain.java
+
+```
+
+## Using readline library from Java code
+
+### jextract readline.h (Mac OS)
 
 ```sh
 
@@ -169,7 +228,7 @@ public class Readline {
 
 ```
 
-### Running the java code that uses readline
+### Running the java code that uses readline (Mac OS)
 
 ```
 java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
@@ -177,16 +236,33 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
 
 ```
 
-## Using libcurl from Java (Mac OS)
+## Using libcurl from Java
 
-### jextract curl.h
+### jextract curl.h (Mac OS)
 
 ```sh
 
-jextract -t org.unix -lcurl \
+jextract -t org.jextract -lcurl \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/ \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/curl.h
+
+```
+
+### jextract curl.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lib curl installation")]
+  [string]$curlpath
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -t org.jextract -I "$curlpath\include" -I "$curlpath\include\curl" -J-Xmx2G -llibcurl --filter 'curl' -- "$curlpath\include\curl\curl.h"
 
 ```
 
@@ -196,8 +272,8 @@ jextract -t org.unix -lcurl \
 
 
 import static jdk.incubator.foreign.MemoryAddress.NULL;
-import static org.unix.RuntimeHelper.*;
-import static org.unix.curl_h.*;
+import static org.jextract.RuntimeHelper.*;
+import static org.jextract.curl_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 public class CurlMain {
@@ -221,13 +297,32 @@ public class CurlMain {
 
 ```
 
-### Running the java code that uses libcurl
+### Running the java code that uses libcurl (Mac OS)
 
 ```sh
 
 # run this shell script by passing a URL as first argument
 java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/lib CurlMain.java $*
+
+```
+
+### Running the java code that uses libcurl (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lib curl installation")]
+  [string]$curlpath,
+  [Parameter(Mandatory=$true, HelpMessage="URL to get")]
+  [string]$url
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=$curlpath\bin" CurlMain.java $url
 
 ```
 
@@ -251,7 +346,7 @@ brew install openblas
 
 It installs include and lib directories under /usr/local/opt/openblas
 
-### jextracting cblas.h (MacOS)
+### jextracting cblas.h (Mac OS)
 
 The following command can be used to extract cblas.h on MacOs
 
@@ -260,6 +355,23 @@ The following command can be used to extract cblas.h on MacOs
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
   -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
+
+```
+
+### jextracting cblas.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lapack installation which include/cblas.h and dependent headers")]
+  [string]$blasPath
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -t blas -I "$blasPath\include" -l libcblas -J-Xmx2G --filter 'cblas.h' -- "$blasPath\include\cblas.h"
 
 ```
 
@@ -316,22 +428,42 @@ public class TestBlas {
 }
 ```
 
-### Compiling and running the above BLAS sample
+### Compiling and running the above BLAS sample (Mac OS)
 
 ```sh
 
-jextract \
-  -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
-  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
-  -l openblas -t blas /usr/local/opt/openblas/include/cblas.h
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=/usr/local/opt/openblas/lib \
+    TestBlas.java
+```
+
+### Compiling and running the above BLAS sample (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lib curl installation, which contains bin/liblapacke.dll")]
+  [string]$blasPath,
+  [Parameter(Mandatory=$true, HelpMessage="The path to the mingw bin directory which contains libgcc_s_seh-1.dll and libquadmath-0.dll")]
+  [string]$mingwBinPath
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+$Env:path+="`;$blasPath\bin" # libblas.dll
+$Env:path+="`;$mingwBinPath" # mingw runtime dlls
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=$blasPath\bin" TestBlas.java
 
 ```
 
-## Using LAPACK library (Mac OS)
+## Using LAPACK library
 
 On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
-### jextracting lapacke.h
+### jextracting lapacke.h (Mac OS)
 
 ```sh
 
@@ -340,6 +472,23 @@ jextract \
    -l lapacke -t lapack \
    --filter lapacke.h \
    /usr/local/opt/lapack/include/lapacke.h
+
+```
+
+### jextracting lapacke.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lapack installation which include/lapacke.h and dependent headers")]
+  [string]$lapackPath
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -t lapack -I "$lapackPath\include" -l liblapacke -J-Xmx2G --filter 'lapacke.h' -- "$lapackPath\include\lapacke.h"
 
 ```
 
@@ -405,7 +554,7 @@ public class TestLapack {
 
 ```
 
-### Compiling and running the above LAPACK sample
+### Compiling and running the above LAPACK sample (Mac OS)
 
 ```sh
 
@@ -415,9 +564,32 @@ java -Dforeign.restricted=permit \
     TestLapack.java
 
 ```
-## Using libproc library to list processes from Java (Mac OS)
 
-### jextract libproc.h
+### Compiling and running the above LAPACK sample (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the lib curl installation, which contains bin/liblapacke.dll")]
+  [string]$lapackPath,
+  [Parameter(Mandatory=$true, HelpMessage="The path to the mingw bin directory which contains libgcc_s_seh-1.dll and libquadmath-0.dll")]
+  [string]$mingwBinPath
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+$Env:path+="`;$lapackPath\bin" # libblas.dll
+$Env:path+="`;$mingwBinPath" # mingw runtime dlls
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=$lapackPath\bin" TestLapack.java
+
+```
+
+## Using libproc library to list processes from Java
+
+### jextract libproc.h (Mac OS)
 
 ```sh
 
@@ -469,7 +641,7 @@ public class LibprocMain {
 
 ```
 
-### Compiling and running the libproc sample
+### Compiling and running the libproc sample (Mac OS)
 
 ```sh
 
@@ -479,16 +651,16 @@ java -Dforeign.restricted=permit \
 
 ```
 
-## Using libgit2 from Java (Mac OS)
+## Using libgit2 from Java
 
-### Getting and building libgit2
+### Getting and building libgit2 (Mac OS)
 
 * Download libgit2 v1.0.0 source from https://github.com/libgit2/libgit2/releases
 * Use cmake to build from libgit2
 * Let ${LIBGIT2_HOME} be the directory where you expanded libgit2 sources.
 * Let ${LIBGIT2_HOME}/build be the build directory where libgit2.dylib is built.
 
-### jextract git2.h
+### jextract git2.h (Mac OS)
 
 ```sh
 
@@ -498,6 +670,23 @@ jextract \
   -I ${LIBGIT2_HOME}/include/ \
   -I ${LIBGIT2_HOME}/include/git2 \
   ${LIBGIT2_HOME}/include/git2.h
+
+```
+
+### jextract git2.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the libgit2 installation")]
+  [string]$libgit2path
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -t com.github -I "$libgit2path\include" -J-Xmx2G -l git2 -- "$libgit2path\include\git2.h"
 
 ```
 
@@ -530,7 +719,7 @@ public class GitClone {
 
 ```
 
-### Compiling and running the libgit2 sample
+### Compiling and running the libgit2 sample (Mac OS)
 
 ```sh
 
@@ -541,6 +730,27 @@ java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
     GitClone.java $*
 ```
 
+### Compiling and running the libgit2 sample (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the libgit2 installation")]
+  [string]$libgit2path,
+  [Parameter(Mandatory=$true, HelpMessage="URL to clone from")]
+  [string]$url,
+  [Parameter(Mandatory=$true, HelpMessage="Path to clone into")]
+  [string]$path
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=$libgit2path\bin" GitClone.java $url $path
+
+```
+
 ### Cloning a github repo using the above run.sh command
 
 ```sh
@@ -549,10 +759,9 @@ sh run.sh https://github.com/libgit2/libgit2.git libgit2
 
 ```
 
-## Using sqlite3 library from Java (Mac OS)
+## Using sqlite3 library from Java
 
-
-### jextract sqlite3.h
+### jextract sqlite3.h (Mac OS)
 
 ```sh
 
@@ -662,12 +871,132 @@ public class SqliteMain {
 
 ```
 
-### Compiling and running the sqlite3 sample
+### Compiling and running the sqlite3 sample (Mac OS)
 
 ```sh
 
 java -Dforeign.restricted=permit \
    --add-modules jdk.incubator.foreign \
    -Djava.library.path=/usr/lib SqliteMain.java
+
+```
+
+## Using OpenGL library from Java
+
+### jextract glut.h (Mac OS)
+
+```sh
+
+jextract -t opengl -lGL -l/System/Library/Frameworks/GLUT.framework/Versions/Current/GLUT \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
+  -C-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h
+
+```
+
+### jextract glut.h (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the freeglut installation")]
+  [string]$freeglutPath
+)
+
+. ./shared_windows.ps1
+
+$jextract = find-tool("jextract")
+
+& $jextract -I "$freeglutPath\include" "-l" opengl32 "-l" glu32 "-l" freeglut "-t" "opengl" -J-Xmx2G --filter 'GL' --filter 'GLU' "--" "$freeglutPath\include\GL\glut.h"
+
+```
+
+### Java program that uses OpenGL
+
+```java
+
+import jdk.incubator.foreign.CSupport;
+import static jdk.incubator.foreign.CSupport.*;
+import jdk.incubator.foreign.NativeScope;
+import static opengl.glut_h.*;
+
+public class Teapot {
+    private float rot = 0;
+
+    Teapot(NativeScope scope) {
+        // Reset Background
+        glClearColor(0f, 0f, 0f, 0f);
+        // Setup Lighting
+        glShadeModel(GL_SMOOTH());
+        var pos = scope.allocateArray(C_FLOAT, new float[] {0.0f, 15.0f, -15.0f, 0});
+        glLightfv(GL_LIGHT0(), GL_POSITION(), pos);
+        var spec = scope.allocateArray(C_FLOAT, new float[] {1, 1, 1, 0});
+        glLightfv(GL_LIGHT0(), GL_AMBIENT(), spec);
+        glLightfv(GL_LIGHT0(), GL_DIFFUSE(), spec);
+        glLightfv(GL_LIGHT0(), GL_SPECULAR(), spec);
+        var shini = scope.allocate(C_FLOAT, 113);
+        glMaterialfv(GL_FRONT(), GL_SHININESS(), shini);
+        glEnable(GL_LIGHTING());
+        glEnable(GL_LIGHT0());
+        glEnable(GL_DEPTH_TEST());
+    }
+
+    void display() {
+        glClear(GL_COLOR_BUFFER_BIT() | GL_DEPTH_BUFFER_BIT());
+        glPushMatrix();
+        glRotatef(-20f, 1f, 1f, 0f);
+        glRotatef(rot, 0f, 1f, 0f);
+        glutSolidTeapot(0.5d);
+        glPopMatrix();
+        glutSwapBuffers();
+    }
+
+    void onIdle() {
+        rot += 0.1;
+        glutPostRedisplay();
+    }
+
+    public static void main(String[] args) {
+        try (var scope = NativeScope.unboundedScope()) {
+            var argc = scope.allocate(C_INT, 0);
+            glutInit(argc, argc);
+            glutInitDisplayMode(GLUT_DOUBLE() | GLUT_RGB() | GLUT_DEPTH());
+            glutInitWindowSize(500, 500);
+            glutCreateWindow(CSupport.toCString("Hello Panama!", scope));
+            var teapot = new Teapot(scope);
+            var displayStub = glutDisplayFunc$func.allocate(teapot::display, scope);
+            var idleStub = glutIdleFunc$func.allocate(teapot::onIdle, scope);
+            glutDisplayFunc(displayStub);
+            glutIdleFunc(idleStub);
+            glutMainLoop();
+        }
+    }
+}
+
+```
+
+### Compiling and running the OpenGL sample (Mac OS)
+
+```sh
+
+java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java $*
+
+```
+
+### Compiling and running the OpenGL sample (Windows)
+
+```powershell
+
+param(
+  [Parameter(Mandatory=$true, HelpMessage="The path to the freeglut installation")]
+  [string]$freeglutPath
+)
+
+. ./shared_windows.ps1
+
+$java = find-tool("java")
+
+& $java -D"foreign.restricted=permit" --add-modules jdk.incubator.foreign -D"java.library.path=C:\Windows\System32`;$freeglutPath\bin\x64" Teapot.java
 
 ```
