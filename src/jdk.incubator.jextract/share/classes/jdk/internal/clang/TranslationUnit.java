@@ -86,10 +86,10 @@ public class TranslationUnit implements AutoCloseable {
                     null :
                     scope.track(MemorySegment.allocateNative(MemoryLayout.ofSequence(inMemoryFiles.length, Index_h.CXUnsavedFile$LAYOUT)));
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemoryAddress start = files.address().addOffset(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
-                Utils.setPointer(start.addOffset(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).address());
-                Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).address());
-                Utils.setLong(start.addOffset(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
+                MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
+                Utils.setPointer(start.asSlice(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).address());
+                Utils.setPointer(start.asSlice(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).address());
+                Utils.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
                         tu,
@@ -121,7 +121,7 @@ public class TranslationUnit implements AutoCloseable {
         MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
         MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
         Index_h.clang_tokenize(tu, range.range, p.address(), pCnt.address());
-        Tokens rv = new Tokens(Utils.getPointer(p.address()), Utils.getInt(pCnt.address()));
+        Tokens rv = new Tokens(Utils.getPointer(p), Utils.getInt(pCnt));
         return rv;
     }
 

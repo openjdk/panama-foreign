@@ -23,6 +23,7 @@
 
 import java.nio.file.Path;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.Test;
 
 /*
@@ -45,12 +46,12 @@ public class Test8248415 extends JextractToolRunner {
             Class<?> nodeClass = loader.loadClass("test8248415_h$Node");
 
             // Check if getters for pointer fields were generated
-            checkMethod(nodeClass, "next$get", MemoryAddress.class, MemoryAddress.class);
-            checkMethod(nodeClass, "next$get", MemoryAddress.class, MemoryAddress.class, long.class);
+            checkMethod(nodeClass, "next$get", MemoryAddress.class, MemorySegment.class);
+            checkMethod(nodeClass, "next$get", MemoryAddress.class, MemorySegment.class, long.class);
 
             // Check if setters for pointer fields were generated
-            checkMethod(nodeClass, "next$set", void.class, MemoryAddress.class, MemoryAddress.class);
-            checkMethod(nodeClass, "next$set", void.class, MemoryAddress.class, long.class, MemoryAddress.class);
+            checkMethod(nodeClass, "next$set", void.class, MemorySegment.class, MemoryAddress.class);
+            checkMethod(nodeClass, "next$set", void.class, MemorySegment.class, long.class, MemoryAddress.class);
         } finally {
             deleteDir(outputPath);
         }

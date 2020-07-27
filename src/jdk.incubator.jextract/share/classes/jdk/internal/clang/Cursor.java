@@ -335,26 +335,15 @@ public final class Cursor {
         return new Cursor(Index_h.clang_getSpecializedCursorTemplate(cursor));
     }
 
-    private static class CursorChildren {
-        private static final ArrayList<Cursor> children = new ArrayList<>();
-        private static final MemoryAddress callback = Index_h.clang_visitChildren$visitor$allocate((c, p, d) -> {
-            Cursor cursor = new Cursor(c);
-            children.add(cursor);
-            return Index_h.CXChildVisit_Continue;
-        });
-
-        synchronized static Stream<Cursor> get(Cursor c) {
-            try {
-                Index_h.clang_visitChildren(c.cursor, callback, MemoryAddress.NULL);
-                return new ArrayList<Cursor>(children).stream();
-            } finally {
-                children.clear();
-            }
-        }
-    }
-
     public Stream<Cursor> children() {
-        return CursorChildren.get(this);
+        final ArrayList<Cursor> ar = new ArrayList<>();
+        // FIXME: need a way to pass ar down as user data
+        Index_h.clang_visitChildren(cursor, Index_h.clang_visitChildren$visitor$make((c, p, d) -> {
+            Cursor cursor = new Cursor(c);
+            ar.add(cursor);
+            return Index_h.CXChildVisit_Continue;
+        }), MemoryAddress.NULL);
+        return ar.stream();
     }
 
     public Stream<Cursor> allChildren() {

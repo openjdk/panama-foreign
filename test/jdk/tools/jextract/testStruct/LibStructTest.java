@@ -41,34 +41,31 @@ public class LibStructTest {
     @Test
     public void testMakePoint() {
         try (var seg = makePoint(42, -39)) {
-            var addr = seg.address();
-            assertEquals(Point.x$get(addr), 42);
-            assertEquals(Point.y$get(addr), -39);
+            assertEquals(Point.x$get(seg), 42);
+            assertEquals(Point.y$get(seg), -39);
         }
     }
 
     @Test
     public void testAllocate() {
         try (var seg = Point.allocate()) {
-            var addr = seg.address();
-            Point.x$set(addr, 56);
-            Point.y$set(addr, 65);
-            assertEquals(Point.x$get(addr), 56);
-            assertEquals(Point.y$get(addr), 65);
+            Point.x$set(seg, 56);
+            Point.y$set(seg, 65);
+            assertEquals(Point.x$get(seg), 56);
+            assertEquals(Point.y$get(seg), 65);
         }
     }
 
     @Test
     public void testAllocateArray() {
         try (var seg = Point.allocateArray(3)) {
-            var addr = seg.address();
             for (int i = 0; i < 3; i++) {
-                Point.x$set(addr, i, 56 + i);
-                Point.y$set(addr, i, 65 + i);
+                Point.x$set(seg, i, 56 + i);
+                Point.y$set(seg, i, 65 + i);
             }
             for (int i = 0; i < 3; i++) {
-                assertEquals(Point.x$get(addr, i), 56 + i);
-                assertEquals(Point.y$get(addr, i), 65 + i);
+                assertEquals(Point.x$get(seg, i), 56 + i);
+                assertEquals(Point.y$get(seg, i), 65 + i);
             }
         }
     }

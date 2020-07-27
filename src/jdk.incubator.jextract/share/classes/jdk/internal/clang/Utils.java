@@ -27,46 +27,27 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import java.lang.invoke.VarHandle;
 
 public class Utils {
-    public static final VarHandle BYTE_VH = CSupport.C_CHAR.varHandle(byte.class);
-    public static final VarHandle BYTE_ARR_VH = MemoryHandles.withStride(BYTE_VH, 1);
-    public static final VarHandle INT_VH = CSupport.C_INT.varHandle(int.class);
-    public static final VarHandle LONG_VH = CSupport.C_LONGLONG.varHandle(long.class);
-    public static final VarHandle POINTER_VH = MemoryHandles.asAddressVarHandle(CSupport.C_POINTER.varHandle(long.class));
-    public static final VarHandle POINTER_ARR_VH = MemoryHandles.withStride(POINTER_VH, 8);
 
-    static int getInt(MemoryAddress addr) {
-        return (int)INT_VH.get(addr);
+    static int getInt(MemorySegment addr) {
+        return MemoryAccess.getInt(addr);
     }
 
-    static void setInt(MemoryAddress addr, int i) {
-        INT_VH.set(addr, i);
+    static void setLong(MemorySegment addr, long i) {
+        MemoryAccess.setLong(addr, i);
     }
 
-    static int getLong(MemoryAddress addr) {
-        return (int)LONG_VH.get(addr);
+    static MemoryAddress getPointer(MemorySegment addr) {
+        return MemoryAccess.getAddress(addr);
     }
 
-    static void setLong(MemoryAddress addr, long i) {
-        LONG_VH.set(addr, i);
-    }
-
-    static byte getByte(MemoryAddress addr) {
-        return (byte)BYTE_VH.get(addr);
-    }
-
-    static MemoryAddress getPointer(MemoryAddress addr) {
-        return (MemoryAddress)POINTER_VH.get(addr);
-    }
-
-    static void setPointer(MemoryAddress addr, MemoryAddress ptr) {
-        POINTER_VH.set(addr, ptr);
+    static void setPointer(MemorySegment addr, MemoryAddress ptr) {
+        MemoryAccess.setAddress(addr, ptr);
     }
 
     static MemorySegment toNativeString(String value) {
@@ -76,11 +57,10 @@ public class Utils {
     static MemorySegment toNativeString(String value, int length) {
         MemoryLayout strLayout = MemoryLayout.ofSequence(length, CSupport.C_CHAR);
         MemorySegment segment = MemorySegment.allocateNative(strLayout);
-        MemoryAddress addr = segment.address();
         for (int i = 0 ; i < value.length() ; i++) {
-            BYTE_ARR_VH.set(addr, i, (byte)value.charAt(i));
+            MemoryAccess.setByteAtOffset(segment, i, (byte)value.charAt(i));
         }
-        BYTE_ARR_VH.set(addr, (long)value.length(), (byte)0);
+        MemoryAccess.setByteAtOffset(segment, value.length(), (byte)0);
         return segment;
     }
 
@@ -95,7 +75,7 @@ public class Utils {
 
         MemorySegment segment = MemorySegment.allocateNative(MemoryLayout.ofSequence(ar.length, CSupport.C_POINTER));
         for (int i = 0; i < ar.length; i++) {
-            POINTER_ARR_VH.set(segment.address(), i, toNativeString(ar[i]).address());
+            MemoryAccess.setAddressAtIndex(segment, i, toNativeString(ar[i]).address());
         }
 
         return segment;

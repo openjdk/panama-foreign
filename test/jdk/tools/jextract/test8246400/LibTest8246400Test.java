@@ -44,7 +44,7 @@ public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
         MemorySegment sum = null;
-        MemoryAddress callback = null;
+        MemorySegment callback = null;
         try (var scope = NativeScope.unboundedScope()) {
             var v1 = Vector.allocate(scope);
             Vector.x$set(v1, 1.0);
@@ -54,24 +54,24 @@ public class LibTest8246400Test {
             Vector.x$set(v2, 0.0);
             Vector.y$set(v2, 1.0);
 
-            sum = add(v1.segment(), v2.segment());
+            sum = add(v1, v2);
             sum = scope.register(sum);
 
-            assertEquals(Vector.x$get(sum.address()), 1.0, 0.1);
-            assertEquals(Vector.y$get(sum.address()), 1.0, 0.1);
+            assertEquals(Vector.x$get(sum), 1.0, 0.1);
+            assertEquals(Vector.y$get(sum), 1.0, 0.1);
 
             callback = cosine_similarity$dot.allocate((a, b) -> {
-                return (Vector.x$get(a.address()) * Vector.x$get(b.address())) +
-                    (Vector.y$get(a.address()) * Vector.y$get(b.address()));
+                return (Vector.x$get(a) * Vector.x$get(b)) +
+                    (Vector.y$get(a) * Vector.y$get(b));
             }, scope);
 
-            var value = cosine_similarity(v1.segment(), v2.segment(), callback);
+            var value = cosine_similarity(v1, v2, callback);
             assertEquals(value, 0.0, 0.1);
 
-            value = cosine_similarity(v1.segment(), v1.segment(), callback);
+            value = cosine_similarity(v1, v1, callback);
             assertEquals(value, 1.0, 0.1);
         }
         assertTrue(!sum.isAlive());
-        assertTrue(!callback.segment().isAlive());
+        assertTrue(!callback.isAlive());
     }
 }

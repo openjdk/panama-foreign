@@ -92,7 +92,7 @@ public class Index implements AutoCloseable {
                     options,
                     outAddress.address()));
 
-            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress.address());
+            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress);
             TranslationUnit rv = new TranslationUnit(tu);
             // even if we failed to parse, we might still have diagnostics
             rv.processDiagnostics(dh);

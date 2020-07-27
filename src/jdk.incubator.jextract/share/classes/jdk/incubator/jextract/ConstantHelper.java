@@ -93,13 +93,6 @@ public class ConstantHelper {
             desc(methodType(MemoryAddress.class, long.class))
     );
 
-    private static final DirectMethodHandleDesc MH_MemorySegment_baseAddress = MethodHandleDesc.ofMethod(
-            Kind.INTERFACE_VIRTUAL,
-            desc(MemorySegment.class),
-            "address",
-            desc(methodType(MemoryAddress.class))
-    );
-
     private static final DirectMethodHandleDesc MH_MemoryHandles_asAddressVarHandle = MethodHandleDesc.ofMethod(
             Kind.STATIC,
             desc(MemoryHandles.class),
@@ -163,7 +156,7 @@ public class ConstantHelper {
                 runtimeHelper,
                 "lookupGlobalVariable",
                 methodType(
-                        MemoryAddress.class,
+                        MemorySegment.class,
                         LibraryLookup[].class,
                         String.class,
                         MemoryLayout.class)
@@ -209,7 +202,7 @@ public class ConstantHelper {
     }
 
     public DirectMethodHandleDesc addAddress(String javaName, String nativeName, MemoryLayout layout) {
-        return emitCondyGetter(javaName + "$ADDR", MemoryAddress.class, globalVarAddressDesc(nativeName, layout));
+        return emitCondyGetter(javaName + "$ADDR", MemorySegment.class, globalVarAddressDesc(nativeName, layout));
     }
 
     public DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc) {
@@ -220,7 +213,11 @@ public class ConstantHelper {
         if (type == MemoryAddress.class) {
             if (value instanceof Long) {
                 return emitCondyGetter(name, type, addressDesc((Long) value));
-            } else if (value instanceof String) {
+            } else {
+                throw new IllegalStateException("Unhandled constant value type: " + value.getClass());
+            }
+        } else if (type == MemorySegment.class) {
+            if (value instanceof String) {
                 return emitCondyGetter(name, type, cStringDesc((String) value));
             } else {
                 throw new IllegalStateException("Unhandled constant value type: " + value.getClass());
@@ -449,7 +446,7 @@ public class ConstantHelper {
     }
 
     private ConstantDesc globalVarAddressDesc(String name, MemoryLayout layout) {
-        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "ADDR_" + name, CD_MemoryAddress, MH_lookupGlobalVariable, LIBRARIES, name, desc(layout));
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "ADDR_" + name, CD_MemorySegment, MH_lookupGlobalVariable, LIBRARIES, name, desc(layout));
     }
 
     private ConstantDesc addressDesc(long value) {
@@ -457,9 +454,7 @@ public class ConstantHelper {
     }
 
     private ConstantDesc cStringDesc(String value) {
-        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "BASEADDRESS", CD_MemoryAddress, MH_MemorySegment_baseAddress,
-            DynamicConstantDesc.ofNamed(BSM_INVOKE, "CSTRING", CD_MemorySegment, MH_makeCString, value)
-        );
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "CSTRING", CD_MemorySegment, MH_makeCString, value);
     }
 
     private ConstantDesc methodHandleDesc(String name, MethodType mtype, FunctionDescriptor funcDesc, boolean varargs) {

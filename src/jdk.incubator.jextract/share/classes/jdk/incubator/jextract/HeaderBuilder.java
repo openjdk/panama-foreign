@@ -175,10 +175,10 @@ public class HeaderBuilder extends JavaSourceBuilder {
         sb.append("}\n");
 
         indent();
-        sb.append(PUB_MODS + "MemoryAddress allocate(" + className + " fi, NativeScope scope) {\n");
+        sb.append(PUB_MODS + "MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
         incrAlign();
         indent();
-        sb.append("return scope.register(allocate(fi)).address();\n");
+        sb.append("return scope.register(allocate(fi));\n");
         decrAlign();
         indent();
         sb.append("}\n");

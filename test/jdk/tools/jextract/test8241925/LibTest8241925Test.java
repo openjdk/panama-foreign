@@ -58,14 +58,14 @@ public class LibTest8241925Test {
             addr = scope.allocateArray(C_INT, intArray);
             int sum = sum(addr, intArray.length);
             assertEquals(sum, IntStream.of(intArray).sum());
-            int[] convertedArray = addr.segment().toIntArray();
+            int[] convertedArray = addr.toIntArray();
             assertEquals(convertedArray, intArray);
 
             double[] dblArray = { 34.5, 67.56, 78.2, 8.45 };
             addr = scope.allocateArray(C_DOUBLE, dblArray);
             double sumd = sum_fp(addr, dblArray.length);
             assertEquals(sumd, DoubleStream.of(dblArray).sum(), 0.1);
-            double[] convertedDblArray = addr.segment().toDoubleArray();
+            double[] convertedDblArray = addr.toDoubleArray();
             for (int i = 0; i < dblArray.length; i++) {
                 assertEquals(dblArray[i], convertedDblArray[i], 0.1);
             }
@@ -73,7 +73,7 @@ public class LibTest8241925Test {
             assertEquals(toJavaStringRestricted(name()), "java");
 
             var dest = scope.allocateArray(C_CHAR, 12);
-            dest.segment().copyFrom(toCString("hello "));
+            dest.copyFrom(toCString("hello "));
             var src = toCString("world", scope);
             assertEquals(toJavaStringRestricted(concatenate(dest, src)), "hello world");
         }
