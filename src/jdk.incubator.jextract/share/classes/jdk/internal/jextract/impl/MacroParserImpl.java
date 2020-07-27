@@ -26,7 +26,11 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.JextractTask;
+import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
+import jdk.incubator.jextract.tool.Main;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -39,17 +43,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class MacroParserImpl {
+class MacroParserImpl implements JextractTask.ConstantParser {
 
     private Reparser reparser;
-    TypeMaker typeMaker = new TypeMaker(null);
+    TreeMaker treeMaker;
+    MacroTable macroTable;
 
-    public MacroParserImpl(TranslationUnit tu, Collection<String> args) {
+    public MacroParserImpl(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
         try {
             this.reparser = new ClangReparser(tu, args);
+            this.treeMaker = treeMaker;
+            this.macroTable = new MacroTable();
         } catch (IOException | Index.ParsingFailedException ex) {
             this.reparser = Reparser.DUMMY;
         }
@@ -61,42 +72,24 @@ class MacroParserImpl {
      * If that is not possible (e.g. because the macro refers to other macro, or has a more complex grammar), fall
      * back to use clang evaluation support.
      */
-    Optional<Macro> eval(String macroName, String... tokens) {
-        if (tokens.length == 2) {
-            //check for fast path
-            Integer num = toNumber(tokens[1]);
-            if (num != null) {
-                return Optional.of(Macro.longMacro(Type.primitive(Type.Primitive.Kind.Int), num));
+    @Override
+    public Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
+        if (!(pos instanceof TreeMaker.CursorPosition)) {
+            return Optional.empty();
+        } else {
+            Cursor cursor = ((TreeMaker.CursorPosition)pos).cursor();
+            if (cursor.isMacroFunctionLike()) {
+                return Optional.empty();
+            } else if (tokens.length == 2) {
+                //check for fast path
+                Integer num = toNumber(tokens[1]);
+                if (num != null) {
+                    return Optional.of(treeMaker.createMacro(cursor, name, Type.primitive(Type.Primitive.Kind.Int), (long)num));
+                }
             }
-        }
-        //slow path
-        try {
-            //step one, parse constant as is
-            MacroResult result = reparse(constantDecl(macroName, false));
-            if (!result.success()) {
-                //step two, attempt parsing pointer constant, by forcing it to uintptr_t
-                result = reparse(constantDecl(macroName, true)).asType(result.type);
-            }
-            return result.success() ?
-                    Optional.of((Macro)result) :
-                    Optional.empty();
-        } catch (BadMacroException ex) {
-            if (JextractTaskImpl.VERBOSE) {
-                System.err.println("Failed to handle macro " + macroName);
-                ex.printStackTrace(System.err);
-            }
+            macroTable.enterMacro(name, tokens, cursor);
             return Optional.empty();
         }
-    }
-
-    MacroResult reparse(String snippet) {
-        MacroResult rv = reparser.reparse(snippet)
-                .filter(c -> c.kind() == CursorKind.VarDecl &&
-                        c.spelling().contains("jextract$"))
-                .map(c -> compute(c))
-                .findAny().get();
-        typeMaker.resolveTypeReferences();
-        return rv;
     }
 
     private Integer toNumber(String str) {
@@ -105,102 +98,6 @@ class MacroParserImpl {
             return str.length() > 0 && str.charAt(0) != '#'? Integer.decode(str) : null;
         } catch (NumberFormatException nfe) {
             return null;
-        }
-    }
-
-    String constantDecl(String macroName, boolean forcePtr) {
-        //we use __auto_type, so that clang will also do type inference for us
-        return (forcePtr) ?
-                "#include <stdint.h> \n __auto_type jextract$macro$ptr$" + macroName + " = (uintptr_t)" + macroName + ";" :
-                "__auto_type jextract$macro$" + macroName + " = " + macroName + ";";
-    }
-
-    MacroResult compute(Cursor decl) {
-        try (EvalResult result = decl.eval()) {
-            switch (result.getKind()) {
-                case Integral: {
-                    long value = result.getAsInt();
-                    return Macro.longMacro(typeMaker.makeType(decl.type()), value);
-                }
-                case FloatingPoint: {
-                    double value = result.getAsFloat();
-                    return Macro.doubleMacro(typeMaker.makeType(decl.type()), value);
-                }
-                case StrLiteral: {
-                    String value = result.getAsString();
-                    return Macro.stringMacro(typeMaker.makeType(decl.type()), value);
-                }
-                default:
-                    return new Failure(typeMaker.makeType(decl.type()));
-            }
-        }
-    }
-
-    static abstract class MacroResult {
-        private final Type type;
-
-        MacroResult(Type type) {
-            this.type = type;
-        }
-
-        public Type type() {
-            return type;
-        }
-
-        abstract boolean success();
-
-        abstract MacroResult asType(Type type);
-    }
-
-    static class Failure extends MacroResult {
-
-        public Failure(Type type) {
-            super(type);
-        }
-
-        @Override
-        boolean success() {
-            return false;
-        }
-
-        @Override
-        MacroResult asType(Type type) {
-            return new Failure(type);
-        }
-    }
-
-    public static class Macro extends MacroResult {
-        Object value;
-
-        private Macro(Type type, Object value) {
-            super(type);
-            this.value = value;
-        }
-
-        @Override
-        boolean success() {
-            return true;
-        }
-
-        public Object value() {
-            return value;
-        }
-
-        @Override
-        MacroResult asType(Type type) {
-            return new Macro(type, value);
-        }
-
-        static Macro longMacro(Type type, long value) {
-            return new Macro(type, value);
-        }
-
-        static Macro doubleMacro(Type type, double value) {
-            return new Macro(type, value);
-        }
-
-        static Macro stringMacro(Type type, String value) {
-            return new Macro(type, value);
         }
     }
 
@@ -215,7 +112,7 @@ class MacroParserImpl {
      * For performance reasons, the set of includes (which comes from the jextract parser) is compiled
      * into a precompiled header, so as to speed to incremental recompilation of the generated snippets.
      */
-    class ClangReparser implements Reparser {
+    static class ClangReparser implements Reparser {
         final Path macro;
         final Index macroIndex = LibClang.createIndex(true);
         final TranslationUnit macroUnit;
@@ -230,34 +127,255 @@ class MacroParserImpl {
                 Stream.of(
                     // Avoid system search path, use bundled instead
                     "-nostdinc",
+                    "-ferror-limit=0",
                     // precompiled header
                     "-include-pch", precompiled.toAbsolutePath().toString()),
                 args.stream()).toArray(String[]::new);
             this.macroUnit = macroIndex.parse(macro.toAbsolutePath().toString(),
-                    d -> processDiagnostics(null, d),
+                    this::processDiagnostics,
                     false, //add serialization support (needed for macros)
                     patchedArgs);
         }
 
+        void processDiagnostics(Diagnostic diag) {
+            if (Main.DEBUG) {
+                System.err.println("Error while processing macro: " + diag.spelling());
+            }
+        }
+
         @Override
         public Stream<Cursor> reparse(String snippet) {
-            macroUnit.reparse(d -> processDiagnostics(snippet, d),
+            macroUnit.reparse(this::processDiagnostics,
                     Index.UnsavedFile.of(macro, snippet));
             return macroUnit.getCursor().children();
         }
-
-        void processDiagnostics(String snippet, Diagnostic diag) {
-            if (diag.severity() > Diagnostic.CXDiagnostic_Warning) {
-                throw new BadMacroException(diag);
-            }
-        }
     }
 
-    private static class BadMacroException extends RuntimeException {
-        static final long serialVersionUID = 1L;
+    /**
+     * This abstraction is used to collect all macros which could not be interpreted during {@link #parseConstant(Position, String, String[])}.
+     * All unparsed macros in the table can have three different states: UNPARSED (which means the macro has not been parsed yet),
+     * SUCCESS (which means the macro has been parsed and has a type and a value) and FAILURE, which means the macro has been
+     * parsed with some errors, but for which we were at least able to infer a type.
+     *
+     * The reparsing process goes as follows:
+     * 1. all unparsed macros are added to the table in the UNPARSED state.
+     * 2. a snippet for all macros in the UNPARSED state is compiled and the table state is updated
+     * 3. a recovery snippet for all macros in the FAILURE state is compiled and the table state is updated again
+     * 4. we repeat from (2) until no further progress is made.
+     * 5. we return a list of macro which are in the SUCCESS state.
+     *
+     * State transitions in the table are as follows:
+     * - an UNPARSED macro can go to either SUCCESS, to FAILURE or be removed (if not even a type can be inferred)
+     * - a FAILURE macro can go to either SUCCESS (if recovery step succeds) or be removed
+     * - a SUCCESS macro cannot go in any other state
+     */
+    class MacroTable {
 
-        public BadMacroException(Diagnostic diag) {
-            super(diag.toString());
+        final Map<String, Entry> macrosByMangledName = new LinkedHashMap<>();
+
+        abstract class Entry {
+            final String name;
+            final String[] tokens;
+            final Cursor cursor;
+
+            Entry(String name, String[] tokens, Cursor cursor) {
+                this.name = name;
+                this.tokens = tokens;
+                this.cursor = cursor;
+            }
+
+            String mangledName() {
+                return "jextract$macro$" + name;
+            }
+
+            Entry success(Type type, Object value) {
+                throw new IllegalStateException();
+            }
+
+            Entry failure(Type type) {
+                throw new IllegalStateException();
+            }
+
+            boolean isSuccess() {
+                return false;
+            }
+            boolean isRecoverableFailure() {
+                return false;
+            }
+            boolean isUnparsed() {
+                return false;
+            }
+
+            void update() {
+                macrosByMangledName.put(mangledName(), this);
+            }
+        }
+
+        class Unparsed extends Entry {
+            Unparsed(String name, String[] tokens, Cursor cursor) {
+                super(name, tokens, cursor);
+            }
+
+            @Override
+            Entry success(Type type, Object value) {
+                return new Success(name, tokens, cursor, type, value);
+            }
+
+            @Override
+            Entry failure(Type type) {
+                return type != null ?
+                        new RecoverableFailure(name, tokens, cursor, type) :
+                        new UnparseableMacro(name, tokens, cursor);
+            }
+
+            @Override
+            boolean isUnparsed() {
+                return true;
+            }
+
+            @Override
+            void update() {
+                throw new IllegalStateException();
+            }
+        }
+
+        class RecoverableFailure extends Entry {
+
+            final Type type;
+
+            public RecoverableFailure(String name, String[] tokens, Cursor cursor, Type type) {
+                super(name, tokens, cursor);
+                this.type = type;
+            }
+
+            @Override
+            Entry success(Type type, Object value) {
+                return new Success(name, tokens, cursor, this.type, value);
+            }
+
+            @Override
+            Entry failure(Type type) {
+                return new UnparseableMacro(name, tokens, cursor);
+            }
+
+            @Override
+            boolean isRecoverableFailure() {
+                return true;
+            }
+        }
+
+        class Success extends Entry {
+            final Type type;
+            final Object value;
+
+            public Success(String name, String[] tokens, Cursor cursor, Type type, Object value) {
+                super(name, tokens, cursor);
+                this.type = type;
+                this.value = value;
+            }
+
+            @Override
+            boolean isSuccess() {
+                return true;
+            }
+
+            public Object value() {
+                return value;
+            }
+        }
+
+        class UnparseableMacro extends Entry {
+
+            UnparseableMacro(String name, String[] tokens, Cursor cursor) {
+                super(name, tokens, cursor);
+            }
+
+            @Override
+            void update() {
+                macrosByMangledName.remove(mangledName());
+            }
+        };
+
+        void enterMacro(String name, String[] tokens, Cursor cursor) {
+            Unparsed unparsed = new Unparsed(name, tokens, cursor);
+            macrosByMangledName.put(unparsed.mangledName(), unparsed);
+        }
+
+        public List<Declaration.Constant> reparseConstants() {
+            int last = -1;
+            while (macrosByMangledName.size() > 0 && last != macrosByMangledName.size()) {
+                last = macrosByMangledName.size();
+                // step 1 - try parsing macros as var declarations
+                reparseMacros(false);
+                // step 2 - retry failed parsed macros as pointers
+                reparseMacros(true);
+            }
+            treeMaker.typeMaker.resolveTypeReferences();
+            return macrosByMangledName.values().stream()
+                    .filter(Entry::isSuccess)
+                    .map(e -> treeMaker.createMacro(e.cursor, e.name, ((Success)e).type, ((Success)e).value))
+                    .collect(Collectors.toList());
+        }
+
+        void updateTable(TypeMaker typeMaker, Cursor decl) {
+            String mangledName = decl.spelling();
+            Entry entry = macrosByMangledName.get(mangledName);
+            try (EvalResult result = decl.eval()) {
+                Entry newEntry = switch (result.getKind()) {
+                    case Integral -> {
+                        long value = result.getAsInt();
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
+                    }
+                    case FloatingPoint -> {
+                        double value = result.getAsFloat();
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
+                    }
+                    case StrLiteral -> {
+                        String value = result.getAsString();
+                        yield entry.success(typeMaker.makeType(decl.type()), value);
+                    }
+                    default -> {
+                        Type type = decl.type().equals(decl.type().canonicalType()) ?
+                                null : typeMaker.makeType(decl.type());
+                        yield entry.failure(type);
+                    }
+                };
+                newEntry.update();
+            }
+        }
+
+        void reparseMacros(boolean recovery) {
+            String snippet = macroDecl(recovery);
+            TreeMaker treeMaker = new TreeMaker();
+            try {
+                reparser.reparse(snippet)
+                        .filter(c -> c.kind() == CursorKind.VarDecl &&
+                                c.spelling().contains("jextract$"))
+                        .forEach(c -> updateTable(treeMaker.typeMaker, c));
+            } finally {
+                treeMaker.typeMaker.resolveTypeReferences();
+            }
+        }
+
+        String macroDecl(boolean recovery) {
+            StringBuilder buf = new StringBuilder();
+            if (recovery) {
+                buf.append("#include <stdint.h>\n");
+            }
+            macrosByMangledName.values().stream()
+                    .filter(e -> !e.isSuccess()) // skip macros that already have passed
+                    .filter(recovery ? Entry::isRecoverableFailure : Entry::isUnparsed)
+                    .forEach(e -> {
+                        buf.append("__auto_type ")
+                                .append(e.mangledName())
+                                .append(" = ");
+                        if (recovery) {
+                            buf.append("(uintptr_t)");
+                        }
+                        buf.append(e.name)
+                                .append(";\n");
+                    });
+            return buf.toString();
         }
     }
 }

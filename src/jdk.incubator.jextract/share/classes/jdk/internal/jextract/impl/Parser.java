@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Position;
+import jdk.incubator.jextract.Type;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -40,7 +41,10 @@ import jdk.internal.clang.TranslationUnit;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 class Parser {
@@ -64,7 +68,7 @@ class Parser {
             true, args.toArray(new String[0]));
 
         JextractTask.ConstantParser constantParser = this.constantParser != null ?
-                this.constantParser : new DefaultConstantParser(new MacroParserImpl(tu, args));
+                this.constantParser : new MacroParserImpl(treeMaker, tu, args);
 
         List<Declaration> decls = new ArrayList<>();
         Cursor tuCursor = tu.getCursor();
@@ -103,6 +107,9 @@ class Parser {
                 }
             });
 
+        if (constantParser instanceof MacroParserImpl) {
+            decls.addAll(((MacroParserImpl)constantParser).macroTable.reparseConstants());
+        }
         Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
         treeMaker.freeze();
         index.close();
@@ -111,28 +118,5 @@ class Parser {
 
     private boolean isMacro(Cursor c) {
         return c.isPreprocessing() && c.kind() == CursorKind.MacroDefinition;
-    }
-
-    class DefaultConstantParser implements JextractTask.ConstantParser {
-
-        final MacroParserImpl macroParser;
-
-        public DefaultConstantParser(MacroParserImpl macroParser) {
-            this.macroParser = macroParser;
-        }
-
-        @Override
-        public Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
-            if (!(pos instanceof TreeMaker.CursorPosition)) {
-                return Optional.empty();
-            } else {
-                Cursor cursor = ((TreeMaker.CursorPosition)pos).cursor();
-                if (cursor.isMacroFunctionLike()) {
-                    return Optional.empty();
-                } else {
-                    return Optional.ofNullable(treeMaker.createMacro(cursor, macroParser.eval(name, tokens)));
-                }
-            }
-        }
     }
 }
