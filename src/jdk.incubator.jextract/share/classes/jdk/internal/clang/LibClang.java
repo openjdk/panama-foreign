@@ -41,7 +41,7 @@ public class LibClang {
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
 
     private final static MemorySegment disableCrashRecovery =
-            Utils.toNativeString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
+            CSupport.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
                 .withAccessModes(MemorySegment.READ);
 
     static {
@@ -72,7 +72,7 @@ public class LibClang {
 
     public static String CXStrToString(MemorySegment cxstr) {
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = Utils.toJavaString(buf);
+        String str = CSupport.toJavaStringRestricted(buf);
         Index_h.clang_disposeString(cxstr);
         return str;
     }
