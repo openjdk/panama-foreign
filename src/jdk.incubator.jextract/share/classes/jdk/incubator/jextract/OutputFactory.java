@@ -201,7 +201,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        builder.addConstantGetter(Utils.javaSafeIdentifier(constant.name()), typeTranslator.getJavaType(constant.type()), constant.value());
+        builder.addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
+                constant.value() instanceof String ? MemorySegment.class :
+                typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
     }
 

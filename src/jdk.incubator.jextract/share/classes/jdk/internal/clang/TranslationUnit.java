@@ -27,9 +27,11 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.io.IOException;
@@ -61,7 +63,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        try (MemorySegment pathStr = Utils.toNativeString(path.toAbsolutePath().toString())) {
+        try (MemorySegment pathStr = CSupport.toCString(path.toAbsolutePath().toString())) {
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.address(), 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
@@ -81,15 +83,15 @@ public class TranslationUnit implements AutoCloseable {
     static long LENGTH_OFFSET = Index_h.CXUnsavedFile$LAYOUT.bitOffset(MemoryLayout.PathElement.groupElement("Length")) / 8;
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
-        try (AllocationScope scope = new AllocationScope()) {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
-                    scope.track(MemorySegment.allocateNative(MemoryLayout.ofSequence(inMemoryFiles.length, Index_h.CXUnsavedFile$LAYOUT)));
+                    scope.allocateArray(Index_h.CXUnsavedFile$LAYOUT, inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemoryAddress start = files.address().addOffset(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
-                Utils.setPointer(start.addOffset(FILENAME_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].file)).address());
-                Utils.setPointer(start.addOffset(CONTENTS_OFFSET), scope.track(Utils.toNativeString(inMemoryFiles[i].contents)).address());
-                Utils.setLong(start.addOffset(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
+                MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
+                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CSupport.toCString(inMemoryFiles[i].file, scope).address());
+                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CSupport.toCString(inMemoryFiles[i].contents, scope).address());
+                MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
                         tu,
@@ -121,7 +123,7 @@ public class TranslationUnit implements AutoCloseable {
         MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
         MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
         Index_h.clang_tokenize(tu, range.range, p.address(), pCnt.address());
-        Tokens rv = new Tokens(Utils.getPointer(p.address()), Utils.getInt(pCnt.address()));
+        Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
         return rv;
     }
 

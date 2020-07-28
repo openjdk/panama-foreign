@@ -26,6 +26,7 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
@@ -56,15 +57,15 @@ public class SourceLocation {
              MemorySegment offset = MemorySegment.allocateNative(CSupport.C_INT)) {
 
             fn.get(loc, file.address(), line.address(), col.address(), offset.address());
-            MemoryAddress fname = Utils.getPointer(file.address());
+            MemoryAddress fname = MemoryAccess.getAddress(file);
 
 
             String str = fname == MemoryAddress.NULL ?
                     null :
                     LibClang.CXStrToString(Index_h.clang_getFileName(fname));
 
-            return new Location(str, Utils.getInt(line.address()),
-                Utils.getInt(col.address()), Utils.getInt(offset.address()));
+            return new Location(str, MemoryAccess.getInt(line),
+                MemoryAccess.getInt(col), MemoryAccess.getInt(offset));
         }
     }
 

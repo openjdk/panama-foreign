@@ -346,7 +346,7 @@ public final class Cursor {
         synchronized static Stream<Cursor> get(Cursor c) {
             try {
                 Index_h.clang_visitChildren(c.cursor, callback, MemoryAddress.NULL);
-                return new ArrayList<Cursor>(children).stream();
+                return new ArrayList<>(children).stream();
             } finally {
                 children.clear();
             }

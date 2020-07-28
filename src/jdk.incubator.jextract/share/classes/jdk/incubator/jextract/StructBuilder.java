@@ -26,6 +26,7 @@ package jdk.incubator.jextract;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 
 /**
  * This class generates static utilities class for C structs, unions.
@@ -79,7 +80,7 @@ public class StructBuilder extends JavaSourceBuilder {
     public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(MemoryAddress addr) {\n");
+        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment addr) {\n");
         incrAlign();
         indent();
         sb.append("return (" + type.getName() + ")"
@@ -96,7 +97,7 @@ public class StructBuilder extends JavaSourceBuilder {
     public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = MemoryAddress.class.getName() + " addr";
+        String param = MemorySegment.class.getName() + " addr";
         sb.append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
         incrAlign();
         indent();
@@ -113,14 +114,14 @@ public class StructBuilder extends JavaSourceBuilder {
     public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MemoryAddress " + javaName + "$addr(MemoryAddress addr) {\n");
+        sb.append(PUB_MODS + "MemorySegment " + javaName + "$addr(MemorySegment addr) {\n");
         incrAlign();
         indent();
-        sb.append("return addr.segment().asSlice(");
+        sb.append("return addr.asSlice(");
         sb.append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
         sb.append(", ");
         sb.append(layout.byteSize());
-        sb.append(").address();\n");
+        sb.append(");\n");
         decrAlign();
         indent();
         sb.append("}\n");
@@ -147,7 +148,7 @@ public class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         sb.append(PUB_MODS);
-        sb.append("MemoryAddress allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        sb.append("MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         decrAlign();
     }
 
@@ -168,7 +169,7 @@ public class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         sb.append(PUB_MODS);
-        sb.append("MemoryAddress allocateArray(int len, NativeScope scope) {\n");
+        sb.append("MemorySegment allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
         sb.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
@@ -180,12 +181,12 @@ public class StructBuilder extends JavaSourceBuilder {
     private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String params = MemoryAddress.class.getName() + " addr, long index";
+        String params = MemorySegment.class.getName() + " addr, long index";
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + params + ") {\n");
         incrAlign();
         indent();
         sb.append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr.addOffset(index*sizeof()));\n");
+                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr.asSlice(index*sizeof()));\n");
         decrAlign();
         indent();
         sb.append("}\n");
@@ -195,11 +196,11 @@ public class StructBuilder extends JavaSourceBuilder {
     private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String params = MemoryAddress.class.getName() + " addr, long index, " + type.getName() + " x";
+        String params = MemorySegment.class.getName() + " addr, long index, " + type.getName() + " x";
         sb.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.addOffset(index*sizeof()), x);\n");
+        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.asSlice(index*sizeof()), x);\n");
         decrAlign();
         indent();
         sb.append("}\n");

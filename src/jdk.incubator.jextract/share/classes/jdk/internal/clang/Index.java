@@ -27,9 +27,11 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.VarHandle;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class Index implements AutoCloseable {
     // Pointer to CXIndex
@@ -80,9 +83,13 @@ public class Index implements AutoCloseable {
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {
-        try (MemorySegment src = Utils.toNativeString(file) ;
-             MemorySegment cargs = Utils.toNativeStringArray(args);
-             MemorySegment outAddress = MemorySegment.allocateNative(CSupport.C_POINTER)) {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            MemorySegment src = CSupport.toCString(file, scope);
+            MemorySegment cargs = scope.allocateArray(CSupport.C_POINTER, args.length);
+            for (int i = 0 ; i < args.length ; i++) {
+                MemoryAccess.setAddressAtIndex(cargs, i, CSupport.toCString(args[i], scope).address());
+            }
+            MemorySegment outAddress = scope.allocate(CSupport.C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src.address(),
@@ -92,7 +99,7 @@ public class Index implements AutoCloseable {
                     options,
                     outAddress.address()));
 
-            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress.address());
+            MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress);
             TranslationUnit rv = new TranslationUnit(tu);
             // even if we failed to parse, we might still have diagnostics
             rv.processDiagnostics(dh);

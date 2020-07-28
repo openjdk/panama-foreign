@@ -22,6 +22,7 @@
  */
 
 import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
@@ -97,8 +98,8 @@ public class ConstantsTest extends JextractToolRunner {
                 { "BOOL_VALUE", byte.class, equalsTo((byte)1) },
                 { "SUB", int.class, equalsTo( 7 ) },
                 // pointer type values
-                { "STR", MemoryAddress.class, equalsToJavaStr("Hello") },
-                { "QUOTE", MemoryAddress.class, equalsToJavaStr("QUOTE") },
+                { "STR", MemorySegment.class, equalsToJavaStr("Hello") },
+                { "QUOTE", MemorySegment.class, equalsToJavaStr("QUOTE") },
                 { "ZERO_PTR", MemoryAddress.class, equalsPtrContents(0) },
                 { "F_PTR", MemoryAddress.class, equalsPtrContents(0xFFFFFFFFFFFFFFFFL) },
         };
@@ -108,7 +109,7 @@ public class ConstantsTest extends JextractToolRunner {
         return actual -> assertEquals(actual, expected);
     }
 
-    static Consumer<MemoryAddress> equalsToJavaStr(String expected) {
+    static Consumer<MemorySegment> equalsToJavaStr(String expected) {
         return actual -> assertEquals(CSupport.toJavaString(actual), expected);
     }
 

@@ -150,10 +150,10 @@ public class TestClassGeneration extends JextractToolRunner {
 
     @Test(dataProvider = "stringConstants")
     public void testStringConstant(String name, String expectedValue) throws Throwable {
-        Method getter = checkMethod(cls, name, MemoryAddress.class);
-        MemoryAddress actual = (MemoryAddress) getter.invoke(null);
+        Method getter = checkMethod(cls, name, MemorySegment.class);
+        MemorySegment actual = (MemorySegment) getter.invoke(null);
         byte[] expected = expectedValue.getBytes(StandardCharsets.UTF_8);
-        assertEquals(actual.segment().byteSize(), expected.length + 1);
+        assertEquals(actual.byteSize(), expected.length + 1);
         for (int i = 0; i < expected.length; i++) {
             assertEquals((byte) VH_bytes.get(actual, (long) i), expected[i]);
         }
@@ -178,16 +178,13 @@ public class TestClassGeneration extends JextractToolRunner {
         Method layout_getter = checkMethod(cls, name + "$LAYOUT", MemoryLayout.class);
         assertEquals(layout_getter.invoke(null), expectedLayout);
 
-        Method addr_getter = checkMethod(cls, name + "$ADDR", MemoryAddress.class);
-        MemoryAddress addr = MemorySegment.ofNativeRestricted(
-                (MemoryAddress)addr_getter.invoke(null),
-                expectedLayout.byteSize(),
-                null, null, null).address();
+        Method addr_getter = checkMethod(cls, name + "$ADDR", MemorySegment.class);
+        MemorySegment segment = (MemorySegment)addr_getter.invoke(null);
 
         Method vh_getter = checkMethod(cls, name + "$VH", VarHandle.class);
         VarHandle vh = (VarHandle) vh_getter.invoke(null);
         assertEquals(vh.varType(), expectedType);
-        assertEquals(vh.get(addr), expectedValue);
+        assertEquals(vh.get(segment), expectedValue);
 
         checkMethod(cls, name + "$get", expectedType);
         checkMethod(cls, name + "$set", void.class, expectedType);
@@ -205,9 +202,9 @@ public class TestClassGeneration extends JextractToolRunner {
             VarHandle vh = (VarHandle) vh_getter.invoke(null);
             assertEquals(vh.varType(), expectedType);
 
-            Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemoryAddress.class);
-            Method setter = checkMethod(structCls, memberName + "$set", void.class, MemoryAddress.class, expectedType);
-            MemoryAddress addr = struct.address();
+            Method getter = checkMethod(structCls, memberName + "$get", expectedType, MemorySegment.class);
+            Method setter = checkMethod(structCls, memberName + "$set", void.class, MemorySegment.class, expectedType);
+            MemorySegment addr = struct;
             setter.invoke(null, addr, testValue);
             assertEquals(getter.invoke(null, addr), testValue);
         }

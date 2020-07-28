@@ -54,7 +54,7 @@ public class LibTest8246341Test {
             assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 2)), "javascript");
             assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 3)), "c++");
         })) {
-            func(callback.address());
+            func(callback);
         }
         assertTrue(callbackCalled[0]);
     }
