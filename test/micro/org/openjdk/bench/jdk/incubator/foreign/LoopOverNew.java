@@ -73,7 +73,7 @@ public class LoopOverNew {
     public void segment_loop() {
         MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment.address(), (long) i, i);
+            VH_int.set(segment, (long) i, i);
         }
         segment.close();
     }

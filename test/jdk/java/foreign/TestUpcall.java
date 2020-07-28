@@ -97,36 +97,33 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static MemoryAddress dummyAddress;
+    static MemorySegment dummyStub;
 
     @BeforeClass
     void setup() {
-        dummyAddress = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid()).address();
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid());
     }
 
     @AfterClass
     void teardown() {
-        dummyAddress.segment().close();
+        dummyStub.close();
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        List<MemorySegment> segments = new ArrayList<>();
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         LibraryLookup.Symbol addr = lib.lookup(fName);
         MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
+        Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks, segments);
         mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
         Object res = mh.invoke(args);
         argChecks.forEach(c -> c.accept(args));
         if (ret == Ret.NON_VOID) {
             returnChecks.forEach(c -> c.accept(res));
         }
-        for (Object arg : args) {
-            if (arg != dummyAddress) {
-                cleanup(arg);
-            }
-        }
+        segments.forEach(MemorySegment::close);
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -148,18 +145,19 @@ public class TestUpcall extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[0], layouts);
     }
 
-    static Object[] makeArgs(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+    static Object[] makeArgs(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemorySegment> segments) throws ReflectiveOperationException {
         Object[] args = new Object[params.size() + 1];
         for (int i = 0 ; i < params.size() ; i++) {
-            args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
+            args[i] = makeArg(params.get(i).layout(fields), checks, i == 0, segments);
         }
-        args[params.size()] = makeCallback(ret, params, fields, checks, argChecks);
+        args[params.size()] = makeCallback(ret, params, fields, checks, argChecks, segments);
         return args;
     }
 
-    static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    @SuppressWarnings("unchecked")
+    static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks, List<MemorySegment> segments) {
         if (params.isEmpty()) {
-            return dummyAddress;
+            return dummyStub.address();
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
@@ -196,8 +194,9 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemoryAddress stub = abi.upcallStub(mh, func).address();
-        return stub;
+        MemorySegment stub = abi.upcallStub(mh, func);
+        segments.add(stub);
+        return stub.address();
     }
 
     private static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
@@ -206,7 +205,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (MemoryLayout field : g.memberLayouts()) {
             if (field instanceof ValueLayout) {
                 VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
-                assertEquals(vh.get(actual.address()), vh.get(expected.address()));
+                assertEquals(vh.get(actual), vh.get(expected));
             }
         }
     }

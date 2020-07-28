@@ -45,7 +45,7 @@ import java.util.function.Function;
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> native scope.
  * For this reason, using a bounded native scope is recommended in cases where programs might need to emulate native stack allocation.
  * <p>
- * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@code MemoryAddress} instances
+ * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@link MemorySegment} instances
  * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope.
  * <p>
  * To allow for more usability, it is possible for an native scope to reclaim ownership of an existing memory segments
@@ -75,282 +75,282 @@ public abstract class NativeScope implements AutoCloseable {
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, byte value) {
+    public MemorySegment allocate(MemoryLayout layout, byte value) {
         VarHandle handle = layout.varHandle(byte.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given short value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, short value) {
+    public MemorySegment allocate(MemoryLayout layout, short value) {
         VarHandle handle = layout.varHandle(short.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given int value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, int value) {
+    public MemorySegment allocate(MemoryLayout layout, int value) {
         VarHandle handle = layout.varHandle(int.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given float value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, float value) {
+    public MemorySegment allocate(MemoryLayout layout, float value) {
         VarHandle handle = layout.varHandle(float.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given long value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, long value) {
+    public MemorySegment allocate(MemoryLayout layout, long value) {
         VarHandle handle = layout.varHandle(long.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given double value.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
-    public MemoryAddress allocate(MemoryLayout layout, double value) {
+    public MemorySegment allocate(MemoryLayout layout, double value) {
         VarHandle handle = layout.varHandle(double.class);
-        MemoryAddress addr = allocate(layout);
+        MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, byte[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, byte[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given short array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, short[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, short[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given char array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, char[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, char[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given int array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, int[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, int[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given float array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, float[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, float[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given long array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, long[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, long[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given double array.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * address must conform to the layout alignment constraints.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
-    public MemoryAddress allocateArray(ValueLayout elementLayout, double[] array) {
+    public MemorySegment allocateArray(ValueLayout elementLayout, double[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
     }
 
-    private <Z> MemoryAddress copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
+    private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
                                                         Function<Z, MemorySegment> heapSegmentFactory) {
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
-        MemoryAddress addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
+        MemorySegment addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
         if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
-            addr.segment().copyFrom(heapSegmentFactory.apply(array));
+            addr.copyFrom(heapSegmentFactory.apply(array));
         } else {
-            ((AbstractMemorySegmentImpl)addr.segment()).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
+            ((AbstractMemorySegmentImpl)addr).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
         }
         return addr;
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout. The address returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned address must conform to the layout alignment constraints.
+     * Allocate a block of memory in this native scope with given layout. The segment returned by this method is
+     * associated with a segment which cannot be closed. Moreover, the returned segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < layout.byteSize()}.
      */
-    public MemoryAddress allocate(MemoryLayout layout) {
+    public MemorySegment allocate(MemoryLayout layout) {
         return allocate(layout.byteSize(), layout.byteAlignment());
     }
 
     /**
      * Allocate a block of memory corresponding to an array with given element layout and size.
-     * The address returned by this method is associated with a segment which cannot be closed.
-     * Moreover, the returned address must conform to the layout alignment constraints. This is equivalent to the
+     * The segment returned by this method is associated with a segment which cannot be closed.
+     * Moreover, the returned segment must conform to the layout alignment constraints. This is equivalent to the
      * following code:
      * <pre>{@code
     allocate(MemoryLayout.ofSequence(size, elementLayout));
      * }</pre>
      * @param elementLayout the array element layout.
      * @param size the array element count.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < (elementLayout.byteSize() * size)}.
      */
-    public MemoryAddress allocateArray(MemoryLayout elementLayout, long size) {
+    public MemorySegment allocateArray(MemoryLayout elementLayout, long size) {
         return allocate(MemoryLayout.ofSequence(size, elementLayout));
     }
 
     /**
-     * Allocate a block of memory in this native scope with given size. The address returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned address must be aligned to {@code size}.
+     * Allocate a block of memory in this native scope with given size. The segment returned by this method is
+     * associated with a segment which cannot be closed. Moreover, the returned segment must be aligned to {@code size}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
-    public MemoryAddress allocate(long bytesSize) {
+    public MemorySegment allocate(long bytesSize) {
         return allocate(bytesSize, bytesSize);
     }
 
     /**
      * Allocate a block of memory in this native scope with given size and alignment constraint.
-     * The address returned by this method is associated with a segment which cannot be closed. Moreover,
-     * the returned address must be aligned to {@code alignment}.
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover,
+     * the returned segment must be aligned to {@code alignment}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
-     * @return an address which points to the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
      * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
      * {@code limit() - size() < bytesSize}.
      */
-    public abstract MemoryAddress allocate(long bytesSize, long bytesAlignment);
+    public abstract MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
      * Register a segment on this scope, which will then reclaim ownership of said segment.
@@ -372,7 +372,7 @@ public abstract class NativeScope implements AutoCloseable {
     public abstract MemorySegment register(MemorySegment segment);
 
     /**
-     * Close this native scope; calling this method will render any address obtained through this native scope
+     * Close this native scope; calling this method will render any segment obtained through this native scope
      * unusable and might release any backing memory resources associated with this native scope.
      */
     @Override

@@ -27,7 +27,6 @@
  * @run testng/othervm -Dforeign.restricted=permit TestSharedAccess
  */
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemoryLayouts;
@@ -56,12 +55,12 @@ public class TestSharedAccess {
         Thread owner = Thread.currentThread();
         MemorySegment s = MemorySegment.allocateNative(4);
         AtomicReference<MemorySegment> confined = new AtomicReference<>(s);
-        setInt(s.address(), 42);
-        assertEquals(getInt(s.address()), 42);
+        setInt(s, 42);
+        assertEquals(getInt(s), 42);
         List<Thread> threads = new ArrayList<>();
         for (int i = 0 ; i < 1000 ; i++) {
             threads.add(new Thread(() -> {
-                assertEquals(getInt(confined.get().address()), 42);
+                assertEquals(getInt(confined.get()), 42);
                 confined.set(confined.get().withOwnerThread(owner));
             }));
         }
@@ -82,7 +81,7 @@ public class TestSharedAccess {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
         try (MemorySegment s = MemorySegment.allocateNative(layout)) {
             for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
-                setInt(s.address().addOffset(i * 4), 42);
+                setInt(s.asSlice(i * 4), 42);
             }
             List<Thread> threads = new ArrayList<>();
             List<Spliterator<MemorySegment>> spliterators = new ArrayList<>();
@@ -105,7 +104,7 @@ public class TestSharedAccess {
             for (Spliterator<MemorySegment> spliterator : spliterators) {
                 threads.add(new Thread(() -> {
                     spliterator.tryAdvance(local -> {
-                        assertEquals(getInt(local.address()), 42);
+                        assertEquals(getInt(local), 42);
                         accessCount.incrementAndGet();
                     });
                 }));
@@ -125,14 +124,14 @@ public class TestSharedAccess {
     @Test
     public void testSharedUnsafe() throws Throwable {
         try (MemorySegment s = MemorySegment.allocateNative(4)) {
-            setInt(s.address(), 42);
-            assertEquals(getInt(s.address()), 42);
+            setInt(s, 42);
+            assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
             MemorySegment sharedSegment = MemorySegment.ofNativeRestricted(
                     s.address(), s.byteSize(), null, null, null);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
-                    assertEquals(getInt(sharedSegment.address()), 42);
+                    assertEquals(getInt(sharedSegment), 42);
                 }));
             }
             threads.forEach(Thread::start);
@@ -225,8 +224,7 @@ public class TestSharedAccess {
                     } catch (InterruptedException e) {
                     }
 
-                    MemoryAddress base = s2.address();
-                    setInt(base.addOffset(4), -42);
+                    setInt(s2.asSlice(4), -42);
                     fail();
                 } catch (IllegalStateException ex) {
                     assertTrue(ex.getMessage().contains("owning thread"));
@@ -234,19 +232,18 @@ public class TestSharedAccess {
             });
 
             a.await();
-            MemoryAddress base = s1.address();
-            setInt(base.addOffset(4), 42);
+            setInt(s1.asSlice(4), 42);
         }
 
         b.countDown();
         r.get();
     }
 
-    static int getInt(MemoryAddress address) {
-        return (int)intHandle.getVolatile(address);
+    static int getInt(MemorySegment base) {
+        return (int)intHandle.getVolatile(base);
     }
 
-    static void setInt(MemoryAddress address, int value) {
-        intHandle.setVolatile(address, value);
+    static void setInt(MemorySegment base, int value) {
+        intHandle.setVolatile(base, value);
     }
 }

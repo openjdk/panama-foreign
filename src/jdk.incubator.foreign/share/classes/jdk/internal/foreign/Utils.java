@@ -27,13 +27,13 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.access.foreign.MemoryAddressProxy;
+import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.VM;
 import sun.invoke.util.Wrapper;
@@ -57,8 +57,8 @@ public final class Utils {
 
     static {
         try {
-            ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterAddress",
-                    MethodType.methodType(MemoryAddressProxy.class, MemoryAddress.class));
+            ADDRESS_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterSegment",
+                    MethodType.methodType(MemorySegmentProxy.class, MemorySegment.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -71,6 +71,11 @@ public final class Utils {
     public static MemoryAddress alignUp(MemoryAddress ma, long alignment) {
         long offset = ma.toRawLongValue();
         return ma.addOffset(alignUp(offset, alignment) - offset);
+    }
+
+    public static MemorySegment alignUp(MemorySegment ms, long alignment) {
+        long offset = ms.address().toRawLongValue();
+        return ms.asSlice(alignUp(offset, alignment) - offset);
     }
 
     public static long bitsToBytesOrThrow(long bits, Supplier<RuntimeException> exFactory) {
@@ -87,8 +92,8 @@ public final class Utils {
         return MemoryHandles.filterCoordinates(handle, 0, ADDRESS_FILTER);
     }
 
-    private static MemoryAddressProxy filterAddress(MemoryAddress addr) {
-        return (MemoryAddressImpl)addr;
+    private static MemorySegmentProxy filterSegment(MemorySegment segment) {
+        return (AbstractMemorySegmentImpl)segment;
     }
 
     public static void checkRestrictedAccess(String method) {

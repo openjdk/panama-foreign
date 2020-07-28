@@ -25,6 +25,8 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.Stable;
@@ -49,7 +51,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
 
-    private static final VarHandle VH_LONG = MemoryHandles.varHandle(long.class, ByteOrder.nativeOrder());
+    private static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
 
     @Stable
     private final MethodHandle mh;
@@ -80,20 +82,21 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
 
     private void invoke(MemoryAddress buffer) {
         try {
+            MemorySegment bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
+
             if (DEBUG) {
                 System.err.println("Buffer state before:");
-                layout.dump(abi.arch, buffer, System.err);
+                layout.dump(abi.arch, bufferBase, System.err);
             }
 
-            MemoryAddress bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
-            MemoryAddress stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(buffer.rebase(bufferBase.segment()).addOffset(layout.stack_args)));
+            MemorySegment stackArgsBase = MemoryAddressImpl.ofLongUnchecked((long)VH_LONG.get(bufferBase.asSlice(layout.stack_args)));
             Object[] args = new Object[type.parameterCount()];
             for (int i = 0 ; i < type.parameterCount() ; i++) {
                 args[i] = BindingInterpreter.box(callingSequence.argumentBindings(i),
                         (storage, type) -> {
-                            MemoryAddress ptr = abi.arch.isStackType(storage.type())
-                                ? stackArgsBase.addOffset(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
-                                : bufferBase.addOffset(layout.argOffset(storage));
+                            MemorySegment ptr = abi.arch.isStackType(storage.type())
+                                ? stackArgsBase.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
+                                : bufferBase.asSlice(layout.argOffset(storage));
                             return SharedUtils.read(ptr, type);
                         });
             }
@@ -113,14 +116,14 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
             if (mh.type().returnType() != void.class) {
                 BindingInterpreter.unbox(o, callingSequence.returnBindings(),
                         (storage, type, value) -> {
-                            MemoryAddress ptr = bufferBase.addOffset(layout.retOffset(storage));
+                            MemorySegment ptr = bufferBase.asSlice(layout.retOffset(storage));
                             SharedUtils.writeOverSized(ptr, type, value);
                         }, null);
             }
 
             if (DEBUG) {
                 System.err.println("Buffer state after:");
-                layout.dump(abi.arch, buffer, System.err);
+                layout.dump(abi.arch, bufferBase, System.err);
             }
         } catch (Throwable t) {
             throw new IllegalStateException(t);

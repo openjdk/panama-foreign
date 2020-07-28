@@ -30,15 +30,9 @@ import jdk.internal.foreign.MemoryAddressImpl;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
- * {@link MemorySegment#address()} method; such addresses are said to be <em>checked</em>, and can be expressed
- * as <em>offsets</em> into some underlying memory segment (see {@link #segment()} and {@link #segmentOffset()}).
- * Since checked memory addresses feature both spatial and temporal bounds, these addresses can <em>safely</em> be
- * dereferenced using a memory access var handle (see {@link MemoryHandles}).
- * <p>
- * If an address does not have any associated segment, it is said to be <em>unchecked</em>. Unchecked memory
- * addresses do not feature known spatial or temporal bounds; as such, attempting a memory dereference operation
- * using an unchecked memory address will result in a runtime exception. Unchecked addresses can be obtained
- * e.g. by calling the {@link #ofLong(long)} method.
+ * {@link MemorySegment#address()} method, and can refer to either off-heap or on-heap memory.
+ * Given an address, it is possible to compute its offset relative to a given segment, which can be useful
+ * when performing memory dereference operations using a memory access var handle (see {@link MemoryHandles}).
  * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
  * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
@@ -69,12 +63,24 @@ public interface MemoryAddress extends Addressable {
     MemoryAddress addOffset(long offset);
 
     /**
-     * Returns the offset of this memory address into the underlying segment (if any).
-     * @return the offset of this memory address into the underlying segment (if any).
-     * @throws UnsupportedOperationException if no segment is associated with this memory address,
-     * e.g. if {@code segment() == null}.
+     * Returns the offset of this memory address into the given segment. More specifically, if both the segment's
+     * base address and this address are off-heap addresses, the result is computed as
+     * {@code this.toRawLongValue() - segment.address().toRawLongValue()}. Otherwise, if both addresses in the form
+     * {@code (B, O1)}, {@code (B, O2)}, where {@code B} is the same base heap object and {@code O1}, {@code O2}
+     * are byte offsets (relative to the base object) associated with this address and the segment's base address,
+     * the result is computed as {@code O1 - O2}.
+     * <p>
+     * If the segment's base address and this address are both heap addresses, but with different base objects, the result is undefined
+     * and an exception is thrown. Similarly, if the segment's base address is an heap address (resp. off-heap) and
+     * this address is an off-heap (resp. heap) address, the result is undefined and an exception is thrown.
+     * Otherwise, the result is a byte offset {@code SO}. If this address falls within the
+     * spatial bounds of the given segment, then {@code 0 <= SO < segment.byteSize()}; otherwise, {@code SO < 0 || SO > segment.byteSize()}.
+     * @return the offset of this memory address into the given segment.
+     * @param segment the segment relative to which this address offset should be computed
+     * @throws IllegalArgumentException if {@code segment} is not compatible with this address; this can happen, for instance,
+     * when {@code segment} models an heap memory region, while this address models an off-heap memory address.
      */
-    long segmentOffset();
+    long segmentOffset(MemorySegment segment);
 
     /**
      * Returns the raw long value associated to this memory address.
@@ -82,21 +88,6 @@ public interface MemoryAddress extends Addressable {
      * @throws UnsupportedOperationException if this memory address is associated with an heap segment.
      */
     long toRawLongValue();
-
-    /**
-     * Returns the memory segment (if any) this address belongs to.
-     * @return The memory segment this address belongs to, or {@code null} if no such segment exists.
-     */
-    MemorySegment segment();
-
-    /**
-     * Reinterpret this address as an offset into the provided segment.
-     * @param segment the segment to be rebased
-     * @return a new address pointing to the same memory location through the provided segment
-     * @throws IllegalArgumentException if the provided segment is not a valid rebase target for this address. This
-     * can happen, for instance, if an heap-based addressed is rebased to an off-heap memory segment.
-     */
-    MemoryAddress rebase(MemorySegment segment);
 
     /**
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
@@ -122,20 +113,18 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The <em>unchecked</em> memory address instance modelling the {@code NULL} address. This address is <em>not</em> backed by
-     * a memory segment and hence it cannot be dereferenced.
+     * The off-heap memory address instance modelling the {@code NULL} address.
      */
-    MemoryAddress NULL = new MemoryAddressImpl( 0L);
+    MemoryAddress NULL = new MemoryAddressImpl(null,  0L);
 
     /**
-     * Obtain a new <em>unchecked</em> memory address instance from given long address. The returned address is <em>not</em> backed by
-     * a memory segment and hence it cannot be dereferenced.
+     * Obtain an off-heap memory address instance from given long address.
      * @param value the long address.
      * @return the new memory address instance.
      */
     static MemoryAddress ofLong(long value) {
         return value == 0 ?
                 NULL :
-                new MemoryAddressImpl(value);
+                new MemoryAddressImpl(null, value);
     }
 }
