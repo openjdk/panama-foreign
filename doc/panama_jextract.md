@@ -99,7 +99,6 @@ jextract \
 
 ```java
 
-
 import static jdk.incubator.foreign.CSupport.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
@@ -111,8 +110,7 @@ public class PythonMain {
         String script = "print(sum([33, 55, 66])); print('Hello from Python!')\n";
 
         Py_Initialize();
-        try (var s = toCString(script)) {
-            var str = s.baseAddress();
+        try (var str = toCString(script)) {
             PyRun_SimpleStringFlags(str, NULL);
             Py_Finalize();
         }
@@ -154,10 +152,9 @@ import static jdk.incubator.foreign.CSupport.*;
 
 public class Readline {
     public static void main(String[] args) {
-        try (var s = toCString("name? ")) {
-            var pstr = s.baseAddress();
+        try (var str = toCString("name? ")) {
             // call "readline" API
-            var p = readline(pstr);
+            var p = readline(str);
 
             // print char* as is
             System.out.println(p);
@@ -194,10 +191,9 @@ jextract -t org.unix -lcurl \
 
 ```java
 
-
 import static jdk.incubator.foreign.MemoryAddress.NULL;
-import static org.unix.RuntimeHelper.*;
-import static org.unix.curl_h.*;
+import static org.jextract.RuntimeHelper.*;
+import static org.jextract.curl_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 public class CurlMain {
@@ -206,11 +202,12 @@ public class CurlMain {
        curl_global_init(CURL_GLOBAL_DEFAULT());
        var curl = curl_easy_init();
        if(!curl.equals(NULL)) {
-           try (var s = toCString(urlStr)) {
-               var url = s.baseAddress();
-               curl_easy_setopt(curl, CURLOPT_URL(), url);
+           try (var url = toCString(urlStr)) {
+               curl_easy_setopt(curl, CURLOPT_URL(), url.address());
                int res = curl_easy_perform(curl);
                if (res != CURLE_OK()) {
+                   String error = toJavaStringRestricted(curl_easy_strerror(res));
+                   System.out.println("Curl error: " + error);
                    curl_easy_cleanup(curl);
                }
            }
@@ -349,6 +346,7 @@ jextract \
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import lapack.*;
 import static lapack.lapacke_h.*;
@@ -379,20 +377,20 @@ public class TestLapack {
             /* Print Right Rand Side */
             print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
             System.out.println();
-
+            
             /* Executable statements */
             //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
             /* Solve least squares problem*/
             info = LAPACKE_dgels(LAPACK_COL_MAJOR(), (byte)'N', m, n, nrhs, A, lda, b, ldb);
-
+ 
             /* Print Solution */
             print_matrix_colmajor("Solution", n, nrhs, b, ldb );
             System.out.println();
             System.exit(info);
-        }
-    }
-
-    static void print_matrix_colmajor(String msg, int m, int n, MemoryAddress mat, int ldm) {
+        }   
+    }   
+    
+    static void print_matrix_colmajor(String msg, int m, int n, MemorySegment mat, int ldm) {
         int i, j;
         System.out.printf("\n %s\n", msg);
 
@@ -452,7 +450,7 @@ public class LibprocMain {
             // list all the pids into the native array
             proc_listallpids(pids, numPids);
             // convert native array to java array
-            int[] jpids = pids.segment().toIntArray();
+            int[] jpids = pids.toIntArray();
             // buffer for process name
             var nameBuf = scope.allocateArray(CSupport.C_CHAR, NAME_BUF_MAX);
             for (int i = 0; i < jpids.length; i++) {
@@ -633,11 +631,11 @@ public class SqliteMain {
             var callback = sqlite3_exec$callback.allocate((a, argc, argv, columnNames) -> {
                 System.out.println("Row num: " + rowNum[0]++);
                 System.out.println("numColumns = " + argc);
-                argv = asArrayRestricted(argv, C_POINTER, argc);
-                columnNames = asArrayRestricted(columnNames, C_POINTER, argc);
+                var argv_seg = asArrayRestricted(argv, C_POINTER, argc);
+                var columnNames_seg = asArrayRestricted(columnNames, C_POINTER, argc);
                 for (int i = 0; i < argc; i++) {
-                     String name = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(columnNames, i));
-                     String value = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(argv, i));
+                     String name = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(columnNames_seg, i));
+                     String value = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(argv_seg, i));
                      System.out.printf("%s = %s\n", name, value);
                 }
                 return 0;
@@ -669,5 +667,90 @@ public class SqliteMain {
 java -Dforeign.restricted=permit \
    --add-modules jdk.incubator.foreign \
    -Djava.library.path=/usr/lib SqliteMain.java
+
+```
+
+## Using OpenGL library from Java (Mac OS)
+
+### jextract glut.h
+
+```sh
+
+jextract -t opengl -lGL -l/System/Library/Frameworks/GLUT.framework/Versions/Current/GLUT \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
+  -C-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h
+
+```
+### Java program that uses OpenGL
+
+```java
+
+import jdk.incubator.foreign.CSupport;
+import static jdk.incubator.foreign.CSupport.*;
+import jdk.incubator.foreign.NativeScope;
+import static opengl.glut_h.*;
+
+public class Teapot {
+    private float rot = 0;
+
+    Teapot(NativeScope scope) {
+        // Reset Background
+        glClearColor(0f, 0f, 0f, 0f);
+        // Setup Lighting
+        glShadeModel(GL_SMOOTH());
+        var pos = scope.allocateArray(C_FLOAT, new float[] {0.0f, 15.0f, -15.0f, 0});
+        glLightfv(GL_LIGHT0(), GL_POSITION(), pos);
+        var spec = scope.allocateArray(C_FLOAT, new float[] {1, 1, 1, 0});
+        glLightfv(GL_LIGHT0(), GL_AMBIENT(), spec);
+        glLightfv(GL_LIGHT0(), GL_DIFFUSE(), spec);
+        glLightfv(GL_LIGHT0(), GL_SPECULAR(), spec);
+        var shini = scope.allocate(C_FLOAT, 113);
+        glMaterialfv(GL_FRONT(), GL_SHININESS(), shini);
+        glEnable(GL_LIGHTING());
+        glEnable(GL_LIGHT0());
+        glEnable(GL_DEPTH_TEST());
+    }
+
+    void display() {
+        glClear(GL_COLOR_BUFFER_BIT() | GL_DEPTH_BUFFER_BIT());
+        glPushMatrix();
+        glRotatef(-20f, 1f, 1f, 0f);
+        glRotatef(rot, 0f, 1f, 0f);
+        glutSolidTeapot(0.5d);
+        glPopMatrix();
+        glutSwapBuffers();
+    }
+
+    void onIdle() {
+        rot += 0.1;
+        glutPostRedisplay();
+    }
+
+    public static void main(String[] args) {
+        try (var scope = NativeScope.unboundedScope()) {
+            var argc = scope.allocate(C_INT, 0);
+            glutInit(argc, argc);
+            glutInitDisplayMode(GLUT_DOUBLE() | GLUT_RGB() | GLUT_DEPTH());
+            glutInitWindowSize(500, 500);
+            glutCreateWindow(CSupport.toCString("Hello Panama!", scope));
+            var teapot = new Teapot(scope);
+            var displayStub = glutDisplayFunc$func.allocate(teapot::display, scope);
+            var idleStub = glutIdleFunc$func.allocate(teapot::onIdle, scope);
+            glutDisplayFunc(displayStub);
+            glutIdleFunc(idleStub);
+            glutMainLoop();
+        }
+    }
+}
+
+```
+
+### Compiling and running the OpenGL sample
+
+```sh
+
+java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java $*
 
 ```

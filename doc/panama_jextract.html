@@ -148,6 +148,12 @@
 <li><a href="#java-program-that-uses-sqlite3">Java program that uses sqlite3</a></li>
 <li><a href="#compiling-and-running-the-sqlite3-sample">Compiling and running the sqlite3 sample</a></li>
 </ul></li>
+<li><a href="#using-opengl-library-from-java-mac-os">Using OpenGL library from Java (Mac OS)</a>
+<ul>
+<li><a href="#jextract-glut.h">jextract glut.h</a></li>
+<li><a href="#java-program-that-uses-opengl">Java program that uses OpenGL</a></li>
+<li><a href="#compiling-and-running-the-opengl-sample">Compiling and running the OpenGL sample</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -207,25 +213,23 @@
 <span id="cb7-7"><a href="#cb7-7"></a>   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h</span></code></pre></div>
 <h3 id="java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</h3>
 <div class="sourceCode" id="cb8"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1"></a></span>
-<span id="cb8-2"><a href="#cb8-2"></a></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="co">// import jextracted python &#39;header&#39; class</span></span>
-<span id="cb8-6"><a href="#cb8-6"></a><span class="kw">import static</span><span class="im"> org.python.RuntimeHelper.*;</span></span>
-<span id="cb8-7"><a href="#cb8-7"></a><span class="kw">import static</span><span class="im"> org.python.Python_h.*;</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a></span>
-<span id="cb8-9"><a href="#cb8-9"></a><span class="kw">public</span> <span class="kw">class</span> PythonMain {</span>
-<span id="cb8-10"><a href="#cb8-10"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb8-11"><a href="#cb8-11"></a>        <span class="bu">String</span> script = <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="sc">\n</span><span class="st">&quot;</span>;</span>
-<span id="cb8-12"><a href="#cb8-12"></a></span>
-<span id="cb8-13"><a href="#cb8-13"></a>        <span class="fu">Py_Initialize</span>();</span>
-<span id="cb8-14"><a href="#cb8-14"></a>        <span class="kw">try</span> (var s = <span class="fu">toCString</span>(script)) {</span>
-<span id="cb8-15"><a href="#cb8-15"></a>            var str = s.<span class="fu">baseAddress</span>();</span>
-<span id="cb8-16"><a href="#cb8-16"></a>            <span class="fu">PyRun_SimpleStringFlags</span>(str, NULL);</span>
-<span id="cb8-17"><a href="#cb8-17"></a>            <span class="fu">Py_Finalize</span>();</span>
-<span id="cb8-18"><a href="#cb8-18"></a>        }</span>
-<span id="cb8-19"><a href="#cb8-19"></a>    }</span>
-<span id="cb8-20"><a href="#cb8-20"></a>}</span></code></pre></div>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">// import jextracted python &#39;header&#39; class</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="kw">import static</span><span class="im"> org.python.RuntimeHelper.*;</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="kw">import static</span><span class="im"> org.python.Python_h.*;</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="kw">public</span> <span class="kw">class</span> PythonMain {</span>
+<span id="cb8-9"><a href="#cb8-9"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb8-10"><a href="#cb8-10"></a>        <span class="bu">String</span> script = <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="sc">\n</span><span class="st">&quot;</span>;</span>
+<span id="cb8-11"><a href="#cb8-11"></a></span>
+<span id="cb8-12"><a href="#cb8-12"></a>        <span class="fu">Py_Initialize</span>();</span>
+<span id="cb8-13"><a href="#cb8-13"></a>        <span class="kw">try</span> (var str = <span class="fu">toCString</span>(script)) {</span>
+<span id="cb8-14"><a href="#cb8-14"></a>            <span class="fu">PyRun_SimpleStringFlags</span>(str, NULL);</span>
+<span id="cb8-15"><a href="#cb8-15"></a>            <span class="fu">Py_Finalize</span>();</span>
+<span id="cb8-16"><a href="#cb8-16"></a>        }</span>
+<span id="cb8-17"><a href="#cb8-17"></a>    }</span>
+<span id="cb8-18"><a href="#cb8-18"></a>}</span></code></pre></div>
 <h3 id="running-the-java-code-that-calls-python-interpreter">Running the Java code that calls Python interpreter</h3>
 <div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1"></a></span>
 <span id="cb9-2"><a href="#cb9-2"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
@@ -246,18 +250,17 @@
 <span id="cb11-5"><a href="#cb11-5"></a></span>
 <span id="cb11-6"><a href="#cb11-6"></a><span class="kw">public</span> <span class="kw">class</span> Readline {</span>
 <span id="cb11-7"><a href="#cb11-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb11-8"><a href="#cb11-8"></a>        <span class="kw">try</span> (var s = <span class="fu">toCString</span>(<span class="st">&quot;name? &quot;</span>)) {</span>
-<span id="cb11-9"><a href="#cb11-9"></a>            var pstr = s.<span class="fu">baseAddress</span>();</span>
-<span id="cb11-10"><a href="#cb11-10"></a>            <span class="co">// call &quot;readline&quot; API</span></span>
-<span id="cb11-11"><a href="#cb11-11"></a>            var p = <span class="fu">readline</span>(pstr);</span>
-<span id="cb11-12"><a href="#cb11-12"></a></span>
-<span id="cb11-13"><a href="#cb11-13"></a>            <span class="co">// print char* as is</span></span>
-<span id="cb11-14"><a href="#cb11-14"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(p);</span>
-<span id="cb11-15"><a href="#cb11-15"></a>            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span></span>
-<span id="cb11-16"><a href="#cb11-16"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + <span class="fu">toJavaStringRestricted</span>(p));</span>
-<span id="cb11-17"><a href="#cb11-17"></a>        }</span>
-<span id="cb11-18"><a href="#cb11-18"></a>    }</span>
-<span id="cb11-19"><a href="#cb11-19"></a>}</span></code></pre></div>
+<span id="cb11-8"><a href="#cb11-8"></a>        <span class="kw">try</span> (var str = <span class="fu">toCString</span>(<span class="st">&quot;name? &quot;</span>)) {</span>
+<span id="cb11-9"><a href="#cb11-9"></a>            <span class="co">// call &quot;readline&quot; API</span></span>
+<span id="cb11-10"><a href="#cb11-10"></a>            var p = <span class="fu">readline</span>(str);</span>
+<span id="cb11-11"><a href="#cb11-11"></a></span>
+<span id="cb11-12"><a href="#cb11-12"></a>            <span class="co">// print char* as is</span></span>
+<span id="cb11-13"><a href="#cb11-13"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(p);</span>
+<span id="cb11-14"><a href="#cb11-14"></a>            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span></span>
+<span id="cb11-15"><a href="#cb11-15"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Hello, &quot;</span> + <span class="fu">toJavaStringRestricted</span>(p));</span>
+<span id="cb11-16"><a href="#cb11-16"></a>        }</span>
+<span id="cb11-17"><a href="#cb11-17"></a>    }</span>
+<span id="cb11-18"><a href="#cb11-18"></a>}</span></code></pre></div>
 <h3 id="running-the-java-code-that-uses-readline">Running the java code that uses readline</h3>
 <pre><code>java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/readline/lib/ Readline.java
@@ -271,23 +274,23 @@
 <span id="cb13-5"><a href="#cb13-5"></a>  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/curl/curl.h</span></code></pre></div>
 <h3 id="java-code-that-uses-libcurl">Java code that uses libcurl</h3>
 <div class="sourceCode" id="cb14"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb14-1"><a href="#cb14-1"></a></span>
-<span id="cb14-2"><a href="#cb14-2"></a></span>
-<span id="cb14-3"><a href="#cb14-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
-<span id="cb14-4"><a href="#cb14-4"></a><span class="kw">import static</span><span class="im"> org.unix.RuntimeHelper.*;</span></span>
-<span id="cb14-5"><a href="#cb14-5"></a><span class="kw">import static</span><span class="im"> org.unix.curl_h.*;</span></span>
-<span id="cb14-6"><a href="#cb14-6"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
-<span id="cb14-7"><a href="#cb14-7"></a></span>
-<span id="cb14-8"><a href="#cb14-8"></a><span class="kw">public</span> <span class="kw">class</span> CurlMain {</span>
-<span id="cb14-9"><a href="#cb14-9"></a>   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb14-10"><a href="#cb14-10"></a>       var urlStr = args[<span class="dv">0</span>];</span>
-<span id="cb14-11"><a href="#cb14-11"></a>       <span class="fu">curl_global_init</span>(<span class="fu">CURL_GLOBAL_DEFAULT</span>());</span>
-<span id="cb14-12"><a href="#cb14-12"></a>       var curl = <span class="fu">curl_easy_init</span>();</span>
-<span id="cb14-13"><a href="#cb14-13"></a>       <span class="kw">if</span>(!curl.<span class="fu">equals</span>(NULL)) {</span>
-<span id="cb14-14"><a href="#cb14-14"></a>           <span class="kw">try</span> (var s = <span class="fu">toCString</span>(urlStr)) {</span>
-<span id="cb14-15"><a href="#cb14-15"></a>               var url = s.<span class="fu">baseAddress</span>();</span>
-<span id="cb14-16"><a href="#cb14-16"></a>               <span class="fu">curl_easy_setopt</span>(curl, <span class="fu">CURLOPT_URL</span>(), url);</span>
-<span id="cb14-17"><a href="#cb14-17"></a>               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</span>
-<span id="cb14-18"><a href="#cb14-18"></a>               <span class="kw">if</span> (res != <span class="fu">CURLE_OK</span>()) {</span>
+<span id="cb14-2"><a href="#cb14-2"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb14-3"><a href="#cb14-3"></a><span class="kw">import static</span><span class="im"> org.jextract.RuntimeHelper.*;</span></span>
+<span id="cb14-4"><a href="#cb14-4"></a><span class="kw">import static</span><span class="im"> org.jextract.curl_h.*;</span></span>
+<span id="cb14-5"><a href="#cb14-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb14-6"><a href="#cb14-6"></a></span>
+<span id="cb14-7"><a href="#cb14-7"></a><span class="kw">public</span> <span class="kw">class</span> CurlMain {</span>
+<span id="cb14-8"><a href="#cb14-8"></a>   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb14-9"><a href="#cb14-9"></a>       var urlStr = args[<span class="dv">0</span>];</span>
+<span id="cb14-10"><a href="#cb14-10"></a>       <span class="fu">curl_global_init</span>(<span class="fu">CURL_GLOBAL_DEFAULT</span>());</span>
+<span id="cb14-11"><a href="#cb14-11"></a>       var curl = <span class="fu">curl_easy_init</span>();</span>
+<span id="cb14-12"><a href="#cb14-12"></a>       <span class="kw">if</span>(!curl.<span class="fu">equals</span>(NULL)) {</span>
+<span id="cb14-13"><a href="#cb14-13"></a>           <span class="kw">try</span> (var url = <span class="fu">toCString</span>(urlStr)) {</span>
+<span id="cb14-14"><a href="#cb14-14"></a>               <span class="fu">curl_easy_setopt</span>(curl, <span class="fu">CURLOPT_URL</span>(), url.<span class="fu">address</span>());</span>
+<span id="cb14-15"><a href="#cb14-15"></a>               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</span>
+<span id="cb14-16"><a href="#cb14-16"></a>               <span class="kw">if</span> (res != <span class="fu">CURLE_OK</span>()) {</span>
+<span id="cb14-17"><a href="#cb14-17"></a>                   <span class="bu">String</span> error = <span class="fu">toJavaStringRestricted</span>(<span class="fu">curl_easy_strerror</span>(res));</span>
+<span id="cb14-18"><a href="#cb14-18"></a>                   <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Curl error: &quot;</span> + error);</span>
 <span id="cb14-19"><a href="#cb14-19"></a>                   <span class="fu">curl_easy_cleanup</span>(curl);</span>
 <span id="cb14-20"><a href="#cb14-20"></a>               }</span>
 <span id="cb14-21"><a href="#cb14-21"></a>           }</span>
@@ -383,59 +386,60 @@
 <div class="sourceCode" id="cb21"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb21-1"><a href="#cb21-1"></a></span>
 <span id="cb21-2"><a href="#cb21-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemoryAccess;</span></span>
 <span id="cb21-3"><a href="#cb21-3"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemoryAddress;</span></span>
-<span id="cb21-4"><a href="#cb21-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
-<span id="cb21-5"><a href="#cb21-5"></a><span class="kw">import</span><span class="im"> lapack.*;</span></span>
-<span id="cb21-6"><a href="#cb21-6"></a><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></span>
-<span id="cb21-7"><a href="#cb21-7"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
-<span id="cb21-8"><a href="#cb21-8"></a></span>
-<span id="cb21-9"><a href="#cb21-9"></a><span class="kw">public</span> <span class="kw">class</span> TestLapack {</span>
-<span id="cb21-10"><a href="#cb21-10"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
-<span id="cb21-11"><a href="#cb21-11"></a></span>
-<span id="cb21-12"><a href="#cb21-12"></a>        <span class="co">/* Locals */</span></span>
-<span id="cb21-13"><a href="#cb21-13"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
-<span id="cb21-14"><a href="#cb21-14"></a>            var A = scope.<span class="fu">allocateArray</span>(C_DOUBLE, <span class="kw">new</span> <span class="dt">double</span>[]{</span>
-<span id="cb21-15"><a href="#cb21-15"></a>                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></span>
-<span id="cb21-16"><a href="#cb21-16"></a>            });</span>
-<span id="cb21-17"><a href="#cb21-17"></a>            var b = scope.<span class="fu">allocateArray</span>(C_DOUBLE, <span class="kw">new</span> <span class="dt">double</span>[]{</span>
-<span id="cb21-18"><a href="#cb21-18"></a>                    -<span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">14</span>, <span class="dv">16</span>, <span class="dv">18</span>, -<span class="dv">3</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">16</span></span>
-<span id="cb21-19"><a href="#cb21-19"></a>            });</span>
-<span id="cb21-20"><a href="#cb21-20"></a>            <span class="dt">int</span> info, m, n, lda, ldb, nrhs;</span>
-<span id="cb21-21"><a href="#cb21-21"></a></span>
-<span id="cb21-22"><a href="#cb21-22"></a>            <span class="co">/* Initialization */</span></span>
-<span id="cb21-23"><a href="#cb21-23"></a>            m = <span class="dv">5</span>;</span>
-<span id="cb21-24"><a href="#cb21-24"></a>            n = <span class="dv">3</span>;</span>
-<span id="cb21-25"><a href="#cb21-25"></a>            nrhs = <span class="dv">2</span>;</span>
-<span id="cb21-26"><a href="#cb21-26"></a>            lda = <span class="dv">5</span>;</span>
-<span id="cb21-27"><a href="#cb21-27"></a>            ldb = <span class="dv">5</span>;</span>
-<span id="cb21-28"><a href="#cb21-28"></a></span>
-<span id="cb21-29"><a href="#cb21-29"></a>            <span class="co">/* Print Entry Matrix */</span></span>
-<span id="cb21-30"><a href="#cb21-30"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );</span>
-<span id="cb21-31"><a href="#cb21-31"></a>            <span class="co">/* Print Right Rand Side */</span></span>
-<span id="cb21-32"><a href="#cb21-32"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );</span>
-<span id="cb21-33"><a href="#cb21-33"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
-<span id="cb21-34"><a href="#cb21-34"></a></span>
-<span id="cb21-35"><a href="#cb21-35"></a>            <span class="co">/* Executable statements */</span></span>
-<span id="cb21-36"><a href="#cb21-36"></a>            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></span>
-<span id="cb21-37"><a href="#cb21-37"></a>            <span class="co">/* Solve least squares problem*/</span></span>
-<span id="cb21-38"><a href="#cb21-38"></a>            info = <span class="fu">LAPACKE_dgels</span>(<span class="fu">LAPACK_COL_MAJOR</span>(), (<span class="dt">byte</span>)<span class="ch">&#39;N&#39;</span>, m, n, nrhs, A, lda, b, ldb);</span>
-<span id="cb21-39"><a href="#cb21-39"></a></span>
-<span id="cb21-40"><a href="#cb21-40"></a>            <span class="co">/* Print Solution */</span></span>
-<span id="cb21-41"><a href="#cb21-41"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );</span>
-<span id="cb21-42"><a href="#cb21-42"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
-<span id="cb21-43"><a href="#cb21-43"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(info);</span>
-<span id="cb21-44"><a href="#cb21-44"></a>        }</span>
-<span id="cb21-45"><a href="#cb21-45"></a>    }</span>
-<span id="cb21-46"><a href="#cb21-46"></a></span>
-<span id="cb21-47"><a href="#cb21-47"></a>    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, MemoryAddress mat, <span class="dt">int</span> ldm) {</span>
-<span id="cb21-48"><a href="#cb21-48"></a>        <span class="dt">int</span> i, j;</span>
-<span id="cb21-49"><a href="#cb21-49"></a>        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</span>
-<span id="cb21-50"><a href="#cb21-50"></a></span>
-<span id="cb21-51"><a href="#cb21-51"></a>        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</span>
-<span id="cb21-52"><a href="#cb21-52"></a>            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, MemoryAccess.<span class="fu">getDoubleAtIndex</span>(mat, i+j*ldm));</span>
-<span id="cb21-53"><a href="#cb21-53"></a>            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</span>
-<span id="cb21-54"><a href="#cb21-54"></a>        }</span>
-<span id="cb21-55"><a href="#cb21-55"></a>    }</span>
-<span id="cb21-56"><a href="#cb21-56"></a>}</span></code></pre></div>
+<span id="cb21-4"><a href="#cb21-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemorySegment;</span></span>
+<span id="cb21-5"><a href="#cb21-5"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
+<span id="cb21-6"><a href="#cb21-6"></a><span class="kw">import</span><span class="im"> lapack.*;</span></span>
+<span id="cb21-7"><a href="#cb21-7"></a><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></span>
+<span id="cb21-8"><a href="#cb21-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb21-9"><a href="#cb21-9"></a></span>
+<span id="cb21-10"><a href="#cb21-10"></a><span class="kw">public</span> <span class="kw">class</span> TestLapack {</span>
+<span id="cb21-11"><a href="#cb21-11"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb21-12"><a href="#cb21-12"></a></span>
+<span id="cb21-13"><a href="#cb21-13"></a>        <span class="co">/* Locals */</span></span>
+<span id="cb21-14"><a href="#cb21-14"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb21-15"><a href="#cb21-15"></a>            var A = scope.<span class="fu">allocateArray</span>(C_DOUBLE, <span class="kw">new</span> <span class="dt">double</span>[]{</span>
+<span id="cb21-16"><a href="#cb21-16"></a>                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></span>
+<span id="cb21-17"><a href="#cb21-17"></a>            });</span>
+<span id="cb21-18"><a href="#cb21-18"></a>            var b = scope.<span class="fu">allocateArray</span>(C_DOUBLE, <span class="kw">new</span> <span class="dt">double</span>[]{</span>
+<span id="cb21-19"><a href="#cb21-19"></a>                    -<span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">14</span>, <span class="dv">16</span>, <span class="dv">18</span>, -<span class="dv">3</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">16</span></span>
+<span id="cb21-20"><a href="#cb21-20"></a>            });</span>
+<span id="cb21-21"><a href="#cb21-21"></a>            <span class="dt">int</span> info, m, n, lda, ldb, nrhs;</span>
+<span id="cb21-22"><a href="#cb21-22"></a></span>
+<span id="cb21-23"><a href="#cb21-23"></a>            <span class="co">/* Initialization */</span></span>
+<span id="cb21-24"><a href="#cb21-24"></a>            m = <span class="dv">5</span>;</span>
+<span id="cb21-25"><a href="#cb21-25"></a>            n = <span class="dv">3</span>;</span>
+<span id="cb21-26"><a href="#cb21-26"></a>            nrhs = <span class="dv">2</span>;</span>
+<span id="cb21-27"><a href="#cb21-27"></a>            lda = <span class="dv">5</span>;</span>
+<span id="cb21-28"><a href="#cb21-28"></a>            ldb = <span class="dv">5</span>;</span>
+<span id="cb21-29"><a href="#cb21-29"></a></span>
+<span id="cb21-30"><a href="#cb21-30"></a>            <span class="co">/* Print Entry Matrix */</span></span>
+<span id="cb21-31"><a href="#cb21-31"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );</span>
+<span id="cb21-32"><a href="#cb21-32"></a>            <span class="co">/* Print Right Rand Side */</span></span>
+<span id="cb21-33"><a href="#cb21-33"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );</span>
+<span id="cb21-34"><a href="#cb21-34"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
+<span id="cb21-35"><a href="#cb21-35"></a>            </span>
+<span id="cb21-36"><a href="#cb21-36"></a>            <span class="co">/* Executable statements */</span></span>
+<span id="cb21-37"><a href="#cb21-37"></a>            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></span>
+<span id="cb21-38"><a href="#cb21-38"></a>            <span class="co">/* Solve least squares problem*/</span></span>
+<span id="cb21-39"><a href="#cb21-39"></a>            info = <span class="fu">LAPACKE_dgels</span>(<span class="fu">LAPACK_COL_MAJOR</span>(), (<span class="dt">byte</span>)<span class="ch">&#39;N&#39;</span>, m, n, nrhs, A, lda, b, ldb);</span>
+<span id="cb21-40"><a href="#cb21-40"></a> </span>
+<span id="cb21-41"><a href="#cb21-41"></a>            <span class="co">/* Print Solution */</span></span>
+<span id="cb21-42"><a href="#cb21-42"></a>            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );</span>
+<span id="cb21-43"><a href="#cb21-43"></a>            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
+<span id="cb21-44"><a href="#cb21-44"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(info);</span>
+<span id="cb21-45"><a href="#cb21-45"></a>        }   </span>
+<span id="cb21-46"><a href="#cb21-46"></a>    }   </span>
+<span id="cb21-47"><a href="#cb21-47"></a>    </span>
+<span id="cb21-48"><a href="#cb21-48"></a>    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, MemorySegment mat, <span class="dt">int</span> ldm) {</span>
+<span id="cb21-49"><a href="#cb21-49"></a>        <span class="dt">int</span> i, j;</span>
+<span id="cb21-50"><a href="#cb21-50"></a>        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</span>
+<span id="cb21-51"><a href="#cb21-51"></a></span>
+<span id="cb21-52"><a href="#cb21-52"></a>        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</span>
+<span id="cb21-53"><a href="#cb21-53"></a>            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, MemoryAccess.<span class="fu">getDoubleAtIndex</span>(mat, i+j*ldm));</span>
+<span id="cb21-54"><a href="#cb21-54"></a>            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</span>
+<span id="cb21-55"><a href="#cb21-55"></a>        }</span>
+<span id="cb21-56"><a href="#cb21-56"></a>    }</span>
+<span id="cb21-57"><a href="#cb21-57"></a>}</span></code></pre></div>
 <h3 id="compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</h3>
 <div class="sourceCode" id="cb22"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1"></a></span>
 <span id="cb22-2"><a href="#cb22-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
@@ -471,7 +475,7 @@
 <span id="cb24-18"><a href="#cb24-18"></a>            <span class="co">// list all the pids into the native array</span></span>
 <span id="cb24-19"><a href="#cb24-19"></a>            <span class="fu">proc_listallpids</span>(pids, numPids);</span>
 <span id="cb24-20"><a href="#cb24-20"></a>            <span class="co">// convert native array to java array</span></span>
-<span id="cb24-21"><a href="#cb24-21"></a>            <span class="dt">int</span>[] jpids = pids.<span class="fu">segment</span>().<span class="fu">toIntArray</span>();</span>
+<span id="cb24-21"><a href="#cb24-21"></a>            <span class="dt">int</span>[] jpids = pids.<span class="fu">toIntArray</span>();</span>
 <span id="cb24-22"><a href="#cb24-22"></a>            <span class="co">// buffer for process name</span></span>
 <span id="cb24-23"><a href="#cb24-23"></a>            var nameBuf = scope.<span class="fu">allocateArray</span>(CSupport.<span class="fu">C_CHAR</span>, NAME_BUF_MAX);</span>
 <span id="cb24-24"><a href="#cb24-24"></a>            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</span>
@@ -616,11 +620,11 @@
 <span id="cb31-66"><a href="#cb31-66"></a>            var callback = sqlite3_exec$callback.<span class="fu">allocate</span>((a, argc, argv, columnNames) -&gt; {</span>
 <span id="cb31-67"><a href="#cb31-67"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Row num: &quot;</span> + rowNum[<span class="dv">0</span>]++);</span>
 <span id="cb31-68"><a href="#cb31-68"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;numColumns = &quot;</span> + argc);</span>
-<span id="cb31-69"><a href="#cb31-69"></a>                argv = <span class="fu">asArrayRestricted</span>(argv, C_POINTER, argc);</span>
-<span id="cb31-70"><a href="#cb31-70"></a>                columnNames = <span class="fu">asArrayRestricted</span>(columnNames, C_POINTER, argc);</span>
+<span id="cb31-69"><a href="#cb31-69"></a>                var argv_seg = <span class="fu">asArrayRestricted</span>(argv, C_POINTER, argc);</span>
+<span id="cb31-70"><a href="#cb31-70"></a>                var columnNames_seg = <span class="fu">asArrayRestricted</span>(columnNames, C_POINTER, argc);</span>
 <span id="cb31-71"><a href="#cb31-71"></a>                <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; argc; i++) {</span>
-<span id="cb31-72"><a href="#cb31-72"></a>                     <span class="bu">String</span> name = <span class="fu">toJavaStringRestricted</span>(MemoryAccess.<span class="fu">getAddressAtIndex</span>(columnNames, i));</span>
-<span id="cb31-73"><a href="#cb31-73"></a>                     <span class="bu">String</span> value = <span class="fu">toJavaStringRestricted</span>(MemoryAccess.<span class="fu">getAddressAtIndex</span>(argv, i));</span>
+<span id="cb31-72"><a href="#cb31-72"></a>                     <span class="bu">String</span> name = <span class="fu">toJavaStringRestricted</span>(MemoryAccess.<span class="fu">getAddressAtIndex</span>(columnNames_seg, i));</span>
+<span id="cb31-73"><a href="#cb31-73"></a>                     <span class="bu">String</span> value = <span class="fu">toJavaStringRestricted</span>(MemoryAccess.<span class="fu">getAddressAtIndex</span>(argv_seg, i));</span>
 <span id="cb31-74"><a href="#cb31-74"></a>                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</span>
 <span id="cb31-75"><a href="#cb31-75"></a>                }</span>
 <span id="cb31-76"><a href="#cb31-76"></a>                <span class="kw">return</span> <span class="dv">0</span>;</span>
@@ -647,5 +651,75 @@
 <span id="cb32-2"><a href="#cb32-2"></a><span class="ex">java</span> -Dforeign.restricted=permit \</span>
 <span id="cb32-3"><a href="#cb32-3"></a>   --add-modules jdk.incubator.foreign \</span>
 <span id="cb32-4"><a href="#cb32-4"></a>   -Djava.library.path=/usr/lib SqliteMain.java</span></code></pre></div>
+<h2 id="using-opengl-library-from-java-mac-os">Using OpenGL library from Java (Mac OS)</h2>
+<h3 id="jextract-glut.h">jextract glut.h</h3>
+<div class="sourceCode" id="cb33"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1"></a></span>
+<span id="cb33-2"><a href="#cb33-2"></a><span class="ex">jextract</span> -t opengl -lGL -l/System/Library/Frameworks/GLUT.framework/Versions/Current/GLUT \</span>
+<span id="cb33-3"><a href="#cb33-3"></a>  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \</span>
+<span id="cb33-4"><a href="#cb33-4"></a>  -C-F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks \</span>
+<span id="cb33-5"><a href="#cb33-5"></a>  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h</span></code></pre></div>
+<h3 id="java-program-that-uses-opengl">Java program that uses OpenGL</h3>
+<div class="sourceCode" id="cb34"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb34-1"><a href="#cb34-1"></a></span>
+<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.CSupport;</span></span>
+<span id="cb34-3"><a href="#cb34-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb34-4"><a href="#cb34-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
+<span id="cb34-5"><a href="#cb34-5"></a><span class="kw">import static</span><span class="im"> opengl.glut_h.*;</span></span>
+<span id="cb34-6"><a href="#cb34-6"></a></span>
+<span id="cb34-7"><a href="#cb34-7"></a><span class="kw">public</span> <span class="kw">class</span> Teapot {</span>
+<span id="cb34-8"><a href="#cb34-8"></a>    <span class="kw">private</span> <span class="dt">float</span> rot = <span class="dv">0</span>;</span>
+<span id="cb34-9"><a href="#cb34-9"></a></span>
+<span id="cb34-10"><a href="#cb34-10"></a>    <span class="fu">Teapot</span>(NativeScope scope) {</span>
+<span id="cb34-11"><a href="#cb34-11"></a>        <span class="co">// Reset Background</span></span>
+<span id="cb34-12"><a href="#cb34-12"></a>        <span class="fu">glClearColor</span>(<span class="fl">0f</span>, <span class="fl">0f</span>, <span class="fl">0f</span>, <span class="fl">0f</span>);</span>
+<span id="cb34-13"><a href="#cb34-13"></a>        <span class="co">// Setup Lighting</span></span>
+<span id="cb34-14"><a href="#cb34-14"></a>        <span class="fu">glShadeModel</span>(<span class="fu">GL_SMOOTH</span>());</span>
+<span id="cb34-15"><a href="#cb34-15"></a>        var pos = scope.<span class="fu">allocateArray</span>(C_FLOAT, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="fl">0.0f</span>, <span class="fl">15.0f</span>, -<span class="fl">15.0f</span>, <span class="dv">0</span>});</span>
+<span id="cb34-16"><a href="#cb34-16"></a>        <span class="fu">glLightfv</span>(<span class="fu">GL_LIGHT0</span>(), <span class="fu">GL_POSITION</span>(), pos);</span>
+<span id="cb34-17"><a href="#cb34-17"></a>        var spec = scope.<span class="fu">allocateArray</span>(C_FLOAT, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>});</span>
+<span id="cb34-18"><a href="#cb34-18"></a>        <span class="fu">glLightfv</span>(<span class="fu">GL_LIGHT0</span>(), <span class="fu">GL_AMBIENT</span>(), spec);</span>
+<span id="cb34-19"><a href="#cb34-19"></a>        <span class="fu">glLightfv</span>(<span class="fu">GL_LIGHT0</span>(), <span class="fu">GL_DIFFUSE</span>(), spec);</span>
+<span id="cb34-20"><a href="#cb34-20"></a>        <span class="fu">glLightfv</span>(<span class="fu">GL_LIGHT0</span>(), <span class="fu">GL_SPECULAR</span>(), spec);</span>
+<span id="cb34-21"><a href="#cb34-21"></a>        var shini = scope.<span class="fu">allocate</span>(C_FLOAT, <span class="dv">113</span>);</span>
+<span id="cb34-22"><a href="#cb34-22"></a>        <span class="fu">glMaterialfv</span>(<span class="fu">GL_FRONT</span>(), <span class="fu">GL_SHININESS</span>(), shini);</span>
+<span id="cb34-23"><a href="#cb34-23"></a>        <span class="fu">glEnable</span>(<span class="fu">GL_LIGHTING</span>());</span>
+<span id="cb34-24"><a href="#cb34-24"></a>        <span class="fu">glEnable</span>(<span class="fu">GL_LIGHT0</span>());</span>
+<span id="cb34-25"><a href="#cb34-25"></a>        <span class="fu">glEnable</span>(<span class="fu">GL_DEPTH_TEST</span>());</span>
+<span id="cb34-26"><a href="#cb34-26"></a>    }</span>
+<span id="cb34-27"><a href="#cb34-27"></a></span>
+<span id="cb34-28"><a href="#cb34-28"></a>    <span class="dt">void</span> <span class="fu">display</span>() {</span>
+<span id="cb34-29"><a href="#cb34-29"></a>        <span class="fu">glClear</span>(<span class="fu">GL_COLOR_BUFFER_BIT</span>() | <span class="fu">GL_DEPTH_BUFFER_BIT</span>());</span>
+<span id="cb34-30"><a href="#cb34-30"></a>        <span class="fu">glPushMatrix</span>();</span>
+<span id="cb34-31"><a href="#cb34-31"></a>        <span class="fu">glRotatef</span>(-<span class="fl">20f</span>, <span class="fl">1f</span>, <span class="fl">1f</span>, <span class="fl">0f</span>);</span>
+<span id="cb34-32"><a href="#cb34-32"></a>        <span class="fu">glRotatef</span>(rot, <span class="fl">0f</span>, <span class="fl">1f</span>, <span class="fl">0f</span>);</span>
+<span id="cb34-33"><a href="#cb34-33"></a>        <span class="fu">glutSolidTeapot</span>(<span class="fl">0.5d</span>);</span>
+<span id="cb34-34"><a href="#cb34-34"></a>        <span class="fu">glPopMatrix</span>();</span>
+<span id="cb34-35"><a href="#cb34-35"></a>        <span class="fu">glutSwapBuffers</span>();</span>
+<span id="cb34-36"><a href="#cb34-36"></a>    }</span>
+<span id="cb34-37"><a href="#cb34-37"></a></span>
+<span id="cb34-38"><a href="#cb34-38"></a>    <span class="dt">void</span> <span class="fu">onIdle</span>() {</span>
+<span id="cb34-39"><a href="#cb34-39"></a>        rot += <span class="fl">0.</span><span class="dv">1</span>;</span>
+<span id="cb34-40"><a href="#cb34-40"></a>        <span class="fu">glutPostRedisplay</span>();</span>
+<span id="cb34-41"><a href="#cb34-41"></a>    }</span>
+<span id="cb34-42"><a href="#cb34-42"></a></span>
+<span id="cb34-43"><a href="#cb34-43"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb34-44"><a href="#cb34-44"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb34-45"><a href="#cb34-45"></a>            var argc = scope.<span class="fu">allocate</span>(C_INT, <span class="dv">0</span>);</span>
+<span id="cb34-46"><a href="#cb34-46"></a>            <span class="fu">glutInit</span>(argc, argc);</span>
+<span id="cb34-47"><a href="#cb34-47"></a>            <span class="fu">glutInitDisplayMode</span>(<span class="fu">GLUT_DOUBLE</span>() | <span class="fu">GLUT_RGB</span>() | <span class="fu">GLUT_DEPTH</span>());</span>
+<span id="cb34-48"><a href="#cb34-48"></a>            <span class="fu">glutInitWindowSize</span>(<span class="dv">500</span>, <span class="dv">500</span>);</span>
+<span id="cb34-49"><a href="#cb34-49"></a>            <span class="fu">glutCreateWindow</span>(CSupport.<span class="fu">toCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>, scope));</span>
+<span id="cb34-50"><a href="#cb34-50"></a>            var teapot = <span class="kw">new</span> <span class="fu">Teapot</span>(scope);</span>
+<span id="cb34-51"><a href="#cb34-51"></a>            var displayStub = glutDisplayFunc$func.<span class="fu">allocate</span>(teapot::display, scope);</span>
+<span id="cb34-52"><a href="#cb34-52"></a>            var idleStub = glutIdleFunc$func.<span class="fu">allocate</span>(teapot::onIdle, scope);</span>
+<span id="cb34-53"><a href="#cb34-53"></a>            <span class="fu">glutDisplayFunc</span>(displayStub);</span>
+<span id="cb34-54"><a href="#cb34-54"></a>            <span class="fu">glutIdleFunc</span>(idleStub);</span>
+<span id="cb34-55"><a href="#cb34-55"></a>            <span class="fu">glutMainLoop</span>();</span>
+<span id="cb34-56"><a href="#cb34-56"></a>        }</span>
+<span id="cb34-57"><a href="#cb34-57"></a>    }</span>
+<span id="cb34-58"><a href="#cb34-58"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-opengl-sample">Compiling and running the OpenGL sample</h3>
+<div class="sourceCode" id="cb35"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1"></a></span>
+<span id="cb35-2"><a href="#cb35-2"></a><span class="ex">java</span> -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
+<span id="cb35-3"><a href="#cb35-3"></a>    -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java <span class="va">$*</span></span></code></pre></div>
 </body>
 </html>
