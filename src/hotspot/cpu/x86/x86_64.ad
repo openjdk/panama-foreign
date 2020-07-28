@@ -461,6 +461,7 @@ int MachCallRuntimeNode::ret_addr_offset() {
 
 int MachCallNativeNode::ret_addr_offset() {
   int offset = 13; // movq r10,#addr; callq (r10)
+  offset += clear_avx_size();
   return offset;
 }
 //
@@ -12569,9 +12570,7 @@ instruct CallNativeDirect(method meth)
 
   ins_cost(300);
   format %{ "call_native " %}
-  ins_encode %{
-    __ call(RuntimeAddress((address) $meth$$method));
-  %}
+  ins_encode(clear_avx, Java_To_Runtime(meth));
   ins_pipe(pipe_slow);
 %}
 
