@@ -23,10 +23,6 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.incubator.foreign.unsafe
- *          jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
- *          java.base/sun.security.action
  * @build NativeTestHelper
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
