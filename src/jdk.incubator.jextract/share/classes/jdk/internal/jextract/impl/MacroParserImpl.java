@@ -52,18 +52,25 @@ import java.util.stream.Stream;
 
 class MacroParserImpl implements JextractTask.ConstantParser {
 
-    private Reparser reparser;
-    TreeMaker treeMaker;
-    MacroTable macroTable;
+    private final Reparser reparser;
+    private final TreeMaker treeMaker;
+    final MacroTable macroTable;
 
-    public MacroParserImpl(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+    private MacroParserImpl(Reparser reparser, TreeMaker treeMaker) {
+        this.reparser = reparser;
+        this.treeMaker = treeMaker;
+        this.macroTable = new MacroTable();
+    }
+
+    public static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+        Reparser reparser;
         try {
-            this.reparser = new ClangReparser(tu, args);
-            this.treeMaker = treeMaker;
-            this.macroTable = new MacroTable();
+            reparser = new ClangReparser(tu, args);
         } catch (IOException | Index.ParsingFailedException ex) {
-            this.reparser = Reparser.DUMMY;
+            throw new RuntimeException(ex);
         }
+
+        return new MacroParserImpl(reparser, treeMaker);
     }
 
     /**
@@ -103,8 +110,6 @@ class MacroParserImpl implements JextractTask.ConstantParser {
 
     interface Reparser {
         Stream<Cursor> reparse(String snippet);
-
-        Reparser DUMMY = s -> Stream.empty();
     }
 
     /**
