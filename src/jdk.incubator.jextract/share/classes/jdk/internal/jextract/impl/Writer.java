@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 
 import javax.tools.JavaFileObject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +73,9 @@ public final class Writer {
             String path = entry.getName();
             Path fullPath = destDir.resolve(path).normalize();
             Files.createDirectories(fullPath.getParent());
-            Files.write(fullPath, entry.openInputStream().readAllBytes());
+            try (InputStream is = entry.openInputStream()) {
+                Files.write(fullPath, is.readAllBytes());
+            }
         }
     }
 
