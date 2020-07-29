@@ -153,11 +153,12 @@ public final class MemoryHandles {
     /**
      * Creates a memory access var handle with the given carrier type and byte order.
      *
-     * The resulting memory access var handle features a single {@link MemorySegment} access coordinate,
-     * and its variable type is set by the given carrier type.
-     *
-     * The alignment constraint for the resulting memory access var handle is the same as the in memory size of the
-     * carrier type, and the accessed offset is set at zero.
+     * The returned var handle's type is {@code carrier} and the list of coordinate types is
+     * {@code (MemorySegment, long)}, where the {@code long} coordinate type corresponds to byte offset into
+     * a given memory segment. The returned var handle accesses bytes at an offset in a given
+     * memory segment, composing bytes to or from a value of the type {@code carrier} according to the given endianness;
+     * the alignment constraint (in bytes) for the resulting memory access var handle is the same as the size (in bytes) of the
+     * carrier type {@code carrier}.
      *
      * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
      * which are common to all memory access var handles.
@@ -178,10 +179,11 @@ public final class MemoryHandles {
     /**
      * Creates a memory access var handle with the given carrier type, alignment constraint, and byte order.
      *
-     * The resulting memory access var handle features a single {@link MemorySegment} access coordinate,
-     * and its variable type is set by the given carrier type.
-     *
-     * The accessed offset is zero.
+     * The returned var handle's type is {@code carrier} and the list of coordinate types is
+     * {@code (MemorySegment, long)}, where the {@code long} coordinate type corresponds to byte offset into
+     * a given memory segment. The returned var handle accesses bytes at an offset in a given
+     * memory segment, composing bytes to or from a value of the type {@code carrier} according to the given endianness;
+     * the alignment constraint (in bytes) for the resulting memory access var handle is given by {@code alignmentBytes}.
      *
      * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
      * which are common to all memory access var handles.
