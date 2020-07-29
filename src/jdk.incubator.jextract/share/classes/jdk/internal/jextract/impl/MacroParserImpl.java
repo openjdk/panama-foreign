@@ -52,18 +52,25 @@ import java.util.stream.Stream;
 
 class MacroParserImpl implements JextractTask.ConstantParser {
 
-    private Reparser reparser;
-    TreeMaker treeMaker;
-    MacroTable macroTable;
+    private final ClangReparser reparser;
+    private final TreeMaker treeMaker;
+    final MacroTable macroTable;
 
-    public MacroParserImpl(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+    private MacroParserImpl(ClangReparser reparser, TreeMaker treeMaker) {
+        this.reparser = reparser;
+        this.treeMaker = treeMaker;
+        this.macroTable = new MacroTable();
+    }
+
+    public static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+        ClangReparser reparser;
         try {
-            this.reparser = new ClangReparser(tu, args);
-            this.treeMaker = treeMaker;
-            this.macroTable = new MacroTable();
+            reparser = new ClangReparser(tu, args);
         } catch (IOException | Index.ParsingFailedException ex) {
-            this.reparser = Reparser.DUMMY;
+            throw new RuntimeException(ex);
         }
+
+        return new MacroParserImpl(reparser, treeMaker);
     }
 
     /**
@@ -101,18 +108,12 @@ class MacroParserImpl implements JextractTask.ConstantParser {
         }
     }
 
-    interface Reparser {
-        Stream<Cursor> reparse(String snippet);
-
-        Reparser DUMMY = s -> Stream.empty();
-    }
-
     /**
      * This class allows client to reparse a snippet of code against a given set of include files.
      * For performance reasons, the set of includes (which comes from the jextract parser) is compiled
      * into a precompiled header, so as to speed to incremental recompilation of the generated snippets.
      */
-    static class ClangReparser implements Reparser {
+    static class ClangReparser {
         final Path macro;
         final Index macroIndex = LibClang.createIndex(true);
         final TranslationUnit macroUnit;
@@ -143,7 +144,6 @@ class MacroParserImpl implements JextractTask.ConstantParser {
             }
         }
 
-        @Override
         public Stream<Cursor> reparse(String snippet) {
             macroUnit.reparse(this::processDiagnostics,
                     Index.UnsavedFile.of(macro, snippet));

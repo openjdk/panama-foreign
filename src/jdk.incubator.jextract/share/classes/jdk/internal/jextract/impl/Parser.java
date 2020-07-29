@@ -68,7 +68,7 @@ class Parser {
             true, args.toArray(new String[0]));
 
         JextractTask.ConstantParser constantParser = this.constantParser != null ?
-                this.constantParser : new MacroParserImpl(treeMaker, tu, args);
+                this.constantParser : MacroParserImpl.make(treeMaker, tu, args);
 
         List<Declaration> decls = new ArrayList<>();
         Cursor tuCursor = tu.getCursor();
