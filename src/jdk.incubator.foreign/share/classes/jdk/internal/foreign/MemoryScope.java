@@ -278,6 +278,9 @@ abstract class MemoryScope {
 
         @Override
         void checkValidState() {
+//            if ((boolean)CLOSED.getOpaque(this)) {
+//                throw new IllegalStateException("Already closed");
+//            }
             MemoryScope.checkAliveConfined(this);
         }
 

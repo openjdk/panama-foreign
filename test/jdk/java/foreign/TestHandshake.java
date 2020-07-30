@@ -36,11 +36,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TestHandshake {
 
-    static MemorySegment segment = MemorySegment.allocateNative(1_000).share();
+    static final int N_THREADS = 1;
+
+    static MemorySegment segment = MemorySegment.allocateNative(1_000_000).share();
 
     public static void main(String[] args) throws Exception {
         List<Thread> accessors = new ArrayList<>();
-        for (int i = 0 ; i < 100 ; i++) {
+        for (int i = 0 ; i < N_THREADS ; i++) {
             Thread access = new Thread(memoryAccess);
             access.start();
             accessors.add(access);
@@ -57,25 +59,38 @@ public class TestHandshake {
         });
     }
 
-    static Runnable memoryAccess = () -> {
-        try {
-            while (segment.isAlive()) {
-                int sum = 0;
-                for (int i = 0; i < segment.byteSize(); i++) {
-                    sum += MemoryAccess.getByteAtIndex(segment, i);
+    static class Accessor implements Runnable {
+        @Override
+        public void run() {
+            try {
+                while (segment.isAlive()) {
+                    int sum = 0;
+                    for (int i = 0; i < segment.byteSize(); i++) {
+                        sum += MemoryAccess.getByteAtIndex(segment, i);
+                    }
                 }
+            } catch (IllegalStateException ex) {
+                // do nothing
             }
-        } catch (IllegalStateException ex) {
-            // do nothing
         }
     };
 
-    static Runnable handshake = () -> {
-        try {
-            Thread.sleep(ThreadLocalRandom.current().nextInt(10000));
-            segment.close();
-        } catch (InterruptedException ex) {
-            // do nothing
+    static Accessor memoryAccess = new Accessor();
+
+    static class Handshaker implements Runnable {
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(ThreadLocalRandom.current().nextInt(100));
+                long prev = System.currentTimeMillis();
+                segment.close();
+                long delay = System.currentTimeMillis() - prev;
+                System.out.println("Segment closed - delay (ms): " + delay);
+            } catch (InterruptedException ex) {
+                // do nothing
+            }
         }
-    };
+    }
+
+    static Handshaker handshake = new Handshaker();
 }
