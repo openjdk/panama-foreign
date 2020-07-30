@@ -24,7 +24,6 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 

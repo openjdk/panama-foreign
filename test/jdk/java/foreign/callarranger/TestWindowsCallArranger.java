@@ -24,9 +24,7 @@
 
 /*
  * @test
- * @modules java.base/sun.nio.ch
- *          jdk.incubator.foreign/jdk.internal.foreign
- *          jdk.incubator.foreign/jdk.internal.foreign.abi
+ * @modules jdk.incubator.foreign/jdk.internal.foreign.abi
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
  * @build CallArrangerTestBase

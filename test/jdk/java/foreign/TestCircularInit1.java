@@ -23,7 +23,6 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign
  * @run testng/othervm TestCircularInit1
  */
 
