@@ -105,7 +105,7 @@ import java.util.function.Consumer;
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
  * Memory segments supports zero or more <em>access modes</em>. Supported access modes are {@link #READ},
- * {@link #WRITE}, {@link #CLOSE}, {@link #ACQUIRE} and {@link #HANDOFF}. The set of access modes supported by a segment alters the
+ * {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. The set of access modes supported by a segment alters the
  * set of operations that are supported by that segment. For instance, attempting to call {@link #close()} on
  * a segment which does not support the {@link #CLOSE} access mode will result in an exception.
  * <p>
@@ -151,7 +151,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
  * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
  * to obtain a {@link Spliterator} from a segment, which can be used to slice the segment and allow multiple thread to
- * work in parallel on disjoint segment slices (this assumes that the access mode {@link #ACQUIRE} is set).
+ * work in parallel on disjoint segment slices (this assumes that the access mode {@link #SHARE} is set).
  * For instance, the following code can be used to sum all int values in a memory segment in parallel:
  * <blockquote><pre>{@code
 MemorySegment segment = ...
@@ -183,6 +183,12 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     MemoryAddress address();
 
     /**
+     * Share segment.
+     * @return shared segment.
+     */
+    MemorySegment share();
+
+    /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
@@ -194,7 +200,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * <a href="#access-modes">access modes</a> as the given segment less the {@link #CLOSE} access mode.
      * <p>
      * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
-     * be processed in parallel by multiple threads (if the access mode {@link #ACQUIRE} is set).
+     * be processed in parallel by multiple threads (if the access mode {@link #SHARE} is set).
      * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
      * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
      * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
@@ -245,7 +251,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Obtains a segment view with specific <a href="#access-modes">access modes</a>. Supported access modes are {@link #READ}, {@link #WRITE},
-     * {@link #CLOSE}, {@link #ACQUIRE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
+     * {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
      * to one with less strict access modes. For instance, attempting to add {@link #WRITE} access mode to a read-only segment
      * will be met with an exception.
      * @param accessModes an ORed mask of zero or more access modes.
@@ -265,7 +271,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Returns the <a href="#access-modes">access modes</a> associated with this segment; the result is represented as ORed values from
-     * {@link #READ}, {@link #WRITE}, {@link #CLOSE}, {@link #ACQUIRE} and {@link #HANDOFF}.
+     * {@link #READ}, {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}.
      * @return the access modes associated with this segment.
      */
     int accessModes();
@@ -790,7 +796,7 @@ allocateNative(bytesSize, 1);
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int ACQUIRE = CLOSE << 1;
+    int SHARE = CLOSE << 1;
 
     /**
      * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
@@ -798,12 +804,12 @@ allocateNative(bytesSize, 1);
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int HANDOFF = ACQUIRE << 1;
+    int HANDOFF = SHARE << 1;
 
     /**
      * Default access mode; this is a union of all the access modes supported by memory segments.
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int ALL_ACCESS = READ | WRITE | CLOSE | ACQUIRE | HANDOFF;
+    int ALL_ACCESS = READ | WRITE | CLOSE | SHARE | HANDOFF;
 }

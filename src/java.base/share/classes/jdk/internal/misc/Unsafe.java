@@ -2449,6 +2449,18 @@ public final class Unsafe {
         return getLoadAverage0(loadavg, nelems);
     }
 
+    /**
+     * This function issues a global handshake operation with all
+     * Java threads. This is useful for implementing asymmetric
+     * dekker synchronization schemes, where expensive synchronization
+     * in performance sensitive common paths, may be shifted to
+     * a less common slow path instead.
+     */
+    public boolean synchronizeThreads() {
+        int i = synchronizeThreads0();
+        return i > 0;
+    }
+
     // The following contain CAS-based Java implementations used on
     // platforms not supporting native instructions
 
@@ -3847,6 +3859,7 @@ public final class Unsafe {
     private native int arrayIndexScale0(Class<?> arrayClass);
     private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
     private native int getLoadAverage0(double[] loadavg, int nelems);
+    private native int synchronizeThreads0();
 
 
     /**

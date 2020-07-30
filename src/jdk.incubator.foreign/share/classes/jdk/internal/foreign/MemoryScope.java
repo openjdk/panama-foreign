@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
@@ -57,6 +58,11 @@ import java.util.concurrent.locks.StampedLock;
  */
 abstract class MemoryScope {
 
+    private MemoryScope(Object ref, Runnable cleanupAction) {
+        this.ref = ref;
+        this.cleanupAction = cleanupAction;
+    }
+
     /**
      * Creates a root MemoryScope with given ref, cleanupAction and current
      * thread as the "owner" thread.
@@ -71,7 +77,7 @@ abstract class MemoryScope {
      * @return a root MemoryScope
      */
     static MemoryScope create(Object ref, Runnable cleanupAction) {
-        return new Root(Thread.currentThread(), ref, cleanupAction);
+        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction);
     }
 
     /**
@@ -91,11 +97,14 @@ abstract class MemoryScope {
      * @return a root MemoryScope
      */
     static MemoryScope createUnchecked(Thread owner, Object ref, Runnable cleanupAction) {
-        return new Root(owner, ref, cleanupAction);
+        return owner != null ?
+                new ConfinedScope(owner, ref, cleanupAction) :
+                new SharedScope(ref, cleanupAction);
     }
 
-    private final Thread owner;
-    private boolean closed; // = false
+    protected Object ref;
+    protected Runnable cleanupAction;
+    protected boolean closed; // = false
     private static final VarHandle CLOSED;
 
     static {
@@ -105,24 +114,6 @@ abstract class MemoryScope {
             throw new ExceptionInInitializerError(ex);
         }
     }
-
-    private MemoryScope(Thread owner) {
-        this.owner = owner;
-    }
-
-    /**
-     * Acquires a child scope (or peer scope if this is a child) with current
-     * thread as the "owner" thread.
-     * This method may be called in any thread.
-     * The returned instance may be published unsafely to and used in any thread,
-     * but methods that explicitly state that they may only be called in "owner" thread,
-     * must strictly be called in the thread that acquired the scope
-     * or else IllegalStateException is thrown.
-     *
-     * @return a child (or peer) scope
-     * @throws IllegalStateException if root scope is already closed
-     */
-    abstract MemoryScope acquire();
 
     /**
      * Closes this scope, executing any cleanup action if this is the root scope.
@@ -158,14 +149,14 @@ abstract class MemoryScope {
      */
     abstract MemoryScope dup(Thread newOwner);
 
+    abstract MemoryScope share();
+
     /**
      * Returns "owner" thread of this scope.
      *
      * @return owner thread (or null for unchecked scope)
      */
-    final Thread ownerThread() {
-        return owner;
-    }
+    abstract Thread ownerThread();
 
     /**
      * This method may be called in any thread.
@@ -185,13 +176,7 @@ abstract class MemoryScope {
      *                               method is executed outside owning thread
      *                               in checked scope
      */
-    @ForceInline
-    final void checkValidState() {
-        if (owner != null && owner != Thread.currentThread()) {
-            throw new IllegalStateException("Attempted access outside owning thread");
-        }
-        checkAliveConfined(this);
-    }
+    abstract void checkValidState();
 
     /**
      * Checks that this scope is still alive.
@@ -205,42 +190,71 @@ abstract class MemoryScope {
         }
     }
 
-    private static final class Root extends MemoryScope {
-        private final StampedLock lock = new StampedLock();
-        private final LongAdder acquired = new LongAdder();
-        private final Object ref;
-        private final Runnable cleanupAction;
+    static class ConfinedScope extends MemoryScope {
 
-        private Root(Thread owner, Object ref, Runnable cleanupAction) {
-            super(owner);
-            this.ref = ref;
-            this.cleanupAction = cleanupAction;
+        final Thread owner;
+
+        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction) {
+            super(ref, cleanupAction);
+            this.owner = owner;
+        }
+
+        @ForceInline
+        final void checkValidState() {
+            if (owner != Thread.currentThread()) {
+                throw new IllegalStateException("Attempted access outside owning thread");
+            }
+            checkAliveConfined(this);
         }
 
         @Override
-        MemoryScope acquire() {
-            // try to optimistically acquire the lock
-            long stamp = lock.tryOptimisticRead();
-            try {
-                for (; ; stamp = lock.readLock()) {
-                    if (stamp == 0L)
-                        continue;
-                    checkAliveConfined(this); // plain read is enough here (either successful optimistic read, or full read lock)
+        void close() {
+            checkValidState();
+            justClose();
+            if (cleanupAction != null) {
+                cleanupAction.run();
+            }
+        }
 
-                    // increment acquires
-                    acquired.increment();
-                    // did a call to close() occur since we acquired the lock?
-                    if (lock.validate(stamp)) {
-                        // no, just return the acquired scope
-                        return new Child(Thread.currentThread());
-                    } else {
-                        // yes, just back off and retry (close might have failed, after all)
-                        acquired.decrement();
-                    }
-                }
-            } finally {
-                if (StampedLock.isReadLockStamp(stamp))
-                    lock.unlockRead(stamp);
+        void justClose() {
+            checkValidState();
+            closed = true;
+        }
+
+        @Override
+        MemoryScope dup(Thread newOwner) {
+            Objects.requireNonNull(newOwner, "newOwner");
+            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
+            justClose();
+            return new ConfinedScope(newOwner, ref, cleanupAction);
+        }
+
+        @Override
+        MemoryScope share() {
+            justClose();
+            return new SharedScope(ref, cleanupAction);
+        }
+
+        @Override
+        Thread ownerThread() {
+            return owner;
+        }
+    }
+
+    static class SharedScope extends MemoryScope {
+
+        static Unsafe UNSAFE = Unsafe.getUnsafe();
+
+        SharedScope(Object ref, Runnable cleanupAction) {
+            super(ref, cleanupAction);
+        }
+
+        @Override
+        void close() {
+            checkValidState();
+            justClose();
+            if (cleanupAction != null) {
+                cleanupAction.run();
             }
         }
 
@@ -248,64 +262,34 @@ abstract class MemoryScope {
         MemoryScope dup(Thread newOwner) {
             Objects.requireNonNull(newOwner, "newOwner");
             // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
-            var duped = new Root(newOwner, ref, cleanupAction);
             justClose();
-            return duped;
+            return new ConfinedScope(newOwner, ref, cleanupAction);
         }
 
         @Override
-        void close() {
-            justClose();
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
+        MemoryScope share() {
+            throw new IllegalStateException("Already shared");
         }
 
-        @ForceInline
-        private void justClose() {
-            // enter critical section - no acquires are possible past this point
-            long stamp = lock.writeLock();
-            try {
-                checkValidState(); // plain read is enough here (full write lock)
-                // check for absence of active acquired children
-                if (acquired.sum() > 0) {
-                    throw new IllegalStateException("Cannot close this scope as it has active acquired children");
+        @Override
+        Thread ownerThread() {
+            return null;
+        }
+
+        @Override
+        void checkValidState() {
+            MemoryScope.checkAliveConfined(this);
+        }
+
+        void justClose() {
+            if (!CLOSED.compareAndSet(this, false, true)) {
+                throw new IllegalStateException("Already closed");
+            }
+            while (true) {
+                if (!UNSAFE.synchronizeThreads()) {
+                    break;
                 }
-                // now that we made sure there's no active acquired children, we can mark scope as closed
-                CLOSED.set(this, true); // plain write is enough here (full write lock)
-            } finally {
-                // leave critical section
-                lock.unlockWrite(stamp);
-            }
-        }
-
-        private final class Child extends MemoryScope {
-
-            private Child(Thread owner) {
-                super(owner);
-            }
-
-            @Override
-            MemoryScope acquire() {
-                return Root.this.acquire();
-            }
-
-            @Override
-            MemoryScope dup(Thread newOwner) {
-                checkValidState(); // child scope is always checked
-                // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
-                var duped = new Child(newOwner);
-                CLOSED.setVolatile(this, true);
-                return duped;
-            }
-
-            @Override
-            void close() {
-                checkValidState(); // child scope is always checked
-                CLOSED.set(this, true);
-                // following acts as a volatile write after plain write above so
-                // plain write gets flushed too (which is important for isAliveThreadSafe())
-                Root.this.acquired.decrement();
+                Thread.onSpinWait();
             }
         }
     }

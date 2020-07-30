@@ -26,7 +26,6 @@
  * @run testng TestSpliterator
  */
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
@@ -61,7 +60,7 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.ofSequence(size, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegment.allocateNative(layout).share();
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment, (long) i, i);
         }
@@ -215,8 +214,8 @@ public class TestSpliterator {
             () -> spliterator(mallocSegment.withAccessModes(READ), layout), READ,
             () -> spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
             () -> spliterator(mallocSegment.withAccessModes(READ|WRITE), layout), READ|WRITE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE), layout), READ|WRITE|ACQUIRE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|ACQUIRE|HANDOFF), layout), READ|WRITE|ACQUIRE|HANDOFF
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE| SHARE), layout), READ|WRITE| SHARE,
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE| SHARE |HANDOFF), layout), READ|WRITE| SHARE |HANDOFF
 
         );
         return l.entrySet().stream().map(e -> new Object[] { e.getKey(), e.getValue() }).toArray(Object[][]::new);

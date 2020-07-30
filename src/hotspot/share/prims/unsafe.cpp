@@ -38,6 +38,7 @@
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
+#include "prims/stackwalk.hpp"
 #include "prims/unsafe.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/handles.inline.hpp"
@@ -45,6 +46,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/orderAccess.hpp"
 #include "runtime/reflection.hpp"
+#include "runtime/handshake.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.hpp"
 #include "runtime/threadSMR.hpp"
@@ -1053,6 +1055,31 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
+class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
+public:
+  UnsafeSynchronizeThreadsClosure() :
+    HandshakeClosure("UnsafeSynchronizeThreads"), inCritical(0) {}
+
+  int inCritical;
+
+  void do_thread(Thread* thread) {
+    JavaFrameStream stream((JavaThread*)thread, JVM_STACKWALK_SHOW_HIDDEN_FRAMES);
+    for (; !stream.at_end(); stream.next()) {
+      //printf("FRAME %s.%s\n", stream.method()->klass_name()->as_C_string(), stream.method()->name_and_sig_as_C_string());
+      if (stream.method()->klass_name()->starts_with("java/lang/invoke/MemoryAccessVarHandle")) {
+        inCritical++;
+        return;
+      }
+    }
+  }
+};
+
+UNSAFE_ENTRY(jint, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe)) {
+  UnsafeSynchronizeThreadsClosure cl;
+  Handshake::execute(&cl);
+  return cl.inCritical;
+} UNSAFE_END
+
 
 /// JVM_RegisterUnsafeMethods
 
@@ -1121,6 +1148,8 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "unpark",             CC "(" OBJ ")V",           FN_PTR(Unsafe_Unpark)},
 
     {CC "getLoadAverage0",    CC "([DI)I",               FN_PTR(Unsafe_GetLoadAverage0)},
+
+    {CC "synchronizeThreads0",CC "()I",                  FN_PTR(Unsafe_SynchronizeThreads0)},
 
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},

@@ -260,6 +260,14 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
+    public MemorySegment share() {
+        if (!isSet(SHARE)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
+        return dup(0, length, mask, scope.share());
+    }
+
+    @Override
     public final void close() {
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
@@ -269,13 +277,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     private final void closeNoCheck() {
         scope.close();
-    }
-
-    final AbstractMemorySegmentImpl acquire() {
-        if (Thread.currentThread() != ownerThread() && !isSet(ACQUIRE)) {
-            throw unsupportedAccessMode(ACQUIRE);
-        }
-        return dup(0, length, mask, scope.acquire());
     }
 
     @Override
@@ -405,7 +406,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((mode & CLOSE) != 0) {
             modes.add("CLOSE");
         }
-        if ((mode & ACQUIRE) != 0) {
+        if ((mode & SHARE) != 0) {
             modes.add("ACQUIRE");
         }
         if ((mode & HANDOFF) != 0) {
@@ -456,11 +457,10 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         public boolean tryAdvance(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                AbstractMemorySegmentImpl acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment;
                 try {
                     action.accept(acquired.asSliceNoCheck(currentIndex * elementSize, elementSize));
                 } finally {
-                    acquired.closeNoCheck();
                     currentIndex++;
                     if (currentIndex == elemCount) {
                         segment = null;
@@ -476,7 +476,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         public void forEachRemaining(Consumer<? super MemorySegment> action) {
             Objects.requireNonNull(action);
             if (currentIndex < elemCount) {
-                AbstractMemorySegmentImpl acquired = segment.acquire();
+                AbstractMemorySegmentImpl acquired = segment;
                 try {
                     if (acquired.isSmall()) {
                         int index = (int) currentIndex;
@@ -491,7 +491,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                         }
                     }
                 } finally {
-                    acquired.closeNoCheck();
                     currentIndex = elemCount;
                     segment = null;
                 }
