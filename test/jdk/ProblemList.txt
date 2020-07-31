@@ -590,7 +590,7 @@ javax/management/monitor/DerivedGaugeMonitorTest.java         8042211 generic-al
 # jdk_io
 
 java/io/pathNames/GeneralWin32.java                             8180264 windows-all
-java/io/File/GetXSpace.java                                     6501010,8249703 windows-all,macosx-all
+java/io/File/GetXSpace.java                                     8249703 macosx-all
 
 ############################################################################
 
@@ -635,8 +635,6 @@ java/nio/channels/DatagramChannel/Unref.java                    8233519 generic-
 java/nio/channels/AsynchronousSocketChannel/StressLoopback.java 8211851 aix-ppc64
 
 java/nio/channels/Selector/Wakeup.java                          6963118 windows-all
-
-sun/nio/ch/TestMaxCachedBufferSize.java                         8212812 macosx-all
 
 ############################################################################
 
@@ -821,7 +819,6 @@ javax/swing/UIDefaults/8149879/InternalResourceBundle.java 8199054 windows-all
 javax/swing/text/html/parser/Parser/8078268/bug8078268.java 8199092 generic-all
 javax/swing/PopupFactory/8048506/bug8048506.java 8202660 windows-all
 javax/swing/JTextArea/TextViewOOM/TextViewOOM.java 8167355 generic-all
-javax/swing/text/Utilities/8142966/SwingFontMetricsTest.java 8199529 windows-all
 javax/swing/JPopupMenu/8075063/ContextMenuScrollTest.java 202880 linux-all
 javax/swing/dnd/8139050/NativeErrorsInTableDnD.java 8202765  macosx-all,linux-all
 javax/swing/Popup/TaskbarPositionTest.java 8065097 macosx-all,linux-all
@@ -928,6 +925,5 @@ jdk/jfr/event/os/TestThreadContextSwitches.java                 8247776 windows-
 # jdk_jpackage
 
 tools/jpackage/share/jdk/jpackage/tests/ModulePathTest3.java#id0    8248418 generic-all
-tools/jpackage/share/EmptyFolderPackageTest.java                    8249201 macosx-all
 
 ############################################################################
