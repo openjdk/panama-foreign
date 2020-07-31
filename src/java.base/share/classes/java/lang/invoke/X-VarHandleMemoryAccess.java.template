@@ -25,6 +25,7 @@
 package java.lang.invoke;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.vm.annotation.Critical;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.util.Objects;
@@ -51,39 +52,39 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
 #if[floatingPoint]
-    @ForceInline
+    @ForceInline @Critical
     static $rawType$ convEndian(boolean big, $type$ v) {
         $rawType$ rv = $Type$.$type$ToRaw$RawType$Bits(v);
         return big == BE ? rv : $RawBoxType$.reverseBytes(rv);
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ convEndian(boolean big, $rawType$ rv) {
         rv = big == BE ? rv : $RawBoxType$.reverseBytes(rv);
         return $Type$.$rawType$BitsTo$Type$(rv);
     }
 #else[floatingPoint]
 #if[byte]
-    @ForceInline
+    @ForceInline @Critical
     static $type$ convEndian(boolean big, $type$ n) {
         return n;
     }
 #else[byte]
-    @ForceInline
+    @ForceInline @Critical
     static $type$ convEndian(boolean big, $type$ n) {
         return big == BE ? n : $BoxType$.reverseBytes(n);
     }
 #end[byte]
 #end[floatingPoint]
 
-    @ForceInline
+    @ForceInline @Critical
     static MemorySegmentProxy checkAddress(Object obb, long offset, long length, boolean ro) {
         MemorySegmentProxy oo = (MemorySegmentProxy)Objects.requireNonNull(obb);
         oo.checkAccess(offset, length, ro);
         return oo;
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static long offset(boolean skipAlignmentMaskCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
         long address = offsetNoVMAlignCheck(skipAlignmentMaskCheck, bb, offset, alignmentMask);
         if ((address & VM_ALIGN) != 0) {
@@ -92,7 +93,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return address;
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static long offsetNoVMAlignCheck(boolean skipAlignmentMaskCheck, MemorySegmentProxy bb, long offset, long alignmentMask) {
         long base = bb.unsafeGetOffset();
         long address = base + offset;
@@ -109,7 +110,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return address;
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ get(VarHandle ob, Object obb, long base) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -133,7 +134,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[floatingPoint]
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static void set(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -159,7 +160,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[floatingPoint]
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getVolatile(VarHandle ob, Object obb, long base) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -169,7 +170,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static void setVolatile(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -179,7 +180,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAcquire(VarHandle ob, Object obb, long base) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -189,7 +190,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static void setRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -199,7 +200,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getOpaque(VarHandle ob, Object obb, long base) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -209,7 +210,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static void setOpaque(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -220,7 +221,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 #if[CAS]
 
-    @ForceInline
+    @ForceInline @Critical
     static boolean compareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -230,7 +231,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ compareAndExchange(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -241,7 +242,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ compareAndExchangeAcquire(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -252,7 +253,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ compareAndExchangeRelease(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -263,7 +264,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   convEndian(handle.be, expected), convEndian(handle.be, value)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static boolean weakCompareAndSetPlain(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -273,7 +274,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static boolean weakCompareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -283,7 +284,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static boolean weakCompareAndSetAcquire(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -293,7 +294,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static boolean weakCompareAndSetRelease(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -303,7 +304,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 convEndian(handle.be, expected), convEndian(handle.be, value));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndSet(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -314,7 +315,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   convEndian(handle.be, value)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndSetAcquire(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -325,7 +326,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                   convEndian(handle.be, value)));
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndSetRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -338,7 +339,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[CAS]
 #if[AtomicAdd]
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndAdd(VarHandle ob, Object obb, long base, $type$ delta) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -352,7 +353,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndAddAcquire(VarHandle ob, Object obb, long base, $type$ delta) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -366,7 +367,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndAddRelease(VarHandle ob, Object obb, long base, $type$ delta) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -380,7 +381,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndAddConvEndianWithCAS(MemorySegmentProxy bb, long offset, $type$ delta) {
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
@@ -394,7 +395,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[AtomicAdd]
 #if[Bitwise]
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseOr(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -408,7 +409,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseOrRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -422,7 +423,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseOrAcquire(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -436,7 +437,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseOrConvEndianWithCAS(MemorySegmentProxy bb, long offset, $type$ value) {
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
@@ -448,7 +449,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         return expectedValue;
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseAnd(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -462,7 +463,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseAndRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -476,7 +477,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseAndAcquire(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -490,7 +491,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseAndConvEndianWithCAS(MemorySegmentProxy bb, long offset, $type$ value) {
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();
@@ -503,7 +504,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
     }
 
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseXor(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -517,7 +518,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseXorRelease(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -531,7 +532,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseXorAcquire(VarHandle ob, Object obb, long base, $type$ value) {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -545,7 +546,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
         }
     }
 
-    @ForceInline
+    @ForceInline @Critical
     static $type$ getAndBitwiseXorConvEndianWithCAS(MemorySegmentProxy bb, long offset, $type$ value) {
         $type$ nativeExpectedValue, expectedValue;
         Object base = bb.unsafeGetBase();

@@ -23,12 +23,13 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign java.base/jdk.internal.misc
+ * @modules jdk.incubator.foreign java.base/jdk.internal.vm.annotation java.base/jdk.internal.misc
  * @run main TestHandshake
  */
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.vm.annotation.Critical;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -90,7 +90,8 @@ class Method : public Metadata {
     _has_injected_profile  = 1 << 4,
     _running_emcp          = 1 << 5,
     _intrinsic_candidate   = 1 << 6,
-    _reserved_stack_access = 1 << 7
+    _reserved_stack_access = 1 << 7,
+    _critical              = 1 << 8
   };
   mutable u2 _flags;
 
@@ -898,6 +899,14 @@ public:
 
   void set_hidden(bool x) {
     _flags = x ? (_flags | _hidden) : (_flags & ~_hidden);
+  }
+
+  bool is_critical() const {
+    return (_flags & _critical) != 0;
+  }
+
+  void set_critical(bool x) {
+    _flags = x ? (_flags | _critical) : (_flags & ~_critical);
   }
 
   bool intrinsic_candidate() {

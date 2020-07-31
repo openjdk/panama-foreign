@@ -2457,8 +2457,7 @@ public final class Unsafe {
      * a less common slow path instead.
      */
     public boolean synchronizeThreads() {
-        int i = synchronizeThreads0();
-        return i > 0;
+        return synchronizeThreads0();
     }
 
     // The following contain CAS-based Java implementations used on
@@ -3859,7 +3858,7 @@ public final class Unsafe {
     private native int arrayIndexScale0(Class<?> arrayClass);
     private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
     private native int getLoadAverage0(double[] loadavg, int nelems);
-    private native int synchronizeThreads0();
+    private native boolean synchronizeThreads0();
 
 
     /**

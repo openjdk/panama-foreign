@@ -41,6 +41,7 @@
 #include "prims/stackwalk.hpp"
 #include "prims/unsafe.hpp"
 #include "runtime/globals.hpp"
+#include "runtime/vframe.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -1055,29 +1056,53 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
-class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
+class UnsafeTrySynchronizeThreadsClosure : public HandshakeClosure {
 public:
-  UnsafeSynchronizeThreadsClosure() :
-    HandshakeClosure("UnsafeSynchronizeThreads"), inCritical(0) {}
+  UnsafeTrySynchronizeThreadsClosure()
+    : HandshakeClosure("UnsafeTrySynchronizeThreads")
+    , _in_critical(false)  {}
 
-  int inCritical;
+  bool _in_critical;
 
   void do_thread(Thread* thread) {
-    JavaFrameStream stream((JavaThread*)thread, JVM_STACKWALK_SHOW_HIDDEN_FRAMES);
+    if (UseNewCode2) {
+      ResourceMark rm;
+      MutexLocker ml(Threads_lock);
+      ttyLocker ttyl;
+      thread->print_on(tty, true);
+      if (thread->is_Java_thread()) {
+        JavaThread* jt = (JavaThread*)thread;
+        jt->print_stack_on(tty);
+      }
+    }
+
+    JavaThread* jt = (JavaThread*)thread;
+    vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
-      //printf("FRAME %s.%s\n", stream.method()->klass_name()->as_C_string(), stream.method()->name_and_sig_as_C_string());
-      if (stream.method()->klass_name()->starts_with("java/lang/invoke/MemoryAccessVarHandle")) {
-        inCritical++;
+      Method* m = stream.method();
+      if (m->is_critical()) {
+        if (UseNewCode) {
+          ResourceMark rm;
+          MutexLocker ml(Threads_lock);
+          ttyLocker ttyl;
+          tty->print("CRITICAL: ");
+          thread->print_on(tty);
+          if (thread->is_Java_thread()) {
+            JavaThread* jt = (JavaThread*)thread;
+            jt->print_stack_on(tty);
+          }
+        }
+        _in_critical = true;
         return;
       }
     }
   }
 };
 
-UNSAFE_ENTRY(jint, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe)) {
-  UnsafeSynchronizeThreadsClosure cl;
+UNSAFE_ENTRY(jboolean, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe)) {
+  UnsafeTrySynchronizeThreadsClosure cl;
   Handshake::execute(&cl);
-  return cl.inCritical;
+  return cl._in_critical ? JNI_TRUE : JNI_FALSE;
 } UNSAFE_END
 
 
@@ -1149,7 +1174,7 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 
     {CC "getLoadAverage0",    CC "([DI)I",               FN_PTR(Unsafe_GetLoadAverage0)},
 
-    {CC "synchronizeThreads0",CC "()I",                  FN_PTR(Unsafe_SynchronizeThreads0)},
+    {CC "synchronizeThreads0",CC "()Z",                  FN_PTR(Unsafe_SynchronizeThreads0)},
 
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},
