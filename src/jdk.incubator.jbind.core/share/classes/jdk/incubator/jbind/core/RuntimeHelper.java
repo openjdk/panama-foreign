@@ -96,22 +96,15 @@ public class RuntimeHelper {
         }
     }
 
-    private static MemoryAddress uncheck(MemoryAddress addr, MemoryLayout layout) {
-        try {
-            return MemorySegment.ofNativeRestricted(addr, layout.byteSize(), null, null, null).address();
-        } catch (Exception e) {
-            return addr;
-        }
-    }
-
-    public static final MemoryAddress lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-        return lookup(LIBRARIES, name)
-                .map(sym -> uncheck(sym.address(), layout))
-                .orElse(null);
+    public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
+        return lookup(LIBRARIES, name).map(s ->
+            MemorySegment.ofNativeRestricted(
+                 s.address(), layout.byteSize(), null, null, s
+            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE)).orElse(null);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean isVariadic) {
-        var symbol = lookup(LIBRARIES, name).orElse(null);
+        Symbol symbol = lookup(LIBRARIES, name).orElse(null);
         if (symbol == null) return null;
 
         MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
@@ -138,7 +131,7 @@ public class RuntimeHelper {
     }
 
     public static VarHandle varHandle(Class<?> carrier, MemoryLayout layout) {
-        boolean isAddr = MemoryAddress.class.isAssignableFrom(carrier);
+        boolean isAddr = carrier == MemoryAddress.class;
         int dims = 0;
         MemoryLayout tmp = layout;
         while (tmp instanceof SequenceLayout) {
@@ -152,11 +145,5 @@ public class RuntimeHelper {
             vh = MemoryHandles.asAddressVarHandle(vh);
         }
         return vh;
-    }
-
-    public static VarHandle fieldHandle(Class<?> carrier, GroupLayout layout, String fieldName) {
-        MemoryLayout fieldLayout = layout.select(MemoryLayout.PathElement.groupElement(fieldName));
-        long offset = layout.byteOffset(MemoryLayout.PathElement.groupElement(fieldName));
-        return MemoryHandles.withOffset(varHandle(carrier, fieldLayout), offset);
     }
 }

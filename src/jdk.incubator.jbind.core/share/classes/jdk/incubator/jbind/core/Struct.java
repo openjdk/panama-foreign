@@ -25,6 +25,7 @@ package jdk.incubator.jbind.core;
 
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
@@ -33,32 +34,42 @@ import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 
-public abstract class Struct<T extends Struct<T>> {
-    private final MemoryAddress addr;
+public abstract class Struct<T extends Struct<T>> implements Addressable {
+    private final MemorySegment ms;
 
-    protected Struct(MemoryAddress addr) {
-        this.addr = addr;
+    protected Struct(MemorySegment segment) {
+        this.ms = segment;
     }
 
     public abstract GroupLayout getLayout();
 
-    public MemoryAddress ptr() {
-        return addr;
+    @Override
+    public MemoryAddress address() {
+        return ms.address();
     };
 
-    protected final MemoryAddress getFieldAddr(String name) {
-        return addr.addOffset(getLayout().byteOffset(MemoryLayout.PathElement.groupElement(name)));
+    protected final MemorySegment getFieldAddr(String name) {
+        return ms.asSlice(getLayout().byteOffset(MemoryLayout.PathElement.groupElement(name)));
     }
 
     /**
-     * Return the leaf handle for field, to be called with struct address
-     * If the field is an array, proper coordinate will be inserted
+     * Return the VarHandle for the field. The returned handle features no coordinate
+     * unless the field is of SequenceLayout, then one long coordinate for each dimension
+     * is added.
      */
-    protected final VarHandle getFieldHandle(String name, Class<?> carrier) {
-        return RuntimeHelper.fieldHandle(carrier, getLayout(), name);
+    protected final VarHandle getFieldHandle(String fieldName, Class<?> carrier) {
+        MemoryLayout.PathElement field = MemoryLayout.PathElement.groupElement(fieldName);
+        MemoryLayout fieldLayout = getLayout().select(field);
+        long offset = getLayout().byteOffset(field);
+        return MemoryHandles.insertCoordinates(RuntimeHelper.varHandle(carrier, fieldLayout),
+            0, ms.asSlice(offset));
+    }
+
+    public MemorySegment segment() {
+        return ms;
     }
 
     public MemorySegment asSegment() {
-        return addr.segment().asSlice(addr.segmentOffset(), getLayout().byteSize());
+        return ms.asSlice(0, getLayout().byteSize());
     }
 }

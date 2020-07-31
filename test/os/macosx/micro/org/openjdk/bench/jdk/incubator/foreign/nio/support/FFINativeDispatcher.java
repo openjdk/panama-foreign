@@ -27,6 +27,7 @@ package org.openjdk.bench.jdk.incubator.foreign.nio.support;
 
 import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 
 public class FFINativeDispatcher extends NativeDispatcher {
@@ -37,9 +38,9 @@ public class FFINativeDispatcher extends NativeDispatcher {
 
     public static UnixFileAttributes statFFI(String path) {
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress file = CSupport.toCString(path, scope);
+            var file = CSupport.toCString(path, scope);
             LibC.stat64 buffer = LibC.stat64.allocate(scope::allocate);
-            LibC.stat64(file, buffer.ptr());
+            LibC.stat64(file, buffer);
             return new UnixFileAttributes(buffer);
         }
     }
@@ -67,11 +68,13 @@ public class FFINativeDispatcher extends NativeDispatcher {
      * @return  dirent->d_name
      */
     public static String readdirFFI(MemoryAddress dir) {
-        MemoryAddress pdir = resizePointer(LibC.readdir(dir), LibC.dirent.sizeof());
+        MemoryAddress pdir = LibC.readdir(dir);
         if (pdir.equals(MemoryAddress.NULL)) {
             return null;
         }
 
-        return CSupport.toJavaString(LibC.dirent.at(pdir).d_name$ptr());
+        MemorySegment segment = MemorySegment.ofNativeRestricted()
+                .asSlice(pdir.toRawLongValue(), LibC.dirent.sizeof());
+        return CSupport.toJavaString(LibC.dirent.at(segment).d_name$ptr());
     }
 };

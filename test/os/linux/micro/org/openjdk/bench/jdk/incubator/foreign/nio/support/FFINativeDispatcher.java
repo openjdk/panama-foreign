@@ -37,9 +37,9 @@ public class FFINativeDispatcher extends NativeDispatcher {
 
     public static UnixFileAttributes statFFI(String path) {
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemoryAddress file = CSupport.toCString(path, scope);
+            var file = CSupport.toCString(path, scope);
             LibC.stat buffer = LibC.stat.allocate(scope::allocate);
-            LibC.__xstat(0, file, buffer.ptr());
+            LibC.__xstat(0, file, buffer);
             return new UnixFileAttributes(buffer);
         }
     }
@@ -67,11 +67,13 @@ public class FFINativeDispatcher extends NativeDispatcher {
      * @return  dirent->d_name
      */
     public static String readdirFFI(MemoryAddress dir) {
-        MemoryAddress pdir = resizePointer(LibC.readdir(dir), LibC.dirent.sizeof());
+        MemoryAddress pdir = LibC.readdir(dir);
         if (pdir.equals(MemoryAddress.NULL)) {
             return null;
         }
 
-        return CSupport.toJavaString(LibC.dirent.at(pdir).d_name$ptr());
+        MemorySegment segment = MemorySegment.ofNativeRestricted()
+                .asSlice(pdir.toRawLongValue(), LibC.dirent.sizeof());
+        return CSupport.toJavaString(LibC.dirent.at(segment).d_name$ptr());
     }
 };

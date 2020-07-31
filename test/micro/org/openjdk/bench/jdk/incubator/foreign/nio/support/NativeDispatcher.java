@@ -57,14 +57,6 @@ public abstract class NativeDispatcher {
         public UnixFileAttributes readAttributes(String path) { return statJNI(path); }
     };
 
-    public static MemoryAddress resizePointer(MemoryAddress addr, long size) {
-        if (addr.segment() == null) {
-            return MemorySegment.ofNativeRestricted(addr, size, null, null, null).address();
-        } else {
-            return addr;
-        }
-    }
-
     public static native long opendirJNI(String path);
     public static native String readdirJNI(long dir);
     public static native void closedirJNI(long dir);

@@ -14,13 +14,13 @@ import java.util.function.LongFunction;
 public final class LibC {
     private static final LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {});
     public static final class stat64 extends Struct<stat64> {
-        protected stat64(MemoryAddress addr) { super(addr); }
-        public static final stat64 at(MemoryAddress addr) { return new stat64(addr); }
-        public static final stat64 allocate(LongFunction<MemoryAddress> allocator, int count) {
+        protected stat64(MemorySegment ms) { super(ms); }
+        public static final stat64 at(MemorySegment ms) { return new stat64(ms); }
+        public static final stat64 allocate(LongFunction<MemorySegment> allocator, int count) {
             return new stat64(allocator.apply(sizeof() * count));
         }
-        public static final stat64 allocate(LongFunction<MemoryAddress> allocator) { return allocate(allocator, 1); }
-        public final stat64 offset(int count) { return at(ptr().addOffset(sizeof() * count)); }
+        public static final stat64 allocate(LongFunction<MemorySegment> allocator) { return allocate(allocator, 1); }
+        public final stat64 offset(int count) { return at(segment().asSlice(sizeof() * count)); }
 
         public static final GroupLayout $LAYOUT = MemoryLayout.ofStruct(
             C_INT.withName("st_dev"),
@@ -60,93 +60,93 @@ public final class LibC {
         @Override
         public final GroupLayout getLayout() { return $LAYOUT; }
 
-        public static final VarHandle st_dev$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_dev");
+        public static final VarHandle st_dev$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_dev")));
         public static final long st_dev$OFFSET = 0L;
-        public final MemoryAddress st_dev$ptr() {
-            return ptr().addOffset(0L);
+        public final MemorySegment st_dev$ptr() {
+            return segment().asSlice(0L);
         }
         public final int st_dev$get() {
-            return (int) st_dev$VH.get(ptr());
+            return (int) st_dev$VH.get(st_dev$ptr());
         }
         public final void st_dev$set(int value) {
-            st_dev$VH.set(ptr(), value);
+            st_dev$VH.set(st_dev$ptr(), value);
         }
 
-        public static final VarHandle st_mode$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "st_mode");
+        public static final VarHandle st_mode$VH = RuntimeHelper.varHandle(short.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_mode")));
         public static final long st_mode$OFFSET = 4L;
-        public final MemoryAddress st_mode$ptr() {
-            return ptr().addOffset(4L);
+        public final MemorySegment st_mode$ptr() {
+            return segment().asSlice(4L);
         }
         public final short st_mode$get() {
-            return (short) st_mode$VH.get(ptr());
+            return (short) st_mode$VH.get(st_mode$ptr());
         }
         public final void st_mode$set(short value) {
-            st_mode$VH.set(ptr(), value);
+            st_mode$VH.set(st_mode$ptr(), value);
         }
 
-        public static final VarHandle st_nlink$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "st_nlink");
+        public static final VarHandle st_nlink$VH = RuntimeHelper.varHandle(short.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_nlink")));
         public static final long st_nlink$OFFSET = 6L;
-        public final MemoryAddress st_nlink$ptr() {
-            return ptr().addOffset(6L);
+        public final MemorySegment st_nlink$ptr() {
+            return segment().asSlice(6L);
         }
         public final short st_nlink$get() {
-            return (short) st_nlink$VH.get(ptr());
+            return (short) st_nlink$VH.get(st_nlink$ptr());
         }
         public final void st_nlink$set(short value) {
-            st_nlink$VH.set(ptr(), value);
+            st_nlink$VH.set(st_nlink$ptr(), value);
         }
 
-        public static final VarHandle st_ino$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_ino");
+        public static final VarHandle st_ino$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_ino")));
         public static final long st_ino$OFFSET = 8L;
-        public final MemoryAddress st_ino$ptr() {
-            return ptr().addOffset(8L);
+        public final MemorySegment st_ino$ptr() {
+            return segment().asSlice(8L);
         }
         public final long st_ino$get() {
-            return (long) st_ino$VH.get(ptr());
+            return (long) st_ino$VH.get(st_ino$ptr());
         }
         public final void st_ino$set(long value) {
-            st_ino$VH.set(ptr(), value);
+            st_ino$VH.set(st_ino$ptr(), value);
         }
 
-        public static final VarHandle st_uid$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_uid");
+        public static final VarHandle st_uid$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_uid")));
         public static final long st_uid$OFFSET = 16L;
-        public final MemoryAddress st_uid$ptr() {
-            return ptr().addOffset(16L);
+        public final MemorySegment st_uid$ptr() {
+            return segment().asSlice(16L);
         }
         public final int st_uid$get() {
-            return (int) st_uid$VH.get(ptr());
+            return (int) st_uid$VH.get(st_uid$ptr());
         }
         public final void st_uid$set(int value) {
-            st_uid$VH.set(ptr(), value);
+            st_uid$VH.set(st_uid$ptr(), value);
         }
 
-        public static final VarHandle st_gid$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_gid");
+        public static final VarHandle st_gid$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_gid")));
         public static final long st_gid$OFFSET = 20L;
-        public final MemoryAddress st_gid$ptr() {
-            return ptr().addOffset(20L);
+        public final MemorySegment st_gid$ptr() {
+            return segment().asSlice(20L);
         }
         public final int st_gid$get() {
-            return (int) st_gid$VH.get(ptr());
+            return (int) st_gid$VH.get(st_gid$ptr());
         }
         public final void st_gid$set(int value) {
-            st_gid$VH.set(ptr(), value);
+            st_gid$VH.set(st_gid$ptr(), value);
         }
 
-        public static final VarHandle st_rdev$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_rdev");
+        public static final VarHandle st_rdev$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_rdev")));
         public static final long st_rdev$OFFSET = 24L;
-        public final MemoryAddress st_rdev$ptr() {
-            return ptr().addOffset(24L);
+        public final MemorySegment st_rdev$ptr() {
+            return segment().asSlice(24L);
         }
         public final int st_rdev$get() {
-            return (int) st_rdev$VH.get(ptr());
+            return (int) st_rdev$VH.get(st_rdev$ptr());
         }
         public final void st_rdev$set(int value) {
-            st_rdev$VH.set(ptr(), value);
+            st_rdev$VH.set(st_rdev$ptr(), value);
         }
 
         public static final long st_atimespec$OFFSET = 32L;
-        public final MemoryAddress st_atimespec$ptr() {
-            return ptr().addOffset(32L);
+        public final MemorySegment st_atimespec$ptr() {
+            return segment().asSlice(32L);
         }
         public final timespec st_atimespec$get() {
             return timespec.at(st_atimespec$ptr());
@@ -156,8 +156,8 @@ public final class LibC {
         }
 
         public static final long st_mtimespec$OFFSET = 48L;
-        public final MemoryAddress st_mtimespec$ptr() {
-            return ptr().addOffset(48L);
+        public final MemorySegment st_mtimespec$ptr() {
+            return segment().asSlice(48L);
         }
         public final timespec st_mtimespec$get() {
             return timespec.at(st_mtimespec$ptr());
@@ -167,8 +167,8 @@ public final class LibC {
         }
 
         public static final long st_ctimespec$OFFSET = 64L;
-        public final MemoryAddress st_ctimespec$ptr() {
-            return ptr().addOffset(64L);
+        public final MemorySegment st_ctimespec$ptr() {
+            return segment().asSlice(64L);
         }
         public final timespec st_ctimespec$get() {
             return timespec.at(st_ctimespec$ptr());
@@ -178,8 +178,8 @@ public final class LibC {
         }
 
         public static final long st_birthtimespec$OFFSET = 80L;
-        public final MemoryAddress st_birthtimespec$ptr() {
-            return ptr().addOffset(80L);
+        public final MemorySegment st_birthtimespec$ptr() {
+            return segment().asSlice(80L);
         }
         public final timespec st_birthtimespec$get() {
             return timespec.at(st_birthtimespec$ptr());
@@ -188,98 +188,98 @@ public final class LibC {
             timespec.at(st_birthtimespec$ptr()).asSegment().copyFrom(value.asSegment());
         }
 
-        public static final VarHandle st_size$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_size");
+        public static final VarHandle st_size$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_size")));
         public static final long st_size$OFFSET = 96L;
-        public final MemoryAddress st_size$ptr() {
-            return ptr().addOffset(96L);
+        public final MemorySegment st_size$ptr() {
+            return segment().asSlice(96L);
         }
         public final long st_size$get() {
-            return (long) st_size$VH.get(ptr());
+            return (long) st_size$VH.get(st_size$ptr());
         }
         public final void st_size$set(long value) {
-            st_size$VH.set(ptr(), value);
+            st_size$VH.set(st_size$ptr(), value);
         }
 
-        public static final VarHandle st_blocks$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_blocks");
+        public static final VarHandle st_blocks$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_blocks")));
         public static final long st_blocks$OFFSET = 104L;
-        public final MemoryAddress st_blocks$ptr() {
-            return ptr().addOffset(104L);
+        public final MemorySegment st_blocks$ptr() {
+            return segment().asSlice(104L);
         }
         public final long st_blocks$get() {
-            return (long) st_blocks$VH.get(ptr());
+            return (long) st_blocks$VH.get(st_blocks$ptr());
         }
         public final void st_blocks$set(long value) {
-            st_blocks$VH.set(ptr(), value);
+            st_blocks$VH.set(st_blocks$ptr(), value);
         }
 
-        public static final VarHandle st_blksize$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_blksize");
+        public static final VarHandle st_blksize$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_blksize")));
         public static final long st_blksize$OFFSET = 112L;
-        public final MemoryAddress st_blksize$ptr() {
-            return ptr().addOffset(112L);
+        public final MemorySegment st_blksize$ptr() {
+            return segment().asSlice(112L);
         }
         public final int st_blksize$get() {
-            return (int) st_blksize$VH.get(ptr());
+            return (int) st_blksize$VH.get(st_blksize$ptr());
         }
         public final void st_blksize$set(int value) {
-            st_blksize$VH.set(ptr(), value);
+            st_blksize$VH.set(st_blksize$ptr(), value);
         }
 
-        public static final VarHandle st_flags$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_flags");
+        public static final VarHandle st_flags$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_flags")));
         public static final long st_flags$OFFSET = 116L;
-        public final MemoryAddress st_flags$ptr() {
-            return ptr().addOffset(116L);
+        public final MemorySegment st_flags$ptr() {
+            return segment().asSlice(116L);
         }
         public final int st_flags$get() {
-            return (int) st_flags$VH.get(ptr());
+            return (int) st_flags$VH.get(st_flags$ptr());
         }
         public final void st_flags$set(int value) {
-            st_flags$VH.set(ptr(), value);
+            st_flags$VH.set(st_flags$ptr(), value);
         }
 
-        public static final VarHandle st_gen$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_gen");
+        public static final VarHandle st_gen$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_gen")));
         public static final long st_gen$OFFSET = 120L;
-        public final MemoryAddress st_gen$ptr() {
-            return ptr().addOffset(120L);
+        public final MemorySegment st_gen$ptr() {
+            return segment().asSlice(120L);
         }
         public final int st_gen$get() {
-            return (int) st_gen$VH.get(ptr());
+            return (int) st_gen$VH.get(st_gen$ptr());
         }
         public final void st_gen$set(int value) {
-            st_gen$VH.set(ptr(), value);
+            st_gen$VH.set(st_gen$ptr(), value);
         }
 
-        public static final VarHandle st_lspare$VH = RuntimeHelper.fieldHandle(int.class, $LAYOUT, "st_lspare");
+        public static final VarHandle st_lspare$VH = RuntimeHelper.varHandle(int.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_lspare")));
         public static final long st_lspare$OFFSET = 124L;
-        public final MemoryAddress st_lspare$ptr() {
-            return ptr().addOffset(124L);
+        public final MemorySegment st_lspare$ptr() {
+            return segment().asSlice(124L);
         }
         public final int st_lspare$get() {
-            return (int) st_lspare$VH.get(ptr());
+            return (int) st_lspare$VH.get(st_lspare$ptr());
         }
         public final void st_lspare$set(int value) {
-            st_lspare$VH.set(ptr(), value);
+            st_lspare$VH.set(st_lspare$ptr(), value);
         }
 
-        public static final VarHandle st_qspare$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "st_qspare");
+        public static final VarHandle st_qspare$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("st_qspare")));
         public static final long st_qspare$OFFSET = 128L;
-        public final MemoryAddress st_qspare$ptr() {
-            return ptr().addOffset(128L);
+        public final MemorySegment st_qspare$ptr() {
+            return segment().asSlice(128L);
         }
         public final long st_qspare$get(long idx0) {
-            return (long) st_qspare$VH.get(ptr(), idx0);
+            return (long) st_qspare$VH.get(st_qspare$ptr(), idx0);
         }
         public final void st_qspare$set(long idx0, long value) {
-            st_qspare$VH.set(ptr(), idx0, value);
+            st_qspare$VH.set(st_qspare$ptr(), idx0, value);
         }
     }
     public static final class timespec extends Struct<timespec> {
-        protected timespec(MemoryAddress addr) { super(addr); }
-        public static final timespec at(MemoryAddress addr) { return new timespec(addr); }
-        public static final timespec allocate(LongFunction<MemoryAddress> allocator, int count) {
+        protected timespec(MemorySegment ms) { super(ms); }
+        public static final timespec at(MemorySegment ms) { return new timespec(ms); }
+        public static final timespec allocate(LongFunction<MemorySegment> allocator, int count) {
             return new timespec(allocator.apply(sizeof() * count));
         }
-        public static final timespec allocate(LongFunction<MemoryAddress> allocator) { return allocate(allocator, 1); }
-        public final timespec offset(int count) { return at(ptr().addOffset(sizeof() * count)); }
+        public static final timespec allocate(LongFunction<MemorySegment> allocator) { return allocate(allocator, 1); }
+        public final timespec offset(int count) { return at(segment().asSlice(sizeof() * count)); }
 
         public static final GroupLayout $LAYOUT = MemoryLayout.ofStruct(
             C_LONG.withName("tv_sec"),
@@ -290,38 +290,38 @@ public final class LibC {
         @Override
         public final GroupLayout getLayout() { return $LAYOUT; }
 
-        public static final VarHandle tv_sec$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "tv_sec");
+        public static final VarHandle tv_sec$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("tv_sec")));
         public static final long tv_sec$OFFSET = 0L;
-        public final MemoryAddress tv_sec$ptr() {
-            return ptr().addOffset(0L);
+        public final MemorySegment tv_sec$ptr() {
+            return segment().asSlice(0L);
         }
         public final long tv_sec$get() {
-            return (long) tv_sec$VH.get(ptr());
+            return (long) tv_sec$VH.get(tv_sec$ptr());
         }
         public final void tv_sec$set(long value) {
-            tv_sec$VH.set(ptr(), value);
+            tv_sec$VH.set(tv_sec$ptr(), value);
         }
 
-        public static final VarHandle tv_nsec$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "tv_nsec");
+        public static final VarHandle tv_nsec$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("tv_nsec")));
         public static final long tv_nsec$OFFSET = 8L;
-        public final MemoryAddress tv_nsec$ptr() {
-            return ptr().addOffset(8L);
+        public final MemorySegment tv_nsec$ptr() {
+            return segment().asSlice(8L);
         }
         public final long tv_nsec$get() {
-            return (long) tv_nsec$VH.get(ptr());
+            return (long) tv_nsec$VH.get(tv_nsec$ptr());
         }
         public final void tv_nsec$set(long value) {
-            tv_nsec$VH.set(ptr(), value);
+            tv_nsec$VH.set(tv_nsec$ptr(), value);
         }
     }
     public static final class _opaque_pthread_mutex_t extends Struct<_opaque_pthread_mutex_t> {
-        protected _opaque_pthread_mutex_t(MemoryAddress addr) { super(addr); }
-        public static final _opaque_pthread_mutex_t at(MemoryAddress addr) { return new _opaque_pthread_mutex_t(addr); }
-        public static final _opaque_pthread_mutex_t allocate(LongFunction<MemoryAddress> allocator, int count) {
+        protected _opaque_pthread_mutex_t(MemorySegment ms) { super(ms); }
+        public static final _opaque_pthread_mutex_t at(MemorySegment ms) { return new _opaque_pthread_mutex_t(ms); }
+        public static final _opaque_pthread_mutex_t allocate(LongFunction<MemorySegment> allocator, int count) {
             return new _opaque_pthread_mutex_t(allocator.apply(sizeof() * count));
         }
-        public static final _opaque_pthread_mutex_t allocate(LongFunction<MemoryAddress> allocator) { return allocate(allocator, 1); }
-        public final _opaque_pthread_mutex_t offset(int count) { return at(ptr().addOffset(sizeof() * count)); }
+        public static final _opaque_pthread_mutex_t allocate(LongFunction<MemorySegment> allocator) { return allocate(allocator, 1); }
+        public final _opaque_pthread_mutex_t offset(int count) { return at(segment().asSlice(sizeof() * count)); }
 
         public static final GroupLayout $LAYOUT = MemoryLayout.ofStruct(
             C_LONG.withName("__sig"),
@@ -332,38 +332,38 @@ public final class LibC {
         @Override
         public final GroupLayout getLayout() { return $LAYOUT; }
 
-        public static final VarHandle __sig$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "__sig");
+        public static final VarHandle __sig$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("__sig")));
         public static final long __sig$OFFSET = 0L;
-        public final MemoryAddress __sig$ptr() {
-            return ptr().addOffset(0L);
+        public final MemorySegment __sig$ptr() {
+            return segment().asSlice(0L);
         }
         public final long __sig$get() {
-            return (long) __sig$VH.get(ptr());
+            return (long) __sig$VH.get(__sig$ptr());
         }
         public final void __sig$set(long value) {
-            __sig$VH.set(ptr(), value);
+            __sig$VH.set(__sig$ptr(), value);
         }
 
-        public static final VarHandle __opaque$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "__opaque");
+        public static final VarHandle __opaque$VH = RuntimeHelper.varHandle(byte.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("__opaque")));
         public static final long __opaque$OFFSET = 8L;
-        public final MemoryAddress __opaque$ptr() {
-            return ptr().addOffset(8L);
+        public final MemorySegment __opaque$ptr() {
+            return segment().asSlice(8L);
         }
         public final byte __opaque$get(long idx0) {
-            return (byte) __opaque$VH.get(ptr(), idx0);
+            return (byte) __opaque$VH.get(__opaque$ptr(), idx0);
         }
         public final void __opaque$set(long idx0, byte value) {
-            __opaque$VH.set(ptr(), idx0, value);
+            __opaque$VH.set(__opaque$ptr(), idx0, value);
         }
     }
     public static final class dirent extends Struct<dirent> {
-        protected dirent(MemoryAddress addr) { super(addr); }
-        public static final dirent at(MemoryAddress addr) { return new dirent(addr); }
-        public static final dirent allocate(LongFunction<MemoryAddress> allocator, int count) {
+        protected dirent(MemorySegment ms) { super(ms); }
+        public static final dirent at(MemorySegment ms) { return new dirent(ms); }
+        public static final dirent allocate(LongFunction<MemorySegment> allocator, int count) {
             return new dirent(allocator.apply(sizeof() * count));
         }
-        public static final dirent allocate(LongFunction<MemoryAddress> allocator) { return allocate(allocator, 1); }
-        public final dirent offset(int count) { return at(ptr().addOffset(sizeof() * count)); }
+        public static final dirent allocate(LongFunction<MemorySegment> allocator) { return allocate(allocator, 1); }
+        public final dirent offset(int count) { return at(segment().asSlice(sizeof() * count)); }
 
         public static final GroupLayout $LAYOUT = MemoryLayout.ofStruct(
             C_LONG.withName("d_ino"),
@@ -379,76 +379,76 @@ public final class LibC {
         @Override
         public final GroupLayout getLayout() { return $LAYOUT; }
 
-        public static final VarHandle d_ino$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "d_ino");
+        public static final VarHandle d_ino$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_ino")));
         public static final long d_ino$OFFSET = 0L;
-        public final MemoryAddress d_ino$ptr() {
-            return ptr().addOffset(0L);
+        public final MemorySegment d_ino$ptr() {
+            return segment().asSlice(0L);
         }
         public final long d_ino$get() {
-            return (long) d_ino$VH.get(ptr());
+            return (long) d_ino$VH.get(d_ino$ptr());
         }
         public final void d_ino$set(long value) {
-            d_ino$VH.set(ptr(), value);
+            d_ino$VH.set(d_ino$ptr(), value);
         }
 
-        public static final VarHandle d_seekoff$VH = RuntimeHelper.fieldHandle(long.class, $LAYOUT, "d_seekoff");
+        public static final VarHandle d_seekoff$VH = RuntimeHelper.varHandle(long.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_seekoff")));
         public static final long d_seekoff$OFFSET = 8L;
-        public final MemoryAddress d_seekoff$ptr() {
-            return ptr().addOffset(8L);
+        public final MemorySegment d_seekoff$ptr() {
+            return segment().asSlice(8L);
         }
         public final long d_seekoff$get() {
-            return (long) d_seekoff$VH.get(ptr());
+            return (long) d_seekoff$VH.get(d_seekoff$ptr());
         }
         public final void d_seekoff$set(long value) {
-            d_seekoff$VH.set(ptr(), value);
+            d_seekoff$VH.set(d_seekoff$ptr(), value);
         }
 
-        public static final VarHandle d_reclen$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "d_reclen");
+        public static final VarHandle d_reclen$VH = RuntimeHelper.varHandle(short.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_reclen")));
         public static final long d_reclen$OFFSET = 16L;
-        public final MemoryAddress d_reclen$ptr() {
-            return ptr().addOffset(16L);
+        public final MemorySegment d_reclen$ptr() {
+            return segment().asSlice(16L);
         }
         public final short d_reclen$get() {
-            return (short) d_reclen$VH.get(ptr());
+            return (short) d_reclen$VH.get(d_reclen$ptr());
         }
         public final void d_reclen$set(short value) {
-            d_reclen$VH.set(ptr(), value);
+            d_reclen$VH.set(d_reclen$ptr(), value);
         }
 
-        public static final VarHandle d_namlen$VH = RuntimeHelper.fieldHandle(short.class, $LAYOUT, "d_namlen");
+        public static final VarHandle d_namlen$VH = RuntimeHelper.varHandle(short.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_namlen")));
         public static final long d_namlen$OFFSET = 18L;
-        public final MemoryAddress d_namlen$ptr() {
-            return ptr().addOffset(18L);
+        public final MemorySegment d_namlen$ptr() {
+            return segment().asSlice(18L);
         }
         public final short d_namlen$get() {
-            return (short) d_namlen$VH.get(ptr());
+            return (short) d_namlen$VH.get(d_namlen$ptr());
         }
         public final void d_namlen$set(short value) {
-            d_namlen$VH.set(ptr(), value);
+            d_namlen$VH.set(d_namlen$ptr(), value);
         }
 
-        public static final VarHandle d_type$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "d_type");
+        public static final VarHandle d_type$VH = RuntimeHelper.varHandle(byte.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_type")));
         public static final long d_type$OFFSET = 20L;
-        public final MemoryAddress d_type$ptr() {
-            return ptr().addOffset(20L);
+        public final MemorySegment d_type$ptr() {
+            return segment().asSlice(20L);
         }
         public final byte d_type$get() {
-            return (byte) d_type$VH.get(ptr());
+            return (byte) d_type$VH.get(d_type$ptr());
         }
         public final void d_type$set(byte value) {
-            d_type$VH.set(ptr(), value);
+            d_type$VH.set(d_type$ptr(), value);
         }
 
-        public static final VarHandle d_name$VH = RuntimeHelper.fieldHandle(byte.class, $LAYOUT, "d_name");
+        public static final VarHandle d_name$VH = RuntimeHelper.varHandle(byte.class, $LAYOUT.select(MemoryLayout.PathElement.groupElement("d_name")));
         public static final long d_name$OFFSET = 21L;
-        public final MemoryAddress d_name$ptr() {
-            return ptr().addOffset(21L);
+        public final MemorySegment d_name$ptr() {
+            return segment().asSlice(21L);
         }
         public final byte d_name$get(long idx0) {
-            return (byte) d_name$VH.get(ptr(), idx0);
+            return (byte) d_name$VH.get(d_name$ptr(), idx0);
         }
         public final void d_name$set(long idx0, byte value) {
-            d_name$VH.set(ptr(), idx0, value);
+            d_name$VH.set(d_name$ptr(), idx0, value);
         }
     }
     public static final MethodHandle mh_stat64 = RuntimeHelper.downcallHandle(
@@ -459,9 +459,9 @@ public final class LibC {
             C_POINTER
         ), false
     );
-    public static final int stat64(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1) {
+    public static final int stat64(jdk.incubator.foreign.Addressable x0, jdk.incubator.foreign.Addressable x1) {
         try {
-            return (int) mh_stat64.invokeExact(x0, x1);
+            return (int) mh_stat64.invokeExact(x0.address(), x1.address());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
@@ -473,9 +473,9 @@ public final class LibC {
             C_POINTER
         ), false
     );
-    public static final int closedir(jdk.incubator.foreign.MemoryAddress x0) {
+    public static final int closedir(jdk.incubator.foreign.Addressable x0) {
         try {
-            return (int) mh_closedir.invokeExact(x0);
+            return (int) mh_closedir.invokeExact(x0.address());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
@@ -487,9 +487,9 @@ public final class LibC {
             C_POINTER
         ), false
     );
-    public static final jdk.incubator.foreign.MemoryAddress opendir(jdk.incubator.foreign.MemoryAddress x0) {
+    public static final jdk.incubator.foreign.MemoryAddress opendir(jdk.incubator.foreign.Addressable x0) {
         try {
-            return (jdk.incubator.foreign.MemoryAddress) mh_opendir.invokeExact(x0);
+            return (jdk.incubator.foreign.MemoryAddress) mh_opendir.invokeExact(x0.address());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
@@ -501,9 +501,9 @@ public final class LibC {
             C_POINTER
         ), false
     );
-    public static final jdk.incubator.foreign.MemoryAddress readdir(jdk.incubator.foreign.MemoryAddress x0) {
+    public static final jdk.incubator.foreign.MemoryAddress readdir(jdk.incubator.foreign.Addressable x0) {
         try {
-            return (jdk.incubator.foreign.MemoryAddress) mh_readdir.invokeExact(x0);
+            return (jdk.incubator.foreign.MemoryAddress) mh_readdir.invokeExact(x0.address());
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
