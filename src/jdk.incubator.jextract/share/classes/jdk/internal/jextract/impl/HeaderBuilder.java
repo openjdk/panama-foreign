@@ -22,11 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.jextract.Type;
 
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
@@ -37,12 +38,12 @@ import java.util.List;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-public class HeaderBuilder extends JavaSourceBuilder {
-    public HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
+class HeaderBuilder extends JavaSourceBuilder {
+    HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
     }
 
-    public void addFunctionalInterface(String name, MethodType mtype,  FunctionDescriptor fDesc) {
+    void addFunctionalInterface(String name, MethodType mtype,  FunctionDescriptor fDesc) {
         incrAlign();
         indent();
         sb.append("public interface " + name + " {\n");
@@ -63,7 +64,7 @@ public class HeaderBuilder extends JavaSourceBuilder {
         indent();
     }
 
-    public void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+    void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
@@ -120,7 +121,7 @@ public class HeaderBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    public void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();
@@ -142,7 +143,7 @@ public class HeaderBuilder extends JavaSourceBuilder {
         };
     }
 
-    public void emitTypedef(String className, String superClassName) {
+    void emitTypedef(String className, String superClassName) {
         incrAlign();
         indent();
         sb.append(PUB_MODS);

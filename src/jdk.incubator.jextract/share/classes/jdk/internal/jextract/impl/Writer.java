@@ -36,11 +36,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class Writer {
-
     private final List<? extends JavaFileObject> files;
     private final Path dest;
 
-    Writer(Path dest, List<? extends JavaFileObject> files) {
+    public Writer(Path dest, List<? extends JavaFileObject> files) {
         this.files = files;
         this.dest = dest;
     }
@@ -57,7 +56,7 @@ public final class Writer {
         }
     }
 
-    void writeAll(boolean compileSources) throws IOException {
+    public void writeAll(boolean compileSources) throws IOException {
         writeClassFiles(resources());
         writeClassFiles(classes());
         if (compileSources) {

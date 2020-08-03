@@ -22,10 +22,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.*;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Primitive;
+
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
@@ -109,7 +112,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 new HeaderBuilder(clsName, pkgName, constantHelper), constantHelper).generate(decl);
     }
 
-    public OutputFactory(String clsName, String pkgName, HeaderBuilder builder, ConstantHelper constantHelper) {
+    private OutputFactory(String clsName, String pkgName, HeaderBuilder builder, ConstantHelper constantHelper) {
         this.clsName = clsName;
         this.pkgName = pkgName;
         this.builder = builder;
@@ -133,7 +136,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
 
-    public JavaFileObject[] generate(Declaration.Scoped decl) {
+    JavaFileObject[] generate(Declaration.Scoped decl) {
         builder.classBegin();
         //generate all decls
         decl.members().forEach(this::generateDecl);

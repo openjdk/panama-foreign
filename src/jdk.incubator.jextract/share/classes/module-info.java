@@ -1,3 +1,5 @@
+import jdk.incubator.jextract.JextractTool;
+
 module jdk.incubator.jextract {
     requires transitive java.compiler;
     requires transitive jdk.incubator.foreign;
@@ -5,5 +7,5 @@ module jdk.incubator.jextract {
     exports jdk.incubator.jextract;
 
     provides java.util.spi.ToolProvider with
-        jdk.incubator.jextract.tool.Main.JextractToolProvider;
+        JextractTool.JextractToolProvider;
 }

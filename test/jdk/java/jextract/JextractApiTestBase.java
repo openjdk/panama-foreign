@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.JextractTask;
+import jdk.incubator.jextract.JextractTool;
 import jdk.incubator.jextract.Type;
 
 import static org.testng.Assert.assertEquals;
@@ -44,8 +44,7 @@ public class JextractApiTestBase {
 
     public static  Declaration.Scoped parse(String headerFilename, String... parseOptions) {
         Path header = Paths.get(System.getProperty("test.src", "."), headerFilename);
-        var task = JextractTask.newTask(false, header);
-        return task.parse(parseOptions);
+        return JextractTool.parse(List.of(header), parseOptions);
     }
 
     public static void checkNames(List<Declaration> members, String... fields) {

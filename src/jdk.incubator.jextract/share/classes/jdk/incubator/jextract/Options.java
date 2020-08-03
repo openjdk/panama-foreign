@@ -20,27 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
-public class Options {
+final class Options {
     // The args for parsing C
-    public final List<String> clangArgs;
+    final List<String> clangArgs;
     // The list of library names
-    public final List<String> libraryNames;
-    public final List<String> filters;
+    final List<String> libraryNames;
+    final List<String> filters;
     // target package
-    public final String targetPackage;
+    final String targetPackage;
     // output directory
-    public final String outputDir;
-    public final boolean source;
+    final String outputDir;
+    final boolean source;
 
     private Options(List<String> clangArgs, List<String> libraryNames,
             List<String> filters, String targetPackage,
@@ -53,15 +49,15 @@ public class Options {
         this.source = source;
     }
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    public static Options createDefault() {
+    static Options createDefault() {
         return builder().build();
     }
 
-    public static class Builder {
+    static class Builder {
         private final List<String> clangArgs;
         private final List<String> libraryNames;
         private final List<String> filters;
@@ -69,7 +65,7 @@ public class Options {
         private String outputDir;
         private boolean source;
 
-        public Builder() {
+        Builder() {
             this.clangArgs = new ArrayList<>();
             this.libraryNames = new ArrayList<>();
             this.filters = new ArrayList<>();
@@ -78,7 +74,7 @@ public class Options {
             this.source = false;
         }
 
-        public Options build() {
+        Options build() {
             return new Options(
                     Collections.unmodifiableList(clangArgs),
                     Collections.unmodifiableList(libraryNames),
@@ -87,27 +83,27 @@ public class Options {
             );
         }
 
-        public void addClangArg(String arg) {
+        void addClangArg(String arg) {
             clangArgs.add(arg);
         }
 
-        public void addLibraryName(String name) {
+        void addLibraryName(String name) {
             libraryNames.add(name);
         }
 
-        public void setOutputDir(String outputDir) {
+        void setOutputDir(String outputDir) {
             this.outputDir = outputDir;
         }
 
-        public void setTargetPackage(String pkg) {
+        void setTargetPackage(String pkg) {
             this.targetPackage = pkg;
         }
 
-        public void addFilter(String filter) {
+        void addFilter(String filter) {
             filters.add(filter);
         }
 
-        public void setGenerateSource() {
+        void setGenerateSource() {
             source = true;
         }
     }

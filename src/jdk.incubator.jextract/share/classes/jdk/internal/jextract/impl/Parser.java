@@ -26,9 +26,7 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.JextractTask;
-import jdk.incubator.jextract.Position;
-import jdk.incubator.jextract.Type;
+import jdk.incubator.jextract.JextractTool;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -41,17 +39,14 @@ import jdk.internal.clang.TranslationUnit;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-class Parser {
+public class Parser {
     private final TreeMaker treeMaker;
-    private final JextractTask.ConstantParser constantParser;
+    private final JextractTool.ConstantParser constantParser;
 
-    public Parser(JextractTask.ConstantParser constantParser) {
+    public Parser(JextractTool.ConstantParser constantParser) {
         this.treeMaker = new TreeMaker();
         this.constantParser = constantParser;
     }
@@ -67,7 +62,7 @@ class Parser {
             },
             true, args.toArray(new String[0]));
 
-        JextractTask.ConstantParser constantParser = this.constantParser != null ?
+        JextractTool.ConstantParser constantParser = this.constantParser != null ?
                 this.constantParser : MacroParserImpl.make(treeMaker, tu, args);
 
         List<Declaration> decls = new ArrayList<>();

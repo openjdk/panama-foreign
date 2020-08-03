@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.incubator.jextract.Type;
