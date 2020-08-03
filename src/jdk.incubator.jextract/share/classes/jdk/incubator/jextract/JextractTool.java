@@ -28,6 +28,7 @@ package jdk.incubator.jextract;
 import jdk.internal.jextract.impl.Filter;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
+import jdk.internal.jextract.impl.Options;
 import jdk.internal.jextract.impl.Writer;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
@@ -57,7 +58,7 @@ import java.util.stream.Stream;
  * on top of the underlying memory access var handles. For each struct, a static layout field is generated.
  */
 public final class JextractTool {
-    private static final String MESSAGES_RESOURCE = "jdk.incubator.jextract.resources.Messages";
+    private static final String MESSAGES_RESOURCE = "jdk.internal.jextract.impl.resources.Messages";
 
     private static final ResourceBundle MESSAGES_BUNDLE;
     static {

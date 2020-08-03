@@ -20,23 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class Options {
+public final class Options {
     // The args for parsing C
-    final List<String> clangArgs;
+    public final List<String> clangArgs;
     // The list of library names
-    final List<String> libraryNames;
-    final List<String> filters;
+    public final List<String> libraryNames;
+    public final List<String> filters;
     // target package
-    final String targetPackage;
+    public final String targetPackage;
     // output directory
-    final String outputDir;
-    final boolean source;
+    public final String outputDir;
+    public final boolean source;
 
     private Options(List<String> clangArgs, List<String> libraryNames,
             List<String> filters, String targetPackage,
@@ -49,15 +49,15 @@ final class Options {
         this.source = source;
     }
 
-    static Builder builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    static Options createDefault() {
+    public static Options createDefault() {
         return builder().build();
     }
 
-    static class Builder {
+    public static class Builder {
         private final List<String> clangArgs;
         private final List<String> libraryNames;
         private final List<String> filters;
@@ -65,7 +65,7 @@ final class Options {
         private String outputDir;
         private boolean source;
 
-        Builder() {
+        public Builder() {
             this.clangArgs = new ArrayList<>();
             this.libraryNames = new ArrayList<>();
             this.filters = new ArrayList<>();
@@ -74,7 +74,7 @@ final class Options {
             this.source = false;
         }
 
-        Options build() {
+        public Options build() {
             return new Options(
                     Collections.unmodifiableList(clangArgs),
                     Collections.unmodifiableList(libraryNames),
@@ -83,27 +83,27 @@ final class Options {
             );
         }
 
-        void addClangArg(String arg) {
+        public void addClangArg(String arg) {
             clangArgs.add(arg);
         }
 
-        void addLibraryName(String name) {
+        public void addLibraryName(String name) {
             libraryNames.add(name);
         }
 
-        void setOutputDir(String outputDir) {
+        public void setOutputDir(String outputDir) {
             this.outputDir = outputDir;
         }
 
-        void setTargetPackage(String pkg) {
+        public void setTargetPackage(String pkg) {
             this.targetPackage = pkg;
         }
 
-        void addFilter(String filter) {
+        public void addFilter(String filter) {
             filters.add(filter);
         }
 
-        void setGenerateSource() {
+        public void setGenerateSource() {
             source = true;
         }
     }
