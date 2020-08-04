@@ -27,6 +27,7 @@ package org.openjdk.bench.jdk.incubator.foreign.nio.support;
 
 import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 
 public class FFINativeDispatcher extends NativeDispatcher {
