@@ -107,7 +107,6 @@ void vm_init_globals() {
 
 
 jint init_globals() {
-  HandleMark hm;
   management_init();
   bytecodes_init();
   classLoader_init1();
