@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 
 class FunctionalInterfaceScanner implements Declaration.Visitor<Void, Set<FunctionDescriptor>> {
-    
+
     private final Set<FunctionDescriptor> descriptors;
 
     FunctionalInterfaceScanner(Set<FunctionDescriptor> descriptors) {

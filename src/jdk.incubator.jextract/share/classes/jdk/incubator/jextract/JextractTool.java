@@ -86,21 +86,6 @@ public final class JextractTool {
         this.err = err;
     }
 
-    /**
-     * A constant parser is an helper object that is used to parse constant values in a foreign language,
-     * and create a corresponding declaration constant, if possible.
-     */
-    public interface ConstantParser {
-        /**
-         * Parses a constant at given position, with given name and list of tokens.
-         * @param pos the constant position.
-         * @param name the constant name.
-         * @param tokens the constant tokens.
-         * @return a constant declaration which embeds the parsed constant value, if possible.
-         */
-        Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens);
-    }
-
     private static Path generateTmpSource(List<Path> headers) {
         assert headers.size() > 1;
         try {
@@ -121,18 +106,8 @@ public final class JextractTool {
      * @return a toplevel declaration.
      */
     public static Declaration.Scoped parse(List<Path> headers, String... parserOptions) {
-        return parse(headers, null, parserOptions);
-    }
-
-    /**
-     * Parse input files into a toplevel declaration with given constant parser and options.
-     * @param constantParser the constant parser to evaluate constants.
-     * @param parserOptions options to be passed to the parser.
-     * @return a toplevel declaration.
-     */
-    public static Declaration.Scoped parse(List<Path> headers, JextractTool.ConstantParser constantParser, String... parserOptions) {
         Path source = headers.size() > 1? generateTmpSource(headers) : headers.iterator().next();
-        return new Parser(constantParser).parse(source, Stream.of(parserOptions).collect(Collectors.toList()));
+        return new Parser().parse(source, Stream.of(parserOptions).collect(Collectors.toList()));
     }
 
     public static Declaration.Scoped filter(Declaration.Scoped decl, String... includedNames) {

@@ -49,7 +49,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class MacroParserImpl implements JextractTool.ConstantParser {
+class MacroParserImpl {
 
     private final ClangReparser reparser;
     private final TreeMaker treeMaker;
@@ -61,7 +61,7 @@ class MacroParserImpl implements JextractTool.ConstantParser {
         this.macroTable = new MacroTable();
     }
 
-    public static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+    static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
         ClangReparser reparser;
         try {
             reparser = new ClangReparser(tu, args);
@@ -78,8 +78,7 @@ class MacroParserImpl implements JextractTool.ConstantParser {
      * If that is not possible (e.g. because the macro refers to other macro, or has a more complex grammar), fall
      * back to use clang evaluation support.
      */
-    @Override
-    public Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
+    Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
         if (!(pos instanceof TreeMaker.CursorPosition)) {
             return Optional.empty();
         } else {
