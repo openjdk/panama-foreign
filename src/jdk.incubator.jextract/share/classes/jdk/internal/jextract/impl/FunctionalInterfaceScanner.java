@@ -23,7 +23,7 @@
  * questions.
  */
 
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
@@ -32,15 +32,15 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import java.util.Optional;
 import java.util.Set;
 
-public class FunctionalInterfaceScanner implements Declaration.Visitor<Void, Set<FunctionDescriptor>> {
-    
+class FunctionalInterfaceScanner implements Declaration.Visitor<Void, Set<FunctionDescriptor>> {
+
     private final Set<FunctionDescriptor> descriptors;
 
-    public FunctionalInterfaceScanner(Set<FunctionDescriptor> descriptors) {
+    FunctionalInterfaceScanner(Set<FunctionDescriptor> descriptors) {
         this.descriptors = descriptors;
     }
 
-    public Declaration.Scoped scan(Declaration.Scoped decl) {
+    Declaration.Scoped scan(Declaration.Scoped decl) {
         decl.accept(this, descriptors);
         return decl;
     }

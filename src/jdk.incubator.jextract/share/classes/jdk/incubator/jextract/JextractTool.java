@@ -23,9 +23,13 @@
  * questions.
  */
 
-package jdk.incubator.jextract.tool;
+package jdk.incubator.jextract;
 
-import jdk.incubator.jextract.*;
+import jdk.internal.jextract.impl.Filter;
+import jdk.internal.jextract.impl.OutputFactory;
+import jdk.internal.jextract.impl.Parser;
+import jdk.internal.jextract.impl.Options;
+import jdk.internal.jextract.impl.Writer;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
@@ -34,14 +38,18 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.spi.ToolProvider;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Simple extraction tool which generates a minimal Java API. Such an API consists mainly of static methods,
@@ -49,8 +57,8 @@ import java.util.spi.ToolProvider;
  * Similarly, for struct fields and global variables, static accessors (getter and setter) are generated
  * on top of the underlying memory access var handles. For each struct, a static layout field is generated.
  */
-public class Main {
-    private static final String MESSAGES_RESOURCE = "jdk.incubator.jextract.tool.resources.Messages";
+public final class JextractTool {
+    private static final String MESSAGES_RESOURCE = "jdk.internal.jextract.impl.resources.Messages";
 
     private static final ResourceBundle MESSAGES_BUNDLE;
     static {
@@ -73,9 +81,55 @@ public class Main {
         return new MessageFormat(MESSAGES_BUNDLE.getString(msgId)).format(args);
     }
 
-    private Main(PrintWriter out, PrintWriter err) {
+    private JextractTool(PrintWriter out, PrintWriter err) {
         this.out = out;
         this.err = err;
+    }
+
+    private static Path generateTmpSource(List<Path> headers) {
+        assert headers.size() > 1;
+        try {
+            Path tmpFile = Files.createTempFile("jextract", ".h");
+            tmpFile.toFile().deleteOnExit();
+            Files.write(tmpFile, headers.stream().
+                    map(src -> "#include \"" + src + "\"").
+                    collect(Collectors.toList()));
+            return tmpFile;
+        } catch (IOException ioExp) {
+            throw new UncheckedIOException(ioExp);
+        }
+    }
+
+    /**
+     * Parse input files into a toplevel declaration with given options.
+     * @param parserOptions options to be passed to the parser.
+     * @return a toplevel declaration.
+     */
+    public static Declaration.Scoped parse(List<Path> headers, String... parserOptions) {
+        Path source = headers.size() > 1? generateTmpSource(headers) : headers.iterator().next();
+        return new Parser().parse(source, Stream.of(parserOptions).collect(Collectors.toList()));
+    }
+
+    public static Declaration.Scoped filter(Declaration.Scoped decl, String... includedNames) {
+        return Filter.filter(decl, includedNames);
+    }
+
+    public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName, String targetPkg, List<String> libNames) {
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
+    }
+
+    /**
+     * Write resulting {@link JavaFileObject} instances into specified destination path.
+     * @param dest the destination path.
+     * @param compileSources whether to compile .java sources or not
+     * @param files the {@link JavaFileObject} instances to be written.
+     */
+    public static void write(Path dest, boolean compileSources, List<JavaFileObject> files) throws UncheckedIOException {
+        try {
+            new Writer(dest, files).writeAll(compileSources);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private int printHelp(OptionParser parser, int exitCode) {
@@ -85,13 +139,18 @@ public class Main {
         return exitCode;
     }
 
+    /**
+     * Main entry point to run the JextractTool
+     *
+     * @param args command line options passed
+     */
     public static void main(String[] args) {
         if (args.length == 0) {
             System.err.println("Expected a header file");
             return;
         }
 
-        Main m = new Main(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
+        JextractTool m = new JextractTool(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
         System.exit(m.run(args));
     }
 
@@ -176,29 +235,27 @@ public class Main {
 
         //parse    //generate
         try {
-            JextractTask jextractTask = JextractTask.newTask(!options.source, header);
-            Declaration.Scoped toplevel = jextractTask.parse(options.clangArgs.toArray(new String[0]));
+            Declaration.Scoped toplevel = parse(List.of(header), options.clangArgs.toArray(new String[0]));
 
             //filter
             if (!options.filters.isEmpty()) {
-                toplevel = Filter.filter(toplevel, options.filters.toArray(new String[0]));
+                toplevel = filter(toplevel, options.filters.toArray(new String[0]));
             }
 
-            if (Main.DEBUG) {
+            if (JextractTool.DEBUG) {
                 System.out.println(toplevel);
             }
 
             Path output = Path.of(options.outputDir);
 
-            JavaFileObject[] files = OutputFactory.generateWrapped(
-                toplevel,
-                header.getFileName().toString(),
-                options.targetPackage,
-                options.libraryNames);
-            jextractTask.write(output, files);
+            List<JavaFileObject> files = generate(
+                toplevel, header.getFileName().toString(),
+                options.targetPackage, options.libraryNames);
+
+            write(output, !options.source, files);
         } catch (RuntimeException re) {
             err.println(re);
-            if (Main.DEBUG) {
+            if (JextractTool.DEBUG) {
                 re.printStackTrace(err);
             }
             return RUNTIME_ERROR;
@@ -206,6 +263,9 @@ public class Main {
         return SUCCESS;
     }
 
+    /**
+     * ToolProvider implementation for jextract tool.
+     */
     public static class JextractToolProvider implements ToolProvider {
         @Override
         public String name() {
@@ -223,7 +283,7 @@ public class Main {
                     checkPermission(new RuntimePermission("jextract"));
             }
 
-            Main instance = new Main(out, err);
+            JextractTool instance = new JextractTool(out, err);
             return instance.run(args);
         }
     }

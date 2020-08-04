@@ -20,17 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract.tool;
+package jdk.internal.jextract.impl;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
-public class Options {
+public final class Options {
     // The args for parsing C
     public final List<String> clangArgs;
     // The list of library names

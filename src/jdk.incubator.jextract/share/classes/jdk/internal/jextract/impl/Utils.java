@@ -35,7 +35,11 @@ import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
 import javax.lang.model.SourceVersion;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,7 +54,54 @@ import java.util.stream.Stream;
  * General utility functions
  */
 class Utils {
-    public static void validSimpleIdentifier(String name) {
+    private static URI fileName(String pkgName, String clsName, String extension) {
+        String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
+        return URI.create(pkgPrefix + clsName + extension);
+    }
+
+    static JavaFileObject fileFromString(String pkgName, String clsName, String contents) {
+        return new SimpleJavaFileObject(fileName(pkgName, clsName, ".java"), JavaFileObject.Kind.SOURCE) {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+                return contents;
+            }
+        };
+    }
+
+    static String javaSafeIdentifier(String name) {
+        return javaSafeIdentifier(name, false);
+    }
+
+    static String javaSafeIdentifier(String name, boolean checkAllChars) {
+        if (checkAllChars) {
+            StringBuilder buf = new StringBuilder();
+            char[] chars = name.toCharArray();
+            if (Character.isJavaIdentifierStart(chars[0])) {
+                buf.append(chars[0]);
+            } else {
+                buf.append('_');
+            }
+            if (chars.length > 1) {
+                for (int i = 1; i < chars.length; i++) {
+                    char ch = chars[i];
+                    if (Character.isJavaIdentifierPart(ch)) {
+                        buf.append(ch);
+                    } else {
+                        buf.append('_');
+                    }
+                }
+            }
+            return buf.toString();
+        } else {
+            // We never get the problem of Java non-identifiers (like 123, ab-xy) as
+            // C identifiers. But we may have a java keyword used as a C identifier.
+            assert SourceVersion.isIdentifier(name);
+
+            return SourceVersion.isKeyword(name) ? (name + "_") : name;
+        }
+    }
+
+    static void validSimpleIdentifier(String name) {
         int length = name.length();
         if (length == 0) {
             throw new IllegalArgumentException();
@@ -73,7 +124,7 @@ class Utils {
         }
     }
 
-    public static void validPackageName(String name) {
+    static void validPackageName(String name) {
         if (name.isEmpty()) {
             throw new IllegalArgumentException();
         }
@@ -86,7 +137,7 @@ class Utils {
         }
     }
 
-    public static String toJavaIdentifier(String str) {
+    static String toJavaIdentifier(String str) {
         final int size = str.length();
         StringBuilder sb = new StringBuilder(size);
         if (! Character.isJavaIdentifierStart(str.charAt(0))) {
@@ -103,7 +154,7 @@ class Utils {
         return sb.toString();
     }
 
-    private static String toSafeName(String name) {
+    static String toSafeName(String name) {
         StringBuilder sb = new StringBuilder(name.length());
         name = toJavaIdentifier(name);
         sb.append(name);
@@ -113,15 +164,15 @@ class Utils {
         return sb.toString();
     }
 
-    public static String toClassName(String cname) {
+    static String toClassName(String cname) {
         return toSafeName(cname);
     }
 
-    public static String toMacroName(String mname) {
+    static String toMacroName(String mname) {
         return toSafeName(mname);
     }
 
-    public static String toInternalName(String pkg, String name, String... nested) {
+    static String toInternalName(String pkg, String name, String... nested) {
         if ((pkg == null || pkg.isEmpty()) && nested == null) {
             return name;
         }
@@ -141,22 +192,22 @@ class Utils {
         return sb.toString();
     }
 
-    public static String getName(Type type) {
+    static String getName(Type type) {
         return LayoutUtils.getName(type);
     }
 
-    public static Stream<Cursor> flattenableChildren(Cursor c) {
+    static Stream<Cursor> flattenableChildren(Cursor c) {
         return c.children()
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
     }
 
-    public static Optional<Cursor> lastChild(Cursor c) {
+    static Optional<Cursor> lastChild(Cursor c) {
         List<Cursor> children = flattenableChildren(c)
                 .collect(Collectors.toList());
         return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
     }
 
-    public static boolean hasIncompleteArray(Cursor c) {
+    static boolean hasIncompleteArray(Cursor c) {
         switch (c.kind()) {
             case FieldDecl:
                 return c.type().kind() == TypeKind.IncompleteArray;
@@ -171,7 +222,7 @@ class Utils {
     }
 
     // return builtin Record types accessible from the given Type
-    public static Stream<Cursor> getBuiltinRecordTypes(Type type) {
+    static Stream<Cursor> getBuiltinRecordTypes(Type type) {
         List<Cursor> recordTypes = new ArrayList<>();
         fillBuiltinRecordTypes(type, recordTypes);
         return recordTypes.stream().distinct();
@@ -228,7 +279,7 @@ class Utils {
 
     // return the absolute path of the library of given name by searching
     // in the given array of paths.
-    public static Optional<Path> findLibraryPath(Path[] paths, String libName) {
+    static Optional<Path> findLibraryPath(Path[] paths, String libName) {
         return Arrays.stream(paths).
                 map(p -> p.resolve(System.mapLibraryName(libName))).
                 filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
@@ -244,7 +295,7 @@ class Utils {
      * Escapes each character in a string that has an escape sequence or
      * is non-printable ASCII.  Leaves non-ASCII characters alone.
      */
-    public static String quote(String s) {
+    static String quote(String s) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
             buf.append(quote(s.charAt(i)));
@@ -256,7 +307,7 @@ class Utils {
      * Escapes a character if it has an escape sequence or is
      * non-printable ASCII.  Leaves non-ASCII characters alone.
      */
-    public static String quote(char ch) {
+    static String quote(char ch) {
         switch (ch) {
         case '\b':  return "\\b";
         case '\f':  return "\\f";
@@ -280,12 +331,12 @@ class Utils {
         return ch >= ' ' && ch <= '~';
     }
 
-    public static Optional<GroupLayout> getContents(MemoryLayout layout) {
+    static Optional<GroupLayout> getContents(MemoryLayout layout) {
         return layout.attribute("contents").map(GroupLayout.class::cast);
     }
 
     @SuppressWarnings("unchecked")
-    public static <Z extends MemoryLayout> Z addContents(Z layout, GroupLayout contents) {
+    static <Z extends MemoryLayout> Z addContents(Z layout, GroupLayout contents) {
         return (Z) layout.withAttribute("contents", contents);
     }
 }

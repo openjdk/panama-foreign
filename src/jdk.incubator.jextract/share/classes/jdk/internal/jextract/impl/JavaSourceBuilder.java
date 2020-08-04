@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
@@ -62,7 +62,7 @@ abstract class JavaSourceBuilder {
         return PUB_CLS_MODS;
     }
 
-    public void classBegin() {
+    void classBegin() {
         addPackagePrefix();
         addImportSection();
 
@@ -74,7 +74,7 @@ abstract class JavaSourceBuilder {
         emitConstructor();
     }
 
-    public void emitConstructor() {
+    void emitConstructor() {
         incrAlign();
         indent();
         sb.append("private ");
@@ -84,46 +84,46 @@ abstract class JavaSourceBuilder {
         decrAlign();
     }
 
-    public void classEnd() {
+    void classEnd() {
         indent();
         sb.append("}\n\n");
     }
 
-    public String getSource() {
+    String getSource() {
         return sb.toString();
     }
 
-    public void addContent(String src) {
+    void addContent(String src) {
         sb.append(src);
     }
 
-    public JavaFileObject build() {
+    JavaFileObject build() {
         String res = sb.toString();
         this.sb.delete(0, res.length());
         return Utils.fileFromString(pkgName, className, res);
     }
 
-    public void addLayoutGetter(String javaName, MemoryLayout layout) {
+    void addLayoutGetter(String javaName, MemoryLayout layout) {
         emitForwardGetter(constantHelper.addLayout(javaName, layout));
     }
 
-    public void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         emitForwardGetter(constantHelper.addVarHandle(javaName, nativeName, layout, type, parentLayout));
     }
 
-    public void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
+    void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs));
     }
 
-    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+    void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         emitForwardGetter(constantHelper.addAddress(javaName, nativeName, layout));
     }
 
-    public void addConstantGetter(String javaName, Class<?> type, Object value) {
+    void addConstantGetter(String javaName, Class<?> type, Object value) {
         emitForwardGetter(constantHelper.addConstant(javaName, type, value));
     }
 
-    public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get() {\n");
@@ -138,7 +138,7 @@ abstract class JavaSourceBuilder {
         decrAlign();
     }
 
-    public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + "void " + javaName + "$set(" + type.getName() + " x) {\n");

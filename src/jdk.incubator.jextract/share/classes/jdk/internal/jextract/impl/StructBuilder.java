@@ -22,17 +22,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
 /**
  * This class generates static utilities class for C structs, unions.
  */
-public class StructBuilder extends JavaSourceBuilder {
-    public StructBuilder(String className, String pkgName, ConstantHelper constantHelper) {
+class StructBuilder extends JavaSourceBuilder {
+    StructBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
     }
 
@@ -52,7 +51,7 @@ public class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void classEnd() {
+    void classEnd() {
         emitSizeof();
         emitAllocate();
         emitScopeAllocate();
@@ -62,7 +61,7 @@ public class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addLayoutGetter(String javaName, MemoryLayout layout) {
+    void addLayoutGetter(String javaName, MemoryLayout layout) {
         var desc = constantHelper.addLayout(javaName + "$struct", layout);
         incrAlign();
         indent();
@@ -77,7 +76,7 @@ public class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment addr) {\n");
@@ -94,7 +93,7 @@ public class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         String param = MemorySegment.class.getName() + " addr";
@@ -111,7 +110,7 @@ public class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+    void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         sb.append(PUB_MODS + "MemorySegment " + javaName + "$addr(MemorySegment addr) {\n");

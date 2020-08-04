@@ -23,12 +23,12 @@
  * questions.
  */
 
-package jdk.incubator.jextract;
+package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 
-public class Filter {
+public final class Filter {
     private Filter() {}
 
     public static Declaration.Scoped filter(Declaration.Scoped decl, String... validNames) {

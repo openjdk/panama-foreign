@@ -26,9 +26,6 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.JextractTask;
-import jdk.incubator.jextract.Position;
-import jdk.incubator.jextract.Type;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -41,19 +38,14 @@ import jdk.internal.clang.TranslationUnit;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-class Parser {
+public class Parser {
     private final TreeMaker treeMaker;
-    private final JextractTask.ConstantParser constantParser;
 
-    public Parser(JextractTask.ConstantParser constantParser) {
+    public Parser() {
         this.treeMaker = new TreeMaker();
-        this.constantParser = constantParser;
     }
 
     public Declaration.Scoped parse(Path path, Collection<String> args) {
@@ -67,8 +59,7 @@ class Parser {
             },
             true, args.toArray(new String[0]));
 
-        JextractTask.ConstantParser constantParser = this.constantParser != null ?
-                this.constantParser : MacroParserImpl.make(treeMaker, tu, args);
+        MacroParserImpl macroParser = MacroParserImpl.make(treeMaker, tu, args);
 
         List<Declaration> decls = new ArrayList<>();
         Cursor tuCursor = tu.getCursor();
@@ -100,16 +91,14 @@ class Parser {
                 } else if (isMacro(c) && src.path() != null) {
                     SourceRange range = c.getExtent();
                     String[] tokens = c.getTranslationUnit().tokens(range);
-                    Optional<Declaration.Constant> constant = constantParser.parseConstant(treeMaker.toPos(c), c.spelling(), tokens);
+                    Optional<Declaration.Constant> constant = macroParser.parseConstant(treeMaker.toPos(c), c.spelling(), tokens);
                     if (constant.isPresent()) {
                         decls.add(constant.get());
                     }
                 }
             });
 
-        if (constantParser instanceof MacroParserImpl) {
-            decls.addAll(((MacroParserImpl)constantParser).macroTable.reparseConstants());
-        }
+        decls.addAll(macroParser.macroTable.reparseConstants());
         Declaration.Scoped rv = treeMaker.createHeader(tuCursor, decls);
         treeMaker.freeze();
         index.close();

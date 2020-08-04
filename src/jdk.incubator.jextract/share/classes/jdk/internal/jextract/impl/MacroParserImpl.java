@@ -27,10 +27,9 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
-import jdk.incubator.jextract.JextractTask;
 import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.jextract.tool.Main;
+import jdk.incubator.jextract.JextractTool;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -50,7 +49,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class MacroParserImpl implements JextractTask.ConstantParser {
+class MacroParserImpl {
 
     private final ClangReparser reparser;
     private final TreeMaker treeMaker;
@@ -62,7 +61,7 @@ class MacroParserImpl implements JextractTask.ConstantParser {
         this.macroTable = new MacroTable();
     }
 
-    public static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+    static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
         ClangReparser reparser;
         try {
             reparser = new ClangReparser(tu, args);
@@ -79,8 +78,7 @@ class MacroParserImpl implements JextractTask.ConstantParser {
      * If that is not possible (e.g. because the macro refers to other macro, or has a more complex grammar), fall
      * back to use clang evaluation support.
      */
-    @Override
-    public Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
+    Optional<Declaration.Constant> parseConstant(Position pos, String name, String[] tokens) {
         if (!(pos instanceof TreeMaker.CursorPosition)) {
             return Optional.empty();
         } else {
@@ -139,7 +137,7 @@ class MacroParserImpl implements JextractTask.ConstantParser {
         }
 
         void processDiagnostics(Diagnostic diag) {
-            if (Main.DEBUG) {
+            if (JextractTool.DEBUG) {
                 System.err.println("Error while processing macro: " + diag.spelling());
             }
         }
