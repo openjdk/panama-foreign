@@ -62,7 +62,7 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(3)
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
 public class ParallelSum {
 
     final static int CARRIER_SIZE = 4;
@@ -74,7 +74,7 @@ public class ParallelSum {
     final static int BULK_FACTOR = 512;
     final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
 
-    static final Unsafe unsafe = Utils.unsafe;
+    static final Unsafe unsafe = org.openjdk.bench.jdk.incubator.foreign.Utils.unsafe;
 
     MemorySegment segment;
     long address;

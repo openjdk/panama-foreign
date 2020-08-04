@@ -58,10 +58,10 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(3)
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
 public class LoopOverNonConstantMapped {
 
-    static final Unsafe unsafe = Utils.unsafe;
+    static final Unsafe unsafe = org.openjdk.bench.jdk.incubator.foreign.Utils.unsafe;
 
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();

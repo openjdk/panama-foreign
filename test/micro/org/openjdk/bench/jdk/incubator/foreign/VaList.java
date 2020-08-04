@@ -49,7 +49,7 @@ import static jdk.incubator.foreign.CSupport.Win64.asVarArg;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(3)
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class VaList {
 
     static final ForeignLinker linker = CSupport.getSystemLinker();
