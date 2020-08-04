@@ -52,7 +52,7 @@ import static jdk.incubator.foreign.CSupport.C_POINTER;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(3)
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class CallOverhead {
 
     static final ForeignLinker abi = CSupport.getSystemLinker();
@@ -123,12 +123,6 @@ public class CallOverhead {
     }
 
     @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public void panama_blank_NO_SPEC() throws Throwable {
-        func.invokeExact();
-    }
-
-    @Benchmark
     public void panama_blank_trivial() throws Throwable {
         func_trivial.invokeExact();
     }
@@ -144,12 +138,6 @@ public class CallOverhead {
     }
 
     @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public int panama_identity_NO_SPEC() throws Throwable {
-        return (int) identity.invokeExact(10);
-    }
-
-    @Benchmark
     public int panama_identity_trivial() throws Throwable {
         return (int) identity_trivial.invokeExact(10);
     }
@@ -160,19 +148,7 @@ public class CallOverhead {
     }
 
     @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public MemorySegment panama_identity_struct_NO_SPEC() throws Throwable {
-        return (MemorySegment) identity_struct.invokeExact(point);
-    }
-
-    @Benchmark
     public MemoryAddress panama_identity_memory_address() throws Throwable {
-        return (MemoryAddress) identity_memory_address.invokeExact(MemoryAddress.NULL);
-    }
-
-    @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public MemoryAddress panama_identity_memory_address_NO_SPEC() throws Throwable {
         return (MemoryAddress) identity_memory_address.invokeExact(MemoryAddress.NULL);
     }
 
@@ -182,20 +158,7 @@ public class CallOverhead {
     }
 
     @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public void panama_args5_NO_SPEC() throws Throwable {
-        args5.invokeExact(10L, 11D, 12L, 13D, 14L);
-    }
-
-    @Benchmark
     public void panama_args10() throws Throwable {
-        args10.invokeExact(10L, 11D, 12L, 13D, 14L,
-                           15D, 16L, 17D, 18L, 19D);
-    }
-
-    @Benchmark
-    @Fork(jvmArgsAppend = "-Djdk.internal.foreign.ProgrammableInvoker.NO_SPEC=true")
-    public void panama_args10_NO_SPEC() throws Throwable {
         args10.invokeExact(10L, 11D, 12L, 13D, 14L,
                            15D, 16L, 17D, 18L, 19D);
     }
