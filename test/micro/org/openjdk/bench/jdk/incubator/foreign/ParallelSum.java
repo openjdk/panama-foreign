@@ -74,7 +74,7 @@ public class ParallelSum {
     final static int BULK_FACTOR = 512;
     final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
 
-    static final Unsafe unsafe = org.openjdk.bench.jdk.incubator.foreign.Utils.unsafe;
+    static final Unsafe unsafe = Utils.unsafe;
 
     MemorySegment segment;
     long address;

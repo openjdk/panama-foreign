@@ -54,7 +54,7 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
 public class LoopOverNonConstantHeap {
 
-    static final Unsafe unsafe = org.openjdk.bench.jdk.incubator.foreign.Utils.unsafe;
+    static final Unsafe unsafe = Utils.unsafe;
 
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
