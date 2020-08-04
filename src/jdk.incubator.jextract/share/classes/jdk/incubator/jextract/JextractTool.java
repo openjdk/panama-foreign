@@ -138,7 +138,7 @@ public final class JextractTool {
     public static Declaration.Scoped filter(Declaration.Scoped decl, String... includedNames) {
         return Filter.filter(decl, includedNames);
     }
-    
+
     public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName, String targetPkg, List<String> libNames) {
         return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
     }
@@ -276,7 +276,7 @@ public final class JextractTool {
             List<JavaFileObject> files = generate(
                 toplevel, header.getFileName().toString(),
                 options.targetPackage, options.libraryNames);
-            
+
             write(output, !options.source, files);
         } catch (RuntimeException re) {
             err.println(re);
