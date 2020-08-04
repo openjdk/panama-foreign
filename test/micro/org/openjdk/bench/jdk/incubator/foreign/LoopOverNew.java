@@ -79,6 +79,15 @@ public class LoopOverNew {
     }
 
     @Benchmark
+    public void segment_loop_shared() {
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE).share();
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
+        }
+        segment.close();
+    }
+
+    @Benchmark
     public void buffer_loop() {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
