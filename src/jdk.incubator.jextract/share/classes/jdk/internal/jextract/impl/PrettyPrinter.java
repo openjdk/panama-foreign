@@ -34,7 +34,7 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
 
-class PrettyPrinter implements Declaration.Visitor<Void, Void> {
+public class PrettyPrinter implements Declaration.Visitor<Void, Void> {
 
     int align = 0;
 
