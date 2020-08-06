@@ -58,7 +58,7 @@ abstract class JavaSourceBuilder {
     }
 
     abstract JavaSourceBuilder prev();
-    
+
     abstract void append(String s);
 
     abstract void append(char c);
