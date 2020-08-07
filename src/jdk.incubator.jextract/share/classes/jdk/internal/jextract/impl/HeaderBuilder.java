@@ -27,11 +27,15 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import javax.tools.JavaFileObject;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -39,27 +43,71 @@ import java.util.List;
  * method is called to get overall generated source string.
  */
 class HeaderBuilder extends JavaSourceBuilder {
+
+    protected final StringBuffer sb;
+
+    // current line alignment (number of 4-spaces)
+    private int align;
+
     HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
+        this.sb = new StringBuffer();
     }
 
-    void addFunctionalInterface(String name, MethodType mtype,  FunctionDescriptor fDesc) {
+    @Override
+    JavaSourceBuilder prev() {
+        return null;
+    }
+
+    @Override
+    void append(String s) {
+        sb.append(s);
+    }
+
+    @Override
+    void append(char c) {
+        sb.append(c);
+    }
+
+    @Override
+    void append(long l) {
+        sb.append(l);
+    }
+
+    @Override
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
+        }
+    }
+
+    @Override
+    void incrAlign() {
+        align++;
+    }
+
+    @Override
+    void decrAlign() {
+        align--;
+    }
+
+    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor fDesc) {
         incrAlign();
         indent();
-        sb.append("public interface " + name + " {\n");
+        append("public interface " + name + " {\n");
         incrAlign();
         indent();
-        sb.append(mtype.returnType().getName() + " apply(");
+        append(mtype.returnType().getName() + " apply(");
         String delim = "";
         for (int i = 0 ; i < mtype.parameterCount(); i++) {
-            sb.append(delim + mtype.parameterType(i).getName() + " x" + i);
+            append(delim + mtype.parameterType(i).getName() + " x" + i);
             delim = ", ";
         }
-        sb.append(");\n");
+        append(");\n");
         addFunctionalFactory(name, mtype, fDesc);
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
         indent();
     }
@@ -67,7 +115,7 @@ class HeaderBuilder extends JavaSourceBuilder {
     void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
+        append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -85,39 +133,39 @@ class HeaderBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            sb.append(delim + pType.getName() + " " + pName);
+            append(delim + pType.getName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
             String lastArg = "x" + numParams;
             if (numParams > 0) {
-                sb.append(", ");
+                append(", ");
             }
-            sb.append("Object... " + lastArg);
+            append("Object... " + lastArg);
             pExprs.add(lastArg);
         }
-        sb.append(") {\n");
+        append(") {\n");
         incrAlign();
         indent();
-        sb.append("try {\n");
+        append("try {\n");
         incrAlign();
         indent();
         if (!mtype.returnType().equals(void.class)) {
-            sb.append("return (" + mtype.returnType().getName() + ")");
+            append("return (" + mtype.returnType().getName() + ")");
         }
-        sb.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
+        append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
         decrAlign();
         indent();
-        sb.append("} catch (Throwable ex) {\n");
+        append("} catch (Throwable ex) {\n");
         incrAlign();
         indent();
-        sb.append("throw new AssertionError(ex);\n");
+        append("throw new AssertionError(ex);\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
@@ -126,12 +174,12 @@ class HeaderBuilder extends JavaSourceBuilder {
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();
             indent();
-            sb.append(PUB_MODS);
-            sb.append("ValueLayout ");
-            sb.append(name);
-            sb.append(" = ");
-            sb.append(TypeTranslator.typeToLayoutName(kind));
-            sb.append(";\n");
+            append(PUB_MODS);
+            append("ValueLayout ");
+            append(uniqueNestedClassName(name));
+            append(" = ");
+            append(TypeTranslator.typeToLayoutName(kind));
+            append(";\n");
             decrAlign();
         }
     }
@@ -146,42 +194,49 @@ class HeaderBuilder extends JavaSourceBuilder {
     void emitTypedef(String className, String superClassName) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("class ");
-        sb.append(className);
-        sb.append(" extends ");
-        sb.append(superClassName);
-        sb.append(" {\n");
+        append(PUB_MODS);
+        append("class ");
+        String uniqueName = uniqueNestedClassName(className);
+        append(uniqueName);
+        append(" extends ");
+        append(superClassName);
+        append(" {\n");
         incrAlign();
         indent();
         // private constructor
-        sb.append("private ");
-        sb.append(className);
-        sb.append("() {}\n");
+        append("private ");
+        append(uniqueName);
+        append("() {}\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
     private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
         indent();
-        sb.append(PUB_MODS + "MemorySegment allocate(" + className + " fi) {\n");
+        append(PUB_MODS + "MemorySegment allocate(" + className + " fi) {\n");
         incrAlign();
         indent();
-        sb.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
+        append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
                 "\"" + mtype.toMethodDescriptorString() + "\");\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
 
         indent();
-        sb.append(PUB_MODS + "MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
+        append(PUB_MODS + "MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
         incrAlign();
         indent();
-        sb.append("return scope.register(allocate(fi));\n");
+        append("return scope.register(allocate(fi));\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
+    }
+
+    JavaFileObject build() {
+        String res = sb.toString();
+        this.sb.delete(0, res.length());
+        return Utils.fileFromString(pkgName, className, res);
     }
 }

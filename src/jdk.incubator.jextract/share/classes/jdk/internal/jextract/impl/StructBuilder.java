@@ -31,8 +31,46 @@ import jdk.incubator.foreign.MemorySegment;
  * This class generates static utilities class for C structs, unions.
  */
 class StructBuilder extends JavaSourceBuilder {
-    StructBuilder(String className, String pkgName, ConstantHelper constantHelper) {
-        super(className, pkgName, constantHelper);
+
+    private final JavaSourceBuilder prev;
+
+    StructBuilder(JavaSourceBuilder prev, String className, String pkgName, ConstantHelper constantHelper) {
+        super(prev.uniqueNestedClassName(className), pkgName, constantHelper);
+        this.prev = prev;
+    }
+
+    JavaSourceBuilder prev() {
+        return prev;
+    }
+
+    @Override
+    void append(String s) {
+        prev.append(s);
+    }
+
+    @Override
+    void append(char c) {
+        prev.append(c);
+    }
+
+    @Override
+    void append(long l) {
+        prev.append(l);
+    }
+
+    @Override
+    void indent() {
+        prev.indent();
+    }
+
+    @Override
+    void incrAlign() {
+        prev.incrAlign();
+    }
+
+    @Override
+    void decrAlign() {
+        prev.decrAlign();
     }
 
     @Override
@@ -51,13 +89,13 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    void classEnd() {
+    JavaSourceBuilder classEnd() {
         emitSizeof();
         emitAllocate();
         emitScopeAllocate();
         emitAllocateArray();
         emitScopeAllocateArray();
-        super.classEnd();
+        return super.classEnd();
     }
 
     @Override
@@ -65,13 +103,13 @@ class StructBuilder extends JavaSourceBuilder {
         var desc = constantHelper.addLayout(javaName + "$struct", layout);
         incrAlign();
         indent();
-        sb.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " $LAYOUT() {\n");
+        append(PUB_MODS + displayName(desc.invocationType().returnType()) + " $LAYOUT() {\n");
         incrAlign();
         indent();
-        sb.append("return " + getCallString(desc) + ";\n");
+        append("return " + getCallString(desc) + ";\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
@@ -79,14 +117,14 @@ class StructBuilder extends JavaSourceBuilder {
     void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment addr) {\n");
+        append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment addr) {\n");
         incrAlign();
         indent();
-        sb.append("return (" + type.getName() + ")"
+        append("return (" + type.getName() + ")"
                 + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr);\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
 
         addIndexGetter(javaName, nativeName, layout, type, parentLayout);
@@ -97,13 +135,13 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         String param = MemorySegment.class.getName() + " addr";
-        sb.append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
+        append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(addr, x);\n");
+        append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(addr, x);\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
 
         addIndexSetter(javaName, nativeName, layout, type, parentLayout);
@@ -113,67 +151,67 @@ class StructBuilder extends JavaSourceBuilder {
     void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        sb.append(PUB_MODS + "MemorySegment " + javaName + "$addr(MemorySegment addr) {\n");
+        append(PUB_MODS + "MemorySegment " + javaName + "$addr(MemorySegment addr) {\n");
         incrAlign();
         indent();
-        sb.append("return addr.asSlice(");
-        sb.append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
-        sb.append(", ");
-        sb.append(layout.byteSize());
-        sb.append(");\n");
+        append("return addr.asSlice(");
+        append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
+        append(", ");
+        append(layout.byteSize());
+        append(");\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
     private void emitSizeof() {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("long sizeof() { return $LAYOUT().byteSize(); }\n");
+        append(PUB_MODS);
+        append("long sizeof() { return $LAYOUT().byteSize(); }\n");
         decrAlign();
     }
 
     private void emitAllocate() {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
+        append(PUB_MODS);
+        append("MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
         decrAlign();
     }
 
     private void emitScopeAllocate() {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        append(PUB_MODS);
+        append("MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         decrAlign();
     }
 
     private void emitAllocateArray() {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("MemorySegment allocateArray(int len) {\n");
+        append(PUB_MODS);
+        append("MemorySegment allocateArray(int len) {\n");
         incrAlign();
         indent();
-        sb.append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
         decrAlign();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
     private void emitScopeAllocateArray() {
         incrAlign();
         indent();
-        sb.append(PUB_MODS);
-        sb.append("MemorySegment allocateArray(int len, NativeScope scope) {\n");
+        append(PUB_MODS);
+        append("MemorySegment allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
-        sb.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
         decrAlign();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
@@ -181,14 +219,14 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         String params = MemorySegment.class.getName() + " addr, long index";
-        sb.append(PUB_MODS + type.getName() + " " + javaName + "$get(" + params + ") {\n");
+        append(PUB_MODS + type.getName() + " " + javaName + "$get(" + params + ") {\n");
         incrAlign();
         indent();
-        sb.append("return (" + type.getName() + ")"
+        append("return (" + type.getName() + ")"
                 + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr.asSlice(index*sizeof()));\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 
@@ -196,13 +234,13 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         String params = MemorySegment.class.getName() + " addr, long index, " + type.getName() + " x";
-        sb.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
+        append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        sb.append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.asSlice(index*sizeof()), x);\n");
+        append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.asSlice(index*sizeof()), x);\n");
         decrAlign();
         indent();
-        sb.append("}\n");
+        append("}\n");
         decrAlign();
     }
 }

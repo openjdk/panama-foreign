@@ -42,13 +42,15 @@ public class Test8244512 extends JextractToolRunner {
         run("-d", nestedOutput.toString(), nestedH.toString()).checkSuccess();
         try(Loader loader = classLoader(nestedOutput)) {
             checkClass(loader, "Foo");
-            checkClass(loader, "Bar");
+            checkClass(loader, "Foo$Bar");
             checkClass(loader, "U");
-            checkClass(loader, "Point");
+            checkClass(loader, "U$Point");
             checkClass(loader, "MyStruct");
-            checkClass(loader, "MyStruct_Z");
+            checkClass(loader, "MyStruct$MyStruct_Z");
+            checkClass(loader, "MyStruct$k");
             checkClass(loader, "MyUnion");
-            checkClass(loader, "MyUnion_Z");
+            checkClass(loader, "MyUnion$MyUnion_Z");
+            checkClass(loader, "MyUnion$k");
             checkClass(loader, "X");
             checkClass(loader, "X2");
         } finally {
