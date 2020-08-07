@@ -220,6 +220,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         if (structClass) {
             currentBuilder = currentBuilder.classEnd();
+            currentBuilder.decrAlign();
         }
         return null;
     }

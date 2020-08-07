@@ -46,6 +46,9 @@ class HeaderBuilder extends JavaSourceBuilder {
 
     protected final StringBuffer sb;
 
+    // current line alignment (number of 4-spaces)
+    private int align;
+
     HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         super(className, pkgName, constantHelper);
         this.sb = new StringBuffer();
@@ -69,6 +72,23 @@ class HeaderBuilder extends JavaSourceBuilder {
     @Override
     void append(long l) {
         sb.append(l);
+    }
+
+    @Override
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
+        }
+    }
+
+    @Override
+    void incrAlign() {
+        align++;
+    }
+
+    @Override
+    void decrAlign() {
+        align--;
     }
 
     void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor fDesc) {

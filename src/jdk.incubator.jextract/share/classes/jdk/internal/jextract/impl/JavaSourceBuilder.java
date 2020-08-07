@@ -44,8 +44,6 @@ abstract class JavaSourceBuilder {
     protected final String className;
     protected final String pkgName;
     protected final ConstantHelper constantHelper;
-    // current line alignment (number of 4-spaces)
-    private int align;
 
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
@@ -54,7 +52,6 @@ abstract class JavaSourceBuilder {
         this.className = className;
         this.pkgName = pkgName;
         this.constantHelper = constantHelper;
-        this.align = align;
     }
 
     abstract JavaSourceBuilder prev();
@@ -64,6 +61,12 @@ abstract class JavaSourceBuilder {
     abstract void append(char c);
 
     abstract void append(long l);
+
+    abstract void indent();
+
+    abstract void incrAlign();
+
+    abstract void decrAlign();
 
     JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper) {
         this(className, pkgName, constantHelper, 0);
@@ -207,20 +210,6 @@ abstract class JavaSourceBuilder {
 
     protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
         return getCallString(constantHelper.addAddress(javaName, nativeName, layout));
-    }
-
-    protected void indent() {
-        for (int i = 0; i < align; i++) {
-            append("    ");
-        }
-    }
-
-    protected void incrAlign() {
-        align++;
-    }
-
-    protected void decrAlign() {
-        align--;
     }
 
     /*

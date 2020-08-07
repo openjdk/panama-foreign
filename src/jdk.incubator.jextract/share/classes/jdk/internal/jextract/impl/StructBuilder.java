@@ -59,6 +59,21 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    void indent() {
+        prev.indent();
+    }
+
+    @Override
+    void incrAlign() {
+        prev.incrAlign();
+    }
+
+    @Override
+    void decrAlign() {
+        prev.decrAlign();
+    }
+
+    @Override
     protected String getClassModifiers() {
         return PUB_MODS;
     }
