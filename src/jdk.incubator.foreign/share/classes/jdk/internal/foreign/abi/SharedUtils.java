@@ -269,13 +269,18 @@ public class SharedUtils {
         throw new IllegalArgumentException("String too large");
     }
 
-    // lazy init MH_FREE handle
-    private static class FreeHolder {
-        private static final MethodHandle MH_FREE;
+    // lazy init MH_ALLOC and MH_FREE handles
+    private static class AllocHolder {
+        static final MethodHandle MH_MALLOC;
+        static final MethodHandle MH_FREE;
 
         static {
             LibraryLookup lookup = LibraryLookup.ofDefault();
             try {
+                MH_MALLOC = getSystemLinker().downcallHandle(lookup.lookup("malloc"),
+                        MethodType.methodType(MemoryAddress.class, long.class),
+                        FunctionDescriptor.of(C_POINTER, C_LONGLONG));
+
                 MH_FREE = getSystemLinker().downcallHandle(lookup.lookup("free"),
                         MethodType.methodType(void.class, MemoryAddress.class),
                         FunctionDescriptor.ofVoid(C_POINTER));
@@ -285,9 +290,17 @@ public class SharedUtils {
         }
     }
 
+    public static MemoryAddress allocateMemoryInternal(long size) {
+        try {
+            return (MemoryAddress) AllocHolder.MH_MALLOC.invokeExact(size);
+        } catch (Throwable th) {
+            throw new RuntimeException(th);
+        }
+    }
+
     public static void freeMemoryInternal(MemoryAddress addr) {
         try {
-            FreeHolder.MH_FREE.invokeExact(addr);
+            AllocHolder.MH_FREE.invokeExact(addr);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }

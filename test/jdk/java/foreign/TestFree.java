@@ -29,15 +29,10 @@
  * @run testng/othervm -Dforeign.restricted=permit TestFree
  */
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ForeignLinker;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import static jdk.incubator.foreign.CSupport.*;
 import static org.testng.Assert.assertEquals;
 
@@ -48,13 +43,8 @@ public class TestFree {
     }
 
     public void test() throws Throwable {
-        LibraryLookup lib = LibraryLookup.ofDefault();
-        ForeignLinker abi = getSystemLinker();
-        MethodHandle malloc = getSystemLinker().downcallHandle(lib.lookup("malloc"),
-                    MethodType.methodType(void.class, MemoryAddress.class),
-                    FunctionDescriptor.of(C_POINTER, C_INT));
         String str = "hello world";
-        MemoryAddress addr = (MemoryAddress)malloc.invokeExact(str.length() + 1);
+        MemoryAddress addr = allocateMemoryRestricted(str.length() + 1);
         MemorySegment seg = asArrayRestricted(addr, C_CHAR, str.length() + 1);
         seg.copyFrom(MemorySegment.ofArray(str.getBytes()));
         MemoryAccess.setByteAtOffset(seg, str.length(), (byte)0);

@@ -884,6 +884,17 @@ public class CSupport {
     }
 
     /**
+     * Allocate memory of given size using malloc.
+     *
+     * @param size memory size to be allocated
+     * @return addr memory address of the allocated memory
+     */
+    public static MemoryAddress allocateMemoryRestricted(long size) {
+        Utils.checkRestrictedAccess("CSupport.allocateMemoryRestricted");
+        return SharedUtils.allocateMemoryInternal(size);
+    }
+
+    /**
      * Free the memory pointed by the given memory address.
      *
      * @param addr memory address of the native memory to be freed
