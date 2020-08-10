@@ -882,4 +882,14 @@ public class CSupport {
         copy(addr, bytes);
         return addr;
     }
+
+    /**
+     * Free the memory pointed by the given memory address.
+     *
+     * @param addr memory address of the native memory to be freed
+     */
+    public static void freeMemoryRestricted(MemoryAddress addr) {
+        Utils.checkRestrictedAccess("CSupport.freeMemoryRestricted");
+        SharedUtils.freeMemoryInternal(addr);
+    }
 }

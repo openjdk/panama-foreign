@@ -33,6 +33,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
@@ -268,6 +269,29 @@ public class SharedUtils {
         throw new IllegalArgumentException("String too large");
     }
 
+    // lazy init MH_FREE handle
+    private static class FreeHolder {
+        private static final MethodHandle MH_FREE;
+
+        static {
+            LibraryLookup lookup = LibraryLookup.ofDefault();
+            try {
+                MH_FREE = getSystemLinker().downcallHandle(lookup.lookup("free"),
+                        MethodType.methodType(void.class, MemoryAddress.class),
+                        FunctionDescriptor.ofVoid(C_POINTER));
+            } catch (NoSuchMethodException nsme) {
+                throw new BootstrapMethodError(nsme);
+            }
+        }
+    }
+
+    public static void freeMemoryInternal(MemoryAddress addr) {
+        try {
+            FreeHolder.MH_FREE.invokeExact(addr);
+        } catch (Throwable th) {
+            throw new RuntimeException(th);
+        }
+    }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, Allocator allocator) {
         String name = CSupport.getSystemLinker().name();
