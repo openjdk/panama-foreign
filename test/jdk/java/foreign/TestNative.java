@@ -27,6 +27,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
+import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -140,8 +141,13 @@ public class TestNative {
 
     public static native long getCapacity(Buffer buffer);
 
-    public static native long allocate(int size);
-    public static native void free(long address);
+    public static MemoryAddress allocate(int size) {
+        return CSupport.allocateMemoryRestricted(size);
+    }
+
+    public static void free(MemoryAddress addr) {
+        CSupport.freeMemoryRestricted(addr);
+    }
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
@@ -165,9 +171,9 @@ public class TestNative {
 
     @Test
     public void testDefaultAccessModes() {
-        MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
+        MemoryAddress addr = allocate(12);
         MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
-                () -> free(addr.toRawLongValue()), null);
+                () -> free(addr), null);
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
@@ -183,9 +189,9 @@ public class TestNative {
 
     @Test
     public void testMallocSegment() {
-        MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
+        MemoryAddress addr = allocate(12);
         MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
-                () -> free(addr.toRawLongValue()), null);
+                () -> free(addr), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());
@@ -193,11 +199,11 @@ public class TestNative {
 
     @Test
     public void testEverythingSegment() {
-        MemoryAddress addr = MemoryAddress.ofLong(allocate(4));
+        MemoryAddress addr = allocate(4);
         MemorySegment everything = MemorySegment.ofNativeRestricted();
         MemoryAccess.setIntAtOffset(everything, addr.toRawLongValue(), 42);
         assertEquals(MemoryAccess.getIntAtOffset(everything, addr.toRawLongValue()), 42);
-        free(addr.toRawLongValue());
+        free(addr);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
