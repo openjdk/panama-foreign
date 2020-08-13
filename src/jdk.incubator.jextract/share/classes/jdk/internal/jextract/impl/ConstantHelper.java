@@ -201,8 +201,8 @@ public class ConstantHelper {
         return emitCondyGetter(javaName + "$MH", MethodHandle.class, methodHandleDesc(nativeName, mtype, desc, varargs));
     }
 
-    public DirectMethodHandleDesc addAddress(String javaName, String nativeName, MemoryLayout layout) {
-        return emitCondyGetter(javaName + "$ADDR", MemorySegment.class, globalVarAddressDesc(nativeName, layout));
+    public DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout) {
+        return emitCondyGetter(javaName + "$SEGMENT", MemorySegment.class, globalVarAddressDesc(nativeName, layout));
     }
 
     public DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc) {

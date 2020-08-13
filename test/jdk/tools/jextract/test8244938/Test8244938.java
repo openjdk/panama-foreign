@@ -40,8 +40,8 @@ public class Test8244938 {
          var seg = func();
          assertEquals(seg.byteSize(), Point.sizeof());
          assertEquals(Point.k$get(seg), 44);
-         var point2dAddr = Point.point2d$addr(seg);
-         assertEquals(Point2D.i$get(point2dAddr), 567);
-         assertEquals(Point2D.j$get(point2dAddr), 33);
+         var point2dSeg = Point.point2d$slice(seg);
+         assertEquals(Point2D.i$get(point2dSeg), 567);
+         assertEquals(Point2D.j$get(point2dSeg), 33);
     }
 }

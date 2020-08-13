@@ -178,7 +178,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Method layout_getter = checkMethod(cls, name + "$LAYOUT", MemoryLayout.class);
         assertEquals(layout_getter.invoke(null), expectedLayout);
 
-        Method addr_getter = checkMethod(cls, name + "$ADDR", MemorySegment.class);
+        Method addr_getter = checkMethod(cls, name + "$SEGMENT", MemorySegment.class);
         MemorySegment segment = (MemorySegment)addr_getter.invoke(null);
 
         Method vh_getter = checkMethod(cls, name + "$VH", VarHandle.class);

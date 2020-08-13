@@ -360,7 +360,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (parent != null) { //struct field
             MemoryLayout parentLayout = parentLayout(parent);
             if (isSegment) {
-                currentBuilder.addAddressGetter(fieldName, tree.name(), treeLayout, parentLayout);
+                currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, parentLayout);
             } else {
                 currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
                 currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
@@ -368,11 +368,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         } else {
             if (isSegment) {
-                toplevelBuilder.addAddressGetter(fieldName, tree.name(), treeLayout, null);
+                toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
             } else {
                 toplevelBuilder.addLayoutGetter(fieldName, layout);
                 toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
-                toplevelBuilder.addAddressGetter(fieldName, tree.name(), treeLayout, null);
+                toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
                 toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
                 toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
             }
