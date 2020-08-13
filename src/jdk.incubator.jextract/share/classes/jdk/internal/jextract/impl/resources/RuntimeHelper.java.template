@@ -60,9 +60,13 @@ public class RuntimeHelper {
 
     public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(s ->
-            MemorySegment.ofNativeRestricted(
+            nonCloseableNonTransferableSegment(MemorySegment.ofNativeRestricted(
                  s.address(), layout.byteSize(), null, null, s
-            ).withAccessModes(MemorySegment.READ | MemorySegment.WRITE)).orElse(null);
+            ))).orElse(null);
+    }
+
+    public static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
+        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
     }
 
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {

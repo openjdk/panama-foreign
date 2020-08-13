@@ -22,8 +22,10 @@
  */
 
 import org.testng.annotations.Test;
+import jdk.incubator.foreign.MemorySegment;
 import test.jextract.test8245003.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static test.jextract.test8245003.test8245003_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
@@ -37,27 +39,34 @@ import static jdk.incubator.foreign.CSupport.*;
  * @run testng/othervm -Dforeign.restricted=permit Test8245003
  */
 public class Test8245003 {
+    private void checkAccess(MemorySegment seg) {
+        assertFalse(seg.hasAccessModes(MemorySegment.CLOSE | MemorySegment.HANDOFF));
+    }
+
     @Test
     public void testStructAccessor() {
-        var addr = special_pt$ADDR();
-        assertEquals(addr.byteSize(), Point.sizeof());
-        assertEquals(Point.x$get(addr), 56);
-        assertEquals(Point.y$get(addr), 75);
+        var seg = special_pt$SEGMENT();
+        checkAccess(seg);
+        assertEquals(seg.byteSize(), Point.sizeof());
+        assertEquals(Point.x$get(seg), 56);
+        assertEquals(Point.y$get(seg), 75);
 
-        addr = special_pt3d$ADDR();
-        assertEquals(addr.byteSize(), Point3D.sizeof());
-        assertEquals(Point3D.z$get(addr), 35);
-        var pointAddr = Point3D.p$addr(addr);
-        assertEquals(pointAddr.byteSize(), Point.sizeof());
-        assertEquals(Point.x$get(pointAddr), 43);
-        assertEquals(Point.y$get(pointAddr), 45);
+        seg = special_pt3d$SEGMENT();
+        checkAccess(seg);
+        assertEquals(seg.byteSize(), Point3D.sizeof());
+        assertEquals(Point3D.z$get(seg), 35);
+        var pointSeg = Point3D.p$slice(seg);
+        assertEquals(pointSeg.byteSize(), Point.sizeof());
+        assertEquals(Point.x$get(pointSeg), 43);
+        assertEquals(Point.y$get(pointSeg), 45);
+        checkAccess(pointSeg);
     }
 
     @Test
     public void testArrayAccessor() {
-        var addr = iarr$ADDR();
-        assertEquals(addr.byteSize(), C_INT.byteSize()*5);
-        int[] arr = addr.toIntArray();
+        var seg = iarr$SEGMENT();
+        assertEquals(seg.byteSize(), C_INT.byteSize()*5);
+        int[] arr = seg.toIntArray();
         assertEquals(arr.length, 5);
         assertEquals(arr[0], 2);
         assertEquals(arr[1], -2);
@@ -65,10 +74,10 @@ public class Test8245003 {
         assertEquals(arr[3], -42);
         assertEquals(arr[4], 345);
 
-        addr = foo$ADDR();
-        assertEquals(addr.byteSize(), Foo.sizeof());
-        assertEquals(Foo.count$get(addr), 37);
-        var greeting = Foo.greeting$addr(addr);
+        seg = foo$SEGMENT();
+        assertEquals(seg.byteSize(), Foo.sizeof());
+        assertEquals(Foo.count$get(seg), 37);
+        var greeting = Foo.greeting$slice(seg);
         byte[] barr = greeting.toByteArray();
         assertEquals(new String(barr), "hello");
     }

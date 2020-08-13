@@ -117,11 +117,11 @@ class StructBuilder extends JavaSourceBuilder {
     void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment addr) {\n");
+        append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr);\n");
+                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(seg);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -134,11 +134,11 @@ class StructBuilder extends JavaSourceBuilder {
     void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        String param = MemorySegment.class.getName() + " addr";
+        String param = MemorySegment.class.getName() + " seg";
         append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(addr, x);\n");
+        append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(seg, x);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -148,17 +148,17 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
         incrAlign();
         indent();
-        append(PUB_MODS + "MemorySegment " + javaName + "$addr(MemorySegment addr) {\n");
+        append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
         incrAlign();
         indent();
-        append("return addr.asSlice(");
+        append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
         append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
         append(", ");
         append(layout.byteSize());
-        append(");\n");
+        append("));\n");
         decrAlign();
         indent();
         append("}\n");

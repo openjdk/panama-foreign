@@ -116,8 +116,8 @@ abstract class JavaSourceBuilder {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs));
     }
 
-    void addAddressGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
-        emitForwardGetter(constantHelper.addAddress(javaName, nativeName, layout));
+    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout));
     }
 
     void addConstantGetter(String javaName, Class<?> type, Object value) {
@@ -209,7 +209,7 @@ abstract class JavaSourceBuilder {
     }
 
     protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
-        return getCallString(constantHelper.addAddress(javaName, nativeName, layout));
+        return getCallString(constantHelper.addSegment(javaName, nativeName, layout));
     }
 
     /*
