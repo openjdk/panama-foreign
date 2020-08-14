@@ -89,6 +89,7 @@
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
+#include "memory/heapInspection.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
@@ -161,9 +162,13 @@ void G1RegionMappingChangedListener::on_commit(uint start_idx, size_t num_region
   reset_from_card_cache(start_idx, num_regions);
 }
 
-Tickspan G1CollectedHeap::run_task(AbstractGangTask* task) {
-  Ticks start = Ticks::now();
+void G1CollectedHeap::run_task(AbstractGangTask* task) {
   workers()->run_task(task, workers()->active_workers());
+}
+
+Tickspan G1CollectedHeap::run_task_timed(AbstractGangTask* task) {
+  Ticks start = Ticks::now();
+  run_task(task);
   return Ticks::now() - start;
 }
 
@@ -1417,6 +1422,7 @@ G1CollectedHeap::G1CollectedHeap() :
   _young_gen_sampling_thread(NULL),
   _workers(NULL),
   _card_table(NULL),
+  _collection_pause_end(Ticks::now()),
   _soft_ref_policy(),
   _old_set("Old Region Set", new OldRegionSetChecker()),
   _archive_set("Archive Region Set", new ArchiveRegionSetChecker()),
@@ -1966,7 +1972,8 @@ void G1CollectedHeap::increment_old_marking_cycles_started() {
   _old_marking_cycles_started++;
 }
 
-void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
+void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent,
+                                                             bool whole_heap_examined) {
   MonitorLocker ml(G1OldGCCount_lock, Mutex::_no_safepoint_check_flag);
 
   // We assume that if concurrent == true, then the caller is a
@@ -1998,6 +2005,10 @@ void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
          _old_marking_cycles_started, _old_marking_cycles_completed);
 
   _old_marking_cycles_completed += 1;
+  if (whole_heap_examined) {
+    // Signal that we have completed a visit to all live objects.
+    record_whole_heap_examined_timestamp();
+  }
 
   // We need to clear the "in_progress" flag in the CM thread before
   // we wake up any waiters (especially when ExplicitInvokesConcurrent
@@ -2295,6 +2306,30 @@ void G1CollectedHeap::object_iterate(ObjectClosure* cl) {
   heap_region_iterate(&blk);
 }
 
+class G1ParallelObjectIterator : public ParallelObjectIterator {
+private:
+  G1CollectedHeap*  _heap;
+  HeapRegionClaimer _claimer;
+
+public:
+  G1ParallelObjectIterator(uint thread_num) :
+      _heap(G1CollectedHeap::heap()),
+      _claimer(thread_num == 0 ? G1CollectedHeap::heap()->workers()->active_workers() : thread_num) {}
+
+  virtual void object_iterate(ObjectClosure* cl, uint worker_id) {
+    _heap->object_iterate_parallel(cl, worker_id, &_claimer);
+  }
+};
+
+ParallelObjectIterator* G1CollectedHeap::parallel_object_iterator(uint thread_num) {
+  return new G1ParallelObjectIterator(thread_num);
+}
+
+void G1CollectedHeap::object_iterate_parallel(ObjectClosure* cl, uint worker_id, HeapRegionClaimer* claimer) {
+  IterateObjectClosureRegionClosure blk(cl);
+  heap_region_par_iterate_from_worker_offset(&blk, claimer, worker_id);
+}
+
 void G1CollectedHeap::keep_alive(oop obj) {
   G1BarrierSet::enqueue(obj);
 }
@@ -2364,19 +2399,6 @@ size_t G1CollectedHeap::max_capacity() const {
 
 size_t G1CollectedHeap::max_reserved_capacity() const {
   return _hrm->max_length() * HeapRegion::GrainBytes;
-}
-
-jlong G1CollectedHeap::millis_since_last_gc() {
-  // See the notes in GenCollectedHeap::millis_since_last_gc()
-  // for more information about the implementation.
-  jlong ret_val = (os::javaTimeNanos() / NANOSECS_PER_MILLISEC) -
-                  _policy->collection_pause_end_millis();
-  if (ret_val < 0) {
-    log_warning(gc)("millis_since_last_gc() would return : " JLONG_FORMAT
-      ". returning zero instead.", ret_val);
-    return 0;
-  }
-  return ret_val;
 }
 
 void G1CollectedHeap::deduplicate_string(oop str) {
@@ -2641,7 +2663,7 @@ void G1CollectedHeap::gc_epilogue(bool full) {
   // Update common counters.
   if (full) {
     // Update the number of full collections that have been completed.
-    increment_old_marking_cycles_completed(false /* concurrent */);
+    increment_old_marking_cycles_completed(false /* concurrent */, true /* liveness_completed */);
   }
 
   // We are at the end of the GC. Total collections has already been increased.
@@ -2665,6 +2687,8 @@ void G1CollectedHeap::gc_epilogue(bool full) {
 
   // Print NUMA statistics.
   _numa->print_statistics();
+
+  _collection_pause_end = Ticks::now();
 }
 
 void G1CollectedHeap::verify_numa_regions(const char* desc) {
@@ -3699,7 +3723,7 @@ void G1CollectedHeap::pre_evacuate_collection_set(G1EvacuationInfo& evacuation_i
 
   {
     G1PrepareEvacuationTask g1_prep_task(this);
-    Tickspan task_time = run_task(&g1_prep_task);
+    Tickspan task_time = run_task_timed(&g1_prep_task);
 
     phase_times()->record_register_regions(task_time.seconds() * 1000.0,
                                            g1_prep_task.humongous_total(),
@@ -3848,7 +3872,7 @@ void G1CollectedHeap::evacuate_initial_collection_set(G1ParScanThreadStateSet* p
   {
     G1RootProcessor root_processor(this, num_workers);
     G1EvacuateRegionsTask g1_par_task(this, per_thread_states, _task_queues, &root_processor, num_workers);
-    task_time = run_task(&g1_par_task);
+    task_time = run_task_timed(&g1_par_task);
     // Closing the inner scope will execute the destructor for the G1RootProcessor object.
     // To extract its code root fixup time we measure total time of this scope and
     // subtract from the time the WorkGang task took.
@@ -3887,7 +3911,7 @@ void G1CollectedHeap::evacuate_next_optional_regions(G1ParScanThreadStateSet* pe
   {
     G1MarkScope code_mark_scope;
     G1EvacuateOptionalRegionsTask task(per_thread_states, _task_queues, workers()->active_workers());
-    task_time = run_task(&task);
+    task_time = run_task_timed(&task);
     // See comment in evacuate_collection_set() for the reason of the scope.
   }
   Tickspan total_processing = Ticks::now() - start_processing;

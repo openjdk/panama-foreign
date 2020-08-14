@@ -213,13 +213,13 @@ class ParallelScavengeHeap : public CollectedHeap {
   HeapWord* block_start(const void* addr) const;
   bool block_is_obj(const HeapWord* addr) const;
 
-  jlong millis_since_last_gc();
-
   void prepare_for_verify();
   PSHeapSummary create_ps_heap_summary();
   virtual void print_on(outputStream* st) const;
   virtual void print_on_error(outputStream* st) const;
   virtual void gc_threads_do(ThreadClosure* tc) const;
+  // Runs the given AbstractGangTask with the current active workers.
+  virtual void run_task(AbstractGangTask* task);
   virtual void print_tracing_info() const;
 
   virtual WorkGang* get_safepoint_workers() { return &_workers; }

@@ -98,6 +98,8 @@ public:
 
   virtual void object_iterate(ObjectClosure* cl);
 
+  virtual void run_task(AbstractGangTask* task);
+
   virtual void keep_alive(oop obj);
 
   virtual void register_nmethod(nmethod* nm);
@@ -106,8 +108,6 @@ public:
   virtual void verify_nmethod(nmethod* nmethod);
 
   virtual WorkGang* get_safepoint_workers();
-
-  virtual jlong millis_since_last_gc();
 
   virtual void gc_threads_do(ThreadClosure* tc) const;
 
