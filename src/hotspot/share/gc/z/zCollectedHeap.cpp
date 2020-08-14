@@ -253,6 +253,10 @@ void ZCollectedHeap::object_iterate(ObjectClosure* cl) {
   _heap.object_iterate(cl, true /* visit_weaks */);
 }
 
+void ZCollectedHeap::run_task(AbstractGangTask* task) {
+  return _heap.run_task(task);
+}
+
 void ZCollectedHeap::keep_alive(oop obj) {
   _heap.keep_alive(obj);
 }
@@ -275,10 +279,6 @@ void ZCollectedHeap::verify_nmethod(nmethod* nm) {
 
 WorkGang* ZCollectedHeap::get_safepoint_workers() {
   return _runtime_workers.workers();
-}
-
-jlong ZCollectedHeap::millis_since_last_gc() {
-  return ZStatCycle::time_since_last() / MILLIUNITS;
 }
 
 void ZCollectedHeap::gc_threads_do(ThreadClosure* tc) const {
