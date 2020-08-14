@@ -105,17 +105,6 @@ public:
   virtual bool is_thread_safe() { return false; }
 };
 
-#ifdef ASSERT
-class ShenandoahAssertToSpaceClosure : public OopClosure {
-private:
-  template <class T>
-  void do_oop_work(T* p);
-public:
-  void do_oop(narrowOop* p);
-  void do_oop(oop* p);
-};
-#endif
-
 typedef ShenandoahLock    ShenandoahHeapLock;
 typedef ShenandoahLocker  ShenandoahHeapLocker;
 
@@ -209,6 +198,8 @@ public:
   WorkGang* get_safepoint_workers();
 
   void gc_threads_do(ThreadClosure* tcl) const;
+  // Runs the given AbstractGangTask with the current active workers.
+  virtual void run_task(AbstractGangTask* task);
 
 // ---------- Heap regions handling machinery
 //
@@ -555,9 +546,6 @@ public:
 
   // Keep alive an object that was loaded with AS_NO_KEEPALIVE.
   void keep_alive(oop obj);
-
-  // Used by RMI
-  jlong millis_since_last_gc();
 
 // ---------- Safepoint interface hooks
 //
