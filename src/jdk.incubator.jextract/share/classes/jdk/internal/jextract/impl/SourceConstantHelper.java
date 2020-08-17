@@ -396,10 +396,12 @@ class SourceConstantHelper implements ConstantHelper {
         indent();
         String fieldName = getConstantStringFieldName(javaName);
         append(PRIVATE_MODS);
+        append("MemorySegment ");
         append(fieldName);
         append(" = CSupport.toCString(\"");
         append(Objects.toString(value));
         append("\");\n");
+        decrAlign();
         return fieldName;
     }
 
