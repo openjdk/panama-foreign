@@ -91,7 +91,7 @@ class SourceConstantHelper implements ConstantHelper {
     public DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         String varHandleName = javaName + "$VH";
         if (namesGenerated.add(varHandleName)) {
-            String fieldName = emitVarHandleField(javaName, type);
+            String fieldName = emitVarHandleField(javaName, type, layout);
             return emitGetter(varHandleName, VarHandle.class, fieldName);
         } else {
             return getGetterDesc(varHandleName, VarHandle.class);
@@ -135,8 +135,8 @@ class SourceConstantHelper implements ConstantHelper {
     public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
         if (namesGenerated.add(name)) {
             String str;
-            if (type == MemorySegment.class) {
-                str = emitConstantStringField(name, value);
+            if (type == MemorySegment.class || type == MemoryAddress.class) {
+                str = emitConstantAddress(name, type, value);
             } else {
                 str = getConstantString(type, value);
             }
@@ -217,6 +217,10 @@ class SourceConstantHelper implements ConstantHelper {
         sb.append(c);
     }
 
+    private void append(long l) {
+        sb.append(l);
+    }
+
     private void append(boolean b) {
         sb.append(b);
     }
@@ -269,7 +273,8 @@ class SourceConstantHelper implements ConstantHelper {
         return name + "$VH_";
     }
 
-    private String emitVarHandleField(String javaName, Class<?> type) {
+    private String emitVarHandleField(String javaName, Class<?> type, MemoryLayout layout) {
+        addLayout(javaName, layout);
         incrAlign();
         String typeName = type.getName();
         boolean isAddr = typeName.contains("MemoryAddress");
@@ -391,16 +396,27 @@ class SourceConstantHelper implements ConstantHelper {
         return javaName + "$STR_CONSTANT_";
     }
 
-    private String emitConstantStringField(String javaName, Object value) {
+    private String emitConstantAddress(String javaName, Class<?> type, Object value) {
+        boolean isAddr = type == MemoryAddress.class;
         incrAlign();
         indent();
         String fieldName = getConstantStringFieldName(javaName);
         append(PRIVATE_MODS);
-        append("MemorySegment ");
+        if (isAddr) {
+            append("MemoryAddress ");
+        } else {
+            append("MemorySegment ");
+        }
         append(fieldName);
-        append(" = CSupport.toCString(\"");
-        append(Objects.toString(value));
-        append("\");\n");
+        if (isAddr) {
+            append(" = MemoryAddress.ofLong(");
+            append(((Number)value).longValue());
+            append("L);\n");
+        } else {
+            append(" = CSupport.toCString(\"");
+            append(Objects.toString(value));
+            append("\");\n");
+        }
         decrAlign();
         return fieldName;
     }
@@ -408,19 +424,26 @@ class SourceConstantHelper implements ConstantHelper {
     private String getConstantString(Class<?> type, Object value) {
         StringBuilder buf = new StringBuilder();
         if (type == float.class) {
-            buf.append(value);
-            buf.append("f");
+            float f = ((Number)value).floatValue();
+            if (Float.isFinite(f)) {
+                buf.append(value);
+                buf.append("f");
+            } else {
+                buf.append("Float.valueOf(\"");
+                buf.append(value.toString());
+                buf.append("\")");
+            }
         } else if (type == long.class) {
             buf.append(value);
             buf.append("L");
         } else if (type == double.class) {
-            Double v = (Double) value;
-            if (Double.isFinite(v)) {
+            double d = ((Number)value).doubleValue();
+            if (Double.isFinite(d)) {
                 buf.append(value);
                 buf.append("d");
             } else {
                 buf.append("Double.valueOf(\"");
-                buf.append(v.toString());
+                buf.append(value.toString());
                 buf.append("\")");
             }
         } else {
