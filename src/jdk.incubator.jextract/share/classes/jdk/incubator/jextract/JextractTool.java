@@ -114,8 +114,9 @@ public final class JextractTool {
         return Filter.filter(decl, includedNames);
     }
 
-    public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName, String targetPkg, List<String> libNames) {
-        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
+    public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName,
+                boolean source, String targetPkg, List<String> libNames) {
+        return List.of(OutputFactory.generateWrapped(decl, headerName, source, targetPkg, libNames));
     }
 
     /**
@@ -249,7 +250,7 @@ public final class JextractTool {
             Path output = Path.of(options.outputDir);
 
             List<JavaFileObject> files = generate(
-                toplevel, header.getFileName().toString(),
+                toplevel, header.getFileName().toString(), options.source,
                 options.targetPackage, options.libraryNames);
 
             write(output, !options.source, files);
