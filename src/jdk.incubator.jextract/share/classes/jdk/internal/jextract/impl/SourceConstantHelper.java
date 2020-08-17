@@ -135,8 +135,10 @@ class SourceConstantHelper implements ConstantHelper {
     public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
         if (namesGenerated.add(name)) {
             String str;
-            if (type == MemorySegment.class || type == MemoryAddress.class) {
-                str = emitConstantAddress(name, type, value);
+            if (type == MemorySegment.class) {
+                str = emitConstantSegment(name, value);
+            } else if (type == MemoryAddress.class) {
+                str = emitConstantAddress(name, value);
             } else {
                 str = getConstantString(type, value);
             }
@@ -392,31 +394,36 @@ class SourceConstantHelper implements ConstantHelper {
         return fieldName;
     }
 
-    private String getConstantStringFieldName(String javaName) {
-        return javaName + "$STR_CONSTANT_";
+    private String getConstantSegmentFieldName(String javaName) {
+        return javaName + "$SEGMENT_CONSTANT_";
     }
-
-    private String emitConstantAddress(String javaName, Class<?> type, Object value) {
-        boolean isAddr = type == MemoryAddress.class;
+    private String emitConstantSegment(String javaName, Object value) {
         incrAlign();
         indent();
-        String fieldName = getConstantStringFieldName(javaName);
+        String fieldName = getConstantSegmentFieldName(javaName);
         append(PRIVATE_MODS);
-        if (isAddr) {
-            append("MemoryAddress ");
-        } else {
-            append("MemorySegment ");
-        }
+        append("MemorySegment ");
         append(fieldName);
-        if (isAddr) {
-            append(" = MemoryAddress.ofLong(");
-            append(((Number)value).longValue());
-            append("L);\n");
-        } else {
-            append(" = CSupport.toCString(\"");
-            append(Objects.toString(value));
-            append("\");\n");
-        }
+        append(" = CSupport.toCString(\"");
+        append(Objects.toString(value));
+        append("\");\n");
+        decrAlign();
+        return fieldName;
+    }
+
+    private String getConstantAddressFieldName(String javaName) {
+        return javaName + "$ADDR_CONSTANT_";
+    }
+    private String emitConstantAddress(String javaName, Object value) {
+        incrAlign();
+        indent();
+        String fieldName = getConstantAddressFieldName(javaName);
+        append(PRIVATE_MODS);
+        append("MemoryAddress ");
+        append(fieldName);
+        append(" = MemoryAddress.ofLong(");
+        append(((Number)value).longValue());
+        append("L);\n");
         decrAlign();
         return fieldName;
     }
