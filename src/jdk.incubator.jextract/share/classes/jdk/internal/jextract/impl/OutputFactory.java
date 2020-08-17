@@ -30,7 +30,6 @@ import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Primitive;
 
 import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.constant.ClassDesc;
@@ -89,10 +88,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return !functions.add(tree);
     }
 
-    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, String pkgName, List<String> libraryNames) {
+    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
+                String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
         String qualName = pkgName.isEmpty() ? clsName : pkgName + "." + clsName;
-        ConstantHelper constantHelper = new ConstantHelper(qualName,
+        ConstantHelper constantHelper = ConstantHelper.make(source, qualName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),
                 libraryNames.toArray(String[]::new));
         return new OutputFactory(pkgName,
@@ -139,7 +139,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             List<JavaFileObject> files = new ArrayList<>();
             files.add(toplevelBuilder.build());
             files.addAll(constantHelper.getClasses());
-            files.add(fileFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
+            files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -171,14 +171,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return TypeTranslator.layoutToClass(isFloat, layout);
     }
 
-    private JavaFileObject fileFromString(String pkgName, String clsName, String contents) {
+    private JavaFileObject jfoFromString(String pkgName, String clsName, String contents) {
         String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
-        return new SimpleJavaFileObject(URI.create(pkgPrefix + clsName + ".java"), JavaFileObject.Kind.SOURCE) {
-            @Override
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-                return contents;
-            }
-        };
+        return InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + clsName + ".java"), contents);
     }
 
     @Override

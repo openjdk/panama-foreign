@@ -32,9 +32,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
@@ -57,18 +55,41 @@ final class InMemoryJavaCompiler {
         return fileManager.getCompiledFiles();
     }
 
+    static JavaFileObject jfoFromByteArray(URI uri, byte[] bytes) {
+        return new SimpleJavaFileObject(uri, JavaFileObject.Kind.CLASS) {
+            @Override
+            public InputStream openInputStream() {
+                return new ByteArrayInputStream(bytes);
+            }
+        };
+    }
+
+    static JavaFileObject jfoFromString(URI uri, String contents) {
+        return new SimpleJavaFileObject(uri, JavaFileObject.Kind.SOURCE) {
+            @Override
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+                return contents;
+            }
+        };
+    }
+
     // Wraper for class byte array
     private static class ClassFile extends SimpleJavaFileObject {
         private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         protected ClassFile(String name) {
-            super(URI.create("memo:///" + name.replace('.', '/') + Kind.CLASS.extension), Kind.CLASS);
+            super(URI.create(name.replace('.', '/') + Kind.CLASS.extension), Kind.CLASS);
         }
 
         @Override
-        public ByteArrayOutputStream openOutputStream() { return this.baos; }
+        public ByteArrayOutputStream openOutputStream() {
+            return this.baos;
+        }
 
-        byte[] toByteArray() { return baos.toByteArray(); }
+        @Override
+        public InputStream openInputStream() {
+            return new ByteArrayInputStream(baos.toByteArray());
+        }
     }
 
     // File manager which spawns ClassFile instances on demand
@@ -81,7 +102,7 @@ final class InMemoryJavaCompiler {
 
         @Override
         public JavaFileObject getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject source) throws IOException {
-            JavaFileObject out = super.getJavaFileForOutput(location, name, kind, source);
+            JavaFileObject out = new ClassFile(name);
             compiled.add(out);
             return out;
         }
