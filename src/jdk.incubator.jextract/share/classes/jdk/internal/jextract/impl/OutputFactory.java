@@ -250,7 +250,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 name = Utils.javaSafeIdentifier(name);
                 //generate functional interface
                 if (f.varargs()) {
-                    System.err.println("WARNING: varargs in callbacks is not supported");
+                    warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
                 toplevelBuilder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow());
@@ -351,25 +351,40 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         boolean isSegment = clazz == MemorySegment.class;
+        boolean sizeAvailable;
+        try {
+            layout.byteSize();
+            sizeAvailable = true;
+        } catch (Exception ignored) {
+            sizeAvailable = false;
+        }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (parent != null) { //struct field
             MemoryLayout parentLayout = parentLayout(parent);
             if (isSegment) {
-                currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, parentLayout);
+                if (sizeAvailable) {
+                    currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, parentLayout);
+                } else {
+                    warn("Layout size not available for " + fieldName);
+                }
             } else {
                 currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
                 currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
                 currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
             }
         } else {
-            if (isSegment) {
-                toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
+            if (sizeAvailable) {
+                if (isSegment) {
+                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
+                } else {
+                    toplevelBuilder.addLayoutGetter(fieldName, layout);
+                    toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
+                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
+                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
+                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
+                }
             } else {
-                toplevelBuilder.addLayoutGetter(fieldName, layout);
-                toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
-                toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
-                toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
-                toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
+                warn("Layout size not available for " + fieldName);
             }
         }
 
@@ -399,5 +414,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             throw new IllegalArgumentException("Unexpected parent declaration");
         }
         // case like `typedef struct { ... } Foo`
+    }
+
+    private void warn(String msg) {
+        System.err.println("WARNING: " + msg);
     }
 }

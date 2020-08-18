@@ -80,8 +80,8 @@ class SourceConstantHelper implements ConstantHelper {
     public DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout) {
         String layoutName = javaName + "$LAYOUT";
         if (namesGenerated.add(layoutName)) {
-            emitLayoutField(javaName, layout);
-            return emitGetter(layoutName, MemoryLayout.class, getLayoutFieldName(javaName));
+            String fieldName = emitLayoutField(javaName, layout);
+            return emitGetter(layoutName, MemoryLayout.class, fieldName);
         } else {
             return getGetterDesc(layoutName, MethodHandle.class);
         }
@@ -303,13 +303,15 @@ class SourceConstantHelper implements ConstantHelper {
         return javaName + "$LAYOUT_";
     }
 
-    private void emitLayoutField(String javaName, MemoryLayout layout) {
+    private String emitLayoutField(String javaName, MemoryLayout layout) {
+        String fieldName = getLayoutFieldName(javaName);
         incrAlign();
         indent();
-        append(PRIVATE_MODS + "MemoryLayout " + getLayoutFieldName(javaName) + " = ");
+        append(PRIVATE_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
+        return fieldName;
     }
 
     private void emitLayoutString(MemoryLayout l) {
