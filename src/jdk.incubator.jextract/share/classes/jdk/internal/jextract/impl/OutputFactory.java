@@ -253,7 +253,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         if (isVaList(descriptor)) {
             MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
-            argLayouts[argLayouts.length - 1] = CSupport.C_VA_LIST.withName(VA_LIST_TAG);
+            argLayouts[argLayouts.length - 1] = CSupport.C_VA_LIST;
             descriptor = descriptor.returnLayout().isEmpty()?
                     FunctionDescriptor.ofVoid(argLayouts) :
                     FunctionDescriptor.of(descriptor.returnLayout().get(), argLayouts);

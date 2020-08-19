@@ -70,21 +70,11 @@ public class RuntimeHelper {
         return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
     }
 
-    private static final boolean isVaList(FunctionDescriptor desc) {
-        List<MemoryLayout> argLayouts = desc.argumentLayouts();
-        int size = argLayouts.size();
-        if (size > 0) {
-            MemoryLayout ml = argLayouts.get(size - 1);
-            return ml.equals(C_VA_LIST) && ml.name().orElse("").equals("__va_list_tag");
-        }
-        return false;
-    }
-
     public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    return variadic || isVaList(fdesc)?
+                    return variadic?
                         VarargsInvoker.make(addr, mt, fdesc) :
                         ABI.downcallHandle(addr, mt, fdesc);
                 }).orElse(null);
