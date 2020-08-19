@@ -28,6 +28,7 @@
 #include "runtime/orderAccess.hpp"
 #include "runtime/os.hpp"
 #include "runtime/safepointMechanism.inline.hpp"
+#include "runtime/vframe.inline.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -84,6 +85,17 @@ void SafepointMechanism::block_or_handshake(JavaThread *thread) {
 }
 
 void SafepointMechanism::block_if_requested_slow(JavaThread *thread) {
+  if (thread->has_last_Java_frame()) {
+    vframeStream stream(thread);
+    for (; !stream.at_end(); stream.next()) {
+      Method* m = stream.method();
+      if (m->is_critical()) {
+        // No safepoints in critical methods
+        return;
+      }
+    }
+  }
+
   // Read global poll and has_handshake after local poll
   OrderAccess::loadload();
 
