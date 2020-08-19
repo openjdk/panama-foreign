@@ -239,7 +239,7 @@ public class CSupport {
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@linkplain #empty()}.
-         *x
+         *
          * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
          *                of the underlying C {@code va_list}.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
