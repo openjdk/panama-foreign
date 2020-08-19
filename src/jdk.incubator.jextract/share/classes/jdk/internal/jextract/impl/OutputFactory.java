@@ -53,6 +53,8 @@ import java.util.stream.Collectors;
  * particular Tree is processed or skipped.
  */
 public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
+    // internal symbol used by clang for "va_list"
+    private static final String VA_LIST_TAG = "__va_list_tag";
     private final Set<String> constants = new HashSet<>();
     // To detect duplicate Variable and Function declarations.
     private final Set<Declaration.Variable> variables = new HashSet<>();
@@ -220,6 +222,22 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
+    private static final boolean isVaList(FunctionDescriptor desc) {
+        List<MemoryLayout> argLayouts = desc.argumentLayouts();
+        int size = argLayouts.size();
+        if (size > 0) {
+            MemoryLayout lastLayout = argLayouts.get(size - 1);
+            if (lastLayout instanceof SequenceLayout) {
+                SequenceLayout seq = (SequenceLayout)lastLayout;
+                MemoryLayout elem = seq.elementLayout();
+                // FIXME: hack for now to use internal symbol used by clang for va_list
+                return elem.name().orElse("").equals(VA_LIST_TAG);
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -232,6 +250,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             //abort
             return null;
         }
+
+        if (isVaList(descriptor)) {
+            MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
+            argLayouts[argLayouts.length - 1] = CSupport.C_VA_LIST;
+            descriptor = descriptor.returnLayout().isEmpty()?
+                    FunctionDescriptor.ofVoid(argLayouts) :
+                    FunctionDescriptor.of(descriptor.returnLayout().get(), argLayouts);
+            Class<?>[] argTypes = mtype.parameterArray();
+            argTypes[argLayouts.length - 1] = MemoryAddress.class;
+            mtype = MethodType.methodType(mtype.returnType(), argTypes);
+        }
+
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
         toplevelBuilder.addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
