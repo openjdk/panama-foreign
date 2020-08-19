@@ -40,6 +40,7 @@
 #include "oops/typeArrayOop.inline.hpp"
 #include "prims/stackwalk.hpp"
 #include "prims/unsafe.hpp"
+#include "runtime/deoptimization.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/vframe.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -1056,13 +1057,40 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
-class UnsafeTrySynchronizeThreadsClosure : public HandshakeClosure {
-public:
-  UnsafeTrySynchronizeThreadsClosure()
-    : HandshakeClosure("UnsafeTrySynchronizeThreads")
-    , _in_critical(false)  {}
+class UnsafeSynchronizeThreadsFindOopClosure : public OopClosure {
+  oop _deopt;
+  bool _found;
 
-  bool _in_critical;
+public:
+  UnsafeSynchronizeThreadsFindOopClosure(jobject deopt) :
+      _deopt(JNIHandles::resolve(deopt)),
+      _found(false) {}
+
+  virtual void do_oop(oop* p) {
+    if (_found) {
+      return;
+    }
+    if (*p == _deopt) {
+      _found = true;
+    }
+  }
+
+  virtual void do_oop(narrowOop* p) {
+    ShouldNotReachHere();
+  }
+
+  bool found() {
+    return _found;
+  }
+};
+
+class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
+  jobject _deopt;
+
+public:
+  UnsafeSynchronizeThreadsClosure(jobject deopt)
+    : HandshakeClosure("UnsafeSynchronizeThreads")
+    , _deopt(deopt) {}
 
   void do_thread(Thread* thread) {
     if (UseNewCode2) {
@@ -1077,32 +1105,30 @@ public:
     }
 
     JavaThread* jt = (JavaThread*)thread;
-    vframeStream stream(jt);
-    for (; !stream.at_end(); stream.next()) {
-      Method* m = stream.method();
-      if (m->is_critical()) {
-        if (UseNewCode) {
-          ResourceMark rm;
-          MutexLocker ml(Threads_lock);
-          ttyLocker ttyl;
-          tty->print("CRITICAL: ");
-          thread->print_on(tty);
-          if (thread->is_Java_thread()) {
-            JavaThread* jt = (JavaThread*)thread;
-            jt->print_stack_on(tty);
-          }
-        }
-        _in_critical = true;
-        return;
+
+    if (!jt->has_last_Java_frame()) {
+      return;
+    }
+
+    frame last_frame = jt->last_frame();
+
+    if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
+      UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
+      CompiledMethod* cm = last_frame.cb()->as_compiled_method();
+      RegisterMap register_map(jt, false);
+      last_frame.oops_do(&cl, NULL, &register_map);
+
+      if (cl.found()) {
+        // Found the deopt oop in a compiled method; deoptimize.
+        Deoptimization::deoptimize(jt, last_frame);
       }
     }
   }
 };
 
-UNSAFE_ENTRY(jboolean, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe)) {
-  UnsafeTrySynchronizeThreadsClosure cl;
+UNSAFE_ENTRY(void, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe, jobject deopt)) {
+  UnsafeSynchronizeThreadsClosure cl(deopt);
   Handshake::execute(&cl);
-  return cl._in_critical ? JNI_TRUE : JNI_FALSE;
 } UNSAFE_END
 
 
@@ -1174,7 +1200,7 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 
     {CC "getLoadAverage0",    CC "([DI)I",               FN_PTR(Unsafe_GetLoadAverage0)},
 
-    {CC "synchronizeThreads0",CC "()Z",                  FN_PTR(Unsafe_SynchronizeThreads0)},
+    {CC "synchronizeThreads0",CC "(" OBJ ")V",           FN_PTR(Unsafe_SynchronizeThreads0)},
 
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},

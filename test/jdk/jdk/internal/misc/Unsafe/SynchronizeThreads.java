@@ -83,12 +83,12 @@ public class SynchronizeThreads {
         setState(0);
         Thread thread = new Worker();
         thread.start();
-        while (getState() == 0);        // Notify Worker started
-        setState(2);                    // Tell Worker to stop incrementing the counter
-        UNSAFE.synchronizeThreads();    // Make sure Worker has seen the signal
+        while (getState() == 0);           // Notify Worker started
+        setState(2);                       // Tell Worker to stop incrementing the counter
+        UNSAFE.synchronizeThreads(null);   // Make sure Worker has seen the signal
         int counter = getCounter();
-        LockSupport.parkNanos(1000);    // Allow some time for the other thread to race
-        if (getCounter() != counter) {  // Check that no counter incremented racingly
+        LockSupport.parkNanos(1000);       // Allow some time for the other thread to race
+        if (getCounter() != counter) {     // Check that no counter incremented racingly
             throw new RuntimeException("Asymmetric Dekker Synchronization failed");
         }
         try {

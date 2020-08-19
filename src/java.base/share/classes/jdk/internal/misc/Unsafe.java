@@ -2455,9 +2455,10 @@ public final class Unsafe {
      * dekker synchronization schemes, where expensive synchronization
      * in performance sensitive common paths, may be shifted to
      * a less common slow path instead.
+     * Top frames containg obj will be deoptimized.
      */
-    public boolean synchronizeThreads() {
-        return synchronizeThreads0();
+    public void synchronizeThreads(Object deopt) {
+        synchronizeThreads0(deopt);
     }
 
     // The following contain CAS-based Java implementations used on
@@ -3858,7 +3859,7 @@ public final class Unsafe {
     private native int arrayIndexScale0(Class<?> arrayClass);
     private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
     private native int getLoadAverage0(double[] loadavg, int nelems);
-    private native boolean synchronizeThreads0();
+    private native void synchronizeThreads0(Object deopt);
 
 
     /**

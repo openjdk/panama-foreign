@@ -288,12 +288,7 @@ abstract class MemoryScope {
             if (!CLOSED.compareAndSet(this, false, true)) {
                 throw new IllegalStateException("Already closed");
             }
-            while (true) {
-                if (!UNSAFE.synchronizeThreads()) {
-                    break;
-                }
-                Thread.onSpinWait();
-            }
+            UNSAFE.synchronizeThreads(this);
         }
     }
 }
