@@ -25,8 +25,14 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.*;
-
+import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.foreign.SequenceLayout;
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
@@ -35,17 +41,20 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.net.URI;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import static java.lang.invoke.MethodType.methodType;
 
 // generates ConstantHelper as java source
 class SourceConstantHelper implements ConstantHelper {
-    private static final String PRIVATE_MODS = "private static final ";
+    private static final String PACKAGE_FINAL_MODS = "static final ";
+    private static final String PRIVATE_FINAL_MODS = "private static final ";
     private static final String ABI_CLASS_ATTR;
+    private static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 1000);
 
     static {
         String abi = CSupport.getSystemLinker().name();
@@ -58,82 +67,125 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     // set of names generates already
-    private static final Set<String> namesGenerated = new HashSet<>();
+    private static final Map<String, DirectMethodHandleDesc> namesGenerated = new HashMap<>();
     // code buffer
-    private final StringBuilder sb = new StringBuilder();
+    private StringBuilder sb = new StringBuilder();
     // current line alignment (number of 4-spaces)
     private int align;
     private final String pkgName;
-    private final String className;
-    private final ClassDesc CD_constantsHelper;
+    private final String headerClassName;
+    private int constantCount;
+    private int constantClassCount;
+    private String constantClassName;
+    private ClassDesc CD_constantsHelper;
+    private final List<String> classes = new ArrayList<>();
 
     SourceConstantHelper(String parentClassName, String[] libraryNames) {
         int idx = parentClassName.lastIndexOf('.');
         this.pkgName = idx == -1? "" : parentClassName.substring(0, idx);
-        String clsName = parentClassName.substring(idx + 1);
-        this.className =  clsName + "$constants";
-        this.CD_constantsHelper = ClassDesc.of(pkgName.isEmpty()? className : (pkgName +"." + className));
-        classBegin(libraryNames);
+        this.headerClassName =  parentClassName.substring(idx + 1);
+        this.constantClassName = getConstantClassName(headerClassName, constantClassCount);
+        this.CD_constantsHelper = ClassDesc.of(pkgName.isEmpty() ? constantClassName : (pkgName + "." + constantClassName));
+        classBegin(libraryNames, null, false);
+    }
+
+    private static String getConstantClassName(String className, int count) {
+        return className + "$constants$" + count;
+    }
+
+    private void newConstantClass() {
+        if (constantCount > CONSTANTS_PER_CLASS) {
+            classEnd();
+            constantClassCount++;
+            String baseClassName = constantClassName;
+            this.constantClassName = getConstantClassName(headerClassName, constantClassCount);
+            this.CD_constantsHelper = ClassDesc.of(pkgName.isEmpty() ? constantClassName : (pkgName + "." + constantClassName));
+            this.constantCount = 0;
+            this.sb = new StringBuilder();
+            classBegin(null, baseClassName, false);
+        }
+        constantCount++;
     }
 
     @Override
     public DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout) {
+        newConstantClass();
         String layoutName = javaName + "$LAYOUT";
-        if (namesGenerated.add(layoutName)) {
-            String fieldName = emitLayoutField(javaName, layout);
-            return emitGetter(layoutName, MemoryLayout.class, fieldName);
+        if (namesGenerated.containsKey(layoutName)) {
+            return namesGenerated.get(layoutName);
         } else {
-            return getGetterDesc(layoutName, MethodHandle.class);
+            String fieldName = emitLayoutField(javaName, layout);
+            DirectMethodHandleDesc getter = emitGetter(layoutName, MemoryLayout.class, fieldName);
+            namesGenerated.put(layoutName, getter);
+            return getter;
         }
     }
 
     @Override
     public DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        newConstantClass();
         String varHandleName = javaName + "$VH";
-        if (namesGenerated.add(varHandleName)) {
-            String fieldName = emitVarHandleField(javaName, type, layout);
-            return emitGetter(varHandleName, VarHandle.class, fieldName);
+
+        if (namesGenerated.containsKey(varHandleName)) {
+            return namesGenerated.get(varHandleName);
         } else {
-            return getGetterDesc(varHandleName, VarHandle.class);
+            String fieldName = emitVarHandleField(javaName, type, layout);
+            DirectMethodHandleDesc getter = emitGetter(varHandleName, VarHandle.class, fieldName);
+            namesGenerated.put(varHandleName, getter);
+            return getter;
         }
     }
 
     @Override
     public DirectMethodHandleDesc addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
+        newConstantClass();
         String mhName = javaName + "$MH";
-        if (namesGenerated.add(mhName)) {
-            String fieldName = emitMethodHandleField(javaName, nativeName, mtype, desc, varargs);
-            return emitGetter(mhName, MethodHandle.class, fieldName);
+        if (namesGenerated.containsKey(mhName)) {
+            return namesGenerated.get(mhName);
         } else {
-            return getGetterDesc(mhName, MethodHandle.class);
+            String fieldName = emitMethodHandleField(javaName, nativeName, mtype, desc, varargs);
+            DirectMethodHandleDesc getter = emitGetter(mhName, MethodHandle.class, fieldName);
+            namesGenerated.put(mhName, getter);
+            return getter;
         }
     }
 
     @Override
     public DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout) {
+        newConstantClass();
         String segmentName = javaName + "$SEGMENT";
-        if (namesGenerated.add(segmentName)) {
-            String fieldName = emitSegmentField(javaName, nativeName, layout);
-            return emitGetter(segmentName, MemorySegment.class, fieldName);
+        if (namesGenerated.containsKey(segmentName)) {
+            return namesGenerated.get(segmentName);
         } else {
-            return getGetterDesc(segmentName, MemorySegment.class);
+            String fieldName = emitSegmentField(javaName, nativeName, layout);
+            DirectMethodHandleDesc getter = emitGetter(segmentName, MemorySegment.class, fieldName);
+            namesGenerated.put(segmentName, getter);
+            return getter;
         }
     }
 
     @Override
     public DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor desc) {
+        newConstantClass();
         String funcDescName = javaName + "$FUNC";
-        if (namesGenerated.add(funcDescName)) {
-            String fieldName = emitFunctionDescField(javaName, desc);
-            return emitGetter(funcDescName, FunctionDescriptor.class, fieldName);
+
+        if (namesGenerated.containsKey(funcDescName)) {
+            return namesGenerated.get(funcDescName);
         } else {
-            return getGetterDesc(funcDescName, FunctionDescriptor.class);
+            String fieldName = emitFunctionDescField(javaName, desc);
+            DirectMethodHandleDesc getter = emitGetter(funcDescName, FunctionDescriptor.class, fieldName);
+            namesGenerated.put(funcDescName, getter);
+            return getter;
         }
     }
 
     @Override
     public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
-        if (namesGenerated.add(name)) {
+        newConstantClass();
+
+        if (namesGenerated.containsKey(name)) {
+            return namesGenerated.get(name);
+        } else {
             String str;
             if (type == MemorySegment.class) {
                 str = emitConstantSegment(name, value);
@@ -142,32 +194,64 @@ class SourceConstantHelper implements ConstantHelper {
             } else {
                 str = getConstantString(type, value);
             }
-            return emitGetter(name, type, str);
-        } else {
-            return getGetterDesc(name, type);
+            DirectMethodHandleDesc getter = emitGetter(name, type, str);
+            namesGenerated.put(name, getter);
+            return getter;
         }
+    }
+
+    private JavaFileObject newJavaFileObject(String className, String src) {
+        String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
+        return InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + className + ".java"), src);
     }
 
     @Override
     public List<JavaFileObject> getClasses() {
         classEnd();
-        String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
-        return List.of(InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + className + ".java"), sb.toString()));
+
+        List<JavaFileObject> javaFileObjects = new ArrayList<>();
+        int count = 0;
+        for (String src : classes) {
+            String name = getConstantClassName(headerClassName, count);
+            javaFileObjects.add(newJavaFileObject(name, src));
+            count++;
+        }
+
+        // generate overall header$constants subclass that inherits from
+        // the individual "split" header$constants$N classes.
+        this.sb = new StringBuilder();
+        String baseClassName = constantClassName;
+        this.constantClassName = headerClassName + "$constants";
+        classBegin(null, baseClassName, true);
+        classEnd();
+        javaFileObjects.add(newJavaFileObject(constantClassName, sb.toString()));
+
+        return javaFileObjects;
     }
 
     // Internals only below this point
-    private void classBegin(String[] libraryNames) {
+    private void classBegin(String[] libraryNames, String baseClassName, boolean leafClass) {
         addPackagePrefix(pkgName);
         addImportSection();
-        append(JavaSourceBuilder.PUB_CLS_MODS);
+        append("public ");
+        if (leafClass) {
+            append("final ");
+        }
         append("class ");
-        append(className);
+        append(constantClassName);
+        if (baseClassName != null) {
+            append(" extends ");
+            append(baseClassName);
+        }
         append(" {\n");
-        emitLibraries(libraryNames);
+        if (libraryNames != null) {
+            emitLibraries(libraryNames);
+        }
     }
 
     private void classEnd() {
         append("}\n");
+        classes.add(sb.toString());
     }
 
     private DirectMethodHandleDesc getGetterDesc(String name, Class<?> type) {
@@ -250,11 +334,12 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
         indent();
-        append(PRIVATE_MODS + "MethodHandle ");
+        append(PRIVATE_FINAL_MODS + "MethodHandle ");
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
-        append("LIBRARIES, \"" + nativeName + "\"");
+        append(getConstantClassName(headerClassName, 0));
+        append(".LIBRARIES, \"" + nativeName + "\"");
         append(",\n");
         indent();
         append("\"" + mtype.toMethodDescriptorString() + "\",\n");
@@ -285,7 +370,7 @@ class SourceConstantHelper implements ConstantHelper {
         }
         indent();
         String fieldName = getVarHandleFieldName(javaName);
-        append(PRIVATE_MODS + "VarHandle " + fieldName + " = ");
+        append(PRIVATE_FINAL_MODS + "VarHandle " + fieldName + " = ");
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
         }
@@ -307,7 +392,7 @@ class SourceConstantHelper implements ConstantHelper {
         String fieldName = getLayoutFieldName(javaName);
         incrAlign();
         indent();
-        append(PRIVATE_MODS + "MemoryLayout " + fieldName + " = ");
+        append(PRIVATE_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
@@ -364,7 +449,7 @@ class SourceConstantHelper implements ConstantHelper {
         indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        append(PRIVATE_MODS);
+        append(PRIVATE_FINAL_MODS);
         append("FunctionDescriptor ");
         append(fieldName);
         append(" = ");
@@ -403,7 +488,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        append(PRIVATE_MODS);
+        append(PRIVATE_FINAL_MODS);
         append("MemorySegment ");
         append(fieldName);
         append(" = CSupport.toCString(\"");
@@ -420,7 +505,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        append(PRIVATE_MODS);
+        append(PRIVATE_FINAL_MODS);
         append("MemoryAddress ");
         append(fieldName);
         append(" = MemoryAddress.ofLong(");
@@ -505,11 +590,13 @@ class SourceConstantHelper implements ConstantHelper {
          incrAlign();
          indent();
          String fieldName = getSegmentFieldName(javaName);
-         append(PRIVATE_MODS);
+         append(PRIVATE_FINAL_MODS);
          append("MemorySegment ");
          append(fieldName);
          append(" = ");
-         append("RuntimeHelper.lookupGlobalVariable(LIBRARIES, \"");
+         append("RuntimeHelper.lookupGlobalVariable(");
+         append(getConstantClassName(headerClassName, 0));
+         append(".LIBRARIES, \"");
          append(nativeName);
          append("\", ");
          append(getLayoutFieldName(javaName));
@@ -521,7 +608,7 @@ class SourceConstantHelper implements ConstantHelper {
     private void emitLibraries(String[] libraryNames) {
         incrAlign();
         indent();
-        append(PRIVATE_MODS);
+        append(PACKAGE_FINAL_MODS);
         append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
         incrAlign();
         for (String lib : libraryNames) {

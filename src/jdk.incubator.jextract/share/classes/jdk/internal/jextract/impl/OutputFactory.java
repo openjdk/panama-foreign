@@ -238,6 +238,20 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
+    private static boolean usesLongDouble(FunctionDescriptor desc) {
+        if (!desc.returnLayout().isEmpty()) {
+            if (desc.returnLayout().get().equals(CSupport.C_LONGDOUBLE)) {
+                return true;
+            }
+        }
+        for (MemoryLayout argLayout : desc.argumentLayouts()) {
+            if (argLayout.equals(CSupport.C_LONGDOUBLE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -248,6 +262,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
+            return null;
+        }
+
+        if (usesLongDouble(descriptor)) {
+            warn("skipping " + funcTree.name() + " because of long double usage");
             return null;
         }
 
@@ -373,6 +392,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             //no layout - abort
             return null;
         }
+        if (layout.equals(CSupport.C_LONGDOUBLE)) {
+            warn("skipping " + fieldName + " because of long double usage");
+        }
+
         Class<?> clazz = typeTranslator.getJavaType(type);
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
                 (layout instanceof ValueLayout && layout.byteSize() > 8)) {
