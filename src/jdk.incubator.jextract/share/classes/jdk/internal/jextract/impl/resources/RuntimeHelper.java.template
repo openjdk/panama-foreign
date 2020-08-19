@@ -15,7 +15,6 @@ import java.lang.invoke.MethodType;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -74,7 +73,7 @@ public class RuntimeHelper {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    return variadic?
+                    return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
                         ABI.downcallHandle(addr, mt, fdesc);
                 }).orElse(null);
