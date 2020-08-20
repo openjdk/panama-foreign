@@ -1066,17 +1066,22 @@ public:
       _deopt(JNIHandles::resolve(deopt)),
       _found(false) {}
 
-  virtual void do_oop(oop* p) {
+  template <typename T>
+  void do_oop_work(T* p) {
     if (_found) {
       return;
     }
-    if (*p == _deopt) {
+    if (RawAccess<>::oop_load(p) == _deopt) {
       _found = true;
     }
   }
 
+  virtual void do_oop(oop* p) {
+    do_oop_work(p);
+  }
+
   virtual void do_oop(narrowOop* p) {
-    ShouldNotReachHere();
+    do_oop_work(p);
   }
 
   bool found() {
@@ -1111,11 +1116,16 @@ public:
     }
 
     frame last_frame = jt->last_frame();
+    RegisterMap register_map(jt, true);
+
+    if (last_frame.is_safepoint_blob_frame()) {
+      last_frame = last_frame.sender(&register_map);
+    }
 
     if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
+      ResourceMark rm;
       UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
       CompiledMethod* cm = last_frame.cb()->as_compiled_method();
-      RegisterMap register_map(jt, false);
       last_frame.oops_do(&cl, NULL, &register_map);
 
       if (cl.found()) {

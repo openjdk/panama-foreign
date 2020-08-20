@@ -82,7 +82,7 @@ public class TestHandshake {
         @Override
         public void run() {
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
                 long prev = System.currentTimeMillis();
                 segment.close();
                 long delay = System.currentTimeMillis() - prev;
