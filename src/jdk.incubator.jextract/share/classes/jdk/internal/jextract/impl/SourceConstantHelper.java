@@ -338,8 +338,7 @@ class SourceConstantHelper implements ConstantHelper {
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
-        append(getConstantClassName(headerClassName, 0));
-        append(".LIBRARIES, \"" + nativeName + "\"");
+        append("LIBRARIES, \"" + nativeName + "\"");
         append(",\n");
         indent();
         append("\"" + mtype.toMethodDescriptorString() + "\",\n");
@@ -595,8 +594,7 @@ class SourceConstantHelper implements ConstantHelper {
          append(fieldName);
          append(" = ");
          append("RuntimeHelper.lookupGlobalVariable(");
-         append(getConstantClassName(headerClassName, 0));
-         append(".LIBRARIES, \"");
+         append("LIBRARIES, \"");
          append(nativeName);
          append("\", ");
          append(getLayoutFieldName(javaName));
