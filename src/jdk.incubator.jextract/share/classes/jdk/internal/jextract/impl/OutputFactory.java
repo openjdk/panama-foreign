@@ -238,14 +238,17 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
+    private static boolean isLongDouble(MemoryLayout layout) {
+        return CSupport.C_LONGDOUBLE.equals(layout);
+    }
+
     private static boolean usesLongDouble(FunctionDescriptor desc) {
-        if (!desc.returnLayout().isEmpty()) {
-            if (desc.returnLayout().get().equals(CSupport.C_LONGDOUBLE)) {
-                return true;
-            }
+        if (isLongDouble(desc.returnLayout().orElse(null))) {
+            return true;
         }
+
         for (MemoryLayout argLayout : desc.argumentLayouts()) {
-            if (argLayout.equals(CSupport.C_LONGDOUBLE)) {
+            if (isLongDouble(argLayout)) {
                 return true;
             }
         }
@@ -392,7 +395,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             //no layout - abort
             return null;
         }
-        if (layout.equals(CSupport.C_LONGDOUBLE)) {
+        if (isLongDouble(layout)) {
             warn("skipping " + fieldName + " because of long double usage");
         }
 
