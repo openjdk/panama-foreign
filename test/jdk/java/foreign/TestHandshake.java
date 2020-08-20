@@ -69,7 +69,7 @@ public class TestHandshake {
         @Override
         public void run() {
             try {
-                while (segment.isAlive()) {
+                while (true) {
                     int sum = 0;
                     for (int i = 0; i < segment.byteSize(); i++) {
                         sum += MemoryAccess.getByteAtIndex(segment, i);
