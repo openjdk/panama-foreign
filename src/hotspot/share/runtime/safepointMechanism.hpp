@@ -39,6 +39,8 @@ class SafepointMechanism : public AllStatic {
   static void* poll_armed_value()                     { return _poll_armed_value; }
   static void* poll_disarmed_value()                  { return _poll_disarmed_value; }
 
+  static bool is_poll_in_critical(JavaThread* thread);
+
   static inline bool local_poll_armed(JavaThread* thread);
 
   static inline void disarm_local_poll(JavaThread* thread);

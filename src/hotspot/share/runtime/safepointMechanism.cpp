@@ -84,16 +84,32 @@ void SafepointMechanism::block_or_handshake(JavaThread *thread) {
   }
 }
 
-void SafepointMechanism::block_if_requested_slow(JavaThread *thread) {
-  if (thread->has_last_Java_frame()) {
-    vframeStream stream(thread);
-    for (; !stream.at_end(); stream.next()) {
-      Method* m = stream.method();
-      if (m->is_critical()) {
-        // No safepoints in critical methods
-        return;
-      }
+bool SafepointMechanism::is_poll_in_critical(JavaThread* thread) {
+  const int max_critical_stack_depth = 3;
+  if (!thread->has_last_Java_frame()) {
+    return false;
+  }
+  int i = 0;
+  vframeStream stream(thread);
+  for (; !stream.at_end(); stream.next()) {
+    Method* m = stream.method();
+    if (m->is_critical()) {
+      assert(i < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+      return true;
     }
+#ifndef ASSERT
+    if (++i >= max_critical_stack_depth) {
+      break;
+    }
+#endif
+  }
+  return false;
+}
+
+void SafepointMechanism::block_if_requested_slow(JavaThread *thread) {
+  if (is_poll_in_critical(thread)) {
+    // No safepoints in critical methods
+    return;
   }
 
   // Read global poll and has_handshake after local poll
