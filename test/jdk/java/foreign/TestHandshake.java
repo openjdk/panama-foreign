@@ -37,7 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TestHandshake {
 
-    static final int N_THREADS = 1;
+    static final int N_THREADS = Runtime.getRuntime().availableProcessors() - 1;
 
     static MemorySegment segment = MemorySegment.allocateNative(1_000_000).share();
 
@@ -82,7 +82,7 @@ public class TestHandshake {
         @Override
         public void run() {
             try {
-                Thread.sleep(ThreadLocalRandom.current().nextInt(100));
+                Thread.sleep(100);
                 long prev = System.currentTimeMillis();
                 segment.close();
                 long delay = System.currentTimeMillis() - prev;
