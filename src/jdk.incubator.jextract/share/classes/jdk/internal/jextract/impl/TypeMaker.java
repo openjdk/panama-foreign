@@ -235,6 +235,14 @@ class TypeMaker {
         }
 
         @Override
+        public Type visitDelegated(Type.Delegated t, Void aVoid) {
+            if (t.kind() == Delegated.Kind.TYPEDEF && t.type() instanceof Type.Array) {
+                return visitArray((Type.Array)t.type(), aVoid);
+            }
+            return visitType(t, aVoid);
+        }
+
+        @Override
         public Type visitType(Type t, Void aVoid) {
             return t;
         }
