@@ -24,12 +24,13 @@
 /*
  * @test
  * @modules jdk.incubator.foreign java.base/jdk.internal.vm.annotation java.base/jdk.internal.misc
- * @run main TestHandshake
+ * @run main/othervm TestHandshake
+ * @run main/othervm -Xint TestHandshake
+ * @run main/othervm -XX:TieredStopAtLevel=1 TestHandshake
  */
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.vm.annotation.Critical;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,27 +38,31 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TestHandshake {
 
-    static final int N_THREADS = Runtime.getRuntime().availableProcessors() - 1;
+    static final int ITERATIONS = 10;
 
-    static MemorySegment segment = MemorySegment.allocateNative(1_000_000).share();
+    static MemorySegment segment;
 
     public static void main(String[] args) throws Exception {
-        List<Thread> accessors = new ArrayList<>();
-        for (int i = 0 ; i < N_THREADS ; i++) {
-            Thread access = new Thread(memoryAccess);
-            access.start();
-            accessors.add(access);
-        }
-        Thread t2 = new Thread(handshake);
-        t2.start();
-        t2.join();
-        accessors.forEach(t -> {
-            try {
-                t.join();
-            } catch (InterruptedException ex) {
-                // do nothing
+        for (int it = 0 ; it < ITERATIONS ; it++) {
+            segment = MemorySegment.allocateNative(1_000_000).share();
+            System.err.println("ITERATION " + it);
+            List<Thread> accessors = new ArrayList<>();
+            for (int i = 0; i < ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
+                Thread access = new Thread(memoryAccess);
+                access.start();
+                accessors.add(access);
             }
-        });
+            Thread t2 = new Thread(handshake);
+            t2.start();
+            t2.join();
+            accessors.forEach(t -> {
+                try {
+                    t.join();
+                } catch (InterruptedException ex) {
+                    // do nothing
+                }
+            });
+        }
     }
 
     static class Accessor implements Runnable {
@@ -82,7 +87,7 @@ public class TestHandshake {
         @Override
         public void run() {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(ThreadLocalRandom.current().nextInt(2000));
                 long prev = System.currentTimeMillis();
                 segment.close();
                 long delay = System.currentTimeMillis() - prev;
