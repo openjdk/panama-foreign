@@ -382,6 +382,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
+    @Override
+    public Object scope() {
+        return scope;
+    }
+
     private void checkBoundsSmall(int offset, int length) {
         if (length < 0 ||
                 offset < 0 ||

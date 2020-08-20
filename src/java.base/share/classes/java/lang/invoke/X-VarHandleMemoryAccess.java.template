@@ -114,6 +114,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     @ForceInline @Critical
     static $type$ get(VarHandle ob, Object obb, long base) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -136,12 +137,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[byte]
 #end[floatingPoint]
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static void set(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
         MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
         MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -166,12 +168,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 #end[byte]
 #end[floatingPoint]
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getVolatile(VarHandle ob, Object obb, long base) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -180,12 +183,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       bb.unsafeGetBase(),
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
         } finally {
-              Reference.reachabilityFence(obb);
+              Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static void setVolatile(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -194,26 +198,28 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAcquire(VarHandle ob, Object obb, long base) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
-            MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
+            MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);             
             return convEndian(handle.be,
                               UNSAFE.get$RawType$Acquire(
                                       bb.unsafeGetBase(),
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static void setRelease(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -222,12 +228,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, value));
         } finally {
-                Reference.reachabilityFence(obb);
+                Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getOpaque(VarHandle ob, Object obb, long base) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, true);
@@ -236,12 +243,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       bb.unsafeGetBase(),
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static void setOpaque(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -250,13 +258,14 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 #if[CAS]
 
     @ForceInline @Critical
     static boolean compareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -265,12 +274,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, expected), convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ compareAndExchange(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -280,12 +290,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, expected), convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ compareAndExchangeAcquire(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -295,12 +306,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, expected), convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ compareAndExchangeRelease(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -310,12 +322,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, expected), convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static boolean weakCompareAndSetPlain(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -324,12 +337,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, expected), convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static boolean weakCompareAndSet(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -338,12 +352,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, expected), convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static boolean weakCompareAndSetAcquire(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -352,12 +367,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, expected), convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static boolean weakCompareAndSetRelease(VarHandle ob, Object obb, long base, $type$ expected, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -366,12 +382,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                     offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                     convEndian(handle.be, expected), convEndian(handle.be, value));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndSet(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -381,12 +398,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndSetAcquire(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -396,12 +414,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndSetRelease(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -411,7 +430,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                                       offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask),
                                       convEndian(handle.be, value)));
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 #end[CAS]
@@ -419,6 +438,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     @ForceInline @Critical
     static $type$ getAndAdd(VarHandle ob, Object obb, long base, $type$ delta) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -431,12 +451,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndAddAcquire(VarHandle ob, Object obb, long base, $type$ delta) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -449,12 +470,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndAddRelease(VarHandle ob, Object obb, long base, $type$ delta) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -467,7 +489,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndAddConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), delta);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
@@ -487,6 +509,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     @ForceInline @Critical
     static $type$ getAndBitwiseOr(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -499,12 +522,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseOrRelease(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -517,12 +541,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseOrAcquire(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -535,7 +560,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseOrConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
@@ -553,6 +578,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     @ForceInline @Critical
     static $type$ getAndBitwiseAnd(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -565,12 +591,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseAndRelease(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -583,12 +610,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseAndAcquire(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -601,7 +629,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseAndConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
@@ -620,6 +648,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
 
     @ForceInline @Critical
     static $type$ getAndBitwiseXor(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -632,12 +661,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseXorRelease(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -650,12 +680,13 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Critical
     static $type$ getAndBitwiseXorAcquire(VarHandle ob, Object obb, long base, $type$ value) {
+        Object scope = ((MemorySegmentProxy)obb).scope();
         try {
             MemoryAccessVarHandleBase handle = (MemoryAccessVarHandleBase)ob;
             MemorySegmentProxy bb = checkAddress(obb, base, handle.length, false);
@@ -668,7 +699,7 @@ final class MemoryAccessVarHandle$Type$Helper extends MemoryAccessVarHandleBase 
                 return getAndBitwiseXorConvEndianWithCAS(bb, offset(handle.skipAlignmentMaskCheck, bb, base, handle.alignmentMask), value);
             }
         } finally {
-            Reference.reachabilityFence(obb);
+            Reference.reachabilityFence(scope);
         }
     }
 
