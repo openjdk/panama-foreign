@@ -30,4 +30,7 @@
 #define NUM_ELEMENTS 5
 typedef int Array[NUM_ELEMENTS];
 
+typedef Array MyArray;
+
 EXPORT int sum(Array a);
+EXPORT int mul(MyArray a);

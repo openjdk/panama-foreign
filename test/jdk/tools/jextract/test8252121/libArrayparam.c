@@ -30,3 +30,11 @@ int sum(Array a) {
     }
     return res;
 }
+
+int mul(MyArray a) {
+    int res = 1;
+    for (int i = 0; i < NUM_ELEMENTS; i++) {
+        res *= a[i];
+    }
+    return res;
+}

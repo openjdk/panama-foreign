@@ -46,6 +46,7 @@ public class Test8252121 {
             int[] array = { 3, 5, 89, 34, -33 };
             MemorySegment seg = scope.allocateArray(CSupport.C_INT, array);
             assertEquals(IntStream.of(array).sum(), sum(seg));
-        } 
+            assertEquals(IntStream.of(array).reduce(1, (a,b) -> a*b), mul(seg));
+        }
     }
 }
