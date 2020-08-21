@@ -1136,7 +1136,7 @@ public:
       }
     } else {
       const int max_critical_stack_depth = 5;
-      int i = 0;
+      int depth = 0;
       vframeStream stream(jt);
       for (; !stream.at_end(); stream.next()) {
         Method* m = stream.method();
@@ -1146,7 +1146,7 @@ public:
             StackValue* var = locals->at(i);
             if (var->type() == T_OBJECT) {
               if (var->get_obj() == JNIHandles::resolve(_deopt)) {
-                assert(i < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+                assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
                 jt->send_thread_stop(_exception());
                 return;
               }
@@ -1154,8 +1154,9 @@ public:
           }
           break;
         }
+        depth++;
 #ifndef ASSERT
-        if (++i >= max_critical_stack_depth) {
+        if (depth >= max_critical_stack_depth) {
           break;
         }
 #endif
