@@ -33,6 +33,7 @@ import java.util.Objects;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.VM;
 import jdk.internal.ref.Cleaner;
+import jdk.internal.vm.annotation.Critical;
 import sun.nio.ch.DirectBuffer;
 
 

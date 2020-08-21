@@ -754,9 +754,12 @@ public abstract class Buffer {
     }
 
     @ForceInline
-    final void checkSegment() {
+    final Object checkSegment() {
         if (segment != null) {
             segment.checkValidState();
+            return segment.scope();
+        } else {
+            return null;
         }
     }
 
