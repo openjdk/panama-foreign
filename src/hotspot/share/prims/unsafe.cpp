@@ -1134,33 +1134,32 @@ public:
         // Found the deopt oop in a compiled method; deoptimize.
         Deoptimization::deoptimize(jt, last_frame);
       }
-    } else {
-      const int max_critical_stack_depth = 5;
-      int depth = 0;
-      vframeStream stream(jt);
-      for (; !stream.at_end(); stream.next()) {
-        Method* m = stream.method();
-        if (m->is_critical()) {
-          StackValueCollection* locals = stream.asJavaVFrame()->locals();
-          for (int i = 0; i < locals->size(); i++) {
-            StackValue* var = locals->at(i);
-            if (var->type() == T_OBJECT) {
-              if (var->get_obj() == JNIHandles::resolve(_deopt)) {
-                assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-                jt->send_thread_stop(_exception());
-                return;
-              }
+    }
+    const int max_critical_stack_depth = 5;
+    int depth = 0;
+    vframeStream stream(jt);
+    for (; !stream.at_end(); stream.next()) {
+      Method* m = stream.method();
+      if (m->is_critical()) {
+        StackValueCollection* locals = stream.asJavaVFrame()->locals();
+        for (int i = 0; i < locals->size(); i++) {
+          StackValue* var = locals->at(i);
+          if (var->type() == T_OBJECT) {
+            if (var->get_obj() == JNIHandles::resolve(_deopt)) {
+              assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+              jt->send_thread_stop(_exception());
+              return;
             }
           }
-          break;
         }
-        depth++;
-#ifndef ASSERT
-        if (depth >= max_critical_stack_depth) {
-          break;
-        }
-#endif
+        break;
       }
+      depth++;
+#ifndef ASSERT
+      if (depth >= max_critical_stack_depth) {
+        break;
+      }
+#endif
     }
   }
 };
