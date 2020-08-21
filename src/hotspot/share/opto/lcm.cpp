@@ -878,7 +878,7 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
   // done for oops since idealreg2debugmask takes care of debug info
   // references but there no way to handle oops differently than other
   // pointers as far as the kill mask goes.
-  bool exclude_soe = op == Op_CallRuntime;
+  bool exclude_soe = op == Op_CallRuntime || op == Op_CallNative;
 
   // If the call is a MethodHandle invoke, we need to exclude the
   // register which is used to save the SP value over MH invokes from
