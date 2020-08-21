@@ -309,8 +309,9 @@ public class TestByteBuffer {
         }
         //outside of scope!!
         for (Map.Entry<Method, Object[]> e : members.entrySet()) {
-            if (!e.getKey().getName().contains("get") &&
-                            !e.getKey().getName().contains("put")) {
+            if ((!e.getKey().getName().contains("get") &&
+                            !e.getKey().getName().contains("put"))
+                            || e.getValue().length > 2) { // skip bulk ops
                 //skip
                 return;
             }
