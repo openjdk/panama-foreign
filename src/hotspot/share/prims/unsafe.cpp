@@ -1091,11 +1091,13 @@ public:
 
 class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
   jobject _deopt;
+  Handle _exception;
 
 public:
-  UnsafeSynchronizeThreadsClosure(jobject deopt)
+  UnsafeSynchronizeThreadsClosure(jobject deopt, Handle exception)
     : HandshakeClosure("UnsafeSynchronizeThreads")
-    , _deopt(deopt) {}
+    , _deopt(deopt)
+    , _exception(exception) {}
 
   void do_thread(Thread* thread) {
     if (UseNewCode2) {
@@ -1132,12 +1134,30 @@ public:
         // Found the deopt oop in a compiled method; deoptimize.
         Deoptimization::deoptimize(jt, last_frame);
       }
+    } else {
+      const int max_critical_stack_depth = 5;
+      int i = 0;
+      vframeStream stream(jt);
+      for (; !stream.at_end(); stream.next()) {
+        Method* m = stream.method();
+        if (m->is_critical()) {
+          assert(i < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+          jt->send_thread_stop(_exception());
+          break;
+        }
+#ifndef ASSERT
+        if (++i >= max_critical_stack_depth) {
+          break;
+        }
+#endif
+      }
     }
   }
 };
 
 UNSAFE_ENTRY(void, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe, jobject deopt)) {
-  UnsafeSynchronizeThreadsClosure cl(deopt);
+  Handle exception = Exceptions::new_exception(thread, vmSymbols::java_lang_IllegalStateException(), "Access racing with close");
+  UnsafeSynchronizeThreadsClosure cl(deopt, exception);
   Handshake::execute(&cl);
 } UNSAFE_END
 
