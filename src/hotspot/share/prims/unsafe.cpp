@@ -1124,8 +1124,8 @@ public:
       last_frame = last_frame.sender(&register_map);
     }
 
+    ResourceMark rm;
     if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
-      ResourceMark rm;
       UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
       CompiledMethod* cm = last_frame.cb()->as_compiled_method();
       last_frame.oops_do(&cl, NULL, &register_map);
@@ -1141,8 +1141,17 @@ public:
       for (; !stream.at_end(); stream.next()) {
         Method* m = stream.method();
         if (m->is_critical()) {
-          assert(i < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-          jt->send_thread_stop(_exception());
+          StackValueCollection* locals = stream.asJavaVFrame()->locals();
+          for (int i = 0; i < locals->size(); i++) {
+            StackValue* var = locals->at(i);
+            if (var->type() == T_OBJECT) {
+              if (var->get_obj() == JNIHandles::resolve(_deopt)) {
+                assert(i < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+                jt->send_thread_stop(_exception());
+                return;
+              }
+            }
+          }
           break;
         }
 #ifndef ASSERT
