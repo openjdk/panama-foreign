@@ -2678,6 +2678,7 @@ void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp) 
   }
   // Always clear the pc because it could have been set by make_walkable()
   movslq(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
+  movslq(Address(java_thread, JavaThread::saved_rbp_address_offset()), NULL_WORD);
   vzeroupper();
 }
 
