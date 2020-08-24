@@ -38,6 +38,12 @@ import java.util.function.Consumer;
  * A set of utilities for working with libraries using the C language/ABI
  */
 public class CSupport {
+
+    /**
+     * No need to construct
+     */
+    private CSupport() {}
+
     /**
      * Obtain a linker that uses the de facto C ABI of the current system to do it's linking.
      * <p>
