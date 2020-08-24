@@ -268,6 +268,8 @@ public final class JextractTool {
      * ToolProvider implementation for jextract tool.
      */
     public static class JextractToolProvider implements ToolProvider {
+        public JextractToolProvider() {}
+
         @Override
         public String name() {
             return "jextract";
