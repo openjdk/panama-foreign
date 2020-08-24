@@ -1068,7 +1068,20 @@ void PhaseOutput::Process_OopMap_Node(MachNode *mach, int current_offset) {
     // Now we can describe the scope.
     methodHandle null_mh;
     bool rethrow_exception = false;
-    C->debug_info()->describe_scope(safepoint_pc_offset, null_mh, scope_method, jvms->bci(), jvms->should_reexecute(), rethrow_exception, is_method_handle_invoke, return_oop, locvals, expvals, monvals);
+    C->debug_info()->describe_scope(
+      safepoint_pc_offset,
+      null_mh,
+      scope_method,
+      jvms->bci(),
+      jvms->should_reexecute(),
+      rethrow_exception,
+      is_method_handle_invoke,
+      mach->is_MachCallNative(),
+      return_oop,
+      locvals,
+      expvals,
+      monvals
+    );
   } // End jvms loop
 
   // Mark the end of the scope set.

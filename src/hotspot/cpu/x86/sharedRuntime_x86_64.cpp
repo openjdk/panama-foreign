@@ -3766,14 +3766,15 @@ void NativeInvokerGenerator::generate() {
   MacroAssembler* masm = _masm;
   __ enter();
 
-  Address java_pc(r15_thread,
-                  JavaThread::frame_anchor_offset() + JavaFrameAnchor::last_Java_pc_offset());
+  Address java_pc(r15_thread, JavaThread::last_Java_pc_offset());
   __ movptr(rscratch1, Address(rsp, 8)); // read return address from stack
   __ movptr(java_pc, rscratch1);
 
   __ movptr(rscratch1, rsp);
-  __ addptr(rscratch1, 16);
+  __ addptr(rscratch1, 16); // skip return and frame
   __ movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), rscratch1);
+
+  __ movptr(Address(r15_thread, JavaThread::saved_rbp_address_offset()), rsp); // rsp points at saved RBP
 
     // State transition
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native);
