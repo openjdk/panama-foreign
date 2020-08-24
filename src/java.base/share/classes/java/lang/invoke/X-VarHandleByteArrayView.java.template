@@ -29,8 +29,10 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.util.Preconditions;
+import jdk.internal.vm.annotation.Critical;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.lang.ref.Reference;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Objects;
@@ -564,11 +566,18 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
         }
 
         @ForceInline
-        static int index(ByteBuffer bb, int index) {
+        final static Object checkSegment(ByteBuffer bb) {
             MemorySegmentProxy segmentProxy = NIO_ACCESS.bufferSegment(bb);
             if (segmentProxy != null) {
                 segmentProxy.checkValidState();
+                return segmentProxy.scope();
+            } else {
+                return null;
             }
+        }
+
+        @ForceInline
+        static int index(ByteBuffer bb, int index) {
             return Preconditions.checkIndex(index, UNSAFE.getInt(bb, BUFFER_LIMIT) - ALIGN, null);
         }
 
@@ -587,276 +596,408 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
             return address;
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ get(VarHandle ob, Object obb, int index) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
 #if[floatingPoint]
-            $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    ((long) index(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
-                    handle.be);
-            return $Type$.$rawType$BitsTo$Type$(rawValue);
+                $rawType$ rawValue = UNSAFE.get$RawType$Unaligned(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        ((long) index(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
+                        handle.be);
+                return $Type$.$rawType$BitsTo$Type$(rawValue);
 #else[floatingPoint]
-            return UNSAFE.get$Type$Unaligned(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    ((long) index(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
-                    handle.be);
+                return UNSAFE.get$Type$Unaligned(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        ((long) index(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
+                        handle.be);
 #end[floatingPoint]
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static void set(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
 #if[floatingPoint]
-            UNSAFE.put$RawType$Unaligned(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    ((long) indexRO(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
-                    $Type$.$type$ToRaw$RawType$Bits(value),
-                    handle.be);
+                UNSAFE.put$RawType$Unaligned(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        ((long) indexRO(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
+                        $Type$.$type$ToRaw$RawType$Bits(value),
+                        handle.be);
 #else[floatingPoint]
-            UNSAFE.put$Type$Unaligned(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    ((long) indexRO(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
-                    value,
-                    handle.be);
+                UNSAFE.put$Type$Unaligned(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        ((long) indexRO(bb, index)) + UNSAFE.getLong(bb, BUFFER_ADDRESS),
+                        value,
+                        handle.be);
 #end[floatingPoint]
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getVolatile(VarHandle ob, Object obb, int index) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.get$RawType$Volatile(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, index(bb, index))));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.get$RawType$Volatile(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, index(bb, index))));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static void setVolatile(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            UNSAFE.put$RawType$Volatile(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                UNSAFE.put$RawType$Volatile(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAcquire(VarHandle ob, Object obb, int index) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.get$RawType$Acquire(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, index(bb, index))));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.get$RawType$Acquire(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, index(bb, index))));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static void setRelease(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            UNSAFE.put$RawType$Release(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                UNSAFE.put$RawType$Release(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getOpaque(VarHandle ob, Object obb, int index) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.get$RawType$Opaque(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, index(bb, index))));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.get$RawType$Opaque(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, index(bb, index))));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static void setOpaque(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            UNSAFE.put$RawType$Opaque(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                UNSAFE.put$RawType$Opaque(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 #if[CAS]
 
-        @ForceInline
+        @ForceInline @Critical
         static boolean compareAndSet(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
 #if[Object]
-            return UNSAFE.compareAndSetReference(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+                return UNSAFE.compareAndSetReference(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
 #else[Object]
-            return UNSAFE.compareAndSet$RawType$(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+                return UNSAFE.compareAndSet$RawType$(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
 #end[Object]
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ compareAndExchange(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.compareAndExchange$RawType$(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.compareAndExchange$RawType$(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, expected), convEndian(handle.be, value)));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ compareAndExchangeAcquire(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.compareAndExchange$RawType$Acquire(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.compareAndExchange$RawType$Acquire(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, expected), convEndian(handle.be, value)));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ compareAndExchangeRelease(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.compareAndExchange$RawType$Release(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, expected), convEndian(handle.be, value)));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.compareAndExchange$RawType$Release(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, expected), convEndian(handle.be, value)));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static boolean weakCompareAndSetPlain(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return UNSAFE.weakCompareAndSet$RawType$Plain(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return UNSAFE.weakCompareAndSet$RawType$Plain(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static boolean weakCompareAndSet(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return UNSAFE.weakCompareAndSet$RawType$(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return UNSAFE.weakCompareAndSet$RawType$(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static boolean weakCompareAndSetAcquire(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return UNSAFE.weakCompareAndSet$RawType$Acquire(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return UNSAFE.weakCompareAndSet$RawType$Acquire(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static boolean weakCompareAndSetRelease(VarHandle ob, Object obb, int index, $type$ expected, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return UNSAFE.weakCompareAndSet$RawType$Release(
-                    UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                    address(bb, indexRO(bb, index)),
-                    convEndian(handle.be, expected), convEndian(handle.be, value));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return UNSAFE.weakCompareAndSet$RawType$Release(
+                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                        address(bb, indexRO(bb, index)),
+                        convEndian(handle.be, expected), convEndian(handle.be, value));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndSet(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
 #if[Object]
-            return convEndian(handle.be,
-                              UNSAFE.getAndSetReference(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, value)));
+                return convEndian(handle.be,
+                                  UNSAFE.getAndSetReference(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, value)));
 #else[Object]
-            return convEndian(handle.be,
-                              UNSAFE.getAndSet$RawType$(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, value)));
+                return convEndian(handle.be,
+                                  UNSAFE.getAndSet$RawType$(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, value)));
 #end[Object]
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndSetAcquire(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.getAndSet$RawType$Acquire(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, value)));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.getAndSet$RawType$Acquire(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, value)));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndSetRelease(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            return convEndian(handle.be,
-                              UNSAFE.getAndSet$RawType$Release(
-                                      UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                                      address(bb, indexRO(bb, index)),
-                                      convEndian(handle.be, value)));
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                return convEndian(handle.be,
+                                  UNSAFE.getAndSet$RawType$Release(
+                                          UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                                          address(bb, indexRO(bb, index)),
+                                          convEndian(handle.be, value)));
+            } finally {
+                Reference.reachabilityFence(scope);
+            }
         }
 #end[CAS]
 #if[AtomicAdd]
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndAdd(VarHandle ob, Object obb, int index, $type$ delta) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndAdd$RawType$(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        delta);
-            } else {
-                return getAndAddConvEndianWithCAS(bb, index, delta);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndAdd$RawType$(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            delta);
+                } else {
+                    return getAndAddConvEndianWithCAS(bb, index, delta);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndAddAcquire(VarHandle ob, Object obb, int index, $type$ delta) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndAdd$RawType$Acquire(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        delta);
-            } else {
-                return getAndAddConvEndianWithCAS(bb, index, delta);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndAdd$RawType$Acquire(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            delta);
+                } else {
+                    return getAndAddConvEndianWithCAS(bb, index, delta);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndAddRelease(VarHandle ob, Object obb, int index, $type$ delta) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndAdd$RawType$Release(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        delta);
-            } else {
-                return getAndAddConvEndianWithCAS(bb, index, delta);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndAdd$RawType$Release(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            delta);
+                } else {
+                    return getAndAddConvEndianWithCAS(bb, index, delta);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
@@ -875,45 +1016,63 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
 #end[AtomicAdd]
 #if[Bitwise]
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseOr(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseOr$RawType$(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseOr$RawType$(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseOrRelease(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseOr$RawType$Release(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseOr$RawType$Release(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseOrAcquire(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseOr$RawType$Acquire(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseOr$RawType$Acquire(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseOrConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
@@ -930,49 +1089,67 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
             return expectedValue;
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseAnd(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseAnd$RawType$(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseAnd$RawType$(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseAndRelease(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseAnd$RawType$Release(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseAnd$RawType$Release(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseAndAcquire(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseAnd$RawType$Acquire(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseAndConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseAndConvEndianWithCAS(ByteBuffer bb, int index, $type$ value) {
             $type$ nativeExpectedValue, expectedValue;
             Object base = UNSAFE.getReference(bb, BYTE_BUFFER_HB);
@@ -986,45 +1163,63 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
         }
 
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseXor(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseXor$RawType$(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseXor$RawType$(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseXorRelease(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseXor$RawType$Release(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseXor$RawType$Release(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
-        @ForceInline
+        @ForceInline @Critical
         static $type$ getAndBitwiseXorAcquire(VarHandle ob, Object obb, int index, $type$ value) {
             ByteBufferHandle handle = (ByteBufferHandle)ob;
             ByteBuffer bb = (ByteBuffer) Objects.requireNonNull(obb);
-            if (handle.be == BE) {
-                return UNSAFE.getAndBitwiseXor$RawType$Acquire(
-                        UNSAFE.getReference(bb, BYTE_BUFFER_HB),
-                        address(bb, indexRO(bb, index)),
-                        value);
-            } else {
-                return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+            Object scope = null;
+            try {
+                scope = checkSegment(bb);
+                if (handle.be == BE) {
+                    return UNSAFE.getAndBitwiseXor$RawType$Acquire(
+                            UNSAFE.getReference(bb, BYTE_BUFFER_HB),
+                            address(bb, indexRO(bb, index)),
+                            value);
+                } else {
+                    return getAndBitwiseXorConvEndianWithCAS(bb, index, value);
+                }
+            } finally {
+                Reference.reachabilityFence(scope);
             }
         }
 
