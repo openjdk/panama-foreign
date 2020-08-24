@@ -1,0 +1,23 @@
+    @ForceInline @Scoped
+    static $type$ get$Type$(Scope scope, Object base, long offset) {
+        try {
+            if (scope != null) {
+                scope.check();
+            }
+            return UNSAFE.get$Type$(base, offset);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static void set$Type$(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.check();
+            }
+            UNSAFE.put$Type$(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
