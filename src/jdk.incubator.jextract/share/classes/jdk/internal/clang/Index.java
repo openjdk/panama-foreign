@@ -114,10 +114,10 @@ public class Index implements AutoCloseable {
     }
 
     private int defaultOptions(boolean detailedPreprocessorRecord) {
-        int rv = Index_h.CXTranslationUnit_ForSerialization;
-        rv |= Index_h.CXTranslationUnit_SkipFunctionBodies;
+        int rv = Index_h.CXTranslationUnit_ForSerialization();
+        rv |= Index_h.CXTranslationUnit_SkipFunctionBodies();
         if (detailedPreprocessorRecord) {
-            rv |= Index_h.CXTranslationUnit_DetailedPreprocessingRecord;
+            rv |= Index_h.CXTranslationUnit_DetailedPreprocessingRecord();
         }
         return rv;
     }

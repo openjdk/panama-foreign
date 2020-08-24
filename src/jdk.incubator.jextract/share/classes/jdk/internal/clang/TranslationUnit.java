@@ -78,17 +78,17 @@ public class TranslationUnit implements AutoCloseable {
         }
     }
 
-    static long FILENAME_OFFSET = Index_h.CXUnsavedFile$LAYOUT.bitOffset(MemoryLayout.PathElement.groupElement("Filename")) / 8;
-    static long CONTENTS_OFFSET = Index_h.CXUnsavedFile$LAYOUT.bitOffset(MemoryLayout.PathElement.groupElement("Contents")) / 8;
-    static long LENGTH_OFFSET = Index_h.CXUnsavedFile$LAYOUT.bitOffset(MemoryLayout.PathElement.groupElement("Length")) / 8;
+    static long FILENAME_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Filename")) / 8;
+    static long CONTENTS_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Contents")) / 8;
+    static long LENGTH_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Length")) / 8;
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
-                    scope.allocateArray(Index_h.CXUnsavedFile$LAYOUT, inMemoryFiles.length);
+                    scope.allocateArray(Index_h.CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile$LAYOUT.byteSize());
+                MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile.$LAYOUT().byteSize());
                 MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CSupport.toCString(inMemoryFiles[i].file, scope).address());
                 MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CSupport.toCString(inMemoryFiles[i].contents, scope).address());
                 MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
@@ -157,8 +157,8 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public MemorySegment getTokenSegment(int idx) {
-            MemoryAddress p = ar.addOffset(idx * Index_h.CXToken$LAYOUT.byteSize());
-            return MemorySegment.ofNativeRestricted(p, Index_h.CXToken$LAYOUT.byteSize(), null, null, null);
+            MemoryAddress p = ar.addOffset(idx * Index_h.CXToken.$LAYOUT().byteSize());
+            return MemorySegment.ofNativeRestricted(p, Index_h.CXToken.$LAYOUT().byteSize(), null, null, null);
         }
 
         public Token getToken(int index) {
