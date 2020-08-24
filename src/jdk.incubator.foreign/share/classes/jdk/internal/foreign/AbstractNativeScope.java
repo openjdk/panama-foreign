@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalLong;
 
-public abstract class AbstractNativeScope extends NativeScope {
+public abstract class AbstractNativeScope implements NativeScope {
 
     private final List<MemorySegment> segments = new ArrayList<>();
     private final Thread ownerThread;
