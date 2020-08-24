@@ -27,9 +27,11 @@
 
 package java.nio;
 
+import java.lang.ref.Reference;
 import java.util.Objects;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.Critical;
 
 class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
     extends {#if[ro]?ByteBufferAs}$Type$Buffer{#if[ro]?$BO$}
@@ -129,18 +131,30 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
         return (i << $LG_BYTES_PER_VALUE$) + address;
     }
 
+    @Critical
     public $type$ get() {
-        checkSegment();
-        $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(nextGetIndex()),
-            {#if[boB]?true:false});
-        return $fromBits$(x);
+        Object scope = null;
+        try {
+            scope = checkSegment();
+            $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(nextGetIndex()),
+                {#if[boB]?true:false});
+            return $fromBits$(x);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
     }
 
+    @Critical
     public $type$ get(int i) {
-        checkSegment();
-        $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)),
-            {#if[boB]?true:false});
-        return $fromBits$(x);
+        Object scope = null;
+        try {
+            scope = checkSegment();
+            $memtype$ x = UNSAFE.get$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)),
+                {#if[boB]?true:false});
+            return $fromBits$(x);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
     }
 
 #if[streamableType]
@@ -153,25 +167,37 @@ class ByteBufferAs$Type$Buffer$RW$$BO$                  // package-private
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer put($type$ x) {
 #if[rw]
-        checkSegment();
-        $memtype$ y = $toBits$(x);
-        UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(nextPutIndex()), y,
-            {#if[boB]?true:false});
-        return this;
+        Object scope = null;
+        try {
+            scope = checkSegment();
+            $memtype$ y = $toBits$(x);
+            UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(nextPutIndex()), y,
+                {#if[boB]?true:false});
+            return this;
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer put(int i, $type$ x) {
 #if[rw]
-        checkSegment();
-        $memtype$ y = $toBits$(x);
-        UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)), y,
-            {#if[boB]?true:false});
-        return this;
+        Object scope = null;
+        try {
+            scope = checkSegment();
+            $memtype$ y = $toBits$(x);
+            UNSAFE.put$Memtype$Unaligned(bb.hb, byteOffset(checkIndex(i)), y,
+                {#if[boB]?true:false});
+            return this;
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]

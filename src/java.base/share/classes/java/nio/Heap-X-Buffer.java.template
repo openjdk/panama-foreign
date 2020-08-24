@@ -30,6 +30,7 @@ package java.nio;
 import java.lang.ref.Reference;
 import java.util.Objects;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.vm.annotation.Critical;
 
 /**
 #if[rw]
@@ -162,6 +163,7 @@ class Heap$Type$Buffer$RW$
     }
 #end[byte]
 
+    @Critical
     public $type$ get() {
         Object scope = checkSegment();
         try {
@@ -171,6 +173,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public $type$ get(int i) {
         Object scope = checkSegment();
         try {
@@ -186,6 +189,7 @@ class Heap$Type$Buffer$RW$
     }
 #end[streamableType]
 
+    @Critical
     public $Type$Buffer get($type$[] dst, int offset, int length) {
         Object scope = checkSegment();
         try {
@@ -201,6 +205,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public $Type$Buffer get(int index, $type$[] dst, int offset, int length) {
         Object scope = checkSegment();
         try {
@@ -223,6 +228,7 @@ class Heap$Type$Buffer$RW$
         return {#if[rw]?false:true};
     }
 
+    @Critical
     public $Type$Buffer put($type$ x) {
 #if[rw]
         Object scope = checkSegment();
@@ -237,6 +243,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer put(int i, $type$ x) {
 #if[rw]
         Object scope = checkSegment();
@@ -251,6 +258,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer put($type$[] src, int offset, int length) {
 #if[rw]
         Object scope = checkSegment();
@@ -270,6 +278,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer put($Type$Buffer src) {
 #if[rw]
         Object scope = checkSegment();
@@ -284,6 +293,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer put(int index, $type$[] src, int offset, int length) {
 #if[rw]
         Object scope = checkSegment();
@@ -302,6 +312,7 @@ class Heap$Type$Buffer$RW$
 
 #if[char]
 
+    @Critical
     public $Type$Buffer put(String src, int start, int end) {
         Object scope = checkSegment();
         try {
@@ -358,6 +369,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public char getChar() {
         Object scope = checkSegment();
         try {
@@ -367,6 +379,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public char getChar(int i) {
         Object scope = checkSegment();
         try {
@@ -378,6 +391,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putChar(char x) {
 #if[rw]
         Object scope = checkSegment();
@@ -392,6 +406,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putChar(int i, char x) {
 #if[rw]
         Object scope = checkSegment();
@@ -430,6 +445,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public short getShort() {
         Object scope = checkSegment();
         try {
@@ -439,6 +455,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public short getShort(int i) {
         Object scope = checkSegment();
         try {
@@ -450,6 +467,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putShort(short x) {
 #if[rw]
         Object scope = checkSegment();
@@ -464,6 +482,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putShort(int i, short x) {
 #if[rw]
         Object scope = checkSegment();
@@ -502,6 +521,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public int getInt() {
         Object scope = checkSegment();
         try {
@@ -511,6 +531,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public int getInt(int i) {
         Object scope = checkSegment();
         try {
@@ -522,6 +543,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putInt(int x) {
 #if[rw]
         Object scope = checkSegment();
@@ -536,6 +558,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putInt(int i, int x) {
 #if[rw]
         Object scope = checkSegment();
@@ -574,6 +597,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public long getLong() {
         Object scope = checkSegment();
         try {
@@ -583,6 +607,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public long getLong(int i) {
         Object scope = checkSegment();
         try {
@@ -594,6 +619,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putLong(long x) {
 #if[rw]
         Object scope = checkSegment();
@@ -608,6 +634,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putLong(int i, long x) {
 #if[rw]
         Object scope = checkSegment();
@@ -646,6 +673,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public float getFloat() {
         Object scope = checkSegment();
         try {
@@ -656,6 +684,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public float getFloat(int i) {
         Object scope = checkSegment();
         try {
@@ -668,6 +697,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putFloat(float x) {
 #if[rw]
         Object scope = checkSegment();
@@ -683,6 +713,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putFloat(int i, float x) {
 #if[rw]
         Object scope = checkSegment();
@@ -722,6 +753,7 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
+    @Critical
     public double getDouble() {
         Object scope = checkSegment();
         try {
@@ -732,6 +764,7 @@ class Heap$Type$Buffer$RW$
         }
     }
 
+    @Critical
     public double getDouble(int i) {
         Object scope = checkSegment();
         try {
@@ -744,6 +777,7 @@ class Heap$Type$Buffer$RW$
 
 #end[rw]
 
+    @Critical
     public $Type$Buffer putDouble(double x) {
 #if[rw]
         Object scope = checkSegment();
@@ -759,6 +793,7 @@ class Heap$Type$Buffer$RW$
 #end[rw]
     }
 
+    @Critical
     public $Type$Buffer putDouble(int i, double x) {
 #if[rw]
         Object scope = checkSegment();

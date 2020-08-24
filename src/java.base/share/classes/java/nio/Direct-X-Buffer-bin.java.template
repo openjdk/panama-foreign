@@ -95,6 +95,7 @@ class XXX {
 #end[rw]
     }
 
+    @Critical
     public ByteBuffer put$Type$(int i, $type$ x) {
 #if[rw]
         Object scope = null;
