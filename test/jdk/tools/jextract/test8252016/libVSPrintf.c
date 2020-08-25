@@ -21,12 +21,11 @@
  * questions.
  */
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
+#include "vsprintf.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 
-EXPORT int my_vsprintf(char *s, const char* format, va_list arg);
+EXPORT int my_vsprintf(char *s, const char* format, va_list arg) {
+    return vsprintf(s, format, arg);
+}
