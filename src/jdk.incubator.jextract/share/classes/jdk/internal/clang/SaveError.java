@@ -37,10 +37,10 @@ import static jdk.internal.clang.libclang.Index_h.CXSaveError_TranslationErrors;
 import static jdk.internal.clang.libclang.Index_h.CXSaveError_Unknown;
 
 public enum SaveError {
-    None(CXSaveError_None),
-    Unknown(CXSaveError_Unknown),
-    TranslationErrors(CXSaveError_TranslationErrors),
-    InvalidTU(CXSaveError_InvalidTU);
+    None(CXSaveError_None()),
+    Unknown(CXSaveError_Unknown()),
+    TranslationErrors(CXSaveError_TranslationErrors()),
+    InvalidTU(CXSaveError_InvalidTU());
 
     private final int code;
 

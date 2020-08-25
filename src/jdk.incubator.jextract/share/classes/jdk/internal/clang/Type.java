@@ -186,7 +186,7 @@ public final class Type {
     }
 
     public int kind0() {
-        return Index_h.CXType$kind$get(type);
+        return Index_h.CXType.kind$get(type);
     }
 
     private long size0() {
