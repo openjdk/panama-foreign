@@ -125,7 +125,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final MemorySegment fill(byte value){
-        checkAccess(0, length, false);
+        checkAccessAndScope(0, length, false);
         UNSAFE.setMemory(base(), min(), length, value);
         return this;
     }
@@ -133,8 +133,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     public void copyFrom(MemorySegment src) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
         long size = that.byteSize();
-        checkAccess(0, size, false);
-        that.checkAccess(0, size, true);
+        checkAccessAndScope(0, size, false);
+        that.checkAccessAndScope(0, size, true);
         UNSAFE.copyMemory(
                 that.base(), that.min(),
                 base(), min(), size);
@@ -149,8 +149,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         final long thisSize = this.byteSize();
         final long thatSize = that.byteSize();
         final long length = Math.min(thisSize, thatSize);
-        this.checkAccess(0, length, true);
-        that.checkAccess(0, length, true);
+        this.checkAccessAndScope(0, length, true);
+        that.checkAccessAndScope(0, length, true);
         if (this == other) {
             return -1;
         }
@@ -329,6 +329,15 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public void checkAccess(long offset, long length, boolean readOnly) {
+        if (!readOnly && !isSet(WRITE)) {
+            throw unsupportedAccessMode(WRITE);
+        } else if (readOnly && !isSet(READ)) {
+            throw unsupportedAccessMode(READ);
+        }
+        checkBounds(offset, length);
+    }
+
+    public void checkAccessAndScope(long offset, long length, boolean readOnly) {
         scope.checkValidState();
         if (!readOnly && !isSet(WRITE)) {
             throw unsupportedAccessMode(WRITE);

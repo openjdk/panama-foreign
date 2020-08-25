@@ -1,5 +1,5 @@
     @ForceInline @Scoped
-    static $type$ get$Type$(Scope scope, Object base, long offset) {
+    public $type$ get$Type$(Scope scope, Object base, long offset) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -11,7 +11,7 @@
     }
 
     @ForceInline @Scoped
-    static void put$Type$(Scope scope, Object base, long offset, $type$ value) {
+    public void put$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -24,7 +24,7 @@
 
 #if[Unaligned]
     @ForceInline @Scoped
-    static $type$ get$Type$Unaligned(Scope scope, Object base, long offset, boolean be) {
+    public $type$ get$Type$Unaligned(Scope scope, Object base, long offset, boolean be) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -36,7 +36,7 @@
     }
 
     @ForceInline @Scoped
-    static void pet$Type$Unaligned(Scope scope, Object base, long offset, $type$ value, boolean be) {
+    public void put$Type$Unaligned(Scope scope, Object base, long offset, $type$ value, boolean be) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -49,7 +49,7 @@
 #end[Unaligned]
 
     @ForceInline @Scoped
-    static $type$ get$Type$Volatile(Scope scope, Object base, long offset) {
+    public $type$ get$Type$Volatile(Scope scope, Object base, long offset) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -61,7 +61,7 @@
     }
 
     @ForceInline @Scoped
-    static void put$Type$Volatile(Scope scope, Object base, long offset, $type$ value) {
+    public void put$Type$Volatile(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -73,7 +73,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ get$Type$Acquire(Scope scope, Object base, long offset) {
+    public $type$ get$Type$Acquire(Scope scope, Object base, long offset) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -85,7 +85,7 @@
     }
 
     @ForceInline @Scoped
-    static void put$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+    public void put$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -97,7 +97,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ get$Type$Opaque(Scope scope, Object base, long offset) {
+    public $type$ get$Type$Opaque(Scope scope, Object base, long offset) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -109,7 +109,7 @@
     }
 
     @ForceInline @Scoped
-    static void put$Type$Opaque(Scope scope, Object base, long offset, $type$ value) {
+    public void put$Type$Opaque(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -122,7 +122,7 @@
 
 #if[CAS]
     @ForceInline @Scoped
-    static boolean compareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public boolean compareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -134,7 +134,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ compareAndExchange$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public $type$ compareAndExchange$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -146,7 +146,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ compareAndExchange$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public $type$ compareAndExchange$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -158,7 +158,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ compareAndExchange$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public $type$ compareAndExchange$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -170,7 +170,7 @@
     }
 
     @ForceInline @Scoped
-    static boolean weakCompareAndSet$Type$Plain(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public boolean weakCompareAndSet$Type$Plain(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -182,7 +182,7 @@
     }
 
     @ForceInline @Scoped
-    static boolean weakCompareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public boolean weakCompareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -194,7 +194,7 @@
     }
 
     @ForceInline @Scoped
-    static boolean weakCompareAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public boolean weakCompareAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -206,7 +206,7 @@
     }
 
     @ForceInline @Scoped
-    static boolean weakCompareAndSet$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+    public boolean weakCompareAndSet$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -218,7 +218,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndSet$Type$(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndSet$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -230,7 +230,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -242,7 +242,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndSet$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndSet$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -256,36 +256,36 @@
 
 #if[AtomicAdd]
     @ForceInline @Scoped
-    static $type$ getAndAdd$Type$(Scope scope, Object base, long offset, $type$ delta) {
+    public $type$ getAndAdd$Type$(Scope scope, Object base, long offset, $type$ delta) {
         try {
             if (scope != null) {
                 scope.checkValidState();
             }
-            return UNSAFE.getAndSet$Type$(base, offset, delta);
+            return UNSAFE.getAndAdd$Type$(base, offset, delta);
         } finally {
             Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Scoped
-    static $type$ getAndAdd$Type$Acquire(Scope scope, Object base, long offset, $type$ delta) {
+    public $type$ getAndAdd$Type$Acquire(Scope scope, Object base, long offset, $type$ delta) {
         try {
             if (scope != null) {
                 scope.checkValidState();
             }
-            return UNSAFE.getAndSet$Type$Acquire(base, offset, delta);
+            return UNSAFE.getAndAdd$Type$Acquire(base, offset, delta);
         } finally {
             Reference.reachabilityFence(scope);
         }
     }
 
     @ForceInline @Scoped
-    static $type$ getAndAdd$Type$Release(Scope scope, Object base, long offset, $type$ delta) {
+    public $type$ getAndAdd$Type$Release(Scope scope, Object base, long offset, $type$ delta) {
         try {
             if (scope != null) {
                 scope.checkValidState();
             }
-            return UNSAFE.getAndSet$Type$Release(base, offset, delta);
+            return UNSAFE.getAndAdd$Type$Release(base, offset, delta);
         } finally {
             Reference.reachabilityFence(scope);
         }
@@ -294,7 +294,7 @@
 
 #if[Bitwise]
     @ForceInline @Scoped
-    static $type$ getAndBitwiseOr$Type$(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseOr$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -306,7 +306,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseOr$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseOr$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -318,7 +318,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseOr$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseOr$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -330,7 +330,7 @@
     }
     
     @ForceInline @Scoped
-    static $type$ getAndBitwiseAnd$Type$(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseAnd$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -342,7 +342,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseAnd$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseAnd$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -354,7 +354,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseAnd$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseAnd$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -366,7 +366,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseXor$Type$(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseXor$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -378,7 +378,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseXor$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseXor$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();
@@ -390,7 +390,7 @@
     }
 
     @ForceInline @Scoped
-    static $type$ getAndBitwiseXor$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+    public $type$ getAndBitwiseXor$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
                 scope.checkValidState();

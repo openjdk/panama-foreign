@@ -37,10 +37,10 @@ public class ScopedMemoryAccess {
 
     private static Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    private static native void registerNatives();
-    static {
-        registerNatives();
-    }
+    //private static native void registerNatives();
+    //static {
+    //    registerNatives();
+    //}
 
     private ScopedMemoryAccess() {}
 

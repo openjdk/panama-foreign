@@ -91,6 +91,9 @@ public class Spp {
                 el = false;
             } else {
                 System.err.println("Usage: java build.tools.spp.Spp [-be] [-nel] [-Kkey] -Dvar=value ... <in >out");
+                for (String s : args) {
+ System.out.println("ARG = " + s);
+                 }
                 System.exit(-1);
             }
         }
