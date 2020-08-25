@@ -837,12 +837,11 @@ public class ASTPrinter {
             System.exit(1);
         }
 
-        // parse the C header/source passed from the command line
-        var index = clang_createIndex(0, 0);
-        var tu = clang_parseTranslationUnit(index, toCString(args[0]),
-            NULL, 0, NULL, 0, CXTranslationUnit_None());
-
         try (var scope = NativeScope.unboundedScope()) {
+            // parse the C header/source passed from the command line
+            var index = clang_createIndex(0, 0);
+            var tu = clang_parseTranslationUnit(index, toCString(args[0], scope),
+                    NULL, 0, NULL, 0, CXTranslationUnit_None());
             // array trick to update within lambda
             var level = new int[1];
             var visitor = new MemorySegment[1];
@@ -871,10 +870,10 @@ public class ASTPrinter {
             // get the AST root and visit it
             var root = clang_getTranslationUnitCursor(tu);
             clang_visitChildren(root, visitor[0], NULL);
-        }
 
-        clang_disposeTranslationUnit(tu);
-        clang_disposeIndex(index);
+            clang_disposeTranslationUnit(tu);
+            clang_disposeIndex(index);
+        }
     }
 }
 

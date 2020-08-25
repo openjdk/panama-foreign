@@ -789,46 +789,45 @@
 <span id="cb40-17"><a href="#cb40-17"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(<span class="dv">1</span>);</span>
 <span id="cb40-18"><a href="#cb40-18"></a>        }</span>
 <span id="cb40-19"><a href="#cb40-19"></a></span>
-<span id="cb40-20"><a href="#cb40-20"></a>        <span class="co">// parse the C header/source passed from the command line</span></span>
-<span id="cb40-21"><a href="#cb40-21"></a>        var index = <span class="fu">clang_createIndex</span>(<span class="dv">0</span>, <span class="dv">0</span>);</span>
-<span id="cb40-22"><a href="#cb40-22"></a>        var tu = <span class="fu">clang_parseTranslationUnit</span>(index, <span class="fu">toCString</span>(args[<span class="dv">0</span>]),</span>
-<span id="cb40-23"><a href="#cb40-23"></a>            NULL, <span class="dv">0</span>, NULL, <span class="dv">0</span>, <span class="fu">CXTranslationUnit_None</span>());</span>
-<span id="cb40-24"><a href="#cb40-24"></a></span>
-<span id="cb40-25"><a href="#cb40-25"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
-<span id="cb40-26"><a href="#cb40-26"></a>            <span class="co">// array trick to update within lambda</span></span>
-<span id="cb40-27"><a href="#cb40-27"></a>            var level = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</span>
-<span id="cb40-28"><a href="#cb40-28"></a>            var visitor = <span class="kw">new</span> MemorySegment[<span class="dv">1</span>];</span>
-<span id="cb40-29"><a href="#cb40-29"></a></span>
-<span id="cb40-30"><a href="#cb40-30"></a>            <span class="co">// clang Cursor visitor callback</span></span>
-<span id="cb40-31"><a href="#cb40-31"></a>            visitor[<span class="dv">0</span>] = clang_visitChildren$visitor.<span class="fu">allocate</span>((cursor, parent, data) -&gt; {</span>
-<span id="cb40-32"><a href="#cb40-32"></a>                var kind = <span class="fu">clang_getCursorKind</span>(cursor);</span>
-<span id="cb40-33"><a href="#cb40-33"></a>                var name = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorSpelling</span>(cursor));</span>
-<span id="cb40-34"><a href="#cb40-34"></a>                var kindName = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorKindSpelling</span>(kind));</span>
-<span id="cb40-35"><a href="#cb40-35"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st">&quot;</span>, <span class="st">&quot; &quot;</span>.<span class="fu">repeat</span>(level[<span class="dv">0</span>]), kindName, name);</span>
-<span id="cb40-36"><a href="#cb40-36"></a>                var type = <span class="fu">clang_getCursorType</span>(cursor);</span>
-<span id="cb40-37"><a href="#cb40-37"></a>                <span class="kw">if</span> (CXType.<span class="fu">kind</span>$<span class="fu">get</span>(type) != <span class="fu">CXType_Invalid</span>()) {</span>
-<span id="cb40-38"><a href="#cb40-38"></a>                    var typeName = <span class="fu">asJavaString</span>(<span class="fu">clang_getTypeSpelling</span>(type));</span>
-<span id="cb40-39"><a href="#cb40-39"></a>                    <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; &lt;</span><span class="sc">%s</span><span class="st">&gt;&quot;</span>, typeName);</span>
-<span id="cb40-40"><a href="#cb40-40"></a>                }</span>
-<span id="cb40-41"><a href="#cb40-41"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
-<span id="cb40-42"><a href="#cb40-42"></a></span>
-<span id="cb40-43"><a href="#cb40-43"></a>                <span class="co">// visit children</span></span>
-<span id="cb40-44"><a href="#cb40-44"></a>                level[<span class="dv">0</span>]++;</span>
-<span id="cb40-45"><a href="#cb40-45"></a>                <span class="fu">clang_visitChildren</span>(cursor, visitor[<span class="dv">0</span>], NULL);</span>
-<span id="cb40-46"><a href="#cb40-46"></a>                level[<span class="dv">0</span>]--;</span>
-<span id="cb40-47"><a href="#cb40-47"></a></span>
-<span id="cb40-48"><a href="#cb40-48"></a>                <span class="kw">return</span> <span class="fu">CXChildVisit_Continue</span>();</span>
-<span id="cb40-49"><a href="#cb40-49"></a>            });</span>
-<span id="cb40-50"><a href="#cb40-50"></a></span>
-<span id="cb40-51"><a href="#cb40-51"></a>            <span class="co">// get the AST root and visit it</span></span>
-<span id="cb40-52"><a href="#cb40-52"></a>            var root = <span class="fu">clang_getTranslationUnitCursor</span>(tu);</span>
-<span id="cb40-53"><a href="#cb40-53"></a>            <span class="fu">clang_visitChildren</span>(root, visitor[<span class="dv">0</span>], NULL);</span>
-<span id="cb40-54"><a href="#cb40-54"></a>        }</span>
-<span id="cb40-55"><a href="#cb40-55"></a></span>
-<span id="cb40-56"><a href="#cb40-56"></a>        <span class="fu">clang_disposeTranslationUnit</span>(tu);</span>
-<span id="cb40-57"><a href="#cb40-57"></a>        <span class="fu">clang_disposeIndex</span>(index);</span>
-<span id="cb40-58"><a href="#cb40-58"></a>    }</span>
-<span id="cb40-59"><a href="#cb40-59"></a>}</span></code></pre></div>
+<span id="cb40-20"><a href="#cb40-20"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb40-21"><a href="#cb40-21"></a>            <span class="co">// parse the C header/source passed from the command line</span></span>
+<span id="cb40-22"><a href="#cb40-22"></a>            var index = <span class="fu">clang_createIndex</span>(<span class="dv">0</span>, <span class="dv">0</span>);</span>
+<span id="cb40-23"><a href="#cb40-23"></a>            var tu = <span class="fu">clang_parseTranslationUnit</span>(index, <span class="fu">toCString</span>(args[<span class="dv">0</span>], scope),</span>
+<span id="cb40-24"><a href="#cb40-24"></a>                    NULL, <span class="dv">0</span>, NULL, <span class="dv">0</span>, <span class="fu">CXTranslationUnit_None</span>());</span>
+<span id="cb40-25"><a href="#cb40-25"></a>            <span class="co">// array trick to update within lambda</span></span>
+<span id="cb40-26"><a href="#cb40-26"></a>            var level = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</span>
+<span id="cb40-27"><a href="#cb40-27"></a>            var visitor = <span class="kw">new</span> MemorySegment[<span class="dv">1</span>];</span>
+<span id="cb40-28"><a href="#cb40-28"></a></span>
+<span id="cb40-29"><a href="#cb40-29"></a>            <span class="co">// clang Cursor visitor callback</span></span>
+<span id="cb40-30"><a href="#cb40-30"></a>            visitor[<span class="dv">0</span>] = clang_visitChildren$visitor.<span class="fu">allocate</span>((cursor, parent, data) -&gt; {</span>
+<span id="cb40-31"><a href="#cb40-31"></a>                var kind = <span class="fu">clang_getCursorKind</span>(cursor);</span>
+<span id="cb40-32"><a href="#cb40-32"></a>                var name = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorSpelling</span>(cursor));</span>
+<span id="cb40-33"><a href="#cb40-33"></a>                var kindName = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorKindSpelling</span>(kind));</span>
+<span id="cb40-34"><a href="#cb40-34"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st">&quot;</span>, <span class="st">&quot; &quot;</span>.<span class="fu">repeat</span>(level[<span class="dv">0</span>]), kindName, name);</span>
+<span id="cb40-35"><a href="#cb40-35"></a>                var type = <span class="fu">clang_getCursorType</span>(cursor);</span>
+<span id="cb40-36"><a href="#cb40-36"></a>                <span class="kw">if</span> (CXType.<span class="fu">kind</span>$<span class="fu">get</span>(type) != <span class="fu">CXType_Invalid</span>()) {</span>
+<span id="cb40-37"><a href="#cb40-37"></a>                    var typeName = <span class="fu">asJavaString</span>(<span class="fu">clang_getTypeSpelling</span>(type));</span>
+<span id="cb40-38"><a href="#cb40-38"></a>                    <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; &lt;</span><span class="sc">%s</span><span class="st">&gt;&quot;</span>, typeName);</span>
+<span id="cb40-39"><a href="#cb40-39"></a>                }</span>
+<span id="cb40-40"><a href="#cb40-40"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
+<span id="cb40-41"><a href="#cb40-41"></a></span>
+<span id="cb40-42"><a href="#cb40-42"></a>                <span class="co">// visit children</span></span>
+<span id="cb40-43"><a href="#cb40-43"></a>                level[<span class="dv">0</span>]++;</span>
+<span id="cb40-44"><a href="#cb40-44"></a>                <span class="fu">clang_visitChildren</span>(cursor, visitor[<span class="dv">0</span>], NULL);</span>
+<span id="cb40-45"><a href="#cb40-45"></a>                level[<span class="dv">0</span>]--;</span>
+<span id="cb40-46"><a href="#cb40-46"></a></span>
+<span id="cb40-47"><a href="#cb40-47"></a>                <span class="kw">return</span> <span class="fu">CXChildVisit_Continue</span>();</span>
+<span id="cb40-48"><a href="#cb40-48"></a>            });</span>
+<span id="cb40-49"><a href="#cb40-49"></a></span>
+<span id="cb40-50"><a href="#cb40-50"></a>            <span class="co">// get the AST root and visit it</span></span>
+<span id="cb40-51"><a href="#cb40-51"></a>            var root = <span class="fu">clang_getTranslationUnitCursor</span>(tu);</span>
+<span id="cb40-52"><a href="#cb40-52"></a>            <span class="fu">clang_visitChildren</span>(root, visitor[<span class="dv">0</span>], NULL);</span>
+<span id="cb40-53"><a href="#cb40-53"></a></span>
+<span id="cb40-54"><a href="#cb40-54"></a>            <span class="fu">clang_disposeTranslationUnit</span>(tu);</span>
+<span id="cb40-55"><a href="#cb40-55"></a>            <span class="fu">clang_disposeIndex</span>(index);</span>
+<span id="cb40-56"><a href="#cb40-56"></a>        }</span>
+<span id="cb40-57"><a href="#cb40-57"></a>    }</span>
+<span id="cb40-58"><a href="#cb40-58"></a>}</span></code></pre></div>
 <h3 id="compiling-and-running-the-libclang-sample">Compiling and running the libclang sample</h3>
 <div class="sourceCode" id="cb41"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1"></a></span>
 <span id="cb41-2"><a href="#cb41-2"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
