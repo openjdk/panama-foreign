@@ -234,7 +234,6 @@ class SourceConstantHelper implements ConstantHelper {
         // emit private constructor to prevent construction objects
         incrAlign();
         indent();
-        append("private ");
         append(constantClassName);
         append("() {}\n");
         decrAlign();
