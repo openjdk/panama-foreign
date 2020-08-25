@@ -46,8 +46,12 @@ public class ScopedMemoryAccess {
 
     private static final ScopedMemoryAccess theScopedMemoryAccess = new ScopedMemoryAccess();
 
-    interface Scope {
-        void check();
+    public static ScopedMemoryAccess getScopedMemoryAccess() {
+        return theScopedMemoryAccess;
+    }
+
+    public interface Scope {
+        void checkValidState();
     }
 
     @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})

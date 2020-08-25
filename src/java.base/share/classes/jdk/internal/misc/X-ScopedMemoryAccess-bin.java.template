@@ -2,7 +2,7 @@
     static $type$ get$Type$(Scope scope, Object base, long offset) {
         try {
             if (scope != null) {
-                scope.check();
+                scope.checkValidState();
             }
             return UNSAFE.get$Type$(base, offset);
         } finally {
@@ -11,13 +11,393 @@
     }
 
     @ForceInline @Scoped
-    static void set$Type$(Scope scope, Object base, long offset, $type$ value) {
+    static void put$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             if (scope != null) {
-                scope.check();
+                scope.checkValidState();
             }
             UNSAFE.put$Type$(base, offset, value);
         } finally {
             Reference.reachabilityFence(scope);
         }
     }
+
+#if[Unaligned]
+    @ForceInline @Scoped
+    static $type$ get$Type$Unaligned(Scope scope, Object base, long offset, boolean be) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.get$Type$Unaligned(base, offset, be);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static void pet$Type$Unaligned(Scope scope, Object base, long offset, $type$ value, boolean be) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            UNSAFE.put$Type$Unaligned(base, offset, value, be);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+#end[Unaligned]
+
+    @ForceInline @Scoped
+    static $type$ get$Type$Volatile(Scope scope, Object base, long offset) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.get$Type$Volatile(base, offset);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static void put$Type$Volatile(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            UNSAFE.put$Type$Volatile(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ get$Type$Acquire(Scope scope, Object base, long offset) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.get$Type$Acquire(base, offset);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static void put$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            UNSAFE.put$Type$Release(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ get$Type$Opaque(Scope scope, Object base, long offset) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.get$Type$Opaque(base, offset);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static void put$Type$Opaque(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            UNSAFE.put$Type$Opaque(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+#if[CAS]
+    @ForceInline @Scoped
+    static boolean compareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.compareAndSet$Type$(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ compareAndExchange$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.compareAndExchange$Type$(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ compareAndExchange$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.compareAndExchange$Type$Acquire(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ compareAndExchange$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.compareAndExchange$Type$Release(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static boolean weakCompareAndSet$Type$Plain(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.weakCompareAndSet$Type$Plain(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static boolean weakCompareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.weakCompareAndSet$Type$(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static boolean weakCompareAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.weakCompareAndSet$Type$Acquire(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static boolean weakCompareAndSet$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.weakCompareAndSet$Type$Release(base, offset, expected, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndSet$Type$(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$Acquire(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndSet$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$Release(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+#end[CAS]
+
+#if[AtomicAdd]
+    @ForceInline @Scoped
+    static $type$ getAndAdd$Type$(Scope scope, Object base, long offset, $type$ delta) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$(base, offset, delta);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndAdd$Type$Acquire(Scope scope, Object base, long offset, $type$ delta) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$Acquire(base, offset, delta);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndAdd$Type$Release(Scope scope, Object base, long offset, $type$ delta) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndSet$Type$Release(base, offset, delta);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+#end[AtomicAdd]
+
+#if[Bitwise]
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseOr$Type$(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseOr$Type$(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseOr$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseOr$Type$Acquire(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseOr$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseOr$Type$Release(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+    
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseAnd$Type$(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseAnd$Type$(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseAnd$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseAnd$Type$Acquire(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseAnd$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseAnd$Type$Release(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseXor$Type$(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseXor$Type$(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseXor$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseXor$Type$Acquire(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+
+    @ForceInline @Scoped
+    static $type$ getAndBitwiseXor$Type$Release(Scope scope, Object base, long offset, $type$ value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            return UNSAFE.getAndBitwiseXor$Type$Release(base, offset, value);
+        } finally {
+            Reference.reachabilityFence(scope);
+        }
+    }
+#end[Bitwise]

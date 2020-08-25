@@ -26,6 +26,8 @@
 
 package jdk.internal.access.foreign;
 
+import jdk.internal.misc.ScopedMemoryAccess;
+
 /**
  * This proxy interface is required to allow instances of the {@code MemorySegment} interface (which is defined inside
  * an incubating module) to be accessed from the memory access var handles.
@@ -42,7 +44,7 @@ public interface MemorySegmentProxy {
     long unsafeGetOffset();
     Object unsafeGetBase();
     boolean isSmall();
-    Object scope();
+    ScopedMemoryAccess.Scope scope();
 
     /* Helper functions for offset computations. These are required so that we can avoid issuing long opcodes
      * (e.g. LMUL, LADD) when we're operating on 'small' segments (segments whose length can be expressed with an int).

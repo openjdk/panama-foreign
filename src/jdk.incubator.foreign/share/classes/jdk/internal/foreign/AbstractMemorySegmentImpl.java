@@ -383,7 +383,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public Object scope() {
+    public MemoryScope scope() {
         return scope;
     }
 

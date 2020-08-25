@@ -26,6 +26,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -56,7 +57,7 @@ import java.util.concurrent.locks.StampedLock;
  * the single thread performing the checked access or there is an external synchronization
  * in place that prevents concurrent access and closing of the scope.
  */
-abstract class MemoryScope {
+abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
     private MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
@@ -176,7 +177,7 @@ abstract class MemoryScope {
      *                               method is executed outside owning thread
      *                               in checked scope
      */
-    abstract void checkValidState();
+    public abstract void checkValidState();
 
     /**
      * Checks that this scope is still alive.
@@ -200,7 +201,7 @@ abstract class MemoryScope {
         }
 
         @ForceInline
-        final void checkValidState() {
+        public final void checkValidState() {
             if (owner != Thread.currentThread()) {
                 throw new IllegalStateException("Attempted access outside owning thread");
             }
@@ -277,7 +278,7 @@ abstract class MemoryScope {
         }
 
         @Override
-        void checkValidState() {
+        public void checkValidState() {
             MemoryScope.checkAliveConfined(this);
         }
 
