@@ -154,6 +154,18 @@
 <li><a href="#java-program-that-uses-opengl">Java program that uses OpenGL</a></li>
 <li><a href="#compiling-and-running-the-opengl-sample">Compiling and running the OpenGL sample</a></li>
 </ul></li>
+<li><a href="#using-time.h-mac-os">Using time.h (Mac OS)</a>
+<ul>
+<li><a href="#jextract-sqlite3.h-1">jextract sqlite3.h</a></li>
+<li><a href="#java-program-that-uses-posix-time-library">Java program that uses POSIX time library</a></li>
+<li><a href="#compiling-and-running-the-opengl-sample-1">Compiling and running the OpenGL sample</a></li>
+</ul></li>
+<li><a href="#using-libclang-library-mac-os">Using libclang library (Mac OS)</a>
+<ul>
+<li><a href="#jextract-index.h">jextract Index.h</a></li>
+<li><a href="#java-program-that-uses-libclang-to-print-ast-of-a-given-c-program">Java program that uses libclang to print AST of a given C program</a></li>
+<li><a href="#compiling-and-running-the-libclang-sample">Compiling and running the libclang sample</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -721,5 +733,105 @@
 <div class="sourceCode" id="cb35"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1"></a></span>
 <span id="cb35-2"><a href="#cb35-2"></a><span class="ex">java</span> -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
 <span id="cb35-3"><a href="#cb35-3"></a>    -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java <span class="va">$*</span></span></code></pre></div>
+<h2 id="using-time.h-mac-os">Using time.h (Mac OS)</h2>
+<h3 id="jextract-sqlite3.h-1">jextract sqlite3.h</h3>
+<div class="sourceCode" id="cb36"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1"></a></span>
+<span id="cb36-2"><a href="#cb36-2"></a><span class="ex">jextract</span> -t org.unix \</span>
+<span id="cb36-3"><a href="#cb36-3"></a>  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \</span>
+<span id="cb36-4"><a href="#cb36-4"></a>   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/time.h</span></code></pre></div>
+<h3 id="java-program-that-uses-posix-time-library">Java program that uses POSIX time library</h3>
+<div class="sourceCode" id="cb37"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb37-1"><a href="#cb37-1"></a></span>
+<span id="cb37-2"><a href="#cb37-2"></a><span class="kw">import static</span><span class="im"> org.unix.time_h.*;</span></span>
+<span id="cb37-3"><a href="#cb37-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb37-4"><a href="#cb37-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.*;</span></span>
+<span id="cb37-5"><a href="#cb37-5"></a></span>
+<span id="cb37-6"><a href="#cb37-6"></a><span class="kw">public</span> <span class="kw">class</span> PanamaTime {</span>
+<span id="cb37-7"><a href="#cb37-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb37-8"><a href="#cb37-8"></a>        <span class="kw">try</span> (NativeScope scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb37-9"><a href="#cb37-9"></a>            var now = scope.<span class="fu">allocate</span>(C_LONG, <span class="bu">System</span>.<span class="fu">currentTimeMillis</span>() / <span class="dv">1000</span>);</span>
+<span id="cb37-10"><a href="#cb37-10"></a>            MemorySegment time = tm.<span class="fu">allocate</span>(scope);</span>
+<span id="cb37-11"><a href="#cb37-11"></a>            <span class="fu">localtime_r</span>(now, time);</span>
+<span id="cb37-12"><a href="#cb37-12"></a>            <span class="bu">System</span>.<span class="fu">err.printf</span>(<span class="st">&quot;Time = </span><span class="sc">%d</span><span class="st">:</span><span class="sc">%d\n</span><span class="st">&quot;</span>, tm.<span class="fu">tm_hour</span>$<span class="fu">get</span>(time), tm.<span class="fu">tm_min</span>$<span class="fu">get</span>(time));</span>
+<span id="cb37-13"><a href="#cb37-13"></a>        }</span>
+<span id="cb37-14"><a href="#cb37-14"></a>    }</span>
+<span id="cb37-15"><a href="#cb37-15"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-opengl-sample-1">Compiling and running the OpenGL sample</h3>
+<div class="sourceCode" id="cb38"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1"></a></span>
+<span id="cb38-2"><a href="#cb38-2"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign PanamaTime.java</span></code></pre></div>
+<h2 id="using-libclang-library-mac-os">Using libclang library (Mac OS)</h2>
+<h3 id="jextract-index.h">jextract Index.h</h3>
+<div class="sourceCode" id="cb39"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1"></a></span>
+<span id="cb39-2"><a href="#cb39-2"></a><span class="co"># LIBCLANG_HOME is the directory where you&#39;ve installed llvm 9.x or above</span></span>
+<span id="cb39-3"><a href="#cb39-3"></a></span>
+<span id="cb39-4"><a href="#cb39-4"></a><span class="ex">jextract</span> --source -t org.llvm.clang -lclang \</span>
+<span id="cb39-5"><a href="#cb39-5"></a>  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \</span>
+<span id="cb39-6"><a href="#cb39-6"></a>  -I <span class="va">${LIBCLANG_HOME}</span>/include/ \</span>
+<span id="cb39-7"><a href="#cb39-7"></a>  -I <span class="va">${LIBCLANG_HOME}</span>/include/clang-c \</span>
+<span id="cb39-8"><a href="#cb39-8"></a>  <span class="va">${LIBCLANG_HOME}</span>/include/clang-c/Index.h</span>
+<span id="cb39-9"><a href="#cb39-9"></a><span class="ex">javac</span> --add-modules jdk.incubator.foreign org/llvm/clang/*.java</span></code></pre></div>
+<h3 id="java-program-that-uses-libclang-to-print-ast-of-a-given-c-program">Java program that uses libclang to print AST of a given C program</h3>
+<div class="sourceCode" id="cb40"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb40-1"><a href="#cb40-1"></a></span>
+<span id="cb40-2"><a href="#cb40-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.*;</span></span>
+<span id="cb40-3"><a href="#cb40-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb40-4"><a href="#cb40-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
+<span id="cb40-5"><a href="#cb40-5"></a><span class="kw">import static</span><span class="im"> org.llvm.clang.Index_h.*;</span></span>
+<span id="cb40-6"><a href="#cb40-6"></a></span>
+<span id="cb40-7"><a href="#cb40-7"></a><span class="kw">public</span> <span class="kw">class</span> ASTPrinter {</span>
+<span id="cb40-8"><a href="#cb40-8"></a>    <span class="kw">private</span> <span class="dt">static</span> <span class="bu">String</span> <span class="fu">asJavaString</span>(MemorySegment clangStr) {</span>
+<span id="cb40-9"><a href="#cb40-9"></a>        <span class="bu">String</span> str = <span class="fu">toJavaStringRestricted</span>(<span class="fu">clang_getCString</span>(clangStr));</span>
+<span id="cb40-10"><a href="#cb40-10"></a>        <span class="fu">clang_disposeString</span>(clangStr);</span>
+<span id="cb40-11"><a href="#cb40-11"></a>        <span class="kw">return</span> str;</span>
+<span id="cb40-12"><a href="#cb40-12"></a>    }</span>
+<span id="cb40-13"><a href="#cb40-13"></a></span>
+<span id="cb40-14"><a href="#cb40-14"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
+<span id="cb40-15"><a href="#cb40-15"></a>        <span class="kw">if</span> (args.<span class="fu">length</span> == <span class="dv">0</span>) {</span>
+<span id="cb40-16"><a href="#cb40-16"></a>            <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;java ASTPrinter &lt;C source or header&gt;&quot;</span>);</span>
+<span id="cb40-17"><a href="#cb40-17"></a>            <span class="bu">System</span>.<span class="fu">exit</span>(<span class="dv">1</span>);</span>
+<span id="cb40-18"><a href="#cb40-18"></a>        }</span>
+<span id="cb40-19"><a href="#cb40-19"></a></span>
+<span id="cb40-20"><a href="#cb40-20"></a>        <span class="co">// parse the C header/source passed from the command line</span></span>
+<span id="cb40-21"><a href="#cb40-21"></a>        var index = <span class="fu">clang_createIndex</span>(<span class="dv">0</span>, <span class="dv">0</span>);</span>
+<span id="cb40-22"><a href="#cb40-22"></a>        var tu = <span class="fu">clang_parseTranslationUnit</span>(index, <span class="fu">toCString</span>(args[<span class="dv">0</span>]),</span>
+<span id="cb40-23"><a href="#cb40-23"></a>            NULL, <span class="dv">0</span>, NULL, <span class="dv">0</span>, <span class="fu">CXTranslationUnit_None</span>());</span>
+<span id="cb40-24"><a href="#cb40-24"></a></span>
+<span id="cb40-25"><a href="#cb40-25"></a>        <span class="kw">try</span> (var scope = NativeScope.<span class="fu">unboundedScope</span>()) {</span>
+<span id="cb40-26"><a href="#cb40-26"></a>            <span class="co">// array trick to update within lambda</span></span>
+<span id="cb40-27"><a href="#cb40-27"></a>            var level = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</span>
+<span id="cb40-28"><a href="#cb40-28"></a>            var visitor = <span class="kw">new</span> MemorySegment[<span class="dv">1</span>];</span>
+<span id="cb40-29"><a href="#cb40-29"></a></span>
+<span id="cb40-30"><a href="#cb40-30"></a>            <span class="co">// clang Cursor visitor callback</span></span>
+<span id="cb40-31"><a href="#cb40-31"></a>            visitor[<span class="dv">0</span>] = clang_visitChildren$visitor.<span class="fu">allocate</span>((cursor, parent, data) -&gt; {</span>
+<span id="cb40-32"><a href="#cb40-32"></a>                var kind = <span class="fu">clang_getCursorKind</span>(cursor);</span>
+<span id="cb40-33"><a href="#cb40-33"></a>                var name = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorSpelling</span>(cursor));</span>
+<span id="cb40-34"><a href="#cb40-34"></a>                var kindName = <span class="fu">asJavaString</span>(<span class="fu">clang_getCursorKindSpelling</span>(kind));</span>
+<span id="cb40-35"><a href="#cb40-35"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st"> </span><span class="sc">%s</span><span class="st">&quot;</span>, <span class="st">&quot; &quot;</span>.<span class="fu">repeat</span>(level[<span class="dv">0</span>]), kindName, name);</span>
+<span id="cb40-36"><a href="#cb40-36"></a>                var type = <span class="fu">clang_getCursorType</span>(cursor);</span>
+<span id="cb40-37"><a href="#cb40-37"></a>                <span class="kw">if</span> (CXType.<span class="fu">kind</span>$<span class="fu">get</span>(type) != <span class="fu">CXType_Invalid</span>()) {</span>
+<span id="cb40-38"><a href="#cb40-38"></a>                    var typeName = <span class="fu">asJavaString</span>(<span class="fu">clang_getTypeSpelling</span>(type));</span>
+<span id="cb40-39"><a href="#cb40-39"></a>                    <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; &lt;</span><span class="sc">%s</span><span class="st">&gt;&quot;</span>, typeName);</span>
+<span id="cb40-40"><a href="#cb40-40"></a>                }</span>
+<span id="cb40-41"><a href="#cb40-41"></a>                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</span>
+<span id="cb40-42"><a href="#cb40-42"></a></span>
+<span id="cb40-43"><a href="#cb40-43"></a>                <span class="co">// visit children</span></span>
+<span id="cb40-44"><a href="#cb40-44"></a>                level[<span class="dv">0</span>]++;</span>
+<span id="cb40-45"><a href="#cb40-45"></a>                <span class="fu">clang_visitChildren</span>(cursor, visitor[<span class="dv">0</span>], NULL);</span>
+<span id="cb40-46"><a href="#cb40-46"></a>                level[<span class="dv">0</span>]--;</span>
+<span id="cb40-47"><a href="#cb40-47"></a></span>
+<span id="cb40-48"><a href="#cb40-48"></a>                <span class="kw">return</span> <span class="fu">CXChildVisit_Continue</span>();</span>
+<span id="cb40-49"><a href="#cb40-49"></a>            });</span>
+<span id="cb40-50"><a href="#cb40-50"></a></span>
+<span id="cb40-51"><a href="#cb40-51"></a>            <span class="co">// get the AST root and visit it</span></span>
+<span id="cb40-52"><a href="#cb40-52"></a>            var root = <span class="fu">clang_getTranslationUnitCursor</span>(tu);</span>
+<span id="cb40-53"><a href="#cb40-53"></a>            <span class="fu">clang_visitChildren</span>(root, visitor[<span class="dv">0</span>], NULL);</span>
+<span id="cb40-54"><a href="#cb40-54"></a>        }</span>
+<span id="cb40-55"><a href="#cb40-55"></a></span>
+<span id="cb40-56"><a href="#cb40-56"></a>        <span class="fu">clang_disposeTranslationUnit</span>(tu);</span>
+<span id="cb40-57"><a href="#cb40-57"></a>        <span class="fu">clang_disposeIndex</span>(index);</span>
+<span id="cb40-58"><a href="#cb40-58"></a>    }</span>
+<span id="cb40-59"><a href="#cb40-59"></a>}</span></code></pre></div>
+<h3 id="compiling-and-running-the-libclang-sample">Compiling and running the libclang sample</h3>
+<div class="sourceCode" id="cb41"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1"></a></span>
+<span id="cb41-2"><a href="#cb41-2"></a><span class="ex">java</span> -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \</span>
+<span id="cb41-3"><a href="#cb41-3"></a>    ASTPrinter.java <span class="va">$*</span></span></code></pre></div>
 </body>
 </html>

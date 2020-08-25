@@ -754,3 +754,137 @@ java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubato
     -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java $*
 
 ```
+
+## Using time.h (Mac OS)
+
+### jextract sqlite3.h
+
+
+```sh
+
+jextract -t org.unix \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
+   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/time.h
+
+```
+
+### Java program that uses POSIX time library
+
+```java
+
+import static org.unix.time_h.*;
+import static jdk.incubator.foreign.CSupport.*;
+import jdk.incubator.foreign.*;
+
+public class PanamaTime {
+    public static void main(String[] args) {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            var now = scope.allocate(C_LONG, System.currentTimeMillis() / 1000);
+            MemorySegment time = tm.allocate(scope);
+            localtime_r(now, time);
+            System.err.printf("Time = %d:%d\n", tm.tm_hour$get(time), tm.tm_min$get(time));
+        }
+    }
+}
+
+```
+
+### Compiling and running the OpenGL sample
+
+
+```sh
+
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign PanamaTime.java
+
+```
+
+## Using libclang library (Mac OS)
+
+### jextract Index.h
+
+```sh
+
+# LIBCLANG_HOME is the directory where you've installed llvm 9.x or above
+
+jextract --source -t org.llvm.clang -lclang \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
+  -I ${LIBCLANG_HOME}/include/ \
+  -I ${LIBCLANG_HOME}/include/clang-c \
+  ${LIBCLANG_HOME}/include/clang-c/Index.h
+javac --add-modules jdk.incubator.foreign org/llvm/clang/*.java
+
+```
+
+### Java program that uses libclang to print AST of a given C program
+
+```java
+
+import jdk.incubator.foreign.*;
+import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.MemoryAddress.NULL;
+import static org.llvm.clang.Index_h.*;
+
+public class ASTPrinter {
+    private static String asJavaString(MemorySegment clangStr) {
+        String str = toJavaStringRestricted(clang_getCString(clangStr));
+        clang_disposeString(clangStr);
+        return str;
+    }
+
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.err.println("java ASTPrinter <C source or header>");
+            System.exit(1);
+        }
+
+        // parse the C header/source passed from the command line
+        var index = clang_createIndex(0, 0);
+        var tu = clang_parseTranslationUnit(index, toCString(args[0]),
+            NULL, 0, NULL, 0, CXTranslationUnit_None());
+
+        try (var scope = NativeScope.unboundedScope()) {
+            // array trick to update within lambda
+            var level = new int[1];
+            var visitor = new MemorySegment[1];
+
+            // clang Cursor visitor callback
+            visitor[0] = clang_visitChildren$visitor.allocate((cursor, parent, data) -> {
+                var kind = clang_getCursorKind(cursor);
+                var name = asJavaString(clang_getCursorSpelling(cursor));
+                var kindName = asJavaString(clang_getCursorKindSpelling(kind));
+                System.out.printf("%s %s %s", " ".repeat(level[0]), kindName, name);
+                var type = clang_getCursorType(cursor);
+                if (CXType.kind$get(type) != CXType_Invalid()) {
+                    var typeName = asJavaString(clang_getTypeSpelling(type));
+                    System.out.printf(" <%s>", typeName);
+                }
+                System.out.println();
+
+                // visit children
+                level[0]++;
+                clang_visitChildren(cursor, visitor[0], NULL);
+                level[0]--;
+
+                return CXChildVisit_Continue();
+            });
+
+            // get the AST root and visit it
+            var root = clang_getTranslationUnitCursor(tu);
+            clang_visitChildren(root, visitor[0], NULL);
+        }
+
+        clang_disposeTranslationUnit(tu);
+        clang_disposeIndex(index);
+    }
+}
+
+```
+
+### Compiling and running the libclang sample
+
+```sh
+
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+    ASTPrinter.java $*
+
+```
