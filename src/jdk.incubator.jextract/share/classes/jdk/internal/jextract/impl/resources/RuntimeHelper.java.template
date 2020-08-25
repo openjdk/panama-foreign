@@ -22,6 +22,8 @@ import static ${C_LANG}.*;
 
 public class RuntimeHelper {
 
+    private RuntimeHelper() {}
+
     private final static ForeignLinker ABI = CSupport.getSystemLinker();
 
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();

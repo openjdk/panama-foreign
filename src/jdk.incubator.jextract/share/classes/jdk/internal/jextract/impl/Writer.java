@@ -49,8 +49,9 @@ public final class Writer {
         if (sources.isEmpty()) {
             return List.of();
         } else {
-            return InMemoryJavaCompiler.compile(sources, 
+            return InMemoryJavaCompiler.compile(sources,
                 "--add-modules", "jdk.incubator.foreign",
+                "-parameters", "-g:lines",
                 "-d", dest.toAbsolutePath().toString(),
                 "-cp", dest.toAbsolutePath().toString());
         }

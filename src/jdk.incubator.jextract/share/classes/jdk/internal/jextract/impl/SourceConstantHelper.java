@@ -230,6 +230,16 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     // Internals only below this point
+    private void emitConstructor() {
+        // emit private constructor to prevent construction objects
+        incrAlign();
+        indent();
+        append("private ");
+        append(constantClassName);
+        append("() {}\n");
+        decrAlign();
+    }
+
     private void classBegin(String[] libraryNames, String baseClassName, boolean leafClass) {
         addPackagePrefix(pkgName);
         addImportSection();
@@ -244,6 +254,7 @@ class SourceConstantHelper implements ConstantHelper {
             append(baseClassName);
         }
         append(" {\n");
+        emitConstructor();
         if (libraryNames != null) {
             emitLibraries(libraryNames);
         }
