@@ -757,7 +757,7 @@ java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubato
 
 ## Using time.h (Mac OS)
 
-### jextract sqlite3.h
+### jextract time.h
 
 
 ```sh
@@ -789,7 +789,7 @@ public class PanamaTime {
 
 ```
 
-### Compiling and running the OpenGL sample
+### Compiling and running the time sample
 
 
 ```sh
