@@ -47,7 +47,7 @@ public class TestHandshake {
             segment = MemorySegment.allocateNative(1_000_000).share();
             System.err.println("ITERATION " + it);
             List<Thread> accessors = new ArrayList<>();
-            for (int i = 0; i < 1 ; i++) { //ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
+            for (int i = 0; i < ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
                 Thread access = new Thread(memoryAccess);
                 access.start();
                 accessors.add(access);
