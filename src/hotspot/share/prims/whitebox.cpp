@@ -2282,6 +2282,17 @@ WB_ENTRY(void, WB_CheckThreadObjOfTerminatingThread(JNIEnv* env, jobject wb, job
   }
 WB_END
 
+WB_ENTRY(void, WB_VerifyFrames(JNIEnv* env, jobject wb))
+  ttyLocker lock;
+  tty->print_cr("[WhiteBox::VerifyFrames] Walking Frames");
+  for (StackFrameStream fst(JavaThread::current(), true); !fst.is_done(); fst.next()) {
+    frame* current_frame = fst.current();
+    current_frame->print_value();
+    current_frame->verify(fst.register_map());
+  }
+  tty->print_cr("[WhiteBox::VerifyFrames] Done");
+WB_END
+
 #define CC (char*)
 
 static JNINativeMethod methods[] = {
@@ -2509,6 +2520,7 @@ static JNINativeMethod methods[] = {
   {CC"clearInlineCaches0",  CC"(Z)V",                 (void*)&WB_ClearInlineCaches },
   {CC"handshakeWalkStack", CC"(Ljava/lang/Thread;Z)I", (void*)&WB_HandshakeWalkStack },
   {CC"checkThreadObjOfTerminatingThread", CC"(Ljava/lang/Thread;)V", (void*)&WB_CheckThreadObjOfTerminatingThread },
+  {CC"verifyFrames",                CC"()V",            (void*)&WB_VerifyFrames },
   {CC"addCompilerDirective",    CC"(Ljava/lang/String;)I",
                                                       (void*)&WB_AddCompilerDirective },
   {CC"removeCompilerDirective",   CC"(I)V",           (void*)&WB_RemoveCompilerDirective },
