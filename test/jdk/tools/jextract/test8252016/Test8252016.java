@@ -33,7 +33,7 @@ import static jdk.incubator.foreign.CSupport.*;
  * @test
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextract -t test.jextract.vsprintf -- vsprintf.h
+ * @run driver JtregJextract -t test.jextract.vsprintf -l VSPrintf -- vsprintf.h
  * @run testng/othervm -Dforeign.restricted=permit Test8252016
  */
 public class Test8252016 {
@@ -46,7 +46,7 @@ public class Test8252016 {
                 b.vargFromLong(C_LONGLONG, -200L);
                 b.vargFromLong(C_LONGLONG, Long.MAX_VALUE);
             })) {
-                vsprintf(s, toCString("%hhd %.2f %lld %lld"), vaList);
+                my_vsprintf(s, toCString("%hhd %.2f %lld %lld"), vaList);
                 String str = toJavaString(s);
                 assertEquals(str, "12 5.50 -200 " + Long.MAX_VALUE);
             }

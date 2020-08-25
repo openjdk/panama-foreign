@@ -239,7 +239,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static boolean isLongDouble(MemoryLayout layout) {
-        return CSupport.C_LONGDOUBLE.equals(layout);
+        return CSupport.C_LONGDOUBLE.bitSize() == 128
+            && CSupport.C_LONGDOUBLE.equals(layout);
     }
 
     private static boolean usesLongDouble(FunctionDescriptor desc) {
