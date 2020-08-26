@@ -1128,14 +1128,22 @@ public:
     if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
       UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
       CompiledMethod* cm = last_frame.cb()->as_compiled_method();
-      last_frame.oops_do(&cl, NULL, &register_map);
 
-      if (cl.found()) {
-        // Found the deopt oop in a compiled method; deoptimize.
-        Deoptimization::deoptimize(jt, last_frame);
-      }
+      //FIXME: this doesn't work if reachability fences are violated by C2
+      // last_frame.oops_do(&cl, NULL, &register_map);
+
+      // if (cl.found()) {
+      //   // Found the deopt oop in a compiled method; deoptimize.
+      //   Deoptimization::deoptimize(jt, last_frame);
+      // }
+
+      // so... we unconditionally deoptimize, for now
+      Deoptimization::deoptimize(jt, last_frame);
     }
-    const int max_critical_stack_depth = 5;
+    // FIXME: the following limit could be much lower, but we have to take into account
+    // when the thread is already throwing an exception, in which case the stack can be
+    // quite deep
+    const int max_critical_stack_depth = 15;
     int depth = 0;
     vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
