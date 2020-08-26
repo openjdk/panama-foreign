@@ -70,7 +70,10 @@
 
 
 #define UNSAFE_ENTRY(result_type, header) \
-  JVM_ENTRY(static result_type, header)
+   JVM_ENTRY(static result_type, header) \
+   if (JavaThread::thread_from_jni_environment(env)->has_async_exception()) { \
+     return (result_type)0; \
+   } else
 
 #define UNSAFE_LEAF(result_type, header) \
   JVM_LEAF(static result_type, header)
