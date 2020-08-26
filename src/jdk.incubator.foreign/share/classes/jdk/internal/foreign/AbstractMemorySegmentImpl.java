@@ -63,6 +63,7 @@ import java.util.function.IntFunction;
 public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+    private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
@@ -126,17 +127,17 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final MemorySegment fill(byte value){
-        checkAccessAndScope(0, length, false);
-        UNSAFE.setMemory(base(), min(), length, value);
+        checkAccess(0, length, false);
+        SCOPED_MEMORY_ACCESS.setMemory(scope, base(), min(), length, value);
         return this;
     }
 
     public void copyFrom(MemorySegment src) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
         long size = that.byteSize();
-        checkAccessAndScope(0, size, false);
-        that.checkAccessAndScope(0, size, true);
-        UNSAFE.copyMemory(
+        checkAccess(0, size, false);
+        that.checkAccess(0, size, true);
+        SCOPED_MEMORY_ACCESS.copyMemory(scope, that.scope,
                 that.base(), that.min(),
                 base(), min(), size);
     }
@@ -150,9 +151,10 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         final long thisSize = this.byteSize();
         final long thatSize = that.byteSize();
         final long length = Math.min(thisSize, thatSize);
-        this.checkAccessAndScope(0, length, true);
-        that.checkAccessAndScope(0, length, true);
+        this.checkAccess(0, length, true);
+        that.checkAccess(0, length, true);
         if (this == other) {
+            checkValidState();
             return -1;
         }
 
@@ -161,7 +163,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             if ((byte) BYTE_HANDLE.get(this, 0) != (byte) BYTE_HANDLE.get(that, 0)) {
                 return 0;
             }
-            i = ArraysSupport.vectorizedMismatchLargeForBytes(
+            i = vectorizedMismatchLargeForBytes(scope, that.scope,
                     this.base(), this.min(),
                     that.base(), that.min(),
                     length);
@@ -178,6 +180,38 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             }
         }
         return thisSize != thatSize ? length : -1;
+    }
+
+    /**
+     * Mismatch over long lengths.
+     */
+    private static long vectorizedMismatchLargeForBytes(MemoryScope aScope, MemoryScope bScope,
+                                                       Object a, long aOffset,
+                                                       Object b, long bOffset,
+                                                       long length) {
+        long off = 0;
+        long remaining = length;
+        int i, size;
+        boolean lastSubRange = false;
+        while (remaining > 7 && !lastSubRange) {
+            if (remaining > Integer.MAX_VALUE) {
+                size = Integer.MAX_VALUE;
+            } else {
+                size = (int) remaining;
+                lastSubRange = true;
+            }
+            i = SCOPED_MEMORY_ACCESS.vectorizedMismatch(aScope, bScope,
+                    a, aOffset + off,
+                    b, bOffset + off,
+                    size, ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);
+            if (i >= 0)
+                return off + i;
+
+            i = size - ~i;
+            off += i;
+            remaining -= i;
+        }
+        return ~remaining;
     }
 
     @Override
@@ -338,13 +372,12 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         checkBounds(offset, length);
     }
 
-    public void checkAccessAndScope(long offset, long length, boolean readOnly) {
+    private void checkAccessAndScope(long offset, long length, boolean readOnly) {
         checkValidState();
         checkAccess(offset, length, readOnly);
     }
 
-    @Override
-    public void checkValidState() {
+    private void checkValidState() {
         try {
             scope.checkValidState();
         } catch (ScopedMemoryAccess.Scope.ScopedAccessException ex) {

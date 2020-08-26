@@ -31,6 +31,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.ref.Reference;
 
+import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 
 public class ScopedMemoryAccess {
@@ -62,5 +63,121 @@ public class ScopedMemoryAccess {
     @Retention(RetentionPolicy.RUNTIME)
     @interface Scoped { }
 
+    // bulk ops
+
+    @ForceInline
+    public void copyMemory(Scope srcScope, Scope dstScope,
+                                   Object srcBase, long srcOffset,
+                                   Object destBase, long destOffset,
+                                   long bytes) {
+          try {
+              copyMemoryInternal(srcScope, dstScope, srcBase, srcOffset, destBase, destOffset, bytes);
+          } catch (Scope.ScopedAccessException ex) {
+              throw new IllegalStateException("This segment is already closed");
+          }
+    }
+
+    @ForceInline @Scoped
+    private void copyMemoryInternal(Scope srcScope, Scope dstScope,
+                               Object srcBase, long srcOffset,
+                               Object destBase, long destOffset,
+                               long bytes) {
+        try {
+            if (srcScope != null) {
+                srcScope.checkValidState();
+            }
+            if (dstScope != null) {
+                dstScope.checkValidState();
+            }
+            UNSAFE.copyMemory(srcBase, srcOffset, destBase, destOffset, bytes);
+        } finally {
+            Reference.reachabilityFence(srcScope);
+            Reference.reachabilityFence(dstScope);
+        }
+    }
+
+    @ForceInline
+    public void copySwapMemory(Scope srcScope, Scope dstScope,
+                                   Object srcBase, long srcOffset,
+                                   Object destBase, long destOffset,
+                                   long bytes, long elemSize) {
+          try {
+              copySwapMemoryInternal(srcScope, dstScope, srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
+          } catch (Scope.ScopedAccessException ex) {
+              throw new IllegalStateException("This segment is already closed");
+          }
+    }
+
+    @ForceInline @Scoped
+    private void copySwapMemoryInternal(Scope srcScope, Scope dstScope,
+                               Object srcBase, long srcOffset,
+                               Object destBase, long destOffset,
+                               long bytes, long elemSize) {
+        try {
+            if (srcScope != null) {
+                srcScope.checkValidState();
+            }
+            if (dstScope != null) {
+                dstScope.checkValidState();
+            }
+            UNSAFE.copySwapMemory(srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
+        } finally {
+            Reference.reachabilityFence(srcScope);
+            Reference.reachabilityFence(dstScope);
+        }
+    }
+
+    @ForceInline
+    public void setMemory(Scope scope, Object o, long offset, long bytes, byte value) {
+        try {
+            setMemoryInternal(scope, o, offset, bytes, value);
+        } catch (Scope.ScopedAccessException ex) {
+            throw new IllegalStateException("This segment is already closed");
+        }
+    }
+
+    @ForceInline @Scoped
+    private void setMemoryInternal(Scope scope, Object o, long offset, long bytes, byte value) {
+        try {
+            if (scope != null) {
+                scope.checkValidState();
+            }
+            UNSAFE.setMemory(o, offset, bytes, value);
+        } catch (Scope.ScopedAccessException ex) {
+            throw new IllegalStateException("This segment is already closed");
+        }
+    }
+
+    @ForceInline
+    public int vectorizedMismatch(Scope aScope, Scope bScope,
+                                             Object a, long aOffset,
+                                             Object b, long bOffset,
+                                             int length,
+                                             int log2ArrayIndexScale) {
+        try {
+            return vectorizedMismatchInternal(aScope, bScope, a, aOffset, b, bOffset, length, log2ArrayIndexScale);
+        } catch (Scope.ScopedAccessException ex) {
+            throw new IllegalStateException("This segment is already closed");
+        }
+    }
+
+    @ForceInline @Scoped
+    private int vectorizedMismatchInternal(Scope aScope, Scope bScope,
+                                             Object a, long aOffset,
+                                             Object b, long bOffset,
+                                             int length,
+                                             int log2ArrayIndexScale) {
+        try {
+            if (aScope != null) {
+                aScope.checkValidState();
+            }
+            if (bScope != null) {
+                bScope.checkValidState();
+            }
+            return ArraysSupport.vectorizedMismatch(a, aOffset, b, bOffset, length, log2ArrayIndexScale);
+        } catch (Scope.ScopedAccessException ex) {
+            throw new IllegalStateException("This segment is already closed");
+        }
+    }
     // typed-ops here
 
