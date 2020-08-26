@@ -33,45 +33,36 @@ class XXX {
 
     private $type$ get$Type$(long a) {
         try {
-            $memtype$ x = UNSAFE.get$Memtype$Unaligned(null, a, bigEndian);
+            $memtype$ x = SCOPED_MEMORY_ACCESS.get$Memtype$Unaligned(scope(), null, a, bigEndian);
             return $fromBits$(x);
         } finally {
             Reference.reachabilityFence(this);
         }
     }
 
-    @Critical
     public $type$ get$Type$() {
-        Object scope = null;
         try {
-            scope = checkSegment();
             return get$Type$(ix(nextGetIndex($BYTES_PER_VALUE$)));
         } finally {
             Reference.reachabilityFence(this);
-            Reference.reachabilityFence(scope);
         }
     }
 
-    @Critical
     public $type$ get$Type$(int i) {
-        Object scope = null;
         try {
-            scope = checkSegment();
             return get$Type$(ix(checkIndex(i, $BYTES_PER_VALUE$)));
         } finally {
             Reference.reachabilityFence(this);
-            Reference.reachabilityFence(scope);
         }
     }
 
 #end[rw]
 
-    @Critical
     private ByteBuffer put$Type$(long a, $type$ x) {
 #if[rw]
         try {
             $memtype$ y = $toBits$(x);
-            UNSAFE.put$Memtype$Unaligned(null, a, y, bigEndian);
+            SCOPED_MEMORY_ACCESS.put$Memtype$Unaligned(scope(), null, a, y, bigEndian);
         } finally {
             Reference.reachabilityFence(this);
         }
@@ -83,29 +74,17 @@ class XXX {
 
     public ByteBuffer put$Type$($type$ x) {
 #if[rw]
-        Object scope = null;
-        try {
-            put$Type$(ix(nextPutIndex($BYTES_PER_VALUE$)), x);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        put$Type$(ix(nextPutIndex($BYTES_PER_VALUE$)), x);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public ByteBuffer put$Type$(int i, $type$ x) {
 #if[rw]
-        Object scope = null;
-        try {
-            scope = checkSegment();
-            put$Type$(ix(checkIndex(i, $BYTES_PER_VALUE$)), x);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        put$Type$(ix(checkIndex(i, $BYTES_PER_VALUE$)), x);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]

@@ -1146,7 +1146,7 @@ public:
     vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
       Method* m = stream.method();
-      if (m->is_critical()) {
+      if (m->is_scoped()) {
         StackValueCollection* locals = stream.asJavaVFrame()->locals();
         for (int i = 0; i < locals->size(); i++) {
           StackValue* var = locals->at(i);

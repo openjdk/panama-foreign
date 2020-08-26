@@ -27,10 +27,8 @@
 
 package java.nio;
 
-import java.lang.ref.Reference;
 import java.util.Objects;
 import jdk.internal.access.foreign.MemorySegmentProxy;
-import jdk.internal.vm.annotation.Critical;
 
 /**
 #if[rw]
@@ -163,24 +161,12 @@ class Heap$Type$Buffer$RW$
     }
 #end[byte]
 
-    @Critical
     public $type$ get() {
-        Object scope = checkSegment();
-        try {
-            return hb[ix(nextGetIndex())];
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return hb[ix(nextGetIndex())];
     }
 
-    @Critical
     public $type$ get(int i) {
-        Object scope = checkSegment();
-        try {
-            return hb[ix(checkIndex(i))];
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return hb[ix(checkIndex(i))];
     }
 
 #if[streamableType]
@@ -189,33 +175,23 @@ class Heap$Type$Buffer$RW$
     }
 #end[streamableType]
 
-    @Critical
     public $Type$Buffer get($type$[] dst, int offset, int length) {
-        Object scope = checkSegment();
-        try {
-            Objects.checkFromIndexSize(offset, length, dst.length);
-            int pos = position();
-            if (length > limit() - pos)
-                throw new BufferUnderflowException();
-            System.arraycopy(hb, ix(pos), dst, offset, length);
-            position(pos + length);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        Objects.checkFromIndexSize(offset, length, dst.length);
+        int pos = position();
+        if (length > limit() - pos)
+            throw new BufferUnderflowException();
+        System.arraycopy(hb, ix(pos), dst, offset, length);
+        position(pos + length);
+        return this;
     }
 
-    @Critical
     public $Type$Buffer get(int index, $type$[] dst, int offset, int length) {
-        Object scope = checkSegment();
-        try {
-            Objects.checkFromIndexSize(index, length, limit());
-            Objects.checkFromIndexSize(offset, length, dst.length);
-            System.arraycopy(hb, ix(index), dst, offset, length);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        Objects.checkFromIndexSize(index, length, limit());
+        Objects.checkFromIndexSize(offset, length, dst.length);
+        System.arraycopy(hb, ix(index), dst, offset, length);
+        return this;
     }
 
     public boolean isDirect() {
@@ -228,83 +204,56 @@ class Heap$Type$Buffer$RW$
         return {#if[rw]?false:true};
     }
 
-    @Critical
     public $Type$Buffer put($type$ x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            hb[ix(nextPutIndex())] = x;
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        hb[ix(nextPutIndex())] = x;
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer put(int i, $type$ x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            hb[ix(checkIndex(i))] = x;
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        hb[ix(checkIndex(i))] = x;
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer put($type$[] src, int offset, int length) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            Objects.checkFromIndexSize(offset, length, src.length);
-            int pos = position();
-            if (length > limit() - pos)
-                throw new BufferOverflowException();
-            System.arraycopy(src, offset, hb, ix(pos), length);
-            position(pos + length);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        Objects.checkFromIndexSize(offset, length, src.length);
+        int pos = position();
+        if (length > limit() - pos)
+            throw new BufferOverflowException();
+        System.arraycopy(src, offset, hb, ix(pos), length);
+        position(pos + length);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer put($Type$Buffer src) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            super.put(src);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        super.put(src);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer put(int index, $type$[] src, int offset, int length) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            Objects.checkFromIndexSize(index, length, limit());
-            Objects.checkFromIndexSize(offset, length, src.length);
-            System.arraycopy(src, offset, hb, ix(index), length);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        Objects.checkFromIndexSize(index, length, limit());
+        Objects.checkFromIndexSize(offset, length, src.length);
+        System.arraycopy(src, offset, hb, ix(index), length);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -312,25 +261,20 @@ class Heap$Type$Buffer$RW$
 
 #if[char]
 
-    @Critical
     public $Type$Buffer put(String src, int start, int end) {
-        Object scope = checkSegment();
-        try {
-            int length = end - start;
-            Objects.checkFromIndexSize(start, length, src.length());
-            if (isReadOnly())
-                throw new ReadOnlyBufferException();
-            int pos = position();
-            int lim = limit();
-            int rem = (pos <= lim) ? lim - pos : 0;
-            if (length > rem)
-                throw new BufferOverflowException();
-            src.getChars(start, end, hb, ix(pos));
-            position(pos + length);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        checkScope();
+        int length = end - start;
+        Objects.checkFromIndexSize(start, length, src.length());
+        if (isReadOnly())
+            throw new ReadOnlyBufferException();
+        int pos = position();
+        int lim = limit();
+        int rem = (pos <= lim) ? lim - pos : 0;
+        if (length > rem)
+            throw new BufferOverflowException();
+        src.getChars(start, end, hb, ix(pos));
+        position(pos + length);
+        return this;
     }
 
 #end[char]
@@ -369,53 +313,29 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public char getChar() {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getCharUnaligned(hb, byteOffset(nextGetIndex(2)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getCharUnaligned(scope(), hb, byteOffset(nextGetIndex(2)), bigEndian);
     }
 
-    @Critical
     public char getChar(int i) {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getCharUnaligned(hb, byteOffset(checkIndex(i, 2)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getCharUnaligned(scope(), hb, byteOffset(checkIndex(i, 2)), bigEndian);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putChar(char x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putCharUnaligned(hb, byteOffset(nextPutIndex(2)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putCharUnaligned(scope(), hb, byteOffset(nextPutIndex(2)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putChar(int i, char x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putCharUnaligned(hb, byteOffset(checkIndex(i, 2)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putCharUnaligned(scope(), hb, byteOffset(checkIndex(i, 2)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -445,53 +365,29 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public short getShort() {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getShortUnaligned(hb, byteOffset(nextGetIndex(2)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getShortUnaligned(scope(), hb, byteOffset(nextGetIndex(2)), bigEndian);
     }
 
-    @Critical
     public short getShort(int i) {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getShortUnaligned(hb, byteOffset(checkIndex(i, 2)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getShortUnaligned(scope(), hb, byteOffset(checkIndex(i, 2)), bigEndian);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putShort(short x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putShortUnaligned(hb, byteOffset(nextPutIndex(2)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putShortUnaligned(scope(), hb, byteOffset(nextPutIndex(2)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putShort(int i, short x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putShortUnaligned(hb, byteOffset(checkIndex(i, 2)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putShortUnaligned(scope(), hb, byteOffset(checkIndex(i, 2)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -521,53 +417,29 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public int getInt() {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getIntUnaligned(hb, byteOffset(nextGetIndex(4)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getIntUnaligned(scope(), hb, byteOffset(nextGetIndex(4)), bigEndian);
     }
 
-    @Critical
     public int getInt(int i) {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getIntUnaligned(hb, byteOffset(checkIndex(i, 4)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getIntUnaligned(scope(), hb, byteOffset(checkIndex(i, 4)), bigEndian);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putInt(int x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putIntUnaligned(hb, byteOffset(nextPutIndex(4)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putIntUnaligned(scope(), hb, byteOffset(nextPutIndex(4)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putInt(int i, int x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putIntUnaligned(hb, byteOffset(checkIndex(i, 4)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putIntUnaligned(scope(), hb, byteOffset(checkIndex(i, 4)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -597,53 +469,29 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public long getLong() {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getLongUnaligned(hb, byteOffset(nextGetIndex(8)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getLongUnaligned(scope(), hb, byteOffset(nextGetIndex(8)), bigEndian);
     }
 
-    @Critical
     public long getLong(int i) {
-        Object scope = checkSegment();
-        try {
-            return UNSAFE.getLongUnaligned(hb, byteOffset(checkIndex(i, 8)), bigEndian);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        return SCOPED_MEMORY_ACCESS.getLongUnaligned(scope(), hb, byteOffset(checkIndex(i, 8)), bigEndian);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putLong(long x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putLongUnaligned(hb, byteOffset(nextPutIndex(8)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putLongUnaligned(scope(), hb, byteOffset(nextPutIndex(8)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putLong(int i, long x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            UNSAFE.putLongUnaligned(hb, byteOffset(checkIndex(i, 8)), x, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        SCOPED_MEMORY_ACCESS.putLongUnaligned(scope(), hb, byteOffset(checkIndex(i, 8)), x, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -673,57 +521,33 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public float getFloat() {
-        Object scope = checkSegment();
-        try {
-            int x = UNSAFE.getIntUnaligned(hb, byteOffset(nextGetIndex(4)), bigEndian);
-            return Float.intBitsToFloat(x);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        int x = SCOPED_MEMORY_ACCESS.getIntUnaligned(scope(), hb, byteOffset(nextGetIndex(4)), bigEndian);
+        return Float.intBitsToFloat(x);
     }
 
-    @Critical
     public float getFloat(int i) {
-        Object scope = checkSegment();
-        try {
-            int x = UNSAFE.getIntUnaligned(hb, byteOffset(checkIndex(i, 4)), bigEndian);
-            return Float.intBitsToFloat(x);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        int x = SCOPED_MEMORY_ACCESS.getIntUnaligned(scope(), hb, byteOffset(checkIndex(i, 4)), bigEndian);
+        return Float.intBitsToFloat(x);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putFloat(float x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            int y = Float.floatToRawIntBits(x);
-            UNSAFE.putIntUnaligned(hb, byteOffset(nextPutIndex(4)), y, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        int y = Float.floatToRawIntBits(x);
+        SCOPED_MEMORY_ACCESS.putIntUnaligned(scope(), hb, byteOffset(nextPutIndex(4)), y, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putFloat(int i, float x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            int y = Float.floatToRawIntBits(x);
-            UNSAFE.putIntUnaligned(hb, byteOffset(checkIndex(i, 4)), y, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        int y = Float.floatToRawIntBits(x);
+        SCOPED_MEMORY_ACCESS.putIntUnaligned(scope(), hb, byteOffset(checkIndex(i, 4)), y, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
@@ -753,57 +577,33 @@ class Heap$Type$Buffer$RW$
 
 #if[rw]
 
-    @Critical
     public double getDouble() {
-        Object scope = checkSegment();
-        try {
-            long x = UNSAFE.getLongUnaligned(hb, byteOffset(nextGetIndex(8)), bigEndian);
-            return Double.longBitsToDouble(x);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        long x = SCOPED_MEMORY_ACCESS.getLongUnaligned(scope(), hb, byteOffset(nextGetIndex(8)), bigEndian);
+        return Double.longBitsToDouble(x);
     }
 
-    @Critical
     public double getDouble(int i) {
-        Object scope = checkSegment();
-        try {
-            long x = UNSAFE.getLongUnaligned(hb, byteOffset(checkIndex(i, 8)), bigEndian);
-            return Double.longBitsToDouble(x);
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        long x = SCOPED_MEMORY_ACCESS.getLongUnaligned(scope(), hb, byteOffset(checkIndex(i, 8)), bigEndian);
+        return Double.longBitsToDouble(x);
     }
 
 #end[rw]
 
-    @Critical
     public $Type$Buffer putDouble(double x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            long y = Double.doubleToRawLongBits(x);
-            UNSAFE.putLongUnaligned(hb, byteOffset(nextPutIndex(8)), y, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        long y = Double.doubleToRawLongBits(x);
+        SCOPED_MEMORY_ACCESS.putLongUnaligned(scope(), hb, byteOffset(nextPutIndex(8)), y, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]
     }
 
-    @Critical
     public $Type$Buffer putDouble(int i, double x) {
 #if[rw]
-        Object scope = checkSegment();
-        try {
-            long y = Double.doubleToRawLongBits(x);
-            UNSAFE.putLongUnaligned(hb, byteOffset(checkIndex(i, 8)), y, bigEndian);
-            return this;
-        } finally {
-            Reference.reachabilityFence(scope);
-        }
+        long y = Double.doubleToRawLongBits(x);
+        SCOPED_MEMORY_ACCESS.putLongUnaligned(scope(), hb, byteOffset(checkIndex(i, 8)), y, bigEndian);
+        return this;
 #else[rw]
         throw new ReadOnlyBufferException();
 #end[rw]

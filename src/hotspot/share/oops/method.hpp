@@ -91,7 +91,7 @@ class Method : public Metadata {
     _running_emcp          = 1 << 5,
     _intrinsic_candidate   = 1 << 6,
     _reserved_stack_access = 1 << 7,
-    _critical              = 1 << 8
+    _scoped                = 1 << 8
   };
   mutable u2 _flags;
 
@@ -901,12 +901,12 @@ public:
     _flags = x ? (_flags | _hidden) : (_flags & ~_hidden);
   }
 
-  bool is_critical() const {
-    return (_flags & _critical) != 0;
+  bool is_scoped() const {
+    return (_flags & _scoped) != 0;
   }
 
-  void set_critical(bool x) {
-    _flags = x ? (_flags | _critical) : (_flags & ~_critical);
+  void set_scoped(bool x) {
+    _flags = x ? (_flags | _scoped) : (_flags & ~_scoped);
   }
 
   bool intrinsic_candidate() {
