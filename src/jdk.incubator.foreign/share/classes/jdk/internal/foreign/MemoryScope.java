@@ -59,6 +59,8 @@ import java.util.concurrent.locks.StampedLock;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
+    private static final ScopedAccessException SCOPE_ACCESS_EXCEPTION = new ScopedAccessException();
+
     private MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
         this.cleanupAction = cleanupAction;
@@ -187,7 +189,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     @ForceInline
     private static void checkAliveConfined(MemoryScope scope) {
         if (scope.closed) {
-            throw new IllegalStateException("This segment is already closed");
+            throw SCOPE_ACCESS_EXCEPTION;
         }
     }
 
@@ -286,7 +288,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (!CLOSED.compareAndSet(this, false, true)) {
                 throw new IllegalStateException("Already closed");
             }
-            UNSAFE.synchronizeThreads(this);
+            UNSAFE.synchronizeThreads(this, SCOPE_ACCESS_EXCEPTION);
         }
     }
 }

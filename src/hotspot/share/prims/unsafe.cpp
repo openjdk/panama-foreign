@@ -1091,10 +1091,10 @@ public:
 
 class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
   jobject _deopt;
-  Handle _exception;
+  jobject _exception;
 
 public:
-  UnsafeSynchronizeThreadsClosure(jobject deopt, Handle exception)
+  UnsafeSynchronizeThreadsClosure(jobject deopt, jobject exception)
     : HandshakeClosure("UnsafeSynchronizeThreads")
     , _deopt(deopt)
     , _exception(exception) {}
@@ -1140,10 +1140,8 @@ public:
       // so... we unconditionally deoptimize, for now
       Deoptimization::deoptimize(jt, last_frame);
     }
-    // FIXME: the following limit could be much lower, but we have to take into account
-    // when the thread is already throwing an exception, in which case the stack can be
-    // quite deep
-    const int max_critical_stack_depth = 15;
+
+    const int max_critical_stack_depth = 5;
     int depth = 0;
     vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
@@ -1155,7 +1153,7 @@ public:
           if (var->type() == T_OBJECT) {
             if (var->get_obj() == JNIHandles::resolve(_deopt)) {
               assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-              jt->send_thread_stop(_exception());
+              jt->send_thread_stop(JNIHandles::resolve(_exception));
               return;
             }
           }
@@ -1172,8 +1170,7 @@ public:
   }
 };
 
-UNSAFE_ENTRY(void, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe, jobject deopt)) {
-  Handle exception = Exceptions::new_exception(thread, vmSymbols::java_lang_IllegalStateException(), "Access racing with close");
+UNSAFE_ENTRY(void, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe, jobject deopt, jobject exception)) {
   UnsafeSynchronizeThreadsClosure cl(deopt, exception);
   Handshake::execute(&cl);
 } UNSAFE_END
@@ -1247,7 +1244,7 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 
     {CC "getLoadAverage0",    CC "([DI)I",               FN_PTR(Unsafe_GetLoadAverage0)},
 
-    {CC "synchronizeThreads0",CC "(" OBJ ")V",           FN_PTR(Unsafe_SynchronizeThreads0)},
+    {CC "synchronizeThreads0",CC "(" OBJ THR ")V",           FN_PTR(Unsafe_SynchronizeThreads0)},
 
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},

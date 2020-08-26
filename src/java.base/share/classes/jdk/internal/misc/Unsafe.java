@@ -2457,8 +2457,8 @@ public final class Unsafe {
      * a less common slow path instead.
      * Top frames containg obj will be deoptimized.
      */
-    public void synchronizeThreads(Object deopt) {
-        synchronizeThreads0(deopt);
+    public void synchronizeThreads(Object deopt, Throwable exception) {
+        synchronizeThreads0(deopt, exception);
     }
 
     // The following contain CAS-based Java implementations used on
@@ -3859,7 +3859,7 @@ public final class Unsafe {
     private native int arrayIndexScale0(Class<?> arrayClass);
     private native Class<?> defineAnonymousClass0(Class<?> hostClass, byte[] data, Object[] cpPatches);
     private native int getLoadAverage0(double[] loadavg, int nelems);
-    private native void synchronizeThreads0(Object deopt);
+    private native void synchronizeThreads0(Object deopt, Throwable exception);
 
 
     /**

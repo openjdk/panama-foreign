@@ -34,6 +34,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
@@ -338,13 +339,17 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public void checkAccessAndScope(long offset, long length, boolean readOnly) {
-        scope.checkValidState();
-        if (!readOnly && !isSet(WRITE)) {
-            throw unsupportedAccessMode(WRITE);
-        } else if (readOnly && !isSet(READ)) {
-            throw unsupportedAccessMode(READ);
+        checkValidState();
+        checkAccess(offset, length, readOnly);
+    }
+
+    @Override
+    public void checkValidState() {
+        try {
+            scope.checkValidState();
+        } catch (ScopedMemoryAccess.Scope.ScopedAccessException ex) {
+            throw new IllegalStateException("This segment is already closed");
         }
-        checkBounds(offset, length);
     }
 
     @Override
@@ -355,11 +360,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     @Override
     public Object unsafeGetBase() {
         return base();
-    }
-
-    @Override
-    public final void checkValidState() {
-        scope.checkValidState();
     }
 
     // Helper methods
