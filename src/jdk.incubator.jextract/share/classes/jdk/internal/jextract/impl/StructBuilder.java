@@ -98,6 +98,25 @@ class StructBuilder extends JavaSourceBuilder {
         return super.classEnd();
     }
 
+    private String getQualifiedName(String fieldName) {
+        return className + "$" + fieldName;
+    }
+
+    @Override
+    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+        var desc = constantHelper.addVarHandle(getQualifiedName(javaName), nativeName, layout, type, parentLayout);
+        incrAlign();
+        indent();
+        append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + javaName + "$VH() {\n");
+        incrAlign();
+        indent();
+        append("return " + getCallString(desc) + ";\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
     @Override
     void addLayoutGetter(String javaName, MemoryLayout layout) {
         var desc = constantHelper.addLayout(javaName + "$struct", layout);
@@ -121,7 +140,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(seg);\n");
+                + varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) + ".get(seg);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -138,7 +157,7 @@ class StructBuilder extends JavaSourceBuilder {
         append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(seg, x);\n");
+        append(varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, null) + ".set(seg, x);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -223,7 +242,8 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".get(addr.asSlice(index*sizeof()));\n");
+                + varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) +
+                ".get(addr.asSlice(index*sizeof()));\n");
         decrAlign();
         indent();
         append("}\n");
@@ -237,7 +257,8 @@ class StructBuilder extends JavaSourceBuilder {
         append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        append(varHandleGetCallString(javaName, nativeName, layout, type, parentLayout) + ".set(addr.asSlice(index*sizeof()), x);\n");
+        append(varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) +
+                ".set(addr.asSlice(index*sizeof()), x);\n");
         decrAlign();
         indent();
         append("}\n");
