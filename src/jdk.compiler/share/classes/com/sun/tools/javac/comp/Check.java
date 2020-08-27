@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.NestingKind;
 import javax.tools.JavaFileManager;
 
 import com.sun.tools.javac.code.*;
@@ -1220,7 +1221,7 @@ public class Check {
                 boolean implicitlyStatic = !sym.isAnonymous() &&
                         ((flags & RECORD) != 0 || (flags & ENUM) != 0 || (flags & INTERFACE) != 0);
                 boolean staticOrImplicitlyStatic = (flags & STATIC) != 0 || implicitlyStatic;
-                mask = staticOrImplicitlyStatic && allowRecords ? StaticLocalFlags : LocalClassFlags;
+                mask = staticOrImplicitlyStatic && allowRecords && (flags & ANNOTATION) == 0 ? StaticLocalFlags : LocalClassFlags;
                 implicit = implicitlyStatic ? STATIC : implicit;
                 if (staticOrImplicitlyStatic) {
                     if (sym.owner.kind == TYP) {
@@ -2907,10 +2908,9 @@ public class Check {
      */
     private void validateAnnotation(JCAnnotation a, JCTree declarationTree, Symbol s) {
         validateAnnotationTree(a);
-        boolean isRecordMember = (s.flags_field & RECORD) != 0 || s.enclClass() != null && s.enclClass().isRecord();
+        boolean isRecordMember = ((s.flags_field & RECORD) != 0 || s.enclClass() != null && s.enclClass().isRecord());
 
-        boolean isRecordField = isRecordMember &&
-                (s.flags_field & (Flags.PRIVATE | Flags.FINAL | Flags.GENERATED_MEMBER | Flags.RECORD)) != 0 &&
+        boolean isRecordField = (s.flags_field & RECORD) != 0 &&
                 declarationTree.hasTag(VARDEF) &&
                 s.owner.kind == TYP;
 
@@ -3826,6 +3826,59 @@ public class Check {
             log.warning(pos,
                         Warnings.AuxiliaryClassAccessedFromOutsideOfItsSourceFile(c, c.sourcefile));
         }
+    }
+
+    /**
+     * Check for a default constructor in an exported package.
+     */
+    void checkDefaultConstructor(ClassSymbol c, DiagnosticPosition pos) {
+        if (lint.isEnabled(LintCategory.MISSING_EXPLICIT_CTOR) &&
+            ((c.flags() & (ENUM | RECORD)) == 0) &&
+            !c.isAnonymous() &&
+            ((c.flags() & PUBLIC) != 0) &&
+            Feature.MODULES.allowedInSource(source)) {
+            NestingKind nestingKind = c.getNestingKind();
+            switch (nestingKind) {
+                case ANONYMOUS,
+                     LOCAL -> {return;}
+                case TOP_LEVEL -> {;} // No additional checks needed
+                case MEMBER -> {
+                    // For nested member classes, all the enclosing
+                    // classes must be public.
+                    Symbol owner = c.owner;
+                    while (owner != null && owner.kind == TYP) {
+                        if ((owner.flags() & PUBLIC) == 0)
+                            return;
+                        owner = owner.owner;
+                    }
+                }
+            }
+
+            // Only check classes in named packages exported by its module
+            PackageSymbol pkg = c.packge();
+            if (!pkg.isUnnamed()) {
+                ModuleSymbol modle = pkg.modle;
+                for (ExportsDirective exportDir : modle.exports) {
+                    // Report warning only if the containing
+                    // package is unconditionally exported
+                    if (exportDir.packge.equals(pkg)) {
+                        if (exportDir.modules == null || exportDir.modules.isEmpty()) {
+                            // Warning may be suppressed by
+                            // annotations; check again for being
+                            // enabled in the deferred context.
+                            deferredLintHandler.report(() -> {
+                                if (lint.isEnabled(LintCategory.MISSING_EXPLICIT_CTOR))
+                                   log.warning(LintCategory.MISSING_EXPLICIT_CTOR,
+                                               pos, Warnings.MissingExplicitCtor(c, pkg, modle));
+                                                       });
+                        } else {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        return;
     }
 
     private class ConversionWarner extends Warner {

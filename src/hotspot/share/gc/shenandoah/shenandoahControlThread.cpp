@@ -50,7 +50,7 @@ ShenandoahControlThread::ShenandoahControlThread() :
   _allocs_seen(0) {
 
   reset_gc_id();
-  create_and_start(ShenandoahCriticalControlThreadPriority ? CriticalPriority : NearMaxPriority);
+  create_and_start();
   _periodic_task.enroll();
   _periodic_satb_flush_task.enroll();
   if (ShenandoahPacing) {
@@ -235,6 +235,9 @@ void ShenandoahControlThread::run_service() {
         // global soft refs policy, and we better report it every time heap
         // usage goes down.
         Universe::update_heap_info_at_gc();
+
+        // Signal that we have completed a visit to all live objects.
+        Universe::heap()->record_whole_heap_examined_timestamp();
       }
 
       // Disable forced counters update, and update counters one more time
@@ -421,6 +424,12 @@ void ShenandoahControlThread::service_concurrent_normal_cycle(GCCause::Cause cau
 
     // Update references freed up collection set, kick the cleanup to reclaim the space.
     heap->entry_cleanup_complete();
+  } else {
+    // Concurrent weak/strong root flags are unset concurrently. We depend on updateref GC safepoints
+    // to ensure the changes are visible to all mutators before gc cycle is completed.
+    // In case of no evacuation, updateref GC safepoints are skipped. Therefore, we will need
+    // to perform thread handshake to ensure their consistences.
+    heap->entry_rendezvous_roots();
   }
 
   // Cycle is complete

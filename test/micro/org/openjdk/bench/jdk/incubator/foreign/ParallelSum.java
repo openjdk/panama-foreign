@@ -190,7 +190,7 @@ public class ParallelSum {
 
     @Benchmark
     public int unsafe_parallel() {
-        return new SumUnsafe(address, 0, ALLOC_SIZE).invoke();
+        return new SumUnsafe(address, 0, ALLOC_SIZE / CARRIER_SIZE).invoke();
     }
 
     static class SumUnsafe extends RecursiveTask<Integer> {
@@ -209,15 +209,19 @@ public class ParallelSum {
         @Override
         protected Integer compute() {
             if (length > SPLIT_THRESHOLD) {
-                SumUnsafe s1 = new SumUnsafe(address, start, length / 2);
-                SumUnsafe s2 = new SumUnsafe(address, length / 2, length / 2);
+                int rem = length % 2;
+                int split = length / 2;
+                int lobound = split;
+                int hibound = lobound + rem;
+                SumUnsafe s1 = new SumUnsafe(address, start, lobound);
+                SumUnsafe s2 = new SumUnsafe(address, start + lobound, hibound);
                 s1.fork();
                 s2.fork();
                 return s1.join() + s2.join();
             } else {
                 int res = 0;
-                for (int i = 0; i < length; i += CARRIER_SIZE) {
-                    res += unsafe.getInt(start + address + i);
+                for (int i = 0; i < length; i ++) {
+                    res += unsafe.getInt(address + (start + i) * CARRIER_SIZE);
                 }
                 return res;
             }

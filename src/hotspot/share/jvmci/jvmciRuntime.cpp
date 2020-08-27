@@ -893,8 +893,11 @@ void JVMCIRuntime::initialize_HotSpotJVMCIRuntime(JVMCI_TRAPS) {
 
   // This should only be called in the context of the JVMCI class being initialized
   JVMCIObject result = JVMCIENV->call_HotSpotJVMCIRuntime_runtime(JVMCI_CHECK);
+  result = JVMCIENV->make_global(result);
 
-  _HotSpotJVMCIRuntime_instance = JVMCIENV->make_global(result);
+  OrderAccess::storestore();  // Ensure handle is fully constructed before publishing
+  _HotSpotJVMCIRuntime_instance = result;
+
   JVMCI::_is_initialized = true;
 }
 
@@ -925,9 +928,9 @@ void JVMCIRuntime::initialize(JVMCIEnv* JVMCIENV) {
   {
     MutexUnlocker unlock(JVMCI_lock);
 
-    HandleMark hm;
-    ResourceMark rm;
     JavaThread* THREAD = JavaThread::current();
+    HandleMark hm(THREAD);
+    ResourceMark rm(THREAD);
     if (JVMCIENV->is_hotspot()) {
       HotSpotJVMCI::compute_offsets(CHECK_EXIT);
     } else {
@@ -1013,7 +1016,7 @@ JVM_ENTRY_NO_ENV(void, JVM_RegisterJVMCINatives(JNIEnv *env, jclass c2vmClass))
   JVMCIENV->runtime()->initialize(JVMCIENV);
 
   {
-    ResourceMark rm;
+    ResourceMark rm(thread);
     HandleMark hm(thread);
     ThreadToNativeFromVM trans(thread);
 
@@ -1322,7 +1325,7 @@ Method* JVMCIRuntime::lookup_method(InstanceKlass* accessor,
   assert(check_klass_accessibility(accessor, holder), "holder not accessible");
 
   Method* dest_method;
-  LinkInfo link_info(holder, name, sig, accessor, LinkInfo::needs_access_check, tag);
+  LinkInfo link_info(holder, name, sig, accessor, LinkInfo::AccessCheck::required, tag);
   switch (bc) {
   case Bytecodes::_invokestatic:
     dest_method =
@@ -1483,7 +1486,7 @@ void JVMCIRuntime::compile_method(JVMCIEnv* JVMCIENV, JVMCICompiler* compiler, c
     return;
   }
 
-  HandleMark hm;
+  HandleMark hm(thread);
   JVMCIObject receiver = get_HotSpotJVMCIRuntime(JVMCIENV);
   if (JVMCIENV->has_pending_exception()) {
     fatal_exception_in_compile(JVMCIENV, thread, "Exception during HotSpotJVMCIRuntime initialization");

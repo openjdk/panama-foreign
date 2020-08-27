@@ -153,7 +153,7 @@ void G1ConcurrentMarkThread::run_service() {
     GCTraceConcTime(Info, gc) tt("Concurrent Cycle");
     {
       ResourceMark rm;
-      HandleMark   hm;
+
       double cycle_start = os::elapsedVTime();
 
       {
@@ -268,7 +268,8 @@ void G1ConcurrentMarkThread::run_service() {
     // called System.gc() with +ExplicitGCInvokesConcurrent).
     {
       SuspendibleThreadSetJoiner sts_join;
-      g1h->increment_old_marking_cycles_completed(true /* concurrent */);
+      g1h->increment_old_marking_cycles_completed(true /* concurrent */,
+                                                  !_cm->has_aborted() /* liveness_completed */);
 
       _cm->concurrent_cycle_end();
       ConcurrentGCBreakpoints::notify_active_to_idle();

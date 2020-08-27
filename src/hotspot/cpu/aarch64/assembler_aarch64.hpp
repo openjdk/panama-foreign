@@ -554,14 +554,7 @@ class Address {
 
   void lea(MacroAssembler *, Register) const;
 
-  static bool offset_ok_for_immed(int64_t offset, int shift) {
-    unsigned mask = (1 << shift) - 1;
-    if (offset < 0 || offset & mask) {
-      return (uabs(offset) < (1 << (20 - 12))); // Unscaled offset
-    } else {
-      return ((offset >> shift) < (1 << (21 - 10 + 1))); // Scaled, unsigned offset
-    }
-  }
+  static bool offset_ok_for_immed(int64_t offset, uint shift);
 };
 
 // Convience classes
@@ -2376,6 +2369,30 @@ public:
   INSN(sha1h,     0b000010);
   INSN(sha1su1,   0b000110);
   INSN(sha256su0, 0b001010);
+
+#undef INSN
+
+#define INSN(NAME, opc)                                                                 \
+  void NAME(FloatRegister Vd, SIMD_Arrangement T, FloatRegister Vn, FloatRegister Vm) { \
+    starti;                                                                             \
+    assert(T == T2D, "arrangement must be T2D");                                        \
+    f(0b11001110011, 31, 21), rf(Vm, 16), f(opc, 15, 10), rf(Vn, 5), rf(Vd, 0);         \
+  }
+
+  INSN(sha512h,   0b100000);
+  INSN(sha512h2,  0b100001);
+  INSN(sha512su1, 0b100010);
+
+#undef INSN
+
+#define INSN(NAME, opc)                                                                 \
+  void NAME(FloatRegister Vd, SIMD_Arrangement T, FloatRegister Vn) {                   \
+    starti;                                                                             \
+    assert(T == T2D, "arrangement must be T2D");                                        \
+    f(opc, 31, 10), rf(Vn, 5), rf(Vd, 0);                                               \
+  }
+
+  INSN(sha512su0, 0b1100111011000000100000);
 
 #undef INSN
 

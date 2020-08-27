@@ -267,7 +267,7 @@ final class HttpClientImpl extends HttpClient implements Trackable {
             try {
                 sslContext = SSLContext.getDefault();
             } catch (NoSuchAlgorithmException ex) {
-                throw new InternalError(ex);
+                throw new UncheckedIOException(new IOException(ex));
             }
         } else {
             sslContext = builder.sslContext;
@@ -310,7 +310,7 @@ final class HttpClientImpl extends HttpClient implements Trackable {
             selmgr = new SelectorManager(this);
         } catch (IOException e) {
             // unlikely
-            throw new InternalError(e);
+            throw new UncheckedIOException(e);
         }
         selmgr.setDaemon(true);
         filters = new FilterFactory();

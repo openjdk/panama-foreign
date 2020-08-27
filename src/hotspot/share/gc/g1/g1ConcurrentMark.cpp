@@ -443,7 +443,7 @@ G1ConcurrentMark::G1ConcurrentMark(G1CollectedHeap* g1h,
     task_queue->initialize();
     _task_queues->register_queue(i, task_queue);
 
-    _tasks[i] = new G1CMTask(i, this, task_queue, _region_mark_stats, _g1h->max_regions());
+    _tasks[i] = new G1CMTask(i, this, task_queue, _region_mark_stats);
 
     _accum_task_vtime[i] = 0.0;
   }
@@ -1479,7 +1479,6 @@ public:
 
   virtual void work(uint worker_id) {
     ResourceMark rm;
-    HandleMark hm;
     G1CMTask* task = _cm->task(worker_id);
     G1CMIsAliveClosure g1_is_alive(_g1h);
     G1CMKeepAliveAndDrainClosure g1_par_keep_alive(_cm, task, false /* is_serial */);
@@ -1508,7 +1507,6 @@ void G1CMRefProcTaskExecutor::execute(ProcessTask& proc_task, uint ergo_workers)
 
 void G1ConcurrentMark::weak_refs_work(bool clear_all_soft_refs) {
   ResourceMark rm;
-  HandleMark   hm;
 
   // Is alive closure.
   G1CMIsAliveClosure g1_is_alive(_g1h);
@@ -1666,7 +1664,7 @@ public:
 
   bool do_object_b(oop obj) {
     return obj != NULL &&
-           (!_g1h->is_in_g1_reserved(obj) || !_g1h->is_obj_dead(obj));
+           (!_g1h->is_in_reserved(obj) || !_g1h->is_obj_dead(obj));
   }
 };
 
@@ -1755,7 +1753,6 @@ public:
     task->record_start_time();
     {
       ResourceMark rm;
-      HandleMark hm;
 
       G1RemarkThreadsClosure threads_f(G1CollectedHeap::heap(), task);
       Threads::threads_do(&threads_f);
@@ -1779,7 +1776,6 @@ public:
 
 void G1ConcurrentMark::finalize_marking() {
   ResourceMark rm;
-  HandleMark   hm;
 
   _g1h->ensure_parsability(false);
 
@@ -1834,7 +1830,7 @@ G1ConcurrentMark::claim_region(uint worker_id) {
   HeapWord* finger = _finger;
 
   while (finger < _heap.end()) {
-    assert(_g1h->is_in_g1_reserved(finger), "invariant");
+    assert(_g1h->is_in_reserved(finger), "invariant");
 
     HeapRegion* curr_region = _g1h->heap_region_containing(finger);
     // Make sure that the reads below do not float before loading curr_region.
@@ -2818,15 +2814,14 @@ void G1CMTask::do_marking_step(double time_target_ms,
 G1CMTask::G1CMTask(uint worker_id,
                    G1ConcurrentMark* cm,
                    G1CMTaskQueue* task_queue,
-                   G1RegionMarkStats* mark_stats,
-                   uint max_regions) :
+                   G1RegionMarkStats* mark_stats) :
   _objArray_processor(this),
   _worker_id(worker_id),
   _g1h(G1CollectedHeap::heap()),
   _cm(cm),
   _next_mark_bitmap(NULL),
   _task_queue(task_queue),
-  _mark_stats_cache(mark_stats, max_regions, RegionMarkStatsCacheSize),
+  _mark_stats_cache(mark_stats, RegionMarkStatsCacheSize),
   _calls(0),
   _time_target_ms(0.0),
   _start_time_ms(0.0),
@@ -2898,7 +2893,7 @@ G1PrintRegionLivenessInfoClosure::G1PrintRegionLivenessInfoClosure(const char* p
   }
 
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  MemRegion g1_reserved = g1h->g1_reserved();
+  MemRegion reserved = g1h->reserved_region();
   double now = os::elapsedTime();
 
   // Print the header of the output.
@@ -2906,7 +2901,7 @@ G1PrintRegionLivenessInfoClosure::G1PrintRegionLivenessInfoClosure(const char* p
   log_trace(gc, liveness)(G1PPRL_LINE_PREFIX" HEAP"
                           G1PPRL_SUM_ADDR_FORMAT("reserved")
                           G1PPRL_SUM_BYTE_FORMAT("region-size"),
-                          p2i(g1_reserved.start()), p2i(g1_reserved.end()),
+                          p2i(reserved.start()), p2i(reserved.end()),
                           HeapRegion::GrainBytes);
   log_trace(gc, liveness)(G1PPRL_LINE_PREFIX);
   log_trace(gc, liveness)(G1PPRL_LINE_PREFIX

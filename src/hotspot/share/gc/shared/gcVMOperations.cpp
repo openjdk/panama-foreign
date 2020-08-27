@@ -130,7 +130,6 @@ bool VM_GC_HeapInspection::collect() {
 }
 
 void VM_GC_HeapInspection::doit() {
-  HandleMark hm;
   Universe::heap()->ensure_parsability(false); // must happen, even if collection does
                                                // not happen (e.g. due to GCLocker)
                                                // or _full_gc being false
@@ -150,7 +149,7 @@ void VM_GC_HeapInspection::doit() {
     }
   }
   HeapInspection inspect;
-  inspect.heap_inspection(_out);
+  inspect.heap_inspection(_out, _parallel_thread_num);
 }
 
 

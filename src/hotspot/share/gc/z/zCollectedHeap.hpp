@@ -105,9 +105,7 @@ public:
   virtual void flush_nmethod(nmethod* nm);
   virtual void verify_nmethod(nmethod* nmethod);
 
-  virtual WorkGang* get_safepoint_workers();
-
-  virtual jlong millis_since_last_gc();
+  virtual WorkGang* safepoint_workers();
 
   virtual void gc_threads_do(ThreadClosure* tc) const;
 

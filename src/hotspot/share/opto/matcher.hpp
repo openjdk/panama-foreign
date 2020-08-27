@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -178,6 +178,10 @@ public:
   static uint mreg2regmask_max;
   static RegMask mreg2regmask[];
   static RegMask STACK_ONLY_mask;
+  static RegMask caller_save_regmask;
+  static RegMask caller_save_regmask_exclude_soe;
+  static RegMask mh_caller_save_regmask;
+  static RegMask mh_caller_save_regmask_exclude_soe;
 
   MachNode* mach_null() const { return _mach_null; }
 
@@ -408,7 +412,7 @@ public:
   static int  number_of_saved_registers();
 
   // The Method-klass-holder may be passed in the inline_cache_reg
-  // and then expanded into the inline_cache_reg and a method_oop register
+  // and then expanded into the inline_cache_reg and a method_ptr register
 
   static OptoReg::Name  interpreter_method_oop_reg();
   static int            interpreter_method_oop_reg_encode();

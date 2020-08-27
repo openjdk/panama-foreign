@@ -92,10 +92,6 @@ static void scavenge_roots_work(ParallelRootType::Value root_type, uint worker_i
   PSPromoteRootsClosure  roots_to_old_closure(pm);
 
   switch (root_type) {
-    case ParallelRootType::universe:
-      Universe::oops_do(&roots_closure);
-      break;
-
     case ParallelRootType::object_synchronizer:
       ObjectSynchronizer::oops_do(&roots_closure);
       break;
@@ -430,13 +426,11 @@ bool PSScavenge::invoke_no_policy() {
   heap->ensure_parsability(true);  // retire TLABs
 
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
-    HandleMark hm;  // Discard invalid handles created during verification
     Universe::verify("Before GC");
   }
 
   {
     ResourceMark rm;
-    HandleMark hm;
 
     GCTraceCPUTime tcpu;
     GCTraceTime(Info, gc) tm("Pause Young", NULL, gc_cause, true);
@@ -714,7 +708,6 @@ bool PSScavenge::invoke_no_policy() {
   }
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
-    HandleMark hm;  // Discard invalid handles created during verification
     Universe::verify("After GC");
   }
 

@@ -105,17 +105,6 @@ public:
   virtual bool is_thread_safe() { return false; }
 };
 
-#ifdef ASSERT
-class ShenandoahAssertToSpaceClosure : public OopClosure {
-private:
-  template <class T>
-  void do_oop_work(T* p);
-public:
-  void do_oop(narrowOop* p);
-  void do_oop(oop* p);
-};
-#endif
-
 typedef ShenandoahLock    ShenandoahHeapLock;
 typedef ShenandoahLocker  ShenandoahHeapLocker;
 
@@ -206,7 +195,7 @@ public:
   void assert_gc_workers(uint nworker) NOT_DEBUG_RETURN;
 
   WorkGang* workers() const;
-  WorkGang* get_safepoint_workers();
+  WorkGang* safepoint_workers();
 
   void gc_threads_do(ThreadClosure* tcl) const;
 
@@ -397,6 +386,7 @@ public:
   void entry_class_unloading();
   void entry_strong_roots();
   void entry_cleanup_early();
+  void entry_rendezvous_roots();
   void entry_evac();
   void entry_updaterefs();
   void entry_cleanup_complete();
@@ -420,11 +410,14 @@ private:
   void op_class_unloading();
   void op_strong_roots();
   void op_cleanup_early();
+  void op_rendezvous_roots();
   void op_conc_evac();
   void op_stw_evac();
   void op_updaterefs();
   void op_cleanup_complete();
   void op_uncommit(double shrink_before);
+
+  void rendezvous_threads();
 
   // Messages for GC trace events, they have to be immortal for
   // passing around the logging/tracing systems
@@ -555,9 +548,6 @@ public:
 
   // Keep alive an object that was loaded with AS_NO_KEEPALIVE.
   void keep_alive(oop obj);
-
-  // Used by RMI
-  jlong millis_since_last_gc();
 
 // ---------- Safepoint interface hooks
 //

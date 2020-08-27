@@ -317,7 +317,6 @@ HeapWord* GenCollectedHeap::mem_allocate_work(size_t size,
 
   // Loop until the allocation is satisfied, or unsatisfied after GC.
   for (uint try_count = 1, gclocker_stalled_count = 0; /* return or throw */; try_count += 1) {
-    HandleMark hm; // Discard any handles allocated in each iteration.
 
     // First allocation attempt is lock-free.
     Generation *young = _young_gen;
@@ -477,7 +476,6 @@ void GenCollectedHeap::collect_generation(Generation* gen, bool full, size_t siz
   log_trace(gc)("%s invoke=%d size=" SIZE_FORMAT, heap()->is_young_gen(gen) ? "Young" : "Old", gen->stat_record()->invocations, size * HeapWordSize);
 
   if (run_verification && VerifyBeforeGC) {
-    HandleMark hm;  // Discard invalid handles created during verification
     Universe::verify("Before GC");
   }
   COMPILER2_OR_JVMCI_PRESENT(DerivedPointerTable::clear());
@@ -502,7 +500,6 @@ void GenCollectedHeap::collect_generation(Generation* gen, bool full, size_t siz
     // weak refs more uniform (and indeed remove such concerns
     // from GCH). XXX
 
-    HandleMark hm;  // Discard invalid handles created during gc
     save_marks();   // save marks for all gens
     // We want to discover references, but not process them yet.
     // This mode is disabled in process_discovered_references if the
@@ -535,7 +532,6 @@ void GenCollectedHeap::collect_generation(Generation* gen, bool full, size_t siz
   update_gc_stats(gen, full);
 
   if (run_verification && VerifyAfterGC) {
-    HandleMark hm;  // Discard invalid handles created during verification
     Universe::verify("After GC");
   }
 }
@@ -820,10 +816,6 @@ void GenCollectedHeap::process_roots(StrongRootsScope* scope,
 
   bool is_par = scope->n_threads() > 1;
   Threads::possibly_parallel_oops_do(is_par, strong_roots, roots_from_code_p);
-
-  if (_process_strong_tasks->try_claim_task(GCH_PS_Universe_oops_do)) {
-    Universe::oops_do(strong_roots);
-  }
 
   if (_process_strong_tasks->try_claim_task(GCH_PS_ObjectSynchronizer_oops_do)) {
     ObjectSynchronizer::oops_do(strong_roots);
@@ -1361,38 +1353,4 @@ oop GenCollectedHeap::handle_failed_promotion(Generation* old_gen,
     Copy::aligned_disjoint_words(cast_from_oop<HeapWord*>(obj), result, obj_size);
   }
   return oop(result);
-}
-
-class GenTimeOfLastGCClosure: public GenCollectedHeap::GenClosure {
-  jlong _time;   // in ms
-  jlong _now;    // in ms
-
- public:
-  GenTimeOfLastGCClosure(jlong now) : _time(now), _now(now) { }
-
-  jlong time() { return _time; }
-
-  void do_generation(Generation* gen) {
-    _time = MIN2(_time, gen->time_of_last_gc(_now));
-  }
-};
-
-jlong GenCollectedHeap::millis_since_last_gc() {
-  // javaTimeNanos() is guaranteed to be monotonically non-decreasing
-  // provided the underlying platform provides such a time source
-  // (and it is bug free). So we still have to guard against getting
-  // back a time later than 'now'.
-  jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
-  GenTimeOfLastGCClosure tolgc_cl(now);
-  // iterate over generations getting the oldest
-  // time that a generation was collected
-  generation_iterate(&tolgc_cl, false);
-
-  jlong retVal = now - tolgc_cl.time();
-  if (retVal < 0) {
-    log_warning(gc)("millis_since_last_gc() would return : " JLONG_FORMAT
-       ". returning zero instead.", retVal);
-    return 0;
-  }
-  return retVal;
 }
