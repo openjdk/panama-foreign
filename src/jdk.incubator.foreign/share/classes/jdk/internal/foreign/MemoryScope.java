@@ -27,14 +27,11 @@
 package jdk.internal.foreign;
 
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.StampedLock;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -58,8 +55,6 @@ import java.util.concurrent.locks.StampedLock;
  * in place that prevents concurrent access and closing of the scope.
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
-
-    private static final ScopedAccessException SCOPE_ACCESS_EXCEPTION = new ScopedAccessException();
 
     private MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
@@ -189,7 +184,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     @ForceInline
     private static void checkAliveConfined(MemoryScope scope) {
         if (scope.closed) {
-            throw SCOPE_ACCESS_EXCEPTION;
+            throw ScopedAccessException.INSTANCE;
         }
     }
 
@@ -288,7 +283,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (!CLOSED.compareAndSet(this, false, true)) {
                 throw new IllegalStateException("Already closed");
             }
-            SCOPED_MEMORY_ACCESS.closeScope(this, SCOPE_ACCESS_EXCEPTION);
+            SCOPED_MEMORY_ACCESS.closeScope(this);
         }
     }
 }

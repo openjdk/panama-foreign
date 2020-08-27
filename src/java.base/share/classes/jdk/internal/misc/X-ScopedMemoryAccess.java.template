@@ -43,15 +43,11 @@ public class ScopedMemoryAccess {
         registerNatives();
     }
 
-    /**
-     * This function issues a global handshake operation with all
-     * Java threads. This is useful for implementing asymmetric
-     * dekker synchronization schemes, where expensive synchronization
-     * in performance sensitive common paths, may be shifted to
-     * a less common slow path instead.
-     * Top frames containg obj will be deoptimized.
-     */
-    public native void closeScope(Scope scope, Scope.ScopedAccessException exception);
+    public void closeScope(Scope scope) {
+        closeScope0(scope, Scope.ScopedAccessException.INSTANCE);
+    }
+
+    native void closeScope0(Scope scope, Scope.ScopedAccessException exception);
 
     private ScopedMemoryAccess() {}
 
@@ -66,6 +62,8 @@ public class ScopedMemoryAccess {
 
         class ScopedAccessException extends RuntimeException {
             static final long serialVersionUID = 1L;
+
+            public static final ScopedAccessException INSTANCE = new ScopedAccessException();
         }
     }
 

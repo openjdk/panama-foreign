@@ -103,7 +103,7 @@
         } finally {
             Reference.reachabilityFence(scope);
         }
-    }    
+    }
 
     @ForceInline
     public void put$Type$Volatile(Scope scope, Object base, long offset, $type$ value) {
