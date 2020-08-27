@@ -38,7 +38,7 @@
 #include "prims/jvm_misc.hpp"
 #include "prims/nativeLookup.hpp"
 #include "prims/unsafe.hpp"
-#include "prims/sharedMemoryAccess.hpp"
+#include "prims/scopedMemoryAccess.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
