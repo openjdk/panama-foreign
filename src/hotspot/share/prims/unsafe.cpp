@@ -1059,6 +1059,129 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
+<<<<<<< HEAD
+=======
+class UnsafeSynchronizeThreadsFindOopClosure : public OopClosure {
+  oop _deopt;
+  bool _found;
+
+public:
+  UnsafeSynchronizeThreadsFindOopClosure(jobject deopt) :
+      _deopt(JNIHandles::resolve(deopt)),
+      _found(false) {}
+
+  template <typename T>
+  void do_oop_work(T* p) {
+    if (_found) {
+      return;
+    }
+    if (RawAccess<>::oop_load(p) == _deopt) {
+      _found = true;
+    }
+  }
+
+  virtual void do_oop(oop* p) {
+    do_oop_work(p);
+  }
+
+  virtual void do_oop(narrowOop* p) {
+    do_oop_work(p);
+  }
+
+  bool found() {
+    return _found;
+  }
+};
+
+class UnsafeSynchronizeThreadsClosure : public HandshakeClosure {
+  jobject _deopt;
+  jobject _exception;
+
+public:
+  UnsafeSynchronizeThreadsClosure(jobject deopt, jobject exception)
+    : HandshakeClosure("UnsafeSynchronizeThreads")
+    , _deopt(deopt)
+    , _exception(exception) {}
+
+  void do_thread(Thread* thread) {
+    if (UseNewCode2) {
+      ResourceMark rm;
+      MutexLocker ml(Threads_lock);
+      ttyLocker ttyl;
+      thread->print_on(tty, true);
+      if (thread->is_Java_thread()) {
+        JavaThread* jt = (JavaThread*)thread;
+        jt->print_stack_on(tty);
+      }
+    }
+
+    JavaThread* jt = (JavaThread*)thread;
+
+    if (!jt->has_last_Java_frame()) {
+      return;
+    }
+
+    frame last_frame = jt->last_frame();
+    RegisterMap register_map(jt, true);
+
+    if (last_frame.is_safepoint_blob_frame()) {
+      last_frame = last_frame.sender(&register_map);
+    }
+
+    ResourceMark rm;
+    if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
+      UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
+      CodeBlobToOopClosure cb_cl(&cl, !CodeBlobToOopClosure::FixRelocations);
+      CompiledMethod* cm = last_frame.cb()->as_compiled_method();
+
+      //FIXME: this doesn't work if reachability fences are violated by C2
+      // last_frame.oops_do(&cl, &cb_cl, &register_map);
+
+      // if (cl.found()) {
+      //   // Found the deopt oop in a compiled method; deoptimize.
+      //   Deoptimization::deoptimize(jt, last_frame);
+      // }
+
+      // so... we unconditionally deoptimize, for now
+      Deoptimization::deoptimize(jt, last_frame);
+    }
+
+    const int max_critical_stack_depth = 5;
+    int depth = 0;
+    vframeStream stream(jt);
+    for (; !stream.at_end(); stream.next()) {
+      Method* m = stream.method();
+      if (m->is_scoped()) {
+        StackValueCollection* locals = stream.asJavaVFrame()->locals();
+        for (int i = 0; i < locals->size(); i++) {
+          StackValue* var = locals->at(i);
+          if (var->type() == T_OBJECT) {
+            if (var->get_obj() == JNIHandles::resolve(_deopt)) {
+              assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
+              jt->send_thread_stop(JNIHandles::resolve(_exception));
+              return;
+            }
+          }
+        }
+        break;
+      }
+      depth++;
+#ifndef ASSERT
+      if (depth >= max_critical_stack_depth) {
+        break;
+      }
+#endif
+    }
+  }
+};
+
+UNSAFE_ENTRY(void, Unsafe_SynchronizeThreads0(JNIEnv *env, jobject unsafe, jobject deopt, jobject exception)) {
+  UnsafeSynchronizeThreadsClosure cl(deopt, exception);
+  Handshake::execute(&cl);
+} UNSAFE_END
+
+
+>>>>>>> e96d307fa4792262f73aa13c06a6e91892e9613c
 /// JVM_RegisterUnsafeMethods
 
 #define ADR "J"
