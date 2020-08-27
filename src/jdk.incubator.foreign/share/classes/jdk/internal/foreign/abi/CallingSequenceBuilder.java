@@ -90,7 +90,12 @@ public class CallingSequenceBuilder {
         stack.push(inType);
 
         for (Binding b : bindings) {
-            b.verifyUnbox(stack);
+            if (b.tag() == Binding.Tag.VM_LOAD
+                    || b.tag() == Binding.Tag.ALLOC_BUFFER
+                    || b.tag() == Binding.Tag.BUFFER_STORE
+                    || b.tag() == Binding.Tag.BOX_ADDRESS)
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
         }
 
         if (!stack.isEmpty()) {
@@ -102,7 +107,11 @@ public class CallingSequenceBuilder {
         Deque<Class<?>> stack = new ArrayDeque<>();
 
         for (Binding b : bindings) {
-            b.verifyBox(stack);
+            if (b.tag() == Binding.Tag.VM_STORE
+                    || b.tag() == Binding.Tag.BUFFER_LOAD
+                    || b.tag() == Binding.Tag.UNBOX_ADDRESS)
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
         }
 
         if (stack.size() != 1) {

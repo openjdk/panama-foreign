@@ -23,14 +23,11 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.invoke.VMStorageProxy;
@@ -40,21 +37,23 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.empty;
+import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
+import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
@@ -77,8 +76,9 @@ public class ProgrammableInvoker {
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
 
-    private static final MethodHandle MH_MAKE_ALLOCATOR;
-    private static final MethodHandle MH_CLOSE_ALLOCATOR;
+    private static final MethodHandle MH_MAKE_SCOPE;
+    private static final MethodHandle MH_CLOSE_SCOPE;
+    private static final MethodHandle MH_WRAP_SCOPE;
 
     private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
 
@@ -86,13 +86,15 @@ public class ProgrammableInvoker {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
-                    methodType(Object.class, Object[].class, Binding.Move[].class, Binding.Move[].class));
+                    methodType(Object.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
                     methodType(Object.class, Object[].class, MethodHandle.class, Map.class, Map.class));
-            MH_MAKE_ALLOCATOR = lookup.findStatic(NativeScope.class, "boundedScope",
+            MH_MAKE_SCOPE = lookup.findStatic(NativeScope.class, "boundedScope",
                     methodType(NativeScope.class, long.class));
-            MH_CLOSE_ALLOCATOR = lookup.findVirtual(NativeScope.class, "close",
+            MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
                     methodType(void.class));
+            MH_WRAP_SCOPE = lookup.findStatic(SharedUtils.Allocator.class, "ofScope",
+                    methodType(SharedUtils.Allocator.class, NativeScope.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -117,8 +119,8 @@ public class ProgrammableInvoker {
         this.addr = addr;
         this.callingSequence = callingSequence;
 
-        this.stackArgsBytes = callingSequence.argMoveBindings()
-                .map(Binding.Move::storage)
+        this.stackArgsBytes = argMoveBindingsStream(callingSequence)
+                .map(Binding.VMStore::storage)
                 .filter(s -> abi.arch.isStackType(s.type()))
                 .count()
                 * abi.arch.typeSize(abi.arch.stackType());
@@ -144,10 +146,10 @@ public class ProgrammableInvoker {
     }
 
     public MethodHandle getBoundMethodHandle() {
-        Binding.Move[] argMoves = callingSequence.argMoveBindings().toArray(Binding.Move[]::new);
-        Class<?>[] argMoveTypes = Arrays.stream(argMoves).map(Binding.Move::type).toArray(Class<?>[]::new);
+        Binding.VMStore[] argMoves = argMoveBindingsStream(callingSequence).toArray(Binding.VMStore[]::new);
+        Class<?>[] argMoveTypes = Arrays.stream(argMoves).map(Binding.VMStore::type).toArray(Class<?>[]::new);
 
-        Binding.Move[] retMoves = callingSequence.retMoveBindings().toArray(Binding.Move[]::new);
+        Binding.VMLoad[] retMoves = retMoveBindings(callingSequence);
         Class<?> returnType = retMoves.length == 0
                 ? void.class
                 : retMoves.length == 1
@@ -190,6 +192,20 @@ public class ProgrammableInvoker {
         return handle;
     }
 
+    private Stream<Binding.VMStore> argMoveBindingsStream(CallingSequence callingSequence) {
+        return callingSequence.argBindings()
+                .filter(Binding.VMStore.class::isInstance)
+                .map(Binding.VMStore.class::cast);
+    }
+
+    private Binding.VMLoad[] retMoveBindings(CallingSequence callingSequence) {
+        return callingSequence.retBindings()
+                .filter(Binding.VMLoad.class::isInstance)
+                .map(Binding.VMLoad.class::cast)
+                .toArray(Binding.VMLoad[]::new);
+    }
+
+
     private VMStorageProxy[] toStorageArray(Binding.Move[] moves) {
         return Arrays.stream(moves).map(Binding.Move::storage).toArray(VMStorage[]::new);
     }
@@ -200,32 +216,38 @@ public class ProgrammableInvoker {
 
         MethodHandle specializedHandle = leafHandle; // initial
 
-        int insertPos = -1;
+        int argInsertPos = -1;
+        int argAllocatorPos = -1;
         if (bufferCopySize > 0) {
-            specializedHandle = dropArguments(specializedHandle, 0, NativeScope.class);
-            insertPos++;
+            argAllocatorPos = 0;
+            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, SharedUtils.Allocator.class);
+            argInsertPos++;
         }
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
-            insertPos += bindings.stream().filter(Binding.Move.class::isInstance).count() + 1;
+            argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
             // We interpret the bindings in reverse since we have to construct a MethodHandle from the bottom up
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
-                if (binding.tag() == Binding.Tag.MOVE) {
-                    insertPos--;
+                if (binding.tag() == Binding.Tag.VM_STORE) {
+                    argInsertPos--;
                 } else {
-                    specializedHandle = binding.specializeUnbox(specializedHandle, insertPos);
+                    specializedHandle = binding.specialize(specializedHandle, argInsertPos, argAllocatorPos);
                 }
             }
         }
 
         if (highLevelType.returnType() != void.class) {
             MethodHandle returnFilter = identity(highLevelType.returnType());
+            int retAllocatorPos = 0;
+            int retInsertPos = 1;
+            returnFilter = dropArguments(returnFilter, retAllocatorPos, SharedUtils.Allocator.class);
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
-                returnFilter = binding.specializeBox(returnFilter);
+                returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
             }
+            returnFilter = insertArguments(returnFilter, retAllocatorPos, DEFAULT_ALLOCATOR);
             specializedHandle = MethodHandles.filterReturnValue(specializedHandle, returnFilter);
         }
 
@@ -233,25 +255,20 @@ public class ProgrammableInvoker {
             // insert try-finally to close the NativeScope used for Binding.Copy
             MethodHandle closer = leafType.returnType() == void.class
                   // (Throwable, NativeScope) -> void
-                ? collectArguments(empty(methodType(void.class, Throwable.class)), 1, MH_CLOSE_ALLOCATOR)
+                ? collectArguments(empty(methodType(void.class, Throwable.class)), 1, MH_CLOSE_SCOPE)
                   // (Throwable, V, NativeScope) -> V
                 : collectArguments(dropArguments(identity(specializedHandle.type().returnType()), 0, Throwable.class),
-                                   2, MH_CLOSE_ALLOCATOR);
+                                   2, MH_CLOSE_SCOPE);
+            // Handle takes a SharedUtils.Allocator, so need to wrap our NativeScope
+            specializedHandle = filterArguments(specializedHandle, argAllocatorPos, MH_WRAP_SCOPE);
             specializedHandle = tryFinally(specializedHandle, closer);
-            specializedHandle = collectArguments(specializedHandle, 0, insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize));
+            MethodHandle makeScopeHandle = insertArguments(MH_MAKE_SCOPE, 0, bufferCopySize);
+            specializedHandle = collectArguments(specializedHandle, argAllocatorPos, makeScopeHandle);
         }
         return specializedHandle;
     }
 
-    private static long toRawLongValue(MemoryAddress address) {
-        return address.toRawLongValue(); // Workaround for JDK-8239083
-    }
-
-    private static MemoryAddress ofLong(long address) {
-        return MemoryAddress.ofLong(address); // Workaround for JDK-8239083
-    }
-
-    private Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
+    private static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
         return IntStream.range(0, moves.length)
                         .boxed()
                         .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
@@ -266,7 +283,7 @@ public class ProgrammableInvoker {
      * @param returnBindings Binding.Move values describing how return values should be copied
      * @return null, a single primitive value, or an Object[] of primitive values
      */
-    Object invokeMoves(Object[] args, Binding.Move[] argBindings, Binding.Move[] returnBindings) {
+    Object invokeMoves(Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
         try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
             if (stackArgsBytes > 0) {
@@ -278,7 +295,7 @@ public class ProgrammableInvoker {
             VH_LONG.set(argBuffer.asSlice(layout.stack_args), stackArgsSeg == null ? 0L : stackArgsSeg.address().toRawLongValue());
 
             for (int i = 0; i < argBindings.length; i++) {
-                Binding.Move binding = argBindings[i];
+                Binding.VMStore binding = argBindings[i];
                 VMStorage storage = binding.storage();
                 MemorySegment ptr = abi.arch.isStackType(storage.type())
                     ? stackArgsSeg.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
@@ -301,13 +318,13 @@ public class ProgrammableInvoker {
             if (returnBindings.length == 0) {
                 return null;
             } else if (returnBindings.length == 1) {
-                Binding.Move move = returnBindings[0];
+                Binding.VMLoad move = returnBindings[0];
                 VMStorage storage = move.storage();
                 return SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
             } else { // length > 1
                 Object[] returns = new Object[returnBindings.length];
                 for (int i = 0; i < returnBindings.length; i++) {
-                    Binding.Move move = returnBindings[i];
+                    Binding.VMLoad move = returnBindings[i];
                     VMStorage storage = move.storage();
                     returns[i] = SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
                 }
@@ -323,7 +340,9 @@ public class ProgrammableInvoker {
     Object invokeInterpBindings(Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        NativeScope scope = bufferCopySize != 0 ? NativeScope.boundedScope(bufferCopySize) : null;
+        boolean hasBufferCopies = bufferCopySize != 0;
+        NativeScope scope = hasBufferCopies ? NativeScope.boundedScope(bufferCopySize) : null;
+        SharedUtils.Allocator unboxAllocator = hasBufferCopies ? SharedUtils.Allocator.ofScope(scope) : null;
         try {
             // do argument processing, get Object[] as result
             Object[] moves = new Object[leaf.type().parameterCount()];
@@ -332,7 +351,7 @@ public class ProgrammableInvoker {
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
                             moves[argIndexMap.get(storage)] = value;
-                        }, scope);
+                        }, unboxAllocator);
             }
 
             // call leaf
@@ -344,9 +363,10 @@ public class ProgrammableInvoker {
             } else if (o instanceof Object[]) {
                 Object[] oArr = (Object[]) o;
                 return BindingInterpreter.box(callingSequence.returnBindings(),
-                        (storage, type) -> oArr[retIndexMap.get(storage)]);
+                        (storage, type) -> oArr[retIndexMap.get(storage)], DEFAULT_ALLOCATOR);
             } else {
-                return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o);
+                return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
+                        DEFAULT_ALLOCATOR);
             }
         } finally {
             if (scope != null) {

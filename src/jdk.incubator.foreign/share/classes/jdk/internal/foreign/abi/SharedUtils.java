@@ -65,6 +65,8 @@ public class SharedUtils {
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
 
+    static final Allocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
+
     static {
         try {
             var lookup = MethodHandles.lookup();
