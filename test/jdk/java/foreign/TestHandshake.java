@@ -24,35 +24,43 @@
 /*
  * @test
  * @modules jdk.incubator.foreign java.base/jdk.internal.vm.annotation java.base/jdk.internal.misc
- * @run main/othervm TestHandshake
- * @run main/othervm -Xint TestHandshake
- * @run main/othervm -XX:TieredStopAtLevel=1 TestHandshake
+ * @run testng/othervm TestHandshake
+ * @run testng/othervm -Xint TestHandshake
+ * @run testng/othervm -XX:TieredStopAtLevel=1 TestHandshake
  */
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 public class TestHandshake {
 
-    static final int ITERATIONS = 10;
+    static final int ITERATIONS = 5;
 
-    static MemorySegment segment;
-
-    public static void main(String[] args) throws Exception {
+    @Test(dataProvider = "accessors")
+    public void testHandshake(Function<MemorySegment, Runnable> accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            segment = MemorySegment.allocateNative(1_000_000).share();
+            MemorySegment segment = MemorySegment.allocateNative(1_000_000).share();
             System.err.println("ITERATION " + it);
             List<Thread> accessors = new ArrayList<>();
             for (int i = 0; i < ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
-                Thread access = new Thread(memoryAccess);
+                Thread access = new Thread(accessorFactory.apply(segment));
                 access.start();
                 accessors.add(access);
             }
-            Thread t2 = new Thread(handshake);
+            Thread t2 = new Thread(new Handshaker(segment));
             t2.start();
             t2.join();
             accessors.forEach(t -> {
@@ -62,10 +70,18 @@ public class TestHandshake {
                     // do nothing
                 }
             });
+            assertTrue(!segment.isAlive());
         }
     }
 
-    static class Accessor implements Runnable {
+    static class SegmentAccessor implements Runnable {
+
+        final MemorySegment segment;
+
+        SegmentAccessor(MemorySegment segment) {
+            this.segment = segment;
+        }
+
         @Override
         public void run() {
             try {
@@ -79,11 +95,64 @@ public class TestHandshake {
                 // do nothing
             }
         }
+    }
+
+    static class BufferAccessor implements Runnable {
+
+        final ByteBuffer bb;
+
+        BufferAccessor(MemorySegment segment) {
+            this.bb = segment.asByteBuffer();
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    int sum = 0;
+                    for (int i = 0; i < bb.capacity(); i++) {
+                        sum += bb.get(i);
+                    }
+                }
+            } catch (IllegalStateException ex) {
+                // do nothing
+            }
+        }
+    }
+
+    static class BufferHandleAccessor implements Runnable {
+
+        static VarHandle handle = MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.nativeOrder());
+
+        final ByteBuffer bb;
+
+        public BufferHandleAccessor(MemorySegment segment) {
+            this.bb = segment.asByteBuffer();
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    int sum = 0;
+                    for (int i = 0; i < bb.capacity() / 2; i++) {
+                        sum += (short)handle.get(bb, i);
+                    }
+                }
+            } catch (IllegalStateException ex) {
+                // do nothing
+            }
+        }
     };
 
-    static Accessor memoryAccess = new Accessor();
-
     static class Handshaker implements Runnable {
+
+        final MemorySegment segment;
+
+        Handshaker(MemorySegment segment) {
+            this.segment = segment;
+        }
+
         @Override
         public void run() {
             try {
@@ -98,5 +167,12 @@ public class TestHandshake {
         }
     }
 
-    static Handshaker handshake = new Handshaker();
+    @DataProvider
+    static Object[][] accessors() {
+        return new Object[][] {
+                { (Function<MemorySegment, Runnable>)SegmentAccessor::new },
+                { (Function<MemorySegment, Runnable>)BufferAccessor::new },
+                { (Function<MemorySegment, Runnable>)BufferHandleAccessor::new }
+        };
+    }
 }
