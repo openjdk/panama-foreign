@@ -1130,10 +1130,11 @@ public:
     ResourceMark rm;
     if (_deopt != NULL && last_frame.is_compiled_frame() && last_frame.can_be_deoptimized()) {
       UnsafeSynchronizeThreadsFindOopClosure cl(_deopt);
+      CodeBlobToOopClosure cb_cl(&cl, !CodeBlobToOopClosure::FixRelocations);
       CompiledMethod* cm = last_frame.cb()->as_compiled_method();
 
       //FIXME: this doesn't work if reachability fences are violated by C2
-      // last_frame.oops_do(&cl, NULL, &register_map);
+      // last_frame.oops_do(&cl, &cb_cl, &register_map);
 
       // if (cl.found()) {
       //   // Found the deopt oop in a compiled method; deoptimize.
