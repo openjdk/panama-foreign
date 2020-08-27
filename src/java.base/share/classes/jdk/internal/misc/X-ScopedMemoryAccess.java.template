@@ -60,7 +60,8 @@ public class ScopedMemoryAccess {
     public interface Scope {
         void checkValidState();
 
-        class ScopedAccessException extends RuntimeException {
+        final class ScopedAccessException extends RuntimeException {
+            private ScopedAccessException() { }
             static final long serialVersionUID = 1L;
 
             public static final ScopedAccessException INSTANCE = new ScopedAccessException();

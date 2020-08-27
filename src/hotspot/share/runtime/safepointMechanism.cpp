@@ -28,7 +28,6 @@
 #include "runtime/orderAccess.hpp"
 #include "runtime/os.hpp"
 #include "runtime/safepointMechanism.inline.hpp"
-#include "runtime/vframe.inline.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/globalDefinitions.hpp"
 
