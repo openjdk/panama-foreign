@@ -246,7 +246,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
     static class SharedScope extends MemoryScope {
 
-        static Unsafe UNSAFE = Unsafe.getUnsafe();
+        static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
         SharedScope(Object ref, Runnable cleanupAction) {
             super(ref, cleanupAction);
@@ -288,7 +288,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (!CLOSED.compareAndSet(this, false, true)) {
                 throw new IllegalStateException("Already closed");
             }
-            UNSAFE.synchronizeThreads(this, SCOPE_ACCESS_EXCEPTION);
+            SCOPED_MEMORY_ACCESS.closeScope(this, SCOPE_ACCESS_EXCEPTION);
         }
     }
 }

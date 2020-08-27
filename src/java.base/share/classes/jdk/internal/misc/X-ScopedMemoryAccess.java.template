@@ -38,10 +38,20 @@ public class ScopedMemoryAccess {
 
     private static Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    //private static native void registerNatives();
-    //static {
-    //    registerNatives();
-    //}
+    private static native void registerNatives();
+    static {
+        registerNatives();
+    }
+
+    /**
+     * This function issues a global handshake operation with all
+     * Java threads. This is useful for implementing asymmetric
+     * dekker synchronization schemes, where expensive synchronization
+     * in performance sensitive common paths, may be shifted to
+     * a less common slow path instead.
+     * Top frames containg obj will be deoptimized.
+     */
+    public native void closeScope(Scope scope, Scope.ScopedAccessException exception);
 
     private ScopedMemoryAccess() {}
 
