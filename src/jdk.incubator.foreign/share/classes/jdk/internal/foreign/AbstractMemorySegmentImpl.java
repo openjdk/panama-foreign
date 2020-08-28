@@ -41,6 +41,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -297,6 +298,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
         try {
             return dup(0L, length, mask, scope.share());
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
+        }
+    }
+
+    @Override
+    public MemorySegment registerCleaner(Cleaner cleaner) {
+        try {
+            return dup(0L, length, mask, scope.withCleaner(cleaner));
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();

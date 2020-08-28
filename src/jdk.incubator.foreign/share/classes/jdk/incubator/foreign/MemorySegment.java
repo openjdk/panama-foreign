@@ -26,6 +26,7 @@
 
 package jdk.incubator.foreign;
 
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -206,6 +207,12 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
      */
     MemorySegment share();
+
+    /**
+     * SOme
+     * @return
+     */
+    MemorySegment registerCleaner(Cleaner cleaner);
 
     /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
