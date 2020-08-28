@@ -176,6 +176,11 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     public abstract void checkValidState();
 
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
+
     /**
      * Checks that this scope is still alive.
      *

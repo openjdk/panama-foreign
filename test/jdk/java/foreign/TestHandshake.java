@@ -97,6 +97,31 @@ public class TestHandshake {
         }
     }
 
+    static class SegmentCopyAccessor implements Runnable {
+
+        final MemorySegment segment;
+
+        SegmentCopyAccessor(MemorySegment segment) {
+            this.segment = segment;
+        }
+
+        @Override
+        public void run() {
+            try {
+                long split = segment.byteSize() / 2;
+                MemorySegment first = segment.asSlice(0, split);
+                MemorySegment second = segment.asSlice(split);
+                while (true) {
+                    for (int i = 0; i < segment.byteSize(); i++) {
+                        first.copyFrom(second);
+                    }
+                }
+            } catch (IllegalStateException ex) {
+                // do nothing
+            }
+        }
+    }
+
     static class BufferAccessor implements Runnable {
 
         final ByteBuffer bb;
@@ -171,6 +196,7 @@ public class TestHandshake {
     static Object[][] accessors() {
         return new Object[][] {
                 { (Function<MemorySegment, Runnable>)SegmentAccessor::new },
+                { (Function<MemorySegment, Runnable>)SegmentCopyAccessor::new },
                 { (Function<MemorySegment, Runnable>)BufferAccessor::new },
                 { (Function<MemorySegment, Runnable>)BufferHandleAccessor::new }
         };
