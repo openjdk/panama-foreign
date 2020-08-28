@@ -39,7 +39,7 @@ import java.util.Objects;
  * A scope has a liveness bit, which is updated when the scope is closed
  * (this operation is triggered by {@link AbstractMemorySegmentImpl#close()}).
  * A scope may also have an associated "owner" thread that confines some operations to
- * associated owner thread such as {@link #close()} or {@link #dup(Thread)}.
+ * associated owner thread such as {@link #close()} or {@link #confineTo(Thread)}.
  * Furthermore, a scope is either root scope ({@link #create(Object, Runnable) created}
  * when memory segment is allocated) or child scope ({@link #acquire() acquired} from root scope).
  * When a child scope is acquired from another child scope, it is actually acquired from
@@ -145,7 +145,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract MemoryScope dup(Thread newOwner);
+    abstract MemoryScope confineTo(Thread newOwner);
 
     abstract MemoryScope share();
 
@@ -225,9 +225,10 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
 
         @Override
-        MemoryScope dup(Thread newOwner) {
-            Objects.requireNonNull(newOwner, "newOwner");
-            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
+        MemoryScope confineTo(Thread newOwner) {
+            if (newOwner == owner) {
+                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+            }
             justClose();
             return new ConfinedScope(newOwner, ref, cleanupAction);
         }
@@ -262,7 +263,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
 
         @Override
-        MemoryScope dup(Thread newOwner) {
+        MemoryScope confineTo(Thread newOwner) {
             Objects.requireNonNull(newOwner, "newOwner");
             // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
             justClose();

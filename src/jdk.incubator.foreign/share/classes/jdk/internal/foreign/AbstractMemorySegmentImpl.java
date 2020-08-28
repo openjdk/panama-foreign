@@ -282,15 +282,11 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (!isSet(HANDOFF)) {
             throw unsupportedAccessMode(HANDOFF);
         }
-        if (scope.ownerThread() == newOwner) {
-            throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-        } else {
-            try {
-                return dup(0L, length, mask, scope.dup(newOwner));
-            } finally {
-                //flush read/writes to segment memory before returning the new segment
-                VarHandle.fullFence();
-            }
+        try {
+            return dup(0L, length, mask, scope.confineTo(newOwner));
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
         }
     }
 
@@ -299,7 +295,12 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (!isSet(SHARE)) {
             throw unsupportedAccessMode(HANDOFF);
         }
-        return dup(0, length, mask, scope.share());
+        try {
+            return dup(0L, length, mask, scope.share());
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
+        }
     }
 
     @Override
