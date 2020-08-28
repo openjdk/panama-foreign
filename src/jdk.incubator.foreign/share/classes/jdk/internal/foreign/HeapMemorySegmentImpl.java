@@ -121,7 +121,9 @@ public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
 
     static <Z> HeapMemorySegmentImpl<Z> makeHeapSegment(Supplier<Z> obj, int length, int base, int scale) {
         int byteSize = length * scale;
-        MemoryScope scope = MemoryScope.create(null, null);
+        MemoryScope scope = MemoryScope.create(null, DUMMY_CLEANUP);
         return new HeapMemorySegmentImpl<>(base, obj, byteSize, defaultAccessModes(byteSize), scope);
     }
+
+    static final Runnable DUMMY_CLEANUP = () -> { };
 }

@@ -33,6 +33,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.lang.invoke.MethodHandles;
 import java.lang.ref.Cleaner;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -59,11 +60,14 @@ import java.util.function.Function;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
+    private static final Function<MemoryScope, Cleaner.Cleanable> NULL_FACTORY = scope -> null;
+
     private MemoryScope(Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
+        Objects.requireNonNull(cleanupAction);
+        Objects.requireNonNull(cleanableFunction);
         this.ref = ref;
         this.cleanupAction = cleanupAction;
-        this.cleanable = cleanableFunction != null ?
-                (PhantomCleanable<?>)cleanableFunction.apply(this) : null;
+        this.cleanable = (PhantomCleanable<?>)cleanableFunction.apply(this);
     }
 
     /**
@@ -80,7 +84,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @return a root MemoryScope
      */
     static MemoryScope create(Object ref, Runnable cleanupAction) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, null);
+        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, NULL_FACTORY);
     }
 
     /**
@@ -101,8 +105,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     static MemoryScope createUnchecked(Thread owner, Object ref, Runnable cleanupAction) {
         return owner != null ?
-                new ConfinedScope(owner, ref, cleanupAction, null) :
-                new SharedScope(ref, cleanupAction, null);
+                new ConfinedScope(owner, ref, cleanupAction, NULL_FACTORY) :
+                new SharedScope(ref, cleanupAction, NULL_FACTORY);
     }
 
     protected Object ref;
@@ -129,7 +133,21 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract void close();
+    final void close() {
+        checkValidState();
+        justClose();
+        try {
+            if (cleanable != null) {
+                // deregister
+                cleanable.clear();
+            }
+            cleanupAction.run();
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
+
+    abstract void justClose();
 
     /**
      * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
@@ -222,15 +240,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             checkAliveConfined(this);
         }
 
-        @Override
-        synchronized void close() {
-            checkValidState();
-            justClose();
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
-        }
-
         void justClose() {
             checkValidState();
             closed = true;
@@ -275,15 +284,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         SharedScope(Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
             super(ref, cleanupAction, cleanableFunction);
-        }
-
-        @Override
-        void close() {
-            checkValidState();
-            justClose();
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
         }
 
         @Override
