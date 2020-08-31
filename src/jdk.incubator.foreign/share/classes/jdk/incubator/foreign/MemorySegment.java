@@ -793,7 +793,7 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #share()}).
+     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #withOwnerThread(Thread)}}).
      * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
