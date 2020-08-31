@@ -279,25 +279,15 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public MemorySegment withOwnerThread(Thread newOwner) {
-        Objects.requireNonNull(newOwner);
-        if (!isSet(HANDOFF)) {
-            throw unsupportedAccessMode(HANDOFF);
+        int expectedMode = newOwner != null ? HANDOFF : SHARE;
+        if (!isSet(expectedMode)) {
+            throw unsupportedAccessMode(expectedMode);
         }
         try {
-            return dup(0L, length, mask, scope.confineTo(newOwner));
-        } finally {
-            //flush read/writes to segment memory before returning the new segment
-            VarHandle.fullFence();
-        }
-    }
-
-    @Override
-    public MemorySegment share() {
-        if (!isSet(SHARE)) {
-            throw unsupportedAccessMode(HANDOFF);
-        }
-        try {
-            return dup(0L, length, mask, scope.share());
+            return dup(0L, length, mask,
+                    expectedMode == HANDOFF ?
+                            scope.confineTo(newOwner) :
+                            scope.share());
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();

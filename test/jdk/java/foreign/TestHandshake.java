@@ -52,7 +52,7 @@ public class TestHandshake {
     @Test(dataProvider = "accessors")
     public void testHandshake(Function<MemorySegment, Runnable> accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            MemorySegment segment = MemorySegment.allocateNative(1_000_000).share();
+            MemorySegment segment = MemorySegment.allocateNative(1_000_000).withOwnerThread(null);
             System.err.println("ITERATION " + it);
             List<Thread> accessors = new ArrayList<>();
             for (int i = 0; i < ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
