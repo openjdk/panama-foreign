@@ -39,7 +39,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongFunction;
@@ -377,7 +376,7 @@ public class TestSegments {
         SHARE(MemorySegment.SHARE) {
             @Override
             void run(MemorySegment segment) {
-                segment.share();
+                segment.withOwnerThread(null);
             }
         },
         CLOSE(MemorySegment.CLOSE) {

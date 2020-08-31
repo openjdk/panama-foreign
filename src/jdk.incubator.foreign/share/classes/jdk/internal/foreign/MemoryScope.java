@@ -123,7 +123,15 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract void close();
+    final void close() {
+        checkValidState();
+        justClose();
+        if (cleanupAction != null) {
+            cleanupAction.run();
+        }
+    }
+
+    abstract void justClose();
 
     /**
      * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
@@ -145,9 +153,17 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract MemoryScope confineTo(Thread newOwner);
+    MemoryScope confineTo(Thread newOwner) {
+        checkValidState();
+        justClose();
+        return new ConfinedScope(newOwner, ref, cleanupAction);
+    }
 
-    abstract MemoryScope share();
+    MemoryScope share() {
+        checkValidState();
+        justClose();
+        return new SharedScope(ref, cleanupAction);
+    }
 
     /**
      * Returns "owner" thread of this scope.
@@ -210,15 +226,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             checkAliveConfined(this);
         }
 
-        @Override
-        void close() {
-            checkValidState();
-            justClose();
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
-        }
-
         void justClose() {
             checkValidState();
             closed = true;
@@ -229,14 +236,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (newOwner == owner) {
                 throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
             }
-            justClose();
-            return new ConfinedScope(newOwner, ref, cleanupAction);
-        }
-
-        @Override
-        MemoryScope share() {
-            justClose();
-            return new SharedScope(ref, cleanupAction);
+            return super.confineTo(newOwner);
         }
 
         @Override
@@ -251,23 +251,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         SharedScope(Object ref, Runnable cleanupAction) {
             super(ref, cleanupAction);
-        }
-
-        @Override
-        void close() {
-            checkValidState();
-            justClose();
-            if (cleanupAction != null) {
-                cleanupAction.run();
-            }
-        }
-
-        @Override
-        MemoryScope confineTo(Thread newOwner) {
-            Objects.requireNonNull(newOwner, "newOwner");
-            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
-            justClose();
-            return new ConfinedScope(newOwner, ref, cleanupAction);
         }
 
         @Override
