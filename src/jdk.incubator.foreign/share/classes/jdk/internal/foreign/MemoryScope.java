@@ -61,12 +61,11 @@ import java.util.function.Function;
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
     private static final Function<MemoryScope, Cleaner.Cleanable> NULL_FACTORY = scope -> null;
+    private static final Runnable DUMMY_CLEANUP = () -> { };
 
     private MemoryScope(Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
-        Objects.requireNonNull(cleanupAction);
-        Objects.requireNonNull(cleanableFunction);
         this.ref = ref;
-        this.cleanupAction = cleanupAction;
+        this.cleanupAction = cleanupAction == null ? DUMMY_CLEANUP : cleanupAction;
         this.cleanable = (PhantomCleanable<?>)cleanableFunction.apply(this);
     }
 
@@ -267,9 +266,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             }
             justClose();
             return new ConfinedScope(owner, ref, cleanupAction,
-                    scope -> cleanupAction != null ?
-                            cleaner.register(scope, cleanupAction) :
-                            null);
+                    scope -> cleaner.register(scope, cleanupAction));
         }
 
         @Override
@@ -306,9 +303,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             }
             justClose();
             return new SharedScope(ref, cleanupAction,
-                    scope -> cleanupAction != null ?
-                            cleaner.register(scope, cleanupAction) :
-                            null);
+                    scope -> cleaner.register(scope, cleanupAction));
         }
 
         @Override
