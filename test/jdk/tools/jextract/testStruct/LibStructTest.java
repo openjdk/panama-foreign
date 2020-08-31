@@ -31,12 +31,22 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Struct -t test.jextract.struct -- struct.h
  * @run testng/othervm -Dforeign.restricted=permit LibStructTest
  */
+
+/*
+ * @test id=sources
+ * @library ..
+ * @modules jdk.incubator.jextract
+ *
+ * @run driver JtregJextractSources -l Struct -t test.jextract.struct -- struct.h
+ * @run testng/othervm -Dforeign.restricted=permit LibStructTest
+ */
+
 public class LibStructTest {
     @Test
     public void testMakePoint() {
