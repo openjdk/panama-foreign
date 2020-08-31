@@ -27,15 +27,11 @@
 package jdk.internal.foreign;
 
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.ref.PhantomCleanable;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.ref.Cleaner;
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Reference;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -60,13 +56,9 @@ import java.util.function.Function;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
-    private static final Function<MemoryScope, Cleaner.Cleanable> NULL_FACTORY = scope -> null;
-    private static final Runnable DUMMY_CLEANUP = () -> { };
-
-    private MemoryScope(Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
+    private MemoryScope(Object ref, Runnable cleanupAction) {
         this.ref = ref;
-        this.cleanupAction = cleanupAction == null ? DUMMY_CLEANUP : cleanupAction;
-        this.cleanable = (PhantomCleanable<?>)cleanableFunction.apply(this);
+        this.cleanupAction = cleanupAction;
     }
 
     /**
@@ -83,7 +75,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @return a root MemoryScope
      */
     static MemoryScope create(Object ref, Runnable cleanupAction) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, NULL_FACTORY);
+        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction);
     }
 
     /**
@@ -104,13 +96,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     static MemoryScope createUnchecked(Thread owner, Object ref, Runnable cleanupAction) {
         return owner != null ?
-                new ConfinedScope(owner, ref, cleanupAction, NULL_FACTORY) :
-                new SharedScope(ref, cleanupAction, NULL_FACTORY);
+                new ConfinedScope(owner, ref, cleanupAction) :
+                new SharedScope(ref, cleanupAction);
     }
 
     protected Object ref;
     protected Runnable cleanupAction;
-    protected final PhantomCleanable<?> cleanable;
     protected boolean closed; // = false
     private static final VarHandle CLOSED;
 
@@ -135,14 +126,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     final void close() {
         checkValidState();
         justClose();
-        try {
-            if (cleanable != null) {
-                // deregister
-                cleanable.clear();
-            }
+        if (cleanupAction != null) {
             cleanupAction.run();
-        } finally {
-            Reference.reachabilityFence(this);
         }
     }
 
@@ -168,14 +153,16 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      *                               scope(s) or if this method is called outside of
      *                               owner thread in checked scope
      */
-    abstract MemoryScope confineTo(Thread newOwner);
+    MemoryScope confineTo(Thread newOwner) {
+        checkValidState();
+        justClose();
+        return new ConfinedScope(newOwner, ref, cleanupAction);
+    }
 
-    abstract MemoryScope share();
-
-    abstract MemoryScope withCleaner(Cleaner cleaner);
-
-    protected Cleaner.Cleanable cleanable() {
-        return cleanable;
+    MemoryScope share() {
+        checkValidState();
+        justClose();
+        return new SharedScope(ref, cleanupAction);
     }
 
     /**
@@ -222,12 +209,26 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
     }
 
+    /**
+     * Checks that this scope is still alive.
+     *
+     * @throws IllegalStateException if this scope is already closed
+     */
+    void forceCleanup() {
+        if (!CLOSED.compareAndSet(this, false, true)) {
+            throw new IllegalStateException("Already closed");
+        }
+        if (cleanupAction != null) {
+            cleanupAction.run();
+        }
+    }
+
     static class ConfinedScope extends MemoryScope {
 
         final Thread owner;
 
-        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
-            super(ref, cleanupAction, cleanableFunction);
+        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction) {
+            super(ref, cleanupAction);
             this.owner = owner;
         }
 
@@ -249,24 +250,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (newOwner == owner) {
                 throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
             }
-            justClose();
-            return new ConfinedScope(newOwner, ref, cleanupAction, MemoryScope::cleanable);
-        }
-
-        @Override
-        MemoryScope share() {
-            justClose();
-            return new SharedScope(ref, cleanupAction, MemoryScope::cleanable);
-        }
-
-        @Override
-        MemoryScope withCleaner(Cleaner cleaner) {
-            if (cleanable != null) {
-                throw new IllegalStateException("Already registered with cleaner!");
-            }
-            justClose();
-            return new ConfinedScope(owner, ref, cleanupAction,
-                    scope -> cleaner.register(scope, cleanupAction));
+            return super.confineTo(newOwner);
         }
 
         @Override
@@ -279,31 +263,13 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-        SharedScope(Object ref, Runnable cleanupAction, Function<MemoryScope, Cleaner.Cleanable> cleanableFunction) {
-            super(ref, cleanupAction, cleanableFunction);
-        }
-
-        @Override
-        MemoryScope confineTo(Thread newOwner) {
-            Objects.requireNonNull(newOwner, "newOwner");
-            // pre-allocate duped scope so we don't get OOME later and be left with this scope closed
-            justClose();
-            return new ConfinedScope(newOwner, ref, cleanupAction, MemoryScope::cleanable);
+        SharedScope(Object ref, Runnable cleanupAction) {
+            super(ref, cleanupAction);
         }
 
         @Override
         MemoryScope share() {
             throw new IllegalStateException("Already shared");
-        }
-
-        @Override
-        MemoryScope withCleaner(Cleaner cleaner) {
-            if (cleanable != null) {
-                throw new IllegalStateException("Already registered with cleaner!");
-            }
-            justClose();
-            return new SharedScope(ref, cleanupAction,
-                    scope -> cleaner.register(scope, cleanupAction));
         }
 
         @Override

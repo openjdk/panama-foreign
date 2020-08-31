@@ -187,9 +187,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
      * Mismatch over long lengths.
      */
     private static long vectorizedMismatchLargeForBytes(MemoryScope aScope, MemoryScope bScope,
-                                                       Object a, long aOffset,
-                                                       Object b, long bOffset,
-                                                       long length) {
+                                                        Object a, long aOffset,
+                                                        Object b, long bOffset,
+                                                        long length) {
         long off = 0;
         long remaining = length;
         int i, size;
@@ -305,13 +305,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public MemorySegment registerCleaner(Cleaner cleaner) {
-        try {
-            return dup(0L, length, mask, scope.withCleaner(cleaner));
-        } finally {
-            //flush read/writes to segment memory before returning the new segment
-            VarHandle.fullFence();
-        }
+    public void registerCleaner(Cleaner cleaner) {
+        checkValidState();
+        cleaner.register(this, scope::forceCleanup);
     }
 
     @Override
@@ -476,7 +472,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
         return new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
-                        this, offset, length));
+                this, offset, length));
     }
 
     protected int id() {
@@ -606,7 +602,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createUnchecked(null, null, null)
+            0, 0, MemoryScope.createUnchecked(null, null, null)
     ) {
         @Override
         ByteBuffer makeByteBuffer() {

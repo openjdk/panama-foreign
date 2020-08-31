@@ -212,7 +212,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * SOme
      * @return
      */
-    MemorySegment registerCleaner(Cleaner cleaner);
+    void registerCleaner(Cleaner cleaner);
 
     /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},

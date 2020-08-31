@@ -25,28 +25,46 @@
 
 /*
  * @test
+ * @modules java.base/jdk.internal.ref
+ *          jdk.incubator.foreign/jdk.incubator.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestCleaner
  */
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import org.testng.annotations.Test;
-
 import java.lang.ref.Cleaner;
-import java.lang.ref.Reference;
+import jdk.internal.ref.CleanerFactory;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class TestCleaner {
 
-    static Cleaner cleaner = Cleaner.create();
+    static class SegmentState {
+        private AtomicInteger cleanupCalls = new AtomicInteger(0);
 
-    boolean isDone = false;
+        void cleanup() {
+            cleanupCalls.incrementAndGet();
+        }
 
-    @Test
-    public void test() {
-        MemorySegment segment = makeSegment();
-        segment = segment.registerCleaner(cleaner);
+        int cleanupCalls() {
+            return cleanupCalls.get();
+        }
+    }
+
+    @Test(dataProvider = "cleaners")
+    public void test(int n, Supplier<Cleaner> cleanerFactory) {
+        SegmentState segmentState = new SegmentState();
+        MemorySegment segment = makeSegment(segmentState);
+        for (int i = 0 ; i < n ; i++) {
+            segment.registerCleaner(cleanerFactory.get());
+        }
         segment = null;
-        while (!checkDone()) {
+        while (segmentState.cleanupCalls() == 0) {
             byte[] b = new byte[100];
             System.gc();
             try {
@@ -55,17 +73,29 @@ public class TestCleaner {
                 throw new AssertionError(ex);
             }
         }
+        assertEquals(segmentState.cleanupCalls(), 1);
     }
 
-    MemorySegment makeSegment() {
-        return MemorySegment.ofNativeRestricted(MemoryAddress.NULL, 10, null, this::done, null);
+    MemorySegment makeSegment(SegmentState segmentState) {
+        return MemorySegment.ofNativeRestricted(MemoryAddress.NULL, 10, null, segmentState::cleanup, null);
     }
 
-    synchronized void done() {
-        isDone = true;
-    }
+    @DataProvider
+    static Object[][] cleaners() {
+        Supplier<Cleaner> CLEANER = Cleaner::create;
+        Supplier<Cleaner> CLEANER_FACTORY = CleanerFactory::cleaner;
 
-    synchronized boolean checkDone() {
-        return isDone;
+        return new Object[][]{
+                { 1, CLEANER },
+                { 2, CLEANER },
+                { 4, CLEANER },
+                { 8, CLEANER },
+                { 16, CLEANER },
+                { 1, CLEANER_FACTORY },
+                { 2, CLEANER_FACTORY },
+                { 4, CLEANER_FACTORY },
+                { 8, CLEANER_FACTORY },
+                { 16, CLEANER_FACTORY },
+        };
     }
 }
