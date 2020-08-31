@@ -205,11 +205,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case UNION: {
                     structClass = true;
                     String className = d.name().isEmpty() ? parent.name() : d.name();
-                    currentBuilder = new StructBuilder(currentBuilder, className, pkgName, constantHelper);
+                    MemoryLayout parentLayout = parentLayout(d);
+                    String parentLayoutFieldName = className + "$struct";
+                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout, pkgName, constantHelper);
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.incrAlign();
                     currentBuilder.classBegin();
-                    currentBuilder.addLayoutGetter(className, d.layout().get());
+                    currentBuilder.addLayoutGetter(parentLayoutFieldName, d.layout().get());
                     break;
                 }
             }
@@ -417,28 +419,27 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (parent != null) { //struct field
-            MemoryLayout parentLayout = parentLayout(parent);
             if (isSegment) {
                 if (sizeAvailable) {
-                    currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, parentLayout);
+                    currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
                 } else {
                     warn("Layout size not available for " + fieldName);
                 }
             } else {
-                currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
-                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
-                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, parentLayout);
+                currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
+                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
+                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
             }
         } else {
             if (sizeAvailable) {
                 if (isSegment) {
-                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
+                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
                 } else {
                     toplevelBuilder.addLayoutGetter(fieldName, layout);
-                    toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz,null);
-                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout, null);
-                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, null);
-                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, null);
+                    toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
+                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
+                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
+                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
                 }
             } else {
                 warn("Layout size not available for " + fieldName);

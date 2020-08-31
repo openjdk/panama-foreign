@@ -106,15 +106,15 @@ abstract class JavaSourceBuilder {
         emitForwardGetter(constantHelper.addLayout(javaName, layout));
     }
 
-    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        emitForwardGetter(constantHelper.addVarHandle(javaName, nativeName, layout, type, parentLayout));
+    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        emitForwardGetter(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
     }
 
     void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs));
     }
 
-    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout));
     }
 
@@ -122,7 +122,7 @@ abstract class JavaSourceBuilder {
         emitForwardGetter(constantHelper.addConstant(javaName, type, value));
     }
 
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         incrAlign();
         indent();
         append(PUB_MODS + type.getName() + " " + javaName + "$get() {\n");
@@ -130,21 +130,21 @@ abstract class JavaSourceBuilder {
         indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(javaName, nativeName, layout, type, null) + ".get(" + vhParam + ");\n");
+                + globalVarHandleGetCallString(javaName, nativeName, layout, type) + ".get(" + vhParam + ");\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
     }
 
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         incrAlign();
         indent();
         append(PUB_MODS + "void " + javaName + "$set(" + type.getName() + " x) {\n");
         incrAlign();
         indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
-        append(varHandleGetCallString(javaName, nativeName, layout, type, null) + ".set(" + vhParam + ", x);\n");
+        append(globalVarHandleGetCallString(javaName, nativeName, layout, type) + ".set(" + vhParam + ", x);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -202,8 +202,8 @@ abstract class JavaSourceBuilder {
         return getCallString(constantHelper.addMethodHandle(javaName, nativeName, mt, fDesc, varargs));
     }
 
-    protected String varHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        return getCallString(constantHelper.addVarHandle(javaName, nativeName, layout, type, parentLayout));
+    private String globalVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        return getCallString(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
     }
 
     protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
@@ -223,4 +223,5 @@ abstract class JavaSourceBuilder {
         name = Utils.javaSafeIdentifier(name);
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
     }
+
 }

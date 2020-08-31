@@ -122,14 +122,23 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout __) {
+        return addVarHandle(javaName, nativeName, layout, type, parentJavaName);
+    }
+
+    @Override
+    public DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        return addVarHandle(javaName, nativeName, layout, type, null);
+    }
+
+    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaFieldName) {
         newConstantClass();
         String varHandleName = javaName + "$VH";
 
         if (namesGenerated.containsKey(varHandleName)) {
             return namesGenerated.get(varHandleName);
         } else {
-            String fieldName = emitVarHandleField(javaName, type, layout);
+            String fieldName = emitVarHandleField(javaName, nativeName, type, layout, parentJavaFieldName);
             DirectMethodHandleDesc getter = emitGetter(varHandleName, VarHandle.class, fieldName);
             namesGenerated.put(varHandleName, getter);
             return getter;
@@ -369,7 +378,7 @@ class SourceConstantHelper implements ConstantHelper {
         return name + "$VH_";
     }
 
-    private String emitVarHandleField(String javaName, Class<?> type, MemoryLayout layout) {
+    private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout, String parentJavaName) {
         addLayout(javaName, layout);
         incrAlign();
         String typeName = type.getName();
@@ -383,8 +392,12 @@ class SourceConstantHelper implements ConstantHelper {
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
         }
-        append(getLayoutFieldName(javaName));
-        append(".varHandle(" + typeName + ".class)");
+        append(getLayoutFieldName(parentJavaName != null ? parentJavaName : javaName));
+        append(".varHandle(" + typeName + ".class");
+        if (parentJavaName != null) {
+            append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
+        }
+        append(")");
         if (isAddr) {
             append(")");
         }
