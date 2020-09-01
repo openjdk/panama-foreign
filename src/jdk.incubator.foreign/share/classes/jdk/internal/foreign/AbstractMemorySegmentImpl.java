@@ -140,6 +140,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    public void copyFromSwap(MemorySegment src, long elemSize) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkAccess(0, size, true);
+        that.checkAccess(0, size, false);
+        UNSAFE.copySwapMemory(
+                that.base(), that.min(),
+                base(), min(), size, elemSize);
+    }
+
     private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
             .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
@@ -250,12 +260,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (scope.ownerThread() == newOwner) {
             throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
         } else {
-            try {
-                return dup(0L, length, mask, scope.dup(newOwner));
-            } finally {
-                //flush read/writes to segment memory before returning the new segment
-                VarHandle.fullFence();
-            }
+            return dupAndClose(newOwner);
+        }
+    }
+
+    public MemorySegment dupAndClose(Thread newOwner) {
+        try {
+            return dup(0L, length, mask, scope.dup(newOwner));
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
         }
     }
 
@@ -570,4 +584,5 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             throw new UnsupportedOperationException();
         }
     };
+
 }
