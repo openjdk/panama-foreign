@@ -35,7 +35,8 @@ import java.util.List;
 
 interface ConstantHelper {
     DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout);
-    DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout);
+    DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout);
+    DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type);
     DirectMethodHandleDesc addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs);
     DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout);
     DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc);

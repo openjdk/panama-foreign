@@ -33,10 +33,15 @@ import jdk.incubator.foreign.MemorySegment;
 class StructBuilder extends JavaSourceBuilder {
 
     private final JavaSourceBuilder prev;
+    private final String parentLayoutFieldName;
+    private final MemoryLayout parentLayout;
 
-    StructBuilder(JavaSourceBuilder prev, String className, String pkgName, ConstantHelper constantHelper) {
+    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout layout, String pkgName, ConstantHelper constantHelper) {
         super(prev.uniqueNestedClassName(className), pkgName, constantHelper);
         this.prev = prev;
+        this.parentLayoutFieldName = parentLayoutFieldName;
+        this.parentLayout = layout;
+
     }
 
     JavaSourceBuilder prev() {
@@ -103,8 +108,8 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        var desc = constantHelper.addVarHandle(getQualifiedName(javaName), nativeName, layout, type, parentLayout);
+    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, parentLayoutFieldName, parentLayout);
         incrAlign();
         indent();
         append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + javaName + "$VH() {\n");
@@ -119,7 +124,7 @@ class StructBuilder extends JavaSourceBuilder {
 
     @Override
     void addLayoutGetter(String javaName, MemoryLayout layout) {
-        var desc = constantHelper.addLayout(javaName + "$struct", layout);
+        var desc = constantHelper.addLayout(javaName, layout);
         incrAlign();
         indent();
         append(PUB_MODS + displayName(desc.invocationType().returnType()) + " $LAYOUT() {\n");
@@ -133,41 +138,41 @@ class StructBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         incrAlign();
         indent();
         append(PUB_MODS + type.getName() + " " + javaName + "$get(MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) + ".get(seg);\n");
+                + fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayoutFieldName, parentLayout) + ".get(seg);\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
 
-        addIndexGetter(javaName, nativeName, layout, type, parentLayout);
+        addIndexGetter(javaName, nativeName, layout, type, parentLayoutFieldName, parentLayout);
     }
 
     @Override
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         incrAlign();
         indent();
         String param = MemorySegment.class.getName() + " seg";
         append(PUB_MODS + "void " + javaName + "$set(" + param + ", " + type.getName() + " x) {\n");
         incrAlign();
         indent();
-        append(varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, null) + ".set(seg, x);\n");
+        append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayoutFieldName, parentLayout) + ".set(seg, x);\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
 
-        addIndexSetter(javaName, nativeName, layout, type, parentLayout);
+        addIndexSetter(javaName, nativeName, layout, type, parentLayoutFieldName, parentLayout);
     }
 
     @Override
-    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout, MemoryLayout parentLayout) {
+    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         incrAlign();
         indent();
         append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
@@ -234,7 +239,7 @@ class StructBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         String params = MemorySegment.class.getName() + " addr, long index";
@@ -242,7 +247,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) +
+                + fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentJavaName, parentLayout) +
                 ".get(addr.asSlice(index*sizeof()));\n");
         decrAlign();
         indent();
@@ -250,18 +255,22 @@ class StructBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout) {
         incrAlign();
         indent();
         String params = MemorySegment.class.getName() + " addr, long index, " + type.getName() + " x";
         append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        append(varHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentLayout) +
+        append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type, parentJavaName, parentLayout) +
                 ".set(addr.asSlice(index*sizeof()), x);\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
+    }
+
+    private String fieldVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout) {
+        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, parentJavaName, parentLayout));
     }
 }

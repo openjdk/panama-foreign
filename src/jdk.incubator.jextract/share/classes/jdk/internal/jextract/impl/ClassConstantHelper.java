@@ -193,7 +193,16 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String ignored, MemoryLayout parentLayout) {
+        return addVarHandle(javaName, nativeName, layout, type, parentLayout);
+    }
+
+    @Override
+    public DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        return addVarHandle(javaName, nativeName, layout, type, null);
+    }
+
+    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
         return emitCondyGetter(javaName + "$VH", VarHandle.class, varHandleDesc(javaName, nativeName, layout, type, parentLayout));
     }
 
