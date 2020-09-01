@@ -617,6 +617,6 @@ public class WhiteBox {
 
   // Walk stack frames of current thread
   public native void verifyFrames();
-  
+
   public native boolean isJVMTIIncluded();
 }
