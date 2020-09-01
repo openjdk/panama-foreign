@@ -43,7 +43,7 @@ public class JtregJextractSources {
 
         Path outputDir = Paths.get(System.getProperty("test.classes", "."));
 
-        List<String> files = Files.find(sourcePath.toAbsolutePath(), 999, (path, __) -> path.toString().endsWith(".java"))
+        List<String> files = Files.find(sourcePath.toAbsolutePath(), 999, (path, ignored) -> path.toString().endsWith(".java"))
                 .map(p -> p.toAbsolutePath().toString())
                 .collect(Collectors.toList());
 

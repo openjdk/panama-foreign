@@ -122,7 +122,7 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout __) {
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout ignored) {
         return addVarHandle(javaName, nativeName, layout, type, parentJavaName);
     }
 

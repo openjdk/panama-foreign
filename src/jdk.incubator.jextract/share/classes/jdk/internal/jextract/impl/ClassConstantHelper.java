@@ -193,7 +193,7 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String __, MemoryLayout parentLayout) {
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String ignored, MemoryLayout parentLayout) {
         return addVarHandle(javaName, nativeName, layout, type, parentLayout);
     }
 
