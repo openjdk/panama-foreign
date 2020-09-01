@@ -64,6 +64,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     protected JavaSourceBuilder currentBuilder;
     protected final ConstantHelper constantHelper;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
+    protected final AnnotationWriter annotationWriter = new AnnotationWriter();
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
@@ -142,6 +143,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.add(toplevelBuilder.build());
             files.addAll(constantHelper.getClasses());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
+            files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -155,6 +157,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                         String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
                                 .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
+    }
+
+    private String getCAnnotationSource() throws URISyntaxException, IOException {
+        URL cAnnotation = OutputFactory.class.getResource("resources/C.java.template");
+        return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
+                String.join("\n", Files.readAllLines(Paths.get(cAnnotation.toURI())));
     }
 
     private void generateDecl(Declaration tree) {
@@ -185,9 +193,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
+        String anno = annotationWriter.getCAnnotation(constant.type());
         toplevelBuilder.addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
-                typeTranslator.getJavaType(constant.type()), constant.value());
+                typeTranslator.getJavaType(constant.type()), constant.value(), anno);
         return null;
     }
 
@@ -207,7 +216,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     String className = d.name().isEmpty() ? parent.name() : d.name();
                     MemoryLayout parentLayout = parentLayout(d);
                     String parentLayoutFieldName = className + "$struct";
-                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout, pkgName, constantHelper);
+                    String anno = annotationWriter.getCAnnotation(Type.declared(d));
+                    String arrayAnno = annotationWriter.getCAnnotation(Type.array(Type.declared(d)));
+                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout, pkgName, constantHelper, anno, arrayAnno);
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.incrAlign();
                     currentBuilder.classBegin();
@@ -295,8 +306,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                                           .map(Declaration.Variable::name)
                                           .map(p -> !p.isEmpty() ? Utils.javaSafeIdentifier(p) : p)
                                           .collect(Collectors.toList());
+        List<String> annos = funcTree.parameters()
+                .stream()
+                .map(Declaration.Variable::type)
+                .map(annotationWriter::getCAnnotation)
+                .collect(Collectors.toList());
+        String returnAnno = annotationWriter.getCAnnotation(funcTree.type().returnType());
         toplevelBuilder.addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
-                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
+                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
             Type.Function f = getAsFunctionPointer(param.type());
@@ -308,7 +325,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                toplevelBuilder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow());
+                String anno = annotationWriter.getCAnnotation(param.type());
+                toplevelBuilder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow(), anno);
                 i++;
             }
         }
@@ -371,7 +389,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 }
             }
         } else if (type instanceof Type.Primitive) {
-             toplevelBuilder.emitPrimitiveTypedef((Type.Primitive)type, tree.name());
+             String anno = annotationWriter.getCAnnotation(type);
+             toplevelBuilder.emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
         }
         return null;
     }
@@ -403,6 +422,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
+        String anno = annotationWriter.getCAnnotation(type);
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
                 (layout instanceof ValueLayout && layout.byteSize() > 8)) {
             //skip
@@ -427,8 +447,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 }
             } else {
                 currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
+                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, anno);
+                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, anno);
             }
         } else {
             if (sizeAvailable) {
@@ -438,8 +458,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     toplevelBuilder.addLayoutGetter(fieldName, layout);
                     toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
                     toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
-                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
-                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
+                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, anno);
+                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, anno);
                 }
             } else {
                 warn("Layout size not available for " + fieldName);
