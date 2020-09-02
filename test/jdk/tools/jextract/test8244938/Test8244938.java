@@ -26,12 +26,22 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.test8244938.test8244938_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @bug 8244938
  * @summary Crash in foreign ABI CallArranger class when a test native function returns a nested struct
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8244938 -t test.jextract.test8244938 -- test8244938.h
+ * @run testng/othervm -Dforeign.restricted=permit Test8244938
+ */
+
+/*
+ * @test id=sources
+ * @bug 8244938
+ * @summary Crash in foreign ABI CallArranger class when a test native function returns a nested struct
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l Test8244938 -t test.jextract.test8244938 -- test8244938.h
  * @run testng/othervm -Dforeign.restricted=permit Test8244938
  */
 public class Test8244938 {

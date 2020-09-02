@@ -28,10 +28,17 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.fp.funcPtr_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l FuncPtr -t test.jextract.fp -- funcPtr.h
+ * @run testng/othervm -Dforeign.restricted=permit LibFuncPtrTest
+ */
+/*
+ * @test id=sources
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l FuncPtr -t test.jextract.fp -- funcPtr.h
  * @run testng/othervm -Dforeign.restricted=permit LibFuncPtrTest
  */
 public class LibFuncPtrTest {

@@ -31,12 +31,21 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.arrayparam.arrayparam_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @bug 8252121
  * @summary jextract generated code fails with ABI for typedefed array type parameters
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.arrayparam -l Arrayparam -- arrayparam.h
+ * @run testng/othervm -Dforeign.restricted=permit Test8252121
+ */
+/*
+ * @test id=sources
+ * @bug 8252121
+ * @summary jextract generated code fails with ABI for typedefed array type parameters
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -t test.jextract.arrayparam -l Arrayparam -- arrayparam.h
  * @run testng/othervm -Dforeign.restricted=permit Test8252121
  */
 public class Test8252121 {

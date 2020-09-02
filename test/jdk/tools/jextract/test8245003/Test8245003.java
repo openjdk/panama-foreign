@@ -30,12 +30,21 @@ import static test.jextract.test8245003.test8245003_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 /*
- * @test
+ * @test id=classes
  * @bug 8245003
  * @summary jextract does not generate accessor for MemorySegement typed values
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8245003 -t test.jextract.test8245003 -- test8245003.h
+ * @run testng/othervm -Dforeign.restricted=permit Test8245003
+ */
+/*
+ * @test id=sources
+ * @bug 8245003
+ * @summary jextract does not generate accessor for MemorySegement typed values
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l Test8245003 -t test.jextract.test8245003 -- test8245003.h
  * @run testng/othervm -Dforeign.restricted=permit Test8245003
  */
 public class Test8245003 {

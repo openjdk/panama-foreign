@@ -30,10 +30,21 @@ import static test.jextract.vsprintf.vsprintf_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 /*
- * @test
+ * @test id=classes
+ * @bug 8252016
+ * @summary jextract should handle va_list
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.vsprintf -l VSPrintf -- vsprintf.h
+ * @run testng/othervm -Dforeign.restricted=permit Test8252016
+ */
+/*
+ * @test id=sources
+ * @bug 8252016
+ * @summary jextract should handle va_list
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -t test.jextract.vsprintf -l VSPrintf -- vsprintf.h
  * @run testng/othervm -Dforeign.restricted=permit Test8252016
  */
 public class Test8252016 {

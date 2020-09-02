@@ -32,12 +32,21 @@ import static org.testng.Assert.assertTrue;
 import static test.jextract.test8244412.test8244412_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @library ..
  * @modules jdk.incubator.jextract
  * @bug 8244412
  * @summary jextract should generate static utils class for primitive typedefs
  * @run driver JtregJextract -t test.jextract.test8244412 -- test8244412.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8244412Test
+ */
+/*
+ * @test id=sources
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @bug 8244412
+ * @summary jextract should generate static utils class for primitive typedefs
+ * @run driver JtregJextractSources -t test.jextract.test8244412 -- test8244412.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8244412Test
  */
 public class LibTest8244412Test {
