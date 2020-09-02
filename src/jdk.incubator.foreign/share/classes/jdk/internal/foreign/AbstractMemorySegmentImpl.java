@@ -569,7 +569,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.create(bb, null);
+            bufferScope = MemoryScope.createConfined(bb, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -585,7 +585,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createUnchecked(null, null, null)
+        0, 0, MemoryScope.createShared(null, null)
     ) {
         @Override
         ByteBuffer makeByteBuffer() {
