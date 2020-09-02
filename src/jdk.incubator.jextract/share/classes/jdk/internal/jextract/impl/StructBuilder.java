@@ -35,17 +35,17 @@ class StructBuilder extends JavaSourceBuilder {
     private final JavaSourceBuilder prev;
     private final String parentLayoutFieldName;
     private final MemoryLayout parentLayout;
-    private final String anno;
-    private final String arrayAnno;
+    private final String structAnno;
+    private final String structArrayAnno;
 
     StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout parentLayout, String pkgName,
-            ConstantHelper constantHelper, String anno, String arrayAnno) {
+            ConstantHelper constantHelper, String structAnno, String structArrayAnno) {
         super(prev.uniqueNestedClassName(className), pkgName, constantHelper);
         this.prev = prev;
         this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
-        this.anno = anno;
-        this.arrayAnno = arrayAnno;
+        this.structAnno = structAnno;
+        this.structArrayAnno = structArrayAnno;
     }
 
     JavaSourceBuilder prev() {
@@ -145,7 +145,7 @@ class StructBuilder extends JavaSourceBuilder {
     void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
         incrAlign();
         indent();
-        append(PUB_MODS + " " + anno + " " + type.getSimpleName() + " " + javaName + "$get(" + this.anno + " MemorySegment seg) {\n");
+        append(PUB_MODS + " " + anno + " " + type.getSimpleName() + " " + javaName + "$get(" + this.structAnno + " MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
@@ -163,7 +163,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
-        append(PUB_MODS + "void " + javaName + "$set(" + this.anno + " " + param + ", " + anno + " " + type.getSimpleName() + " x) {\n");
+        append(PUB_MODS + "void " + javaName + "$set(" + this.structAnno + " " + param + ", " + anno + " " + type.getSimpleName() + " x) {\n");
         incrAlign();
         indent();
         append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) + ".set(seg, x);\n");
@@ -205,7 +205,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append(PUB_MODS);
-        append(anno + " MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
+        append(structAnno + " MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
         decrAlign();
     }
 
@@ -213,7 +213,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append(PUB_MODS);
-        append(anno + " MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        append(structAnno + " MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         decrAlign();
     }
 
@@ -221,7 +221,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append(PUB_MODS);
-        append(arrayAnno + " MemorySegment allocateArray(int len) {\n");
+        append(structArrayAnno + " MemorySegment allocateArray(int len) {\n");
         incrAlign();
         indent();
         append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
@@ -234,7 +234,7 @@ class StructBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         append(PUB_MODS);
-        append(arrayAnno + " MemorySegment allocateArray(int len, NativeScope scope) {\n");
+        append(structArrayAnno + " MemorySegment allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
         append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
@@ -246,7 +246,7 @@ class StructBuilder extends JavaSourceBuilder {
     private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
         incrAlign();
         indent();
-        String params = this.anno + " " + MemorySegment.class.getSimpleName() + " seg, long index";
+        String params = this.structAnno + " " + MemorySegment.class.getSimpleName() + " seg, long index";
         append(PUB_MODS + " " + anno + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
         incrAlign();
         indent();
@@ -262,7 +262,7 @@ class StructBuilder extends JavaSourceBuilder {
     private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
         incrAlign();
         indent();
-        String params = this.anno + " " + MemorySegment.class.getSimpleName() + " seg, long index, " + anno + " " + type.getSimpleName() + " x";
+        String params = this.structAnno + " " + MemorySegment.class.getSimpleName() + " seg, long index, " + anno + " " + type.getSimpleName() + " x";
         append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();

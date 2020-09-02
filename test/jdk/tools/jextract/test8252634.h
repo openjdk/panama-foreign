@@ -33,6 +33,9 @@ struct Point* make(int x, int y);
 
 void func(int (*callback)(int));
 
+typedef int* int_ptr;
+int_ptr p;
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

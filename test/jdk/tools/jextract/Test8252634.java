@@ -25,6 +25,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
@@ -49,36 +50,75 @@ public class Test8252634 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8252634.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> headerClass = loader.loadClass("test8252634_h");
             this.cAnnoClass = (Class<? extends Annotation>)loader.loadClass("C");
             this.cValueMethod = findMethod(cAnnoClass, "value");
-            Method make = findMethod(headerClass, "make", int.class, int.class);
-            Parameter[] params = make.getParameters();
-            checkAnnotation(params[0].getAnnotatedType(), "int");
-            checkAnnotation(params[1].getAnnotatedType(), "int");
-            checkAnnotation(make.getAnnotatedReturnType(), "struct Point*");
-            Method func = findFirstMethod(headerClass, "func");
-            params = func.getParameters();
-            checkAnnotation(params[0].getAnnotatedType(), "int(*)(int)");
+
+            Class<?> headerClass = loader.loadClass("test8252634_h");
+            checkGlobalFunctions(headerClass);
+            checkGlobalVariables(headerClass);
 
             Class<?> pointClass = loader.loadClass("test8252634_h$Point");
-            Method xGetter = findMethod(pointClass, "x$get", MemorySegment.class);
-            checkAnnotation(xGetter.getParameters()[0].getAnnotatedType(), "struct Point");
-            checkAnnotation(xGetter.getAnnotatedReturnType(), "int");
-            Method yGetter = findMethod(pointClass, "y$get", MemorySegment.class);
-            checkAnnotation(yGetter.getParameters()[0].getAnnotatedType(), "struct Point");
-            checkAnnotation(yGetter.getAnnotatedReturnType(), "int");
-            Method xSetter = findMethod(pointClass, "x$set", MemorySegment.class, int.class);
-            checkAnnotation(xSetter.getParameters()[0].getAnnotatedType(), "struct Point");
-            checkAnnotation(xSetter.getParameters()[1].getAnnotatedType(), "int");
-            Method ySetter = findMethod(pointClass, "y$set", MemorySegment.class, int.class);
-            checkAnnotation(ySetter.getParameters()[0].getAnnotatedType(), "struct Point");
-            checkAnnotation(ySetter.getParameters()[1].getAnnotatedType(), "int");
-            Method allocate = findMethod(pointClass, "allocate");
-            checkAnnotation(allocate.getAnnotatedReturnType(), "struct Point");
+            checkPointGetters(pointClass);
+            checkPointSetters(pointClass);
+            checkPointAllocate(pointClass);
         } finally {
             deleteDir(outputPath);
         }
+    }
+
+    private void checkGlobalFunctions(Class<?> headerClass) throws Throwable {
+        Method make = findMethod(headerClass, "make", int.class, int.class);
+        Parameter[] params = make.getParameters();
+        checkAnnotation(params[0].getAnnotatedType(), "int");
+        checkAnnotation(params[1].getAnnotatedType(), "int");
+        checkAnnotation(make.getAnnotatedReturnType(), "struct Point*");
+        Method func = findFirstMethod(headerClass, "func");
+        params = func.getParameters();
+        checkAnnotation(params[0].getAnnotatedType(), "int(*)(int)");
+    }
+
+    private void checkGlobalVariables(Class<?> headerClass) throws Throwable {
+        Method pGetter = findMethod(headerClass, "p$get");
+        checkAnnotation(pGetter.getAnnotatedReturnType(), "int_ptr");
+        Method pSetter = findMethod(headerClass, "p$set", MemoryAddress.class);
+        checkAnnotation(pSetter.getParameters()[0].getAnnotatedType(), "int_ptr");
+    }
+
+    private void checkPointGetters(Class<?> pointClass) throws Throwable {
+        Method xGetter = findMethod(pointClass, "x$get", MemorySegment.class);
+        checkAnnotation(xGetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(xGetter.getAnnotatedReturnType(), "int");
+        Method yGetter = findMethod(pointClass, "y$get", MemorySegment.class);
+        checkAnnotation(yGetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(yGetter.getAnnotatedReturnType(), "int");
+        Method xIndexedGetter = findMethod(pointClass, "x$get", MemorySegment.class, long.class);
+        checkAnnotation(xIndexedGetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(xIndexedGetter.getAnnotatedReturnType(), "int");
+        Method yIndexedGetter = findMethod(pointClass, "y$get", MemorySegment.class, long.class);
+        checkAnnotation(yIndexedGetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(yIndexedGetter.getAnnotatedReturnType(), "int");
+    }
+
+    private void checkPointSetters(Class<?> pointClass) throws Throwable {
+        Method xSetter = findMethod(pointClass, "x$set", MemorySegment.class, int.class);
+        checkAnnotation(xSetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(xSetter.getParameters()[1].getAnnotatedType(), "int");
+        Method ySetter = findMethod(pointClass, "y$set", MemorySegment.class, int.class);
+        checkAnnotation(ySetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(ySetter.getParameters()[1].getAnnotatedType(), "int");
+        Method xIndexedSetter = findMethod(pointClass, "x$set", MemorySegment.class, long.class, int.class);
+        checkAnnotation(xIndexedSetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(xIndexedSetter.getParameters()[2].getAnnotatedType(), "int");
+        Method yIndexedSetter = findMethod(pointClass, "y$set", MemorySegment.class, long.class, int.class);
+        checkAnnotation(yIndexedSetter.getParameters()[0].getAnnotatedType(), "struct Point");
+        checkAnnotation(yIndexedSetter.getParameters()[2].getAnnotatedType(), "int");
+    }
+
+    private void checkPointAllocate(Class<?> pointClass) throws Throwable {
+        Method allocate = findMethod(pointClass, "allocate");
+        checkAnnotation(allocate.getAnnotatedReturnType(), "struct Point");
+        Method allocateArray = findMethod(pointClass, "allocateArray", int.class);
+        checkAnnotation(allocateArray.getAnnotatedReturnType(), "struct Point[]");
     }
 
     private void checkAnnotation(AnnotatedElement ae, String expected) throws Throwable {
