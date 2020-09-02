@@ -88,7 +88,7 @@ class HeaderBuilder extends JavaSourceBuilder {
         align--;
     }
 
-    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor fDesc) {
+    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor fDesc, String anno) {
         incrAlign();
         indent();
         append("public interface " + name + " {\n");
@@ -101,7 +101,7 @@ class HeaderBuilder extends JavaSourceBuilder {
             delim = ", ";
         }
         append(");\n");
-        addFunctionalFactory(name, mtype, fDesc);
+        addFunctionalFactory(name, mtype, fDesc, anno);
         decrAlign();
         indent();
         append("}\n");
@@ -109,10 +109,16 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
     }
 
-    void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+    void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
+                                  boolean varargs, List<String> paramNames, List<String> annos, String returnAnno) {
         incrAlign();
         indent();
-        append(PUB_MODS + mtype.returnType().getName() + " " + javaName + " (");
+        append(PUB_MODS);
+        if (mtype.returnType() != void.class) {
+            append(returnAnno);
+            append(' ');
+        }
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -130,7 +136,7 @@ class HeaderBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            append(delim + pType.getName() + " " + pName);
+            append(delim + annos.get(i) + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
@@ -166,13 +172,13 @@ class HeaderBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    void emitPrimitiveTypedef(Type.Primitive primType, String name, String anno) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();
             indent();
             append(PUB_MODS);
-            append("ValueLayout ");
+            append(anno + " ValueLayout ");
             append(uniqueNestedClassName(name));
             append(" = ");
             append(TypeTranslator.typeToLayoutName(kind));
@@ -210,9 +216,9 @@ class HeaderBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc) {
+    private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc, String anno) {
         indent();
-        append(PUB_MODS + "MemorySegment allocate(" + className + " fi) {\n");
+        append(PUB_MODS + " " + anno + " MemorySegment allocate(" + className + " fi) {\n");
         incrAlign();
         indent();
         append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
@@ -222,7 +228,7 @@ class HeaderBuilder extends JavaSourceBuilder {
         append("}\n");
 
         indent();
-        append(PUB_MODS + "MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
+        append(PUB_MODS + " " + anno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
         incrAlign();
         indent();
         append("return scope.register(allocate(fi));\n");
