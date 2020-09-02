@@ -635,12 +635,16 @@ class SourceConstantHelper implements ConstantHelper {
         for (String lib : libraryNames) {
             indent();
             append('\"');
-            append(lib);
+            append(quoteLibraryName(lib));
             append("\",\n");
         }
         decrAlign();
         indent();
         append("});\n\n");
         decrAlign();
+    }
+
+    private static String quoteLibraryName(String lib) {
+        return lib.replace("\\", "\\\\"); // double up slashes
     }
 }
