@@ -26,12 +26,21 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.test8239918.test8239918_h.*;
 
 /*
- * @test
- * @library ..
- * @modules jdk.incubator.jextract
+ * @test id=classes
  * @bug 8239918
  * @summary jextract generates uncompilable code for no argument C function
+ * @library ..
+ * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8239918 -t test.jextract.test8239918 -- test8239918.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8239918Test
+ */
+/*
+ * @test id=sources
+ * @bug 8239918
+ * @summary jextract generates uncompilable code for no argument C function
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l Test8239918 -t test.jextract.test8239918 -- test8239918.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8239918Test
  */
 public class LibTest8239918Test {

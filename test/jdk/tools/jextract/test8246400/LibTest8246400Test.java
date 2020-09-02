@@ -32,12 +32,21 @@ import static test.jextract.test8246400.test8246400_h.*;
 import static test.jextract.test8246400.RuntimeHelper.*;
 
 /*
- * @test
- * @library ..
- * @modules jdk.incubator.jextract
+ * @test id=classes
  * @bug 8246400
  * @summary jextract should generate a utility to manage mutliple MemorySegments
+ * @library ..
+ * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
+ */
+/*
+ * @test id=sources
+ * @bug 8246400
+ * @summary jextract should generate a utility to manage mutliple MemorySegments
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
  */
 public class LibTest8246400Test {

@@ -32,13 +32,21 @@ import static test.jextract.test8246341.test8246341_h.*;
 import static jdk.incubator.foreign.CSupport.*;
 
 /*
- * @test
- * @library ..
- * @modules jdk.incubator.jextract
- * @modules jdk.incubator.foreign
+ * @test id=classes
  * @bug 8246341
  * @summary jextract should generate Cpointer utilities class
+ * @library ..
+ * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8246341 -t test.jextract.test8246341 -- test8246341.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8246341Test
+ */
+/*
+ * @test id=sources
+ * @bug 8246341
+ * @summary jextract should generate Cpointer utilities class
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -l Test8246341 -t test.jextract.test8246341 -- test8246341.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8246341Test
  */
 public class LibTest8246341Test {

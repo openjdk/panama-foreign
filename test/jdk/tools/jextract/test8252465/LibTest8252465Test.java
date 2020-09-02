@@ -27,12 +27,21 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.test8252465.test8252465_h.*;
 
 /*
- * @test
- * @library ..
- * @modules jdk.incubator.jextract
+ * @test id=classes
  * @bug 8252465
  * @summary jextract generates wrong layout and varhandle when different structs have same named field
+ * @library ..
+ * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.test8252465 -- test8252465.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8252465Test
+ */
+/*
+ * @test id=sources
+ * @bug 8252465
+ * @summary jextract generates wrong layout and varhandle when different structs have same named field
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @run driver JtregJextractSources -t test.jextract.test8252465 -- test8252465.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8252465Test
  */
 public class LibTest8252465Test {

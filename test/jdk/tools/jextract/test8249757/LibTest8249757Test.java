@@ -26,12 +26,21 @@ import static org.testng.Assert.assertEquals;
 import static test.jextract.test8249757.test8249757_h.*;
 
 /*
- * @test
+ * @test id=classes
  * @library ..
  * @modules jdk.incubator.jextract
  * @bug 8249757
  * @summary jextract should expose a way to load library from a given absolute path
  * @run driver JtregJextract -libpath Test8249757 -t test.jextract.test8249757 -- test8249757.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8249757Test
+ */
+/*
+ * @test id=sources
+ * @library ..
+ * @modules jdk.incubator.jextract
+ * @bug 8249757
+ * @summary jextract should expose a way to load library from a given absolute path
+ * @run driver JtregJextractSources -libpath Test8249757 -t test.jextract.test8249757 -- test8249757.h
  * @run testng/othervm -Dforeign.restricted=permit LibTest8249757Test
  */
 public class LibTest8249757Test {

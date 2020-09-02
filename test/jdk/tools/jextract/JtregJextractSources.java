@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Array;
@@ -32,9 +33,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class JtregJextractSources {
+    private static Path getJextractSourcePath() {
+        Path testSrc = Path.of(System.getProperty("test.file"));
+        return Path.of(testSrc.toFile().getName() + "_sources");
+    }
 
     public static int main(String[] args) throws IOException {
-        Path sourcePath = Path.of("sources");
+        System.err.println("jextract --source mode");
+        Path sourcePath = getJextractSourcePath();
         JtregJextract jj =  new JtregJextract(null, sourcePath);
         String[] newArgs = new String[args.length + 1];
         newArgs[0] = "--source";
@@ -47,6 +53,7 @@ public class JtregJextractSources {
                 .map(p -> p.toAbsolutePath().toString())
                 .collect(Collectors.toList());
 
+        System.err.println("compiling jextracted sources @ " + sourcePath.toAbsolutePath());
         List<String> commands = new ArrayList<>();
         commands.add(Paths.get(System.getProperty("test.jdk"), "bin", "javac").toString());
         commands.add("--add-modules");
