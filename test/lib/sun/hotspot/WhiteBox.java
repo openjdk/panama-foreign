@@ -616,7 +616,7 @@ public class WhiteBox {
   public native void checkThreadObjOfTerminatingThread(Thread target);
 
   // Walk stack frames of current thread
-  public native void verifyFrames();
+  public native void verifyFrames(boolean log);
 
   public native boolean isJVMTIIncluded();
 }

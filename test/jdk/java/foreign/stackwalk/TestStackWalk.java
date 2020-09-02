@@ -105,7 +105,7 @@ public class TestStackWalk {
 
     static void m() {
         if (armed) {
-            WB.verifyFrames();
+            WB.verifyFrames(true);
         }
     }
 
