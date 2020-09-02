@@ -52,7 +52,6 @@ import static java.lang.invoke.MethodType.methodType;
 // generates ConstantHelper as java source
 class SourceConstantHelper implements ConstantHelper {
     private static final String PACKAGE_FINAL_MODS = "static final ";
-    private static final String PRIVATE_FINAL_MODS = "private static final ";
     private static final String ABI_CLASS_ATTR;
     private static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 1000);
 
@@ -353,7 +352,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
         indent();
-        append(PRIVATE_FINAL_MODS + "MethodHandle ");
+        append(PACKAGE_FINAL_MODS + "MethodHandle ");
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
@@ -388,7 +387,7 @@ class SourceConstantHelper implements ConstantHelper {
         }
         indent();
         String fieldName = getVarHandleFieldName(javaName);
-        append(PRIVATE_FINAL_MODS + "VarHandle " + fieldName + " = ");
+        append(PACKAGE_FINAL_MODS + "VarHandle " + fieldName + " = ");
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
         }
@@ -414,7 +413,7 @@ class SourceConstantHelper implements ConstantHelper {
         String fieldName = getLayoutFieldName(javaName);
         incrAlign();
         indent();
-        append(PRIVATE_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
+        append(PACKAGE_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
@@ -471,7 +470,7 @@ class SourceConstantHelper implements ConstantHelper {
         indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        append(PRIVATE_FINAL_MODS);
+        append(PACKAGE_FINAL_MODS);
         append("FunctionDescriptor ");
         append(fieldName);
         append(" = ");
@@ -510,7 +509,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        append(PRIVATE_FINAL_MODS);
+        append(PACKAGE_FINAL_MODS);
         append("MemorySegment ");
         append(fieldName);
         append(" = CSupport.toCString(\"");
@@ -527,7 +526,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        append(PRIVATE_FINAL_MODS);
+        append(PACKAGE_FINAL_MODS);
         append("MemoryAddress ");
         append(fieldName);
         append(" = MemoryAddress.ofLong(");
@@ -612,7 +611,7 @@ class SourceConstantHelper implements ConstantHelper {
          incrAlign();
          indent();
          String fieldName = getSegmentFieldName(javaName);
-         append(PRIVATE_FINAL_MODS);
+         append(PACKAGE_FINAL_MODS);
          append("MemorySegment ");
          append(fieldName);
          append(" = ");
