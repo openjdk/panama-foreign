@@ -28,9 +28,8 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetBooleanAction;
 
@@ -68,7 +67,6 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @Override
     ByteBuffer makeByteBuffer() {
-        JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
         return nioAccess.newDirectByteBuffer(min(), (int) this.length, null, this);
     }
 
@@ -85,18 +83,24 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     // factories
 
     public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes) {
-        long alignedSize = bytesSize;
-
-        if (alignmentBytes > MAX_ALIGN) {
-            alignedSize = bytesSize + (alignmentBytes - 1);
+        if (VM.isDirectMemoryPageAligned()) {
+            alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
+        long alignedSize = alignmentBytes > MAX_ALIGN ?
+                bytesSize + (alignmentBytes - 1) :
+                bytesSize;
+
+        nioAccess.reserveMemory(alignedSize, bytesSize);
 
         long buf = unsafe.allocateMemory(alignedSize);
         if (!skipZeroMemory) {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.create(null, () -> unsafe.freeMemory(buf));
+        MemoryScope scope = MemoryScope.create(null, () -> {
+            unsafe.freeMemory(buf);
+            nioAccess.unreserveMemory(alignedSize, bytesSize);
+        });
         MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
         if (alignedSize != bytesSize) {
