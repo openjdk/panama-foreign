@@ -157,7 +157,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * For instance, the following code can be used to sum all int values in a memory segment in parallel:
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).share()) {
+try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).withOwnerThread(null)) {
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
                            .mapToInt(s -> (int)VH_int.get(s.address()))

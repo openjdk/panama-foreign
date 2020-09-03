@@ -196,8 +196,8 @@ public class ScopedMemoryAccess {
                 scope.checkValidState();
             }
             UNSAFE.setMemory(o, offset, bytes, value);
-        } catch (Scope.ScopedAccessException ex) {
-            throw new IllegalStateException("This segment is already closed");
+        } finally {
+            Reference.reachabilityFence(scope);
         }
     }
 
@@ -228,8 +228,9 @@ public class ScopedMemoryAccess {
                 bScope.checkValidState();
             }
             return ArraysSupport.vectorizedMismatch(a, aOffset, b, bOffset, length, log2ArrayIndexScale);
-        } catch (Scope.ScopedAccessException ex) {
-            throw new IllegalStateException("This segment is already closed");
+        } finally {
+            Reference.reachabilityFence(aScope);
+            Reference.reachabilityFence(bScope);
         }
     }
     // typed-ops here
