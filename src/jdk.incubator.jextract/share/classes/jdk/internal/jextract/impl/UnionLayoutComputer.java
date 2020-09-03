@@ -31,6 +31,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
 
 import java.util.List;
 
@@ -69,6 +70,9 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
 
     @Override
     long fieldSize(Cursor c) {
+        if (c.type().kind() == TypeKind.IncompleteArray) {
+            return 0;
+        }
         return c.type().size() * 8;
     }
 

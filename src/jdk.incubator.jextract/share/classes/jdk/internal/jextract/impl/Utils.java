@@ -201,26 +201,6 @@ class Utils {
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
     }
 
-    static Optional<Cursor> lastChild(Cursor c) {
-        List<Cursor> children = flattenableChildren(c)
-                .collect(Collectors.toList());
-        return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
-    }
-
-    static boolean hasIncompleteArray(Cursor c) {
-        switch (c.kind()) {
-            case FieldDecl:
-                return c.type().kind() == TypeKind.IncompleteArray;
-            case UnionDecl:
-                return flattenableChildren(c)
-                        .anyMatch(Utils::hasIncompleteArray);
-            case StructDecl:
-                return lastChild(c).map(Utils::hasIncompleteArray).orElse(false);
-            default:
-                throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
-        }
-    }
-
     // return builtin Record types accessible from the given Type
     static Stream<Cursor> getBuiltinRecordTypes(Type type) {
         List<Cursor> recordTypes = new ArrayList<>();
