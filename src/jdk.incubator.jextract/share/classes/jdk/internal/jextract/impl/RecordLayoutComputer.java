@@ -32,6 +32,7 @@ import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -70,10 +71,6 @@ abstract class RecordLayoutComputer {
     }
 
     final MemoryLayout compute() {
-        if (Utils.hasIncompleteArray(cursor)) {
-            //for now do this - incomplete arrays not supported well in clang
-            return MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(cursor.type().size() * 8));
-        }
         Stream<Cursor> fieldCursors = Utils.flattenableChildren(cursor);
         for (Cursor fc : fieldCursors.collect(Collectors.toList())) {
             /*
@@ -124,7 +121,10 @@ abstract class RecordLayoutComputer {
     }
 
     long fieldSize(Cursor c) {
-        return c.isBitField()? c.getBitFieldWidth() : c.type().size() * 8;
+        if (c.type().kind() == TypeKind.IncompleteArray) {
+            return 0;
+        }
+        return c.isBitField() ? c.getBitFieldWidth() : c.type().size() * 8;
     }
 
     //Todo: fixme
