@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -56,6 +57,10 @@ public class Test8252634 extends JextractToolRunner {
             Class<?> headerClass = loader.loadClass("test8252634_h");
             checkGlobalFunctions(headerClass);
             checkGlobalVariables(headerClass);
+
+            Class<?> fooTypedefClass = loader.loadClass("test8252634_h$Foo");
+            checkAnnotation(fooTypedefClass, "struct foo");
+            checkFooAllocatePointer(fooTypedefClass);
 
             Class<?> pointClass = loader.loadClass("test8252634_h$Point");
             checkPointGetters(pointClass);
@@ -117,8 +122,23 @@ public class Test8252634 extends JextractToolRunner {
     private void checkPointAllocate(Class<?> pointClass) throws Throwable {
         Method allocate = findMethod(pointClass, "allocate");
         checkAnnotation(allocate.getAnnotatedReturnType(), "struct Point");
+        allocate = findMethod(pointClass, "allocate", NativeScope.class);
+        checkAnnotation(allocate.getAnnotatedReturnType(), "struct Point");
         Method allocateArray = findMethod(pointClass, "allocateArray", int.class);
         checkAnnotation(allocateArray.getAnnotatedReturnType(), "struct Point[]");
+        allocateArray = findMethod(pointClass, "allocateArray", int.class, NativeScope.class);
+        checkAnnotation(allocateArray.getAnnotatedReturnType(), "struct Point[]");
+        Method allocatePointer = findMethod(pointClass, "allocatePointer");
+        checkAnnotation(allocatePointer.getAnnotatedReturnType(), "struct Point*");
+        allocatePointer = findMethod(pointClass, "allocatePointer", NativeScope.class);
+        checkAnnotation(allocatePointer.getAnnotatedReturnType(), "struct Point*");
+    }
+
+    private void checkFooAllocatePointer(Class<?> fooClass) throws Throwable {
+        Method allocatePointer = findMethod(fooClass, "allocatePointer");
+        checkAnnotation(allocatePointer.getAnnotatedReturnType(), "struct foo*");
+        allocatePointer = findMethod(fooClass, "allocatePointer", NativeScope.class);
+        checkAnnotation(allocatePointer.getAnnotatedReturnType(), "struct foo*");
     }
 
     private void checkAnnotation(AnnotatedElement ae, String expected) throws Throwable {

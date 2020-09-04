@@ -27,6 +27,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -40,14 +41,15 @@ import java.util.List;
  * method is called to get overall generated source string.
  */
 class HeaderBuilder extends JavaSourceBuilder {
-
+    private final AnnotationWriter annotationWriter;
     protected final StringBuffer sb;
 
     // current line alignment (number of 4-spaces)
     private int align;
 
-    HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper) {
+    HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
         super(className, pkgName, constantHelper);
+        this.annotationWriter = annotationWriter;
         this.sb = new StringBuffer();
     }
 
@@ -194,16 +196,22 @@ class HeaderBuilder extends JavaSourceBuilder {
         };
     }
 
-    void emitTypedef(String className, String superClassName) {
+    void emitTypedef(Declaration.Typedef td, String superClassName) {
+        String className = td.name();
+        boolean superClassExists = superClassName != null;
         incrAlign();
         indent();
         append(PUB_MODS);
-        append("class ");
+        append(annotationWriter.getCAnnotation(td.type()));
+        append(" class ");
         String uniqueName = uniqueNestedClassName(className);
         append(uniqueName);
-        append(" extends ");
-        append(superClassName);
+        if (superClassExists) {
+            append(" extends ");
+            append(superClassName);
+        }
         append(" {\n");
+
         incrAlign();
         indent();
         // private constructor
@@ -211,6 +219,38 @@ class HeaderBuilder extends JavaSourceBuilder {
         append(uniqueName);
         append("() {}\n");
         decrAlign();
+
+        // typedef of incomplete struct/union
+        // generate a class with just allocatePointer methods with right annotation
+        if (!superClassExists) {
+            String anno = annotationWriter.getCAnnotation(Type.pointer(td.type()));
+            // allocatePointer
+            incrAlign();
+            indent();
+            append(PUB_MODS);
+            append(anno + " MemorySegment allocatePointer() {\n");
+            incrAlign();
+            indent();
+            append("return MemorySegment.allocateNative(C_POINTER);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+
+            // allocatePointer (scope version)
+            incrAlign();
+            indent();
+            append(PUB_MODS);
+            append(anno + " MemorySegment allocatePointer(NativeScope scope) {\n");
+            incrAlign();
+            indent();
+            append("return scope.allocate(C_POINTER);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+        }
+
         indent();
         append("}\n");
         decrAlign();

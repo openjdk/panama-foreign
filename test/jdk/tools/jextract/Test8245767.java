@@ -21,8 +21,9 @@
  * questions.
  */
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
-
+import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertNotNull;
@@ -47,9 +48,13 @@ public class Test8245767 extends JextractToolRunner {
             Class<?> cls = loader.loadClass("test8245767_h");
             assertNotNull(cls);
 
-            // no class should be generated for typedef on opaque struct
+            // class should be generated for typedef on opaque struct
             Class<?> fooCls = loader.loadClass("test8245767_h$Foo");
-            assertNull(fooCls);
+            assertNotNull(fooCls);
+            Method alloc = findMethod(fooCls, "allocatePointer");
+            assertNotNull(alloc);
+            alloc = findMethod(fooCls, "allocatePointer", NativeScope.class);
+            assertNotNull(alloc);
 
             // check Point_t
             Class<?> point_tCls = loader.loadClass("test8245767_h$Point_t");
