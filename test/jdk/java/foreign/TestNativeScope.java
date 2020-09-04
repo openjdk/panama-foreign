@@ -50,6 +50,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static jdk.incubator.foreign.MemorySegment.CLOSE;
 import static jdk.incubator.foreign.MemorySegment.HANDOFF;
@@ -236,6 +238,9 @@ public class TestNativeScope {
                 { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
+                { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
                 { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -256,6 +261,9 @@ public class TestNativeScope {
                 { 42d, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
+                { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
+                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
                 { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -276,6 +284,9 @@ public class TestNativeScope {
                 { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
 
                 { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -296,6 +307,9 @@ public class TestNativeScope {
                 { 42d, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<Double>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
+                { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
+                        (AllocationFunction<MemoryAddress>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
         };
     }
 
@@ -321,6 +335,9 @@ public class TestNativeScope {
                 { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<double[]>) NativeScope::allocateArray,
                         ToArrayHelper.toDoubleArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
+                        (AllocationFunction<MemoryAddress[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toAddressArray },
 
 
                 { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_BE,
@@ -342,6 +359,9 @@ public class TestNativeScope {
                 { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<double[]>) NativeScope::allocateArray,
                         ToArrayHelper.toDoubleArray },
+                { (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                        (AllocationFunction<MemoryAddress[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toAddressArray },
 
                 { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<byte[]>) NativeScope::allocateArray,
@@ -362,6 +382,9 @@ public class TestNativeScope {
                 { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_LE,
                         (AllocationFunction<double[]>) NativeScope::allocateArray,
                         ToArrayHelper.toDoubleArray },
+                { (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
+                        (AllocationFunction<MemoryAddress[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toAddressArray },
 
 
                 { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE,
@@ -383,6 +406,9 @@ public class TestNativeScope {
                 { (ScopeFactory) size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_64_BE,
                         (AllocationFunction<double[]>) NativeScope::allocateArray,
                         ToArrayHelper.toDoubleArray },
+                { (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
+                        (AllocationFunction<MemoryAddress[]>) NativeScope::allocateArray,
+                        ToArrayHelper.toAddressArray },
         };
     }
 
@@ -485,6 +511,34 @@ public class TestNativeScope {
                 double[] found = new double[buffer.limit()];
                 buffer.get(found);
                 return found;
+            }
+        };
+
+        ToArrayHelper<MemoryAddress[]> toAddressArray = new ToArrayHelper<>() {
+            @Override
+            public MemoryAddress[] array() {
+                return switch ((int)MemoryLayouts.ADDRESS.byteSize()) {
+                    case 4 -> wrap(toIntArray.array());
+                    case 8 -> wrap(toLongArray.array());
+                    default -> throw new IllegalStateException("Cannot get here");
+                };
+            }
+
+            @Override
+            public MemoryAddress[] toArray(MemorySegment segment, ValueLayout layout) {
+                return switch ((int)layout.byteSize()) {
+                    case 4 -> wrap(toIntArray.toArray(segment, layout));
+                    case 8 -> wrap(toLongArray.toArray(segment, layout));
+                    default -> throw new IllegalStateException("Cannot get here");
+                };
+            }
+
+            private MemoryAddress[] wrap(int[] ints) {
+                return IntStream.of(ints).mapToObj(MemoryAddress::ofLong).toArray(MemoryAddress[]::new);
+            }
+
+            private MemoryAddress[] wrap(long[] ints) {
+                return LongStream.of(ints).mapToObj(MemoryAddress::ofLong).toArray(MemoryAddress[]::new);
             }
         };
     }
