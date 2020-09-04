@@ -48,7 +48,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // The maximum alignment supported by malloc - typically 16 on
     // 64-bit platforms and 8 on 32-bit platforms.
-    private final static long MAX_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
+    private final static long MAX_MALLOC_ALIGN = Unsafe.ADDRESS_SIZE == 4 ? 8 : 16;
 
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
@@ -86,7 +86,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
-        long alignedSize = alignmentBytes > MAX_ALIGN ?
+        long alignedSize = alignmentBytes > MAX_MALLOC_ALIGN ?
                 bytesSize + (alignmentBytes - 1) :
                 bytesSize;
 
