@@ -827,6 +827,21 @@ public abstract class Buffer {
                 public boolean isLoaded(long address, boolean isSync, long size) {
                     return MappedMemoryUtils.isLoaded(address, isSync, size);
                 }
+
+                @Override
+                public void reserveMemory(long size, long cap) {
+                    Bits.reserveMemory(size, cap);
+                }
+
+                @Override
+                public void unreserveMemory(long size, long cap) {
+                    Bits.unreserveMemory(size, cap);
+                }
+
+                @Override
+                public int pageSize() {
+                    return Bits.pageSize();
+                }
             });
     }
 

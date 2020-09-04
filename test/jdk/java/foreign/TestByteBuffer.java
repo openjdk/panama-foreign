@@ -25,7 +25,7 @@
  * @test
  * @modules java.base/sun.nio.ch
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @run testng TestByteBuffer
+ * @run testng/othervm -XX:MaxDirectMemorySize=3000000000 TestByteBuffer
  */
 
 
