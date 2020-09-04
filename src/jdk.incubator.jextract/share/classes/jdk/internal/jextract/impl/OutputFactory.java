@@ -64,7 +64,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     protected JavaSourceBuilder currentBuilder;
     protected final ConstantHelper constantHelper;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
-    protected final AnnotationWriter annotationWriter = new AnnotationWriter();
+    protected final AnnotationWriter annotationWriter;
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
@@ -98,15 +98,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         ConstantHelper constantHelper = ConstantHelper.make(source, qualName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),
                 libraryNames.toArray(String[]::new));
-        return new OutputFactory(pkgName,
-                new HeaderBuilder(clsName, pkgName, constantHelper), constantHelper).generate(decl);
+        AnnotationWriter annotationWriter = new AnnotationWriter();
+        HeaderBuilder headerBuilder = new HeaderBuilder(clsName, pkgName, constantHelper, annotationWriter);
+        return new OutputFactory(pkgName, headerBuilder, constantHelper, annotationWriter).generate(decl);
     }
 
-    private OutputFactory(String pkgName, HeaderBuilder toplevelBuilder, ConstantHelper constantHelper) {
+    private OutputFactory(String pkgName, HeaderBuilder toplevelBuilder, ConstantHelper constantHelper,
+                          AnnotationWriter annotationWriter) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
         this.constantHelper = constantHelper;
+        this.annotationWriter = annotationWriter;
     }
 
     private static String getCLangConstantsHolder() {
@@ -133,9 +136,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         // check if unresolved typedefs can be resolved now!
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
             Declaration.Scoped structDef = ((Type.Declared)td.type()).tree();
-            if (structDefinitionSeen(structDef)) {
-                toplevelBuilder.emitTypedef(td.name(), structDefinitionName(structDef));
-            }
+            toplevelBuilder.emitTypedef(td, structDefinitionSeen(structDef)? structDefinitionName(structDef) : null);
         }
         toplevelBuilder.classEnd();
         try {
@@ -216,9 +217,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     String className = d.name().isEmpty() ? parent.name() : d.name();
                     MemoryLayout parentLayout = parentLayout(d);
                     String parentLayoutFieldName = className + "$struct";
-                    String anno = annotationWriter.getCAnnotation(Type.declared(d));
-                    String arrayAnno = annotationWriter.getCAnnotation(Type.array(Type.declared(d)));
-                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout, pkgName, constantHelper, anno, arrayAnno);
+                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout,
+                            pkgName, constantHelper, annotationWriter, Type.declared(d));
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.incrAlign();
                     currentBuilder.classBegin();
@@ -373,7 +373,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                toplevelBuilder.emitTypedef(tree.name(), structDefinitionName(s));
+                                toplevelBuilder.emitTypedef(tree, structDefinitionName(s));
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.

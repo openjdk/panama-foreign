@@ -26,6 +26,8 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.Type;
 
 /**
  * This class generates static utilities class for C structs, unions.
@@ -37,15 +39,17 @@ class StructBuilder extends JavaSourceBuilder {
     private final MemoryLayout parentLayout;
     private final String structAnno;
     private final String structArrayAnno;
+    private final String structPtrAnno;
 
-    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout parentLayout, String pkgName,
-            ConstantHelper constantHelper, String structAnno, String structArrayAnno) {
+    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout parentLayout,
+            String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter, Type structType) {
         super(prev.uniqueNestedClassName(className), pkgName, constantHelper);
         this.prev = prev;
         this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
-        this.structAnno = structAnno;
-        this.structArrayAnno = structArrayAnno;
+        this.structAnno = annotationWriter.getCAnnotation(structType);
+        this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
+        this.structPtrAnno = annotationWriter.getCAnnotation(Type.pointer(structType));
     }
 
     JavaSourceBuilder prev() {
@@ -104,6 +108,8 @@ class StructBuilder extends JavaSourceBuilder {
         emitScopeAllocate();
         emitAllocateArray();
         emitScopeAllocateArray();
+        emitAllocatePoiner();
+        emitScopeAllocatePointer();
         return super.classEnd();
     }
 
@@ -191,6 +197,7 @@ class StructBuilder extends JavaSourceBuilder {
         indent();
         append("}\n");
         decrAlign();
+
     }
 
     private void emitSizeof() {
@@ -224,9 +231,10 @@ class StructBuilder extends JavaSourceBuilder {
         append(structArrayAnno + " MemorySegment allocateArray(int len) {\n");
         incrAlign();
         indent();
-        append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
         decrAlign();
-        append("}\n");
+        indent();
+        append('}');
         decrAlign();
     }
 
@@ -237,8 +245,37 @@ class StructBuilder extends JavaSourceBuilder {
         append(structArrayAnno + " MemorySegment allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
-        append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));");
+        append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
         decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitAllocatePoiner() {
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(structPtrAnno + " MemorySegment allocatePointer() {\n");
+        incrAlign();
+        indent();
+        append("return MemorySegment.allocateNative(C_POINTER);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitScopeAllocatePointer() {
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(structPtrAnno + " MemorySegment allocatePointer(NativeScope scope) {\n");
+        incrAlign();
+        indent();
+        append("return scope.allocate(C_POINTER);\n");
+        decrAlign();
+        indent();
         append("}\n");
         decrAlign();
     }

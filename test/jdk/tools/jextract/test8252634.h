@@ -36,6 +36,8 @@ void func(int (*callback)(int));
 typedef int* int_ptr;
 int_ptr p;
 
+typedef struct foo Foo;
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
