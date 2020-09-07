@@ -42,7 +42,16 @@ public final class MemoryAccess {
     private static final VarHandle float_BE_handle = indexedHandle(MemoryLayouts.BITS_32_BE, float.class);
     private static final VarHandle long_BE_handle = indexedHandle(MemoryLayouts.BITS_64_BE, long.class);
     private static final VarHandle double_BE_handle = indexedHandle(MemoryLayouts.BITS_64_BE, double.class);
-    private static final VarHandle address_handle = MemoryHandles.asAddressVarHandle((ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle);
+    private static final VarHandle address_handle;
+
+    static {
+        Class<?> carrier = switch ((int) MemoryLayouts.ADDRESS.byteSize()) {
+            case 4 -> int.class;
+            case 8 -> long.class;
+            default -> throw new ExceptionInInitializerError("Unsupported pointer size: " + MemoryLayouts.ADDRESS.byteSize());
+        };
+        address_handle = MemoryHandles.asAddressVarHandle(indexedHandle(MemoryLayouts.ADDRESS, carrier));
+    }
 
     /**
      * Read a byte from given segment and offset, with byte order set to {@link ByteOrder#LITTLE_ENDIAN}.

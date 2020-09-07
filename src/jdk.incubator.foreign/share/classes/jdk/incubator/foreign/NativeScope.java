@@ -36,6 +36,7 @@ import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.OptionalLong;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * This class provides a scope of given size, within which several allocations can be performed. An native scope is backed
@@ -182,6 +183,29 @@ public interface NativeScope extends AutoCloseable {
     }
 
     /**
+     * Allocate a block of memory in this native scope with given layout and initialize it with given address value.
+     * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
+     * The segment returned by this method cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
+     * @param layout the layout of the block of memory to be allocated.
+     * @param value the value to be set on the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
+     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
+     * {@code limit() - size() < layout.byteSize()}.
+     * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
+     */
+    default MemorySegment allocate(MemoryLayout layout, MemoryAddress value) {
+        if (MemoryLayouts.ADDRESS.byteSize() != layout.byteSize()) {
+            throw new IllegalArgumentException("Layout size mismatch - " + layout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
+        }
+        switch ((int)layout.byteSize()) {
+            case 4: return allocate(layout, (int)value.toRawLongValue());
+            case 8: return allocate(layout, value.toRawLongValue());
+            default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
+        }
+    }
+
+    /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
@@ -284,6 +308,33 @@ public interface NativeScope extends AutoCloseable {
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, double[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
+    }
+
+    /**
+     * Allocate a block of memory in this native scope with given layout and initialize it with given address array.
+     * The address value of each array element might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
+     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * segment must conform to the layout alignment constraints.
+     * @param elementLayout the element layout of the array to be allocated.
+     * @param array the array to be copied on the newly allocated memory block.
+     * @return a segment for the newly allocated memory block.
+     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
+     * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
+     * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
+     */
+    default MemorySegment allocateArray(ValueLayout elementLayout, MemoryAddress[] array) {
+        if (MemoryLayouts.ADDRESS.byteSize() != elementLayout.byteSize()) {
+            throw new IllegalArgumentException("Layout size mismatch - " + elementLayout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
+        }
+        switch ((int)elementLayout.byteSize()) {
+            case 4: return copyArrayWithSwapIfNeeded(Stream.of(array)
+                            .mapToInt(a -> (int)a.toRawLongValue()).toArray(),
+                            elementLayout, MemorySegment::ofArray);
+            case 8: return copyArrayWithSwapIfNeeded(Stream.of(array)
+                            .mapToLong(MemoryAddress::toRawLongValue).toArray(),
+                            elementLayout, MemorySegment::ofArray);
+            default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
+        }
     }
 
     private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,

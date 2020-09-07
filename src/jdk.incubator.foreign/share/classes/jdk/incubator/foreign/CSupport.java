@@ -488,7 +488,7 @@ public class CSupport {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
 
         /**
@@ -593,7 +593,7 @@ public class CSupport {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
 
         /**
@@ -702,7 +702,7 @@ public class CSupport {
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.BITS_64_LE
+        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
                 .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
 
         /**
