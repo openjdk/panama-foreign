@@ -26,6 +26,8 @@
 
 package jdk.incubator.foreign;
 
+import jdk.internal.misc.Unsafe;
+
 import java.nio.ByteOrder;
 
 /**
@@ -135,4 +137,9 @@ public final class MemoryLayouts {
      * A value layout constant whose size is the same as that of a Java {@code double}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
     public static final ValueLayout JAVA_DOUBLE = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
+
+    /**
+     * A value layout constant whose size is the same as that of a machine address (e.g. {@code size_t}), and byte order set to {@link ByteOrder#nativeOrder()}.
+     */
+    public static final ValueLayout ADDRESS = MemoryLayout.ofValueBits(Unsafe.ADDRESS_SIZE * 8, ByteOrder.nativeOrder());
 }
