@@ -1,3 +1,28 @@
+/*
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
 package jdk.incubator.foreign;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -750,13 +775,13 @@ public final class MemoryAccess {
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
     VarHandle handle = MemoryHandles.asAddressHandle(MemoryHandles.withStride(JAVA_LONG.withBitAlignment(8).varHandle(long.class), 1L));
-    handle.set(segment, offset, value);
+    handle.set(segment, offset, value.address());
      * }</pre></blockquote>
      * @param segment the segment to be dereferenced.
      * @param offset offset (relative to {@code segment}). The final address of this read operation can be expressed as {@code segment.address().addOffset(offset)}.
-     * @param value the memory address to be written.
+     * @param value the memory address to be written (expressed as an {@link Addressable} instance).
      */
-    public static void setAddressAtOffset(MemorySegment segment, long offset, MemoryAddress value) {
+    public static void setAddressAtOffset(MemorySegment segment, long offset, Addressable value) {
         address_handle.set(segment, offset, value);
     }
 
@@ -1377,9 +1402,9 @@ public final class MemoryAccess {
     setAddressAtOffset(segment, 0L, value);
      * }</pre></blockquote>
      * @param segment the segment to be dereferenced.
-     * @param value the memory address to be written.
+     * @param value the memory address to be written (expressed as an {@link Addressable} instance).
      */
-    public static void setAddress(MemorySegment segment, MemoryAddress value) {
+    public static void setAddress(MemorySegment segment, Addressable value) {
         setAddressAtOffset(segment, 0L, value);
     }
 
@@ -2040,9 +2065,9 @@ public final class MemoryAccess {
      * }</pre></blockquote>
      * @param segment the segment to be dereferenced.
      * @param index element index (relative to {@code segment}). The final address of this read operation can be expressed as {@code segment.address().addOffset(index * 8)}.
-     * @param value the memory address to be written.
+     * @param value the memory address to be written (expressed as an {@link Addressable} instance).
      */
-    public static void setAddressAtIndex(MemorySegment segment, long index, MemoryAddress value) {
+    public static void setAddressAtIndex(MemorySegment segment, long index, Addressable value) {
         setAddressAtOffset(segment, scale(segment, index, 8), value);
     }
 
