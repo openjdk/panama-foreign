@@ -225,11 +225,16 @@ public class CSupport {
 
         /**
          * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
+         * <p>
+         * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+         * restricted methods, and use safe and supported functionalities, where possible.
          *
          * @param address a memory address pointing to an existing C {@code va_list}.
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
-        static VaList ofAddress(MemoryAddress address) {
+        static VaList ofAddressRestricted(MemoryAddress address) {
+            Utils.checkRestrictedAccess("VaList.ofAddressRestricted");
             return SharedUtils.newVaListOfAddress(address);
         }
 
@@ -299,7 +304,7 @@ public class CSupport {
              * @return this builder.
              * @throws IllegalArgumentException if the given memory layout is not compatible with {@code int}
              */
-            Builder vargFromInt(MemoryLayout layout, int value);
+            Builder vargFromInt(ValueLayout layout, int value);
 
             /**
              * Adds a native value represented as a {@code long} to the C {@code va_list} being constructed.
@@ -309,7 +314,7 @@ public class CSupport {
              * @return this builder.
              * @throws IllegalArgumentException if the given memory layout is not compatible with {@code long}
              */
-            Builder vargFromLong(MemoryLayout layout, long value);
+            Builder vargFromLong(ValueLayout layout, long value);
 
             /**
              * Adds a native value represented as a {@code double} to the C {@code va_list} being constructed.
@@ -319,17 +324,17 @@ public class CSupport {
              * @return this builder.
              * @throws IllegalArgumentException if the given memory layout is not compatible with {@code double}
              */
-            Builder vargFromDouble(MemoryLayout layout, double value);
+            Builder vargFromDouble(ValueLayout layout, double value);
 
             /**
              * Adds a native value represented as a {@code MemoryAddress} to the C {@code va_list} being constructed.
              *
              * @param layout the native layout of the value.
-             * @param value the value, represented as a {@code MemoryAddress}.
+             * @param value the value, represented as a {@code Addressable}.
              * @return this builder.
              * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemoryAddress}
              */
-            Builder vargFromAddress(MemoryLayout layout, MemoryAddress value);
+            Builder vargFromAddress(ValueLayout layout, Addressable value);
 
             /**
              * Adds a native value represented as a {@code MemorySegment} to the C {@code va_list} being constructed.
@@ -339,7 +344,7 @@ public class CSupport {
              * @return this builder.
              * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
              */
-            Builder vargFromSegment(MemoryLayout layout, MemorySegment value);
+            Builder vargFromSegment(GroupLayout layout, MemorySegment value);
         }
     }
 
@@ -891,6 +896,10 @@ public class CSupport {
 
     /**
      * Allocate memory of given size using malloc.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param size memory size to be allocated
      * @return addr memory address of the allocated memory
@@ -902,6 +911,10 @@ public class CSupport {
 
     /**
      * Free the memory pointed by the given memory address.
+     * <p>
+     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param addr memory address of the native memory to be freed
      */

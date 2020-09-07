@@ -25,13 +25,8 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CSupport.VaList;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -206,27 +201,27 @@ class WinVaList implements VaList {
         }
 
         @Override
-        public Builder vargFromInt(MemoryLayout layout, int value) {
+        public Builder vargFromInt(ValueLayout layout, int value) {
             return arg(int.class, layout, value);
         }
 
         @Override
-        public Builder vargFromLong(MemoryLayout layout, long value) {
+        public Builder vargFromLong(ValueLayout layout, long value) {
             return arg(long.class, layout, value);
         }
 
         @Override
-        public Builder vargFromDouble(MemoryLayout layout, double value) {
+        public Builder vargFromDouble(ValueLayout layout, double value) {
             return arg(double.class, layout, value);
         }
 
         @Override
-        public Builder vargFromAddress(MemoryLayout layout, MemoryAddress value) {
-            return arg(MemoryAddress.class, layout, value);
+        public Builder vargFromAddress(ValueLayout layout, Addressable value) {
+            return arg(MemoryAddress.class, layout, value.address());
         }
 
         @Override
-        public Builder vargFromSegment(MemoryLayout layout, MemorySegment value) {
+        public Builder vargFromSegment(GroupLayout layout, MemorySegment value) {
             return arg(MemorySegment.class, layout, value);
         }
 

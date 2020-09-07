@@ -44,15 +44,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
-import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.*;
 
 import static jdk.incubator.foreign.MemoryAccess.*;
 
@@ -426,14 +418,14 @@ public class StdLibTest extends NativeTestHelper {
         DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
 
         final Class<?> carrier;
-        final MemoryLayout layout;
+        final ValueLayout layout;
         final String format;
         final Object nativeValue;
         final Object javaValue;
         @SuppressWarnings("rawtypes")
         final VaListBuilderCall builderCall;
 
-        <Z> PrintfArg(Class<?> carrier, MemoryLayout layout, String format, Z nativeValue, Object javaValue, VaListBuilderCall<Z> builderCall) {
+        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Z nativeValue, Object javaValue, VaListBuilderCall<Z> builderCall) {
             this.carrier = carrier;
             this.layout = layout;
             this.format = format;
@@ -449,7 +441,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         interface VaListBuilderCall<V> {
-            void build(VaList.Builder builder, MemoryLayout layout, V value);
+            void build(VaList.Builder builder, ValueLayout layout, V value);
         }
     }
 
