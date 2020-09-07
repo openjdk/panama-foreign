@@ -185,7 +185,7 @@ public interface NativeScope extends AutoCloseable {
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given address value.
      * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
+     * The segment returned by this method cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
