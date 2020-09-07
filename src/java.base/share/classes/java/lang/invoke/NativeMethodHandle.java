@@ -29,6 +29,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.invoke.NativeEntryPoint;
 
 import static java.lang.invoke.LambdaForm.*;
+import static java.lang.invoke.MethodHandleNatives.Constants.LM_TRUSTED;
 import static java.lang.invoke.MethodHandleNatives.Constants.REF_invokeStatic;
 import static java.lang.invoke.MethodHandleStatics.newInternalError;
 
@@ -87,7 +88,7 @@ import static java.lang.invoke.MethodHandleStatics.newInternalError;
                 .appendParameterTypes(Object.class);
         MemberName linker = new MemberName(MethodHandle.class, "linkToNative", linkerType, REF_invokeStatic);
         try {
-            linker = IMPL_NAMES.resolveOrFail(REF_invokeStatic, linker, null, NoSuchMethodException.class);
+            linker = IMPL_NAMES.resolveOrFail(REF_invokeStatic, linker, null, LM_TRUSTED, NoSuchMethodException.class);
         } catch (ReflectiveOperationException ex) {
             throw newInternalError(ex);
         }
