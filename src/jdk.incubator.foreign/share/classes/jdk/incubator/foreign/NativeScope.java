@@ -85,7 +85,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
-    default MemorySegment allocate(MemoryLayout layout, byte value) {
+    default MemorySegment allocate(ValueLayout layout, byte value) {
         VarHandle handle = layout.varHandle(byte.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -103,7 +103,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
-    default MemorySegment allocate(MemoryLayout layout, short value) {
+    default MemorySegment allocate(ValueLayout layout, short value) {
         VarHandle handle = layout.varHandle(short.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -121,7 +121,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
-    default MemorySegment allocate(MemoryLayout layout, int value) {
+    default MemorySegment allocate(ValueLayout layout, int value) {
         VarHandle handle = layout.varHandle(int.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -139,7 +139,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
-    default MemorySegment allocate(MemoryLayout layout, float value) {
+    default MemorySegment allocate(ValueLayout layout, float value) {
         VarHandle handle = layout.varHandle(float.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -157,7 +157,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
-    default MemorySegment allocate(MemoryLayout layout, long value) {
+    default MemorySegment allocate(ValueLayout layout, long value) {
         VarHandle handle = layout.varHandle(long.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -175,7 +175,7 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
-    default MemorySegment allocate(MemoryLayout layout, double value) {
+    default MemorySegment allocate(ValueLayout layout, double value) {
         VarHandle handle = layout.varHandle(double.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
@@ -183,7 +183,8 @@ public interface NativeScope extends AutoCloseable {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given address value.
+     * Allocate a block of memory in this native scope with given layout and initialize it with given address value
+     * (expressed as an {@link Addressable} instance).
      * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
      * The segment returned by this method cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
@@ -194,13 +195,13 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
      */
-    default MemorySegment allocate(MemoryLayout layout, MemoryAddress value) {
+    default MemorySegment allocate(ValueLayout layout, Addressable value) {
         if (MemoryLayouts.ADDRESS.byteSize() != layout.byteSize()) {
             throw new IllegalArgumentException("Layout size mismatch - " + layout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
         }
         switch ((int)layout.byteSize()) {
-            case 4: return allocate(layout, (int)value.toRawLongValue());
-            case 8: return allocate(layout, value.toRawLongValue());
+            case 4: return allocate(layout, (int)value.address().toRawLongValue());
+            case 8: return allocate(layout, value.address().toRawLongValue());
             default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
         }
     }
@@ -322,16 +323,16 @@ public interface NativeScope extends AutoCloseable {
      * {@code limit() - size() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
      */
-    default MemorySegment allocateArray(ValueLayout elementLayout, MemoryAddress[] array) {
+    default MemorySegment allocateArray(ValueLayout elementLayout, Addressable[] array) {
         if (MemoryLayouts.ADDRESS.byteSize() != elementLayout.byteSize()) {
             throw new IllegalArgumentException("Layout size mismatch - " + elementLayout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
         }
         switch ((int)elementLayout.byteSize()) {
             case 4: return copyArrayWithSwapIfNeeded(Stream.of(array)
-                            .mapToInt(a -> (int)a.toRawLongValue()).toArray(),
+                            .mapToInt(a -> (int)a.address().toRawLongValue()).toArray(),
                             elementLayout, MemorySegment::ofArray);
             case 8: return copyArrayWithSwapIfNeeded(Stream.of(array)
-                            .mapToLong(MemoryAddress::toRawLongValue).toArray(),
+                            .mapToLong(a -> a.address().toRawLongValue()).toArray(),
                             elementLayout, MemorySegment::ofArray);
             default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
         }
