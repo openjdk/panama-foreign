@@ -31,20 +31,11 @@
  * @run testng/othervm -Dforeign.restricted=permit VaListTest
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CSupport.AArch64;
 import jdk.incubator.foreign.CSupport.SysV;
 import jdk.incubator.foreign.CSupport.VaList;
 import jdk.incubator.foreign.CSupport.Win64;
-import jdk.incubator.foreign.ForeignLinker;
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -156,7 +147,7 @@ public class VaListTest {
     @Test(dataProvider = "sumInts")
     public void testIntSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                            BiFunction<Integer, VaList, Integer> sumInts,
-                           MemoryLayout intLayout) {
+                           ValueLayout intLayout) {
         try (VaList vaList = vaListFactory.apply(b ->
                 b.vargFromInt(intLayout, 10)
                         .vargFromInt(intLayout, 15)
@@ -184,7 +175,7 @@ public class VaListTest {
     @Test(dataProvider = "sumDoubles")
     public void testDoubleSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                               BiFunction<Integer, VaList, Double> sumDoubles,
-                              MemoryLayout doubleLayout) {
+                              ValueLayout doubleLayout) {
         try (VaList vaList = vaListFactory.apply(b ->
                 b.vargFromDouble(doubleLayout, 3.0D)
                         .vargFromDouble(doubleLayout, 4.0D)
@@ -214,7 +205,7 @@ public class VaListTest {
     @Test(dataProvider = "pointers")
     public void testVaListMemoryAddress(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                         Function<VaList, Integer> getFromPointer,
-                                        MemoryLayout pointerLayout) {
+                                        ValueLayout pointerLayout) {
         try (MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT)) {
             MemoryAccess.setInt(msInt, 10);
             try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()))) {
@@ -267,7 +258,7 @@ public class VaListTest {
     @Test(dataProvider = "structs")
     public void testStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                            Function<VaList, Integer> sumStruct,
-                           MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
+                           GroupLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(Point_LAYOUT)) {
             VH_Point_x.set(struct, 5);
             VH_Point_y.set(struct, 10);
@@ -318,7 +309,7 @@ public class VaListTest {
     @Test(dataProvider = "bigStructs")
     public void testBigStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                               Function<VaList, Long> sumBigStruct,
-                              MemoryLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
+                              GroupLayout BigPoint_LAYOUT, VarHandle VH_BigPoint_x, VarHandle VH_BigPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(BigPoint_LAYOUT)) {
             VH_BigPoint_x.set(struct, 5);
             VH_BigPoint_y.set(struct, 10);
@@ -369,7 +360,7 @@ public class VaListTest {
     @Test(dataProvider = "floatStructs")
     public void testFloatStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                 Function<VaList, Float> sumFloatStruct,
-                                MemoryLayout FloatPoint_LAYOUT,
+                                GroupLayout FloatPoint_LAYOUT,
                                 VarHandle VH_FloatPoint_x, VarHandle VH_FloatPoint_y) {
         try (MemorySegment struct = MemorySegment.allocateNative(FloatPoint_LAYOUT)) {
             VH_FloatPoint_x.set(struct, 1.234f);
@@ -429,7 +420,7 @@ public class VaListTest {
     @Test(dataProvider = "hugeStructs")
     public void testHugeStruct(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                Function<VaList, Long> sumHugeStruct,
-                               MemoryLayout HugePoint_LAYOUT,
+                               GroupLayout HugePoint_LAYOUT,
                                VarHandle VH_HugePoint_x, VarHandle VH_HugePoint_y, VarHandle VH_HugePoint_z) {
         // On AArch64 a struct needs to be larger than 16 bytes to be
         // passed by reference.
@@ -482,8 +473,8 @@ public class VaListTest {
     @Test(dataProvider = "sumStack")
     public void testStack(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                           SumStackFunc sumStack,
-                          MemoryLayout longLayout,
-                          MemoryLayout doubleLayout) {
+                          ValueLayout longLayout,
+                          ValueLayout doubleLayout) {
         try (MemorySegment longSum = MemorySegment.allocateNative(longLayout);
              MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout)) {
             MemoryAccess.setLong(longSum, 0L);
@@ -555,7 +546,7 @@ public class VaListTest {
     @Test(dataProvider = "sumIntsScoped")
     public void testScopedVaList(BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> vaListFactory,
                                  BiFunction<Integer, VaList, Integer> sumInts,
-                                 MemoryLayout intLayout) {
+                                 ValueLayout intLayout) {
         VaList listLeaked;
         try (NativeScope scope = NativeScope.unboundedScope()) {
             VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
@@ -571,7 +562,7 @@ public class VaListTest {
     @Test(dataProvider = "structs")
     public void testScopeMSRead(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                                 Function<VaList, Integer> sumStruct, // ignored
-                                MemoryLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
+                                GroupLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         MemorySegment pointOut;
         try (NativeScope scope = NativeScope.unboundedScope()) {
             try (MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT)) {
@@ -599,7 +590,7 @@ public class VaListTest {
     }
 
     @Test(dataProvider = "copy")
-    public void testCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, MemoryLayout intLayout) {
+    public void testCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, ValueLayout intLayout) {
         try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8))) {
             VaList  copy = list.copy();
@@ -615,7 +606,7 @@ public class VaListTest {
     }
 
     @Test(dataProvider = "copy")
-    public void testScopedCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, MemoryLayout intLayout) {
+    public void testScopedCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, ValueLayout intLayout) {
         try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8))) {
             VaList copy;
@@ -635,7 +626,7 @@ public class VaListTest {
     @Test(dataProvider = "copy",
             expectedExceptions = IllegalStateException.class)
     public void testCopyUnusableAfterOriginalClosed(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                                    MemoryLayout intLayout) {
+                                                    ValueLayout intLayout) {
         VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8));
         try (VaList copy = list.copy()) {
@@ -648,7 +639,7 @@ public class VaListTest {
     @Test(dataProvider = "copy",
             expectedExceptions = IllegalStateException.class)
     public void testCopyUnusableAfterOriginalClosedScope(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                                         MemoryLayout intLayout) {
+                                                         ValueLayout intLayout) {
         VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8));
         try (NativeScope scope = NativeScope.unboundedScope()) {
