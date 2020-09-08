@@ -57,7 +57,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private static final String VA_LIST_TAG = "__va_list_tag";
     private final Set<String> constants = new HashSet<>();
     // To detect duplicate Variable and Function declarations.
-    private final Set<Declaration.Variable> variables = new HashSet<>();
+    private final Set<String> variables = new HashSet<>();
     private final Set<Declaration.Function> functions = new HashSet<>();
 
     protected final HeaderBuilder toplevelBuilder;
@@ -83,7 +83,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     // have we seen this Variable earlier?
     protected boolean variableSeen(Declaration.Variable tree) {
-        return !variables.add(tree);
+        return !variables.add(tree.name());
     }
 
     // have we seen this Function earlier?
