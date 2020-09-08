@@ -755,6 +755,139 @@ java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubato
 
 ```
 
+## Using tensorflow (Mac OS)
+
+### getting libtensorflow
+
+* Download tensorflow library from
+
+    https://www.tensorflow.org/install/lang_c
+
+* extract the downloaded tar in a directory called LIBTENSORFLOW_HOME
+
+###  jextract c_api.h
+
+```sh
+
+jextract --source \
+  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
+  -t org.tensorflow \
+  -I ${LIBTENSORFLOW_HOME}/include \
+  -l ${LIBTENSORFLOW_HOME}/lib/libtensorflow.dylib \
+  ${LIBTENSORFLOW_HOME}/include/tensorflow/c/c_api.h
+
+javac --add-modules jdk.incubator.foreign org/tensorflow/*.java
+
+```
+
+### Python program that creates and saves model
+
+The following Python program should be run to create and save model
+which will read and printed by a Java program.
+
+Note: you need to install tensorflow package to run this python script.
+
+```python
+
+import tensorflow as tf
+from tensorflow.keras import models, layers
+from tensorflow.keras.datasets import mnist
+
+model = tf.keras.models.Sequential([
+  tf.keras.layers.Flatten(input_shape=(28, 28)),
+  tf.keras.layers.Dense(128,activation='relu'),
+  tf.keras.layers.Dense(10, activation='softmax')
+])
+
+model.compile(
+    loss='sparse_categorical_crossentropy',
+    optimizer=tf.keras.optimizers.Adam(0.001),
+    metrics=['accuracy'],
+)
+
+print(model.summary())
+
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+
+train_images = train_images/255.0
+test_images = test_images/255.0
+
+model.fit(train_images, train_labels,
+    epochs=4, batch_size=128, verbose=1)
+
+test_loss, test_accuracy = model.evaluate(test_images, test_labels)
+
+print(test_loss, test_accuracy)
+
+model.save("saved_mnist_model")
+
+```
+
+### Java program that uses Tensorflow C API
+
+```java
+
+import jdk.incubator.foreign.*;
+import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.MemoryAccess.*;
+import static jdk.incubator.foreign.MemoryAddress.*;
+import static org.tensorflow.c_api_h.*;
+
+// simple program that loads saved model and prints basic info on operations in it
+
+public class TensorflowLoadSavedModel {
+    public static void main(String... args) throws Exception {
+        System.out.println("TensorFlow C library version: " + toJavaStringRestricted(TF_Version()));
+
+        if (args.length == 0) {
+            System.err.println("java TensorflowLoadSavedModel <saved model dir>");
+            System.exit(1);
+        }
+
+        try (var scope = NativeScope.unboundedScope()) {
+            var graph = TF_NewGraph();
+            var status = TF_NewStatus();
+            var sessionOpts = TF_NewSessionOptions();
+
+            var savedModelDir = toCString(args[0], scope);
+            var tags = scope.allocate(C_POINTER, toCString("serve", scope));
+            var session = TF_LoadSessionFromSavedModel(sessionOpts, NULL, savedModelDir, tags, 1, graph, NULL, status);
+
+            if (TF_GetCode(status) != TF_OK()) {
+                System.err.printf("cannot load session from saved model: %s\n",
+                    toJavaStringRestricted(TF_Message(status)));
+            } else {
+                System.err.println("load session from saved model works!");
+            }
+
+            // print operations
+            var size = scope.allocate(C_LONGLONG);
+            var operation = NULL;
+            while (!(operation = TF_GraphNextOperation(graph, size)).equals(NULL)) {
+                System.out.printf("%s : %s\n",
+                    toJavaStringRestricted(TF_OperationName(operation)),
+                    toJavaStringRestricted(TF_OperationOpType(operation)));
+            }
+
+            TF_DeleteGraph(graph);
+            TF_DeleteSession(session, status);
+            TF_DeleteSessionOptions(sessionOpts);
+            TF_DeleteStatus(status);
+        }
+    }
+}
+
+```
+
+### Compiling and running the Java Tensorflow sample
+
+```sh
+
+java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+   TensorflowLoadSavedModel.java saved_mnist_model
+
+```
+
 ## Using time.h (Mac OS)
 
 ### jextract time.h
