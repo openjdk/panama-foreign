@@ -785,6 +785,8 @@ javac --add-modules jdk.incubator.foreign org/tensorflow/*.java
 The following Python program should be run to create and save model
 which will read and printed by a Java program.
 
+Note: you need to install tensorflow package to run this python script.
+
 ```python
 
 import tensorflow as tf
