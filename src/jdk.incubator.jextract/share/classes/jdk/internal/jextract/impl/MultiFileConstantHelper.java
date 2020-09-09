@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MultiFileConstantHelper implements ConstantHelper {
-
-    private static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 1000);
+    static final int CONSTANTS_PER_CLASS_SOURCES = Integer.getInteger("jextract.constants.per.class.source", 1000);
+    static final int CONSTANTS_PER_CLASS_CLASSES = Integer.getInteger("jextract.constants.per.class.binary", 10000);
 
     @FunctionalInterface
     interface ConstantHelperFunc {
@@ -44,6 +44,7 @@ public class MultiFileConstantHelper implements ConstantHelper {
 
     private final ConstantHelperFunc delegateFactory;
     private final String headerClassName;
+    private final int constantsPerClass;
 
     private int constantCount;
     private int constantClassCount;
@@ -51,9 +52,10 @@ public class MultiFileConstantHelper implements ConstantHelper {
 
     private final List<JavaFileObject> finishedClasses = new ArrayList<>();
 
-    public MultiFileConstantHelper(String headerClassName, ConstantHelperFunc func) {
+    public MultiFileConstantHelper(String headerClassName, ConstantHelperFunc func, int constantsPerClass) {
         this.headerClassName = headerClassName;
         this.delegateFactory = func;
+        this.constantsPerClass = constantsPerClass;
         this.delegate = delegateFactory.make(getConstantClassName(), null, false);
     }
 
@@ -62,7 +64,7 @@ public class MultiFileConstantHelper implements ConstantHelper {
     }
 
     private void checkNewConstantsClass() {
-        if (constantCount > CONSTANTS_PER_CLASS) {
+        if (constantCount > constantsPerClass) {
             newConstantsClass(false, null);
         }
         constantCount++;

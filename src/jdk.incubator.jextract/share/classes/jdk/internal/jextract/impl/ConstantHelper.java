@@ -33,6 +33,9 @@ import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
 import java.util.List;
 
+import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_CLASSES;
+import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_SOURCES;
+
 interface ConstantHelper {
     DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout);
     DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout);
@@ -48,6 +51,7 @@ interface ConstantHelper {
         return new MultiFileConstantHelper(headerClassName,
             (simpleClassName, baseClassName, isFinal) -> source
                 ? SourceConstantHelper.make(packageName, simpleClassName, libraryNames, baseClassName, isFinal)
-                : ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName, isFinal));
+                : ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName, isFinal),
+            source ? CONSTANTS_PER_CLASS_SOURCES : CONSTANTS_PER_CLASS_CLASSES);
     }
 }
