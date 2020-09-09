@@ -94,8 +94,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        String qualName = pkgName.isEmpty() ? clsName : pkgName + "." + clsName;
-        ConstantHelper constantHelper = ConstantHelper.make(source, qualName,
+        ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),
                 libraryNames.toArray(String[]::new));
         AnnotationWriter annotationWriter = new AnnotationWriter();

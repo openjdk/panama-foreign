@@ -54,6 +54,10 @@ import java.util.stream.Stream;
  * General utility functions
  */
 class Utils {
+    public static String qualifiedClassName(String packageName, String simpleName) {
+        return (packageName.isEmpty() ? "" : packageName + ".") + simpleName;
+    }
+
     private static URI fileName(String pkgName, String clsName, String extension) {
         String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
         return URI.create(pkgPrefix + clsName + extension);
