@@ -782,7 +782,7 @@ public final class MemoryAccess {
      * @param value the memory address to be written (expressed as an {@link Addressable} instance).
      */
     public static void setAddressAtOffset(MemorySegment segment, long offset, Addressable value) {
-        address_handle.set(segment, offset, value);
+        address_handle.set(segment, offset, value.address());
     }
 
     private static VarHandle indexedHandle(ValueLayout elementLayout, Class<?> carrier) {
