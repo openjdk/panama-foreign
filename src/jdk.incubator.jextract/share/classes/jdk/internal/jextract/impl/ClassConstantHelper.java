@@ -98,15 +98,6 @@ class ClassConstantHelper implements ConstantHelper {
             desc(methodType(VarHandle.class, VarHandle.class))
     );
 
-    private static final DirectMethodHandleDesc BSM_GET_STATIC_FINAL = ConstantDescs.ofConstantBootstrap(
-            CD_ConstantBootstraps,
-            "getStaticFinal",
-            CD_Object,
-            CD_Class
-    );
-
-    private static final ConstantDesc TRUE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "TRUE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
-    private static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
     private static final ClassDesc CD_PathElelemt = desc(MemoryLayout.PathElement.class);
     private static final ClassDesc CD_MemoryAddress = desc(MemoryAddress.class);
     private static final ClassDesc CD_MemorySegment = desc(MemorySegment.class);
@@ -133,13 +124,27 @@ class ClassConstantHelper implements ConstantHelper {
             Map.entry(MemoryAddress.class,      desc(Long.TYPE))
     );
 
-    ClassConstantHelper(String parentClassName, ClassDesc runtimeHelper, ClassDesc cString, String[] libraryNames) {
-        this.cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        String className = parentClassName + "$constants";
-        this.CD_constantsHelper = ClassDesc.of(className);
-        this.internalClassName = className.replace('.', '/');
+    public ClassConstantHelper(ClassWriter cw, ClassDesc CD_constantsHelper, String internalClassName,
+            DirectMethodHandleDesc MH_downcallHandle, DirectMethodHandleDesc MH_lookupGlobalVariable,
+            DirectMethodHandleDesc MH_makeCString, ConstantDesc LIBRARIES) {
+        this.cw = cw;
+        this.MH_downcallHandle = MH_downcallHandle;
+        this.MH_lookupGlobalVariable = MH_lookupGlobalVariable;
+        this.MH_makeCString = MH_makeCString;
+        this.internalClassName = internalClassName;
+        this.CD_constantsHelper = CD_constantsHelper;
+        this.LIBRARIES = LIBRARIES;
+    }
 
-        this.MH_downcallHandle = findRuntimeHelperBootstrap(
+    public static ConstantHelper make(String packageName, String className, ClassDesc runtimeHelper, ClassDesc cString,
+                                      String[] libraryNames, String baseClassName, boolean isFinal) {
+        String qualName = Utils.qualifiedClassName(packageName, className);
+        String qualBaseName = baseClassName != null ? Utils.qualifiedClassName(packageName, baseClassName) : null;
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        ClassDesc CD_constantsHelper = ClassDesc.of(qualName);
+        String internalClassName = toInternalName(qualName);
+
+        DirectMethodHandleDesc MH_downcallHandle = findRuntimeHelperBootstrap(
                 runtimeHelper,
                 "downcallHandle",
                 methodType(
@@ -150,7 +155,7 @@ class ClassConstantHelper implements ConstantHelper {
                         FunctionDescriptor.class,
                         boolean.class)
         );
-        this.MH_lookupGlobalVariable = findRuntimeHelperBootstrap(
+        DirectMethodHandleDesc MH_lookupGlobalVariable = findRuntimeHelperBootstrap(
                 runtimeHelper,
                 "lookupGlobalVariable",
                 methodType(
@@ -159,7 +164,7 @@ class ClassConstantHelper implements ConstantHelper {
                         String.class,
                         MemoryLayout.class)
         );
-        this.MH_makeCString = findRuntimeHelperBootstrap(
+        DirectMethodHandleDesc MH_makeCString = findRuntimeHelperBootstrap(
                 cString,
                 "toCString",
                 methodType(
@@ -167,7 +172,7 @@ class ClassConstantHelper implements ConstantHelper {
                         String.class)
         );
 
-        this.LIBRARIES = librariesDesc(findRuntimeHelperBootstrap(
+        ConstantDesc LIBRARIES = librariesDesc(findRuntimeHelperBootstrap(
                 runtimeHelper,
                 "libraries",
                 methodType(
@@ -175,7 +180,23 @@ class ClassConstantHelper implements ConstantHelper {
                         String[].class)
         ), libraryNames);
 
-        cw.visit(V15, ACC_PUBLIC, internalClassName, null, INTR_OBJECT, null);
+        ClassConstantHelper helper = new ClassConstantHelper(cw, CD_constantsHelper, internalClassName,
+                MH_downcallHandle, MH_lookupGlobalVariable, MH_makeCString, LIBRARIES);
+        helper.classBegin(qualBaseName, isFinal);
+        return helper;
+    }
+
+    private static String toInternalName(String className) {
+        return className.replace('.', '/');
+    }
+
+    private void classBegin(String baseClassName, boolean isFinal) {
+        String baseName = baseClassName != null ? toInternalName(baseClassName) : INTR_OBJECT;
+        int mods = ACC_PUBLIC;
+        if (isFinal) {
+            mods |= ACC_FINAL;
+        }
+        cw.visit(V15, mods, internalClassName, null, baseName, null);
     }
 
     private static DirectMethodHandleDesc findRuntimeHelperBootstrap(ClassDesc runtimeHelper, String name, MethodType type) {
@@ -472,7 +493,7 @@ class ClassConstantHelper implements ConstantHelper {
             name,
             mtype.descriptorString(),
             desc(funcDesc),
-            varargs ? TRUE : FALSE);
+            desc(varargs));
     }
 
     // To ASM constant translation

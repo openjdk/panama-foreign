@@ -43,12 +43,11 @@ interface ConstantHelper {
     DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value);
     List<JavaFileObject> getClasses();
 
-    static ConstantHelper make(boolean source, String parentClassName, ClassDesc runtimeHelper,
+    static ConstantHelper make(boolean source, String packageName, String headerClassName, ClassDesc runtimeHelper,
                                ClassDesc cString, String[] libraryNames) {
-        if (source) {
-            return new SourceConstantHelper(parentClassName, libraryNames);
-        } else {
-            return new ClassConstantHelper(parentClassName, runtimeHelper, cString, libraryNames);
-        }
+        return new MultiFileConstantHelper(headerClassName,
+            (simpleClassName, baseClassName, isFinal) -> source
+                ? SourceConstantHelper.make(packageName, simpleClassName, libraryNames, baseClassName, isFinal)
+                : ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName, isFinal));
     }
 }

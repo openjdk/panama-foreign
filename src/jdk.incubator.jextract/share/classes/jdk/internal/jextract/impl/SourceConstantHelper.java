@@ -72,43 +72,25 @@ class SourceConstantHelper implements ConstantHelper {
     // current line alignment (number of 4-spaces)
     private int align;
     private final String pkgName;
-    private final String headerClassName;
-    private int constantCount;
-    private int constantClassCount;
-    private String constantClassName;
-    private ClassDesc CD_constantsHelper;
-    private final List<String> classes = new ArrayList<>();
+    private final String constantClassName;
+    private final ClassDesc CD_constantsHelper;
 
-    SourceConstantHelper(String parentClassName, String[] libraryNames) {
-        int idx = parentClassName.lastIndexOf('.');
-        this.pkgName = idx == -1? "" : parentClassName.substring(0, idx);
-        this.headerClassName =  parentClassName.substring(idx + 1);
-        this.constantClassName = getConstantClassName(headerClassName, constantClassCount);
-        this.CD_constantsHelper = ClassDesc.of(pkgName.isEmpty() ? constantClassName : (pkgName + "." + constantClassName));
-        classBegin(libraryNames, null, false);
+    private SourceConstantHelper(String packageName, String className, ClassDesc CD_constantsHelper) {
+        this.pkgName = packageName;
+        this.constantClassName = className;
+        this.CD_constantsHelper = CD_constantsHelper;
     }
 
-    private static String getConstantClassName(String className, int count) {
-        return className + "$constants$" + count;
-    }
-
-    private void newConstantClass() {
-        if (constantCount > CONSTANTS_PER_CLASS) {
-            classEnd();
-            constantClassCount++;
-            String baseClassName = constantClassName;
-            this.constantClassName = getConstantClassName(headerClassName, constantClassCount);
-            this.CD_constantsHelper = ClassDesc.of(pkgName.isEmpty() ? constantClassName : (pkgName + "." + constantClassName));
-            this.constantCount = 0;
-            this.sb = new StringBuilder();
-            classBegin(null, baseClassName, false);
-        }
-        constantCount++;
+    public static ConstantHelper make(String packageName, String className, String[] libraryNames,
+                                      String baseClassName, boolean isFinal) {
+        ClassDesc CD_constantsHelper = ClassDesc.of(className);
+        SourceConstantHelper helper = new SourceConstantHelper(packageName, className, CD_constantsHelper);
+        helper.classBegin(libraryNames, baseClassName, isFinal);
+        return helper;
     }
 
     @Override
     public DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout) {
-        newConstantClass();
         String layoutName = javaName + "$LAYOUT";
         if (namesGenerated.containsKey(layoutName)) {
             return namesGenerated.get(layoutName);
@@ -131,7 +113,6 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaFieldName) {
-        newConstantClass();
         String varHandleName = javaName + "$VH";
 
         if (namesGenerated.containsKey(varHandleName)) {
@@ -146,7 +127,6 @@ class SourceConstantHelper implements ConstantHelper {
 
     @Override
     public DirectMethodHandleDesc addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        newConstantClass();
         String mhName = javaName + "$MH";
         if (namesGenerated.containsKey(mhName)) {
             return namesGenerated.get(mhName);
@@ -160,7 +140,6 @@ class SourceConstantHelper implements ConstantHelper {
 
     @Override
     public DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout) {
-        newConstantClass();
         String segmentName = javaName + "$SEGMENT";
         if (namesGenerated.containsKey(segmentName)) {
             return namesGenerated.get(segmentName);
@@ -174,7 +153,6 @@ class SourceConstantHelper implements ConstantHelper {
 
     @Override
     public DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor desc) {
-        newConstantClass();
         String funcDescName = javaName + "$FUNC";
 
         if (namesGenerated.containsKey(funcDescName)) {
@@ -189,8 +167,6 @@ class SourceConstantHelper implements ConstantHelper {
 
     @Override
     public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
-        newConstantClass();
-
         if (namesGenerated.containsKey(name)) {
             return namesGenerated.get(name);
         } else {
@@ -216,25 +192,9 @@ class SourceConstantHelper implements ConstantHelper {
     @Override
     public List<JavaFileObject> getClasses() {
         classEnd();
-
-        List<JavaFileObject> javaFileObjects = new ArrayList<>();
-        int count = 0;
-        for (String src : classes) {
-            String name = getConstantClassName(headerClassName, count);
-            javaFileObjects.add(newJavaFileObject(name, src));
-            count++;
-        }
-
-        // generate overall header$constants subclass that inherits from
-        // the individual "split" header$constants$N classes.
-        this.sb = new StringBuilder();
-        String baseClassName = constantClassName;
-        this.constantClassName = headerClassName + "$constants";
-        classBegin(null, baseClassName, true);
-        classEnd();
-        javaFileObjects.add(newJavaFileObject(constantClassName, sb.toString()));
-
-        return javaFileObjects;
+        JavaFileObject result = newJavaFileObject(constantClassName, sb.toString());
+        sb = null;
+        return List.of(result);
     }
 
     // Internals only below this point
@@ -247,11 +207,11 @@ class SourceConstantHelper implements ConstantHelper {
         decrAlign();
     }
 
-    private void classBegin(String[] libraryNames, String baseClassName, boolean leafClass) {
+    private void classBegin(String[] libraryNames, String baseClassName, boolean isFinal) {
         addPackagePrefix(pkgName);
         addImportSection();
         append("public ");
-        if (leafClass) {
+        if (isFinal) {
             append("final ");
         }
         append("class ");
@@ -262,14 +222,13 @@ class SourceConstantHelper implements ConstantHelper {
         }
         append(" {\n");
         emitConstructor();
-        if (libraryNames != null) {
+        if (baseClassName == null) { // only for the first one
             emitLibraries(libraryNames);
         }
     }
 
     private void classEnd() {
         append("}\n");
-        classes.add(sb.toString());
     }
 
     private DirectMethodHandleDesc getGetterDesc(String name, Class<?> type) {
