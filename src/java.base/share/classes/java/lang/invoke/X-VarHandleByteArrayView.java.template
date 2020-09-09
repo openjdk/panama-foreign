@@ -573,6 +573,7 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
             return Preconditions.checkIndex(index, UNSAFE.getInt(bb, BUFFER_LIMIT) - ALIGN, null);
         }
 
+        @ForceInline
         static Scope scope(ByteBuffer bb) {
             MemorySegmentProxy segmentProxy = NIO_ACCESS.bufferSegment(bb);
             return segmentProxy != null ?

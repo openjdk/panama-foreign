@@ -43,14 +43,14 @@ import jdk.internal.vm.annotation.ForceInline;
  * already been released (which would result in a hard VM crash).
  * <p>
  * Accessing and releasing memory from a single thread is not problematic - after all, a given thread cannot,
- * at the same time, access the a memory region <em>and</em> free it. But ensuring correctness of memory access
+ * at the same time, access a memory region <em>and</em> free it. But ensuring correctness of memory access
  * when multiple threads are involved is much trickier, as there can be cases where a thread is accessing
  * a memory region while another thread is releasing it.
  * <p>
  * This class provides tools to manages races when multiple threads are accessing and/or releasing the same memory
  * region concurrently. More specifically, when a thread wants to release a memory region, it should call the
  * {@link #closeScope(jdk.internal.misc.ScopedMemoryAccess.Scope)} method provided by this class. This method initiates
- * a thread-local handshakes with all the other VM threads, which are then stopped one by one. If any thread is found
+ * thread-local handshakes with all the other VM threads, which are then stopped one by one. If any thread is found
  * accessing memory that is associated to the very scope object being closed, that thread execution is asynchronously
  * interrupted with a {@link Scope.ScopedAccessException}.
  * <p>

@@ -223,8 +223,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * (ii) no other thread is accessing the memory associated with this scope while the segment is being
      * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
      * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
-     * Because of it is the job of the closing thread to make sure that no concurrent access is possible,
-     * checking the liveness bit can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}),
+     * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
+     * checking the liveness bit upon access can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}),
      * as in the confined case.
      */
     static class SharedScope extends MemoryScope {

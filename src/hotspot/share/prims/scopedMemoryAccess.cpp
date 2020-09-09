@@ -159,6 +159,5 @@ JVM_ENTRY(void, JVM_RegisterJDKInternalMiscScopedMemoryAccessMethods(JNIEnv *env
   ThreadToNativeFromVM ttnfv(thread);
 
   int ok = env->RegisterNatives(scopedMemoryAccessClass, jdk_internal_misc_ScopedMemoryAccess_methods, sizeof(jdk_internal_misc_ScopedMemoryAccess_methods)/sizeof(JNINativeMethod));
-  //printf("closeScope(%s%s)V\n", SCOPE, SCOPED_EXC);
   guarantee(ok == 0, "register jdk.internal.misc.ScopedMemoryAccess natives");
 } JVM_END

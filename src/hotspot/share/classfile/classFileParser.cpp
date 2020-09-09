@@ -2105,7 +2105,7 @@ AnnotationCollector::annotation_index(const ClassLoaderData* loader_data,
     }
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_internal_misc_Scoped_signature): {
       if (_location != _in_method)  break;  // only allow for methods
-//      if (!privileged)              break;  // only allow in privileged code
+      if (!privileged)              break;  // only allow in privileged code
       return _method_Scoped;
     }
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_internal_HotSpotIntrinsicCandidate_signature): {
