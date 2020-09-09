@@ -1486,6 +1486,8 @@ class JavaThread: public Thread {
 
   // Thread.stop support
   void send_thread_stop(oop throwable);
+  void install_async_exception(oop throwable);
+
   AsyncRequests clear_special_runtime_exit_condition() {
     AsyncRequests x = _special_runtime_exit_condition;
     _special_runtime_exit_condition = _no_async_condition;

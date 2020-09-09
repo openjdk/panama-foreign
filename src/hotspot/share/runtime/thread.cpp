@@ -2436,7 +2436,7 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
   JFR_ONLY(SUSPEND_THREAD_CONDITIONAL(this);)
 }
 
-void JavaThread::send_thread_stop(oop java_throwable)  {
+void JavaThread::install_async_exception(oop java_throwable)  {
   ResourceMark rm;
   assert(Thread::current()->is_VM_thread() || Thread::current() == this, "should be in the vm thread");
 
@@ -2475,8 +2475,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
       Exceptions::debug_check_abort(_pending_async_exception->klass()->external_name());
     }
   }
+}
 
-
+void JavaThread::send_thread_stop(oop java_throwable) {
+  this->install_async_exception(java_throwable);
   // Interrupt thread so it will wake up from a potential wait()/sleep()/park()
   java_lang_Thread::set_interrupted(threadObj(), true);
   this->interrupt();
