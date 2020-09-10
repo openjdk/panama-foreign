@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm -Dforeign.restricted=permit TestNativeScope
+ * @run testng/othervm TestNativeScope
  */
 
 import jdk.incubator.foreign.MemorySegment;
@@ -197,7 +197,7 @@ public class TestNativeScope {
 
     @Test
     public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.ofNativeRestricted(MemoryAddress.ofLong(42), 10, null, null, null);
+        MemorySegment unconfined = MemorySegment.allocateNative(10).withOwnerThread(null);
         NativeScope scope = NativeScope.boundedScope(10);
         MemorySegment registered = scope.register(unconfined);
         assertFalse(unconfined.isAlive());

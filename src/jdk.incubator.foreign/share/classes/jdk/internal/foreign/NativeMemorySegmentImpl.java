@@ -28,6 +28,8 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.access.JavaNioAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -97,7 +99,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.create(null, () -> {
+        MemoryScope scope = MemoryScope.createConfined(null, () -> {
             unsafe.freeMemory(buf);
             nioAccess.unreserveMemory(alignedSize, bytesSize);
         });
@@ -111,7 +113,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
-        MemoryScope scope = MemoryScope.createUnchecked(owner, attachment, cleanup);
+        MemoryScope scope = owner == null ?
+                MemoryScope.createShared(attachment, cleanup) :
+                MemoryScope.createConfined(owner, attachment, cleanup);
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
     }
 }
