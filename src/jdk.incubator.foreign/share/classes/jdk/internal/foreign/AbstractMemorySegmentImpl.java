@@ -278,6 +278,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public MemorySegment withOwnerThread(Thread newOwner) {
+        checkValidState();
         int expectedMode = newOwner != null ? HANDOFF : SHARE;
         if (!isSet(expectedMode)) {
             throw unsupportedAccessMode(expectedMode);
@@ -295,13 +296,10 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final void close() {
+        checkValidState();
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
         }
-        closeNoCheck();
-    }
-
-    private final void closeNoCheck() {
         scope.close();
     }
 
