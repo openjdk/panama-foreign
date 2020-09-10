@@ -26,7 +26,6 @@
  * @run testng TestSegments
  */
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
@@ -40,7 +39,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongFunction;
@@ -74,9 +72,6 @@ public class TestSegments {
             Thread t = new Thread(() -> {
                 try {
                     Object o = member.method.invoke(segment, member.params);
-                    if (member.method.getName().equals("acquire")) {
-                        ((MemorySegment)o).close();
-                    }
                 } catch (ReflectiveOperationException ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -312,6 +307,7 @@ public class TestSegments {
         final static List<String> CONFINED_NAMES = List.of(
                 "address",
                 "close",
+                "share",
                 "fill",
                 "copyFrom",
                 "mismatch",
@@ -377,30 +373,10 @@ public class TestSegments {
     }
 
     enum AccessActions {
-        ACQUIRE(MemorySegment.ACQUIRE) {
+        SHARE(MemorySegment.SHARE) {
             @Override
             void run(MemorySegment segment) {
-                Spliterator<MemorySegment> spliterator =
-                        MemorySegment.spliterator(segment, MemoryLayout.ofSequence(segment.byteSize(), MemoryLayouts.JAVA_BYTE));
-                AtomicReference<RuntimeException> exception = new AtomicReference<>();
-                Runnable action = () -> {
-                    try {
-                        spliterator.tryAdvance(s -> { });
-                    } catch (RuntimeException e) {
-                        exception.set(e);
-                    }
-                };
-                Thread thread = new Thread(action);
-                thread.start();
-                try {
-                    thread.join();
-                } catch (InterruptedException ex) {
-                    throw new AssertionError(ex);
-                }
-                RuntimeException e = exception.get();
-                if (e != null) {
-                    throw e;
-                }
+                segment.withOwnerThread(null);
             }
         },
         CLOSE(MemorySegment.CLOSE) {

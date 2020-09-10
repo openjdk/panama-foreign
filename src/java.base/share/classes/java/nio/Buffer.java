@@ -30,6 +30,7 @@ import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM.BufferPool;
 import jdk.internal.vm.annotation.ForceInline;
@@ -192,6 +193,8 @@ import java.util.Spliterator;
 public abstract class Buffer {
     // Cached unsafe-access object
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
+
+    static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     /**
      * The characteristics of Spliterators that traverse and split elements
@@ -754,9 +757,18 @@ public abstract class Buffer {
     }
 
     @ForceInline
-    final void checkSegment() {
+    final ScopedMemoryAccess.Scope scope() {
         if (segment != null) {
-            segment.checkValidState();
+            return segment.scope();
+        } else {
+            return null;
+        }
+    }
+
+    final void checkScope() {
+        ScopedMemoryAccess.Scope scope = scope();
+        if (scope != null) {
+            scope.checkValidState();
         }
     }
 
