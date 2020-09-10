@@ -297,6 +297,10 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public void registerCleaner(Cleaner cleaner) {
+        checkAccessModes(CLOSE);
+        if (ownerThread() != null) {
+            throw new UnsupportedOperationException("Cannot register cleaner on confined segment");
+        }
         checkValidState();
         cleaner.register(this, scope::forceCleanup);
     }
