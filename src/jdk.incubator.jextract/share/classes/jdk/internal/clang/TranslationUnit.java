@@ -64,7 +64,7 @@ public class TranslationUnit implements AutoCloseable {
 
     public final void save(Path path) throws TranslationUnitSaveException {
         try (MemorySegment pathStr = CSupport.toCString(path.toAbsolutePath().toString())) {
-            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr.address(), 0));
+            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
             }
@@ -89,14 +89,14 @@ public class TranslationUnit implements AutoCloseable {
                     scope.allocateArray(Index_h.CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
                 MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile.$LAYOUT().byteSize());
-                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CSupport.toCString(inMemoryFiles[i].file, scope).address());
-                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CSupport.toCString(inMemoryFiles[i].contents, scope).address());
+                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CSupport.toCString(inMemoryFiles[i].file, scope));
+                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CSupport.toCString(inMemoryFiles[i].contents, scope));
                 MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
                         tu,
                         inMemoryFiles.length,
-                        files == null ? MemoryAddress.NULL : files.address(),
+                        files == null ? MemoryAddress.NULL : files,
                         Index_h.clang_defaultReparseOptions(tu)));
 
             if (code != ErrorCode.Success) {
@@ -122,7 +122,7 @@ public class TranslationUnit implements AutoCloseable {
     public Tokens tokenize(SourceRange range) {
         MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
         MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
-        Index_h.clang_tokenize(tu, range.range, p.address(), pCnt.address());
+        Index_h.clang_tokenize(tu, range.range, p, pCnt);
         Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
         return rv;
     }
