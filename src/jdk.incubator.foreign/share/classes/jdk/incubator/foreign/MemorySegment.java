@@ -102,7 +102,7 @@ import java.util.function.Consumer;
  *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
  *     objects.</li>
  * </ul>
- * 
+ *
  * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
  * that segment will be released when the segment becomes <em>unreachable</em> (see {@link #registerCleaner(Cleaner)});
  * this might be useful to prevent native memory leaks.
