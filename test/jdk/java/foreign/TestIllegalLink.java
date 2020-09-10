@@ -28,7 +28,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestIllegalLink
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
@@ -40,14 +40,14 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.CSupport.C_INT;
+import static jdk.incubator.foreign.CLinker.C_INT;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class TestIllegalLink {
 
     private static final MemoryAddress dummyTarget = MemoryAddress.NULL;
-    private static final ForeignLinker ABI = CSupport.getSystemLinker();
+    private static final ForeignLinker ABI = CLinker.getSystemLinker();
 
     @Test(dataProvider = "types")
     public void testTypeMismatch(MethodType mt, FunctionDescriptor desc, String expectedExceptionMessage) {

@@ -27,7 +27,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -142,11 +142,11 @@ public class TestNative {
     public static native long getCapacity(Buffer buffer);
 
     public static MemoryAddress allocate(int size) {
-        return CSupport.allocateMemoryRestricted(size);
+        return CLinker.allocateMemoryRestricted(size);
     }
 
     public static void free(MemoryAddress addr) {
-        CSupport.freeMemoryRestricted(addr);
+        CLinker.freeMemoryRestricted(addr);
     }
 
     @Test(dataProvider="nativeAccessOps")

@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8248421
- * @summary CSupport should have a way to free memory allocated outside Java
+ * @summary SystemCLinker should have a way to free memory allocated outside Java
  * @run testng/othervm -Dforeign.restricted=permit TestFree
  */
 
@@ -33,7 +33,7 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestFree {

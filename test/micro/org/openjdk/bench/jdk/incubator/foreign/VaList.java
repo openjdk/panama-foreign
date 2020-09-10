@@ -22,10 +22,10 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.CLinker;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -39,10 +39,10 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
-import static jdk.incubator.foreign.CSupport.C_DOUBLE;
-import static jdk.incubator.foreign.CSupport.C_INT;
-import static jdk.incubator.foreign.CSupport.C_LONGLONG;
-import static jdk.incubator.foreign.CSupport.Win64.asVarArg;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONGLONG;
+import static jdk.incubator.foreign.CLinker.asVarArg;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -52,7 +52,7 @@ import static jdk.incubator.foreign.CSupport.Win64.asVarArg;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class VaList {
 
-    static final ForeignLinker linker = CSupport.getSystemLinker();
+    static final ForeignLinker linker = CLinker.getSystemLinker();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
 
     static final MethodHandle MH_ellipsis;
@@ -64,8 +64,8 @@ public class VaList {
                     MethodType.methodType(void.class, int.class, int.class, double.class, long.class),
                     FunctionDescriptor.ofVoid(C_INT, asVarArg(C_INT), asVarArg(C_DOUBLE), asVarArg(C_LONGLONG)));
             MH_vaList = linker.downcallHandle(lookup.lookup("vaList"),
-                    MethodType.methodType(void.class, int.class, CSupport.VaList.class),
-                    FunctionDescriptor.ofVoid(C_INT, CSupport.C_VA_LIST));
+                    MethodType.methodType(void.class, int.class, VaList.class),
+                    FunctionDescriptor.ofVoid(C_INT, C_VA_LIST));
         } catch (NoSuchMethodException e) {
             throw new InternalError(e);
         }
@@ -79,7 +79,7 @@ public class VaList {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (CSupport.VaList vaList = CSupport.VaList.make(b ->
+        try (VaList vaList = VaList.make(b ->
             b.vargFromInt(C_INT, 1)
              .vargFromDouble(C_DOUBLE, 2D)
              .vargFromLong(C_LONGLONG, 3L)

@@ -24,7 +24,8 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign.abi
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64
  * @build CallArrangerTestBase
  * @run testng TestAarch64CallArranger
@@ -42,7 +43,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodType;
 
-import static jdk.incubator.foreign.CSupport.AArch64.*;
+import static jdk.internal.foreign.PlatformLayouts.AArch64.*;
 import static jdk.internal.foreign.abi.Binding.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Architecture.*;
 import static org.testng.Assert.assertEquals;

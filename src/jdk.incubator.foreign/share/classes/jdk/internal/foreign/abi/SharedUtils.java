@@ -24,8 +24,6 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAccess;
@@ -36,7 +34,9 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
@@ -57,7 +57,7 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class SharedUtils {
 
@@ -235,19 +235,12 @@ public class SharedUtils {
         throw new IllegalArgumentException("Size too large: " + size);
     }
 
-    public static ForeignLinker getSystemLinker() {
-        String arch = System.getProperty("os.arch");
-        String os = System.getProperty("os.name");
-        if (arch.equals("amd64") || arch.equals("x86_64")) {
-            if (os.startsWith("Windows")) {
-                return Windowsx64Linker.getInstance();
-            } else {
-                return SysVx64Linker.getInstance();
-            }
-        } else if (arch.equals("aarch64")) {
-            return AArch64Linker.getInstance();
-        }
-        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
+    public static CLinker getSystemLinker() {
+        return switch (CABI.current()) {
+            case Win64 -> Windowsx64Linker.getInstance();
+            case SysV -> SysVx64Linker.getInstance();
+            case AArch64 -> AArch64Linker.getInstance();
+        };
     }
 
     public static String toJavaStringInternal(MemorySegment segment, long start, Charset charset) {
@@ -307,12 +300,10 @@ public class SharedUtils {
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, Allocator allocator) {
-        String name = CSupport.getSystemLinker().name();
-        return switch(name) {
-            case Win64.NAME -> Windowsx64Linker.newVaList(actions, allocator);
-            case SysV.NAME -> SysVx64Linker.newVaList(actions, allocator);
-            case AArch64.NAME -> AArch64Linker.newVaList(actions, allocator);
-            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        return switch (CABI.current()) {
+            case Win64 -> Windowsx64Linker.newVaList(actions, allocator);
+            case SysV -> SysVx64Linker.newVaList(actions, allocator);
+            case AArch64 -> AArch64Linker.newVaList(actions, allocator);
         };
     }
 
@@ -323,22 +314,18 @@ public class SharedUtils {
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma) {
-        String name = CSupport.getSystemLinker().name();
-        return switch(name) {
-            case Win64.NAME -> Windowsx64Linker.newVaListOfAddress(ma);
-            case SysV.NAME -> SysVx64Linker.newVaListOfAddress(ma);
-            case AArch64.NAME -> AArch64Linker.newVaListOfAddress(ma);
-            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        return switch (CABI.current()) {
+            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma);
+            case SysV -> SysVx64Linker.newVaListOfAddress(ma);
+            case AArch64 -> AArch64Linker.newVaListOfAddress(ma);
         };
     }
 
     public static VaList emptyVaList() {
-        String name = CSupport.getSystemLinker().name();
-        return switch(name) {
-            case Win64.NAME -> Windowsx64Linker.emptyVaList();
-            case SysV.NAME -> SysVx64Linker.emptyVaList();
-            case AArch64.NAME -> AArch64Linker.emptyVaList();
-            default -> throw new IllegalStateException("Unknown linker name: " + name);
+        return switch (CABI.current()) {
+            case Win64 -> Windowsx64Linker.emptyVaList();
+            case SysV -> SysVx64Linker.emptyVaList();
+            case AArch64 -> AArch64Linker.emptyVaList();
         };
     }
 
@@ -417,7 +404,7 @@ public class SharedUtils {
         }
     }
 
-    public static class EmptyVaList implements CSupport.VaList {
+    public static class EmptyVaList implements VaList {
 
         private final MemoryAddress address;
 

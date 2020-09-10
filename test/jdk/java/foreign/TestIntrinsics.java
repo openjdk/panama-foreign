@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
@@ -32,11 +33,10 @@
  *   TestIntrinsics
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.MemoryAddress;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -46,12 +46,12 @@ import jdk.incubator.foreign.MemoryLayout;
 import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestIntrinsics extends NativeTestHelper {
 
-    static final ForeignLinker abi = CSupport.getSystemLinker();
+    static final ForeignLinker abi = CLinker.getSystemLinker();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");
 
     private static final MethodHandle MH_empty;

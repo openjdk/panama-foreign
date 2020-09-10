@@ -46,7 +46,7 @@
  *   TestStackWalk
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
@@ -60,12 +60,12 @@ import java.lang.ref.Reference;
 import sun.hotspot.WhiteBox;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static jdk.incubator.foreign.CSupport.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 
 public class TestStackWalk {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
 
-    static final ForeignLinker linker = CSupport.getSystemLinker();
+    static final ForeignLinker linker = CLinker.getSystemLinker();
 
     static final MethodHandle MH_foo;
     static final MethodHandle MH_m;

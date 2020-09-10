@@ -32,7 +32,7 @@ import java.lang.invoke.MethodType;
  * This class can be used to link native functions as a {@link MethodHandle}, or to link Java
  * methods as a native function pointer (modelled as a {@link MemorySegment}).
  *
- * Instances of this interface can be obtained for instance by calling {@link CSupport#getSystemLinker()}
+ * Instances of this interface can be obtained for instance by calling {@link CLinker#getSystemLinker()}
  */
 public interface ForeignLinker {
     /**
@@ -57,11 +57,4 @@ public interface ForeignLinker {
      * @return the native stub segment.
      */
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
-
-    /**
-     * Returns the name of this linker.
-     *
-     * @return the name
-     */
-    String name();
 }

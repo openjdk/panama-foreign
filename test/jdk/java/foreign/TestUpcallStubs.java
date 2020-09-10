@@ -27,7 +27,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestUpcallStubs
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
@@ -44,7 +44,7 @@ import static org.testng.Assert.assertFalse;
 
 public class TestUpcallStubs {
 
-    static final ForeignLinker abi = CSupport.getSystemLinker();
+    static final ForeignLinker abi = CLinker.getSystemLinker();
     static final MethodHandle MH_dummy;
 
     static {

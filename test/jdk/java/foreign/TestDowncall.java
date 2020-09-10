@@ -24,6 +24,7 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
  * @run testng/othervm
@@ -48,10 +49,9 @@
  *   TestDowncall
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ForeignLinker;
 
@@ -67,7 +67,7 @@ import org.testng.annotations.*;
 public class TestDowncall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestDowncall");
-    static ForeignLinker abi = CSupport.getSystemLinker();
+    static ForeignLinker abi = CLinker.getSystemLinker();
 
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)

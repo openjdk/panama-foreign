@@ -26,7 +26,7 @@
  * @run testng/othervm TestCircularInit1
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
@@ -35,8 +35,8 @@ public class TestCircularInit1 {
 
     @Test
     public void testCircularInit() {
-        System.out.println(CSupport.C_BOOL); // trigger clinit
-        assertNotNull(CSupport.C_BOOL); // should not be null
+        System.out.println(CLinker.C_BOOL); // trigger clinit
+        assertNotNull(CLinker.C_BOOL); // should not be null
     }
 
 }

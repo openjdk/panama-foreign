@@ -24,6 +24,7 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
  * @run testng/othervm
@@ -48,7 +49,7 @@
  *   TestUpcall
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
@@ -72,14 +73,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.CSupport.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static org.testng.Assert.assertEquals;
 
 
 public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
-    static ForeignLinker abi = CSupport.getSystemLinker();
+    static ForeignLinker abi = CLinker.getSystemLinker();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;

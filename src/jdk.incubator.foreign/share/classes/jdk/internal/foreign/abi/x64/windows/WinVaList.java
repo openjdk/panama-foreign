@@ -26,7 +26,7 @@
 package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.CSupport.VaList;
+import jdk.incubator.foreign.CLinker.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -34,7 +34,7 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 
-import static jdk.incubator.foreign.CSupport.Win64.C_POINTER;
+import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
 
 // see vadefs.h (VC header)
 //

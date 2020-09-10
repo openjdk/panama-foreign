@@ -24,13 +24,14 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.PlatformLayouts;
 
-import static jdk.incubator.foreign.CSupport.Win64.VARARGS_ATTRIBUTE_NAME;
+import static jdk.internal.foreign.PlatformLayouts.*;
+import static jdk.internal.foreign.PlatformLayouts.Win64.VARARGS_ATTRIBUTE_NAME;
 
 enum TypeClass {
     STRUCT_REGISTER,
@@ -42,7 +43,7 @@ enum TypeClass {
 
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        CSupport.Win64.ArgumentClass clazz = Windowsx64Linker.argumentClassFor(type);
+        Win64.ArgumentClass clazz = Windowsx64Linker.argumentClassFor(type);
         if (clazz == null) {
             //padding not allowed here
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
@@ -57,11 +58,11 @@ enum TypeClass {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        if (clazz == CSupport.Win64.ArgumentClass.INTEGER) {
+        if (clazz == Win64.ArgumentClass.INTEGER) {
             return INTEGER;
-        } else if(clazz == CSupport.Win64.ArgumentClass.POINTER) {
+        } else if(clazz == Win64.ArgumentClass.POINTER) {
             return POINTER;
-        } else if (clazz == CSupport.Win64.ArgumentClass.FLOAT) {
+        } else if (clazz == Win64.ArgumentClass.FLOAT) {
             if (type.attribute(VARARGS_ATTRIBUTE_NAME)
                     .map(Boolean.class::cast).orElse(false)) {
                 return VARARG_FLOAT;
