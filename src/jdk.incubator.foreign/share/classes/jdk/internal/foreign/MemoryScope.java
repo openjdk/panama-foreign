@@ -31,6 +31,7 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
 import java.util.Objects;
 
 /**
@@ -104,8 +105,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     final void close() {
-        justClose();
-        cleanupAction.cleanup();
+        try {
+            justClose();
+            cleanupAction.cleanup();
+        } finally {
+            Reference.reachabilityFence(this);
+        }
     }
 
     abstract void justClose();
@@ -118,8 +123,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     MemoryScope confineTo(Thread newOwner) {
-        justClose();
-        return new ConfinedScope(newOwner, ref, cleanupAction);
+        try {
+            justClose();
+            return new ConfinedScope(newOwner, ref, cleanupAction.dup());
+        } finally {
+            Reference.reachabilityFence(this);
+        }
     }
 
     /**
@@ -130,8 +139,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * or if this is already a shared scope.
      */
     MemoryScope share() {
-        justClose();
-        return new SharedScope(ref, cleanupAction);
+        try {
+            justClose();
+            return new SharedScope(ref, cleanupAction.dup());
+        } finally {
+            Reference.reachabilityFence(this);
+        }
     }
 
     /**
@@ -260,9 +273,20 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     interface CleanupAction {
         void cleanup();
+        CleanupAction dup();
 
         /** Dummy cleanup action */
-        CleanupAction DUMMY = () -> { };
+        CleanupAction DUMMY = new CleanupAction() {
+            @Override
+            public void cleanup() {
+                // do nothing
+            }
+
+            @Override
+            public CleanupAction dup() {
+                return this;
+            }
+        };
     }
 
     /**
@@ -286,14 +310,31 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         abstract void run();
 
         public final void cleanup() {
-            if (!CALLED.compareAndSet(this, false, true)) {
-                // This can never happen under normal circumstances. The only cases where this can happen are (i) when
-                // MemoryScope::close races with a cleaner also calling the cleanup action, or (ii) when two cleaners
-                // race to cleanup the same scope.
-                throw new IllegalStateException("Already cleaned");
-            }
+            disable();
             run();
         };
+
+        @Override
+        public CleanupAction dup() {
+            disable();
+            return new BasicCleanupAction() {
+                @Override
+                void run() {
+                    BasicCleanupAction.this.run();
+                }
+            };
+        }
+
+        final void disable() {
+            if (!CALLED.compareAndSet(this, false, true)) {
+                // This can never happen under normal circumstances. The only case where this can happen is when
+                // when two cleaners race to cleanup the same scope. It is never possible to have a race
+                // between explicit/implicit close because all the scope terminal operations have
+                // reachability fences which prevent a scope to be deemed unreachable before we are done
+                // marking the original cleanup action as "dead".
+                throw new IllegalStateException("Already cleaned");
+            }
+        }
 
         /**
          * Returns a custom {@code BasicCleanupAction} based on given {@link Runnable} instance.
