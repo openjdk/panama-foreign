@@ -298,11 +298,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     @Override
     public void registerCleaner(Cleaner cleaner) {
         checkAccessModes(CLOSE);
-        if (ownerThread() != null) {
-            throw new UnsupportedOperationException("Cannot register cleaner on confined segment");
-        }
         checkValidState();
-        cleaner.register(this, scope::forceCleanup);
+        MemoryScope.CleanupAction cleanupAction = scope.cleanupAction;
+        cleaner.register(this.scope, cleanupAction::cleanup);
     }
 
     @Override
@@ -578,7 +576,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, null);
+            bufferScope = MemoryScope.createConfined(bb, MemoryScope.CleanupAction.DUMMY);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -594,7 +592,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createShared(null, null)
+        0, 0, MemoryScope.createShared(null, MemoryScope.CleanupAction.DUMMY)
     ) {
         @Override
         ByteBuffer makeByteBuffer() {

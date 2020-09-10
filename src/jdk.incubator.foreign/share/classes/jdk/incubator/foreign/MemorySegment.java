@@ -200,9 +200,9 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * at most once. Also, in case the segment has been closed explicitly (see {@link #close}) no further action will be
      * taken by the GC when the segment later becomes unreachable.
      * @param cleaner the {@link Cleaner} object responsible for cleaning up this memory segment.
-     * @throws IllegalStateException if this segment is not <em>alive</em>
-     * @throws UnsupportedOperationException if this segment is not shared, or if this segment does not feature
-     * the {@link #CLOSE} access mode.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #CLOSE} access mode.
      */
     void registerCleaner(Cleaner cleaner);
 
