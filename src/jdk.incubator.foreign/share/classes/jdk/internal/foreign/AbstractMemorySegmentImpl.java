@@ -142,6 +142,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    public void copyFromSwap(MemorySegment src, long elemSize) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkAccess(0, size, false);
+        that.checkAccess(0, size, true);
+        SCOPED_MEMORY_ACCESS.copySwapMemory(scope, that.scope,
+                that.base(), that.min(),
+                base(), min(), size, elemSize);
+    }
+
     private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
             .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
@@ -278,15 +288,19 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public MemorySegment withOwnerThread(Thread newOwner) {
+        return withOwnerThreadInternal(newOwner, true);
+    }
+
+    public MemorySegment withOwnerThreadInternal(Thread newOwner, boolean strict) {
         checkValidState();
         int expectedMode = newOwner != null ? HANDOFF : SHARE;
-        if (!isSet(expectedMode)) {
+        if (strict && !isSet(expectedMode)) {
             throw unsupportedAccessMode(expectedMode);
         }
         try {
             return dup(0L, length, mask,
                     expectedMode == HANDOFF ?
-                            scope.confineTo(newOwner) :
+                            scope.confineTo(newOwner, strict) :
                             scope.share());
         } finally {
             //flush read/writes to segment memory before returning the new segment

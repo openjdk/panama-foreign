@@ -117,7 +117,10 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    MemoryScope confineTo(Thread newOwner) {
+    final MemoryScope confineTo(Thread newOwner, boolean strict) {
+        if (strict && newOwner == ownerThread()) {
+            throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+        }
         justClose();
         return new ConfinedScope(newOwner, ref, cleanupAction);
     }
@@ -198,14 +201,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         void justClose() {
             checkValidState();
             closed = true;
-        }
-
-        @Override
-        MemoryScope confineTo(Thread newOwner) {
-            if (newOwner == owner) {
-                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-            }
-            return super.confineTo(newOwner);
         }
 
         @Override
