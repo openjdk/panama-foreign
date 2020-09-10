@@ -102,7 +102,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     final void close() {
-        checkValidState();
         justClose();
         if (cleanupAction != null) {
             cleanupAction.run();
@@ -119,7 +118,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     MemoryScope confineTo(Thread newOwner) {
-        checkValidState();
         justClose();
         return new ConfinedScope(newOwner, ref, cleanupAction);
     }
@@ -132,7 +130,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * or if this is already a shared scope.
      */
     MemoryScope share() {
-        checkValidState();
         justClose();
         return new SharedScope(ref, cleanupAction);
     }

@@ -33,6 +33,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
@@ -80,6 +81,22 @@ public class TestSegments {
             t.start();
             t.join();
             assertEquals(failed.get(), member.isConfined());
+        }
+    }
+
+    @Test(dataProvider = "segmentOperations")
+    public void testOpAfterClose(SegmentMember member) throws Throwable {
+        MemorySegment segment = MemorySegment.allocateNative(4);
+        segment.close();
+        try {
+            Object o = member.method.invoke(segment, member.params);
+            assertFalse(member.isConfined());
+        } catch (InvocationTargetException ex) {
+            assertTrue(member.isConfined());
+            Throwable target = ex.getTargetException();
+            assertTrue(target instanceof NullPointerException ||
+                          target instanceof UnsupportedOperationException ||
+                          target instanceof IllegalStateException);
         }
     }
 
