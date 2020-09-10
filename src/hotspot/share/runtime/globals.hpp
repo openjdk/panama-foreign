@@ -347,6 +347,12 @@ const size_t minimumSymbolTableSize = 1024;
   diagnostic(bool, UseVectorizedMismatchIntrinsic, false,                   \
           "Enables intrinsification of ArraysSupport.vectorizedMismatch()") \
                                                                             \
+  diagnostic(bool, UseCopySignIntrinsic, false,                             \
+          "Enables intrinsification of Math.copySign")                      \
+                                                                            \
+  diagnostic(bool, UseSignumIntrinsic, false,                               \
+          "Enables intrinsification of Math.signum")                        \
+                                                                            \
   diagnostic(ccstrlist, DisableIntrinsic, "",                               \
          "do not expand intrinsics whose (internal) names appear here")     \
                                                                             \
@@ -807,6 +813,16 @@ const size_t minimumSymbolTableSize = 1024;
           "rebiasing of a type after previous bulk rebias")                 \
           range(500, max_intx)                                              \
           constraint(BiasedLockingDecayTimeFunc,AfterErgo)                  \
+                                                                            \
+  diagnostic(intx, DiagnoseSyncOnPrimitiveWrappers, 0,                      \
+             "Detect and take action upon identifying synchronization on "  \
+             "primitive wrappers. Modes: "                                  \
+             "0: off; "                                                     \
+             "1: exit with fatal error; "                                   \
+             "2: log message to stdout. Output file can be specified with " \
+             "   -Xlog:primitivewrappers. If JFR is running it will "       \
+             "   also generate JFR events.")                                \
+             range(0, 2)                                                    \
                                                                             \
   product(bool, ExitOnOutOfMemoryError, false,                              \
           "JVM exits on the first occurrence of an out-of-memory error")    \

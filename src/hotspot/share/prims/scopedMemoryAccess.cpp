@@ -98,7 +98,9 @@ public:
           if (var->type() == T_OBJECT) {
             if (var->get_obj() == JNIHandles::resolve(_deopt)) {
               assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-              jt->send_thread_stop(JNIHandles::resolve(_exception));
+              if (!thread->has_pending_exception()) {
+                jt->install_async_exception(JNIHandles::resolve(_exception));
+              }
               return;
             }
           }
@@ -157,6 +159,5 @@ JVM_ENTRY(void, JVM_RegisterJDKInternalMiscScopedMemoryAccessMethods(JNIEnv *env
   ThreadToNativeFromVM ttnfv(thread);
 
   int ok = env->RegisterNatives(scopedMemoryAccessClass, jdk_internal_misc_ScopedMemoryAccess_methods, sizeof(jdk_internal_misc_ScopedMemoryAccess_methods)/sizeof(JNINativeMethod));
-  //printf("closeScope(%s%s)V\n", SCOPE, SCOPED_EXC);
   guarantee(ok == 0, "register jdk.internal.misc.ScopedMemoryAccess natives");
 } JVM_END

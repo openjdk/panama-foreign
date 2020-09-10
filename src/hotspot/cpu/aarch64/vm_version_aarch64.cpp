@@ -27,6 +27,7 @@
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "runtime/arguments.hpp"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
 #include "runtime/stubCodeGenerator.hpp"
@@ -273,6 +274,12 @@ void VM_Version::get_processor_features() {
     // A73 is faster with short-and-easy-for-speculative-execution-loop
     if (FLAG_IS_DEFAULT(UseSimpleArrayEquals)) {
       FLAG_SET_DEFAULT(UseSimpleArrayEquals, true);
+    }
+  }
+
+  if (_cpu == CPU_ARM) {
+    if (FLAG_IS_DEFAULT(UseSignumIntrinsic)) {
+      FLAG_SET_DEFAULT(UseSignumIntrinsic, true);
     }
   }
 

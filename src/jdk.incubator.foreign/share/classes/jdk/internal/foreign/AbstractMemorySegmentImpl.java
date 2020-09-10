@@ -187,9 +187,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
      * Mismatch over long lengths.
      */
     private static long vectorizedMismatchLargeForBytes(MemoryScope aScope, MemoryScope bScope,
-                                                        Object a, long aOffset,
-                                                        Object b, long bOffset,
-                                                        long length) {
+                                                       Object a, long aOffset,
+                                                       Object b, long bOffset,
+                                                       long length) {
         long off = 0;
         long remaining = length;
         int i, size;
@@ -279,6 +279,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public MemorySegment withOwnerThread(Thread newOwner) {
+        checkValidState();
         int expectedMode = newOwner != null ? HANDOFF : SHARE;
         if (!isSet(expectedMode)) {
             throw unsupportedAccessMode(expectedMode);
@@ -302,13 +303,10 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public final void close() {
+        checkValidState();
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
         }
-        closeNoCheck();
-    }
-
-    private final void closeNoCheck() {
         scope.close();
     }
 
@@ -462,7 +460,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
         return new IndexOutOfBoundsException(String.format("Out of bound access on segment %s; new offset = %d; new length = %d",
-                this, offset, length));
+                        this, offset, length));
     }
 
     protected int id() {
@@ -576,7 +574,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.create(bb, null);
+            bufferScope = MemoryScope.createConfined(bb, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -592,7 +590,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-            0, 0, MemoryScope.createUnchecked(null, null, null)
+        0, 0, MemoryScope.createShared(null, null)
     ) {
         @Override
         ByteBuffer makeByteBuffer() {

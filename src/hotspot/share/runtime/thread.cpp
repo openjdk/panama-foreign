@@ -989,7 +989,7 @@ void Thread::check_possible_safepoint() {
 
   if (_no_safepoint_count > 0) {
     print_owned_locks();
-    fatal("Possible safepoint reached by thread that does not allow it");
+    assert(false, "Possible safepoint reached by thread that does not allow it");
   }
 #ifdef CHECK_UNHANDLED_OOPS
   // Clear unhandled oops in JavaThreads so we get a crash right away.
@@ -1691,7 +1691,6 @@ void JavaThread::initialize() {
   _on_thread_list = false;
   _thread_state = _thread_new;
   _terminated = _not_terminated;
-  _array_for_gc = NULL;
   _suspend_equivalent = false;
   _in_deopt_handler = 0;
   _doing_unsafe_access = false;
@@ -2436,7 +2435,7 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
   JFR_ONLY(SUSPEND_THREAD_CONDITIONAL(this);)
 }
 
-void JavaThread::send_thread_stop(oop java_throwable)  {
+void JavaThread::install_async_exception(oop java_throwable)  {
   ResourceMark rm;
   assert(Thread::current()->is_VM_thread() || Thread::current() == this, "should be in the vm thread");
 
@@ -2475,8 +2474,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
       Exceptions::debug_check_abort(_pending_async_exception->klass()->external_name());
     }
   }
+}
 
-
+void JavaThread::send_thread_stop(oop java_throwable) {
+  this->install_async_exception(java_throwable);
   // Interrupt thread so it will wake up from a potential wait()/sleep()/park()
   java_lang_Thread::set_interrupted(threadObj(), true);
   this->interrupt();
@@ -2614,9 +2615,17 @@ int JavaThread::java_suspend_self() {
 void JavaThread::java_suspend_self_with_safepoint_check() {
   assert(this == Thread::current(), "invariant");
   JavaThreadState state = thread_state();
-  set_thread_state(_thread_blocked);
-  java_suspend_self();
-  set_thread_state_fence(state);
+
+  do {
+    set_thread_state(_thread_blocked);
+    java_suspend_self();
+    // The current thread could have been suspended again. We have to check for
+    // suspend after restoring the saved state. Without this the current thread
+    // might return to _thread_in_Java and execute bytecodes for an arbitrary
+    // long time.
+    set_thread_state_fence(state);
+  } while (is_external_suspend());
+
   // Since we are not using a regular thread-state transition helper here,
   // we must manually emit the instruction barrier after leaving a safe state.
   OrderAccess::cross_modify_fence();
@@ -3009,13 +3018,6 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
   if (has_last_Java_frame()) {
     // Record JavaThread to GC thread
     RememberProcessedThread rpt(this);
-
-    // traverse the registered growable array
-    if (_array_for_gc != NULL) {
-      for (int index = 0; index < _array_for_gc->length(); index++) {
-        f->do_oop(_array_for_gc->adr_at(index));
-      }
-    }
 
     // Traverse the monitor chunks
     for (MonitorChunk* chunk = monitor_chunks(); chunk != NULL; chunk = chunk->next()) {

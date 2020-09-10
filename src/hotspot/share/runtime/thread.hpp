@@ -1486,6 +1486,8 @@ class JavaThread: public Thread {
 
   // Thread.stop support
   void send_thread_stop(oop throwable);
+  void install_async_exception(oop throwable);
+
   AsyncRequests clear_special_runtime_exit_condition() {
     AsyncRequests x = _special_runtime_exit_condition;
     _special_runtime_exit_condition = _no_async_condition;
@@ -1959,13 +1961,6 @@ class JavaThread: public Thread {
   virtual void run();
   void thread_main_inner();
   virtual void post_run();
-
-
- private:
-  GrowableArray<oop>* _array_for_gc;
- public:
-
-  void register_array_for_gc(GrowableArray<oop>* array) { _array_for_gc = array; }
 
  public:
   // Thread local information maintained by JVMTI.
