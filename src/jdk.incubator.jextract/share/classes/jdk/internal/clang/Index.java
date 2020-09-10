@@ -87,17 +87,17 @@ public class Index implements AutoCloseable {
             MemorySegment src = CSupport.toCString(file, scope);
             MemorySegment cargs = scope.allocateArray(CSupport.C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
-                MemoryAccess.setAddressAtIndex(cargs, i, CSupport.toCString(args[i], scope).address());
+                MemoryAccess.setAddressAtIndex(cargs, i, CSupport.toCString(args[i], scope));
             }
             MemorySegment outAddress = scope.allocate(CSupport.C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
-                    src.address(),
-                    cargs == null ? MemoryAddress.NULL : cargs.address(),
+                    src,
+                    cargs == null ? MemoryAddress.NULL : cargs,
                     args.length, MemoryAddress.NULL,
                     0,
                     options,
-                    outAddress.address()));
+                    outAddress));
 
             MemoryAddress tu = (MemoryAddress) VH_MemoryAddress.get(outAddress);
             TranslationUnit rv = new TranslationUnit(tu);

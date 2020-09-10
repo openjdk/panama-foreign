@@ -110,7 +110,7 @@ public final class Type {
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
         try (MemorySegment cfname = CSupport.toCString(fieldName)) {
-            return Index_h.clang_Type_getOffsetOf(type, cfname.address());
+            return Index_h.clang_Type_getOffsetOf(type, cfname);
         }
     }
 
