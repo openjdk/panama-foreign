@@ -1,3 +1,4 @@
+
 #include "precompiled.hpp"
 #include "jni.h"
 #include "jvm.h"
@@ -86,7 +87,7 @@ public:
       Deoptimization::deoptimize(jt, last_frame);
     }
 
-    const int max_critical_stack_depth = 5;
+    const int max_critical_stack_depth = 45;
     int depth = 0;
     vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
@@ -136,13 +137,13 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
 
 #define MEMACCESS "ScopedMemoryAccess"
 #define SCOPE LANG MEMACCESS "$Scope;"
-#define SCOPED_EXC LANG MEMACCESS "$Scope$ScopedAccessException;"
+#define SCOPED_ERR LANG MEMACCESS "$Scope$ScopedAccessError;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
-    {CC "closeScope0",   CC "(" SCOPE SCOPED_EXC ")V",           FN_PTR(ScopedMemoryAccess_closeScope)},
+    {CC "closeScope0",   CC "(" SCOPE SCOPED_ERR ")V",           FN_PTR(ScopedMemoryAccess_closeScope)},
 };
 
 #undef CC
