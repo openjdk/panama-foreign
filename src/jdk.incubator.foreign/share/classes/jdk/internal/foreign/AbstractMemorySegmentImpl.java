@@ -299,8 +299,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     public void registerCleaner(Cleaner cleaner) {
         checkAccessModes(CLOSE);
         checkValidState();
-        MemoryScope.CleanupAction cleanupAction = scope.cleanupAction;
-        cleaner.register(this.scope, cleanupAction::cleanup);
+        cleaner.register(this.scope, scope.cleanupAction);
     }
 
     @Override

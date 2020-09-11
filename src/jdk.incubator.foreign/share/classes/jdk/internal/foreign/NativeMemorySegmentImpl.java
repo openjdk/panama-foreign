@@ -28,8 +28,6 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -99,9 +97,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.BasicCleanupAction() {
+        MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
             @Override
-            void run() {
+            void doCleanup() {
                 unsafe.freeMemory(buf);
                 nioAccess.unreserveMemory(alignedSize, bytesSize);
             }
@@ -117,7 +115,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
         MemoryScope.CleanupAction cleanupAction = cleanup != null ?
-                MemoryScope.BasicCleanupAction.of(cleanup) : MemoryScope.CleanupAction.DUMMY;
+                MemoryScope.CleanupAction.AtMostOnceOnly.of(cleanup) : MemoryScope.CleanupAction.DUMMY;
         MemoryScope scope = owner == null ?
                 MemoryScope.createShared(attachment, cleanupAction) :
                 MemoryScope.createConfined(owner, attachment, cleanupAction);

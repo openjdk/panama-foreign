@@ -26,8 +26,6 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MappedMemorySegment;
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
 import sun.nio.ch.FileChannelImpl;
 
@@ -103,9 +101,9 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
         if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, bytesOffset, bytesSize);
-            MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.BasicCleanupAction() {
+            MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
                 @Override
-                void run() {
+                void doCleanup() {
                     unmapperProxy.unmap();
                 }
             });

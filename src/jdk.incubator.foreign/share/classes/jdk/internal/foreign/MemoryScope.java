@@ -86,8 +86,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         return new SharedScope(ref, cleanupAction);
     }
 
-    protected Object ref;
-    protected CleanupAction cleanupAction;
+    protected final Object ref;
+    protected final CleanupAction cleanupAction;
     protected boolean closed; // = false
     private static final VarHandle CLOSED;
 
@@ -271,9 +271,14 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     /**
      * A functional interface modelling the cleanup action associated with a scope.
      */
-    interface CleanupAction {
+    interface CleanupAction extends Runnable {
         void cleanup();
         CleanupAction dup();
+
+        @Override
+        default void run() {
+            cleanup();
+        }
 
         /** Dummy cleanup action */
         CleanupAction DUMMY = new CleanupAction() {
@@ -287,68 +292,81 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
                 return this;
             }
         };
-    }
 
-    /**
-     * A stateful cleanup action; this action can only be called at most once. The implementation
-     * guarantees this invariant even when multiple threads race to call the {@link #cleanup()} method.
-     */
-    static abstract class BasicCleanupAction implements CleanupAction {
+        /**
+         * A stateful cleanup action; this action can only be called at most once. The implementation
+         * guarantees this invariant even when multiple threads race to call the {@link #cleanup()} method.
+         */
+        abstract class AtMostOnceOnly implements CleanupAction {
 
-        static final VarHandle CALLED;
+            static final VarHandle CALLED;
 
-        static {
-            try {
-                CALLED = MethodHandles.lookup().findVarHandle(BasicCleanupAction.class, "called", boolean.class);
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
+            static {
+                try {
+                    CALLED = MethodHandles.lookup().findVarHandle(AtMostOnceOnly.class, "called", boolean.class);
+                } catch (Throwable ex) {
+                    throw new ExceptionInInitializerError(ex);
+                }
             }
-        }
 
-        private boolean called = false;
+            private boolean called = false;
 
-        abstract void run();
+            abstract void doCleanup();
 
-        public final void cleanup() {
-            disable();
-            run();
-        };
-
-        @Override
-        public CleanupAction dup() {
-            disable();
-            return new BasicCleanupAction() {
-                @Override
-                void run() {
-                    BasicCleanupAction.this.run();
+            public final void cleanup() {
+                if (disable()) {
+                    doCleanup();
                 }
             };
-        }
 
-        final void disable() {
-            if (!CALLED.compareAndSet(this, false, true)) {
-                // This can never happen under normal circumstances. The only case where this can happen is when
+            @Override
+            public CleanupAction dup() {
+                disable();
+                class DupAction extends AtMostOnceOnly {
+                    final AtMostOnceOnly root;
+
+                    DupAction(AtMostOnceOnly root) {
+                        this.root = root;
+                    }
+
+                    @Override
+                    void doCleanup() {
+                        root.doCleanup();
+                    }
+
+                    @Override
+                    public CleanupAction dup() {
+                        disable();
+                        return new DupAction(root);
+                    }
+                }
+                return new DupAction(this);
+            }
+
+            final boolean disable() {
+                // This can fail under normal circumstances. The only case where a failure can happen is when
                 // when two cleaners race to cleanup the same scope. It is never possible to have a race
                 // between explicit/implicit close because all the scope terminal operations have
                 // reachability fences which prevent a scope to be deemed unreachable before we are done
                 // marking the original cleanup action as "dead".
-                throw new IllegalStateException("Already cleaned");
+                return CALLED.compareAndSet(this, false, true);
+            }
+
+            /**
+             * Returns a custom {@code BasicCleanupAction} based on given {@link Runnable} instance.
+             * @param runnable the runnable to be executed when {@link #cleanup()} is called on the returned cleanup action.
+             * @return the new cleanup action.
+             */
+            static AtMostOnceOnly of(Runnable runnable) {
+                Objects.requireNonNull(runnable);
+                return new AtMostOnceOnly() {
+                    @Override
+                    void doCleanup() {
+                        runnable.run();
+                    }
+                };
             }
         }
-
-        /**
-         * Returns a custom {@code BasicCleanupAction} based on given {@link Runnable} instance.
-         * @param runnable the runnable to be executed when {@link #cleanup()} is called on the returned cleanup action.
-         * @return the new cleanup action.
-         */
-        static BasicCleanupAction of(Runnable runnable) {
-            Objects.requireNonNull(runnable);
-            return new BasicCleanupAction() {
-                @Override
-                void run() {
-                    runnable.run();
-                }
-            };
-        }
     }
+
 }
