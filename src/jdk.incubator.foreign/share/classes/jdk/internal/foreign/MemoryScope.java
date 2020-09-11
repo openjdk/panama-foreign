@@ -163,12 +163,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     /**
      * Checks that this scope is still alive (see {@link #isAlive()}), by performing
      * a quick, plain access. As such, this method should be used with care.
-     * @throws ScopedAccessException if this scope is already closed.
+     * @throws ScopedAccessError if this scope is already closed.
      */
     @ForceInline
     private static void checkAliveRaw(MemoryScope scope) {
         if (scope.closed) {
-            throw ScopedAccessException.INSTANCE;
+            throw ScopedAccessError.INSTANCE;
         }
     }
 
