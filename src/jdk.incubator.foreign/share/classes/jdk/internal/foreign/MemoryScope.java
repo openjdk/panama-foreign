@@ -322,25 +322,27 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             @Override
             public CleanupAction dup() {
                 disable();
-                class DupAction extends AtMostOnceOnly {
-                    final AtMostOnceOnly root;
-
-                    DupAction(AtMostOnceOnly root) {
-                        this.root = root;
-                    }
-
-                    @Override
-                    void doCleanup() {
-                        root.doCleanup();
-                    }
-
-                    @Override
-                    public CleanupAction dup() {
-                        disable();
-                        return new DupAction(root);
-                    }
-                }
                 return new DupAction(this);
+            }
+
+            //where
+            static class DupAction extends AtMostOnceOnly {
+                final AtMostOnceOnly root;
+
+                DupAction(AtMostOnceOnly root) {
+                    this.root = root;
+                }
+
+                @Override
+                void doCleanup() {
+                    root.doCleanup();
+                }
+
+                @Override
+                public CleanupAction dup() {
+                    disable();
+                    return new DupAction(root);
+                }
             }
 
             final boolean disable() {
