@@ -1207,6 +1207,7 @@ class JavaThread: public Thread {
   volatile address _exception_pc;                // PC where exception happened
   volatile address _exception_handler_pc;        // PC for handler of exception
   volatile int     _is_method_handle_return;     // true (== 1) if the current exception PC is a MethodHandle call site.
+  bool             _is_exception_handling;
 
  private:
   // support for JNI critical regions
@@ -1586,6 +1587,9 @@ class JavaThread: public Thread {
   void set_exception_pc(address a)               { _exception_pc = a; }
   void set_exception_handler_pc(address a)       { _exception_handler_pc = a; }
   void set_is_method_handle_return(bool value)   { _is_method_handle_return = value ? 1 : 0; }
+
+  bool is_exception_handling() const             { return _is_exception_handling; }
+  void set_is_exception_handling(bool val)       { _is_exception_handling = val; }
 
   void clear_exception_oop_and_pc() {
     set_exception_oop(NULL);

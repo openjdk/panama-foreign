@@ -28,6 +28,7 @@
  * @run testng/othervm TestHandshake
  * @run testng/othervm -Xint TestHandshake
  * @run testng/othervm -XX:TieredStopAtLevel=1 TestHandshake
+ * @run testng/othervm -XX:-TieredCompilation TestHandshake
  */
 
 import jdk.incubator.foreign.MemoryAccess;
@@ -51,7 +52,7 @@ public class TestHandshake {
 
     static final int ITERATIONS = 5;
     static final int SEGMENT_SIZE = 1_000_000;
-    static final int MAX_DELAY_MILLIS = 2000;
+    static final int MAX_DELAY_MILLIS = 500;
     static final int MAX_EXECUTOR_WAIT_SECONDS = 10;
 
     @Test(dataProvider = "accessors")
@@ -60,7 +61,7 @@ public class TestHandshake {
             MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE).withOwnerThread(null);
             System.err.println("ITERATION " + it);
             ExecutorService accessExecutor = Executors.newCachedThreadPool();
-            for (int i = 0; i < ThreadLocalRandom.current().nextInt(Runtime.getRuntime().availableProcessors()); i++) {
+            for (int i = 0; i < Runtime.getRuntime().availableProcessors() ; i++) {
                 accessExecutor.execute(accessorFactory.apply(segment));
             }
             Thread.sleep(ThreadLocalRandom.current().nextInt(MAX_DELAY_MILLIS));
@@ -113,6 +114,24 @@ public class TestHandshake {
                         first.copyFrom(second);
                     }
                 }
+            } catch (IllegalStateException ex) {
+                // do nothing
+            }
+        }
+    }
+
+    static class SegmentFillAccessor implements Runnable {
+
+        final MemorySegment segment;
+
+        SegmentFillAccessor(MemorySegment segment) {
+            this.segment = segment;
+        }
+
+        @Override
+        public void run() {
+            try {
+                segment.fill((byte)ThreadLocalRandom.current().nextInt(10));
             } catch (IllegalStateException ex) {
                 // do nothing
             }
@@ -215,6 +234,7 @@ public class TestHandshake {
                 { (Function<MemorySegment, Runnable>)SegmentAccessor::new },
                 { (Function<MemorySegment, Runnable>)SegmentCopyAccessor::new },
                 { (Function<MemorySegment, Runnable>)SegmentMismatchAccessor::new },
+                { (Function<MemorySegment, Runnable>)SegmentFillAccessor::new },
                 { (Function<MemorySegment, Runnable>)BufferAccessor::new },
                 { (Function<MemorySegment, Runnable>)BufferHandleAccessor::new }
         };
