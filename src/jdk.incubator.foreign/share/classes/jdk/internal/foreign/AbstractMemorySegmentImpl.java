@@ -383,7 +383,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     private void checkValidState() {
         try {
             scope.checkValidState();
-        } catch (ScopedMemoryAccess.Scope.ScopedAccessException ex) {
+        } catch (ScopedMemoryAccess.Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }

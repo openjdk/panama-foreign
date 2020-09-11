@@ -52,7 +52,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * {@link #closeScope(jdk.internal.misc.ScopedMemoryAccess.Scope)} method provided by this class. This method initiates
  * thread-local handshakes with all the other VM threads, which are then stopped one by one. If any thread is found
  * accessing memory that is associated to the very scope object being closed, that thread execution is asynchronously
- * interrupted with a {@link Scope.ScopedAccessException}.
+ * interrupted with a {@link Scope.ScopedAccessError}.
  * <p>
  * This synchronization strategy relies on the idea that accessing memory is atomic with respect to checking the
  * validity of the scope associated with that memory region - that is, a thread that wants to perform memory access will be
@@ -77,10 +77,10 @@ public class ScopedMemoryAccess {
     }
 
     public void closeScope(Scope scope) {
-        closeScope0(scope, Scope.ScopedAccessException.INSTANCE);
+        closeScope0(scope, Scope.ScopedAccessError.INSTANCE);
     }
 
-    native void closeScope0(Scope scope, Scope.ScopedAccessException exception);
+    native void closeScope0(Scope scope, Scope.ScopedAccessError exception);
 
     private ScopedMemoryAccess() {}
 
@@ -98,17 +98,19 @@ public class ScopedMemoryAccess {
         void checkValidState();
 
         /**
-         * Exception thrown when memory access fails because the memory has already been released.
+         * Error thrown when memory access fails because the memory has already been released.
          * Note: for performance reasons, this exception is never created by client; instead a shared instance
-         * is thrown (sometimes, this instance can be thrown asynchronosuly inside VM code). For this reason,
+         * is thrown (sometimes, this instance can be thrown asynchronously inside VM code). For this reason,
          * it is important for clients to always catch this exception and throw a regular exception instead
          * (which contains full stack information).
          */
-        final class ScopedAccessException extends RuntimeException {
-            private ScopedAccessException() { }
+        final class ScopedAccessError extends Error {
+            private ScopedAccessError() {
+                super("Attempt to access an already released memory resource", null, false, false);
+            }
             static final long serialVersionUID = 1L;
 
-            public static final ScopedAccessException INSTANCE = new ScopedAccessException();
+            public static final ScopedAccessError INSTANCE = new ScopedAccessError();
         }
     }
 
@@ -125,7 +127,7 @@ public class ScopedMemoryAccess {
                                    long bytes) {
           try {
               copyMemoryInternal(srcScope, dstScope, srcBase, srcOffset, destBase, destOffset, bytes);
-          } catch (Scope.ScopedAccessException ex) {
+          } catch (Scope.ScopedAccessError ex) {
               throw new IllegalStateException("This segment is already closed");
           }
     }
@@ -156,7 +158,7 @@ public class ScopedMemoryAccess {
                                    long bytes, long elemSize) {
           try {
               copySwapMemoryInternal(srcScope, dstScope, srcBase, srcOffset, destBase, destOffset, bytes, elemSize);
-          } catch (Scope.ScopedAccessException ex) {
+          } catch (Scope.ScopedAccessError ex) {
               throw new IllegalStateException("This segment is already closed");
           }
     }
@@ -184,7 +186,7 @@ public class ScopedMemoryAccess {
     public void setMemory(Scope scope, Object o, long offset, long bytes, byte value) {
         try {
             setMemoryInternal(scope, o, offset, bytes, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -209,7 +211,7 @@ public class ScopedMemoryAccess {
                                              int log2ArrayIndexScale) {
         try {
             return vectorizedMismatchInternal(aScope, bScope, a, aOffset, b, bOffset, length, log2ArrayIndexScale);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
