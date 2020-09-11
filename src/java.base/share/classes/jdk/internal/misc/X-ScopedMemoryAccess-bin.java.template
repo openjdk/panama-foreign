@@ -2,7 +2,7 @@
     public $type$ get$Type$(Scope scope, Object base, long offset) {
         try {
             return get$Type$Internal(scope, base, offset);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -23,7 +23,7 @@
     public void put$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             put$Type$Internal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -45,7 +45,7 @@
     public $type$ get$Type$Unaligned(Scope scope, Object base, long offset, boolean be) {
         try {
             return get$Type$UnalignedInternal(scope, base, offset, be);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -66,7 +66,7 @@
     public void put$Type$Unaligned(Scope scope, Object base, long offset, $type$ value, boolean be) {
         try {
             put$Type$UnalignedInternal(scope, base, offset, value, be);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -88,7 +88,7 @@
     public $type$ get$Type$Volatile(Scope scope, Object base, long offset) {
         try {
             return get$Type$VolatileInternal(scope, base, offset);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -109,7 +109,7 @@
     public void put$Type$Volatile(Scope scope, Object base, long offset, $type$ value) {
         try {
             put$Type$VolatileInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -130,7 +130,7 @@
     public $type$ get$Type$Acquire(Scope scope, Object base, long offset) {
         try {
             return get$Type$AcquireInternal(scope, base, offset);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -151,7 +151,7 @@
     public void put$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             put$Type$ReleaseInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -172,7 +172,7 @@
     public $type$ get$Type$Opaque(Scope scope, Object base, long offset) {
         try {
             return get$Type$OpaqueInternal(scope, base, offset);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -192,7 +192,7 @@
     public void put$Type$Opaque(Scope scope, Object base, long offset, $type$ value) {
         try {
             put$Type$OpaqueInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -213,7 +213,7 @@
     public boolean compareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return compareAndSet$Type$Internal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -234,7 +234,7 @@
     public $type$ compareAndExchange$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return compareAndExchange$Type$Internal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -255,7 +255,7 @@
     public $type$ compareAndExchange$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return compareAndExchange$Type$AcquireInternal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -276,7 +276,7 @@
     public $type$ compareAndExchange$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return compareAndExchange$Type$ReleaseInternal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -297,7 +297,7 @@
     public boolean weakCompareAndSet$Type$Plain(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return weakCompareAndSet$Type$PlainInternal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -318,7 +318,7 @@
     public boolean weakCompareAndSet$Type$(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return weakCompareAndSet$Type$Internal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -339,7 +339,7 @@
     public boolean weakCompareAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return weakCompareAndSet$Type$AcquireInternal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -360,7 +360,7 @@
     public boolean weakCompareAndSet$Type$Release(Scope scope, Object base, long offset, $type$ expected, $type$ value) {
         try {
             return weakCompareAndSet$Type$ReleaseInternal(scope, base, offset, expected, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -381,7 +381,7 @@
     public $type$ getAndSet$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndSet$Type$Internal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -402,7 +402,7 @@
     public $type$ getAndSet$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndSet$Type$AcquireInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -423,7 +423,7 @@
     public $type$ getAndSet$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndSet$Type$ReleaseInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -446,7 +446,7 @@
     public $type$ getAndAdd$Type$(Scope scope, Object base, long offset, $type$ delta) {
         try {
             return getAndAdd$Type$Internal(scope, base, offset, delta);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -467,7 +467,7 @@
     public $type$ getAndAdd$Type$Acquire(Scope scope, Object base, long offset, $type$ delta) {
         try {
             return getAndAdd$Type$AcquireInternal(scope, base, offset, delta);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -488,7 +488,7 @@
     public $type$ getAndAdd$Type$Release(Scope scope, Object base, long offset, $type$ delta) {
         try {
             return getAndAdd$Type$ReleaseInternal(scope, base, offset, delta);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -511,7 +511,7 @@
     public $type$ getAndBitwiseOr$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseOr$Type$Internal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -532,7 +532,7 @@
     public $type$ getAndBitwiseOr$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseOr$Type$AcquireInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -553,7 +553,7 @@
     public $type$ getAndBitwiseOr$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseOr$Type$ReleaseInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -574,7 +574,7 @@
     public $type$ getAndBitwiseAnd$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseAnd$Type$Internal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -595,7 +595,7 @@
     public $type$ getAndBitwiseAnd$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseAnd$Type$AcquireInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -616,7 +616,7 @@
     public $type$ getAndBitwiseAnd$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseAnd$Type$ReleaseInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -637,7 +637,7 @@
     public $type$ getAndBitwiseXor$Type$(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseXor$Type$Internal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -658,7 +658,7 @@
     public $type$ getAndBitwiseXor$Type$Acquire(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseXor$Type$AcquireInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
@@ -679,7 +679,7 @@
     public $type$ getAndBitwiseXor$Type$Release(Scope scope, Object base, long offset, $type$ value) {
         try {
             return getAndBitwiseXor$Type$ReleaseInternal(scope, base, offset, value);
-        } catch (Scope.ScopedAccessException ex) {
+        } catch (Scope.ScopedAccessError ex) {
             throw new IllegalStateException("This segment is already closed");
         }
     }
