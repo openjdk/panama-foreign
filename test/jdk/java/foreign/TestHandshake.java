@@ -50,7 +50,7 @@ import static org.testng.Assert.*;
 
 public class TestHandshake {
 
-    static final int ITERATIONS = 5;
+    static final int ITERATIONS = 10;
     static final int SEGMENT_SIZE = 1_000_000;
     static final int MAX_DELAY_MILLIS = 500;
     static final int MAX_EXECUTOR_WAIT_SECONDS = 10;

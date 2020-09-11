@@ -160,7 +160,10 @@ JRT_BLOCK_ENTRY(Deoptimization::UnrollBlock*, Deoptimization::fetch_unroll_info(
   }
   thread->inc_in_deopt_handler();
 
-  return fetch_unroll_info_helper(thread, exec_mode);
+  UnrollBlock* result = fetch_unroll_info_helper(thread, exec_mode);
+  thread->check_and_handle_async_exceptions(true);
+
+  return result;
 JRT_END
 
 #if COMPILER2_OR_JVMCI
