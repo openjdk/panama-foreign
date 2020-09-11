@@ -87,7 +87,7 @@ public:
       Deoptimization::deoptimize(jt, last_frame);
     }
 
-    const int max_critical_stack_depth = 45;
+    const int max_critical_stack_depth = 5;
     int depth = 0;
     vframeStream stream(jt);
     for (; !stream.at_end(); stream.next()) {
