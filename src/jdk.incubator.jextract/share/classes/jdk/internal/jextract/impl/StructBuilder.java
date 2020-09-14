@@ -110,6 +110,7 @@ class StructBuilder extends JavaSourceBuilder {
         emitScopeAllocateArray();
         emitAllocatePoiner();
         emitScopeAllocatePointer();
+        emitAsRestricted();
         return super.classEnd();
     }
 
@@ -277,6 +278,14 @@ class StructBuilder extends JavaSourceBuilder {
         decrAlign();
         indent();
         append("}\n");
+        decrAlign();
+    }
+
+    private void emitAsRestricted() {
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(structAnno + " MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
         decrAlign();
     }
 
