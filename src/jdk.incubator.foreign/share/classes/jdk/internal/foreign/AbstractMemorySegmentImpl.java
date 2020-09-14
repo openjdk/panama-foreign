@@ -41,6 +41,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -292,6 +293,13 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();
         }
+    }
+
+    @Override
+    public void registerCleaner(Cleaner cleaner) {
+        checkAccessModes(CLOSE);
+        checkValidState();
+        cleaner.register(this.scope, scope.cleanupAction);
     }
 
     @Override
@@ -567,7 +575,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, null);
+            bufferScope = MemoryScope.createConfined(bb, MemoryScope.CleanupAction.DUMMY);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -583,7 +591,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createShared(null, null)
+        0, 0, MemoryScope.createShared(null, MemoryScope.CleanupAction.DUMMY)
     ) {
         @Override
         ByteBuffer makeByteBuffer() {

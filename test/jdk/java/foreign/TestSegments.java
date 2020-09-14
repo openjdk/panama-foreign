@@ -335,7 +335,8 @@ public class TestSegments {
                 "toFloatArray",
                 "toLongArray",
                 "toDoubleArray",
-                "withOwnerThread"
+                "withOwnerThread",
+                "registerCleaner"
         );
 
         public SegmentMember(Method method, Object[] params) {

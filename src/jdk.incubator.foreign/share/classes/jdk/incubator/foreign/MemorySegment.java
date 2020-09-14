@@ -26,6 +26,7 @@
 
 package jdk.incubator.foreign;
 
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -101,6 +102,10 @@ import java.util.function.Consumer;
  *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
  *     objects.</li>
  * </ul>
+ *
+ * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
+ * that segment will be released when the segment becomes <em>unreachable</em> (see {@link #registerCleaner(Cleaner)});
+ * this might be useful to prevent native memory leaks.
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
@@ -186,6 +191,20 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      */
     @Override
     MemoryAddress address();
+
+    /**
+     * Register this memory segment instance against a {@link Cleaner} object. This allows for the segment to be closed
+     * as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
+     * @apiNote Calling this method multiple times, even concurrently (from multiple threads, if this segment is shared)
+     * is allowed; the implementation guarantees that the memory resources associated with this segment will be released
+     * at most once. Also, in case the segment has been closed explicitly (see {@link #close}) no further action will be
+     * taken by the GC when the segment later becomes unreachable.
+     * @param cleaner the {@link Cleaner} object responsible for cleaning up this memory segment.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment
+     * @throws UnsupportedOperationException if this segment does not feature the {@link #CLOSE} access mode.
+     */
+    void registerCleaner(Cleaner cleaner);
 
     /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
