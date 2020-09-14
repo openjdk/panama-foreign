@@ -75,13 +75,11 @@ define_pd_global(intx, InitArrayShortSize, BytesPerLong);
 define_pd_global(intx, InlineSmallCode,          1000);
 #endif
 
-#define ARCH_FLAGS(develop, \
-                   product, \
-                   diagnostic, \
-                   experimental, \
-                   notproduct, \
-                   range, \
-                   constraint) \
+#define ARCH_FLAGS(develop,                                             \
+                   product,                                             \
+                   notproduct,                                          \
+                   range,                                               \
+                   constraint)                                          \
                                                                         \
   product(bool, NearCpool, true,                                        \
          "constant pool is close to instructions")                      \
@@ -99,6 +97,9 @@ define_pd_global(intx, InlineSmallCode,          1000);
           "Avoid generating unaligned memory accesses")                 \
   product(bool, UseLSE, false,                                          \
           "Use LSE instructions")                                       \
+  product(uint, UseSVE, 0,                                              \
+          "Highest supported SVE instruction set version")              \
+          range(0, 2)                                                   \
   product(bool, UseBlockZeroing, true,                                  \
           "Use DC ZVA for block zeroing")                               \
   product(intx, BlockZeroingLowLimit, 256,                              \
@@ -109,5 +110,7 @@ define_pd_global(intx, InlineSmallCode,          1000);
           "Use prfm hint with specified distance in compiled code."     \
           "Value -1 means off.")                                        \
           range(-1, 4096)
+
+// end of ARCH_FLAGS
 
 #endif // CPU_AARCH64_GLOBALS_AARCH64_HPP

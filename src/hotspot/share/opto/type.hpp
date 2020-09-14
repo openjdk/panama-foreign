@@ -53,6 +53,7 @@ class     TypeNarrowKlass;
 class   TypeAry;
 class   TypeTuple;
 class   TypeVect;
+class     TypeVectA;
 class     TypeVectS;
 class     TypeVectD;
 class     TypeVectX;
@@ -87,6 +88,7 @@ public:
 
     Tuple,                      // Method signature or object layout
     Array,                      // Array types
+    VectorA,                    // (Scalable) Vector types for vector length agnostic
     VectorS,                    //  32bit Vector types
     VectorD,                    //  64bit Vector types
     VectorX,                    // 128bit Vector types
@@ -758,6 +760,7 @@ public:
   virtual const Type *xmeet( const Type *t) const;
   virtual const Type *xdual() const;     // Compute dual right now.
 
+  static const TypeVect *VECTA;
   static const TypeVect *VECTS;
   static const TypeVect *VECTD;
   static const TypeVect *VECTX;
@@ -767,6 +770,11 @@ public:
 #ifndef PRODUCT
   virtual void dump2(Dict &d, uint, outputStream *st) const; // Specialized per-Type dumping
 #endif
+};
+
+class TypeVectA : public TypeVect {
+  friend class TypeVect;
+  TypeVectA(const Type* elem, uint length) : TypeVect(VectorA, elem, length) {}
 };
 
 class TypeVectS : public TypeVect {
@@ -1623,12 +1631,12 @@ inline const TypeAry *Type::isa_ary() const {
 }
 
 inline const TypeVect *Type::is_vect() const {
-  assert( _base >= VectorS && _base <= VectorZ, "Not a Vector" );
+  assert( _base >= VectorA && _base <= VectorZ, "Not a Vector" );
   return (TypeVect*)this;
 }
 
 inline const TypeVect *Type::isa_vect() const {
-  return (_base >= VectorS && _base <= VectorZ) ? (TypeVect*)this : NULL;
+  return (_base >= VectorA && _base <= VectorZ) ? (TypeVect*)this : NULL;
 }
 
 inline const TypePtr *Type::is_ptr() const {

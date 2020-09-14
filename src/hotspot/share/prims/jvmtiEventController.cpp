@@ -198,7 +198,7 @@ class EnterInterpOnlyModeClosure : public HandshakeClosure {
 public:
   EnterInterpOnlyModeClosure() : HandshakeClosure("EnterInterpOnlyMode") { }
   void do_thread(Thread* th) {
-    JavaThread* jt = (JavaThread*) th;
+    JavaThread* jt = th->as_Java_thread();
     JvmtiThreadState* state = jt->jvmti_thread_state();
 
     // Set up the current stack depth for later tracking
@@ -331,10 +331,13 @@ void JvmtiEventControllerPrivate::enter_interp_only_mode(JvmtiThreadState *state
   EC_TRACE(("[%s] # Entering interpreter only mode",
             JvmtiTrace::safe_get_thread_name(state->get_thread())));
   EnterInterpOnlyModeClosure hs;
-  if (SafepointSynchronize::is_at_safepoint()) {
-    hs.do_thread(state->get_thread());
+  JavaThread *target = state->get_thread();
+  Thread *current = Thread::current();
+  if (target == current || target->active_handshaker() == current) {
+    hs.do_thread(target);
   } else {
-    Handshake::execute_direct(&hs, state->get_thread());
+    bool executed = Handshake::execute_direct(&hs, target);
+    guarantee(executed, "Direct handshake failed. Target thread is not alive?");
   }
 }
 
@@ -641,7 +644,6 @@ JvmtiEventControllerPrivate::recompute_enabled() {
 
 void
 JvmtiEventControllerPrivate::thread_started(JavaThread *thread) {
-  assert(thread->is_Java_thread(), "Must be JavaThread");
   assert(thread == Thread::current(), "must be current thread");
   assert(JvmtiEnvBase::environments_might_exist(), "to enter event controller, JVM TI environments must exist");
 
@@ -975,27 +977,16 @@ JvmtiEventController::set_extension_event_callback(JvmtiEnvBase *env,
   }
 }
 
-
-
-
 void
 JvmtiEventController::set_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
+  assert(JvmtiThreadState_lock->is_locked(), "Must be locked.");
   JvmtiEventControllerPrivate::set_frame_pop(ets, fpop);
 }
 
-
 void
 JvmtiEventController::clear_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
+  assert(JvmtiThreadState_lock->is_locked(), "Must be locked.");
   JvmtiEventControllerPrivate::clear_frame_pop(ets, fpop);
-}
-
-
-void
-JvmtiEventController::clear_to_frame_pop(JvmtiEnvThreadState *ets, JvmtiFramePop fpop) {
-  MutexLocker mu(SafepointSynchronize::is_at_safepoint() ? NULL : JvmtiThreadState_lock);
-  JvmtiEventControllerPrivate::clear_to_frame_pop(ets, fpop);
 }
 
 void
