@@ -31,6 +31,8 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
+import java.util.Objects;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -47,7 +49,8 @@ import java.lang.invoke.VarHandle;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
-    private MemoryScope(Object ref, Runnable cleanupAction) {
+    private MemoryScope(Object ref, CleanupAction cleanupAction) {
+        Objects.requireNonNull(cleanupAction);
         this.ref = ref;
         this.cleanupAction = cleanupAction;
     }
@@ -56,35 +59,35 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * Creates a confined memory scope with given attachment and cleanup action. The returned scope
      * is assumed to be confined on the current thread.
      * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
+     * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a confined memory scope
      */
-    static MemoryScope createConfined(Object ref, Runnable cleanupAction) {
+    static MemoryScope createConfined(Object ref, CleanupAction cleanupAction) {
         return createConfined(Thread.currentThread(), ref, cleanupAction);
     }
 
     /**
      * Creates a confined memory scope with given attachment, cleanup action and owner thread.
      * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
+     * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a confined memory scope
      */
-    static MemoryScope createConfined(Thread owner, Object ref, Runnable cleanupAction) {
+    static MemoryScope createConfined(Thread owner, Object ref, CleanupAction cleanupAction) {
         return new ConfinedScope(owner, ref, cleanupAction);
     }
 
     /**
      * Creates a shared memory scope with given attachment and cleanup action.
      * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction an optional cleanup action to be executed when returned scope is closed
+     * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a shared memory scope
      */
-    static MemoryScope createShared(Object ref, Runnable cleanupAction) {
+    static MemoryScope createShared(Object ref, CleanupAction cleanupAction) {
         return new SharedScope(ref, cleanupAction);
     }
 
-    protected Object ref;
-    protected Runnable cleanupAction;
+    protected final Object ref;
+    protected final CleanupAction cleanupAction;
     protected boolean closed; // = false
     private static final VarHandle CLOSED;
 
@@ -102,9 +105,11 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     final void close() {
-        justClose();
-        if (cleanupAction != null) {
-            cleanupAction.run();
+        try {
+            justClose();
+            cleanupAction.cleanup();
+        } finally {
+            Reference.reachabilityFence(this);
         }
     }
 
@@ -118,11 +123,15 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread.
      */
     final MemoryScope confineTo(Thread newOwner, boolean strict) {
-        if (strict && newOwner == ownerThread()) {
-            throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+        try {
+            if (strict && newOwner == ownerThread()) {
+                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
+            }
+            justClose();
+            return new ConfinedScope(newOwner, ref, cleanupAction.dup());
+        } finally {
+            Reference.reachabilityFence(this);
         }
-        justClose();
-        return new ConfinedScope(newOwner, ref, cleanupAction);
     }
 
     /**
@@ -133,8 +142,12 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * or if this is already a shared scope.
      */
     MemoryScope share() {
-        justClose();
-        return new SharedScope(ref, cleanupAction);
+        try {
+            justClose();
+            return new SharedScope(ref, cleanupAction.dup());
+        } finally {
+            Reference.reachabilityFence(this);
+        }
     }
 
     /**
@@ -185,7 +198,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         final Thread owner;
 
-        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction) {
+        public ConfinedScope(Thread owner, Object ref, CleanupAction cleanupAction) {
             super(ref, cleanupAction);
             this.owner = owner;
         }
@@ -223,7 +236,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-        SharedScope(Object ref, Runnable cleanupAction) {
+        SharedScope(Object ref, CleanupAction cleanupAction) {
             super(ref, cleanupAction);
         }
 
@@ -249,4 +262,108 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             SCOPED_MEMORY_ACCESS.closeScope(this);
         }
     }
+
+    /**
+     * A functional interface modelling the cleanup action associated with a scope.
+     */
+    interface CleanupAction extends Runnable {
+        void cleanup();
+        CleanupAction dup();
+
+        @Override
+        default void run() {
+            cleanup();
+        }
+
+        /** Dummy cleanup action */
+        CleanupAction DUMMY = new CleanupAction() {
+            @Override
+            public void cleanup() {
+                // do nothing
+            }
+
+            @Override
+            public CleanupAction dup() {
+                return this;
+            }
+        };
+
+        /**
+         * A stateful cleanup action; this action can only be called at most once. The implementation
+         * guarantees this invariant even when multiple threads race to call the {@link #cleanup()} method.
+         */
+        abstract class AtMostOnceOnly implements CleanupAction {
+
+            static final VarHandle CALLED;
+
+            static {
+                try {
+                    CALLED = MethodHandles.lookup().findVarHandle(AtMostOnceOnly.class, "called", boolean.class);
+                } catch (Throwable ex) {
+                    throw new ExceptionInInitializerError(ex);
+                }
+            }
+
+            private boolean called = false;
+
+            abstract void doCleanup();
+
+            public final void cleanup() {
+                if (disable()) {
+                    doCleanup();
+                }
+            };
+
+            @Override
+            public CleanupAction dup() {
+                disable();
+                return new DupAction(this);
+            }
+
+            //where
+            static class DupAction extends AtMostOnceOnly {
+                final AtMostOnceOnly root;
+
+                DupAction(AtMostOnceOnly root) {
+                    this.root = root;
+                }
+
+                @Override
+                void doCleanup() {
+                    root.doCleanup();
+                }
+
+                @Override
+                public CleanupAction dup() {
+                    disable();
+                    return new DupAction(root);
+                }
+            }
+
+            final boolean disable() {
+                // This can fail under normal circumstances. The only case where a failure can happen is when
+                // when two cleaners race to cleanup the same scope. It is never possible to have a race
+                // between explicit/implicit close because all the scope terminal operations have
+                // reachability fences which prevent a scope to be deemed unreachable before we are done
+                // marking the original cleanup action as "dead".
+                return CALLED.compareAndSet(this, false, true);
+            }
+
+            /**
+             * Returns a custom {@code BasicCleanupAction} based on given {@link Runnable} instance.
+             * @param runnable the runnable to be executed when {@link #cleanup()} is called on the returned cleanup action.
+             * @return the new cleanup action.
+             */
+            static AtMostOnceOnly of(Runnable runnable) {
+                Objects.requireNonNull(runnable);
+                return new AtMostOnceOnly() {
+                    @Override
+                    void doCleanup() {
+                        runnable.run();
+                    }
+                };
+            }
+        }
+    }
+
 }

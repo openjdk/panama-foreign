@@ -28,8 +28,6 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaNioAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -99,9 +97,12 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.createConfined(null, () -> {
-            unsafe.freeMemory(buf);
-            nioAccess.unreserveMemory(alignedSize, bytesSize);
+        MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
+            @Override
+            void doCleanup() {
+                unsafe.freeMemory(buf);
+                nioAccess.unreserveMemory(alignedSize, bytesSize);
+            }
         });
         MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
@@ -113,9 +114,11 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
+        MemoryScope.CleanupAction cleanupAction = cleanup != null ?
+                MemoryScope.CleanupAction.AtMostOnceOnly.of(cleanup) : MemoryScope.CleanupAction.DUMMY;
         MemoryScope scope = owner == null ?
-                MemoryScope.createShared(attachment, cleanup) :
-                MemoryScope.createConfined(owner, attachment, cleanup);
+                MemoryScope.createShared(attachment, cleanupAction) :
+                MemoryScope.createConfined(owner, attachment, cleanupAction);
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
     }
 }
