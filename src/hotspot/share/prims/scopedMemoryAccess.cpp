@@ -99,7 +99,7 @@ public:
           if (var->type() == T_OBJECT) {
             if (var->get_obj() == JNIHandles::resolve(_deopt)) {
               assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
-              if (!thread->has_pending_exception()) {
+              if (!jt->is_exception_handling()) {
                 jt->install_async_exception(JNIHandles::resolve(_exception));
               }
               return;
