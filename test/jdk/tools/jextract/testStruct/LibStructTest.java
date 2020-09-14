@@ -21,7 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
@@ -87,18 +87,18 @@ public class LibStructTest {
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)AllTypes.$LAYOUT();
-        checkField(g, "sc", CSupport.C_CHAR);
-        checkField(g, "uc", CSupport.C_CHAR);
-        checkField(g, "s",  CSupport.C_SHORT);
-        checkField(g, "us", CSupport.C_SHORT);
-        checkField(g, "i",  CSupport.C_INT);
-        checkField(g, "ui", CSupport.C_INT);
-        checkField(g, "l",  CSupport.C_LONG);
-        checkField(g, "ul", CSupport.C_LONG);
-        checkField(g, "ll", CSupport.C_LONGLONG);
-        checkField(g, "ull",CSupport.C_LONGLONG);
-        checkField(g, "f",  CSupport.C_FLOAT);
-        checkField(g, "d",  CSupport.C_DOUBLE);
-        checkField(g, "ld", CSupport.C_LONGDOUBLE);
+        checkField(g, "sc", CLinker.C_CHAR);
+        checkField(g, "uc", CLinker.C_CHAR);
+        checkField(g, "s",  CLinker.C_SHORT);
+        checkField(g, "us", CLinker.C_SHORT);
+        checkField(g, "i",  CLinker.C_INT);
+        checkField(g, "ui", CLinker.C_INT);
+        checkField(g, "l",  CLinker.C_LONG);
+        checkField(g, "ul", CLinker.C_LONG);
+        checkField(g, "ll", CLinker.C_LONGLONG);
+        checkField(g, "ull",CLinker.C_LONGLONG);
+        checkField(g, "f",  CLinker.C_FLOAT);
+        checkField(g, "d",  CLinker.C_DOUBLE);
+        checkField(g, "ld", CLinker.C_LONGDOUBLE);
     }
 }

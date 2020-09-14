@@ -26,21 +26,28 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
+
+import java.lang.constant.DynamicConstantDesc;
 import java.util.Optional;
 import java.util.function.Supplier;
+
+import static java.lang.constant.ConstantDescs.BSM_GET_STATIC_FINAL;
 
 /**
  * General Layout utility functions
  */
 public final class LayoutUtils {
-    private static ForeignLinker abi = CSupport.getSystemLinker();
+    public static final String CANONICAL_FIELD = "jextract/constant_name";
+    private static final ValueLayout POINTER_LAYOUT = CLinker.C_POINTER
+            .withAttribute(CANONICAL_FIELD, CanonicalField.C_POINTER);
+
     private LayoutUtils() {}
 
     public static String getName(Type type) {
@@ -88,10 +95,7 @@ public final class LayoutUtils {
             case LongDouble:
                 return Primitive.Kind.LongDouble.layout().orElseThrow(unsupported);
             case Complex:
-                if (!abi.name().equals(CSupport.SysV.NAME)) {
-                    throw new UnsupportedOperationException("unsupported: " + t.kind());
-                }
-                return CSupport.SysV.C_COMPLEX_LONGDOUBLE;
+                throw new UnsupportedOperationException("unsupported: " + t.kind());
             case Record:
                 return getRecordLayout(t);
             case Vector:
@@ -111,7 +115,7 @@ public final class LayoutUtils {
                 return getLayout(t.canonicalType());
             case Pointer:
             case BlockPointer:
-                return CSupport.C_POINTER;
+                return POINTER_LAYOUT;
             default:
                 throw new UnsupportedOperationException("unsupported: " + t.kind());
         }
@@ -138,7 +142,7 @@ public final class LayoutUtils {
         @Override
         public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
             if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
-                return CSupport.C_POINTER;
+                return POINTER_LAYOUT;
             } else {
                 return t.type().accept(this, null);
             }
@@ -202,14 +206,43 @@ public final class LayoutUtils {
     }
 
     public static Primitive.Kind valueLayoutForSize(long size) {
-        switch ((int)size) {
-            case 8: return Primitive.Kind.Char;
-            case 16: return Primitive.Kind.Short;
-            case 32: return Primitive.Kind.Int;
-            case 64: return abi.name().equals(CSupport.Win64.NAME) ?
-                    Primitive.Kind.LongLong : Primitive.Kind.Long;
-            default:
-                throw new IllegalStateException("Cannot infer container layout");
+        return switch ((int) size) {
+            case 8 -> Primitive.Kind.Char;
+            case 16 -> Primitive.Kind.Short;
+            case 32 -> Primitive.Kind.Int;
+            case 64 -> Primitive.Kind.LongLong;
+            default -> throw new IllegalStateException("Cannot infer container layout");
+        };
+    }
+    
+    public enum CanonicalField {
+        C_CHAR(canonicalLayoutConstantDesc("C_CHAR")),
+        C_SHORT(canonicalLayoutConstantDesc("C_SHORT")),
+        C_INT(canonicalLayoutConstantDesc("C_INT")),
+        C_LONG(canonicalLayoutConstantDesc("C_LONG")),
+        C_LONGLONG(canonicalLayoutConstantDesc("C_LONGLONG")),
+        C_FLOAT(canonicalLayoutConstantDesc("C_FLOAT")),
+        C_DOUBLE(canonicalLayoutConstantDesc("C_DOUBLE")),
+        C_LONGDOUBLE(canonicalLayoutConstantDesc("C_LONGDOUBLE")),
+        C_POINTER(canonicalLayoutConstantDesc("C_POINTER"));
+
+        private final DynamicConstantDesc<ValueLayout> descriptor;
+
+        CanonicalField(DynamicConstantDesc<ValueLayout> descriptor) {
+            this.descriptor = descriptor;
+        }
+
+        public DynamicConstantDesc<ValueLayout> descriptor() {
+            return descriptor;
+        }
+
+        private static DynamicConstantDesc<ValueLayout> canonicalLayoutConstantDesc(String name) {
+            return DynamicConstantDesc.ofNamed(
+                BSM_GET_STATIC_FINAL,
+                name,
+                ValueLayout.class.describeConstable().orElseThrow(),
+                CLinker.class.describeConstable().orElseThrow()
+            );
         }
     }
 }

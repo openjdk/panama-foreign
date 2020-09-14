@@ -25,8 +25,7 @@
  */
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -39,9 +38,10 @@ import java.lang.invoke.MethodType;
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
     private static final boolean CRASH_RECOVERY = Boolean.getBoolean("libclang.crash_recovery");
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private final static MemorySegment disableCrashRecovery =
-            CSupport.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
+            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
                 .withAccessModes(MemorySegment.READ);
 
     static {
@@ -49,12 +49,11 @@ public class LibClang {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                ForeignLinker abi = CSupport.getSystemLinker();
-                String putenv = abi.name().equals(CSupport.Win64.NAME) ?
-                        "_putenv" : "putenv";
-                MethodHandle PUT_ENV = abi.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),
+                CLinker linker = CLinker.getInstance();
+                String putenv = IS_WINDOWS ? "_putenv" : "putenv";
+                MethodHandle PUT_ENV = linker.downcallHandle(LibraryLookup.ofDefault().lookup(putenv),
                                 MethodType.methodType(int.class, MemoryAddress.class),
-                                FunctionDescriptor.of(CSupport.C_INT, CSupport.C_POINTER));
+                                FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
                 int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);
@@ -72,7 +71,7 @@ public class LibClang {
 
     public static String CXStrToString(MemorySegment cxstr) {
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = CSupport.toJavaStringRestricted(buf);
+        String str = CLinker.toJavaStringRestricted(buf);
         Index_h.clang_disposeString(cxstr);
         return str;
     }

@@ -32,8 +32,8 @@
 import jdk.incubator.foreign.MemoryLayout;
 import org.testng.annotations.Test;
 
-import static jdk.incubator.foreign.CSupport.C_INT;
-import static jdk.incubator.foreign.CSupport.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static org.testng.Assert.*;
 
 import java.nio.file.Path;

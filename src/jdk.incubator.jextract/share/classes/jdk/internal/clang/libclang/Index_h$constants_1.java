@@ -32,7 +32,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class Index_h$constants_1 extends Index_h$constants_0 {
     private static final FunctionDescriptor clang_getCursorType$FUNC_ = FunctionDescriptor.of(MemoryLayout.ofStruct(

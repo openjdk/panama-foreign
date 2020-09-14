@@ -27,7 +27,7 @@ import test.jextract.test8245003.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static test.jextract.test8245003.test8245003_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 /*
  * @test id=classes

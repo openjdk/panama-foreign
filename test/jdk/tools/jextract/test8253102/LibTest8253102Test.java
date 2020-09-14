@@ -22,7 +22,7 @@
  */
 
 import org.testng.annotations.Test;
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import static org.testng.Assert.assertEquals;
@@ -54,7 +54,7 @@ public class LibTest8253102Test {
         MemorySegment seg = Point.ofAddressRestricted(addr);
         assertEquals(Point.x$get(seg), 14);
         assertEquals(Point.y$get(seg), 99);
-        CSupport.freeMemoryRestricted(addr);
+        CLinker.freeMemoryRestricted(addr);
         boolean caughtException = false;
         try {
             seg.close();

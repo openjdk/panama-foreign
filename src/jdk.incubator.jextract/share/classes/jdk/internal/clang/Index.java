@@ -26,7 +26,7 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
@@ -79,17 +79,17 @@ public class Index implements AutoCloseable {
     }
 
     private static final VarHandle VH_MemoryAddress =
-            MemoryHandles.asAddressVarHandle(CSupport.C_POINTER.varHandle(long.class));
+            MemoryHandles.asAddressVarHandle(CLinker.C_POINTER.varHandle(long.class));
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            MemorySegment src = CSupport.toCString(file, scope);
-            MemorySegment cargs = scope.allocateArray(CSupport.C_POINTER, args.length);
+            MemorySegment src = CLinker.toCString(file, scope);
+            MemorySegment cargs = scope.allocateArray(CLinker.C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
-                MemoryAccess.setAddressAtIndex(cargs, i, CSupport.toCString(args[i], scope));
+                MemoryAccess.setAddressAtIndex(cargs, i, CLinker.toCString(args[i], scope));
             }
-            MemorySegment outAddress = scope.allocate(CSupport.C_POINTER);
+            MemorySegment outAddress = scope.allocate(CLinker.C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src,

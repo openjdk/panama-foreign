@@ -32,7 +32,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class Index_h$constants_2 extends Index_h$constants_1 {
     private static final MemoryLayout flags$LAYOUT_ = C_INT;
@@ -641,7 +641,7 @@ public class Index_h$constants_2 extends Index_h$constants_1 {
 
     public static int CINDEX_VERSION() { return (int)59L; }
 
-    private static final MemorySegment CINDEX_VERSION_STRING$SEGMENT_CONSTANT_ = CSupport.toCString("0.59");
+    private static final MemorySegment CINDEX_VERSION_STRING$SEGMENT_CONSTANT_ = CLinker.toCString("0.59");
     public static jdk.incubator.foreign.MemorySegment CINDEX_VERSION_STRING() { return CINDEX_VERSION_STRING$SEGMENT_CONSTANT_; }
 
 }

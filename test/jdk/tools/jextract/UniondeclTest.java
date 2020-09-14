@@ -22,7 +22,7 @@
  */
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import org.testng.annotations.Test;
 import java.nio.file.Path;
 import jdk.incubator.foreign.GroupLayout;
@@ -51,8 +51,8 @@ public class UniondeclTest extends JextractToolRunner {
             GroupLayout intOrFloatLayout = (GroupLayout)findLayout(intOrFloatCls);
             assertNotNull(intOrFloatLayout);
             assertTrue(intOrFloatLayout.isUnion());
-            checkField(intOrFloatLayout, "i",  CSupport.C_INT);
-            checkField(intOrFloatLayout, "f", CSupport.C_FLOAT);
+            checkField(intOrFloatLayout, "i",  CLinker.C_INT);
+            checkField(intOrFloatLayout, "f", CLinker.C_FLOAT);
         } finally {
             deleteDir(uniondeclOutput);
         }

@@ -26,7 +26,7 @@
 
 package jdk.internal.clang;
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -63,7 +63,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        try (MemorySegment pathStr = CSupport.toCString(path.toAbsolutePath().toString())) {
+        try (MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString())) {
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
             if (res != SaveError.None) {
                 throw new TranslationUnitSaveException(path, res);
@@ -89,8 +89,8 @@ public class TranslationUnit implements AutoCloseable {
                     scope.allocateArray(Index_h.CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
                 MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile.$LAYOUT().byteSize());
-                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CSupport.toCString(inMemoryFiles[i].file, scope));
-                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CSupport.toCString(inMemoryFiles[i].contents, scope));
+                MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CLinker.toCString(inMemoryFiles[i].file, scope));
+                MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CLinker.toCString(inMemoryFiles[i].contents, scope));
                 MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
             }
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_reparseTranslationUnit(
@@ -120,8 +120,8 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Tokens tokenize(SourceRange range) {
-        MemorySegment p = MemorySegment.allocateNative(CSupport.C_POINTER);
-        MemorySegment pCnt = MemorySegment.allocateNative(CSupport.C_INT);
+        MemorySegment p = MemorySegment.allocateNative(CLinker.C_POINTER);
+        MemorySegment pCnt = MemorySegment.allocateNative(CLinker.C_INT);
         Index_h.clang_tokenize(tu, range.range, p, pCnt);
         Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
         return rv;

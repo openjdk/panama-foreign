@@ -25,11 +25,15 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.jextract.impl.LayoutUtils.CanonicalField;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.ConstantDynamic;
 import jdk.internal.org.objectweb.asm.Handle;
@@ -50,14 +54,19 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.constant.ConstantDescs.*;
 import static java.lang.invoke.MethodHandleInfo.*;
 import static java.lang.invoke.MethodType.methodType;
+import static jdk.internal.jextract.impl.LayoutUtils.CANONICAL_FIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 // generates ConstantHelper as java .class directly
@@ -66,6 +75,11 @@ class ClassConstantHelper implements ConstantHelper {
     private static final String INTR_OBJECT = Type.getInternalName(Object.class);
 
     private static final ClassDesc CD_LIBRARIES = desc(LibraryLookup[].class);
+    private static final ClassDesc CD_MEMORY_LAYOUT = desc(MemoryLayout.class);
+    private static final ClassDesc CD_Constable = desc(Constable.class);
+    private static final ClassDesc CD_GROUP_LAYOUT = desc(GroupLayout.class);
+    private static final ClassDesc CD_SEQUENCE_LAYOUT = desc(SequenceLayout.class);
+    private static final ClassDesc CD_FUNCTION_DESC = desc(FunctionDescriptor.class);
 
     private static final DirectMethodHandleDesc MH_MemoryLayout_varHandle = MethodHandleDesc.ofMethod(
             Kind.INTERFACE_VIRTUAL,
@@ -164,12 +178,11 @@ class ClassConstantHelper implements ConstantHelper {
                         String.class,
                         MemoryLayout.class)
         );
-        DirectMethodHandleDesc MH_makeCString = findRuntimeHelperBootstrap(
+        DirectMethodHandleDesc MH_makeCString = MethodHandleDesc.ofMethod(
+                Kind.INTERFACE_STATIC,
                 cString,
                 "toCString",
-                methodType(
-                        MemorySegment.class,
-                        String.class)
+                desc(methodType(MemorySegment.class, String.class))
         );
 
         ConstantDesc LIBRARIES = librariesDesc(findRuntimeHelperBootstrap(
@@ -298,7 +311,127 @@ class ClassConstantHelper implements ConstantHelper {
 
     @SuppressWarnings("unchecked")
     private static <T extends ConstantDesc> T desc(Constable constable) {
+        if (constable instanceof MemoryLayout) {
+            return (T) describeLayout((MemoryLayout) constable);
+        } else if (constable instanceof FunctionDescriptor) {
+            return (T) describeDescriptor((FunctionDescriptor) constable);
+        }
+
         return (T) constable.describeConstable().orElseThrow();
+    }
+
+    private static final MethodHandleDesc MH_VOID_FUNCTION
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.STATIC, CD_FUNCTION_DESC, "ofVoid",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_MEMORY_LAYOUT.arrayType()));
+
+    private static final MethodHandleDesc MH_FUNCTION
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.STATIC, CD_FUNCTION_DESC, "of",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_MEMORY_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));
+
+    private static ConstantDesc describeDescriptor(FunctionDescriptor descriptor) {
+        List<ConstantDesc> constants = new ArrayList<>();
+        boolean hasReturn = descriptor.returnLayout().isPresent();
+        constants.add(hasReturn ? MH_FUNCTION : MH_VOID_FUNCTION);
+        if (hasReturn) {
+            constants.add(describeLayout(descriptor.returnLayout().get()));
+        }
+        for (MemoryLayout argLayout : descriptor.argumentLayouts()) {
+            constants.add(describeLayout(argLayout));
+        }
+        return DynamicConstantDesc.ofNamed(
+            ConstantDescs.BSM_INVOKE, "function", CD_FUNCTION_DESC, constants.toArray(ConstantDesc[]::new));
+    }
+
+    private static ConstantDesc describeLayout(MemoryLayout layout) {
+        if (layout instanceof GroupLayout) {
+            return describeGroupLayout((GroupLayout) layout);
+        } else if (layout instanceof SequenceLayout) {
+            return describeSequenceLayout((SequenceLayout) layout);
+        } else if(layout instanceof ValueLayout) {
+            return describeValueLayout((ValueLayout) layout);
+        }
+
+        return layout.describeConstable().orElseThrow();
+    }
+
+    private static final MethodHandleDesc MH_WITH_BIT_ALIGNMENT
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL, CD_MEMORY_LAYOUT, "withBitAlignment",
+                MethodTypeDesc.of(CD_MEMORY_LAYOUT, CD_long));
+
+    private static final MethodHandleDesc MH_WITH_ATTRIBUTE
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL, CD_MEMORY_LAYOUT, "withAttribute",
+                MethodTypeDesc.of(CD_MEMORY_LAYOUT, CD_String, CD_Constable));
+
+    private static <T> DynamicConstantDesc<T> decorateLayoutConstant(MemoryLayout layout, DynamicConstantDesc<T> desc) {
+        return decorateLayoutConstant(layout, desc, layout.attributes());
+    }
+
+    private static <T> DynamicConstantDesc<T> decorateLayoutConstant(MemoryLayout layout, DynamicConstantDesc<T> desc,
+                                                                     Stream<String> attributes) {
+        if (!hasNaturalAlignment(layout)) {
+            desc = DynamicConstantDesc.ofNamed(BSM_INVOKE, "withBitAlignment", desc.constantType(), MH_WITH_BIT_ALIGNMENT,
+                    desc, layout.bitAlignment());
+        }
+        for (String name : attributes.collect(Collectors.toList())) {
+            Constable value = layout.attribute(name).get();
+            desc = DynamicConstantDesc.ofNamed(BSM_INVOKE, "withAttribute", desc.constantType(), MH_WITH_ATTRIBUTE,
+                    desc, name, value.describeConstable().orElseThrow());
+        }
+
+        return desc;
+    }
+
+    private static boolean hasNaturalAlignment(MemoryLayout layout) {
+        return layout.hasSize() && layout.bitSize() == layout.bitAlignment();
+    }
+
+    private static final MethodHandleDesc MH_STRUCT
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofStruct",
+                MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));
+
+    private static final MethodHandleDesc MH_UNION
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofUnion",
+                MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));
+
+    private static ConstantDesc describeGroupLayout(GroupLayout layout) {
+        List<MemoryLayout> elements = layout.memberLayouts();
+        ConstantDesc[] constants = new ConstantDesc[1 + elements.size()];
+        constants[0] = layout.isStruct() ? MH_STRUCT : MH_UNION;
+        for (int i = 0 ; i < elements.size() ; i++) {
+            constants[i + 1] = describeLayout(elements.get(i));
+        }
+        return decorateLayoutConstant(layout, DynamicConstantDesc.ofNamed(
+                ConstantDescs.BSM_INVOKE, layout.isStruct() ? "struct" : "union",
+                CD_GROUP_LAYOUT, constants));
+    }
+
+    private static final MethodHandleDesc MH_SIZED_SEQUENCE
+        = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofSequence",
+                MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, CD_long, CD_MEMORY_LAYOUT));
+
+    private static final MethodHandleDesc MH_UNSIZED_SEQUENCE
+         = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofSequence",
+                MethodTypeDesc.of(CD_SEQUENCE_LAYOUT, CD_MEMORY_LAYOUT));
+
+    private static ConstantDesc describeSequenceLayout(SequenceLayout layout) {
+        return decorateLayoutConstant(layout, layout.elementCount().isPresent() ?
+            DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                    CD_SEQUENCE_LAYOUT, MH_SIZED_SEQUENCE,
+                    layout.elementCount().getAsLong(), describeLayout(layout.elementLayout())) :
+            DynamicConstantDesc.ofNamed(ConstantDescs.BSM_INVOKE, "value",
+                    CD_SEQUENCE_LAYOUT, MH_UNSIZED_SEQUENCE,
+                    describeLayout(layout.elementLayout())));
+    }
+
+    private static ConstantDesc describeValueLayout(ValueLayout layout) {
+        Optional<Constable> constantNameOp = layout.attribute(CANONICAL_FIELD);
+        if (constantNameOp.isPresent()) {
+            CanonicalField canonicalField = (CanonicalField) constantNameOp.get();
+            return decorateLayoutConstant(layout, canonicalField.descriptor(),
+                layout.attributes().filter(attr -> !CANONICAL_FIELD.equals(attr) && !attr.startsWith("abi/")));
+        }
+
+        return layout.describeConstable().orElseThrow();
     }
 
     // ASM helpers
@@ -390,7 +523,7 @@ class ClassConstantHelper implements ConstantHelper {
                     Kind.STATIC,
                     CD_constantsHelper,
                     nameKey,
-                    mt.describeConstable().orElseThrow()
+                    desc(mt)
             );
         });
     }

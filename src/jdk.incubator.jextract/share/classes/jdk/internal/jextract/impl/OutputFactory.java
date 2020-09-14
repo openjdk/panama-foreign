@@ -95,7 +95,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
         ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
-                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CSupport"),
+                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
                 libraryNames.toArray(String[]::new));
         AnnotationWriter annotationWriter = new AnnotationWriter();
         HeaderBuilder headerBuilder = new HeaderBuilder(clsName, pkgName, constantHelper, annotationWriter);
@@ -111,22 +111,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         this.annotationWriter = annotationWriter;
     }
 
-    private static String getCLangConstantsHolder() {
-        String prefix = "jdk.incubator.foreign.CSupport.";
-        String abi = CSupport.getSystemLinker().name();
-        switch (abi) {
-            case CSupport.SysV.NAME:
-                return prefix + "SysV";
-            case CSupport.Win64.NAME:
-                return prefix + "Win64";
-            case CSupport.AArch64.NAME:
-                return prefix + "AArch64";
-            default:
-                throw new UnsupportedOperationException("Unsupported ABI: " + abi);
-        }
-    }
-
-    static final String C_LANG_CONSTANTS_HOLDER = getCLangConstantsHolder();
+    static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
 
     JavaFileObject[] generate(Declaration.Scoped decl) {
         toplevelBuilder.classBegin();
@@ -251,8 +236,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static boolean isLongDouble(MemoryLayout layout) {
-        return CSupport.C_LONGDOUBLE.bitSize() == 128
-            && CSupport.C_LONGDOUBLE.equals(layout);
+        return CLinker.C_LONGDOUBLE.bitSize() == 128
+            && CLinker.C_LONGDOUBLE.equals(layout);
     }
 
     private static boolean usesLongDouble(FunctionDescriptor desc) {
@@ -288,7 +273,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         if (isVaList(descriptor)) {
             MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
-            argLayouts[argLayouts.length - 1] = CSupport.C_VA_LIST;
+            argLayouts[argLayouts.length - 1] = CLinker.C_VA_LIST;
             descriptor = descriptor.returnLayout().isEmpty()?
                     FunctionDescriptor.ofVoid(argLayouts) :
                     FunctionDescriptor.of(descriptor.returnLayout().get(), argLayouts);

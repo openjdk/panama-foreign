@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 import test.jextract.test8241925.*;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8241925.test8241925_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 /*
  * @test
