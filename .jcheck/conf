@@ -1,5 +1,5 @@
 [general]
-project=jdk
+project=panama
 jbs=JDK
 
 [checks]
@@ -20,8 +20,7 @@ files=.*\.cpp|.*\.hpp|.*\.c|.*\.h|.*\.java
 message=Merge
 
 [checks "reviewers"]
-reviewers=1
-ignore=duke
+committers=1
 
 [checks "committer"]
 role=committer
