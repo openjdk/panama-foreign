@@ -1420,6 +1420,7 @@ address OptoRuntime::handle_exception_C(JavaThread* thread) {
     // Enter the VM
 
     ResetNoHandleMark rnhm;
+    ExceptionHandlingMark ehm(thread);
     handler_address = handle_exception_C_helper(thread, nm);
   }
 
