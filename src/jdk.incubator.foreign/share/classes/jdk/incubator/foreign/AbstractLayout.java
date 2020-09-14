@@ -206,11 +206,17 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final ClassDesc CD_BYTEORDER = ByteOrder.class.describeConstable().get();
 
+    static final ClassDesc CD_FUNCTION_DESC = FunctionDescriptor.class.describeConstable().get();
+
     static final ClassDesc CD_Constable = Constable.class.describeConstable().get();
 
     static final ConstantDesc BIG_ENDIAN = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "BIG_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
 
     static final ConstantDesc LITTLE_ENDIAN = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "LITTLE_ENDIAN", CD_BYTEORDER, CD_BYTEORDER);
+
+    static final ConstantDesc TRUE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "TRUE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
+
+    static final ConstantDesc FALSE = DynamicConstantDesc.ofNamed(BSM_GET_STATIC_FINAL, "FALSE", ConstantDescs.CD_Boolean, ConstantDescs.CD_Boolean);
 
     static final MethodHandleDesc MH_PADDING = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofPaddingBits",
                 MethodTypeDesc.of(CD_MEMORY_LAYOUT, CD_long));
@@ -229,6 +235,12 @@ abstract class AbstractLayout implements MemoryLayout {
 
     static final MethodHandleDesc MH_UNION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_STATIC, CD_MEMORY_LAYOUT, "ofUnion",
                 MethodTypeDesc.of(CD_GROUP_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_VOID_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.STATIC, CD_FUNCTION_DESC, "ofVoid",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_MEMORY_LAYOUT.arrayType()));
+
+    static final MethodHandleDesc MH_FUNCTION = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.STATIC, CD_FUNCTION_DESC, "of",
+                MethodTypeDesc.of(CD_FUNCTION_DESC, CD_MEMORY_LAYOUT, CD_MEMORY_LAYOUT.arrayType()));
 
     static final MethodHandleDesc MH_WITH_BIT_ALIGNMENT = MethodHandleDesc.ofMethod(DirectMethodHandleDesc.Kind.INTERFACE_VIRTUAL, CD_MEMORY_LAYOUT, "withBitAlignment",
                 MethodTypeDesc.of(CD_MEMORY_LAYOUT, CD_long));
