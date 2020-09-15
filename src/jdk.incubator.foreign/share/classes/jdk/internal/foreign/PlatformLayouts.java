@@ -81,12 +81,6 @@ public class PlatformLayouts {
         }
 
         /**
-         * The {@code _Bool} native type.
-         */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
@@ -186,12 +180,6 @@ public class PlatformLayouts {
         }
 
         /**
-         * The {@code _Bool} native type.
-         */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
-        /**
          * The {@code char} native type.
          */
         public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
@@ -287,12 +275,6 @@ public class PlatformLayouts {
             /** Classification constant for machine pointer values */
             POINTER;
         }
-
-        /**
-         * The {@code _Bool} native type.
-         */
-        public static final ValueLayout C_BOOL = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
 
         /**
          * The {@code char} native type.

@@ -39,18 +39,22 @@ import java.util.function.Consumer;
 import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
- * This interface is a used as a super class for all ForeinLinker implementations that
- * implement the system's C ABI and calling convention. As such, instances of this interface
- * can be used to link foreign functions in native libraries that follow the JVM's target
- * platform C application binary interface (ABI).
+ * A foreign linker specializing for C Application Binary Interface (ABI) calling conventions.
+ * Instances of this interface can be used to link foreign functions in native libraries that
+ * follow the JVM's target platform C ABI.
  *
  * <p>There are two components that go into linking a foreign function: a method type, and
- * a function descriptor. The method type, consisting of a set of 'carrier' types constitutes
- * the Java side of a call to a foreign function, while the function descriptor constitutes
- * the native side of the call. Memory layout attributes are used in the function descriptor
+ * a function descriptor. The method type, consisting of a set of <em>carrier</em> types constitute the
+ * set of carrier types, which, together, specify the Java signature which clients must adhere to when
+ * calling the underlying foreign function. The function descriptor contains a set of memory layouts which,
+ * together, specify the foreign function signature and classification information (via custom layout attributes),
+ * so that linking can take place. Memory layout attributes are used in the function descriptor
  * to attach ABI classification meta-data to memory layouts, which are required for linking.
- * Clients of this API should use the prepared memory layout constants found in this interface
- * to create their function descriptor, based on the built-in types provided by the C language.</p>
+ * Clients of this API should build function descriptors using the predefined memory layout constants
+ * (based on a subset of the built-in types provided by the C language), found in this interface;
+ * a failure to do so might result in linkage errors, given that linking requires additional classification
+ * information to determine, for instance, how arguments should be loaded into registers during a
+ * foreign function call.</p>
  *
  * <p>Implementations of this interface support the following primitive carrier types:
  * {@code byte}, {@code short}, {@code char}, {@code int}, {@code long}, {@code float},
@@ -65,29 +69,32 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  *   memory layout must be a {@code ValueLayout}, and the bit size of the layout must match that of the carrier type
  *   (see {@link Integer#SIZE} and similar fields in other primitive wrapper classes).</li>
  *
- *   <li>If the carrier type is {@code MemoryAddress} or {@code VaList}, then the corresponding memory layout must be a
+ *   <li>If the carrier type is {@code MemoryAddress}, then the corresponding memory layout must be a
  *   {@code ValueLayout}, and its bit size must match the platform's address size (see {@link MemoryLayouts#ADDRESS}).
- *   For this purpose, {@link CLinker#C_POINTER} can  be used as a memory layout for {@code MemoryAddress} carriers,
- *   and {@link CLinker#C_VA_LIST} can be used for {@code VaList} carriers.</li>
+ *   For this purpose, {@link CLinker#C_POINTER} can  be used</li>
  *
  *   <li>If the carrier type is {@code MemorySegment}, then the corresponding memory layout must be a
  *   {@code GroupLayout}</li>
+ *
+ *   <li>If the carrier type is {@code VaList}, then the corresponding memory layout must be
+ *   {@link CLinker#C_VA_LIST}</li>
  * </ul>
  *
  * <p>Variadic functions, declared in C either with a trailing ellipses ({@code ...}) at the end of the formal parameter
  * list or with an empty formal parameter list, are not supported directly. It is not possible to create a method handle
  * that takes a variable number of arguments, and neither is it possible to create an upcall stub wrapping a method
- * handle that accepts a variable number of arguments. However, for down calls only, it is possible to link a native
- * variadic function by using a 'specialized' method type and function descriptor: for each argument that is to be
+ * handle that accepts a variable number of arguments. However, for downcalls only, it is possible to link a native
+ * variadic function by using a <em>specialized</em> method type and function descriptor: for each argument that is to be
  * passed as a variadic argument, an explicit carrier type and memory layout must be present in the method type and
- * function descriptor when linking the function. Furthermore, the memory layouts of variadic arguments must
- * have a special vararg attribute. Such memory layouts can be created from an existing layout by calling
- * {@link #asVarArg(MemoryLayout)}</p>
+ * function descriptor when linking the function. Furthermore, as memory layouts corresponding to variadic arguments in
+ * a function descriptor must contain additional classification information, it is required that
+ * {@link #asVarArg(MemoryLayout)} is used to create the memory layouts for each parameter corresponding to a variadic
+ * argument in a specialized function descriptor</p>
  */
 public interface CLinker extends ForeignLinker {
 
     /**
-     * Obtain a linker that uses the de facto C ABI of the current system to do it's linking.
+     * Obtain a linker that uses the de facto C ABI of the current system to do its linking.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -96,8 +103,8 @@ public interface CLinker extends ForeignLinker {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    static CLinker getSystemLinker() {
-        Utils.checkRestrictedAccess("SystemCLinker.getSystemLinker");
+    static CLinker getInstance() {
+        Utils.checkRestrictedAccess("CLinker.getInstance");
         return SharedUtils.getSystemLinker();
     }
 
@@ -137,23 +144,19 @@ public interface CLinker extends ForeignLinker {
     String ABI_ATTR_PREFIX = "abi/";
 
     /**
-     * The {@code _Bool} native type.
-     */
-    ValueLayout C_BOOL = pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
-    /**
-     * The {@code char} native type.
+     * The layout for the {@code char} C type
      */
     ValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
     /**
-     * The {@code short} native type.
+     * The layout for the {@code short} C type
      */
     ValueLayout C_SHORT = pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
     /**
-     * The {@code int} native type.
+     * The layout for the {@code int} C type
      */
     ValueLayout C_INT = pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
     /**
-     * The {@code long} native type.
+     * The layout for the {@code long} C type
      */
     ValueLayout C_LONG = pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
     /**
@@ -161,11 +164,11 @@ public interface CLinker extends ForeignLinker {
      */
     ValueLayout C_LONGLONG = pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
     /**
-     * The {@code float} native type.
+     * The layout for the {@code float} C type
      */
     ValueLayout C_FLOAT = pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
     /**
-     * The {@code double} native type.
+     * The layout for the {@code double} C type
      */
     ValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
     /**
@@ -177,7 +180,7 @@ public interface CLinker extends ForeignLinker {
      */
     ValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
     /**
-     * The {@code va_list} native type.
+     * The layout for the {@code va_list} C type
      */
     MemoryLayout C_VA_LIST = pick(SysV.C_VA_LIST, Win64.C_VA_LIST, AArch64.C_VA_LIST);
 
