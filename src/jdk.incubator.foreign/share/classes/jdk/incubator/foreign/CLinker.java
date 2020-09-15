@@ -51,7 +51,7 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * to attach ABI classification meta-data to memory layouts, which are required for linking.
  * Clients of this API should use the prepared memory layout constants found in this interface
  * to create their function descriptor, based on the built-in types provided by the C language.</p>
- * 
+ *
  * <p>Implementations of this interface support the following primitive carrier types:
  * {@code byte}, {@code short}, {@code char}, {@code int}, {@code long}, {@code float},
  * and {@code double}, as well as {@link MemoryAddress} for passing pointers, and
