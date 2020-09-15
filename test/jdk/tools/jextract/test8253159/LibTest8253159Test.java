@@ -27,34 +27,38 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static test.jextract.test8253102.test8253102_h.*;
+import test.jextract.test8253159.RuntimeHelper;
+import static test.jextract.test8253159.test8253159_h.*;
 
 /*
  * @test id=classes
- * @bug 8253102
- * @summary jextract should emit address to segment utility method on struct classes
+ * @bug 8253159
+ * @summary RuntimeHelper.asArrayRestricted should create noncloseable segment
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextract -l Test8253102 -t test.jextract.test8253102 -- test8253102.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253102Test
+ * @run driver JtregJextract -l Test8253159 -t test.jextract.test8253159 -- test8253159.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8253159Test
  */
 /*
  * @test id=sources
- * @bug 8253102
- * @summary jextract should emit address to segment utility method on struct classes
+ * @bug 8253159
+ * @summary RuntimeHelper.asArrayRestricted should create noncloseable segment
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextractSources -l Test8253102 -t test.jextract.test8253102 -- test8253102.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253102Test
+ * @run driver JtregJextractSources -l Test8253159 -t test.jextract.test8253159 -- test8253159.h
+ * @run testng/othervm -Dforeign.restricted=permit LibTest8253159Test
  */
-public class LibTest8253102Test {
+public class LibTest8253159Test {
     @Test
     public void test() {
-        MemoryAddress addr = make(14, 99);
-        MemorySegment seg = Point.ofAddressRestricted(addr);
-        assertEquals(Point.x$get(seg), 14);
-        assertEquals(Point.y$get(seg), 99);
-        CSupport.freeMemoryRestricted(addr);
+        MemoryAddress addr = get_array();
+        MemorySegment seg = RuntimeHelper.asArrayRestricted(addr, CSupport.C_INT, 6);
+        int[] actual = seg.toIntArray();
+        int[] expected = new int[] { 2, 3, 5, 7, 11, 13};
+        assertEquals(actual.length, expected.length);
+        for (int i = 0; i < actual.length; i++) {
+            assertEquals(actual[i], expected[i]);
+        }
         boolean caughtException = false;
         try {
             seg.close();

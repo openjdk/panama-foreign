@@ -96,9 +96,13 @@ public class RuntimeHelper {
         }
     }
 
+    public static final MemorySegment nonCloseableSegment(MemorySegment seg) {
+        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
+    }
+
     public static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
-               Thread.currentThread(), null, null);
+        return nonCloseableSegment(MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
+               Thread.currentThread(), null, null));
     }
 
     public static MemorySegment asArray(MemorySegment seg, MemoryLayout layout, int numElements) {
