@@ -32,6 +32,8 @@ import jdk.incubator.foreign.ValueLayout;
 
 import java.nio.ByteOrder;
 
+import static jdk.incubator.foreign.CLinker.ABI_ATTR_PREFIX;
+
 public class PlatformLayouts {
     public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
         return switch (CABI.current()) {
@@ -60,7 +62,7 @@ public class PlatformLayouts {
          * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
          * attribute value must be an enum constant from {@link ArgumentClass}.
          */
-        public final static String CLASS_ATTRIBUTE_NAME = "abi/sysv/class";
+        public final static String CLASS_ATTRIBUTE_NAME = ABI_ATTR_PREFIX + "sysv/class";
 
         /**
          * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
@@ -163,13 +165,13 @@ public class PlatformLayouts {
          * The name of the layout attribute (see {@link MemoryLayout#attributes()} used to mark variadic parameters. The
          * attribute value must be a boolean.
          */
-        public final static String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
+        public final static String VARARGS_ATTRIBUTE_NAME = ABI_ATTR_PREFIX + "windows/varargs";
 
         /**
          * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
          * attribute value must be an enum constant from {@link ArgumentClass}.
          */
-        public final static String CLASS_ATTRIBUTE_NAME = "abi/windows/class";
+        public final static String CLASS_ATTRIBUTE_NAME = ABI_ATTR_PREFIX + "windows/class";
 
         /**
          * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
@@ -272,7 +274,7 @@ public class PlatformLayouts {
          * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
          * attribute value must be an enum constant from {@link ArgumentClass}.
          */
-        public static final String CLASS_ATTRIBUTE_NAME = "abi/aarch64/class";
+        public static final String CLASS_ATTRIBUTE_NAME = ABI_ATTR_PREFIX + "aarch64/class";
 
         /**
          * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.

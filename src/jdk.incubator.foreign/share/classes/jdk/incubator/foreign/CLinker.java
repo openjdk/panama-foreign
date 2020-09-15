@@ -132,6 +132,11 @@ public interface CLinker extends ForeignLinker {
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
+     * The prefix of all ABI attribute names.
+     */
+    String ABI_ATTR_PREFIX = "abi/";
+
+    /**
      * The {@code _Bool} native type.
      */
     ValueLayout C_BOOL = pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
