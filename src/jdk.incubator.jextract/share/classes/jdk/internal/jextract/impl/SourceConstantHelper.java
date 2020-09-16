@@ -25,7 +25,6 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -33,6 +32,8 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.SequenceLayout;
+import jdk.internal.jextract.impl.LayoutUtils.CanonicalABIType;
+
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
@@ -41,29 +42,17 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import static java.lang.invoke.MethodType.methodType;
+import static jdk.internal.jextract.impl.LayoutUtils.CANONICAL_FIELD;
 
 // generates ConstantHelper as java source
 class SourceConstantHelper implements ConstantHelper {
     private static final String PACKAGE_FINAL_MODS = "static final ";
-    private static final String ABI_CLASS_ATTR;
-    private static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 1000);
-
-    static {
-        String abi = CSupport.getSystemLinker().name();
-        ABI_CLASS_ATTR = switch (abi) {
-            case CSupport.SysV.NAME -> CSupport.SysV.CLASS_ATTRIBUTE_NAME;
-            case CSupport.Win64.NAME -> CSupport.Win64.CLASS_ATTRIBUTE_NAME;
-            case CSupport.AArch64.NAME -> CSupport.AArch64.CLASS_ATTRIBUTE_NAME;
-            default -> throw new UnsupportedOperationException("Unsupported Foreign Linker: " + abi);
-        };
-    }
 
     // set of names generates already
     private static final Map<String, DirectMethodHandleDesc> namesGenerated = new HashMap<>();
@@ -390,27 +379,23 @@ class SourceConstantHelper implements ConstantHelper {
             emitLayoutString(((SequenceLayout) l).elementLayout());
             append(")");
         } else if (l instanceof GroupLayout) {
-            if (l == CSupport.SysV.C_COMPLEX_LONGDOUBLE) {
-                append("C_COMPLEX_LONGDOUBLE");
+            if (((GroupLayout) l).isStruct()) {
+                append("MemoryLayout.ofStruct(\n");
             } else {
-                if (((GroupLayout) l).isStruct()) {
-                    append("MemoryLayout.ofStruct(\n");
-                } else {
-                    append("MemoryLayout.ofUnion(\n");
-                }
-                incrAlign();
-                String delim = "";
-                for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
-                    append(delim);
-                    indent();
-                    emitLayoutString(e);
-                    delim = ",\n";
-                }
-                append("\n");
-                decrAlign();
-                indent();
-                append(")");
+                append("MemoryLayout.ofUnion(\n");
             }
+            incrAlign();
+            String delim = "";
+            for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
+                append(delim);
+                indent();
+                emitLayoutString(e);
+                delim = ",\n";
+            }
+            append("\n");
+            decrAlign();
+            indent();
+            append(")");
         } else {
             // padding
             append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
@@ -471,7 +456,7 @@ class SourceConstantHelper implements ConstantHelper {
         append(PACKAGE_FINAL_MODS);
         append("MemorySegment ");
         append(fieldName);
-        append(" = CSupport.toCString(\"");
+        append(" = CLinker.toCString(\"");
         append(Objects.toString(value));
         append("\");\n");
         decrAlign();
@@ -528,37 +513,10 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     private static String typeToLayoutName(ValueLayout vl) {
-        if (matchLayout(vl, CSupport.C_BOOL)) {
-            return "C_BOOL";
-        } else if (matchLayout(vl, CSupport.C_CHAR)) {
-            return "C_CHAR";
-        } else if (matchLayout(vl, CSupport.C_SHORT)) {
-            return "C_SHORT";
-        } else if (matchLayout(vl, CSupport.C_INT)) {
-            return "C_INT";
-        } else if (matchLayout(vl, CSupport.C_LONG)) {
-            return "C_LONG";
-        } else if (matchLayout(vl, CSupport.C_LONGLONG)) {
-            return "C_LONGLONG";
-        } else if (matchLayout(vl, CSupport.C_FLOAT)) {
-            return "C_FLOAT";
-        } else if (matchLayout(vl, CSupport.C_DOUBLE)) {
-            return "C_DOUBLE";
-        } else if (matchLayout(vl, CSupport.C_LONGDOUBLE)) {
-            return "C_LONGDOUBLE";
-        } else if (matchLayout(vl, CSupport.C_POINTER)) {
-            return "C_POINTER";
-        } else {
-            throw new RuntimeException("should not reach here, problematic layout: " + vl);
-        }
-    }
-
-    private static boolean matchLayout(ValueLayout a, ValueLayout b) {
-        if (a == b) return true;
-        return (a.bitSize() == b.bitSize() &&
-                a.order() == b.order() &&
-                a.bitAlignment() == b.bitAlignment() &&
-                a.attribute(ABI_CLASS_ATTR).equals(b.attribute(ABI_CLASS_ATTR)));
+        return vl.attribute(CANONICAL_FIELD)
+            .map(CanonicalABIType.class::cast)
+            .map(CanonicalABIType::name)
+            .orElseThrow(() -> new RuntimeException("should not reach here, problematic layout: " + vl));
     }
 
     private String getSegmentFieldName(String javaName) {

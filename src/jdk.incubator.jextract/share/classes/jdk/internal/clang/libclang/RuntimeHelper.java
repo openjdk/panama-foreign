@@ -29,8 +29,7 @@
 package jdk.internal.clang.libclang;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -41,16 +40,17 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_LONGLONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 
 public class RuntimeHelper {
 
-    private final static ForeignLinker ABI = CSupport.getSystemLinker();
+    private final static CLinker LINKER = CLinker.getInstance();
 
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
 
@@ -103,12 +103,12 @@ public class RuntimeHelper {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
                     return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
-                        ABI.downcallHandle(addr, mt, fdesc);
+                        LINKER.downcallHandle(addr, mt, fdesc);
                 }).orElse(null);
     }
 
     public static final MemorySegment upcallStub(MethodHandle handle, FunctionDescriptor fdesc) {
-        return ABI.upcallStub(handle, fdesc);
+        return LINKER.upcallStub(handle, fdesc);
     }
 
     public static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
@@ -187,7 +187,7 @@ public class RuntimeHelper {
             FunctionDescriptor f = (function.returnLayout().isEmpty()) ?
                     FunctionDescriptor.ofVoid(argLayouts) :
                     FunctionDescriptor.of(function.returnLayout().get(), argLayouts);
-            MethodHandle mh = ABI.downcallHandle(symbol, mt, f);
+            MethodHandle mh = LINKER.downcallHandle(symbol, mt, f);
             // flatten argument list so that it can be passed to an asSpreader MH
             Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
             System.arraycopy(args, 0, allArgs, 0, nNamedArgs);

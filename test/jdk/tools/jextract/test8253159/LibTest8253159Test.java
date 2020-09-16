@@ -22,7 +22,7 @@
  */
 
 import org.testng.annotations.Test;
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import static org.testng.Assert.assertEquals;
@@ -52,7 +52,7 @@ public class LibTest8253159Test {
     @Test
     public void test() {
         MemoryAddress addr = get_array();
-        MemorySegment seg = RuntimeHelper.asArrayRestricted(addr, CSupport.C_INT, 6);
+        MemorySegment seg = RuntimeHelper.asArrayRestricted(addr, CLinker.C_INT, 6);
         int[] actual = seg.toIntArray();
         int[] expected = new int[] { 2, 3, 5, 7, 11, 13};
         assertEquals(actual.length, expected.length);

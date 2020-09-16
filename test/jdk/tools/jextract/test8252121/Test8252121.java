@@ -24,7 +24,7 @@
 import org.testng.annotations.Test;
 
 import java.util.stream.IntStream;
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import static org.testng.Assert.assertEquals;
@@ -53,7 +53,7 @@ public class Test8252121 {
     public void test() {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             int[] array = { 3, 5, 89, 34, -33 };
-            MemorySegment seg = scope.allocateArray(CSupport.C_INT, array);
+            MemorySegment seg = scope.allocateArray(CLinker.C_INT, array);
             assertEquals(IntStream.of(array).sum(), sum(seg));
             assertEquals(IntStream.of(array).reduce(1, (a,b) -> a*b), mul(seg));
         }

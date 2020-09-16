@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_INT;
 import static jdk.incubator.foreign.CLinker.C_LONGLONG;
+import static jdk.incubator.foreign.CLinker.C_VA_LIST;
 import static jdk.incubator.foreign.CLinker.asVarArg;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -78,7 +79,7 @@ public class VaList {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (VaList vaList = VaList.make(b ->
+        try (CLinker.VaList vaList = CLinker.VaList.make(b ->
             b.vargFromInt(C_INT, 1)
              .vargFromDouble(C_DOUBLE, 2D)
              .vargFromLong(C_LONGLONG, 3L)

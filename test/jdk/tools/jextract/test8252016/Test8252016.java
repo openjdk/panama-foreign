@@ -27,7 +27,7 @@ import jdk.incubator.foreign.MemorySegment;
 
 import static org.testng.Assert.assertEquals;
 import static test.jextract.vsprintf.vsprintf_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 /*
  * @test id=classes

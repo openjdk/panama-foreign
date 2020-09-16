@@ -21,7 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -110,7 +110,7 @@ public class ConstantsTest extends JextractToolRunner {
     }
 
     static Consumer<MemorySegment> equalsToJavaStr(String expected) {
-        return actual -> assertEquals(CSupport.toJavaString(actual), expected);
+        return actual -> assertEquals(CLinker.toJavaString(actual), expected);
     }
 
     static Consumer<MemoryAddress> equalsPtrContents(long expected) {
