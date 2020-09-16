@@ -214,7 +214,7 @@ public final class LayoutUtils {
             default -> throw new IllegalStateException("Cannot infer container layout");
         };
     }
-    
+
     public enum CanonicalField {
         C_CHAR(canonicalLayoutConstantDesc("C_CHAR")),
         C_SHORT(canonicalLayoutConstantDesc("C_SHORT")),
