@@ -115,7 +115,8 @@ public interface CLinker {
     }
 
     /**
-     * Obtain a method handle which can be used to call a given native function.
+     * Obtain a foreign method handle, with given type, which can be used to call a
+     * target foreign function at a given address and featuring a given function descriptor.
      *
      * @param symbol   downcall symbol.
      * @param type     the method type.
@@ -126,14 +127,13 @@ public interface CLinker {
     MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
-     * Allocates a native stub segment which contains executable code to upcall into a given method handle.
+     * Allocates a native segment whose base address (see {@link MemorySegment#address}) can be
+     * passed to other foreign functions (as a function pointer); calling such a function pointer
+     * from native code will result in the execution of the provided method handle.
      *
-     * <p>The base address of the returned stub segment can be passed to other foreign functions
-     * (as a function pointer). The returned segment is <em>not</em> thread-confined, and it only features
+     * <p>The returned segment is <em>not</em> thread-confined, and it only features
      * the {@link MemorySegment#CLOSE} access mode. When the returned segment is closed,
      * the corresponding native stub will be deallocated.</p>
-     *
-     * <p>The method type of the target method handle is used for linking</p>
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
