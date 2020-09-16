@@ -24,7 +24,6 @@
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.foreign.CABI;
-import jdk.internal.foreign.PlatformLayouts;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
 

@@ -23,8 +23,6 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
@@ -48,7 +46,7 @@ import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
 
-public class TestIntrinsics extends NativeTestHelper {
+public class TestIntrinsics {
 
     static final CLinker abi = CLinker.getInstance();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");

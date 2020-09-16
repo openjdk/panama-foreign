@@ -24,7 +24,6 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestVarArgs
  */
 
@@ -48,7 +47,7 @@ import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.*;
 import static org.testng.Assert.assertEquals;
 
-public class TestVarArgs extends NativeTestHelper {
+public class TestVarArgs {
 
     static final MemoryLayout ML_CallInfo = MemoryLayout.ofStruct(
             C_POINTER.withName("writeback"), // writeback
