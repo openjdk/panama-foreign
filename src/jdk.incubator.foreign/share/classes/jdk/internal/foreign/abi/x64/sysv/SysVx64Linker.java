@@ -25,12 +25,11 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.CLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -40,12 +39,12 @@ import java.lang.invoke.MethodType;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
-public class SysVx64Linker implements ForeignLinker {
+public class SysVx64Linker implements CLinker {
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
     public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
@@ -62,7 +61,7 @@ public class SysVx64Linker implements ForeignLinker {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_unboxVaList = lookup.findVirtual(CSupport.VaList.class, "address",
+            MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
             MH_boxVaList = lookup.findStatic(SysVx64Linker.class, "newVaListOfAddress",
                 MethodType.methodType(VaList.class, MemoryAddress.class));
@@ -96,11 +95,6 @@ public class SysVx64Linker implements ForeignLinker {
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
-    }
-
-    @Override
-    public String name() {
-        return SysV.NAME;
     }
 
     static Optional<ArgumentClassImpl> argumentClassFor(MemoryLayout layout) {

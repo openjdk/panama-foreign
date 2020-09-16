@@ -25,12 +25,11 @@
 package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.CLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -39,12 +38,12 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
-public class Windowsx64Linker implements ForeignLinker {
+public class Windowsx64Linker implements CLinker {
 
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
@@ -63,7 +62,7 @@ public class Windowsx64Linker implements ForeignLinker {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_unboxVaList = lookup.findVirtual(CSupport.VaList.class, "address",
+            MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
             MH_boxVaList = lookup.findStatic(Windowsx64Linker.class, "newVaListOfAddress",
                 MethodType.methodType(VaList.class, MemoryAddress.class));
@@ -97,11 +96,6 @@ public class Windowsx64Linker implements ForeignLinker {
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
-    }
-
-    @Override
-    public String name() {
-        return Win64.NAME;
     }
 
     static Win64.ArgumentClass argumentClassFor(MemoryLayout layout) {

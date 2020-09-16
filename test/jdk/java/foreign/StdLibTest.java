@@ -23,7 +23,6 @@
 
 /*
  * @test
- * @build NativeTestHelper StdLibTest
  * @run testng/othervm -Dforeign.restricted=permit StdLibTest
  */
 
@@ -50,13 +49,13 @@ import static jdk.incubator.foreign.MemoryAccess.*;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 @Test
-public class StdLibTest extends NativeTestHelper {
+public class StdLibTest {
 
-    final static ForeignLinker abi = CSupport.getSystemLinker();
+    final static CLinker abi = CLinker.getInstance();
 
     private StdLibHelper stdLibHelper = new StdLibHelper();
 

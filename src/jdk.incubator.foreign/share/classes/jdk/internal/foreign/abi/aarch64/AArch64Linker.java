@@ -26,12 +26,11 @@
 package jdk.internal.foreign.abi.aarch64;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.CLinker;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -40,13 +39,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * ABI implementation based on ARM document "Procedure Call Standard for
  * the ARM 64-bit Architecture".
  */
-public class AArch64Linker implements ForeignLinker {
+public class AArch64Linker implements CLinker {
     private static AArch64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits
@@ -57,7 +56,7 @@ public class AArch64Linker implements ForeignLinker {
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_unboxVaList = lookup.findVirtual(CSupport.VaList.class, "address",
+            MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
             MH_boxVaList = lookup.findStatic(AArch64Linker.class, "newVaListOfAddress",
                 MethodType.methodType(VaList.class, MemoryAddress.class));
@@ -85,11 +84,6 @@ public class AArch64Linker implements ForeignLinker {
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
-    }
-
-    @Override
-    public String name() {
-        return AArch64.NAME;
     }
 
     static AArch64.ArgumentClass argumentClassFor(MemoryLayout layout) {

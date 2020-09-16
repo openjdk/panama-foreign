@@ -37,8 +37,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static jdk.incubator.foreign.CSupport.SysV;
-import static jdk.incubator.foreign.CSupport.VaList;
+import static jdk.internal.foreign.PlatformLayouts.SysV;
+import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
@@ -112,7 +112,7 @@ public class SysVVaList implements VaList {
         = MemoryHandles.asAddressVarHandle(LAYOUT.varHandle(long.class, groupElement("reg_save_area")));
 
     private static final Cleaner cleaner = Cleaner.create();
-    private static final CSupport.VaList EMPTY = new SharedUtils.EmptyVaList(emptyListAddress());
+    private static final VaList EMPTY = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
     private final MemorySegment regSaveArea;
@@ -141,7 +141,7 @@ public class SysVVaList implements VaList {
         return base.withAccessModes(0).address();
     }
 
-    public static CSupport.VaList empty() {
+    public static VaList empty() {
         return EMPTY;
     }
 
@@ -356,7 +356,7 @@ public class SysVVaList implements VaList {
                + '}';
     }
 
-    static class Builder implements CSupport.VaList.Builder {
+    static class Builder implements VaList.Builder {
         private final SharedUtils.Allocator allocator;
         private final MemorySegment reg_save_area;
         private long currentGPOffset = 0;
