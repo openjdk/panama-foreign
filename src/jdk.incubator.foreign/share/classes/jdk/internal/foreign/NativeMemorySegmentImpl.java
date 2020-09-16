@@ -41,8 +41,9 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL,
-            Long.MAX_VALUE, null, null, null).withAccessModes(READ | WRITE);
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE)
+            .withOwnerThread(null)
+            .withAccessModes(READ | WRITE);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -113,12 +114,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Thread owner, Runnable cleanup, Object attachment) {
-        MemoryScope.CleanupAction cleanupAction = cleanup != null ?
-                MemoryScope.CleanupAction.AtMostOnceOnly.of(cleanup) : MemoryScope.CleanupAction.DUMMY;
-        MemoryScope scope = owner == null ?
-                MemoryScope.createShared(attachment, cleanupAction) :
-                MemoryScope.createConfined(owner, attachment, cleanupAction);
-        return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize) {
+        return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
+                MemoryScope.createConfined(null, MemoryScope.CleanupAction.DUMMY));
     }
 }

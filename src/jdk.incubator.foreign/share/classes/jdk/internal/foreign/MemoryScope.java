@@ -63,17 +63,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @return a confined memory scope
      */
     static MemoryScope createConfined(Object ref, CleanupAction cleanupAction) {
-        return createConfined(Thread.currentThread(), ref, cleanupAction);
-    }
-
-    /**
-     * Creates a confined memory scope with given attachment, cleanup action and owner thread.
-     * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction a cleanup action to be executed when returned scope is closed
-     * @return a confined memory scope
-     */
-    static MemoryScope createConfined(Thread owner, Object ref, CleanupAction cleanupAction) {
-        return new ConfinedScope(owner, ref, cleanupAction);
+        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction);
     }
 
     /**
@@ -142,6 +132,17 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         try {
             justClose();
             return new SharedScope(ref, cleanupAction.dup());
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
+
+    final MemoryScope wrapAction(Runnable runnable) {
+        try {
+            justClose();
+            return ownerThread() == null ?
+                    new SharedScope(ref, cleanupAction.wrap(runnable)) :
+                    new ConfinedScope(ownerThread(), ref, cleanupAction.wrap(runnable));
         } finally {
             Reference.reachabilityFence(this);
         }
@@ -274,6 +275,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     interface CleanupAction extends Runnable {
         void cleanup();
         CleanupAction dup();
+        CleanupAction wrap(Runnable runnable);
 
         @Override
         default void run() {
@@ -290,6 +292,11 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             @Override
             public CleanupAction dup() {
                 return this;
+            }
+
+            @Override
+            public CleanupAction wrap(Runnable runnable) {
+                return AtMostOnceOnly.of(runnable);
             }
         };
 
@@ -323,6 +330,14 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             public CleanupAction dup() {
                 disable();
                 return new DupAction(this);
+            }
+
+            @Override
+            public CleanupAction wrap(Runnable runnable) {
+                disable();
+                return AtMostOnceOnly.of(() -> {
+                    runnable.run(); doCleanup();
+                });
             }
 
             //where
