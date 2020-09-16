@@ -143,11 +143,6 @@ public interface CLinker {
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
-     * The prefix of all ABI attribute names.
-     */
-    String ABI_ATTR_PREFIX = "abi/";
-
-    /**
      * The layout for the {@code char} C type
      */
     ValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
