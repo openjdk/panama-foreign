@@ -268,7 +268,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * the same confinement thread (see {@link #ownerThread()} and access modes (see {@link #accessModes()}),
      * but with a different cleanup action. More specifically, the cleanup action associated with the returned segment will
      * first call the user-provided action, before delegating back to the original cleanup action associated with
-     * this segment. Any exception thrown by the user-provided action will be discarded, and will not prevent the
+     * this segment (if any). Any errors and/or exceptions thrown by the user-provided action will be discarded, and will not prevent the
      * release of any memory resources associated with this segment.
      * <p>
      * As a side-effect, this segment will be marked as <em>not alive</em>,

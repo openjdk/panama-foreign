@@ -93,6 +93,11 @@ public interface MemoryAddress extends Addressable {
      * (often as a plain {@code long} value). The returned segment will feature all <a href="#access-modes">access modes</a>
      * (see {@link MemorySegment#ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
      * <p>
+     * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
+     * memory resources which might implicitly be associated with the segment. If the client wants to specify
+     * a cleanup action to be executed when the returned segment is closed, the {@link MemorySegment#withCleanupAction(Runnable)}
+     * method should be used.
+     * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
@@ -105,10 +110,10 @@ public interface MemoryAddress extends Addressable {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     default MemorySegment asSegmentRestricted(long bytesSize) {
+        Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        Utils.checkRestrictedAccess("MemoryAddress.ofSegmentRestricted");
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize);
     }
 
