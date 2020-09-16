@@ -22,11 +22,10 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.CLinker;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -41,8 +40,8 @@ import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static jdk.incubator.foreign.CSupport.C_INT;
-import static jdk.incubator.foreign.CSupport.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -52,7 +51,7 @@ import static jdk.incubator.foreign.CSupport.C_POINTER;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class Upcalls {
 
-    static final ForeignLinker abi = CSupport.getSystemLinker();
+    static final CLinker abi = CLinker.getInstance();
     static final MethodHandle blank;
     static final MethodHandle identity;
 

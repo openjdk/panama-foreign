@@ -22,34 +22,28 @@
  *
  */
 
-import jdk.incubator.foreign.CSupport;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.CABI;
+
+import static jdk.internal.foreign.PlatformLayouts.*;
 
 public class NativeTestHelper {
 
-    public static final ForeignLinker ABI = CSupport.getSystemLinker();
+    public static final CABI ABI = CABI.current();
 
     public static boolean isIntegral(MemoryLayout layout) {
-        return switch (ABI.name()) {
-            case CSupport.SysV.NAME -> layout.attribute(CSupport.SysV.CLASS_ATTRIBUTE_NAME).get() == CSupport.SysV.ArgumentClass.INTEGER;
-            case CSupport.Win64.NAME -> layout.attribute(CSupport.Win64.CLASS_ATTRIBUTE_NAME).get() == CSupport.Win64.ArgumentClass.INTEGER;
-            case CSupport.AArch64.NAME -> layout.attribute(CSupport.AArch64.CLASS_ATTRIBUTE_NAME).get() == CSupport.AArch64.ArgumentClass.INTEGER;
-            default -> throw new AssertionError("unexpected ABI: " + ABI.name());
+        return switch (ABI) {
+            case SysV -> layout.attribute(SysV.CLASS_ATTRIBUTE_NAME).get() == SysV.ArgumentClass.INTEGER;
+            case Win64 -> layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get() == Win64.ArgumentClass.INTEGER;
+            case AArch64 -> layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get() == AArch64.ArgumentClass.INTEGER;
         };
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return switch (ABI.name()) {
-            case CSupport.SysV.NAME -> layout.attribute(CSupport.SysV.CLASS_ATTRIBUTE_NAME).get() == CSupport.SysV.ArgumentClass.POINTER;
-            case CSupport.Win64.NAME -> layout.attribute(CSupport.Win64.CLASS_ATTRIBUTE_NAME).get() == CSupport.Win64.ArgumentClass.POINTER;
-            case CSupport.AArch64.NAME -> layout.attribute(CSupport.AArch64.CLASS_ATTRIBUTE_NAME).get() == CSupport.AArch64.ArgumentClass.POINTER;
-            default -> throw new AssertionError("unexpected ABI: " + ABI.name());
+        return switch (ABI) {
+            case SysV -> layout.attribute(SysV.CLASS_ATTRIBUTE_NAME).get() == SysV.ArgumentClass.POINTER;
+            case Win64 -> layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get() == Win64.ArgumentClass.POINTER;
+            case AArch64 -> layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get() == AArch64.ArgumentClass.POINTER;
         };
-    }
-
-    public static ValueLayout asVarArg(ValueLayout layout) {
-        return ABI.name().equals(CSupport.Win64.NAME) ? CSupport.Win64.asVarArg(layout) : layout;
     }
 }

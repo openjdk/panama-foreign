@@ -29,14 +29,9 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.PlatformLayouts;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.abi.aarch64.AArch64Linker.argumentClassFor;
 
 enum TypeClass {

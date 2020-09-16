@@ -24,7 +24,8 @@
 
 /*
  * @test
- * @modules jdk.incubator.foreign/jdk.internal.foreign.abi
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ *          jdk.incubator.foreign/jdk.internal.foreign.abi
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.aarch64
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.windows
  *          jdk.incubator.foreign/jdk.internal.foreign.abi.x64.sysv
@@ -32,10 +33,7 @@
  */
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.CSupport.AArch64;
-import jdk.incubator.foreign.CSupport.SysV;
-import jdk.incubator.foreign.CSupport.VaList;
-import jdk.incubator.foreign.CSupport.Win64;
+import jdk.incubator.foreign.CLinker.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -54,29 +52,30 @@ import java.util.function.Function;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-import static jdk.incubator.foreign.CSupport.C_DOUBLE;
-import static jdk.incubator.foreign.CSupport.C_FLOAT;
-import static jdk.incubator.foreign.CSupport.C_INT;
-import static jdk.incubator.foreign.CSupport.C_LONGLONG;
-import static jdk.incubator.foreign.CSupport.C_POINTER;
-import static jdk.incubator.foreign.CSupport.C_VA_LIST;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_FLOAT;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONGLONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_VA_LIST;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
+import static jdk.internal.foreign.PlatformLayouts.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 public class VaListTest {
 
-    private static final ForeignLinker abi = CSupport.getSystemLinker();
+    private static final CLinker abi = CLinker.getInstance();
     private static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
 
     private static final MethodHandle MH_sumInts = link("sumInts",
             MethodType.methodType(int.class, int.class, VaList.class),
-            FunctionDescriptor.of(C_INT, C_INT, CSupport.C_VA_LIST));
+            FunctionDescriptor.of(C_INT, C_INT, C_VA_LIST));
     private static final MethodHandle MH_sumDoubles = link("sumDoubles",
             MethodType.methodType(double.class, int.class, VaList.class),
-            FunctionDescriptor.of(C_DOUBLE, C_INT, CSupport.C_VA_LIST));
+            FunctionDescriptor.of(C_DOUBLE, C_INT, C_VA_LIST));
     private static final MethodHandle MH_getInt = link("getInt",
             MethodType.methodType(int.class, VaList.class),
             FunctionDescriptor.of(C_INT, C_VA_LIST));
@@ -118,7 +117,7 @@ public class VaListTest {
     private static final Function<Consumer<VaList.Builder>, VaList> aarch64VaListFactory
             = actions -> AArch64Linker.newVaList(actions, MemorySegment::allocateNative);
     private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
-            = CSupport.VaList::make;
+            = VaList::make;
 
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
             = (actions, scope) -> Windowsx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
@@ -127,7 +126,7 @@ public class VaListTest {
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> aarch64VaListScopedFactory
             = (actions, scope) -> AArch64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> platformVaListScopedFactory
-            = CSupport.VaList::make;
+            = VaList::make;
 
     @DataProvider
     @SuppressWarnings("unchecked")
@@ -798,7 +797,7 @@ public class VaListTest {
     }
 
     interface VaListConsumer {
-        void accept(CSupport.VaList list);
+        void accept(VaList list);
 
         static MethodHandle mh(VaListConsumer instance) {
             try {

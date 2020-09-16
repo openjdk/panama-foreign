@@ -23,10 +23,12 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm TestCircularInit2
  */
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
+import jdk.internal.foreign.PlatformLayouts;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertNotNull;
@@ -35,10 +37,10 @@ public class TestCircularInit2 {
 
     @Test
     public void testCircularInit() {
-        System.out.println(CSupport.C_BOOL); // trigger clinit
-        assertNotNull(CSupport.C_BOOL);
-        assertNotNull(CSupport.C_BOOL);
-        assertNotNull(CSupport.C_BOOL);
+        System.out.println(CLinker.C_CHAR); // trigger clinit
+        assertNotNull(PlatformLayouts.Win64.C_CHAR);
+        assertNotNull(PlatformLayouts.SysV.C_CHAR);
+        assertNotNull(PlatformLayouts.AArch64.C_CHAR);
     }
 
 }

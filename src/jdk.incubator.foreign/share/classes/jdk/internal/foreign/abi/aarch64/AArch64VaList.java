@@ -37,8 +37,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-import static jdk.incubator.foreign.CSupport.AArch64;
-import static jdk.incubator.foreign.CSupport.VaList;
+import static jdk.internal.foreign.PlatformLayouts.AArch64;
+import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
@@ -97,7 +97,7 @@ public class AArch64VaList implements VaList {
         = LAYOUT.varHandle(int.class, groupElement("__vr_offs"));
 
     private static final Cleaner cleaner = Cleaner.create();
-    private static final CSupport.VaList EMPTY
+    private static final VaList EMPTY
         = new SharedUtils.EmptyVaList(emptyListAddress());
 
     private final MemorySegment segment;
@@ -138,7 +138,7 @@ public class AArch64VaList implements VaList {
         return ms.address();
     }
 
-    public static CSupport.VaList empty() {
+    public static VaList empty() {
         return EMPTY;
     }
 
@@ -422,7 +422,7 @@ public class AArch64VaList implements VaList {
             + '}';
     }
 
-    static class Builder implements CSupport.VaList.Builder {
+    static class Builder implements VaList.Builder {
         private final SharedUtils.Allocator allocator;
         private final MemorySegment gpRegs;
         private final MemorySegment fpRegs;

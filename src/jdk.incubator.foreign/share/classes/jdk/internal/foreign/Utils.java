@@ -26,15 +26,12 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.CSupport;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.foreign.MemorySegmentProxy;
-import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.VM;
 import sun.invoke.util.Wrapper;
 
@@ -115,16 +112,6 @@ public final class Utils {
     private static void throwIllegalAccessError(String value, String method) {
         throw new IllegalAccessError("Illegal access to restricted foreign method: " + method +
                 " ; system property 'foreign.restricted' is set to '" + value + "'");
-    }
-
-    public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
-        ForeignLinker abi = SharedUtils.getSystemLinker();
-        return switch (abi.name()) {
-            case CSupport.SysV.NAME -> sysv;
-            case CSupport.Win64.NAME -> win64;
-            case CSupport.AArch64.NAME -> aarch64;
-            default -> throw new ExceptionInInitializerError("Unexpected ABI: " + abi.name());
-        };
     }
 
     public static void checkPrimitiveCarrierCompat(Class<?> carrier, MemoryLayout layout) {
