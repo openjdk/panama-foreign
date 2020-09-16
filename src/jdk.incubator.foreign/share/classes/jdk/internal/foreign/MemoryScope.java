@@ -336,7 +336,13 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             public CleanupAction wrap(Runnable runnable) {
                 disable();
                 return AtMostOnceOnly.of(() -> {
-                    runnable.run(); doCleanup();
+                    try {
+                        runnable.run();
+                    } catch (Throwable t) {
+                        // ignore
+                    } finally {
+                        doCleanup();
+                    }
                 });
             }
 
