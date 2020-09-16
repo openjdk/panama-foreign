@@ -56,7 +56,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -80,7 +79,7 @@ import static org.testng.Assert.assertEquals;
 public class TestUpcall extends CallGeneratorHelper {
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
-    static ForeignLinker abi = CLinker.getSystemLinker();
+    static CLinker abi = CLinker.getInstance();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;

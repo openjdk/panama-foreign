@@ -24,7 +24,6 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -55,7 +54,7 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class CallOverhead {
 
-    static final ForeignLinker abi = CLinker.getSystemLinker();
+    static final CLinker abi = CLinker.getInstance();
     static final MethodHandle func;
     static final MethodHandle identity;
     static final MethodHandle identity_struct;

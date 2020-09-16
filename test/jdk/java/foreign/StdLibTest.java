@@ -57,7 +57,7 @@ import static org.testng.Assert.*;
 @Test
 public class StdLibTest extends NativeTestHelper {
 
-    final static ForeignLinker abi = CLinker.getSystemLinker();
+    final static CLinker abi = CLinker.getInstance();
 
     private StdLibHelper stdLibHelper = new StdLibHelper();
 

@@ -34,7 +34,6 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 
@@ -51,7 +50,7 @@ import static org.testng.Assert.assertEquals;
 
 public class TestIntrinsics extends NativeTestHelper {
 
-    static final ForeignLinker abi = CLinker.getSystemLinker();
+    static final CLinker abi = CLinker.getInstance();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");
 
     private static final MethodHandle MH_empty;

@@ -22,7 +22,6 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.CLinker;
@@ -52,7 +51,7 @@ import static jdk.incubator.foreign.CLinker.asVarArg;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class VaList {
 
-    static final ForeignLinker linker = CLinker.getSystemLinker();
+    static final CLinker linker = CLinker.getInstance();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
 
     static final MethodHandle MH_ellipsis;

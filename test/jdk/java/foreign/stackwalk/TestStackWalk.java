@@ -47,7 +47,6 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -65,7 +64,7 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 public class TestStackWalk {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
 
-    static final ForeignLinker linker = CLinker.getSystemLinker();
+    static final CLinker linker = CLinker.getInstance();
 
     static final MethodHandle MH_foo;
     static final MethodHandle MH_m;

@@ -29,7 +29,6 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -47,7 +46,7 @@ import static org.testng.Assert.fail;
 public class TestIllegalLink {
 
     private static final MemoryAddress dummyTarget = MemoryAddress.NULL;
-    private static final ForeignLinker ABI = CLinker.getSystemLinker();
+    private static final CLinker ABI = CLinker.getInstance();
 
     @Test(dataProvider = "types")
     public void testTypeMismatch(MethodType mt, FunctionDescriptor desc, String expectedExceptionMessage) {

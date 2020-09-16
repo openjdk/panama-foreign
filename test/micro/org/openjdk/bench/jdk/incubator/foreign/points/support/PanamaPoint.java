@@ -27,7 +27,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.CLinker;
 
 import java.lang.invoke.MethodHandle;
@@ -51,7 +50,7 @@ public class PanamaPoint implements AutoCloseable {
 
     static {
         try {
-            ForeignLinker abi = CLinker.getSystemLinker();
+            CLinker abi = CLinker.getInstance();
             LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
             MH_distance = abi.downcallHandle(
                 lookup.lookup("distance"),

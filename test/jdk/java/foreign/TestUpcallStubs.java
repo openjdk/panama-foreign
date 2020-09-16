@@ -28,7 +28,6 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
@@ -44,7 +43,7 @@ import static org.testng.Assert.assertFalse;
 
 public class TestUpcallStubs {
 
-    static final ForeignLinker abi = CLinker.getSystemLinker();
+    static final CLinker abi = CLinker.getInstance();
     static final MethodHandle MH_dummy;
 
     static {

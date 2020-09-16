@@ -67,7 +67,7 @@ import static org.testng.Assert.assertTrue;
 
 public class VaListTest {
 
-    private static final ForeignLinker abi = CLinker.getSystemLinker();
+    private static final CLinker abi = CLinker.getInstance();
     private static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
 
     private static final MethodHandle MH_sumInts = link("sumInts",

@@ -29,7 +29,6 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ForeignLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -60,7 +59,7 @@ public class TestVarArgs extends NativeTestHelper {
 
     static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
 
-    static final ForeignLinker abi = CLinker.getSystemLinker();
+    static final CLinker abi = CLinker.getInstance();
     static final LibraryLookup.Symbol varargsAddr;
 
     static {

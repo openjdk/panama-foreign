@@ -44,16 +44,15 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * follow the JVM's target platform C ABI.
  *
  * <p>There are two components that go into linking a foreign function: a method type, and
- * a function descriptor. The method type, consisting of a set of <em>carrier</em> types constitute the
- * set of carrier types, which, together, specify the Java signature which clients must adhere to when
- * calling the underlying foreign function. The function descriptor contains a set of memory layouts which,
- * together, specify the foreign function signature and classification information (via custom layout attributes),
- * so that linking can take place. Memory layout attributes are used in the function descriptor
- * to attach ABI classification meta-data to memory layouts, which are required for linking.
- * Clients of this API should build function descriptors using the predefined memory layout constants
- * (based on a subset of the built-in types provided by the C language), found in this interface;
- * a failure to do so might result in linkage errors, given that linking requires additional classification
- * information to determine, for instance, how arguments should be loaded into registers during a
+ * a function descriptor. The method type, consists of a set of <em>carrier</em> types, which, together,
+ * specify the Java signature which clients must adhere to when calling the underlying foreign function.
+ * The function descriptor contains a set of memory layouts which, together, specify the foreign function
+ * signature and classification information (via custom layout attributes), so that linking can take place.
+ * Memory layout attributes are used in the function descriptor to attach ABI classification meta-data to
+ * memory layouts, which are required for linking. Clients of this API should build function descriptors
+ * using the predefined memory layout constants (based on a subset of the built-in types provided by the C language),
+ * found in this interface; a failure to do so might result in linkage errors, given that linking requires additional
+ * classification information to determine, for instance, how arguments should be loaded into registers during a
  * foreign function call.</p>
  *
  * <p>Implementations of this interface support the following primitive carrier types:
@@ -90,11 +89,18 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * a function descriptor must contain additional classification information, it is required that
  * {@link #asVarArg(MemoryLayout)} is used to create the memory layouts for each parameter corresponding to a variadic
  * argument in a specialized function descriptor</p>
+ *
+ * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by
+ * explicitly permitted types.
+ *
+ * @implSpec
+ * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface CLinker extends ForeignLinker {
+public interface CLinker {
 
     /**
-     * Obtain a linker that uses the de facto C ABI of the current system to do its linking.
+     * Returns the C linker for the current platform.
      * <p>
      * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -117,7 +123,6 @@ public interface CLinker extends ForeignLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a carrier type and memory layout mismatch.
      */
-    @Override
     MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
@@ -135,7 +140,6 @@ public interface CLinker extends ForeignLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException in the case of a carrier type and memory layout mismatch.
      */
-    @Override
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
@@ -208,7 +212,7 @@ public interface CLinker extends ForeignLinker {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null}.
      */
-    public static MemorySegment toCString(String str) {
+    static MemorySegment toCString(String str) {
         Objects.requireNonNull(str);
         return toCString(str.getBytes());
     }
@@ -227,7 +231,7 @@ public interface CLinker extends ForeignLinker {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null} or {@code charset == null}.
      */
-    public static MemorySegment toCString(String str, Charset charset) {
+    static MemorySegment toCString(String str, Charset charset) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         return toCString(str.getBytes(charset));
@@ -247,7 +251,7 @@ public interface CLinker extends ForeignLinker {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null} or {@code scope == null}.
      */
-    public static MemorySegment toCString(String str, NativeScope scope) {
+    static MemorySegment toCString(String str, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -268,7 +272,7 @@ public interface CLinker extends ForeignLinker {
      * @return a new native memory segment containing the converted C string.
      * @throws NullPointerException if either {@code str == null}, {@code charset == null} or {@code scope == null}.
      */
-    public static MemorySegment toCString(String str, Charset charset, NativeScope scope) {
+    static MemorySegment toCString(String str, Charset charset, NativeScope scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -291,7 +295,7 @@ public interface CLinker extends ForeignLinker {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      */
-    public static String toJavaStringRestricted(MemoryAddress addr) {
+    static String toJavaStringRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CLinker.toJavaStringRestricted");
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), Charset.defaultCharset());
     }
@@ -313,7 +317,7 @@ public interface CLinker extends ForeignLinker {
      * @throws NullPointerException if {@code addr == null}
      * @throws IllegalArgumentException if the size of the native string is greater than {@code Integer.MAX_VALUE}.
      */
-    public static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
+    static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
         Utils.checkRestrictedAccess("CLinker.toJavaStringRestricted");
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), charset);
     }
@@ -332,7 +336,7 @@ public interface CLinker extends ForeignLinker {
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
-    public static String toJavaString(MemorySegment addr) {
+    static String toJavaString(MemorySegment addr) {
         return SharedUtils.toJavaStringInternal(addr, 0L, Charset.defaultCharset());
     }
 
@@ -351,7 +355,7 @@ public interface CLinker extends ForeignLinker {
      * @throws IllegalStateException if the size of the native string is greater than the size of the segment
      * associated with {@code addr}, or if {@code addr} is associated with a segment that is <em>not alive</em>.
      */
-    public static String toJavaString(MemorySegment addr, Charset charset) {
+    static String toJavaString(MemorySegment addr, Charset charset) {
         return SharedUtils.toJavaStringInternal(addr, 0L, charset);
     }
 
@@ -383,7 +387,7 @@ public interface CLinker extends ForeignLinker {
      * @param size memory size to be allocated
      * @return addr memory address of the allocated memory
      */
-    public static MemoryAddress allocateMemoryRestricted(long size) {
+    static MemoryAddress allocateMemoryRestricted(long size) {
         Utils.checkRestrictedAccess("CLinker.allocateMemoryRestricted");
         return SharedUtils.allocateMemoryInternal(size);
     }
@@ -397,7 +401,7 @@ public interface CLinker extends ForeignLinker {
      *
      * @param addr memory address of the native memory to be freed
      */
-    public static void freeMemoryRestricted(MemoryAddress addr) {
+    static void freeMemoryRestricted(MemoryAddress addr) {
         Utils.checkRestrictedAccess("CLinker.freeMemoryRestricted");
         SharedUtils.freeMemoryInternal(addr);
     }
@@ -414,6 +418,11 @@ public interface CLinker extends ForeignLinker {
      * <p>
      * As such, this interface only supports reading {@code int}, {@code double},
      * and any other type that fits into a {@code long}.
+     *
+     * @apiNote In the future, if the Java language permits, {@link VaList}
+     * may become a {@code sealed} interface, which would prohibit subclassing except by
+     * explicitly permitted types.
+     *
      */
     interface VaList extends Addressable, AutoCloseable {
 
@@ -636,6 +645,11 @@ public interface CLinker extends ForeignLinker {
 
         /**
          * A builder interface used to construct a C {@code va_list}.
+         *
+         * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
+         * may become a {@code sealed} interface, which would prohibit subclassing except by
+         * explicitly permitted types.
+         *
          */
         interface Builder {
 
