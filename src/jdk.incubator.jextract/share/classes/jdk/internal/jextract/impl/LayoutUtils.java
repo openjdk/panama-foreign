@@ -46,7 +46,7 @@ import static java.lang.constant.ConstantDescs.BSM_GET_STATIC_FINAL;
 public final class LayoutUtils {
     public static final String CANONICAL_FIELD = "jextract/constant_name";
     private static final ValueLayout POINTER_LAYOUT = CLinker.C_POINTER
-            .withAttribute(CANONICAL_FIELD, CanonicalField.C_POINTER);
+            .withAttribute(CANONICAL_FIELD, CanonicalABIType.C_POINTER);
 
     private LayoutUtils() {}
 
@@ -215,7 +215,7 @@ public final class LayoutUtils {
         };
     }
 
-    public enum CanonicalField {
+    public enum CanonicalABIType {
         C_CHAR(canonicalLayoutConstantDesc("C_CHAR")),
         C_SHORT(canonicalLayoutConstantDesc("C_SHORT")),
         C_INT(canonicalLayoutConstantDesc("C_INT")),
@@ -228,7 +228,7 @@ public final class LayoutUtils {
 
         private final DynamicConstantDesc<ValueLayout> descriptor;
 
-        CanonicalField(DynamicConstantDesc<ValueLayout> descriptor) {
+        CanonicalABIType(DynamicConstantDesc<ValueLayout> descriptor) {
             this.descriptor = descriptor;
         }
 

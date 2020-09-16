@@ -32,7 +32,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.internal.jextract.impl.LayoutUtils.CanonicalField;
+import jdk.internal.jextract.impl.LayoutUtils.CanonicalABIType;
 
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
@@ -514,8 +514,8 @@ class SourceConstantHelper implements ConstantHelper {
 
     private static String typeToLayoutName(ValueLayout vl) {
         return vl.attribute(CANONICAL_FIELD)
-            .map(CanonicalField.class::cast)
-            .map(CanonicalField::name)
+            .map(CanonicalABIType.class::cast)
+            .map(CanonicalABIType::name)
             .orElseThrow(() -> new RuntimeException("should not reach here, problematic layout: " + vl));
     }
 

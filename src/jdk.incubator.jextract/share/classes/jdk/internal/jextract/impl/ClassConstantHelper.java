@@ -33,7 +33,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.jextract.impl.LayoutUtils.CanonicalField;
+import jdk.internal.jextract.impl.LayoutUtils.CanonicalABIType;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.ConstantDynamic;
 import jdk.internal.org.objectweb.asm.Handle;
@@ -426,8 +426,8 @@ class ClassConstantHelper implements ConstantHelper {
     private static ConstantDesc describeValueLayout(ValueLayout layout) {
         Optional<Constable> constantNameOp = layout.attribute(CANONICAL_FIELD);
         if (constantNameOp.isPresent()) {
-            CanonicalField canonicalField = (CanonicalField) constantNameOp.get();
-            return decorateLayoutConstant(layout, canonicalField.descriptor(),
+            CanonicalABIType canonicalABIType = (CanonicalABIType) constantNameOp.get();
+            return decorateLayoutConstant(layout, canonicalABIType.descriptor(),
                 layout.attributes().filter(attr -> !CANONICAL_FIELD.equals(attr) && !attr.startsWith("abi/")));
         }
 
