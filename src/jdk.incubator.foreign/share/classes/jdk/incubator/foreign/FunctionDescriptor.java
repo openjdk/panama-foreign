@@ -114,8 +114,11 @@ public final class FunctionDescriptor implements Constable {
      * @param resLayout the return
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
+     * @throws NullPointerException if any of the argument layouts, or the return layout is null
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
+        Objects.requireNonNull(resLayout);
+        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
         return new FunctionDescriptor(resLayout, Map.of(), argLayouts);
     }
 
@@ -123,8 +126,10 @@ public final class FunctionDescriptor implements Constable {
      * Create a void function descriptor with given argument layouts.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
+     * @throws NullPointerException if any of the argument layouts is null
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
+        Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
         return new FunctionDescriptor(null, Map.of(), argLayouts);
     }
 
@@ -133,8 +138,10 @@ public final class FunctionDescriptor implements Constable {
      * of this function descriptor.
      * @param addedLayouts the layouts to append
      * @return the new function descriptor
+     * @throws NullPointerException if any of the new argument layouts is null
      */
     public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
+        Arrays.stream(addedLayouts).forEach(Objects::requireNonNull);
         MemoryLayout[] newLayouts = Arrays.copyOf(argLayouts, argLayouts.length + addedLayouts.length);
         System.arraycopy(addedLayouts, 0, newLayouts, argLayouts.length, addedLayouts.length);
         return new FunctionDescriptor(resLayout, attributes, newLayouts);
@@ -144,9 +151,19 @@ public final class FunctionDescriptor implements Constable {
      * Create a new function descriptor with the given memory layout as the new return layout.
      * @param newReturn the new return layout
      * @return the new function descriptor
+     * @throws NullPointerException if the new return layout is null
      */
     public FunctionDescriptor changeReturnLayout(MemoryLayout newReturn) {
+        Objects.requireNonNull(newReturn);
         return new FunctionDescriptor(newReturn, attributes, argLayouts);
+    }
+
+    /**
+     * Create a new function descriptor with the return layout dropped.
+     * @return the new function descriptor
+     */
+    public FunctionDescriptor dropReturnLayout() {
+        return new FunctionDescriptor(null, attributes, argLayouts);
     }
 
     /**
