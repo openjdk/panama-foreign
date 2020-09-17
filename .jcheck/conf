@@ -17,7 +17,7 @@ domain=openjdk.org
 files=.*\.cpp|.*\.hpp|.*\.c|.*\.h|.*\.java
 
 [checks "merge"]
-message=Merge
+message=Merge 
 
 [checks "reviewers"]
 committers=1
