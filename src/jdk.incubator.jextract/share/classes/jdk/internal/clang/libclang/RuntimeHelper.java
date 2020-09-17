@@ -90,14 +90,14 @@ public class RuntimeHelper {
         return lookup(LIBRARIES, name).map(s ->
             nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
                     .withOwnerThread(null)
-                    .withCleanupAction(new RunnableHolder(s))
+                    .withCleanupAction(new SymbolHolder(s))
             )).orElse(null);
     }
 
-    static class RunnableHolder implements Runnable {
+    static class SymbolHolder implements Runnable {
         LibraryLookup.Symbol symbol;
 
-        RunnableHolder(LibraryLookup.Symbol symbol) {
+        SymbolHolder(LibraryLookup.Symbol symbol) {
             this.symbol = symbol;
         }
 
