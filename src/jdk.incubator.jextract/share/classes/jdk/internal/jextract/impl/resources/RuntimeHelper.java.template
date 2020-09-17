@@ -60,11 +60,9 @@ public class RuntimeHelper {
     }
 
     public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-            return lookup(LIBRARIES, name).map(s ->
-                nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                        .withOwnerThread(null)
-                        .withCleanupAction(new SymbolHolder(s))
-                )).orElse(null);
+        return lookup(LIBRARIES, name).map(s ->
+            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
+                    .withOwnerThread(null))).orElse(null);
     }
 
     static class SymbolHolder implements Runnable {
