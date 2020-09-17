@@ -27,10 +27,9 @@
  * @test
  * @modules java.base/jdk.internal.ref
  *          jdk.incubator.foreign/jdk.incubator.foreign
- * @run testng/othervm -Dforeign.restricted=permit TestCleaner
+ * @run testng TestCleaner
  */
 
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
@@ -61,7 +60,8 @@ public class TestCleaner {
     @Test(dataProvider = "cleaners")
     public void test(int n, Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
         SegmentState segmentState = new SegmentState();
-        MemorySegment segment = makeSegment(segmentState);
+        MemorySegment segment = MemorySegment.allocateNative(10)
+                .withCleanupAction(segmentState::cleanup);
         // register cleaners before
         for (int i = 0 ; i < n ; i++) {
             segment.registerCleaner(cleanerFactory.get());
@@ -86,10 +86,6 @@ public class TestCleaner {
             }
         }
         assertEquals(segmentState.cleanupCalls(), 1);
-    }
-
-    MemorySegment makeSegment(SegmentState segmentState) {
-        return MemorySegment.ofNativeRestricted(MemoryAddress.NULL, 10, Thread.currentThread(), segmentState::cleanup, null);
     }
 
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {

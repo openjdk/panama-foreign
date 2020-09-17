@@ -310,6 +310,12 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
+    public MemorySegment withCleanupAction(Runnable action) {
+        checkValidState();
+        return dup(0L, length, mask, scope.wrapAction(action));
+    }
+
+    @Override
     public void registerCleaner(Cleaner cleaner) {
         checkAccessModes(CLOSE);
         checkValidState();

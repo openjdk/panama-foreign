@@ -97,7 +97,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(value), byteSize, null, null, null);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize)
+                .withOwnerThread(null);
     }
 }

@@ -261,8 +261,7 @@ public class StdLibTest {
             static final long SIZE = 56;
 
             Tm(MemoryAddress addr) {
-                this.base = MemorySegment.ofNativeRestricted(addr, SIZE, Thread.currentThread(),
-                        null, null);
+                this.base = addr.asSegmentRestricted(SIZE);
             }
 
             int sec() {

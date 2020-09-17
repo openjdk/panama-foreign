@@ -115,8 +115,8 @@ class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    try (MemorySegment struct = MemorySegment.ofNativeRestricted(structAddr, layout.byteSize(),
-                                                                            segment.ownerThread(), null, null)) {
+                    try (MemorySegment struct = handoffIfNeeded(structAddr.asSegmentRestricted(layout.byteSize()),
+                         segment.ownerThread())) {
                         MemorySegment seg = allocator.allocate(layout.byteSize());
                         seg.copyFrom(struct);
                         yield seg;
@@ -143,7 +143,7 @@ class WinVaList implements VaList {
     }
 
     static WinVaList ofAddress(MemoryAddress addr) {
-        MemorySegment segment = MemorySegment.ofNativeRestricted(addr, Long.MAX_VALUE, Thread.currentThread(), null, null);
+        MemorySegment segment = addr.asSegmentRestricted(Long.MAX_VALUE);
         return new WinVaList(segment, List.of(segment), null);
     }
 
@@ -160,15 +160,15 @@ class WinVaList implements VaList {
 
     @Override
     public VaList copy() {
-        MemorySegment liveness = MemorySegment.ofNativeRestricted(
-                MemoryAddress.NULL, 1, segment.ownerThread(), null, null);
+        MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
+                segment.ownerThread());
         return new WinVaList(segment, List.of(), liveness);
     }
 
     @Override
     public VaList copy(NativeScope scope) {
-        MemorySegment liveness = MemorySegment.ofNativeRestricted(
-                MemoryAddress.NULL, 1, segment.ownerThread(), null, null);
+        MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
+                segment.ownerThread());
         liveness = scope.register(liveness);
         return new WinVaList(segment, List.of(), liveness);
     }
@@ -260,5 +260,10 @@ class WinVaList implements VaList {
 
             return new WinVaList(segment, attachedSegments, null);
         }
+    }
+
+    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
+        return segment.ownerThread() == thread ?
+                segment : segment.withOwnerThread(thread);
     }
 }

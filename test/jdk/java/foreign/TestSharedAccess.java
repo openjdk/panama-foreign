@@ -27,10 +27,7 @@
  * @run testng/othervm -Dforeign.restricted=permit TestSharedAccess
  */
 
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.*;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
@@ -127,8 +124,8 @@ public class TestSharedAccess {
             setInt(s, 42);
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = MemorySegment.ofNativeRestricted(
-                    s.address(), s.byteSize(), null, null, null);
+            MemorySegment sharedSegment = s.address().asSegmentRestricted(s.byteSize())
+                    .withOwnerThread(null);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
                     assertEquals(getInt(sharedSegment), 42);

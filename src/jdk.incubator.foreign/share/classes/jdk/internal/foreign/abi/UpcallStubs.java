@@ -33,8 +33,9 @@ public class UpcallStubs {
 
     public static MemorySegment upcallAddress(UpcallHandler handler) {
         long stubAddress = handler.entryPoint();
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress),
-                0, null, () -> freeUpcallStub(stubAddress), null)
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0)
+                .withOwnerThread(null)
+                .withCleanupAction(() -> freeUpcallStub(stubAddress))
                 .withAccessModes(MemorySegment.CLOSE);
     };
 
