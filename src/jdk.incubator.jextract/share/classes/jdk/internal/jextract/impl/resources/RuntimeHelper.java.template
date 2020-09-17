@@ -65,19 +65,6 @@ public class RuntimeHelper {
                     .withOwnerThread(null))).orElse(null);
     }
 
-    static class SymbolHolder implements Runnable {
-        LibraryLookup.Symbol symbol;
-
-        SymbolHolder(LibraryLookup.Symbol symbol) {
-            this.symbol = symbol;
-        }
-
-        @Override
-        public void run() {
-            // do nothing
-        }
-    }
-
     public static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
         return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
     }
