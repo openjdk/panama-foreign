@@ -233,7 +233,7 @@
 <span id="cb7-7"><a href="#cb7-7"></a>   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/python2.7/Python.h</span></code></pre></div>
 <h3 id="java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</h3>
 <div class="sourceCode" id="cb8"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1"></a></span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb8-3"><a href="#cb8-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb8-4"><a href="#cb8-4"></a><span class="co">// import jextracted python &#39;header&#39; class</span></span>
 <span id="cb8-5"><a href="#cb8-5"></a><span class="kw">import static</span><span class="im"> org.python.RuntimeHelper.*;</span></span>
@@ -266,7 +266,7 @@
 <div class="sourceCode" id="cb11"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1"></a></span>
 <span id="cb11-2"><a href="#cb11-2"></a><span class="kw">import static</span><span class="im"> org.unix.RuntimeHelper.*;</span></span>
 <span id="cb11-3"><a href="#cb11-3"></a><span class="kw">import static</span><span class="im"> org.unix.readline_h.*;</span></span>
-<span id="cb11-4"><a href="#cb11-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb11-5"><a href="#cb11-5"></a></span>
 <span id="cb11-6"><a href="#cb11-6"></a><span class="kw">public</span> <span class="kw">class</span> Readline {</span>
 <span id="cb11-7"><a href="#cb11-7"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
@@ -297,7 +297,7 @@
 <span id="cb14-2"><a href="#cb14-2"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb14-3"><a href="#cb14-3"></a><span class="kw">import static</span><span class="im"> org.jextract.RuntimeHelper.*;</span></span>
 <span id="cb14-4"><a href="#cb14-4"></a><span class="kw">import static</span><span class="im"> org.jextract.curl_h.*;</span></span>
-<span id="cb14-5"><a href="#cb14-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb14-5"><a href="#cb14-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb14-6"><a href="#cb14-6"></a></span>
 <span id="cb14-7"><a href="#cb14-7"></a><span class="kw">public</span> <span class="kw">class</span> CurlMain {</span>
 <span id="cb14-8"><a href="#cb14-8"></a>   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
@@ -346,7 +346,7 @@
 <span id="cb18-5"><a href="#cb18-5"></a><span class="kw">import</span><span class="im"> blas.*;</span></span>
 <span id="cb18-6"><a href="#cb18-6"></a><span class="kw">import static</span><span class="im"> blas.RuntimeHelper.*;</span></span>
 <span id="cb18-7"><a href="#cb18-7"></a><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></span>
-<span id="cb18-8"><a href="#cb18-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb18-8"><a href="#cb18-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb18-9"><a href="#cb18-9"></a></span>
 <span id="cb18-10"><a href="#cb18-10"></a><span class="kw">public</span> <span class="kw">class</span> TestBlas {</span>
 <span id="cb18-11"><a href="#cb18-11"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
@@ -410,7 +410,7 @@
 <span id="cb21-5"><a href="#cb21-5"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
 <span id="cb21-6"><a href="#cb21-6"></a><span class="kw">import</span><span class="im"> lapack.*;</span></span>
 <span id="cb21-7"><a href="#cb21-7"></a><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></span>
-<span id="cb21-8"><a href="#cb21-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb21-8"><a href="#cb21-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb21-9"><a href="#cb21-9"></a></span>
 <span id="cb21-10"><a href="#cb21-10"></a><span class="kw">public</span> <span class="kw">class</span> TestLapack {</span>
 <span id="cb21-11"><a href="#cb21-11"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</span>
@@ -476,7 +476,7 @@
 <span id="cb23-6"><a href="#cb23-6"></a>  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libproc.h</span></code></pre></div>
 <h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb24-1"><a href="#cb24-1"></a></span>
-<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.CSupport;</span></span>
+<span id="cb24-2"><a href="#cb24-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.CLinker;</span></span>
 <span id="cb24-3"><a href="#cb24-3"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemorySegment;</span></span>
 <span id="cb24-4"><a href="#cb24-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
 <span id="cb24-5"><a href="#cb24-5"></a><span class="kw">import</span><span class="im"> org.unix.*;</span></span>
@@ -491,18 +491,18 @@
 <span id="cb24-14"><a href="#cb24-14"></a>            <span class="co">// get the number of processes</span></span>
 <span id="cb24-15"><a href="#cb24-15"></a>            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(NULL, <span class="dv">0</span>);</span>
 <span id="cb24-16"><a href="#cb24-16"></a>            <span class="co">// allocate an array</span></span>
-<span id="cb24-17"><a href="#cb24-17"></a>            var pids = scope.<span class="fu">allocateArray</span>(CSupport.<span class="fu">C_INT</span>, numPids);</span>
+<span id="cb24-17"><a href="#cb24-17"></a>            var pids = scope.<span class="fu">allocateArray</span>(CLinker.<span class="fu">C_INT</span>, numPids);</span>
 <span id="cb24-18"><a href="#cb24-18"></a>            <span class="co">// list all the pids into the native array</span></span>
 <span id="cb24-19"><a href="#cb24-19"></a>            <span class="fu">proc_listallpids</span>(pids, numPids);</span>
 <span id="cb24-20"><a href="#cb24-20"></a>            <span class="co">// convert native array to java array</span></span>
 <span id="cb24-21"><a href="#cb24-21"></a>            <span class="dt">int</span>[] jpids = pids.<span class="fu">toIntArray</span>();</span>
 <span id="cb24-22"><a href="#cb24-22"></a>            <span class="co">// buffer for process name</span></span>
-<span id="cb24-23"><a href="#cb24-23"></a>            var nameBuf = scope.<span class="fu">allocateArray</span>(CSupport.<span class="fu">C_CHAR</span>, NAME_BUF_MAX);</span>
+<span id="cb24-23"><a href="#cb24-23"></a>            var nameBuf = scope.<span class="fu">allocateArray</span>(CLinker.<span class="fu">C_CHAR</span>, NAME_BUF_MAX);</span>
 <span id="cb24-24"><a href="#cb24-24"></a>            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</span>
 <span id="cb24-25"><a href="#cb24-25"></a>                <span class="dt">int</span> pid = jpids[i];</span>
 <span id="cb24-26"><a href="#cb24-26"></a>                <span class="co">// get the process name</span></span>
 <span id="cb24-27"><a href="#cb24-27"></a>                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);</span>
-<span id="cb24-28"><a href="#cb24-28"></a>                <span class="bu">String</span> procName = CSupport.<span class="fu">toJavaString</span>(nameBuf);</span>
+<span id="cb24-28"><a href="#cb24-28"></a>                <span class="bu">String</span> procName = CLinker.<span class="fu">toJavaString</span>(nameBuf);</span>
 <span id="cb24-29"><a href="#cb24-29"></a>                <span class="co">// print pid and process name</span></span>
 <span id="cb24-30"><a href="#cb24-30"></a>                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, pid, procName);</span>
 <span id="cb24-31"><a href="#cb24-31"></a>            }</span>
@@ -535,7 +535,7 @@
 <span id="cb27-2"><a href="#cb27-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.MemoryAddress;</span></span>
 <span id="cb27-3"><a href="#cb27-3"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
 <span id="cb27-4"><a href="#cb27-4"></a><span class="kw">import static</span><span class="im"> com.github.git2_h.*;</span></span>
-<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb27-5"><a href="#cb27-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb27-6"><a href="#cb27-6"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb27-7"><a href="#cb27-7"></a></span>
 <span id="cb27-8"><a href="#cb27-8"></a><span class="kw">public</span> <span class="kw">class</span> GitClone {</span>
@@ -579,7 +579,7 @@
 <span id="cb31-5"><a href="#cb31-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb31-6"><a href="#cb31-6"></a><span class="kw">import static</span><span class="im"> org.sqlite.sqlite3_h.*;</span></span>
 <span id="cb31-7"><a href="#cb31-7"></a><span class="kw">import static</span><span class="im"> org.sqlite.RuntimeHelper.*;</span></span>
-<span id="cb31-8"><a href="#cb31-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb31-8"><a href="#cb31-8"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb31-9"><a href="#cb31-9"></a></span>
 <span id="cb31-10"><a href="#cb31-10"></a><span class="kw">public</span> <span class="kw">class</span> SqliteMain {</span>
 <span id="cb31-11"><a href="#cb31-11"></a>   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) <span class="kw">throws</span> <span class="bu">Exception</span> {</span>
@@ -680,8 +680,8 @@
 <span id="cb33-5"><a href="#cb33-5"></a>  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/GLUT.framework/Headers/glut.h</span></code></pre></div>
 <h3 id="java-program-that-uses-opengl">Java program that uses OpenGL</h3>
 <div class="sourceCode" id="cb34"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb34-1"><a href="#cb34-1"></a></span>
-<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.CSupport;</span></span>
-<span id="cb34-3"><a href="#cb34-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb34-2"><a href="#cb34-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.CLinker;</span></span>
+<span id="cb34-3"><a href="#cb34-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb34-4"><a href="#cb34-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.NativeScope;</span></span>
 <span id="cb34-5"><a href="#cb34-5"></a><span class="kw">import static</span><span class="im"> opengl.glut_h.*;</span></span>
 <span id="cb34-6"><a href="#cb34-6"></a></span>
@@ -727,7 +727,7 @@
 <span id="cb34-46"><a href="#cb34-46"></a>            <span class="fu">glutInit</span>(argc, argc);</span>
 <span id="cb34-47"><a href="#cb34-47"></a>            <span class="fu">glutInitDisplayMode</span>(<span class="fu">GLUT_DOUBLE</span>() | <span class="fu">GLUT_RGB</span>() | <span class="fu">GLUT_DEPTH</span>());</span>
 <span id="cb34-48"><a href="#cb34-48"></a>            <span class="fu">glutInitWindowSize</span>(<span class="dv">500</span>, <span class="dv">500</span>);</span>
-<span id="cb34-49"><a href="#cb34-49"></a>            <span class="fu">glutCreateWindow</span>(CSupport.<span class="fu">toCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>, scope));</span>
+<span id="cb34-49"><a href="#cb34-49"></a>            <span class="fu">glutCreateWindow</span>(CLinker.<span class="fu">toCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>, scope));</span>
 <span id="cb34-50"><a href="#cb34-50"></a>            var teapot = <span class="kw">new</span> <span class="fu">Teapot</span>(scope);</span>
 <span id="cb34-51"><a href="#cb34-51"></a>            var displayStub = glutDisplayFunc$func.<span class="fu">allocate</span>(teapot::display, scope);</span>
 <span id="cb34-52"><a href="#cb34-52"></a>            var idleStub = glutIdleFunc$func.<span class="fu">allocate</span>(teapot::onIdle, scope);</span>
@@ -796,7 +796,7 @@
 <h3 id="java-program-that-uses-tensorflow-c-api">Java program that uses Tensorflow C API</h3>
 <div class="sourceCode" id="cb38"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb38-1"><a href="#cb38-1"></a></span>
 <span id="cb38-2"><a href="#cb38-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.*;</span></span>
-<span id="cb38-3"><a href="#cb38-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb38-3"><a href="#cb38-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb38-4"><a href="#cb38-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAccess.*;</span></span>
 <span id="cb38-5"><a href="#cb38-5"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.*;</span></span>
 <span id="cb38-6"><a href="#cb38-6"></a><span class="kw">import static</span><span class="im"> org.tensorflow.c_api_h.*;</span></span>
@@ -857,7 +857,7 @@
 <h3 id="java-program-that-uses-posix-time-library">Java program that uses POSIX time library</h3>
 <div class="sourceCode" id="cb41"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb41-1"><a href="#cb41-1"></a></span>
 <span id="cb41-2"><a href="#cb41-2"></a><span class="kw">import static</span><span class="im"> org.unix.time_h.*;</span></span>
-<span id="cb41-3"><a href="#cb41-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb41-3"><a href="#cb41-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb41-4"><a href="#cb41-4"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.*;</span></span>
 <span id="cb41-5"><a href="#cb41-5"></a></span>
 <span id="cb41-6"><a href="#cb41-6"></a><span class="kw">public</span> <span class="kw">class</span> PanamaTime {</span>
@@ -887,7 +887,7 @@
 <h3 id="java-program-that-uses-libclang-to-print-ast-of-a-given-c-program">Java program that uses libclang to print AST of a given C program</h3>
 <div class="sourceCode" id="cb44"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb44-1"><a href="#cb44-1"></a></span>
 <span id="cb44-2"><a href="#cb44-2"></a><span class="kw">import</span><span class="im"> jdk.incubator.foreign.*;</span></span>
-<span id="cb44-3"><a href="#cb44-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CSupport.*;</span></span>
+<span id="cb44-3"><a href="#cb44-3"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.CLinker.*;</span></span>
 <span id="cb44-4"><a href="#cb44-4"></a><span class="kw">import static</span><span class="im"> jdk.incubator.foreign.MemoryAddress.NULL;</span></span>
 <span id="cb44-5"><a href="#cb44-5"></a><span class="kw">import static</span><span class="im"> org.llvm.clang.Index_h.*;</span></span>
 <span id="cb44-6"><a href="#cb44-6"></a></span>
