@@ -88,9 +88,23 @@ public class RuntimeHelper {
 
     public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(s ->
-            nonCloseableNonTransferableSegment(MemorySegment.ofNativeRestricted(
-                 s.address(), layout.byteSize(), null, null, s
-            ))).orElse(null);
+            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
+                    .withOwnerThread(null)
+                    .withCleanupAction(new RunnableHolder(s))
+            )).orElse(null);
+    }
+
+    static class RunnableHolder implements Runnable {
+        LibraryLookup.Symbol symbol;
+
+        RunnableHolder(LibraryLookup.Symbol symbol) {
+            this.symbol = symbol;
+        }
+
+        @Override
+        public void run() {
+            // do nothing
+        }
     }
 
     public static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
@@ -123,8 +137,7 @@ public class RuntimeHelper {
     }
 
     public static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
-               Thread.currentThread(), null, null);
+        return nonCloseableNonTransferableSegment(addr.asSegmentRestricted(numElements * layout.byteSize()));
     }
 
     public static MemorySegment asArray(MemorySegment seg, MemoryLayout layout, int numElements) {
