@@ -39,7 +39,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.ToIntFunction;
 
 import org.testng.annotations.*;
 
@@ -113,7 +112,7 @@ public class TestArrays {
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
-        try (MemorySegment segment = MemorySegment.ofNativeRestricted(MemoryAddress.NULL, seq.byteSize(), null, null, null)) {
+        try (MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(seq.byteSize())) {
             arrayFactory.apply(segment);
         }
     }
