@@ -114,21 +114,20 @@ public class AArch64VaList implements VaList {
     }
 
     private static AArch64VaList readFromSegment(MemorySegment segment) {
-        MemorySegment gpRegsArea = MemorySegment.ofNativeRestricted(
-            grTop(segment).addOffset(-MAX_GP_OFFSET), MAX_GP_OFFSET,
-            segment.ownerThread(), null, null);
+        MemorySegment gpRegsArea = handoffIfNeeded(grTop(segment).addOffset(-MAX_GP_OFFSET)
+                .asSegmentRestricted(MAX_GP_OFFSET), segment.ownerThread());
 
-        MemorySegment fpRegsArea = MemorySegment.ofNativeRestricted(
-            vrTop(segment).addOffset(-MAX_FP_OFFSET), MAX_FP_OFFSET,
-            segment.ownerThread(), null, null);
+        MemorySegment fpRegsArea = handoffIfNeeded(vrTop(segment).addOffset(-MAX_FP_OFFSET)
+                .asSegmentRestricted(MAX_FP_OFFSET), segment.ownerThread());
         return new AArch64VaList(segment, gpRegsArea, fpRegsArea, List.of(gpRegsArea, fpRegsArea));
     }
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null,
-                () -> U.freeMemory(ptr), null);
+                MemoryAddress.ofLong(ptr), LAYOUT.byteSize())
+                .withOwnerThread(null)
+                .withCleanupAction(() -> U.freeMemory(ptr));
         cleaner.register(AArch64VaList.class, ms::close);
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
@@ -256,9 +255,8 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
-                             stackPtr(), layout.byteSize(),
-                             segment.ownerThread(), null, null)) {
+                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
+                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
@@ -267,9 +265,8 @@ public class AArch64VaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
-                             stackPtr(), layout.byteSize(),
-                             segment.ownerThread(), null, null)) {
+                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
+                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
@@ -315,8 +312,8 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(
-                             ptr, layout.byteSize(), segment.ownerThread(), null, null)) {
+                    try (MemorySegment slice = handoffIfNeeded(ptr
+                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         yield seg;
@@ -360,8 +357,7 @@ public class AArch64VaList implements VaList {
     }
 
     public static VaList ofAddress(MemoryAddress ma) {
-        return readFromSegment(MemorySegment.ofNativeRestricted(
-                ma, LAYOUT.byteSize(), Thread.currentThread(), null, null));
+        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize()));
     }
 
     @Override
@@ -561,5 +557,10 @@ public class AArch64VaList implements VaList {
             assert fpRegs.ownerThread() == vaListSegment.ownerThread();
             return new AArch64VaList(vaListSegment, gpRegs, fpRegs, attachedSegments);
         }
+    }
+
+    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
+        return segment.ownerThread() == thread ?
+                segment : segment.withOwnerThread(thread);
     }
 }

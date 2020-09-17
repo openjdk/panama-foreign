@@ -172,8 +172,8 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
-                () -> free(addr), null);
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
+                .withCleanupAction(() -> free(addr));
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
@@ -190,8 +190,8 @@ public class TestNative {
     @Test
     public void testMallocSegment() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = MemorySegment.ofNativeRestricted(addr, 12, null,
-                () -> free(addr), null);
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
+                .withCleanupAction(() -> free(addr));
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());
@@ -209,13 +209,8 @@ public class TestNative {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
         try (MemorySegment segment = MemorySegment.allocateNative(4)) {
-            MemorySegment.ofNativeRestricted(segment.address(), 0, null, null, null);
+            segment.address().asSegmentRestricted(0);
         }
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testNullUnsafeSegment() {
-        MemorySegment.ofNativeRestricted(null, 10, null, null, null);
     }
 
     static {

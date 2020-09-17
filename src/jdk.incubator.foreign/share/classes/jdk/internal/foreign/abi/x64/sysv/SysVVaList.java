@@ -132,7 +132,9 @@ public class SysVVaList implements VaList {
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment base = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
-                MemoryAddress.ofLong(ptr), LAYOUT.byteSize(), null, () -> U.freeMemory(ptr), null);
+                MemoryAddress.ofLong(ptr), LAYOUT.byteSize())
+                .withOwnerThread(null)
+                .withCleanupAction(() -> U.freeMemory(ptr));
         cleaner.register(SysVVaList.class, base::close);
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
@@ -174,8 +176,8 @@ public class SysVVaList implements VaList {
     }
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
-        return MemorySegment.ofNativeRestricted((MemoryAddress) VH_reg_save_area.get(segment),
-            LAYOUT_REG_SAVE_AREA.byteSize(), segment.ownerThread(), null, null);
+        return handoffIfNeeded(((MemoryAddress)VH_reg_save_area.get(segment))
+                .asSegmentRestricted(LAYOUT_REG_SAVE_AREA.byteSize()), segment.ownerThread());
     }
 
     private void preAlignStack(MemoryLayout layout) {
@@ -230,8 +232,8 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr(), layout.byteSize(),
-                                                                                segment.ownerThread(), null, null)) {
+                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
+                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
@@ -240,8 +242,8 @@ public class SysVVaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (MemorySegment slice = MemorySegment.ofNativeRestricted(stackPtr(), layout.byteSize(),
-                                                                                segment.ownerThread(), null, null)) {
+                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
+                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
@@ -304,9 +306,7 @@ public class SysVVaList implements VaList {
     }
 
     public static VaList ofAddress(MemoryAddress ma) {
-        MemorySegment vaListSegment
-            = MemorySegment.ofNativeRestricted(ma, LAYOUT.byteSize(), Thread.currentThread(), null, null);
-        return readFromSegment(vaListSegment);
+        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize()));
     }
 
     @Override
@@ -474,5 +474,10 @@ public class SysVVaList implements VaList {
             assert reg_save_area.ownerThread() == vaListSegment.ownerThread();
             return new SysVVaList(vaListSegment, reg_save_area, attachedSegments);
         }
+    }
+
+    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
+        return segment.ownerThread() == thread ?
+            segment : segment.withOwnerThread(thread);
     }
 }

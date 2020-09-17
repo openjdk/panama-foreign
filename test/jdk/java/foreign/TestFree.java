@@ -38,8 +38,7 @@ import static org.testng.Assert.assertEquals;
 
 public class TestFree {
     private static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return MemorySegment.ofNativeRestricted(addr, numElements * layout.byteSize(),
-               Thread.currentThread(), null, null);
+        return addr.asSegmentRestricted(numElements * layout.byteSize());
     }
 
     public void test() throws Throwable {

@@ -722,8 +722,7 @@ public class VaListTest {
                 })},
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
-                    MemorySegment ms = MemorySegment.ofNativeRestricted(intPtr, C_INT.byteSize(),
-                            Thread.currentThread(), null, null);
+                    MemorySegment ms = intPtr.asSegmentRestricted(C_INT.byteSize());
                     int x = MemoryAccess.getInt(ms);
                     assertEquals(x, 10);
                 })},
