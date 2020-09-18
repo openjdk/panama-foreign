@@ -185,7 +185,7 @@ public interface CLinker {
 
     /**
      * Returns a memory layout that is suitable to use the layout for variadic arguments.
-     *
+     * @param <T> the memory layout type
      * @param ml the layout the adapt
      * @return a potentially newly created layout with the right attributes
      */
