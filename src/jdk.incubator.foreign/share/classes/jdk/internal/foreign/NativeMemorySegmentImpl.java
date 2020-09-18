@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE)
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null)
             .withOwnerThread(null)
             .withAccessModes(READ | WRITE);
 
@@ -115,7 +115,11 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize) {
+        return makeNativeSegmentUnchecked(min, bytesSize, null);
+    }
+
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Object attachment) {
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
-                MemoryScope.createConfined(null, MemoryScope.CleanupAction.DUMMY));
+                MemoryScope.createConfined(attachment, MemoryScope.CleanupAction.DUMMY));
     }
 }
