@@ -49,6 +49,33 @@ public class CallGeneratorHelper extends NativeTestHelper {
 
     static int functions = 0;
 
+    public static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
+        assertEquals(actual.byteSize(), expected.byteSize());
+        GroupLayout g = (GroupLayout) layout;
+        for (MemoryLayout field : g.memberLayouts()) {
+            if (field instanceof ValueLayout) {
+                VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
+                assertEquals(vh.get(actual), vh.get(expected));
+            }
+        }
+    }
+
+    private static Class<?> vhCarrier(MemoryLayout layout) {
+        if (layout instanceof ValueLayout) {
+            if (isIntegral(layout)) {
+                if (layout.bitSize() == 64) {
+                    return long.class;
+                }
+                return int.class;
+            } else if (layout.bitSize() == 32) {
+                return float.class;
+            }
+            return double.class;
+        } else {
+            throw new IllegalStateException("Unexpected layout: " + layout);
+        }
+    }
+
     enum Ret {
         VOID,
         NON_VOID
