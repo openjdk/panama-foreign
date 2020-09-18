@@ -882,18 +882,15 @@ public:
   const TypeFunc *_tf;        // Function type
   address      _entry_point;  // Address of the method being called
   float        _cnt;          // Estimate of number of times called
-  uint         _argsize;      // Size of argument block on stack
   bool         _guaranteed_safepoint; // Do we need to observe safepoint?
 
   const TypeFunc* tf()        const { return _tf; }
   const address entry_point() const { return _entry_point; }
   const float   cnt()         const { return _cnt; }
-  uint argsize()              const { return _argsize; }
 
   void set_tf(const TypeFunc* tf)       { _tf = tf; }
   void set_entry_point(address p)       { _entry_point = p; }
   void set_cnt(float c)                 { _cnt = c; }
-  void set_argsize(int s)               { _argsize = s; }
   void set_guaranteed_safepoint(bool b) { _guaranteed_safepoint = b; }
 
   MachCallNode() : MachSafePointNode() {

@@ -320,6 +320,11 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     /**
      * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
      * and whose new size is specified by the given argument.
+     *
+     * @see #asSlice(long)
+     * @see #asSlice(MemoryAddress)
+     * @see #asSlice(MemoryAddress, long)
+     *
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
      * @param newSize The new segment size, specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
@@ -328,24 +333,70 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     MemorySegment asSlice(long offset, long newSize);
 
     /**
+     * Obtains a new memory segment view whose base address is the given address, and whose new size is specified by the given argument.
+     * <p>
+     * Equivalent to the following code:
+     * <pre>{@code
+    asSlice(newBase.segmentOffset(this), newSize);
+     * }</pre>
+     *
+     * @see #asSlice(long)
+     * @see #asSlice(MemoryAddress)
+     * @see #asSlice(long, long)
+     *
+     * @param newBase The new segment base address.
+     * @param newSize The new segment size, specified in bytes.
+     * @return a new memory segment view with updated base/limit addresses.
+     * @throws NullPointerException if {@code newBase == null}.
+     * @throws IndexOutOfBoundsException if {@code offset < 0}, {@code offset > byteSize()}, {@code newSize < 0}, or {@code newSize > byteSize() - offset}
+     */
+    default MemorySegment asSlice(MemoryAddress newBase, long newSize) {
+        Objects.requireNonNull(newBase);
+        return asSlice(newBase.segmentOffset(this), newSize);
+    }
+
+    /**
      * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
      * and whose new size is computed by subtracting the specified offset from this segment size.
+     * <p>
+     * Equivalent to the following code:
+     * <pre>{@code
+    asSlice(offset, byteSize() - offset);
+     * }</pre>
+     *
+     * @see #asSlice(MemoryAddress)
+     * @see #asSlice(MemoryAddress, long)
+     * @see #asSlice(long, long)
+     *
      * @param offset The new segment base offset (relative to the current segment base address), specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
      * @throws IndexOutOfBoundsException if {@code offset < 0}, or {@code offset > byteSize()}.
      */
-    MemorySegment asSlice(long offset);
+    default MemorySegment asSlice(long offset) {
+        return asSlice(offset, byteSize() - offset);
+    }
 
     /**
-     * Obtains a new memory segment view whose base address is the address passed as argument,
-     * and whose new size is computed by subtracting the address offset relative to this segment
-     * (see {@link MemoryAddress#segmentOffset(MemorySegment)}) from this segment size.
-     * @param address The new segment base offset (relative to the current segment base address), specified in bytes.
+     * Obtains a new memory segment view whose base address is the given address, and whose new size is computed by subtracting
+     * the address offset relative to this segment (see {@link MemoryAddress#segmentOffset(MemorySegment)}) from this segment size.
+     * <p>
+     * Equivalent to the following code:
+     * <pre>{@code
+    asSlice(newBase.segmentOffset(this));
+     * }</pre>
+     *
+     * @see #asSlice(long)
+     * @see #asSlice(MemoryAddress, long)
+     * @see #asSlice(long, long)
+     *
+     * @param newBase The new segment base offset (relative to the current segment base address), specified in bytes.
      * @return a new memory segment view with updated base/limit addresses.
+     * @throws NullPointerException if {@code newBase == null}.
      * @throws IndexOutOfBoundsException if {@code address.segmentOffset(this) < 0}, or {@code address.segmentOffset(this) > byteSize()}.
      */
-    default MemorySegment asSlice(MemoryAddress address) {
-        return asSlice(address.segmentOffset(this));
+    default MemorySegment asSlice(MemoryAddress newBase) {
+        Objects.requireNonNull(newBase);
+        return asSlice(newBase.segmentOffset(this));
     }
 
     /**
