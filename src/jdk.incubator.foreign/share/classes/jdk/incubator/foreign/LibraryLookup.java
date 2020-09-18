@@ -43,6 +43,16 @@ import java.util.Objects;
  * from a native method handle to a lookup object (the one that was used to lookup the native library symbol the method handle
  * refers to); this is useful to prevent situations where a native library is unloaded in the middle of a native call.
  * <p>
+ * In cases where a client wants to create a memory segment out of a lookup symbol, the client might want to attach the
+ * lookup symbol to the newly created segment, so that the symbol will be kept reachable as long as the memory segment
+ * is reachable; this can be achieved by creating the segment using the {@link MemoryAddress#asSegmentRestricted(long, Object)}
+ * restricted segment factory, as follows:
+ * <pre>{@code
+LibraryLookup defaultLookup = LibraryLookup.defaultLookup();
+LibraryLookup.Symbol errno = defaultLookup.lookup("errno");
+MemorySegment errnoSegment = errno.address().asRestrictedSegment(4, errno);
+ * }</pre>
+ * <p>
  * To allow for a library to be unloaded, a client will have to discard any strong references it
  * maintains, directly, or indirectly to a lookup object associated with given library.
  */
