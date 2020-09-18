@@ -229,12 +229,12 @@ Handle ThreadService::get_current_contended_monitor(JavaThread* thread) {
   oop obj = NULL;
   if (wait_obj != NULL) {
     // thread is doing an Object.wait() call
-    obj = (oop) wait_obj->object();
+    obj = wait_obj->object();
   } else {
     ObjectMonitor *enter_obj = thread->current_pending_monitor();
     if (enter_obj != NULL) {
       // thread is trying to enter() an ObjectMonitor.
-      obj = (oop) enter_obj->object();
+      obj = enter_obj->object();
     }
   }
 
@@ -625,7 +625,7 @@ public:
   }
   void do_monitor(ObjectMonitor* mid) {
     if (mid->owner() == _thread) {
-      oop object = (oop) mid->object();
+      oop object = mid->object();
       if (!_stack_trace->is_owned_monitor_on_stack(object)) {
         _stack_trace->add_jni_locked_monitor(object);
       }
@@ -877,6 +877,8 @@ void ThreadSnapshot::initialize(ThreadsList * t_list, JavaThread* thread) {
   _is_ext_suspended = thread->is_being_ext_suspended();
   _is_in_native = (thread->thread_state() == _thread_in_native);
 
+  Handle obj = ThreadService::get_current_contended_monitor(thread);
+
   oop blocker_object = NULL;
   oop blocker_object_owner = NULL;
 
@@ -884,7 +886,6 @@ void ThreadSnapshot::initialize(ThreadsList * t_list, JavaThread* thread) {
       _thread_status == java_lang_Thread::IN_OBJECT_WAIT ||
       _thread_status == java_lang_Thread::IN_OBJECT_WAIT_TIMED) {
 
-    Handle obj = ThreadService::get_current_contended_monitor(thread);
     if (obj() == NULL) {
       // monitor no longer exists; thread is not blocked
       _thread_status = java_lang_Thread::RUNNABLE;
@@ -997,7 +998,7 @@ void DeadlockCycle::print_on_with(ThreadsList * t_list, outputStream* st) const 
 
     if (waitingToLockMonitor != NULL) {
       st->print("  waiting to lock monitor " INTPTR_FORMAT, p2i(waitingToLockMonitor));
-      oop obj = (oop)waitingToLockMonitor->object();
+      oop obj = waitingToLockMonitor->object();
       st->print(" (object " INTPTR_FORMAT ", a %s)", p2i(obj),
                  obj->klass()->external_name());
 
