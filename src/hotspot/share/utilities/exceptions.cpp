@@ -522,6 +522,16 @@ ExceptionMark::~ExceptionMark() {
   }
 }
 
+// Implementation of ExceptionHandlingMark
+
+ExceptionHandlingMark::ExceptionHandlingMark(JavaThread* jt) : _jt(jt) {
+  jt->set_is_exception_handling(true);
+}
+
+ExceptionHandlingMark::~ExceptionHandlingMark() {
+  _jt->set_is_exception_handling(false);
+}
+
 // ----------------------------------------------------------------------------------------
 
 // caller frees value_string if necessary
