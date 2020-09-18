@@ -51,7 +51,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -64,7 +63,6 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -193,33 +191,6 @@ public class TestUpcall extends CallGeneratorHelper {
         MemorySegment stub = abi.upcallStub(mh, func);
         segments.add(stub);
         return stub.address();
-    }
-
-    private static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
-        assertEquals(actual.byteSize(), expected.byteSize());
-        GroupLayout g = (GroupLayout) layout;
-        for (MemoryLayout field : g.memberLayouts()) {
-            if (field instanceof ValueLayout) {
-                VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
-                assertEquals(vh.get(actual), vh.get(expected));
-            }
-        }
-    }
-
-    private static Class<?> vhCarrier(MemoryLayout layout) {
-        if (layout instanceof ValueLayout) {
-            if (isIntegral(layout)) {
-                if (layout.bitSize() == 64) {
-                    return long.class;
-                }
-                return int.class;
-            } else if (layout.bitSize() == 32) {
-                return float.class;
-            }
-            return double.class;
-        } else {
-            throw new IllegalStateException("Unexpected layout: " + layout);
-        }
     }
 
     static Object passAndSave(Object[] o, AtomicReference<Object[]> ref) {
