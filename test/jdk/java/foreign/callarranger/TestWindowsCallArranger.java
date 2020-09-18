@@ -327,4 +327,47 @@ public class TestWindowsCallArranger extends CallArrangerTestBase {
 
         checkReturnBindings(callingSequence, new Binding[]{});
     }
+
+    @Test
+    public void testStackStruct() {
+        MemoryLayout struct = MemoryLayout.ofStruct(C_POINTER, C_DOUBLE, C_INT);
+
+        MethodType mt = MethodType.methodType(void.class,
+            MemorySegment.class, int.class, double.class, MemoryAddress.class,
+            MemorySegment.class, int.class, double.class, MemoryAddress.class,
+            MemorySegment.class, int.class, double.class, MemoryAddress.class,
+            MemorySegment.class, int.class, double.class, MemoryAddress.class);
+        FunctionDescriptor fd = FunctionDescriptor.ofVoid(
+            struct, C_INT, C_DOUBLE, C_POINTER,
+            struct, C_INT, C_DOUBLE, C_POINTER,
+            struct, C_INT, C_DOUBLE, C_POINTER,
+            struct, C_INT, C_DOUBLE, C_POINTER);
+        CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, false);
+
+        assertFalse(bindings.isInMemoryReturn);
+        CallingSequence callingSequence = bindings.callingSequence;
+        assertEquals(callingSequence.methodType(), mt);
+        assertEquals(callingSequence.functionDesc(), fd);
+
+        checkArgumentBindings(callingSequence, new Binding[][]{
+            { copy(struct), baseAddress(), convertAddress(), move(rcx, long.class) },
+            { move(rdx, int.class) },
+            { move(xmm2, double.class) },
+            { convertAddress(), move(r9, long.class) },
+            { copy(struct), baseAddress(), convertAddress(), move(stackStorage(0), long.class) },
+            { move(stackStorage(1), int.class) },
+            { move(stackStorage(2), double.class) },
+            { convertAddress(), move(stackStorage(3), long.class) },
+            { copy(struct), baseAddress(), convertAddress(), move(stackStorage(4), long.class) },
+            { move(stackStorage(5), int.class) },
+            { move(stackStorage(6), double.class) },
+            { convertAddress(), move(stackStorage(7), long.class) },
+            { copy(struct), baseAddress(), convertAddress(), move(stackStorage(8), long.class) },
+            { move(stackStorage(9), int.class) },
+            { move(stackStorage(10), double.class) },
+            { convertAddress(), move(stackStorage(11), long.class) },
+        });
+
+        checkReturnBindings(callingSequence, new Binding[]{});
+    }
 }

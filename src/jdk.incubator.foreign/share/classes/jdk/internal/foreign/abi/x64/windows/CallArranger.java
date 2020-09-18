@@ -169,7 +169,7 @@ public class CallArranger {
                 stackOffset = Utils.alignUp(stackOffset, alignment);
 
                 VMStorage storage = X86_64Architecture.stackStorage((int) (stackOffset / STACK_SLOT_SIZE));
-                stackOffset += layout.byteSize();
+                stackOffset += STACK_SLOT_SIZE;
                 return storage;
             }
             return (forArguments
