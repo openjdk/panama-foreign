@@ -114,6 +114,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize) {
+        return makeNativeSegmentUnchecked(min, bytesSize, null);
+    }
+
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Object attachment) {
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
                 MemoryScope.createConfined(attachment, MemoryScope.CleanupAction.DUMMY));
