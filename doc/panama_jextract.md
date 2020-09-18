@@ -99,7 +99,7 @@ jextract \
 
 ```java
 
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
 import static org.python.RuntimeHelper.*;
@@ -148,7 +148,7 @@ jextract \
 
 import static org.unix.RuntimeHelper.*;
 import static org.unix.readline_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class Readline {
     public static void main(String[] args) {
@@ -194,7 +194,7 @@ jextract -t org.unix -lcurl \
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.jextract.RuntimeHelper.*;
 import static org.jextract.curl_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class CurlMain {
    public static void main(String[] args) {
@@ -270,7 +270,7 @@ import jdk.incubator.foreign.NativeScope;
 import blas.*;
 import static blas.RuntimeHelper.*;
 import static blas.cblas_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class TestBlas {
     public static void main(String[] args) {
@@ -350,7 +350,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import lapack.*;
 import static lapack.lapacke_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class TestLapack {
     public static void main(String[] args) {
@@ -431,7 +431,7 @@ jextract \
 
 ```java
 
-import jdk.incubator.foreign.CSupport;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import org.unix.*;
@@ -446,18 +446,18 @@ public class LibprocMain {
             // get the number of processes
             int numPids = proc_listallpids(NULL, 0);
             // allocate an array
-            var pids = scope.allocateArray(CSupport.C_INT, numPids);
+            var pids = scope.allocateArray(CLinker.C_INT, numPids);
             // list all the pids into the native array
             proc_listallpids(pids, numPids);
             // convert native array to java array
             int[] jpids = pids.toIntArray();
             // buffer for process name
-            var nameBuf = scope.allocateArray(CSupport.C_CHAR, NAME_BUF_MAX);
+            var nameBuf = scope.allocateArray(CLinker.C_CHAR, NAME_BUF_MAX);
             for (int i = 0; i < jpids.length; i++) {
                 int pid = jpids[i];
                 // get the process name
                 proc_name(pid, nameBuf, NAME_BUF_MAX);
-                String procName = CSupport.toJavaString(nameBuf);
+                String procName = CLinker.toJavaString(nameBuf);
                 // print pid and process name
                 System.out.printf("%d %s\n", pid, procName);
             }
@@ -506,7 +506,7 @@ jextract \
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.NativeScope;
 import static com.github.git2_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 
 public class GitClone {
@@ -570,7 +570,7 @@ import jdk.incubator.foreign.NativeScope;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.sqlite.sqlite3_h.*;
 import static org.sqlite.RuntimeHelper.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 
 public class SqliteMain {
    public static void main(String[] args) throws Exception {
@@ -686,8 +686,8 @@ jextract -t opengl -lGL -l/System/Library/Frameworks/GLUT.framework/Versions/Cur
 
 ```java
 
-import jdk.incubator.foreign.CSupport;
-import static jdk.incubator.foreign.CSupport.*;
+import jdk.incubator.foreign.CLinker;
+import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.NativeScope;
 import static opengl.glut_h.*;
 
@@ -733,7 +733,7 @@ public class Teapot {
             glutInit(argc, argc);
             glutInitDisplayMode(GLUT_DOUBLE() | GLUT_RGB() | GLUT_DEPTH());
             glutInitWindowSize(500, 500);
-            glutCreateWindow(CSupport.toCString("Hello Panama!", scope));
+            glutCreateWindow(CLinker.toCString("Hello Panama!", scope));
             var teapot = new Teapot(scope);
             var displayStub = glutDisplayFunc$func.allocate(teapot::display, scope);
             var idleStub = glutIdleFunc$func.allocate(teapot::onIdle, scope);
@@ -828,7 +828,7 @@ model.save("saved_mnist_model")
 ```java
 
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAccess.*;
 import static jdk.incubator.foreign.MemoryAddress.*;
 import static org.tensorflow.c_api_h.*;
@@ -906,7 +906,7 @@ jextract -t org.unix \
 ```java
 
 import static org.unix.time_h.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.*;
 
 public class PanamaTime {
@@ -953,7 +953,7 @@ javac --add-modules jdk.incubator.foreign org/llvm/clang/*.java
 ```java
 
 import jdk.incubator.foreign.*;
-import static jdk.incubator.foreign.CSupport.*;
+import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.llvm.clang.Index_h.*;
 
