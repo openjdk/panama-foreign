@@ -89,22 +89,7 @@ public class RuntimeHelper {
     public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(s ->
             nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                    .withOwnerThread(null)
-                    .withCleanupAction(new SymbolHolder(s))
-            )).orElse(null);
-    }
-
-    static class SymbolHolder implements Runnable {
-        LibraryLookup.Symbol symbol;
-
-        SymbolHolder(LibraryLookup.Symbol symbol) {
-            this.symbol = symbol;
-        }
-
-        @Override
-        public void run() {
-            // do nothing
-        }
+                    .withOwnerThread(null))).orElse(null);
     }
 
     public static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
