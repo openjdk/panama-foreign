@@ -102,7 +102,6 @@ jextract \
 import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
-import static org.python.RuntimeHelper.*;
 import static org.python.Python_h.*;
 
 public class PythonMain {
@@ -146,7 +145,6 @@ jextract \
 
 ```java
 
-import static org.unix.RuntimeHelper.*;
 import static org.unix.readline_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 
@@ -192,7 +190,6 @@ jextract -t org.unix -lcurl \
 ```java
 
 import static jdk.incubator.foreign.MemoryAddress.NULL;
-import static org.jextract.RuntimeHelper.*;
 import static org.jextract.curl_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 
@@ -268,7 +265,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.NativeScope;
 import blas.*;
-import static blas.RuntimeHelper.*;
 import static blas.cblas_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 
@@ -569,7 +565,6 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.NativeScope;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.sqlite.sqlite3_h.*;
-import static org.sqlite.RuntimeHelper.*;
 import static jdk.incubator.foreign.CLinker.*;
 
 public class SqliteMain {
@@ -631,8 +626,8 @@ public class SqliteMain {
             var callback = sqlite3_exec$callback.allocate((a, argc, argv, columnNames) -> {
                 System.out.println("Row num: " + rowNum[0]++);
                 System.out.println("numColumns = " + argc);
-                var argv_seg = asArrayRestricted(argv, C_POINTER, argc);
-                var columnNames_seg = asArrayRestricted(columnNames, C_POINTER, argc);
+                var argv_seg = argv.asSegmentRestricted(C_POINTER.byteSize() * argc);
+                var columnNames_seg = columnNames.asSegmentRestricted(C_POINTER.byteSize() * argc);
                 for (int i = 0; i < argc; i++) {
                      String name = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(columnNames_seg, i));
                      String value = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(argv_seg, i));

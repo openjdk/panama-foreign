@@ -29,7 +29,6 @@ import test.jextract.test8246400.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static test.jextract.test8246400.test8246400_h.*;
-import static test.jextract.test8246400.RuntimeHelper.*;
 
 /*
  * @test id=classes
