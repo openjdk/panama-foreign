@@ -457,7 +457,7 @@ class SourceConstantHelper implements ConstantHelper {
         append("MemorySegment ");
         append(fieldName);
         append(" = CLinker.toCString(\"");
-        append(Objects.toString(value));
+        append(Utils.quote(Objects.toString(value)));
         append("\");\n");
         decrAlign();
         return fieldName;
