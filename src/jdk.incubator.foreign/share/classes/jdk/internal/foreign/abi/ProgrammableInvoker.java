@@ -161,7 +161,8 @@ public class ProgrammableInvoker {
                                             .asType(leafType);
 
         boolean isSimple = !(retMoves.length > 1);
-        if (USE_INTRINSICS && isSimple) {
+        boolean usesStackArgs = stackArgsBytes != 0;
+        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
             NativeEntryPoint nep = NativeEntryPoint.make(
                 addr.address().toRawLongValue(),
                 "native_call",
