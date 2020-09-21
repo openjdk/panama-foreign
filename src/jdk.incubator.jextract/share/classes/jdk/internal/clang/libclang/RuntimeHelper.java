@@ -40,9 +40,10 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_LONGLONG;
@@ -61,7 +62,7 @@ final class RuntimeHelper {
             return Arrays.stream(libNames)
                  .map(libName -> {
                       if (libName.indexOf(File.separatorChar) != -1) {
-                          return LibraryLookup.ofPath(libName);
+                          return LibraryLookup.ofPath(Path.of(libName));
                       } else {
                           return LibraryLookup.ofLibrary(libName);
                       }
@@ -107,17 +108,9 @@ final class RuntimeHelper {
 
     // Internals below this point
     private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
-        for (LibraryLookup l : LIBRARIES) {
-            try {
-                return Optional.of(l.lookup(sym));
-            } catch (Throwable t) {
-            }
-        }
-        try {
-            return Optional.of(LibraryLookup.ofDefault().lookup(sym));
-        } catch (Throwable t) {
-            return Optional.empty();
-        }
+        return Stream.of(LIBRARIES)
+                .flatMap(l -> l.lookup(sym).stream())
+                .findFirst();
     }
 
     private static class VarargsInvoker {
