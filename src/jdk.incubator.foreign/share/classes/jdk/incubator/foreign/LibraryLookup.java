@@ -29,7 +29,9 @@ import jdk.internal.foreign.LibrariesHelper;
 
 import java.io.File;
 import java.lang.invoke.MethodType;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A native library lookup. Exposes lookup operation for searching symbols, see {@link LibraryLookup#lookup(String)}.
@@ -89,9 +91,8 @@ public interface LibraryLookup {
      * Lookups a symbol with given name in this library. The returned symbol maintains a strong reference to this lookup object.
      * @param name the symbol name.
      * @return the library symbol (if any).
-     * @throws NoSuchMethodException if no symbol with given name could be found.
      */
-    Symbol lookup(String name) throws NoSuchMethodException;
+    Optional<Symbol> lookup(String name);
 
     /**
      * Obtain a default library lookup object.
@@ -110,17 +111,14 @@ public interface LibraryLookup {
      * @param path the library path.
      * @return a library lookup object for given path.
      */
-    static LibraryLookup ofPath(String path) {
+    static LibraryLookup ofPath(Path path) {
         Objects.requireNonNull(path);
+        String absolutePath = path.toAbsolutePath().toString();
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkLink(path);
+            security.checkLink(absolutePath);
         }
-        if (!(new File(path).isAbsolute())) {
-            throw new UnsatisfiedLinkError(
-                    "Expecting an absolute path of the library: " + path);
-        }
-        return LibrariesHelper.load(path);
+        return LibrariesHelper.load(absolutePath);
     }
 
     /**

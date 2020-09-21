@@ -152,65 +152,54 @@ public class StdLibTest {
 
     static class StdLibHelper {
 
-        final static MethodHandle strcat;
-        final static MethodHandle strcmp;
-        final static MethodHandle puts;
-        final static MethodHandle strlen;
-        final static MethodHandle gmtime;
-        final static MethodHandle qsort;
+        static final LibraryLookup lookup = LibraryLookup.ofDefault();
+
+        final static MethodHandle strcat = abi.downcallHandle(lookup.lookup("strcat").get(),
+                MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
+
+        final static MethodHandle strcmp = abi.downcallHandle(lookup.lookup("strcmp").get(),
+                MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
+
+        final static MethodHandle puts = abi.downcallHandle(lookup.lookup("puts").get(),
+                MethodType.methodType(int.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_INT, C_POINTER));
+
+        final static MethodHandle strlen = abi.downcallHandle(lookup.lookup("strlen").get(),
+                MethodType.methodType(int.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_INT, C_POINTER));
+
+        final static MethodHandle gmtime = abi.downcallHandle(lookup.lookup("gmtime").get(),
+                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_POINTER, C_POINTER));
+
+        final static MethodHandle qsort = abi.downcallHandle(lookup.lookup("qsort").get(),
+                MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
+                FunctionDescriptor.ofVoid(C_POINTER, C_LONGLONG, C_LONGLONG, C_POINTER));
+
+        final static FunctionDescriptor qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
+
         final static MethodHandle qsortCompar;
-        final static FunctionDescriptor qsortComparFunction;
-        final static MethodHandle rand;
-        final static MethodHandle vprintf;
-        final static LibraryLookup.Symbol printfAddr;
-        final static FunctionDescriptor printfBase;
+
+        final static MethodHandle rand = abi.downcallHandle(lookup.lookup("rand").get(),
+                MethodType.methodType(int.class),
+                FunctionDescriptor.of(C_INT));
+
+        final static MethodHandle vprintf = abi.downcallHandle(lookup.lookup("vprintf").get(),
+                MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
+                FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
+
+        final static LibraryLookup.Symbol printfAddr = lookup.lookup("printf").get();
+
+        final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
         static {
             try {
-                LibraryLookup lookup = LibraryLookup.ofDefault();
-
-                strcat = abi.downcallHandle(lookup.lookup("strcat"),
-                        MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
-
-                strcmp = abi.downcallHandle(lookup.lookup("strcmp"),
-                        MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
-
-                puts = abi.downcallHandle(lookup.lookup("puts"),
-                        MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER));
-
-                strlen = abi.downcallHandle(lookup.lookup("strlen"),
-                        MethodType.methodType(int.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER));
-
-                gmtime = abi.downcallHandle(lookup.lookup("gmtime"),
-                        MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                        FunctionDescriptor.of(C_POINTER, C_POINTER));
-
-                qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
-
-                qsort = abi.downcallHandle(lookup.lookup("qsort"),
-                        MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(C_POINTER, C_LONGLONG, C_LONGLONG, C_POINTER));
-
                 //qsort upcall handle
                 qsortCompar = MethodHandles.lookup().findStatic(StdLibTest.StdLibHelper.class, "qsortCompare",
                         MethodType.methodType(int.class, MemorySegment.class, MemoryAddress.class, MemoryAddress.class));
-
-                rand = abi.downcallHandle(lookup.lookup("rand"),
-                        MethodType.methodType(int.class),
-                        FunctionDescriptor.of(C_INT));
-
-                vprintf = abi.downcallHandle(lookup.lookup("vprintf"),
-                        MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
-                        FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
-
-                printfAddr = lookup.lookup("printf");
-
-                printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
-            } catch (Throwable ex) {
+            } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException(ex);
             }
         }

@@ -71,7 +71,7 @@ public class Upcalls {
         try {
             LibraryLookup ll = LibraryLookup.ofLibrary("Upcalls");
             {
-                LibraryLookup.Symbol addr = ll.lookup("blank");
+                LibraryLookup.Symbol addr = ll.lookup("blank").get();
                 MethodType mt = MethodType.methodType(void.class, MemoryAddress.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_POINTER);
                 blank = abi.downcallHandle(addr, mt, fd);
@@ -82,7 +82,7 @@ public class Upcalls {
                 ).address();
             }
             {
-                LibraryLookup.Symbol addr = ll.lookup("identity");
+                LibraryLookup.Symbol addr = ll.lookup("identity").get();
                 MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
                 FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
                 identity = abi.downcallHandle(addr, mt, fd);

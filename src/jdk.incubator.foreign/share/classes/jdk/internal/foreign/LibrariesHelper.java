@@ -115,19 +115,23 @@ public final class LibrariesHelper {
         }
 
         @Override
-        public Symbol lookup(String name) throws NoSuchMethodException {
-            MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
-            return new Symbol() { // inner class - retains a link to enclosing lookup
-                @Override
-                public String name() {
-                    return name;
-                }
+        public Optional<Symbol> lookup(String name) {
+            try {
+                MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
+                return Optional.of(new Symbol() { // inner class - retains a link to enclosing lookup
+                    @Override
+                    public String name() {
+                        return name;
+                    }
 
-                @Override
-                public MemoryAddress address() {
-                    return addr;
-                }
-            };
+                    @Override
+                    public MemoryAddress address() {
+                        return addr;
+                    }
+                });
+            } catch (NoSuchMethodException ex) {
+                return Optional.empty();
+            }
         }
 
         static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary);
