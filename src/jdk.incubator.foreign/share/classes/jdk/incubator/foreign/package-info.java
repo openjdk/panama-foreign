@@ -113,7 +113,9 @@ MethodHandle strlen = CLinker.getInstance().downcallHandle(
         FunctionDescriptor.of(CLinker.C_LONG, CLinker.C_POINTER)
 );
 
-long len = strlen.invokeExact(CLinker.toCString("Hello").address()) // 5
+try (var cString = CLinker.toCString("Hello")) {
+    long len = strlen.invokeExact(cString.address()) // 5
+}
  * }</pre>
  *
  * Here, we lookup the {@code strlen} symbol in the <em>default</em> library lookup (see {@link jdk.incubator.foreign.LibraryLookup#ofDefault()}.
