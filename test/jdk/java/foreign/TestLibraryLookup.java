@@ -57,7 +57,7 @@ public class TestLibraryLookup {
     public void testSimpleLookup() throws Throwable {
         LibraryLookup.Symbol symbol = null;
         LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-        symbol = lookup.lookup("f");
+        symbol = lookup.lookup("f").get();
         assertEquals(symbol.name(), "f");
         assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
         lookup = null;
@@ -71,7 +71,7 @@ public class TestLibraryLookup {
         List<LibraryLookup> lookups = new ArrayList<>();
         for (int i = 0 ; i < 5 ; i++) {
             LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-            LibraryLookup.Symbol symbol = lookup.lookup("f");
+            LibraryLookup.Symbol symbol = lookup.lookup("f").get();
             lookups.add(lookup);
             symbols.add(symbol);
             assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
@@ -134,7 +134,7 @@ public class TestLibraryLookup {
         static {
             try {
                 lookup = LibraryLookup.ofLibrary("LookupTest");
-                symbol = lookup.lookup("f");
+                symbol = lookup.lookup("f").get();
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError();
             }

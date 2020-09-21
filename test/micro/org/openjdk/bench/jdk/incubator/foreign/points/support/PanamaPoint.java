@@ -49,22 +49,18 @@ public class PanamaPoint implements AutoCloseable {
     private static final MethodHandle MH_distance_ptrs;
 
     static {
-        try {
-            CLinker abi = CLinker.getInstance();
-            LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
-            MH_distance = abi.downcallHandle(
-                lookup.lookup("distance"),
-                methodType(double.class, MemorySegment.class, MemorySegment.class),
-                FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
-            );
-            MH_distance_ptrs = abi.downcallHandle(
-                lookup.lookup("distance_ptrs"),
-                methodType(double.class, MemoryAddress.class, MemoryAddress.class),
-                FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
-            );
-        } catch (NoSuchMethodException e) {
-            throw new BootstrapMethodError(e);
-        }
+        CLinker abi = CLinker.getInstance();
+        LibraryLookup lookup = LibraryLookup.ofLibrary("Point");
+        MH_distance = abi.downcallHandle(
+            lookup.lookup("distance").get(),
+            methodType(double.class, MemorySegment.class, MemorySegment.class),
+            FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
+        );
+        MH_distance_ptrs = abi.downcallHandle(
+            lookup.lookup("distance_ptrs").get(),
+            methodType(double.class, MemoryAddress.class, MemoryAddress.class),
+            FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
+        );
     }
 
     private final MemorySegment segment;

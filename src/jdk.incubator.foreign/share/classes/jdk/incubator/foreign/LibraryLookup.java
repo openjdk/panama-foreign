@@ -30,6 +30,7 @@ import jdk.internal.foreign.LibrariesHelper;
 import java.io.File;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A native library lookup. Exposes lookup operation for searching symbols, see {@link LibraryLookup#lookup(String)}.
@@ -89,9 +90,8 @@ public interface LibraryLookup {
      * Lookups a symbol with given name in this library. The returned symbol maintains a strong reference to this lookup object.
      * @param name the symbol name.
      * @return the library symbol (if any).
-     * @throws NoSuchMethodException if no symbol with given name could be found.
      */
-    Symbol lookup(String name) throws NoSuchMethodException;
+    Optional<Symbol> lookup(String name);
 
     /**
      * Obtain a default library lookup object.

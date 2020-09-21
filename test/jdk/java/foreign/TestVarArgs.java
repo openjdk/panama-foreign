@@ -59,15 +59,8 @@ public class TestVarArgs {
     static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
 
     static final CLinker abi = CLinker.getInstance();
-    static final LibraryLookup.Symbol varargsAddr;
-
-    static {
-        try {
-            varargsAddr = LibraryLookup.ofLibrary("VarArgs").lookup("varargs");
-        } catch (NoSuchMethodException e) {
-            throw new BootstrapMethodError(e);
-        }
-    }
+    static final LibraryLookup.Symbol varargsAddr = LibraryLookup.ofLibrary("VarArgs")
+            .lookup("varargs").get();
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

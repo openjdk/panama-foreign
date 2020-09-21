@@ -43,6 +43,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_LONGLONG;
@@ -73,17 +74,9 @@ public class RuntimeHelper {
     }
 
     private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
-        for (LibraryLookup l : LIBRARIES) {
-            try {
-                return Optional.of(l.lookup(sym));
-            } catch (Throwable t) {
-            }
-        }
-        try {
-            return Optional.of(LibraryLookup.ofDefault().lookup(sym));
-        } catch (Throwable t) {
-            return Optional.empty();
-        }
+        return Stream.of(LIBRARIES)
+                .flatMap(l -> l.lookup(sym).stream())
+                .findFirst();
     }
 
     public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
