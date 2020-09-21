@@ -108,7 +108,7 @@ public class TestUpcall extends CallGeneratorHelper {
         List<MemorySegment> segments = new ArrayList<>();
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        LibraryLookup.Symbol addr = lib.lookup(fName);
+        LibraryLookup.Symbol addr = lib.lookup(fName).get();
         MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
         Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks, segments);
         mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);

@@ -264,23 +264,16 @@ public class SharedUtils {
 
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
-        static final MethodHandle MH_MALLOC;
-        static final MethodHandle MH_FREE;
 
-        static {
-            LibraryLookup lookup = LibraryLookup.ofDefault();
-            try {
-                MH_MALLOC = getSystemLinker().downcallHandle(lookup.lookup("malloc"),
+        final static LibraryLookup LOOKUP = LibraryLookup.ofDefault();
+
+        final static MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
                         MethodType.methodType(MemoryAddress.class, long.class),
-                        FunctionDescriptor.of(C_POINTER, C_LONGLONG));
+                FunctionDescriptor.of(C_POINTER, C_LONGLONG));
 
-                MH_FREE = getSystemLinker().downcallHandle(lookup.lookup("free"),
+        final static MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
                         MethodType.methodType(void.class, MemoryAddress.class),
-                        FunctionDescriptor.ofVoid(C_POINTER));
-            } catch (NoSuchMethodException nsme) {
-                throw new BootstrapMethodError(nsme);
-            }
-        }
+                FunctionDescriptor.ofVoid(C_POINTER));
     }
 
     public static MemoryAddress allocateMemoryInternal(long size) {

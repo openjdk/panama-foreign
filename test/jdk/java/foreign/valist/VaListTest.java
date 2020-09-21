@@ -96,11 +96,7 @@ public class VaListTest {
             FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_VA_LIST));
 
     private static MethodHandle link(String symbol, MethodType mt, FunctionDescriptor fd) {
-        try {
-            return abi.downcallHandle(lookup.lookup(symbol), mt, fd);
-        } catch (NoSuchMethodException e) {
-            throw new NoSuchMethodError(e.getMessage());
-        }
+        return abi.downcallHandle(lookup.lookup(symbol).get(), mt, fd);
     }
 
     private static MethodHandle linkVaListCB(String symbol) {

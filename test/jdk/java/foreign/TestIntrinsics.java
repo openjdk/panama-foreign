@@ -63,7 +63,7 @@ public class TestIntrinsics {
 
     private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout)
             throws NoSuchMethodException {
-        LibraryLookup.Symbol ma = lookup.lookup(name);
+        LibraryLookup.Symbol ma = lookup.lookup(name).get();
         MethodType mt = methodType(carrier, carrier);
         FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
         return abi.downcallHandle(ma, mt, fd);
@@ -72,7 +72,7 @@ public class TestIntrinsics {
     static {
         try {
             {
-                LibraryLookup.Symbol ma = lookup.lookup("empty");
+                LibraryLookup.Symbol ma = lookup.lookup("empty").get();
                 MethodType mt = methodType(void.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid();
                 MH_empty = abi.downcallHandle(ma, mt, fd);
@@ -84,14 +84,14 @@ public class TestIntrinsics {
             MH_identity_float = linkIndentity("identity_float", float.class, C_FLOAT);
             MH_identity_double = linkIndentity("identity_double", double.class, C_DOUBLE);
             {
-                LibraryLookup.Symbol ma = lookup.lookup("identity_va");
+                LibraryLookup.Symbol ma = lookup.lookup("identity_va").get();
                 MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
                 FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
                         asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONGLONG));
                 MH_identity_va = abi.downcallHandle(ma, mt, fd);
             }
             {
-                LibraryLookup.Symbol ma = lookup.lookup("invoke_consumer");
+                LibraryLookup.Symbol ma = lookup.lookup("invoke_consumer").get();
                 MethodType mt = methodType(void.class, int.class, double.class, long.class, float.class, byte.class,
                         short.class, char.class);
                 FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT, C_DOUBLE, C_LONGLONG, C_FLOAT, C_CHAR,

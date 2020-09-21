@@ -43,22 +43,38 @@ import static org.testng.Assert.*;
 
 public class TestLibraryLookup {
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Library not found.*")
     public void testInvalidLookupName() {
         LibraryLookup.ofLibrary("NonExistent");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not an absolute path.*")
+    public void testNoAbsoluteLookupPath() {
+        LibraryLookup.ofPath(Path.of("NonExistent"));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Library not found.*")
     public void testInvalidLookupPath() {
-        LibraryLookup.ofPath(Path.of("NonExistent").toAbsolutePath().toString());
+        LibraryLookup.ofPath(Path.of("NonExistent").toAbsolutePath());
     }
 
     @Test
     public void testSimpleLookup() throws Throwable {
         LibraryLookup.Symbol symbol = null;
         LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-        symbol = lookup.lookup("f");
+        symbol = lookup.lookup("f").get();
         assertEquals(symbol.name(), "f");
+        assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
+        lookup = null;
+        symbol = null;
+        waitUnload();
+    }
+
+    @Test
+    public void testInvalidSymbolLookup() throws Throwable {
+        LibraryLookup.Symbol symbol = null;
+        LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
+        assertTrue(lookup.lookup("nonExistent").isEmpty());
         assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
         lookup = null;
         symbol = null;
@@ -71,7 +87,7 @@ public class TestLibraryLookup {
         List<LibraryLookup> lookups = new ArrayList<>();
         for (int i = 0 ; i < 5 ; i++) {
             LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-            LibraryLookup.Symbol symbol = lookup.lookup("f");
+            LibraryLookup.Symbol symbol = lookup.lookup("f").get();
             lookups.add(lookup);
             symbols.add(symbol);
             assertEquals(LibrariesHelper.numLoadedLibraries(), 1);
@@ -134,7 +150,7 @@ public class TestLibraryLookup {
         static {
             try {
                 lookup = LibraryLookup.ofLibrary("LookupTest");
-                symbol = lookup.lookup("f");
+                symbol = lookup.lookup("f").get();
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError();
             }
