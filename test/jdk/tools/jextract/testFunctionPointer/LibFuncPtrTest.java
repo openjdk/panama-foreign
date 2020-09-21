@@ -22,7 +22,6 @@
  */
 
 import org.testng.annotations.Test;
-import test.jextract.fp.RuntimeHelper;
 
 import static org.testng.Assert.assertEquals;
 import static test.jextract.fp.funcPtr_h.*;
