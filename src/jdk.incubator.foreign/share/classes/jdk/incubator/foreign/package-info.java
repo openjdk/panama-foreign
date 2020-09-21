@@ -230,7 +230,7 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  * <li>{@code deny}: issues a runtime exception on each restricted call. This is the default value;</li>
  * <li>{@code permit}: allows restricted calls;</li>
  * <li>{@code warn}: like permit, but also prints a one-line warning on each restricted call;</li>
- * <li>{@code debug}: like permit, but also dumps the stack corresponding to any given restricted.</li>
+ * <li>{@code debug}: like permit, but also dumps the stack corresponding to any given restricted call.</li>
  * </ul>
  */
 package jdk.incubator.foreign;
