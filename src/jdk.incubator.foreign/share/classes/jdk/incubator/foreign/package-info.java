@@ -222,7 +222,7 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  * For instance, in the case of {@link jdk.incubator.foreign.MemoryAddress#asSegmentRestricted(long)}, if the provided
  * spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
- * to never pass arguments that might causes incorrect binding of foreign data and/or functions to a Java API.
+ * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
  * Access to restricted method is <em>disabled</em> by default; to enable restricted methods, the JDK property
  * {@code foreign.restricted} must be set to a value other than {@code deny}. The possible values for this property are:
