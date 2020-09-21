@@ -108,7 +108,7 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  *
  * <pre>{@code
 MethodHandle strlen = CLinker.getInstance().downcallHandle(
-        LibraryLookup.ofDefault().lookup("strlen"),
+        LibraryLookup.ofDefault().lookup("strlen").get(),
         MethodType.methodType(long.class, MemoryAddress.class),
         FunctionDescriptor.of(CLinker.C_LONG, CLinker.C_POINTER)
 );
