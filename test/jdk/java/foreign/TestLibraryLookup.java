@@ -50,7 +50,7 @@ public class TestLibraryLookup {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testInvalidLookupPath() {
-        LibraryLookup.ofPath(Path.of("NonExistent").toAbsolutePath().toString());
+        LibraryLookup.ofPath(Path.of("NonExistent"));
     }
 
     @Test

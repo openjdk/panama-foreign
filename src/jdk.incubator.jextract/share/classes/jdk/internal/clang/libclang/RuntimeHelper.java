@@ -40,8 +40,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -62,7 +62,7 @@ final class RuntimeHelper {
             return Arrays.stream(libNames)
                  .map(libName -> {
                       if (libName.indexOf(File.separatorChar) != -1) {
-                          return LibraryLookup.ofPath(libName);
+                          return LibraryLookup.ofPath(Path.of(libName));
                       } else {
                           return LibraryLookup.ofLibrary(libName);
                       }
