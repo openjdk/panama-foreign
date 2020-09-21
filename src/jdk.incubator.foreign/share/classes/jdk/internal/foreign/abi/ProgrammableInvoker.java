@@ -68,7 +68,7 @@ public class ProgrammableInvoker {
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_SPEC", "true"));
     private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "false"));
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "true"));
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
