@@ -72,15 +72,15 @@ final class RuntimeHelper {
         return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
     }
 
-    static final MemorySegment nonCloseableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
-    }
-
     static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
         return nonCloseableSegment(addr.asSegmentRestricted(numElements * layout.byteSize()));
     }
 
     // Internals only below this point
+    private static final MemorySegment nonCloseableSegment(MemorySegment seg) {
+        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
+    }
+
     private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
         for (LibraryLookup l : LIBRARIES) {
             try {
