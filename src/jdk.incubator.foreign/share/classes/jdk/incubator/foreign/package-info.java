@@ -174,7 +174,7 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr.toR
  * }</pre>
  *
  * <h3>Upcalls</h3>
- * The {@link jdk.incubator.foreign.CLinker} class also allows to turn an existing method handles (which might point
+ * The {@link jdk.incubator.foreign.CLinker} class also allows to turn an existing method handle (which might point
  * to a Java method) into a native memory segment (see {@link jdk.incubator.foreign.MemorySegment}), so that Java code
  * can effectively be passed to other foreign functions. For instance, we can write a method that compares two
  * integer values, as follows:
