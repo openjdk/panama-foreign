@@ -19,14 +19,10 @@ import java.util.Optional;
 
 import static jdk.incubator.foreign.CLinker.*;
 
-public class RuntimeHelper {
-
+final class RuntimeHelper {
     private RuntimeHelper() {}
-
     private final static CLinker LINKER = CLinker.getInstance();
-
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
-
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
 
     static final LibraryLookup[] libraries(String... libNames) {
@@ -45,6 +41,46 @@ public class RuntimeHelper {
         }
     }
 
+    static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
+        return lookup(LIBRARIES, name).map(s ->
+            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
+                    .withOwnerThread(null))).orElse(null);
+    }
+
+    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
+        return lookup(LIBRARIES, name).map(
+                addr -> {
+                    MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+                    return variadic ?
+                        VarargsInvoker.make(addr, mt, fdesc) :
+                        LINKER.downcallHandle(addr, mt, fdesc);
+                }).orElse(null);
+    }
+
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
+        try {
+            MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
+                    MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
+            handle = handle.bindTo(z);
+            return LINKER.upcallStub(handle, fdesc);
+        } catch (Throwable ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
+        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
+    }
+
+    static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
+        return nonCloseableSegment(addr.asSegmentRestricted(numElements * layout.byteSize()));
+    }
+
+    // Internals only below this point
+    private static final MemorySegment nonCloseableSegment(MemorySegment seg) {
+        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
+    }
+
     private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
         for (LibraryLookup l : LIBRARIES) {
             try {
@@ -57,54 +93,6 @@ public class RuntimeHelper {
         } catch (Throwable t) {
             return Optional.empty();
         }
-    }
-
-    public static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-        return lookup(LIBRARIES, name).map(s ->
-            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                    .withOwnerThread(null))).orElse(null);
-    }
-
-    public static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
-    }
-
-    public static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
-        return lookup(LIBRARIES, name).map(
-                addr -> {
-                    MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    return variadic ?
-                        VarargsInvoker.make(addr, mt, fdesc) :
-                        LINKER.downcallHandle(addr, mt, fdesc);
-                }).orElse(null);
-    }
-
-    public static final MemorySegment upcallStub(MethodHandle handle, FunctionDescriptor fdesc) {
-        return LINKER.upcallStub(handle, fdesc);
-    }
-
-    public static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
-        try {
-            MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
-                    MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
-            handle = handle.bindTo(z);
-            return upcallStub(handle, fdesc);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-
-    public static final MemorySegment nonCloseableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
-    }
-
-    public static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return nonCloseableSegment(addr.asSegmentRestricted(numElements * layout.byteSize()));
-    }
-
-    public static MemorySegment asArray(MemorySegment seg, MemoryLayout layout, int numElements) {
-        Objects.requireNonNull(seg);
-        return seg.asSlice(0L, numElements * layout.byteSize());
     }
 
     private static class VarargsInvoker {
