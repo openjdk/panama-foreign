@@ -224,7 +224,7 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
- * Access to restricted method is <em>disabled</em> by default; to enable restricted methods, the JDK property
+ * Access to restricted methods is <em>disabled</em> by default; to enable restricted methods, the JDK property
  * {@code foreign.restricted} must be set to a value other than {@code deny}. The possible values for this property are:
  * <ul>
  * <li>{@code deny}: issues a runtime exception on each restricted call. This is the default value;</li>
