@@ -98,10 +98,10 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  *
  * <h2>Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link jdk.incubator.foreign.LibraryLookup} and {@link jdk.incubator.foreign.CLinker}.
- * The first is used to load foreign libraries, as well as to lookup symbols inside said libraries; the latter
+ * The former is used to load foreign libraries, as well as to lookup symbols inside said libraries; the latter
  * provides linking capabilities which allow to model foreign functions as {@link jdk.incubator.foreign.MemoryHandles} instance,
- * so that clients can perform foreign function calls directly in Java, with no need to introduce intermediate
- * layers of native code (as it's the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
+ * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
+ * code (as it's the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
  * For example, to compute the length of a string using the C standard library function {@code strlen} on a Linux x64 platform,
  * we can use the following code:
