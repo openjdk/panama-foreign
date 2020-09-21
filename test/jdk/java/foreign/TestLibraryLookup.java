@@ -43,14 +43,19 @@ import static org.testng.Assert.*;
 
 public class TestLibraryLookup {
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Library not found.*")
     public void testInvalidLookupName() {
         LibraryLookup.ofLibrary("NonExistent");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testInvalidLookupPath() {
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Not an absolute path.*")
+    public void testNoAbsoluteLookupPath() {
         LibraryLookup.ofPath(Path.of("NonExistent"));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Library not found.*")
+    public void testInvalidLookupPath() {
+        LibraryLookup.ofPath(Path.of("NonExistent").toAbsolutePath());
     }
 
     @Test

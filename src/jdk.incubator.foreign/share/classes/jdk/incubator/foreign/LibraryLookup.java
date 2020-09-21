@@ -108,12 +108,17 @@ public interface LibraryLookup {
 
     /**
      * Obtain a library lookup object corresponding to a library identified by given path.
-     * @param path the library path.
+     * @param path the library absolute path.
      * @return a library lookup object for given path.
+     * @throws IllegalArgumentException if the specified path does not correspond to an absolute path,
+     * e.g. if {@code !path.isAbsolute()}.
      */
     static LibraryLookup ofPath(Path path) {
         Objects.requireNonNull(path);
-        String absolutePath = path.toAbsolutePath().toString();
+        if (!path.isAbsolute()) {
+            throw new IllegalArgumentException("Not an absolute path: " + path.toString());
+        }
+        String absolutePath = path.toString();
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(absolutePath);
