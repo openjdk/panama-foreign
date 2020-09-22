@@ -52,7 +52,7 @@ import static jdk.internal.jextract.impl.LayoutUtils.CANONICAL_FIELD;
 
 // generates ConstantHelper as java source
 class SourceConstantHelper implements ConstantHelper {
-    private static final String PACKAGE_FINAL_MODS = "static final ";
+    private static final String PKG_STATIC_FINAL_MODS = "static final ";
 
     // set of names generates already
     private static final Map<String, DirectMethodHandleDesc> namesGenerated = new HashMap<>();
@@ -199,7 +199,6 @@ class SourceConstantHelper implements ConstantHelper {
     private void classBegin(String[] libraryNames, String baseClassName, boolean isFinal) {
         addPackagePrefix(pkgName);
         addImportSection();
-        append("public ");
         if (isFinal) {
             append("final ");
         }
@@ -231,7 +230,7 @@ class SourceConstantHelper implements ConstantHelper {
     private DirectMethodHandleDesc emitGetter(String name, Class<?> type, String value) {
         incrAlign();
         indent();
-        append(JavaSourceBuilder.PUB_MODS);
+        append(PKG_STATIC_FINAL_MODS);
         append(type.getName());
         append(' ');
         append(name);
@@ -300,7 +299,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
         indent();
-        append(PACKAGE_FINAL_MODS + "MethodHandle ");
+        append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
@@ -335,7 +334,7 @@ class SourceConstantHelper implements ConstantHelper {
         }
         indent();
         String fieldName = getVarHandleFieldName(javaName);
-        append(PACKAGE_FINAL_MODS + "VarHandle " + fieldName + " = ");
+        append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
         }
@@ -361,7 +360,7 @@ class SourceConstantHelper implements ConstantHelper {
         String fieldName = getLayoutFieldName(javaName);
         incrAlign();
         indent();
-        append(PACKAGE_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
+        append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
@@ -414,7 +413,7 @@ class SourceConstantHelper implements ConstantHelper {
         indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        append(PACKAGE_FINAL_MODS);
+        append(PKG_STATIC_FINAL_MODS);
         append("FunctionDescriptor ");
         append(fieldName);
         append(" = ");
@@ -453,7 +452,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        append(PACKAGE_FINAL_MODS);
+        append(PKG_STATIC_FINAL_MODS);
         append("MemorySegment ");
         append(fieldName);
         append(" = CLinker.toCString(\"");
@@ -470,7 +469,7 @@ class SourceConstantHelper implements ConstantHelper {
         incrAlign();
         indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        append(PACKAGE_FINAL_MODS);
+        append(PKG_STATIC_FINAL_MODS);
         append("MemoryAddress ");
         append(fieldName);
         append(" = MemoryAddress.ofLong(");
@@ -528,7 +527,7 @@ class SourceConstantHelper implements ConstantHelper {
          incrAlign();
          indent();
          String fieldName = getSegmentFieldName(javaName);
-         append(PACKAGE_FINAL_MODS);
+         append(PKG_STATIC_FINAL_MODS);
          append("MemorySegment ");
          append(fieldName);
          append(" = ");
@@ -545,7 +544,7 @@ class SourceConstantHelper implements ConstantHelper {
     private void emitLibraries(String[] libraryNames) {
         incrAlign();
         indent();
-        append(PACKAGE_FINAL_MODS);
+        append(PKG_STATIC_FINAL_MODS);
         append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
         incrAlign();
         for (String lib : libraryNames) {
