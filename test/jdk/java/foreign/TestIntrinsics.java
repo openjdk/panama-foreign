@@ -36,8 +36,9 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
+import java.util.List;
 
 import jdk.incubator.foreign.MemoryLayout;
 import org.testng.annotations.*;
@@ -59,7 +60,7 @@ public class TestIntrinsics {
     private static final MethodHandle MH_identity_float;
     private static final MethodHandle MH_identity_double;
     private static final MethodHandle MH_identity_va;
-    private static final MethodHandle MH_invoke_consumer;
+    private static final MethodHandle[] MH_invoke_high_arity;
 
     private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout)
             throws NoSuchMethodException {
@@ -90,85 +91,76 @@ public class TestIntrinsics {
                         asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONGLONG));
                 MH_identity_va = abi.downcallHandle(ma, mt, fd);
             }
-            {
-                LibraryLookup.Symbol ma = lookup.lookup("invoke_consumer");
-                MethodType mt = methodType(void.class, int.class, double.class, long.class, float.class, byte.class,
-                        short.class, char.class);
-                FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_INT, C_DOUBLE, C_LONGLONG, C_FLOAT, C_CHAR,
-                        C_SHORT, C_SHORT);
-                MH_invoke_consumer = abi.downcallHandle(ma, mt, fd);
+            MH_invoke_high_arity = new MethodHandle[7];
+            MethodType baseMT = methodType(void.class, int.class, double.class, long.class, float.class, byte.class,
+                    short.class, char.class);
+            FunctionDescriptor baseFD = FunctionDescriptor.ofVoid(C_INT, C_DOUBLE, C_LONGLONG, C_FLOAT, C_CHAR,
+                    C_SHORT, C_SHORT);
+            for (int i = 0; i < MH_invoke_high_arity.length; i++) {
+                LibraryLookup.Symbol ma = lookup.lookup("invoke_high_arity" + i);
+                MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
+                FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
+                MH_invoke_high_arity[i] = abi.downcallHandle(ma, mt, fd);
             }
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
     }
 
-    @DataProvider
-    public Object[][] handles() throws Throwable {
-        return new Object[][] {
-            { "invoke_empty" },
-            { "invoke_identity_char" },
-            { "invoke_identity_short" },
-            { "invoke_identity_int" },
-            { "invoke_identity_long" },
-            { "invoke_identity_float" },
-            { "invoke_identity_double" },
-            { "invoke_identity_va" },
-            { "invoke_consumer" },
-        };
-    }
-
-    @Test(dataProvider = "handles")
-    public void testIntrinsics(String methodName) throws Throwable {
-        MethodHandle handle = MethodHandles.lookup().findStatic(TestIntrinsics.class, methodName, methodType(void.class));
-
+    @Test(dataProvider = "tests")
+    public void testIntrinsics(RunnableX test) throws Throwable {
         for (int i = 0; i < 20_000; i++) {
-            handle.invokeExact();
+            test.run();
         }
     }
 
-    // where
-
-    public static void invoke_empty() throws Throwable {
-        MH_empty.invokeExact();
+    interface RunnableX {
+        void run() throws Throwable;
     }
 
-    public static void invoke_identity_char() throws Throwable {
-        byte x = (byte) MH_identity_char.invokeExact((byte) 10);
-        assertEquals(x, (byte) 10);
-    }
+    @DataProvider
+    public Object[][] tests() {
+        List<RunnableX> tests = new ArrayList<>();
+        tests.add(MH_empty::invokeExact);
+        tests.add(() -> {
+            byte x = (byte) MH_identity_char.invokeExact((byte) 10);
+            assertEquals(x, (byte) 10);
+        });
+        tests.add(() -> {
+            short x = (short) MH_identity_short.invokeExact((short) 10);
+            assertEquals(x, (short) 10);
+        });
+        tests.add(() -> {
+            int x = (int) MH_identity_int.invokeExact(10);
+            assertEquals(x, 10);
+        });
+        tests.add(() -> {
+            long x = (long) MH_identity_long.invokeExact(10L);
+            assertEquals(x, 10L);
+        });
+        tests.add(() -> {
+            float x = (float) MH_identity_float.invokeExact(10F);
+            assertEquals(x, 10F);
+        });
+        tests.add(() -> {
+            double x = (double) MH_identity_double.invokeExact(10D);
+            assertEquals(x, 10D);
+        });
+        tests.add(() -> {
+            int x = (int) MH_identity_va.invokeExact(1, 10D, 2, 3F, 4L);
+            assertEquals(x, 1);
+        });
 
-    public static void invoke_identity_short() throws Throwable {
-        short x = (short) MH_identity_short.invokeExact((short) 10);
-        assertEquals(x, (short) 10);
-    }
+        Object[] args = { 1, 10D, 2L, 3F, (byte) 0, (short) 13, (char) 'a' };
+        for (int i = 0; i < MH_invoke_high_arity.length; i++) {
+            MethodHandle mh = MH_invoke_high_arity[i];
+            Object expected = args[i];
+            tests.add(() -> {
+                Object actual = mh.invokeWithArguments(args);
+                assertEquals(actual, expected);
+            });
+        }
 
-    public static void invoke_identity_int() throws Throwable {
-        int x = (int) MH_identity_int.invokeExact(10);
-        assertEquals(x, 10);
-    }
-
-    public static void invoke_identity_long() throws Throwable {
-        long x = (long) MH_identity_long.invokeExact(10L);
-        assertEquals(x, 10L);
-    }
-
-    public static void invoke_identity_float() throws Throwable {
-        float x = (float) MH_identity_float.invokeExact(10F);
-        assertEquals(x, 10F);
-    }
-
-    public static void invoke_identity_double() throws Throwable {
-        double x = (double) MH_identity_double.invokeExact(10D);
-        assertEquals(x, 10D);
-    }
-
-    public static void invoke_identity_va() throws Throwable {
-        int x = (int) MH_identity_va.invokeExact(1, 10D, 2, 3F, 4L);
-        assertEquals(x, 1);
-    }
-
-    public static void invoke_consumer() throws Throwable {
-        MH_invoke_consumer.invokeExact(1, 10D, 2L, 3F, (byte) 0, (short) 13, (char) 'a');
+        return tests.stream().map(rx -> new Object[]{ rx }).toArray(Object[][]::new);
     }
 }
