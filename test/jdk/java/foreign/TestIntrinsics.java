@@ -53,9 +53,8 @@ public class TestIntrinsics {
     static final CLinker abi = CLinker.getInstance();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");
 
-    private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout, boolean trivial)
-            throws NoSuchMethodException {
-        LibraryLookup.Symbol ma = lookup.lookup(name).get();
+    private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout, boolean trivial) {
+        LibraryLookup.Symbol ma = lookup.lookup(name).orElseThrow();
         MethodType mt = methodType(carrier, carrier);
         FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
         if (trivial) {
@@ -80,7 +79,7 @@ public class TestIntrinsics {
     }
 
     @DataProvider
-    public Object[][] tests() throws NoSuchMethodException {
+    public Object[][] tests() {
         List<RunnableX> testsList = new ArrayList<>();
         AddTest tests = (mh, expectedResult, args) -> testsList.add(() -> {
             Object actual = mh.invokeWithArguments(args);
@@ -88,7 +87,7 @@ public class TestIntrinsics {
         });
 
         { // empty
-            LibraryLookup.Symbol ma = lookup.lookup("empty");
+            LibraryLookup.Symbol ma = lookup.lookup("empty").orElseThrow();
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, mt, fd), null);
@@ -109,7 +108,7 @@ public class TestIntrinsics {
         tests.add(linkIndentity("identity_double", double.class, C_DOUBLE, true), 10D, 10D);
 
         { // identity_va
-            LibraryLookup.Symbol ma = lookup.lookup("identity_va");
+            LibraryLookup.Symbol ma = lookup.lookup("identity_va").orElseThrow();
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
                     asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONGLONG));
@@ -124,7 +123,7 @@ public class TestIntrinsics {
                     C_SHORT, C_SHORT);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                LibraryLookup.Symbol ma = lookup.lookup("invoke_high_arity" + i);
+                LibraryLookup.Symbol ma = lookup.lookup("invoke_high_arity" + i).orElseThrow();
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];
