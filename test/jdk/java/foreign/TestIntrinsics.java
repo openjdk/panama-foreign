@@ -45,6 +45,7 @@ import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME;
 import static org.testng.Assert.assertEquals;
 
 public class TestIntrinsics {
@@ -52,59 +53,15 @@ public class TestIntrinsics {
     static final CLinker abi = CLinker.getInstance();
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");
 
-    private static final MethodHandle MH_empty;
-    private static final MethodHandle MH_identity_int;
-    private static final MethodHandle MH_identity_char;
-    private static final MethodHandle MH_identity_short;
-    private static final MethodHandle MH_identity_long;
-    private static final MethodHandle MH_identity_float;
-    private static final MethodHandle MH_identity_double;
-    private static final MethodHandle MH_identity_va;
-    private static final MethodHandle[] MH_invoke_high_arity;
-
-    private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout)
+    private static MethodHandle linkIndentity(String name, Class<?> carrier, MemoryLayout layout, boolean trivial)
             throws NoSuchMethodException {
         LibraryLookup.Symbol ma = lookup.lookup(name).get();
         MethodType mt = methodType(carrier, carrier);
         FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
-        return abi.downcallHandle(ma, mt, fd);
-    }
-
-    static {
-        try {
-            {
-                LibraryLookup.Symbol ma = lookup.lookup("empty").get();
-                MethodType mt = methodType(void.class);
-                FunctionDescriptor fd = FunctionDescriptor.ofVoid();
-                MH_empty = abi.downcallHandle(ma, mt, fd);
-            }
-            MH_identity_char = linkIndentity("identity_char", byte.class, C_CHAR);
-            MH_identity_short = linkIndentity("identity_short", short.class, C_SHORT);
-            MH_identity_int = linkIndentity("identity_int", int.class, C_INT);
-            MH_identity_long = linkIndentity("identity_long", long.class, C_LONGLONG);
-            MH_identity_float = linkIndentity("identity_float", float.class, C_FLOAT);
-            MH_identity_double = linkIndentity("identity_double", double.class, C_DOUBLE);
-            {
-                LibraryLookup.Symbol ma = lookup.lookup("identity_va").get();
-                MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
-                FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
-                        asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONGLONG));
-                MH_identity_va = abi.downcallHandle(ma, mt, fd);
-            }
-            MH_invoke_high_arity = new MethodHandle[7];
-            MethodType baseMT = methodType(void.class, int.class, double.class, long.class, float.class, byte.class,
-                    short.class, char.class);
-            FunctionDescriptor baseFD = FunctionDescriptor.ofVoid(C_INT, C_DOUBLE, C_LONGLONG, C_FLOAT, C_CHAR,
-                    C_SHORT, C_SHORT);
-            for (int i = 0; i < MH_invoke_high_arity.length; i++) {
-                LibraryLookup.Symbol ma = lookup.lookup("invoke_high_arity" + i);
-                MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
-                FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
-                MH_invoke_high_arity[i] = abi.downcallHandle(ma, mt, fd);
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new BootstrapMethodError(e);
+        if (trivial) {
+            fd = fd.withAttribute(TRIVIAL_ATTRIBUTE_NAME, true);
         }
+        return abi.downcallHandle(ma, mt, fd);
     }
 
     @Test(dataProvider = "tests")
@@ -114,53 +71,68 @@ public class TestIntrinsics {
         }
     }
 
-    interface RunnableX {
+    private interface RunnableX {
         void run() throws Throwable;
     }
 
+    private interface AddTest {
+        void add(MethodHandle target, Object expectedResult, Object... args);
+    }
+
     @DataProvider
-    public Object[][] tests() {
-        List<RunnableX> tests = new ArrayList<>();
-        tests.add(MH_empty::invokeExact);
-        tests.add(() -> {
-            byte x = (byte) MH_identity_char.invokeExact((byte) 10);
-            assertEquals(x, (byte) 10);
-        });
-        tests.add(() -> {
-            short x = (short) MH_identity_short.invokeExact((short) 10);
-            assertEquals(x, (short) 10);
-        });
-        tests.add(() -> {
-            int x = (int) MH_identity_int.invokeExact(10);
-            assertEquals(x, 10);
-        });
-        tests.add(() -> {
-            long x = (long) MH_identity_long.invokeExact(10L);
-            assertEquals(x, 10L);
-        });
-        tests.add(() -> {
-            float x = (float) MH_identity_float.invokeExact(10F);
-            assertEquals(x, 10F);
-        });
-        tests.add(() -> {
-            double x = (double) MH_identity_double.invokeExact(10D);
-            assertEquals(x, 10D);
-        });
-        tests.add(() -> {
-            int x = (int) MH_identity_va.invokeExact(1, 10D, 2, 3F, 4L);
-            assertEquals(x, 1);
+    public Object[][] tests() throws NoSuchMethodException {
+        List<RunnableX> testsList = new ArrayList<>();
+        AddTest tests = (mh, expectedResult, args) -> testsList.add(() -> {
+            Object actual = mh.invokeWithArguments(args);
+            assertEquals(actual, expectedResult);
         });
 
-        Object[] args = { 1, 10D, 2L, 3F, (byte) 0, (short) 13, (char) 'a' };
-        for (int i = 0; i < MH_invoke_high_arity.length; i++) {
-            MethodHandle mh = MH_invoke_high_arity[i];
-            Object expected = args[i];
-            tests.add(() -> {
-                Object actual = mh.invokeWithArguments(args);
-                assertEquals(actual, expected);
-            });
+        { // empty
+            LibraryLookup.Symbol ma = lookup.lookup("empty");
+            MethodType mt = methodType(void.class);
+            FunctionDescriptor fd = FunctionDescriptor.ofVoid();
+            tests.add(abi.downcallHandle(ma, mt, fd), null);
+            tests.add(abi.downcallHandle(ma, mt, fd.withAttribute(TRIVIAL_ATTRIBUTE_NAME, true)), null);
         }
 
-        return tests.stream().map(rx -> new Object[]{ rx }).toArray(Object[][]::new);
+        tests.add(linkIndentity("identity_char", byte.class, C_CHAR, false), (byte) 10, (byte) 10);
+        tests.add(linkIndentity("identity_char", byte.class, C_CHAR, true), (byte) 10, (byte) 10);
+        tests.add(linkIndentity("identity_short", short.class, C_SHORT, false), (short) 10, (short) 10);
+        tests.add(linkIndentity("identity_short", short.class, C_SHORT, true), (short) 10, (short) 10);
+        tests.add(linkIndentity("identity_int", int.class, C_INT, false), 10, 10);
+        tests.add(linkIndentity("identity_int", int.class, C_INT, true), 10, 10);
+        tests.add(linkIndentity("identity_long", long.class, C_LONGLONG, false), 10L, 10L);
+        tests.add(linkIndentity("identity_long", long.class, C_LONGLONG, true), 10L, 10L);
+        tests.add(linkIndentity("identity_float", float.class, C_FLOAT, false), 10F, 10F);
+        tests.add(linkIndentity("identity_float", float.class, C_FLOAT, true), 10F, 10F);
+        tests.add(linkIndentity("identity_double", double.class, C_DOUBLE, false), 10D, 10D);
+        tests.add(linkIndentity("identity_double", double.class, C_DOUBLE, true), 10D, 10D);
+
+        { // identity_va
+            LibraryLookup.Symbol ma = lookup.lookup("identity_va");
+            MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
+            FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
+                    asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONGLONG));
+            tests.add(abi.downcallHandle(ma, mt, fd), 1, 1, 10D, 2, 3F, 4L);
+            tests.add(abi.downcallHandle(ma, mt, fd.withAttribute(TRIVIAL_ATTRIBUTE_NAME, true)), 1, 1, 10D, 2, 3F, 4L);
+        }
+
+        { // high_arity
+            MethodType baseMT = methodType(void.class, int.class, double.class, long.class, float.class, byte.class,
+                    short.class, char.class);
+            FunctionDescriptor baseFD = FunctionDescriptor.ofVoid(C_INT, C_DOUBLE, C_LONGLONG, C_FLOAT, C_CHAR,
+                    C_SHORT, C_SHORT);
+            Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
+            for (int i = 0; i < args.length; i++) {
+                LibraryLookup.Symbol ma = lookup.lookup("invoke_high_arity" + i);
+                MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
+                FunctionDescriptor fd = baseFD.changeReturnLayout(baseFD.argumentLayouts().get(i));
+                Object expected = args[i];
+                tests.add(abi.downcallHandle(ma, mt, fd), expected, args);
+                tests.add(abi.downcallHandle(ma, mt, fd.withAttribute(TRIVIAL_ATTRIBUTE_NAME, true)), expected, args);
+            }
+        }
+
+        return testsList.stream().map(rx -> new Object[]{ rx }).toArray(Object[][]::new);
     }
 }
