@@ -68,7 +68,7 @@ public class ProgrammableInvoker {
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_SPEC", "true"));
     private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "false"));
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS", "true"));
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
@@ -161,7 +161,8 @@ public class ProgrammableInvoker {
                                             .asType(leafType);
 
         boolean isSimple = !(retMoves.length > 1);
-        if (USE_INTRINSICS && isSimple) {
+        boolean usesStackArgs = stackArgsBytes != 0;
+        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
             NativeEntryPoint nep = NativeEntryPoint.make(
                 addr.address().toRawLongValue(),
                 "native_call",
