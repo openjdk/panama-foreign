@@ -25,12 +25,11 @@
  */
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.ValueLayout;
 
-import java.nio.ByteOrder;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static jdk.incubator.foreign.MemoryLayouts.ADDRESS;
 
 public class PlatformLayouts {
     public static <Z extends MemoryLayout> Z pick(Z sysv, Z win64, Z aarch64) {
@@ -57,86 +56,49 @@ public class PlatformLayouts {
         }
 
         /**
-         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
-         * attribute value must be an enum constant from {@link ArgumentClass}.
-         */
-        public final static String CLASS_ATTRIBUTE_NAME = "abi/sysv/class";
-
-        /**
-         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
-         */
-        public enum ArgumentClass {
-            /** Classification constant for integral values */
-            INTEGER,
-            /** Classification constant for floating point values */
-            SSE,
-            /** Classification constant for x87 floating point values */
-            X87,
-            /** Classification constant for {@code complex long double} values */
-            COMPLEX_87,
-            /** Classification constant for machine pointer values */
-            POINTER;
-        }
-
-        /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.SSE);
+        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.SSE);
+        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.LITTLE_ENDIAN)
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.X87);
-
-        /**
-         * The {@code complex long double} native type.
-         */
-        public static final GroupLayout C_COMPLEX_LONGDOUBLE = MemoryLayout.ofStruct(C_LONGDOUBLE, C_LONGDOUBLE)
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.COMPLEX_87);
+        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -160,76 +122,48 @@ public class PlatformLayouts {
         public final static String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
 
         /**
-         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
-         * attribute value must be an enum constant from {@link ArgumentClass}.
-         */
-        public final static String CLASS_ATTRIBUTE_NAME = "abi/windows/class";
-
-        /**
-         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
-         */
-        public enum ArgumentClass {
-            /** Classification constant for integral values */
-            INTEGER,
-            /** Classification constant for floating point values */
-            FLOAT,
-            /** Classification constant for machine pointer values */
-            POINTER;
-        }
-
-        /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
-
+        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
+        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
+        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.FLOAT);
+        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -257,76 +191,49 @@ public class PlatformLayouts {
         }
 
         /**
-         * The name of the layout attribute (see {@link MemoryLayout#attributes()} used for ABI classification. The
-         * attribute value must be an enum constant from {@link ArgumentClass}.
-         */
-        public static final String CLASS_ATTRIBUTE_NAME = "abi/aarch64/class";
-
-        /**
-         * Constants used for ABI classification. They are referred to by the layout attribute {@link #CLASS_ATTRIBUTE_NAME}.
-         */
-        public enum ArgumentClass {
-            /** Classification constant for machine integral values */
-            INTEGER,
-            /** Classification constant for machine floating point values */
-            VECTOR,
-            /** Classification constant for machine pointer values */
-            POINTER;
-        }
-
-        /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = MemoryLayouts.BITS_8_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = MemoryLayouts.BITS_16_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.INTEGER);
+        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = MemoryLayouts.BITS_32_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.VECTOR);
+        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = MemoryLayouts.BITS_64_LE
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.VECTOR);
+        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.LITTLE_ENDIAN)
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.VECTOR);
+        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = MemoryLayouts.ADDRESS
-                .withAttribute(CLASS_ATTRIBUTE_NAME, ArgumentClass.POINTER);
+        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
