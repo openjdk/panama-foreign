@@ -73,7 +73,7 @@ public class TestDowncall extends CallGeneratorHelper {
     public void testDowncall(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
         List<MemorySegment> segments = new ArrayList<>();
-        LibraryLookup.Symbol addr = lib.lookup(fName);
+        LibraryLookup.Symbol addr = lib.lookup(fName).get();
         MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
         Object[] args = makeArgs(paramTypes, fields, checks, segments);
         mh = mh.asSpreader(Object[].class, paramTypes.size());

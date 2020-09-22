@@ -55,6 +55,7 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 public class CallOverhead {
 
     static final CLinker abi = CLinker.getInstance();
+
     static final MethodHandle func;
     static final MethodHandle identity;
     static final MethodHandle identity_struct;
@@ -73,39 +74,35 @@ public class CallOverhead {
     static {
         System.loadLibrary("CallOverheadJNI");
 
-        try {
-            LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
-            {
-                LibraryLookup.Symbol addr = ll.lookup("func");
-                MethodType mt = MethodType.methodType(void.class);
-                FunctionDescriptor fd = FunctionDescriptor.ofVoid();
-                func = abi.downcallHandle(addr, mt, fd);
-                func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
-            }
-            {
-                LibraryLookup.Symbol addr = ll.lookup("identity");
-                MethodType mt = MethodType.methodType(int.class, int.class);
-                FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
-                identity = abi.downcallHandle(addr, mt, fd);
-                identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
-            }
-            identity_struct = abi.downcallHandle(ll.lookup("identity_struct"),
-                    MethodType.methodType(MemorySegment.class, MemorySegment.class),
-                    FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
-            identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address"),
-                    MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
-                    FunctionDescriptor.of(C_POINTER, C_POINTER));
-            args5 = abi.downcallHandle(ll.lookup("args5"),
-                    MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
-                    FunctionDescriptor.ofVoid(C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG));
-            args10 = abi.downcallHandle(ll.lookup("args10"),
-                    MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class,
-                                                      double.class, long.class, double.class, long.class, double.class),
-                    FunctionDescriptor.ofVoid(C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG,
-                                              C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE));
-        } catch (NoSuchMethodException e) {
-            throw new BootstrapMethodError(e);
+        LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
+        {
+            LibraryLookup.Symbol addr = ll.lookup("func").get();
+            MethodType mt = MethodType.methodType(void.class);
+            FunctionDescriptor fd = FunctionDescriptor.ofVoid();
+            func = abi.downcallHandle(addr, mt, fd);
+            func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
         }
+        {
+            LibraryLookup.Symbol addr = ll.lookup("identity").get();
+            MethodType mt = MethodType.methodType(int.class, int.class);
+            FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
+            identity = abi.downcallHandle(addr, mt, fd);
+            identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+        }
+        identity_struct = abi.downcallHandle(ll.lookup("identity_struct").get(),
+                MethodType.methodType(MemorySegment.class, MemorySegment.class),
+                FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
+        identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address").get(),
+                MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_POINTER, C_POINTER));
+        args5 = abi.downcallHandle(ll.lookup("args5").get(),
+                MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
+                FunctionDescriptor.ofVoid(C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG));
+        args10 = abi.downcallHandle(ll.lookup("args10").get(),
+                MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class,
+                                                  double.class, long.class, double.class, long.class, double.class),
+                FunctionDescriptor.ofVoid(C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG,
+                                          C_DOUBLE, C_LONGLONG, C_DOUBLE, C_LONGLONG, C_DOUBLE));
     }
 
     static native void blank();

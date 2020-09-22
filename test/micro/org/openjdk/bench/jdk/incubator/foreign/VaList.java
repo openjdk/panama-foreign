@@ -59,16 +59,12 @@ public class VaList {
     static final MethodHandle MH_vaList;
 
     static {
-        try {
-            MH_ellipsis = linker.downcallHandle(lookup.lookup("ellipsis"),
-                    MethodType.methodType(void.class, int.class, int.class, double.class, long.class),
-                    FunctionDescriptor.ofVoid(C_INT, asVarArg(C_INT), asVarArg(C_DOUBLE), asVarArg(C_LONGLONG)));
-            MH_vaList = linker.downcallHandle(lookup.lookup("vaList"),
-                    MethodType.methodType(void.class, int.class, VaList.class),
-                    FunctionDescriptor.ofVoid(C_INT, C_VA_LIST));
-        } catch (NoSuchMethodException e) {
-            throw new InternalError(e);
-        }
+        MH_ellipsis = linker.downcallHandle(lookup.lookup("ellipsis").get(),
+                MethodType.methodType(void.class, int.class, int.class, double.class, long.class),
+                FunctionDescriptor.ofVoid(C_INT, asVarArg(C_INT), asVarArg(C_DOUBLE), asVarArg(C_LONGLONG)));
+        MH_vaList = linker.downcallHandle(lookup.lookup("vaList").get(),
+                MethodType.methodType(void.class, int.class, VaList.class),
+                FunctionDescriptor.ofVoid(C_INT, C_VA_LIST));
     }
 
     @Benchmark
