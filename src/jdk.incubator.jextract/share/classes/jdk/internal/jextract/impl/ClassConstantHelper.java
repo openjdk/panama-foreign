@@ -205,10 +205,7 @@ class ClassConstantHelper implements ConstantHelper {
 
     private void classBegin(String baseClassName, boolean isFinal) {
         String baseName = baseClassName != null ? toInternalName(baseClassName) : INTR_OBJECT;
-        int mods = ACC_PUBLIC;
-        if (isFinal) {
-            mods |= ACC_FINAL;
-        }
+        int mods = isFinal? ACC_FINAL : 0;
         cw.visit(V15, mods, internalClassName, null, baseName, null);
     }
 
@@ -513,7 +510,7 @@ class ClassConstantHelper implements ConstantHelper {
     private DirectMethodHandleDesc emitGetter(String name, Class<?> type, Consumer<MethodVisitor> action) {
         return pool.computeIfAbsent(name, nameKey -> {
             MethodType mt = methodType(type);
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, nameKey, mt.descriptorString(), null, null);
+            MethodVisitor mv = cw.visitMethod(ACC_STATIC | ACC_FINAL, nameKey, mt.descriptorString(), null, null);
             mv.visitCode();
             action.accept(mv);
             emitReturn(mv, type);

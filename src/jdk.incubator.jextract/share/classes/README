@@ -4,7 +4,6 @@ jextract was run using "sh extract.sh" on Mac OS.
 Manual modifications:
 
 * GNU/CP copyright header added
-* CSupport.SysV.* imports replaced by CSupport.* (platform independent C layouts)
 * Generated C_LONG layouts are replaced with C_LONGLONG for portability
 * Index_h$constants$N classes were renamed to be Index_h$constants_N
 * Index_h$constants_0.libName was manually added to handle platform dependency of
