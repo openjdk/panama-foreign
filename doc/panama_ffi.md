@@ -141,7 +141,7 @@ long len = strlen.invokeExact(CLinker.toCString("Hello").address()) // 5
 
 Here we are using one of the helper methods in `CLinker` to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this has been possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java.
 
-Now that we have seen the basics of how foreign function calls are supported in Panama, let's add some additional considerations. First, it is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is, mostly a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that, in this case, the Panama runtime has to *trust* our description of the `strlen` function. For this reason, access to the foreign linker is a restricted operation, which can only be performed if the runtime flag `foreign.restricted=permit` is passed on the command line of the Java launcher [^1].
+Now that we have seen the basics of how foreign function calls are supported in Panama, let's add some additional considerations. First, it is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is, mostly a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that, in this case, the Panama runtime has to *trust* our description of the `strlen` function. For this reason, access to the foreign linker is a restricted operation, which can only be performed if the runtime flag `foreign.restricted=permit` is passed on the command line of the Java launcher <a href="#1"><sup>1</sup></a>
 
 Finally let's talk about the life-cycle of some of the entities involved here; first, as a downcall native handle wraps a lookup symbol, the library from which the symbol has been loaded will stay loaded until there are reachable downcall handles referring to one of its symbols; in the above example, this consideration is less important, given the use of the default lookup object, which can be assumed to stay alive for the entire duration of the application.
 
@@ -447,6 +447,44 @@ public class Examples {
     }
 }
 ```
+
+
+
+<ol>
+   <li><a id="1"></a><small>In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.<small></li> 
+</ol>
+
+<li><a id="1"></a><small>In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.<small>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
