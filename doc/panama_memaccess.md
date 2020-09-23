@@ -146,7 +146,7 @@ SequenceLayout taggedValues = MemoryLayout.ofSequence(5,
 ).withName("TaggedValues");
 ```
 
-Here we assume that we need to insert some padding after the `kind` field to honor the alignment requirements of the `value` field <a href="1"><sup>1</sup></a>. Now, if we had to access the `value` field of all the elements of the array using manual offset computation, the code would quickly become pretty hard to read — on each iteration we would have to remember that the stride of the array is 8 bytes and that the offset of the `value` field relative to the `TaggedValue` struct is 4 bytes. This gives us an access expression like `(i * 8) + 4`, where `i` is the index of the element whose `value` field needs to be accessed.
+Here we assume that we need to insert some padding after the `kind` field to honor the alignment requirements of the `value` field <a href="#1"><sup>1</sup></a>. Now, if we had to access the `value` field of all the elements of the array using manual offset computation, the code would quickly become pretty hard to read — on each iteration we would have to remember that the stride of the array is 8 bytes and that the offset of the `value` field relative to the `TaggedValue` struct is 4 bytes. This gives us an access expression like `(i * 8) + 4`, where `i` is the index of the element whose `value` field needs to be accessed.
 
 With memory layouts, we can simply compute, once and for all, the memory access var handle to access the `value` field inside the sequence, as follows:
 
@@ -249,7 +249,7 @@ var segmentB = segmentA.withOwnerThread(threadB); // confined by thread B
 
 This pattern of access is also known as *serial confinement* and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API *kills* the original segment (as if `close` was called, but without releasing the underlying memory) and returns a *new* segment with the correct owner. The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.
 
-When serial confinement is not enough, clients can optionally remove thread ownership, that is, turn a confined segment into a *shared* one which can be accessed — and closed — concurrently, by multiple threads<a href="2"><sup>2</sup></a>. As before, sharing a segment kills the original segment and returns a new segment with no owner thread:
+When serial confinement is not enough, clients can optionally remove thread ownership, that is, turn a confined segment into a *shared* one which can be accessed — and closed — concurrently, by multiple threads<a href="#2"><sup>2</sup></a>. As before, sharing a segment kills the original segment and returns a new segment with no owner thread:
 
 ```java
 MemorySegment segmentA = MemorySegment.allocateNative(10); // confined by thread A
@@ -307,9 +307,7 @@ segment = null; // Cleaner might reclaim the segment memory now
 
 Note that registering a segment with a cleaner doesn't prevent clients from calling `MemorySegment::close` explicitly; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.
 
-<ol>
-<li><a id="1"/> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.<li/>
+* <a id="1"/><small>(<sup>1<sup/>): In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.<small/>
 
-<li><a id="2"/> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.<li/>
+* <a id="2"/><small>(<sup>2<sup/>): Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.<small/>
 
-</ol>
