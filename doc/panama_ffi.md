@@ -1,11 +1,3 @@
----
-​---
-title: State of foreign function support
-author: Maurizio Cimadamore
-date: June, 2020
-​---
----
-
 ## State of foreign function support
 
 **September 2020**
