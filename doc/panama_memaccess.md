@@ -307,7 +307,7 @@ segment = null; // Cleaner might reclaim the segment memory now
 
 Note that registering a segment with a cleaner doesn't prevent clients from calling `MemorySegment::close` explicitly; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.
 
-* <a id="1"/>(<sup>1</sup>): In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.
+* <a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small>
 
-* <a id="2"/>(<sup>2</sup>): Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.
+* <a id="2"/>(<sup>2</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.</small>
 
