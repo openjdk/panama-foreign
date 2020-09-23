@@ -141,13 +141,13 @@ long len = strlen.invokeExact(CLinker.toCString("Hello").address()) // 5
 
 Here we are using one of the helper methods in `CLinker` to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this has been possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java.
 
-Now that we have seen the basics of how foreign function calls are supported in Panama, let's add some additional considerations. First, it is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is, mostly a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that, in this case, the Panama runtime has to *trust* our description of the `strlen` function. For this reason, access to the foreign linker is a restricted operation, which can only be performed if the runtime flag `foreign.restricted=permit` is passed on the command line of the Java launcher <a href="#1"><sup>1</sup></a>
+Now that we have seen the basics of how foreign function calls are supported in Panama, let's add some additional considerations. First, it is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is, mostly a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that, in this case, the Panama runtime has to *trust* our description of the `strlen` function. For this reason, access to the foreign linker is a restricted operation, which can only be performed if the runtime flag `foreign.restricted=permit` is passed on the command line of the Java launcher <a href="1"><sup>1</sup></a>.
 
 Finally let's talk about the life-cycle of some of the entities involved here; first, as a downcall native handle wraps a lookup symbol, the library from which the symbol has been loaded will stay loaded until there are reachable downcall handles referring to one of its symbols; in the above example, this consideration is less important, given the use of the default lookup object, which can be assumed to stay alive for the entire duration of the application.
 
-Certain functions might return pointers, or structs; it is important to realize that if a function returns a pointer (or a `MemoryAddress`), no life-cycle whatsoever is attached to that pointer. It is then up to the client to e.g. free the memory associated with that pointer, or do nothing (in case the library is responsible for the life-cycle of that pointer). If a library returns a struct by value, things are different, as a *fresh*, confined memory segment is allocated off-heap and returned to the callee. It is the responsibility of the callee to cleanup that struct's segment (using `MemorySegment::close`) [^2].
+Certain functions might return pointers, or structs; it is important to realize that if a function returns a pointer (or a `MemoryAddress`), no life-cycle whatsoever is attached to that pointer. It is then up to the client to e.g. free the memory associated with that pointer, or do nothing (in case the library is responsible for the life-cycle of that pointer). If a library returns a struct by value, things are different, as a *fresh*, confined memory segment is allocated off-heap and returned to the callee. It is the responsibility of the callee to cleanup that struct's segment (using `MemorySegment::close`) <a href="2"><sup>2</sup></a>.
 
-Performance-wise, the reader might ask how efficient calling a foreign function using a native method handle is; the answer is *very*. The JVM comes with some special support for native method handles, so that, if a give method handle is invoked many times (e.g, inside an *hot* loop), the JIT compiler might decide to just generate a snippet of assembly code required to call the native function, and execute that directly. In most cases, invoking native function this way is as efficient as doing so through JNI [^3a][^3b].
+Performance-wise, the reader might ask how efficient calling a foreign function using a native method handle is; the answer is *very*. The JVM comes with some special support for native method handles, so that, if a give method handle is invoked many times (e.g, inside an *hot* loop), the JIT compiler might decide to just generate a snippet of assembly code required to call the native function, and execute that directly. In most cases, invoking native function this way is as efficient as doing so through JNI <a href="3a"><sup>3a</sup></a><a href="3b"><sup>3b</sup></a>.
 
 ### Upcalls
 
@@ -209,7 +209,7 @@ int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 
 The above code creates an off-heap array, then copies the contents of a Java array on it (we shall see in the next [section](#native-scope) ways to do that more succinctly), and then pass the array to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side-effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
-As before, we conclude with a quick note on life-cycle. First, the life-cycle of the upcall stub is tied to that of the segment returned by the foreign linker. When the segment is closed, the upcall is uninstalled from the VM and will no longer be a valid function pointer. Second, the life-cycle of structs (if any) passed by value to the Java upcall function is independent from that of the upcall [^4], so again the user will have to pay attention not to leak memory and to call `MemorySegment::close` on any segments obtained through an upcall.
+As before, we conclude with a quick note on life-cycle. First, the life-cycle of the upcall stub is tied to that of the segment returned by the foreign linker. When the segment is closed, the upcall is uninstalled from the VM and will no longer be a valid function pointer. Second, the life-cycle of structs (if any) passed by value to the Java upcall function is independent from that of the upcall <a href="4"><sup>4</sup></a>, so again the user will have to pay attention not to leak memory and to call `MemorySegment::close` on any segments obtained through an upcall.
 
 ### Native scope
 
@@ -246,7 +246,7 @@ try (NativeScope scope = NativeScope.unboundedScope()) {
 }
 ```
 
-It's easy to see how this code improves over the former in many ways; first, native scopes have primitives to allocate *and* initialize the contents of a segment; secondly, native scope use more efficient allocation underneath, so that not every allocation request is turned into a `malloc` — in fact, if the size of memory to be used is known before hand, clients can also use the bounded variant of native scope, using the `NativeScope::boundedScope(long size)` factory [^5]. Third, a native scope can be used as a single temporal bound for all the segments allocated within it: that is, if the code needs to instantiate other variables, it can keep doing so using the same scope — when the *try-with-resource* statement completes, all resources associated with the scope will be freed.
+It's easy to see how this code improves over the former in many ways; first, native scopes have primitives to allocate *and* initialize the contents of a segment; secondly, native scope use more efficient allocation underneath, so that not every allocation request is turned into a `malloc` — in fact, if the size of memory to be used is known before hand, clients can also use the bounded variant of native scope, using the `NativeScope::boundedScope(long size)` factory <a href="5"><sup>5</sup></a>. Third, a native scope can be used as a single temporal bound for all the segments allocated within it: that is, if the code needs to instantiate other variables, it can keep doing so using the same scope — when the *try-with-resource* statement completes, all resources associated with the scope will be freed.
 
 There are at least two cases where allocation of native resources occurs *outside* a native scope:
 
@@ -286,7 +286,7 @@ The foreign function support can support variadic calls, but with a caveat: the 
 printf("%d plus %d equals %d", 2, 2, 4);
 ```
 
-To do this using the foreign function support provided by Panama we would have to build a *specialized* downcall handle for that call shape [^6]:
+To do this using the foreign function support provided by Panama we would have to build a *specialized* downcall handle for that call shape <a href="6"><sup>6</sup></a>:
 
 ```java
 MethodHandle printf = CLinker.getInstance().downcallHandle(
@@ -450,54 +450,18 @@ public class Examples {
 
 
 
+
+
+
+
 <ol>
-   <li><a id="1"></a><small>In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.<small></li> 
+<li><a id="1"/> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.<li/>
+<li><a id="2"/> In the fututre we might consider knobs to allow structs returned by value to be allocated on-heap rather than off-heap. If these structs are always passed back and forth in an opaque manner, there could be a significant performance advantage in avoiding an off-heap allocation.<li/>
+<li><a id="3a"/> At the time of writing, support for native method intrinsics has been disabled by default due to some spurious VM crash being detected when running `jextract` with the intrinsics support enabled. While we work to rectify this situation, the intrinsics support can still be enabled using the ` -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true` flag.<li/>
+<li><a id="3b"/> As an advanced option, Panama allows the user to opt-in to remove Java to native thread transitions; while, in the general case it is unsafe doing so (removing thread transitions could have a negative impact on GC for long running native functions, and could crash the VM if the downcall needs to pop back out in Java, e.g. via an upcall), greater efficiency can be achieved; performance sensitive users should consider this option at least for the functions that are called more frquently, assuming that these functions are *leaf* functions (e.g. do not go back to Java via an upcall) and are relatively short-lived.<li/>
+<li><a id="4"/> This might change in the future, as we might want to tie the lifecycle of structs created for an upcall to the lifecycle of the upcall itself so that e.g. any segment that are created ahead of calling a Java upcall, are released immediately after the upcall returns<li/>
+<li><a id="5"/> We are currently investigating alternate allocation strategies to make allocation inside native scopes even faster<li/>
+<li><a id="6"/> On Windows, layouts for variadic arguments have to be adjusted using the `CLinker.Win64.asVarArg(ValueLayout)`; this is necessay because the Windows ABI passes variadic arguments using different rules than the ones used for ordinary arguments.<li/>
+
+
 </ol>
-
-<li><a id="1"></a><small>In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.<small>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[^1]: In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.
-[^2]: In the fututre we might consider knobs to allow structs returned by value to be allocated on-heap rather than off-heap. If these structs are always passed back and forth in an opaque manner, there could be a significant performance advantage in avoiding an off-heap allocation.
-[^3a]: At the time of writing, support for native method intrinsics has been disabled by default due to some spurious VM crash being detected when running `jextract` with the intrinsics support enabled. While we work to rectify this situation, the intrinsics support can still be enabled using the ` -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true` flag.
-[^3b]: As an advanced option, Panama allows the user to opt-in to remove Java to native thread transitions; while, in the general case it is unsafe doing so (removing thread transitions could have a negative impact on GC for long running native functions, and could crash the VM if the downcall needs to pop back out in Java, e.g. via an upcall), greater efficiency can be achieved; performance sensitive users should consider this option at least for the functions that are called more frquently, assuming that these functions are *leaf* functions (e.g. do not go back to Java via an upcall) and are relatively short-lived.
-[^4]: This might change in the future, as we might want to tie the lifecycle of structs created for an upcall to the lifecycle of the upcall itself so that e.g. any segment that are created ahead of calling a Java upcall, are released immediately after the upcall returns
-[^5]: We are currently investigating alternate allocation strategies to make allocation inside native scopes even faster
-[^6]: On Windows, layouts for variadic arguments have to be adjusted using the `CLinker.Win64.asVarArg(ValueLayout)`; this is necessay because the Windows ABI passes variadic arguments using different rules than the ones used for ordinary arguments.
-
-
