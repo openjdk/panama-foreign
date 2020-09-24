@@ -46,7 +46,7 @@ import java.util.Optional;
  * <p><a id = "var-symbols"></a></p>
  * In cases where a client wants to create a memory segment out of a lookup symbol, the client might want to attach the
  * lookup symbol to the newly created segment, so that the symbol will be kept reachable as long as the memory segment
- * is reachable; this can be achieved by creating the segment using the {@link MemoryAddress#asSegmentRestricted(long, Object)}
+ * is reachable; this can be achieved by creating the segment using the {@link MemoryAddress#asSegmentRestricted(long)}
  * restricted segment factory, as follows:
  * <pre>{@code
 LibraryLookup defaultLookup = LibraryLookup.defaultLookup();
@@ -79,7 +79,7 @@ public interface LibraryLookup {
 
         /**
          * The memory address of this lookup symbol. If the memory associated with this symbol needs to be dereferenced,
-         * clients can obtain a segment from this symbol's address using the {@link MemoryAddress#asSegmentRestricted(long, Object)},
+         * clients can obtain a segment from this symbol's address using the {@link MemoryAddress#asSegmentRestricted(long)},
          * and making sure that the created segment maintains a <a href="LibraryLookup.html#var-symbols">strong reference</a> to this symbol, to prevent library unloading.
          * @return the memory address of this lookup symbol.
          */

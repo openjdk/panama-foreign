@@ -106,8 +106,6 @@ public interface MemoryAddress extends Addressable {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @see #asSegmentRestricted(long, Object)
-     *
      * @param bytesSize the desired size.
      * @return a new confined native memory segment with given base address and size.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.

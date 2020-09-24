@@ -913,6 +913,7 @@ allocateNative(bytesSize, 1);
          * Register the reconstructed memory segment instance against a {@link Cleaner} object. This allows for the reconstructed
          * segment to be closed as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
          * @param cleaner the {@link Cleaner} object responsible for cleaning up this memory segment.
+         * @return this segment rebuilder.
          * @throws IllegalStateException if this method is called more than once.
          * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()} does not feature the {@link #CLOSE} access mode.
          */
