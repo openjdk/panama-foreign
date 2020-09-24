@@ -288,38 +288,107 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public MemorySegment withOwnerThread(Thread newOwner) {
-        return withOwnerThreadInternal(newOwner, true);
-    }
-
-    public MemorySegment withOwnerThreadInternal(Thread newOwner, boolean strict) {
+    public MemorySegment rebuild(Consumer<Rebuilder> rebuilder) {
         checkValidState();
-        int expectedMode = newOwner != null ? HANDOFF : SHARE;
-        if (strict && !isSet(expectedMode)) {
-            throw unsupportedAccessMode(expectedMode);
-        }
         try {
-            return dup(0L, length, mask,
-                    expectedMode == HANDOFF ?
-                            scope.confineTo(newOwner, strict) :
-                            scope.share());
+            SegmenentRebuilderImpl segmenentRebuilder = new SegmenentRebuilderImpl();
+            rebuilder.accept(segmenentRebuilder);
+            return segmenentRebuilder.rebuild();
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();
         }
     }
 
-    @Override
-    public MemorySegment withCleanupAction(Runnable action) {
-        checkValidState();
-        return dup(0L, length, mask, scope.wrapAction(action));
-    }
+    class SegmenentRebuilderImpl implements Rebuilder {
 
-    @Override
-    public void registerCleaner(Cleaner cleaner) {
-        checkAccessModes(CLOSE);
-        checkValidState();
-        cleaner.register(this.scope, scope.cleanupAction);
+        Thread ownerThread = ownerThread();
+        MemoryScope.CleanupAction cleanupAction = scope.cleanupAction.dup();
+        Object attachment = scope.ref;
+        Cleaner cleaner = null;
+        int accessModes = accessModes();
+        MemorySegment newSegment;
+
+        @Override
+        public MemorySegment segment() {
+            return AbstractMemorySegmentImpl.this;
+        }
+
+        @Override
+        public Rebuilder setAccessModes(int accessModes) {
+            checkAccessModes(accessModes);
+            if ((~accessModes() & accessModes) != 0) {
+                throw new IllegalArgumentException("Cannot acquire more access modes");
+            }
+            this.accessModes = accessModes;
+            return this;
+        }
+
+        @Override
+        public Rebuilder setOwnerThread(Thread newOwner) {
+            if (!isSet(HANDOFF)) {
+                throw unsupportedAccessMode(HANDOFF);
+            }
+            ownerThread = newOwner;
+            return this;
+        }
+
+        @Override
+        public Rebuilder removeOwnerThread() {
+            if (!isSet(SHARE)) {
+                throw unsupportedAccessMode(SHARE);
+            }
+            ownerThread = null;
+            return this;
+        }
+
+        @Override
+        public Rebuilder addCleanupAction(Runnable action) {
+            Objects.requireNonNull(action);
+            cleanupAction = cleanupAction.wrap(action);
+            return this;
+        }
+
+        @Override
+        public Rebuilder addAttachment(Object attachment) {
+            Objects.requireNonNull(attachment);
+            if (this.attachment == null) {
+                this.attachment = attachment;
+            } else {
+                Object prevAttachment = this.attachment;
+                this.attachment = new Object() {
+                    Object o1 = prevAttachment;
+                    Object o2 = attachment;
+                };
+            }
+            return this;
+        }
+
+        @Override
+        public Rebuilder registerCleaner(Cleaner cleaner) {
+            if (this.cleaner != null) {
+                throw new IllegalStateException("Already registered with a cleaner");
+            }
+            if (!isSet(CLOSE)) {
+                throw unsupportedAccessMode(CLOSE);
+            }
+            this.cleaner = cleaner;
+            return this;
+        }
+
+        MemorySegment rebuild() {
+            if (newSegment == null) {
+                scope.justClose(); // kill the old scope
+                MemoryScope scope = ownerThread != null ?
+                        new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction) :
+                        new MemoryScope.SharedScope(attachment, cleanupAction);
+                if (cleaner != null) {
+                    cleaner.register(scope, cleanupAction);
+                }
+                newSegment = dup(0L, length, accessModes, scope);
+            }
+            return newSegment;
+        }
     }
 
     @Override

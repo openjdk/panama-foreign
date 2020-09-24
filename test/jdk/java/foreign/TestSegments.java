@@ -335,9 +335,7 @@ public class TestSegments {
                 "toFloatArray",
                 "toLongArray",
                 "toDoubleArray",
-                "withOwnerThread",
-                "registerCleaner",
-                "withCleanupAction"
+                "rebuild"
         );
 
         public SegmentMember(Method method, Object[] params) {
@@ -395,7 +393,7 @@ public class TestSegments {
         SHARE(MemorySegment.SHARE) {
             @Override
             void run(MemorySegment segment) {
-                segment.withOwnerThread(null);
+                segment.rebuild(Rebuilder::removeOwnerThread);
             }
         },
         CLOSE(MemorySegment.CLOSE) {
@@ -419,7 +417,7 @@ public class TestSegments {
         HANDOFF(MemorySegment.HANDOFF) {
             @Override
             void run(MemorySegment segment) {
-                segment.withOwnerThread(new Thread());
+                segment.rebuild(r -> r.setOwnerThread(new Thread()));
             }
         };
 

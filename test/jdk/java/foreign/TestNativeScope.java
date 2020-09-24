@@ -48,7 +48,6 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -127,15 +126,15 @@ public class TestNativeScope {
         assertTrue(s2.isAlive());
         assertTrue(s3.isAlive());
         try (NativeScope scope = NativeScope.boundedScope(10)) {
-            MemorySegment ss1 = scope.register(s1);
+            MemorySegment ss1 = s1.rebuild(scope);
             assertFalse(s1.isAlive());
             assertTrue(ss1.isAlive());
             s1 = ss1;
-            MemorySegment ss2 = scope.register(s2);
+            MemorySegment ss2 = s2.rebuild(scope);
             assertFalse(s2.isAlive());
             assertTrue(ss2.isAlive());
             s2 = ss2;
-            MemorySegment ss3 = scope.register(s3);
+            MemorySegment ss3 = s3.rebuild(scope);
             assertFalse(s3.isAlive());
             assertTrue(ss3.isAlive());
             s3 = ss3;
@@ -149,7 +148,7 @@ public class TestNativeScope {
     public void testNoTerminalOps() {
         try (NativeScope scope = NativeScope.boundedScope(10)) {
             MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
-            MemorySegment attached = scope.register(s1);
+            MemorySegment attached = s1.rebuild(scope);
             int[] terminalOps = {CLOSE, HANDOFF};
             for (int mode : terminalOps) {
                 if (attached.hasAccessModes(mode)) {
@@ -164,28 +163,17 @@ public class TestNativeScope {
         MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
         NativeScope scope1 = NativeScope.boundedScope(10);
         NativeScope scope2 = NativeScope.boundedScope(10);
-        scope2.register(scope1.register(s1));
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testNullClaim() {
-        NativeScope.boundedScope(10).register(null);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testNotAliveClaim() {
-        MemorySegment segment = MemorySegment.ofArray(new byte[1]);
-        segment.close();
-        NativeScope.boundedScope(10).register(segment);
+        s1.rebuild(scope1).rebuild(scope2);
     }
 
     @Test
     public void testNoClaimFromWrongThread() throws InterruptedException {
-        MemorySegment s = MemorySegment.ofArray(new byte[1]);
+        NativeScope scope = NativeScope.boundedScope(10);
         AtomicBoolean failed = new AtomicBoolean(false);
         Thread t = new Thread(() -> {
             try {
-                NativeScope.boundedScope(10).register(s);
+                MemorySegment s = MemorySegment.ofArray(new byte[1]);
+                s.rebuild(scope);
             } catch (IllegalArgumentException ex) {
                 failed.set(true);
             }
@@ -197,9 +185,9 @@ public class TestNativeScope {
 
     @Test
     public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.allocateNative(10).withOwnerThread(null);
+        MemorySegment unconfined = MemorySegment.allocateNative(10).rebuild(MemorySegment.Rebuilder::removeOwnerThread);
         NativeScope scope = NativeScope.boundedScope(10);
-        MemorySegment registered = scope.register(unconfined);
+        MemorySegment registered = unconfined.rebuild(scope);
         assertFalse(unconfined.isAlive());
         assertEquals(registered.ownerThread(), scope.ownerThread());
         scope.close();

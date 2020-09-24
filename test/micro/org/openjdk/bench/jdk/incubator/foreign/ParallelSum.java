@@ -86,7 +86,7 @@ public class ParallelSum {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
         segment = MemorySegment.allocateNative(ALLOC_SIZE)
-                .withOwnerThread(null);
+                .rebuild(MemorySegment.SegmentRebuilder::removeOwnerThread);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

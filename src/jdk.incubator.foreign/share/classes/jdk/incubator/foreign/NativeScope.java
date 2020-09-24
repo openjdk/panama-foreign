@@ -29,12 +29,12 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.AbstractNativeScope;
 import jdk.internal.foreign.Utils;
-import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.OptionalLong;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -49,12 +49,13 @@ import java.util.stream.Stream;
  * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@link MemorySegment} instances
  * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope.
  * <p>
- * To allow for more usability, it is possible for an native scope to reclaim ownership of an existing memory segments
- * (see {@link #register(MemorySegment)}). This might be useful to allow one or more segments which were independently
+ * To allow for more usability, it is possible for a native scope to reclaim ownership of an existing memory segments
+ * (see {@link #accept(jdk.incubator.foreign.MemorySegment.Rebuilder)}) - that is, this native scope can be passed as a segment rebuilder to
+ * {@link MemorySegment#rebuild(Consumer)}. This might be useful to allow one or more segments which were independently
  * created to share the same life-cycle as a given native scope - which in turns enables client to group all memory
  * allocation and usage under a single <em>try-with-resources block</em>.
  */
-public interface NativeScope extends AutoCloseable {
+public interface NativeScope extends AutoCloseable, Consumer<MemorySegment.Rebuilder> {
 
     /**
      * If this native scope is bounded, returns the size, in bytes, of this native scope.
@@ -405,23 +406,21 @@ public interface NativeScope extends AutoCloseable {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Register a segment on this scope, which will then reclaim ownership of said segment.
-     * The input segment must be closeable - that is, it must feature the {@link MemorySegment#CLOSE} access mode.
-     * As a side-effect, the input segment will be marked as <em>not alive</em>, and a new segment will be returned.
+     * Reconstructs an existing segment, by setting this scope as the temporal bounds of the reconstructed segment.
+     * The input segment (see {@link MemorySegment.Rebuilder#segment()} must be closeable - that is,
+     * it must feature the {@link MemorySegment#CLOSE} access mode.
      * <p>
-     * The returned segment will feature only {@link MemorySegment#READ} and
+     * The reconstructed segment will feature only {@link MemorySegment#READ} and
      * {@link MemorySegment#WRITE} access modes (assuming these were available in the original segment). As such
-     * the resulting segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
+     * the reconstructed segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
      * indirectly when this native scope is closed.
-     * @param segment the segment which will be registered on this native scope.
-     * @return a new, non closeable memory segment, backed by the same underlying region as {@code segment},
-     * but whose life-cycle is tied to that of this native scope.
-     * @throws IllegalStateException if {@code segment} is not <em>alive</em> (see {@link MemorySegment#isAlive()}).
-     * @throws NullPointerException if {@code segment == null}
-     * @throws IllegalArgumentException if {@code segment} is not confined and {@code segment.ownerThread() != this.ownerThread()},
-     * or if {@code segment} does not feature the {@link MemorySegment#CLOSE} access mode.
+     * @param rebuilder the segment rebuilder.
+     * @throws IllegalArgumentException if {@code rebuilder.segment().ownerThread() != ownerThread()} or if
+     * {@code rebuilder.segment()} does not feature the {@link MemorySegment#CLOSE} access mode.
+     *
+     * @see MemorySegment#rebuild(Consumer)
      */
-    MemorySegment register(MemorySegment segment);
+    void accept(MemorySegment.Rebuilder rebuilder);
 
     /**
      * Close this native scope; calling this method will render any segment obtained through this native scope

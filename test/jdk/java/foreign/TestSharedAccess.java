@@ -39,7 +39,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static org.testng.Assert.*;
 
@@ -58,11 +57,11 @@ public class TestSharedAccess {
         for (int i = 0 ; i < 1000 ; i++) {
             threads.add(new Thread(() -> {
                 assertEquals(getInt(confined.get()), 42);
-                confined.set(confined.get().withOwnerThread(owner));
+                confined.set(confined.get().rebuild(r -> r.setOwnerThread(owner)));
             }));
         }
         threads.forEach(t -> {
-            confined.set(confined.get().withOwnerThread(t));
+            confined.set(confined.get().rebuild(r -> r.setOwnerThread(t)));
             t.start();
             try {
                 t.join();
@@ -76,7 +75,7 @@ public class TestSharedAccess {
     @Test
     public void testShared() throws Throwable {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-        try (MemorySegment s = MemorySegment.allocateNative(layout).withOwnerThread(null)) {
+        try (MemorySegment s = MemorySegment.allocateNative(layout).rebuild(MemorySegment.Rebuilder::removeOwnerThread)) {
             for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
                 setInt(s.asSlice(i * 4), 42);
             }
@@ -125,7 +124,7 @@ public class TestSharedAccess {
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
             MemorySegment sharedSegment = s.address().asSegmentRestricted(s.byteSize())
-                    .withOwnerThread(null);
+                    .rebuild(MemorySegment.Rebuilder::removeOwnerThread);
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
                     assertEquals(getInt(sharedSegment), 42);
@@ -142,53 +141,16 @@ public class TestSharedAccess {
         }
     }
 
-    @Test(expectedExceptions=IllegalArgumentException.class)
-    public void testBadHandoffSameThread() {
-        MemorySegment.ofArray(new int[4]).withOwnerThread(Thread.currentThread());
-    }
-
     @Test(expectedExceptions=UnsupportedOperationException.class)
     public void testBadHandoffNoAccess() {
         MemorySegment.ofArray(new int[4])
-            .withAccessModes(MemorySegment.CLOSE).withOwnerThread(new Thread());
-    }
-
-    @Test(expectedExceptions=IllegalStateException.class)
-    public void testBadShareAlreadyShared() {
-        MemorySegment.ofArray(new int[4])
-                .withOwnerThread(null)
-                .withOwnerThread(null);
+            .withAccessModes(MemorySegment.CLOSE).rebuild(r -> r.setOwnerThread(new Thread()));
     }
 
     @Test(expectedExceptions=UnsupportedOperationException.class)
     public void testBadShareNoAccess() {
         MemorySegment.ofArray(new int[4])
-                .withAccessModes(MemorySegment.CLOSE).withOwnerThread(null);
-    }
-
-    private void withAcquired(Consumer<MemorySegment> acquiredAction) {
-        CountDownLatch holder = new CountDownLatch(1);
-        MemorySegment segment = MemorySegment.allocateNative(16).withOwnerThread(null);
-        Spliterator<MemorySegment> spliterator = MemorySegment.spliterator(segment,
-                MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_BYTE));
-        CountDownLatch acquired = new CountDownLatch(1);
-        Runnable r = () -> spliterator.tryAdvance(s -> {
-            try {
-                acquired.countDown();
-                holder.await();
-            } catch (InterruptedException ex) {
-                throw new AssertionError(ex);
-            }
-        });
-        new Thread(r).start();
-        try {
-            acquired.await();
-            acquiredAction.accept(segment);
-        } catch (InterruptedException ex) {
-            throw new AssertionError(ex);
-        } finally {
-            holder.countDown();
-        }
+                .withAccessModes(MemorySegment.CLOSE).rebuild(MemorySegment.Rebuilder::removeOwnerThread);
     }
 
     @Test

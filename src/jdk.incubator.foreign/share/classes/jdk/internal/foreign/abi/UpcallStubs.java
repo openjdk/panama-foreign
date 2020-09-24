@@ -26,7 +26,6 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
@@ -34,9 +33,9 @@ public class UpcallStubs {
     public static MemorySegment upcallAddress(UpcallHandler handler) {
         long stubAddress = handler.entryPoint();
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0)
-                .withOwnerThread(null)
-                .withCleanupAction(() -> freeUpcallStub(stubAddress))
-                .withAccessModes(MemorySegment.CLOSE);
+                .rebuild(r -> r.removeOwnerThread()
+                               .addCleanupAction(() -> freeUpcallStub(stubAddress))
+                               .setAccessModes(MemorySegment.CLOSE | MemorySegment.HANDOFF | MemorySegment.SHARE));
     };
 
     private static void freeUpcallStub(long stubAddress) {

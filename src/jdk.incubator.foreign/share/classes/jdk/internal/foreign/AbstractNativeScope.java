@@ -26,13 +26,7 @@ public abstract class AbstractNativeScope implements NativeScope {
 
     @Override
     public void close() {
-        for (MemorySegment segment : segments) {
-            try {
-                segment.close();
-            } catch (IllegalStateException ex) {
-                //already closed - skip
-            }
-        }
+        segments.forEach(s -> ((AbstractMemorySegmentImpl)s).scope().close());
     }
 
     void checkOwnerThread() {
@@ -52,18 +46,18 @@ public abstract class AbstractNativeScope implements NativeScope {
     }
 
     @Override
-    public MemorySegment register(MemorySegment segment) {
+    public void accept(MemorySegment.Rebuilder rebuilder) {
+        MemorySegment segment = rebuilder.segment();
         Objects.requireNonNull(segment);
         if (segment.ownerThread() != null && (segment.ownerThread() != ownerThread())) {
-            throw new IllegalArgumentException("Cannot register segment owned by a different thread");
+            throw new IllegalArgumentException("Cannot rebuild a segment owned by a different thread");
         } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
-            throw new IllegalArgumentException("Cannot register a non-closeable segment");
+            throw new IllegalArgumentException("Cannot rebuild a non-closeable segment");
         }
-        MemorySegment attachedSegment = ((AbstractMemorySegmentImpl)segment)
-                .withOwnerThreadInternal(ownerThread(), false);
-        segments.add(attachedSegment);
-        return attachedSegment
-                .withAccessModes(segment.accessModes() & SCOPE_MASK);
+        rebuilder.setOwnerThread(ownerThread())
+                 .setAccessModes(segment.accessModes() & SCOPE_MASK);
+        MemorySegment newSegment = ((AbstractMemorySegmentImpl.SegmenentRebuilderImpl)rebuilder).rebuild();
+        segments.add(newSegment);
     }
 
     public static class UnboundedNativeScope extends AbstractNativeScope {

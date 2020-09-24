@@ -103,7 +103,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, bytesOffset, bytesSize);
             MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
                 @Override
-                void doCleanup() {
+                public void doCleanup() {
                     unmapperProxy.unmap();
                 }
             });

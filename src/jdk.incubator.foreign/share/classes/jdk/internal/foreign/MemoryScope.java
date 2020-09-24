@@ -106,52 +106,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     abstract void justClose();
 
     /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @param newOwner new owner thread of the returned memory scope
-     * @return a new confined scope, which is a duplicate of this scope, but with a new owner thread.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread.
-     */
-    final MemoryScope confineTo(Thread newOwner, boolean strict) {
-        try {
-            if (strict && newOwner == ownerThread()) {
-                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-            }
-            justClose();
-            return new ConfinedScope(newOwner, ref, cleanupAction.dup());
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @return a new shared scope, which is a duplicate of this scope.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread,
-     * or if this is already a shared scope.
-     */
-    MemoryScope share() {
-        try {
-            justClose();
-            return new SharedScope(ref, cleanupAction.dup());
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    final MemoryScope wrapAction(Runnable runnable) {
-        try {
-            justClose();
-            return ownerThread() == null ?
-                    new SharedScope(ref, cleanupAction.wrap(runnable)) :
-                    new ConfinedScope(ownerThread(), ref, cleanupAction.wrap(runnable));
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    /**
      * Returns "owner" thread of this scope.
      * @return owner thread (or null for a shared scope)
      */
@@ -239,11 +193,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         SharedScope(Object ref, CleanupAction cleanupAction) {
             super(ref, cleanupAction);
-        }
-
-        @Override
-        MemoryScope share() {
-            throw new IllegalStateException("Already shared");
         }
 
         @Override

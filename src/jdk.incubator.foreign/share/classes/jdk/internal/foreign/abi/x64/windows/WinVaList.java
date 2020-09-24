@@ -169,7 +169,7 @@ class WinVaList implements VaList {
     public VaList copy(NativeScope scope) {
         MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
                 segment.ownerThread());
-        liveness = scope.register(liveness);
+        liveness = liveness.rebuild(scope);
         return new WinVaList(segment, List.of(), liveness);
     }
 
@@ -264,6 +264,6 @@ class WinVaList implements VaList {
 
     private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
         return segment.ownerThread() == thread ?
-                segment : segment.withOwnerThread(thread);
+                segment : segment.rebuild(r -> r.setOwnerThread(thread));
     }
 }

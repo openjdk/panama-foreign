@@ -30,7 +30,6 @@
  * @run testng TestCleaner
  */
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
 import jdk.internal.ref.CleanerFactory;
@@ -58,20 +57,16 @@ public class TestCleaner {
     }
 
     @Test(dataProvider = "cleaners")
-    public void test(int n, Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
+    public void test(Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
         SegmentState segmentState = new SegmentState();
         MemorySegment segment = MemorySegment.allocateNative(10)
-                .withCleanupAction(segmentState::cleanup);
+                .rebuild(r -> r.addCleanupAction(segmentState::cleanup));
         // register cleaners before
-        for (int i = 0 ; i < n ; i++) {
-            segment.registerCleaner(cleanerFactory.get());
-        }
+        segment = segment.rebuild(r -> r.registerCleaner(cleanerFactory.get()));
         segment = segmentFunction.apply(segment);
         if (segment.isAlive()) {
             // also register cleaners after
-            for (int i = 0; i < n; i++) {
-                segment.registerCleaner(cleanerFactory.get());
-            }
+            segment = segment.rebuild(r -> r.registerCleaner(cleanerFactory.get()));
         }
         //check that cleanup has not been called by any cleaner yet!
         assertEquals(segmentState.cleanupCalls(), segment.isAlive() ? 0 : 1);
@@ -91,7 +86,7 @@ public class TestCleaner {
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {
         IDENTITY(Function.identity()),
         CLOSE(s -> { s.close(); return s; }),
-        SHARE(s -> { return s.withOwnerThread(null); });
+        SHARE(s -> { return s.rebuild(MemorySegment.Rebuilder::removeOwnerThread); });
 
         private final Function<MemorySegment, MemorySegment> segmentFunction;
 
@@ -112,17 +107,13 @@ public class TestCleaner {
                 (Supplier<Cleaner>)CleanerFactory::cleaner
         };
 
-        int[] ncleaners = { 1, 2, 4, 8, 16 };
-
         SegmentFunction[] segmentFunctions = SegmentFunction.values();
-        Object[][] data = new Object[cleaners.length * ncleaners.length * segmentFunctions.length][3];
+        Object[][] data = new Object[cleaners.length * segmentFunctions.length][3];
 
-        for (int ncleaner = 0 ; ncleaner < ncleaners.length ; ncleaner++) {
-            for (int cleaner = 0 ; cleaner < cleaners.length ; cleaner++) {
-                for (int segmentFunction = 0 ; segmentFunction < segmentFunctions.length ; segmentFunction++) {
-                    data[ncleaner + ncleaners.length * cleaner + (cleaners.length * ncleaners.length * segmentFunction)] =
-                            new Object[] { ncleaners[ncleaner], cleaners[cleaner], segmentFunctions[segmentFunction] };
-                }
+        for (int cleaner = 0 ; cleaner < cleaners.length ; cleaner++) {
+            for (int segmentFunction = 0 ; segmentFunction < segmentFunctions.length ; segmentFunction++) {
+                data[cleaner + (cleaners.length * segmentFunction)] =
+                        new Object[] { cleaners[cleaner], segmentFunctions[segmentFunction] };
             }
         }
 

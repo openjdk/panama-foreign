@@ -58,7 +58,8 @@ public class TestHandshake {
     @Test(dataProvider = "accessors")
     public void testHandshake(Function<MemorySegment, Runnable> accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE).withOwnerThread(null);
+            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE)
+                    .rebuild(MemorySegment.Rebuilder::removeOwnerThread);
             System.err.println("ITERATION " + it);
             ExecutorService accessExecutor = Executors.newCachedThreadPool();
             for (int i = 0; i < Runtime.getRuntime().availableProcessors() ; i++) {
@@ -145,7 +146,7 @@ public class TestHandshake {
 
         SegmentMismatchAccessor(MemorySegment segment) {
             this.segment = segment;
-            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE).withOwnerThread(null);
+            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE).rebuild(MemorySegment.Rebuilder::removeOwnerThread);
             copy.copyFrom(segment);
             MemoryAccess.setByteAtIndex(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
