@@ -205,8 +205,7 @@ class ClassConstantHelper implements ConstantHelper {
 
     private void classBegin(String baseClassName) {
         String baseName = baseClassName != null ? toInternalName(baseClassName) : INTR_OBJECT;
-        int mods = ACC_PUBLIC;
-        cw.visit(V15, mods, internalClassName, null, baseName, null);
+        cw.visit(V15, 0, internalClassName, null, baseName, null);
     }
 
     private static DirectMethodHandleDesc findRuntimeHelperBootstrap(ClassDesc runtimeHelper, String name, MethodType type) {
@@ -510,7 +509,7 @@ class ClassConstantHelper implements ConstantHelper {
     private DirectMethodHandleDesc emitGetter(String name, Class<?> type, Consumer<MethodVisitor> action) {
         return pool.computeIfAbsent(name, nameKey -> {
             MethodType mt = methodType(type);
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, nameKey, mt.descriptorString(), null, null);
+            MethodVisitor mv = cw.visitMethod(ACC_STATIC | ACC_FINAL, nameKey, mt.descriptorString(), null, null);
             mv.visitCode();
             action.accept(mv);
             emitReturn(mv, type);

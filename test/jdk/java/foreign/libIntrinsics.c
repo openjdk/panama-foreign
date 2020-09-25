@@ -59,5 +59,24 @@ EXPORT int identity_va(int x, ...) {
     return x;
 }
 
-EXPORT void invoke_consumer(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT int invoke_high_arity0(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return x;
+}
+EXPORT double invoke_high_arity1(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return d;
+}
+EXPORT long long invoke_high_arity2(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return l;
+}
+EXPORT float invoke_high_arity3(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return f;
+}
+EXPORT char invoke_high_arity4(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return c;
+}
+EXPORT short invoke_high_arity5(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return s1;
+}
+EXPORT short invoke_high_arity6(int x, double d, long long l, float f, char c, short s1, short s2) {
+    return s2;
 }
