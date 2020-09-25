@@ -253,4 +253,7 @@ abstract class JavaSourceBuilder {
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
     }
 
+    StructBuilder newStructBuilder(String name, String parentLayoutFieldName, MemoryLayout parentLayout, Type type) {
+        return new StructBuilder(this, name, parentLayoutFieldName, parentLayout, type);
+    }
 }

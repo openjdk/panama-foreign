@@ -120,10 +120,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         // check if unresolved typedefs can be resolved now!
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
             Declaration.Scoped structDef = ((Type.Declared) td.type()).tree();
-            TypedefBuilder typedefBuilder = new TypedefBuilder(toplevelBuilder, td.name(),
+            toplevelBuilder.addTypeDef(td.name(),
                     structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
-            typedefBuilder.classBegin();
-            typedefBuilder.classEnd();
         }
         toplevelBuilder.classEnd();
         try {
@@ -204,7 +202,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     String className = d.name().isEmpty() ? parent.name() : d.name();
                     MemoryLayout parentLayout = parentLayout(d);
                     String parentLayoutFieldName = className + "$struct";
-                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName,
+                    currentBuilder = currentBuilder.newStructBuilder(className, parentLayoutFieldName,
                             parentLayout, Type.declared(d));
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.incrAlign();
@@ -312,10 +310,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                FunctionalInterfaceBuilder fib = new FunctionalInterfaceBuilder(currentBuilder, name, fitype,
+                toplevelBuilder.addFunctionalInterface(name, fitype,
                         Type.descriptorFor(f).orElseThrow(), param.type());
-                fib.classBegin();
-                fib.classEnd();
                 i++;
             }
         }
@@ -362,9 +358,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                TypedefBuilder typedefBuilder = new TypedefBuilder(toplevelBuilder, tree.name(), structDefinitionName(s), tree.type());
-                                typedefBuilder.classBegin();
-                                typedefBuilder.classEnd();
+                                toplevelBuilder.addTypeDef(tree.name(), structDefinitionName(s), tree.type());
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.

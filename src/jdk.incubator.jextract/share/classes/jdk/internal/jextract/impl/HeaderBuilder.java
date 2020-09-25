@@ -178,4 +178,16 @@ class HeaderBuilder extends JavaSourceBuilder {
         this.sb.delete(0, res.length());
         return Utils.fileFromString(pkgName, className, res);
     }
+
+    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
+        builder.classBegin();
+        builder.classEnd();
+    }
+
+    void addTypeDef(String name, String superClass, Type type) {
+        TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
+        builder.classBegin();
+        builder.classEnd();
+    }
 }
