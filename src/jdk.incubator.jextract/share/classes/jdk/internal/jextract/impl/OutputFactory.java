@@ -309,8 +309,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                String anno = annotationWriter.getCAnnotation(param.type());
-                toplevelBuilder.addFunctionalInterface(name, fitype, Type.descriptorFor(f).orElseThrow(), anno);
+                FunctionalInterfaceBuilder fib = new FunctionalInterfaceBuilder(currentBuilder, name, fitype, Type.descriptorFor(f).orElseThrow(),
+                        pkgName, constantHelper, annotationWriter, param.type());
+                fib.classBegin();
+                fib.classEnd();
                 i++;
             }
         }

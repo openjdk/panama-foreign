@@ -48,7 +48,7 @@ class HeaderBuilder extends JavaSourceBuilder {
     private int align;
 
     HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(className, pkgName, constantHelper);
+        super(className, pkgName, constantHelper, Kind.CLASS);
         this.annotationWriter = annotationWriter;
         this.sb = new StringBuffer();
     }
@@ -88,27 +88,6 @@ class HeaderBuilder extends JavaSourceBuilder {
     @Override
     void decrAlign() {
         align--;
-    }
-
-    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor fDesc, String anno) {
-        incrAlign();
-        indent();
-        append("public interface " + name + " {\n");
-        incrAlign();
-        indent();
-        append(mtype.returnType().getName() + " apply(");
-        String delim = "";
-        for (int i = 0 ; i < mtype.parameterCount(); i++) {
-            append(delim + mtype.parameterType(i).getName() + " x" + i);
-            delim = ", ";
-        }
-        append(");\n");
-        addFunctionalFactory(name, mtype, fDesc, anno);
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-        indent();
     }
 
     void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
@@ -254,27 +233,6 @@ class HeaderBuilder extends JavaSourceBuilder {
         indent();
         append("}\n");
         decrAlign();
-    }
-
-    private void addFunctionalFactory(String className, MethodType mtype, FunctionDescriptor fDesc, String anno) {
-        indent();
-        append(PUB_MODS + " " + anno + " MemorySegment allocate(" + className + " fi) {\n");
-        incrAlign();
-        indent();
-        append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fDesc) + ", " +
-                "\"" + mtype.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        append("}\n");
-
-        indent();
-        append(PUB_MODS + " " + anno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.register(allocate(fi));\n");
-        decrAlign();
-        indent();
-        append("}\n");
     }
 
     JavaFileObject build() {

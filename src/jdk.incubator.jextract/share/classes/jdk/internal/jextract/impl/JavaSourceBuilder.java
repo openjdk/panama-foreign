@@ -37,8 +37,23 @@ import java.util.Set;
  * Superclass for .java source generator classes.
  */
 abstract class JavaSourceBuilder {
+
+    enum Kind {
+        CLASS("class"),
+        INTERFACE("interface");
+
+        final String kindName;
+
+        Kind(String kindName) {
+            this.kindName = kindName;
+        }
+    }
+
+
+
     static final String PUB_CLS_MODS = "public final ";
     static final String PUB_MODS = "public static ";
+    protected final Kind kind;
     protected final String className;
     protected final String pkgName;
     protected final ConstantHelper constantHelper;
@@ -46,7 +61,8 @@ abstract class JavaSourceBuilder {
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
 
-    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper, int align) {
+    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper, Kind kind) {
+        this.kind = kind;
         this.className = className;
         this.pkgName = pkgName;
         this.constantHelper = constantHelper;
@@ -66,10 +82,6 @@ abstract class JavaSourceBuilder {
 
     abstract void decrAlign();
 
-    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper) {
-        this(className, pkgName, constantHelper, 0);
-    }
-
     protected String getClassModifiers() {
         return PUB_CLS_MODS;
     }
@@ -80,10 +92,11 @@ abstract class JavaSourceBuilder {
 
         indent();
         append(getClassModifiers());
-        append("class ");
-        append(className);
+        append(kind.kindName + " " + className);
         append(" {\n\n");
-        emitConstructor();
+        if (kind != Kind.INTERFACE) {
+            emitConstructor();
+        }
     }
 
     void emitConstructor() {

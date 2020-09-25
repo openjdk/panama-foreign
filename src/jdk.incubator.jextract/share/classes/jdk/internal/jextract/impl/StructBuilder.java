@@ -43,7 +43,7 @@ class StructBuilder extends JavaSourceBuilder {
 
     StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout parentLayout,
             String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter, Type structType) {
-        super(prev.uniqueNestedClassName(className), pkgName, constantHelper);
+        super(prev.uniqueNestedClassName(className), pkgName, constantHelper, Kind.CLASS);
         this.prev = prev;
         this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
