@@ -201,8 +201,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     String className = d.name().isEmpty() ? parent.name() : d.name();
                     MemoryLayout parentLayout = parentLayout(d);
                     String parentLayoutFieldName = className + "$struct";
-                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName, parentLayout,
-                            pkgName, constantHelper, annotationWriter, Type.declared(d));
+                    currentBuilder = new StructBuilder(currentBuilder, className, parentLayoutFieldName,
+                            parentLayout, Type.declared(d));
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.incrAlign();
                     currentBuilder.classBegin();
@@ -309,8 +309,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                FunctionalInterfaceBuilder fib = new FunctionalInterfaceBuilder(currentBuilder, name, fitype, Type.descriptorFor(f).orElseThrow(),
-                        pkgName, constantHelper, annotationWriter, param.type());
+                FunctionalInterfaceBuilder fib = new FunctionalInterfaceBuilder(currentBuilder, name, fitype,
+                        Type.descriptorFor(f).orElseThrow(), param.type());
                 fib.classBegin();
                 fib.classEnd();
                 i++;

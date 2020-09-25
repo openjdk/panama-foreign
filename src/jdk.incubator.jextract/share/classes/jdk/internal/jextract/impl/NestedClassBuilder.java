@@ -25,24 +25,13 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.*;
-import jdk.incubator.jextract.Type;
+public abstract class NestedClassBuilder extends JavaSourceBuilder {
 
-import java.lang.invoke.MethodType;
+    JavaSourceBuilder prev;
 
-public class FunctionalInterfaceBuilder extends NestedClassBuilder {
-
-    private final String fiAnno;
-    private final MethodType fiType;
-    private final FunctionDescriptor fiDesc;
-
-    FunctionalInterfaceBuilder(JavaSourceBuilder prev, String className, MethodType fiType,
-                               FunctionDescriptor fiDesc, Type funcType) {
-        super(prev, Kind.INTERFACE, className);
-        this.fiType = fiType;
-        this.fiDesc = fiDesc;
+    public NestedClassBuilder(JavaSourceBuilder prev, Kind kind, String className) {
+        super(kind, prev.uniqueNestedClassName(className), prev.pkgName, prev.constantHelper, prev.annotationWriter);
         this.prev = prev;
-        this.fiAnno = annotationWriter.getCAnnotation(funcType);
     }
 
     JavaSourceBuilder prev() {
@@ -92,48 +81,5 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     @Override
     protected void addImportSection() {
         // nested class. containing class has necessary imports
-    }
-
-    @Override
-    JavaSourceBuilder classEnd() {
-        emitFunctionalInterfaceMethod();
-        emitFunctionalFactories();
-        return super.classEnd();
-    }
-
-    void emitFunctionalInterfaceMethod() {
-        incrAlign();
-        indent();
-        append(fiType.returnType().getName() + " apply(");
-        String delim = "";
-        for (int i = 0 ; i < fiType.parameterCount(); i++) {
-            append(delim + fiType.parameterType(i).getName() + " x" + i);
-            delim = ", ";
-        }
-        append(");\n");
-        decrAlign();
-        indent();
-    }
-
-    private void emitFunctionalFactories() {
-        incrAlign();
-        indent();
-        append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi) {\n");
-        incrAlign();
-        indent();
-        append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
-                "\"" + fiType.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        append("}\n");
-
-        indent();
-        append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.register(allocate(fi));\n");
-        decrAlign();
-        indent();
-        append("}\n");
     }
 }

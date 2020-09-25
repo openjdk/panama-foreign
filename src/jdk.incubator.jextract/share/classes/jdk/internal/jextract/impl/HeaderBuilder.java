@@ -41,15 +41,13 @@ import java.util.List;
  * method is called to get overall generated source string.
  */
 class HeaderBuilder extends JavaSourceBuilder {
-    private final AnnotationWriter annotationWriter;
     protected final StringBuffer sb;
 
     // current line alignment (number of 4-spaces)
     private int align;
 
     HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(className, pkgName, constantHelper, Kind.CLASS);
-        this.annotationWriter = annotationWriter;
+        super(Kind.CLASS, className, pkgName, constantHelper, annotationWriter);
         this.sb = new StringBuffer();
     }
 

@@ -49,23 +49,23 @@ abstract class JavaSourceBuilder {
         }
     }
 
-
-
     static final String PUB_CLS_MODS = "public final ";
     static final String PUB_MODS = "public static ";
-    protected final Kind kind;
+    private final Kind kind;
     protected final String className;
     protected final String pkgName;
     protected final ConstantHelper constantHelper;
+    protected final AnnotationWriter annotationWriter;
 
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
 
-    JavaSourceBuilder(String className, String pkgName, ConstantHelper constantHelper, Kind kind) {
+    JavaSourceBuilder(Kind kind, String className, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
         this.kind = kind;
         this.className = className;
         this.pkgName = pkgName;
         this.constantHelper = constantHelper;
+        this.annotationWriter = annotationWriter;
     }
 
     abstract JavaSourceBuilder prev();

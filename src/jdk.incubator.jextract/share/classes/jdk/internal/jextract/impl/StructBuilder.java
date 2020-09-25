@@ -32,73 +32,23 @@ import jdk.incubator.jextract.Type;
 /**
  * This class generates static utilities class for C structs, unions.
  */
-class StructBuilder extends JavaSourceBuilder {
+class StructBuilder extends NestedClassBuilder {
 
-    private final JavaSourceBuilder prev;
     private final String parentLayoutFieldName;
     private final MemoryLayout parentLayout;
     private final String structAnno;
     private final String structArrayAnno;
     private final String structPtrAnno;
 
-    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName, MemoryLayout parentLayout,
-            String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter, Type structType) {
-        super(prev.uniqueNestedClassName(className), pkgName, constantHelper, Kind.CLASS);
+    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName,
+                  MemoryLayout parentLayout, Type structType) {
+        super(prev, Kind.CLASS, className);
         this.prev = prev;
         this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
         this.structAnno = annotationWriter.getCAnnotation(structType);
         this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
         this.structPtrAnno = annotationWriter.getCAnnotation(Type.pointer(structType));
-    }
-
-    JavaSourceBuilder prev() {
-        return prev;
-    }
-
-    @Override
-    void append(String s) {
-        prev.append(s);
-    }
-
-    @Override
-    void append(char c) {
-        prev.append(c);
-    }
-
-    @Override
-    void append(long l) {
-        prev.append(l);
-    }
-
-    @Override
-    void indent() {
-        prev.indent();
-    }
-
-    @Override
-    void incrAlign() {
-        prev.incrAlign();
-    }
-
-    @Override
-    void decrAlign() {
-        prev.decrAlign();
-    }
-
-    @Override
-    protected String getClassModifiers() {
-        return PUB_MODS;
-    }
-
-    @Override
-    protected void addPackagePrefix() {
-        // nested class. containing class has necessary package declaration
-    }
-
-    @Override
-    protected void addImportSection() {
-        // nested class. containing class has necessary imports
     }
 
     @Override
