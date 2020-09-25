@@ -31,11 +31,6 @@ import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
-import java.util.List;
-import java.util.function.Supplier;
-
-import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_CLASSES;
-import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_SOURCES;
 
 interface ConstantHelper {
     DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout);
@@ -50,12 +45,8 @@ interface ConstantHelper {
     static ConstantHelperFactory makeFactory(boolean source, String packageName, ClassDesc runtimeHelper,
                                          ClassDesc cString, String[] libraryNames) {
         return source ?
-                (hf) -> {
-            return SourceConstantHelper.make(packageName, hf + "$constants", libraryNames, null);
-                } :
-                (hf) -> {
-            return ClassConstantHelper.make(packageName, hf + "$constants", runtimeHelper, cString, libraryNames, null);
-                };
+                (hf) -> SourceConstantHelper.make(packageName, hf + "$constants", libraryNames, null) :
+                (hf) -> ClassConstantHelper.make(packageName, hf + "$constants", runtimeHelper, cString, libraryNames, null);
     }
 
     interface ConstantHelperFactory {
