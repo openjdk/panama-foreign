@@ -201,7 +201,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     currentBuilder = currentBuilder.newStructBuilder(className, parentLayoutFieldName,
                             parentLayout, Type.declared(d));
                     addStructDefinition(d, currentBuilder.className);
-                    currentBuilder.incrAlign();
                     currentBuilder.classBegin();
                     currentBuilder.addLayoutGetter(parentLayoutFieldName, d.layout().get());
                     break;
@@ -211,7 +210,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         if (structClass) {
             currentBuilder = currentBuilder.classEnd();
-            currentBuilder.decrAlign();
         }
         return null;
     }

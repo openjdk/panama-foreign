@@ -25,44 +25,46 @@
 
 package jdk.internal.jextract.impl;
 
-public abstract class NestedClassBuilder extends JavaSourceBuilder {
+public class StringSourceBuilder {
 
-    JavaSourceBuilder prev;
+    // code buffer
+    private StringBuilder sb = new StringBuilder();
+    // current line alignment (number of 4-spaces)
+    private int align;
 
-    public NestedClassBuilder(JavaSourceBuilder prev, Kind kind, String className) {
-        super(prev.builder, kind, prev.uniqueNestedClassName(className), prev.pkgName, prev.constantHelper, prev.annotationWriter);
-        this.prev = prev;
+    void append(String s) {
+        sb.append(s);
     }
 
-    @Override
-    void classBegin() {
-        builder.incrAlign();
-        super.classBegin();
+    void append(char c) {
+        sb.append(c);
     }
 
-    @Override
-    JavaSourceBuilder classEnd() {
-        JavaSourceBuilder res = super.classEnd();
-        builder.decrAlign();
-        return res;
+    void append(boolean b) {
+        sb.append(b);
     }
 
-    JavaSourceBuilder prev() {
-        return prev;
+    void append(long l) {
+        sb.append(l);
     }
 
-    @Override
-    protected String getClassModifiers() {
-        return PUB_MODS;
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
+        }
     }
 
-    @Override
-    protected void addPackagePrefix() {
-        // nested class. containing class has necessary package declaration
+    void incrAlign() {
+        align++;
     }
 
-    @Override
-    protected void addImportSection() {
-        // nested class. containing class has necessary imports
+    void decrAlign() {
+        align--;
+    }
+
+    String build() {
+        String s = sb.toString();
+        sb.delete(0, s.length());
+        return s;
     }
 }

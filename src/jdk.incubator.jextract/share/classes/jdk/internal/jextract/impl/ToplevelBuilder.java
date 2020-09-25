@@ -38,16 +38,11 @@ import java.util.stream.Collectors;
  * method is called to get overall generated source string.
  */
 class ToplevelBuilder extends HeaderFileBuilder {
-    protected final StringBuffer sb;
     private final ConstantHelper.ConstantHelperFactory constantHelperFactory;
-
-    // current line alignment (number of 4-spaces)
-    private int align;
 
     ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
         super(headerFileName, pkgName, null, constantHelperFactory, annotationWriter);
         headerFileBuilders.put(headerFileName, this);
-        this.sb = new StringBuffer();
         this.constantHelperFactory = constantHelperFactory;
     }
 
@@ -66,44 +61,11 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return null;
     }
 
-    @Override
-    void append(String s) {
-        sb.append(s);
-    }
-
-    @Override
-    void append(char c) {
-        sb.append(c);
-    }
-
-    @Override
-    void append(long l) {
-        sb.append(l);
-    }
-
-    @Override
-    void indent() {
-        for (int i = 0; i < align; i++) {
-            append("    ");
-        }
-    }
-
-    @Override
-    void incrAlign() {
-        align++;
-    }
-
-    @Override
-    void decrAlign() {
-        align--;
-    }
-
     List<JavaFileObject> build() {
-        String res = sb.toString().replace("extends #{SUPER}",
+        String res = builder.build().replace("extends #{SUPER}",
                 lastHeader == null ?
                         "" :
                         "extends " + lastHeader.className);
-        this.sb.delete(0, res.length());
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
         files.addAll(constantHelper.build());

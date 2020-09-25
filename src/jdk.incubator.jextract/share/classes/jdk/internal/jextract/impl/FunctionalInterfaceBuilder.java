@@ -45,55 +45,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         this.fiAnno = annotationWriter.getCAnnotation(funcType);
     }
 
-    JavaSourceBuilder prev() {
-        return prev;
-    }
-
-    @Override
-    void append(String s) {
-        prev.append(s);
-    }
-
-    @Override
-    void append(char c) {
-        prev.append(c);
-    }
-
-    @Override
-    void append(long l) {
-        prev.append(l);
-    }
-
-    @Override
-    void indent() {
-        prev.indent();
-    }
-
-    @Override
-    void incrAlign() {
-        prev.incrAlign();
-    }
-
-    @Override
-    void decrAlign() {
-        prev.decrAlign();
-    }
-
-    @Override
-    protected String getClassModifiers() {
-        return PUB_MODS;
-    }
-
-    @Override
-    protected void addPackagePrefix() {
-        // nested class. containing class has necessary package declaration
-    }
-
-    @Override
-    protected void addImportSection() {
-        // nested class. containing class has necessary imports
-    }
-
     @Override
     JavaSourceBuilder classEnd() {
         emitFunctionalInterfaceMethod();
@@ -102,38 +53,38 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     }
 
     void emitFunctionalInterfaceMethod() {
-        incrAlign();
-        indent();
-        append(fiType.returnType().getName() + " apply(");
+        builder.incrAlign();
+        builder.indent();
+        builder.append(fiType.returnType().getName() + " apply(");
         String delim = "";
         for (int i = 0 ; i < fiType.parameterCount(); i++) {
-            append(delim + fiType.parameterType(i).getName() + " x" + i);
+            builder.append(delim + fiType.parameterType(i).getName() + " x" + i);
             delim = ", ";
         }
-        append(");\n");
-        decrAlign();
-        indent();
+        builder.append(");\n");
+        builder.decrAlign();
+        builder.indent();
     }
 
     private void emitFunctionalFactories() {
-        incrAlign();
-        indent();
-        append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi) {\n");
-        incrAlign();
-        indent();
-        append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
+        builder.incrAlign();
+        builder.indent();
+        builder.append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi) {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
                 "\"" + fiType.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        append("}\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
 
-        indent();
-        append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.register(allocate(fi));\n");
-        decrAlign();
-        indent();
-        append("}\n");
+        builder.indent();
+        builder.append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("return scope.register(allocate(fi));\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
     }
 }

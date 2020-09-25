@@ -40,17 +40,13 @@ import java.util.List;
  * method is called to get overall generated source string.
  */
 class HeaderFileBuilder extends JavaSourceBuilder {
-    protected final StringBuffer sb;
 
-    // current line alignment (number of 4-spaces)
-    private int align;
     private String superclass;
 
     HeaderFileBuilder(String headerfileName, String pkgName, String superclass, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
-        super(Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName,
+        super(new StringSourceBuilder(), Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName,
                 constantHelperFactory.make(Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true)), annotationWriter);
         this.superclass = superclass;
-        this.sb = new StringBuffer();
     }
 
     @Override
@@ -68,48 +64,16 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         return null;
     }
 
-    @Override
-    void append(String s) {
-        sb.append(s);
-    }
-
-    @Override
-    void append(char c) {
-        sb.append(c);
-    }
-
-    @Override
-    void append(long l) {
-        sb.append(l);
-    }
-
-    @Override
-    void indent() {
-        for (int i = 0; i < align; i++) {
-            append("    ");
-        }
-    }
-
-    @Override
-    void incrAlign() {
-        align++;
-    }
-
-    @Override
-    void decrAlign() {
-        align--;
-    }
-
     void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
                                   boolean varargs, List<String> paramNames, List<String> annos, String returnAnno) {
-        incrAlign();
-        indent();
-        append(PUB_MODS);
+        builder.incrAlign();
+        builder.indent();
+        builder.append(PUB_MODS);
         if (mtype.returnType() != void.class) {
-            append(returnAnno);
-            append(' ');
+            builder.append(returnAnno);
+            builder.append(' ');
         }
-        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        builder.append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -127,54 +91,54 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            append(delim + annos.get(i) + " " + pType.getSimpleName() + " " + pName);
+            builder.append(delim + annos.get(i) + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
             String lastArg = "x" + numParams;
             if (numParams > 0) {
-                append(", ");
+                builder.append(", ");
             }
-            append("Object... " + lastArg);
+            builder.append("Object... " + lastArg);
             pExprs.add(lastArg);
         }
-        append(") {\n");
-        incrAlign();
-        indent();
-        append("try {\n");
-        incrAlign();
-        indent();
+        builder.append(") {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("try {\n");
+        builder.incrAlign();
+        builder.indent();
         if (!mtype.returnType().equals(void.class)) {
-            append("return (" + mtype.returnType().getName() + ")");
+            builder.append("return (" + mtype.returnType().getName() + ")");
         }
-        append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
-        decrAlign();
-        indent();
-        append("} catch (Throwable ex) {\n");
-        incrAlign();
-        indent();
-        append("throw new AssertionError(ex);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
+        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("} catch (Throwable ex) {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("throw new AssertionError(ex);\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
+        builder.decrAlign();
     }
 
     void emitPrimitiveTypedef(Type.Primitive primType, String name, String anno) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
-            incrAlign();
-            indent();
-            append(PUB_MODS);
-            append(anno + " ValueLayout ");
-            append(uniqueNestedClassName(name));
-            append(" = ");
-            append(TypeTranslator.typeToLayoutName(kind));
-            append(";\n");
-            decrAlign();
+            builder.incrAlign();
+            builder.indent();
+            builder.append(PUB_MODS);
+            builder.append(anno + " ValueLayout ");
+            builder.append(uniqueNestedClassName(name));
+            builder.append(" = ");
+            builder.append(TypeTranslator.typeToLayoutName(kind));
+            builder.append(";\n");
+            builder.decrAlign();
         }
     }
 
@@ -187,8 +151,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     List<JavaFileObject> build() {
         classEnd();
-        String res = sb.toString();
-        this.sb.delete(0, res.length());
+        String res = builder.build();
         List<JavaFileObject> files = constantHelper.build();
         files.add(Utils.fileFromString(pkgName, className, res));
         return files;

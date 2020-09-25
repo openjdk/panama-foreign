@@ -59,29 +59,29 @@ public class TypedefBuilder extends NestedClassBuilder {
     void emitAllocatePointerMethods() {
         String anno = annotationWriter.getCAnnotation(Type.pointer(type));
         // allocatePointer
-        incrAlign();
-        indent();
-        append(PUB_MODS);
-        append(anno + " MemorySegment allocatePointer() {\n");
-        incrAlign();
-        indent();
-        append("return MemorySegment.allocateNative(C_POINTER);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
+        builder.incrAlign();
+        builder.indent();
+        builder.append(PUB_MODS);
+        builder.append(anno + " MemorySegment allocatePointer() {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("return MemorySegment.allocateNative(C_POINTER);\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
+        builder.decrAlign();
 
         // allocatePointer (scope version)
-        incrAlign();
-        indent();
-        append(PUB_MODS);
-        append(anno + " MemorySegment allocatePointer(NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.allocate(C_POINTER);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
+        builder.incrAlign();
+        builder.indent();
+        builder.append(PUB_MODS);
+        builder.append(anno + " MemorySegment allocatePointer(NativeScope scope) {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("return scope.allocate(C_POINTER);\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
+        builder.decrAlign();
     }
 }
