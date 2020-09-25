@@ -46,8 +46,9 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     private int align;
     private String superclass;
 
-    HeaderFileBuilder(String headerfileName, String pkgName, String superclass, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName, constantHelper, annotationWriter);
+    HeaderFileBuilder(String headerfileName, String pkgName, String superclass, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
+        super(Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName,
+                constantHelperFactory.make(Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true)), annotationWriter);
         this.superclass = superclass;
         this.sb = new StringBuffer();
     }
@@ -188,6 +189,6 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         classEnd();
         String res = sb.toString();
         this.sb.delete(0, res.length());
-        return List.of(Utils.fileFromString(pkgName, className, res));
+        return List.of(Utils.fileFromString(pkgName, className, res), constantHelper.build());
     }
 }

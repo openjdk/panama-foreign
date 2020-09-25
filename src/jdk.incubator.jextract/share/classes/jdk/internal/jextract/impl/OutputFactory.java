@@ -62,7 +62,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     protected final ToplevelBuilder toplevelBuilder;
     protected JavaSourceBuilder currentBuilder;
-    protected final ConstantHelper constantHelper;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     protected final AnnotationWriter annotationWriter;
     private final String pkgName;
@@ -93,21 +92,19 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
                 String pkgName, List<String> libraryNames) {
-        String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
+        ConstantHelper.ConstantHelperFactory constantHelperFactory = ConstantHelper.makeFactory(source, pkgName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
                 libraryNames.toArray(String[]::new));
         AnnotationWriter annotationWriter = new AnnotationWriter();
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(headerName, pkgName, constantHelper, annotationWriter);
-        return new OutputFactory(pkgName, toplevelBuilder, constantHelper, annotationWriter).generate(decl);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(headerName, pkgName, constantHelperFactory, annotationWriter);
+        return new OutputFactory(pkgName, toplevelBuilder, annotationWriter).generate(decl);
     }
 
-    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, ConstantHelper constantHelper,
+    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder,
                           AnnotationWriter annotationWriter) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
-        this.constantHelper = constantHelper;
         this.annotationWriter = annotationWriter;
     }
 
@@ -127,7 +124,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         try {
             List<JavaFileObject> files = new ArrayList<>();
             files.addAll(toplevelBuilder.build());
-            files.addAll(constantHelper.getClasses());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);

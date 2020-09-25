@@ -71,10 +71,10 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     public static ConstantHelper make(String packageName, String className, String[] libraryNames,
-                                      String baseClassName, boolean isFinal) {
+                                      String baseClassName) {
         ClassDesc CD_constantsHelper = ClassDesc.of(className);
         SourceConstantHelper helper = new SourceConstantHelper(packageName, className, CD_constantsHelper);
-        helper.classBegin(libraryNames, baseClassName, isFinal);
+        helper.classBegin(libraryNames, baseClassName);
         return helper;
     }
 
@@ -179,11 +179,11 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public List<JavaFileObject> getClasses() {
+    public JavaFileObject build() {
         classEnd();
         JavaFileObject result = newJavaFileObject(constantClassName, sb.toString());
         sb = null;
-        return List.of(result);
+        return result;
     }
 
     // Internals only below this point
@@ -196,13 +196,10 @@ class SourceConstantHelper implements ConstantHelper {
         decrAlign();
     }
 
-    private void classBegin(String[] libraryNames, String baseClassName, boolean isFinal) {
+    private void classBegin(String[] libraryNames, String baseClassName) {
         addPackagePrefix(pkgName);
         addImportSection();
         append("public ");
-        if (isFinal) {
-            append("final ");
-        }
         append("class ");
         append(constantClassName);
         if (baseClassName != null) {

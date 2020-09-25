@@ -39,14 +39,16 @@ import java.util.stream.Collectors;
  */
 class ToplevelBuilder extends HeaderFileBuilder {
     protected final StringBuffer sb;
+    private final ConstantHelper.ConstantHelperFactory constantHelperFactory;
 
     // current line alignment (number of 4-spaces)
     private int align;
 
-    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(headerFileName, pkgName, null, constantHelper, annotationWriter);
+    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
+        super(headerFileName, pkgName, null, constantHelperFactory, annotationWriter);
         headerFileBuilders.put(headerFileName, this);
         this.sb = new StringBuffer();
+        this.constantHelperFactory = constantHelperFactory;
     }
 
     @Override
@@ -104,6 +106,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         this.sb.delete(0, res.length());
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
+        files.add(constantHelper.build());
         files.addAll(headerFileBuilders.values().stream()
                 .skip(1) // skip this builder
                 .flatMap(hf -> hf.build().stream())
@@ -133,7 +136,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
                     lastHeader == null ?
                             null :
                             lastHeader.className,
-                    constantHelper, annotationWriter);
+                    constantHelperFactory, annotationWriter);
             lastHeader = headerFileBuilder;
             headerFileBuilders.put(headerfile, headerFileBuilder);
             headerFileBuilder.classBegin();

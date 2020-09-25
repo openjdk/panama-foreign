@@ -32,6 +32,7 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_CLASSES;
 import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_CLASS_SOURCES;
@@ -44,14 +45,20 @@ interface ConstantHelper {
     DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout);
     DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc);
     DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value);
-    List<JavaFileObject> getClasses();
+    JavaFileObject build();
 
-    static ConstantHelper make(boolean source, String packageName, String headerClassName, ClassDesc runtimeHelper,
-                               ClassDesc cString, String[] libraryNames) {
-        return new MultiFileConstantHelper(headerClassName,
-            (simpleClassName, baseClassName, isFinal) -> source
-                ? SourceConstantHelper.make(packageName, simpleClassName, libraryNames, baseClassName, isFinal)
-                : ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName, isFinal),
-            source ? CONSTANTS_PER_CLASS_SOURCES : CONSTANTS_PER_CLASS_CLASSES);
+    static ConstantHelperFactory makeFactory(boolean source, String packageName, ClassDesc runtimeHelper,
+                                         ClassDesc cString, String[] libraryNames) {
+        return source ?
+                (hf) -> {
+            return SourceConstantHelper.make(packageName, hf + "$constants", libraryNames, null);
+                } :
+                (hf) -> {
+            return ClassConstantHelper.make(packageName, hf + "$constants", runtimeHelper, cString, libraryNames, null);
+                };
+    }
+
+    interface ConstantHelperFactory {
+        ConstantHelper make(String headerClassName);
     }
 }
