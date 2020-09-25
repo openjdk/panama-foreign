@@ -106,7 +106,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         this.sb.delete(0, res.length());
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
-        files.add(constantHelper.build());
+        files.addAll(constantHelper.build());
         files.addAll(headerFileBuilders.values().stream()
                 .skip(1) // skip this builder
                 .flatMap(hf -> hf.build().stream())

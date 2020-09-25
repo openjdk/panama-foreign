@@ -289,11 +289,11 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public JavaFileObject build() {
+    public List<JavaFileObject> build() {
         cw.visitEnd();
         byte[] bytes = cw.toByteArray();
         cw = null;
-        return jfoFromByteArray(internalClassName, bytes);
+        return List.of(jfoFromByteArray(internalClassName, bytes));
     }
 
     // Utility

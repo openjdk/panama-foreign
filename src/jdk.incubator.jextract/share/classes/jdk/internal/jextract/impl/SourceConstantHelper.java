@@ -179,11 +179,11 @@ class SourceConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public JavaFileObject build() {
+    public List<JavaFileObject> build() {
         classEnd();
         JavaFileObject result = newJavaFileObject(constantClassName, sb.toString());
         sb = null;
-        return result;
+        return List.of(result);
     }
 
     // Internals only below this point

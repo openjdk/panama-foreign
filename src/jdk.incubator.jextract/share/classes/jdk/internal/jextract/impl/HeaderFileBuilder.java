@@ -189,6 +189,8 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         classEnd();
         String res = sb.toString();
         this.sb.delete(0, res.length());
-        return List.of(Utils.fileFromString(pkgName, className, res), constantHelper.build());
+        List<JavaFileObject> files = constantHelper.build();
+        files.add(Utils.fileFromString(pkgName, className, res));
+        return files;
     }
 }
