@@ -71,6 +71,7 @@ public class ConstantsTest extends JextractToolRunner {
         var f = findMethod(constants, name);
         assertNotNull(f);
         assertSame(f.getReturnType(), type);
+        f.setAccessible(true);
         Object actual = f.invoke(null);
         checker.accept(actual);
     }

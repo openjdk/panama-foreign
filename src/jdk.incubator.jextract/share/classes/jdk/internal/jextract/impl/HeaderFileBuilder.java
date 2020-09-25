@@ -27,7 +27,6 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -40,15 +39,27 @@ import java.util.List;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-class HeaderBuilder extends JavaSourceBuilder {
+class HeaderFileBuilder extends JavaSourceBuilder {
     protected final StringBuffer sb;
 
     // current line alignment (number of 4-spaces)
     private int align;
+    private String superclass;
 
-    HeaderBuilder(String className, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(Kind.CLASS, className, pkgName, constantHelper, annotationWriter);
+    HeaderFileBuilder(String headerfileName, String pkgName, String superclass, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
+        super(Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName, constantHelper, annotationWriter);
+        this.superclass = superclass;
         this.sb = new StringBuffer();
+    }
+
+    @Override
+    String superClass() {
+        return superclass;
+    }
+
+    @Override
+    protected String getClassModifiers() {
+        return "";
     }
 
     @Override
@@ -173,21 +184,10 @@ class HeaderBuilder extends JavaSourceBuilder {
         };
     }
 
-    JavaFileObject build() {
+    List<JavaFileObject> build() {
+        classEnd();
         String res = sb.toString();
         this.sb.delete(0, res.length());
-        return Utils.fileFromString(pkgName, className, res);
-    }
-
-    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
-        builder.classBegin();
-        builder.classEnd();
-    }
-
-    void addTypeDef(String name, String superClass, Type type) {
-        TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
-        builder.classBegin();
-        builder.classEnd();
+        return List.of(Utils.fileFromString(pkgName, className, res));
     }
 }

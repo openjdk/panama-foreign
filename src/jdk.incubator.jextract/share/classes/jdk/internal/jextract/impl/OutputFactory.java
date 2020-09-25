@@ -60,7 +60,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<String> variables = new HashSet<>();
     private final Set<Declaration.Function> functions = new HashSet<>();
 
-    protected final HeaderBuilder toplevelBuilder;
+    protected final ToplevelBuilder toplevelBuilder;
     protected JavaSourceBuilder currentBuilder;
     protected final ConstantHelper constantHelper;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
@@ -98,11 +98,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
                 libraryNames.toArray(String[]::new));
         AnnotationWriter annotationWriter = new AnnotationWriter();
-        HeaderBuilder headerBuilder = new HeaderBuilder(clsName, pkgName, constantHelper, annotationWriter);
-        return new OutputFactory(pkgName, headerBuilder, constantHelper, annotationWriter).generate(decl);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(headerName, pkgName, constantHelper, annotationWriter);
+        return new OutputFactory(pkgName, toplevelBuilder, constantHelper, annotationWriter).generate(decl);
     }
 
-    private OutputFactory(String pkgName, HeaderBuilder toplevelBuilder, ConstantHelper constantHelper,
+    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, ConstantHelper constantHelper,
                           AnnotationWriter annotationWriter) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
@@ -126,7 +126,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         toplevelBuilder.classEnd();
         try {
             List<JavaFileObject> files = new ArrayList<>();
-            files.add(toplevelBuilder.build());
+            files.addAll(toplevelBuilder.build());
             files.addAll(constantHelper.getClasses());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
@@ -180,7 +180,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         String anno = annotationWriter.getCAnnotation(constant.type());
-        toplevelBuilder.addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
+        builderFor(constant).addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
                 typeTranslator.getJavaType(constant.type()), constant.value(), anno);
         return null;
@@ -297,7 +297,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 .map(annotationWriter::getCAnnotation)
                 .collect(Collectors.toList());
         String returnAnno = annotationWriter.getCAnnotation(funcTree.type().returnType());
-        toplevelBuilder.addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+        builderFor(funcTree).addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
                 Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
@@ -375,7 +375,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         } else if (type instanceof Type.Primitive) {
              String anno = annotationWriter.getCAnnotation(type);
-             toplevelBuilder.emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
+             builderFor(tree).emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
         }
         return null;
     }
@@ -481,5 +481,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private void warn(String msg) {
         System.err.println("WARNING: " + msg);
+    }
+
+    HeaderFileBuilder builderFor(Declaration declaration) {
+        //FIXME: what about declarations which have no path, or where duplicate names are found?
+        return toplevelBuilder.builderFor(declaration.pos().path().getFileName().toString());
     }
 }

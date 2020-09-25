@@ -1,0 +1,143 @@
+/*
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package jdk.internal.jextract.impl;
+
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.jextract.Type;
+
+import javax.tools.JavaFileObject;
+import java.lang.invoke.MethodType;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * A helper class to generate header interface class in source form.
+ * After aggregating various constituents of a .java source, build
+ * method is called to get overall generated source string.
+ */
+class ToplevelBuilder extends HeaderFileBuilder {
+    protected final StringBuffer sb;
+
+    // current line alignment (number of 4-spaces)
+    private int align;
+
+    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
+        super(headerFileName, pkgName, null, constantHelper, annotationWriter);
+        headerFileBuilders.put(headerFileName, this);
+        this.sb = new StringBuffer();
+    }
+
+    @Override
+    String superClass() {
+        return "#{SUPER}";
+    }
+
+    @Override
+    protected String getClassModifiers() {
+        return PUB_CLS_MODS;
+    }
+
+    @Override
+    JavaSourceBuilder prev() {
+        return null;
+    }
+
+    @Override
+    void append(String s) {
+        sb.append(s);
+    }
+
+    @Override
+    void append(char c) {
+        sb.append(c);
+    }
+
+    @Override
+    void append(long l) {
+        sb.append(l);
+    }
+
+    @Override
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
+        }
+    }
+
+    @Override
+    void incrAlign() {
+        align++;
+    }
+
+    @Override
+    void decrAlign() {
+        align--;
+    }
+
+    List<JavaFileObject> build() {
+        String res = sb.toString().replace("extends #{SUPER}",
+                lastHeader == null ?
+                        "" :
+                        "extends " + lastHeader.className);
+        this.sb.delete(0, res.length());
+        List<JavaFileObject> files = new ArrayList<>();
+        files.add(Utils.fileFromString(pkgName, className, res));
+        files.addAll(headerFileBuilders.values().stream()
+                .skip(1) // skip this builder
+                .flatMap(hf -> hf.build().stream())
+                .collect(Collectors.toList()));
+        return files;
+    }
+
+    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
+        builder.classBegin();
+        builder.classEnd();
+    }
+
+    void addTypeDef(String name, String superClass, Type type) {
+        TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
+        builder.classBegin();
+        builder.classEnd();
+    }
+
+    private Map<String, HeaderFileBuilder> headerFileBuilders = new LinkedHashMap<>();
+    private HeaderFileBuilder lastHeader = null;
+
+    HeaderFileBuilder builderFor(String headerfile) {
+        HeaderFileBuilder headerFileBuilder = headerFileBuilders.get(headerfile);
+        if (headerFileBuilder == null) {
+            headerFileBuilder = new HeaderFileBuilder(headerfile, pkgName,
+                    lastHeader == null ?
+                            null :
+                            lastHeader.className,
+                    constantHelper, annotationWriter);
+            lastHeader = headerFileBuilder;
+            headerFileBuilders.put(headerfile, headerFileBuilder);
+            headerFileBuilder.classBegin();
+        }
+        return headerFileBuilder;
+    }
+}

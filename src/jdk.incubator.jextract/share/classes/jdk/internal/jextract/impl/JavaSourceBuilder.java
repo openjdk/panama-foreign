@@ -118,7 +118,7 @@ abstract class JavaSourceBuilder {
     void emitConstructor() {
         incrAlign();
         indent();
-        append("private ");
+        append("/* package-private */ ");
         append(className);
         append("() {}");
         append('\n');
