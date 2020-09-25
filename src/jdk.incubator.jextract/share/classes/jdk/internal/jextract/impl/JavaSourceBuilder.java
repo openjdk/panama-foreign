@@ -26,6 +26,7 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Type;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
@@ -82,6 +83,14 @@ abstract class JavaSourceBuilder {
 
     abstract void decrAlign();
 
+    String superClass() {
+        return null;
+    }
+
+    Type type() {
+        return null;
+    }
+
     protected String getClassModifiers() {
         return PUB_CLS_MODS;
     }
@@ -91,8 +100,15 @@ abstract class JavaSourceBuilder {
         addImportSection();
 
         indent();
+        if (type() != null) {
+            append(annotationWriter.getCAnnotation(type()));
+        }
         append(getClassModifiers());
         append(kind.kindName + " " + className);
+        if (superClass() != null) {
+            append(" extends ");
+            append(superClass());
+        }
         append(" {\n\n");
         if (kind != Kind.INTERFACE) {
             emitConstructor();

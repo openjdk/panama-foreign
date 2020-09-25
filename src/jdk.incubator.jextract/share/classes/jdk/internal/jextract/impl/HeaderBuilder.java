@@ -173,66 +173,6 @@ class HeaderBuilder extends JavaSourceBuilder {
         };
     }
 
-    void emitTypedef(Declaration.Typedef td, String superClassName) {
-        String className = td.name();
-        boolean superClassExists = superClassName != null;
-        incrAlign();
-        indent();
-        append(PUB_MODS);
-        append(annotationWriter.getCAnnotation(td.type()));
-        append(" class ");
-        String uniqueName = uniqueNestedClassName(className);
-        append(uniqueName);
-        if (superClassExists) {
-            append(" extends ");
-            append(superClassName);
-        }
-        append(" {\n");
-
-        incrAlign();
-        indent();
-        // private constructor
-        append("private ");
-        append(uniqueName);
-        append("() {}\n");
-        decrAlign();
-
-        // typedef of incomplete struct/union
-        // generate a class with just allocatePointer methods with right annotation
-        if (!superClassExists) {
-            String anno = annotationWriter.getCAnnotation(Type.pointer(td.type()));
-            // allocatePointer
-            incrAlign();
-            indent();
-            append(PUB_MODS);
-            append(anno + " MemorySegment allocatePointer() {\n");
-            incrAlign();
-            indent();
-            append("return MemorySegment.allocateNative(C_POINTER);\n");
-            decrAlign();
-            indent();
-            append("}\n");
-            decrAlign();
-
-            // allocatePointer (scope version)
-            incrAlign();
-            indent();
-            append(PUB_MODS);
-            append(anno + " MemorySegment allocatePointer(NativeScope scope) {\n");
-            incrAlign();
-            indent();
-            append("return scope.allocate(C_POINTER);\n");
-            decrAlign();
-            indent();
-            append("}\n");
-            decrAlign();
-        }
-
-        indent();
-        append("}\n");
-        decrAlign();
-    }
-
     JavaFileObject build() {
         String res = sb.toString();
         this.sb.delete(0, res.length());

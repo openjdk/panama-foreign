@@ -39,6 +39,7 @@ class StructBuilder extends NestedClassBuilder {
     private final String structAnno;
     private final String structArrayAnno;
     private final String structPtrAnno;
+    private final Type structType;
 
     StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName,
                   MemoryLayout parentLayout, Type structType) {
@@ -49,6 +50,12 @@ class StructBuilder extends NestedClassBuilder {
         this.structAnno = annotationWriter.getCAnnotation(structType);
         this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
         this.structPtrAnno = annotationWriter.getCAnnotation(Type.pointer(structType));
+        this.structType = structType;
+    }
+
+    @Override
+    Type type() {
+        return structType;
     }
 
     @Override

@@ -119,8 +119,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         decl.members().forEach(this::generateDecl);
         // check if unresolved typedefs can be resolved now!
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
-            Declaration.Scoped structDef = ((Type.Declared)td.type()).tree();
-            toplevelBuilder.emitTypedef(td, structDefinitionSeen(structDef)? structDefinitionName(structDef) : null);
+            Declaration.Scoped structDef = ((Type.Declared) td.type()).tree();
+            TypedefBuilder typedefBuilder = new TypedefBuilder(toplevelBuilder, td.name(),
+                    structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
+            typedefBuilder.classBegin();
+            typedefBuilder.classEnd();
         }
         toplevelBuilder.classEnd();
         try {
@@ -359,7 +362,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                toplevelBuilder.emitTypedef(tree, structDefinitionName(s));
+                                TypedefBuilder typedefBuilder = new TypedefBuilder(toplevelBuilder, tree.name(), structDefinitionName(s), tree.type());
+                                typedefBuilder.classBegin();
+                                typedefBuilder.classEnd();
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.
