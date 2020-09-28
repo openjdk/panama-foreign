@@ -64,7 +64,7 @@ public class StringSourceBuilder {
 
     String build() {
         String s = sb.toString();
-        sb.delete(0, s.length());
+        sb = null;
         return s;
     }
 }
