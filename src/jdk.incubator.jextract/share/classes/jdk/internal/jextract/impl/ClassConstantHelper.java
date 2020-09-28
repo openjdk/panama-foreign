@@ -151,7 +151,7 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     public static ConstantHelper make(String packageName, String className, ClassDesc runtimeHelper, ClassDesc cString,
-                                      String[] libraryNames, String baseClassName, boolean isFinal) {
+                                      String[] libraryNames, String baseClassName) {
         String qualName = Utils.qualifiedClassName(packageName, className);
         String qualBaseName = baseClassName != null ? Utils.qualifiedClassName(packageName, baseClassName) : null;
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -195,7 +195,7 @@ class ClassConstantHelper implements ConstantHelper {
 
         ClassConstantHelper helper = new ClassConstantHelper(cw, CD_constantsHelper, internalClassName,
                 MH_downcallHandle, MH_lookupGlobalVariable, MH_makeCString, LIBRARIES);
-        helper.classBegin(qualBaseName, isFinal);
+        helper.classBegin(qualBaseName);
         return helper;
     }
 
@@ -203,10 +203,9 @@ class ClassConstantHelper implements ConstantHelper {
         return className.replace('.', '/');
     }
 
-    private void classBegin(String baseClassName, boolean isFinal) {
+    private void classBegin(String baseClassName) {
         String baseName = baseClassName != null ? toInternalName(baseClassName) : INTR_OBJECT;
-        int mods = isFinal? ACC_FINAL : 0;
-        cw.visit(V15, mods, internalClassName, null, baseName, null);
+        cw.visit(V15, 0, internalClassName, null, baseName, null);
     }
 
     private static DirectMethodHandleDesc findRuntimeHelperBootstrap(ClassDesc runtimeHelper, String name, MethodType type) {
@@ -289,7 +288,7 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public List<JavaFileObject> getClasses() {
+    public List<JavaFileObject> build() {
         cw.visitEnd();
         byte[] bytes = cw.toByteArray();
         cw = null;
