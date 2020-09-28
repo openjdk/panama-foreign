@@ -51,7 +51,6 @@ public final class Writer {
         } else {
             return InMemoryJavaCompiler.compile(sources,
                 "--add-modules", "jdk.incubator.foreign",
-                "-XDcompilePolicy=byfile",
                 "-parameters", "-g:lines",
                 "-d", dest.toAbsolutePath().toString(),
                 "-cp", dest.toAbsolutePath().toString());
