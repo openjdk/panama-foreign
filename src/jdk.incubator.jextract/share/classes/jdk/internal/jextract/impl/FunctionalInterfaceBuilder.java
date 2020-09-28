@@ -62,7 +62,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         }
         builder.append(");\n");
         builder.decrAlign();
-        builder.indent();
     }
 
     private void emitFunctionalFactories() {
@@ -76,7 +75,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
-
         builder.indent();
         builder.append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
         builder.incrAlign();
@@ -85,5 +83,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
+        builder.decrAlign();
     }
 }
