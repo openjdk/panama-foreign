@@ -222,17 +222,6 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return getGetterDesc(name, type);
     }
 
-    @Override
-    protected void addImportSection() {
-        builder.append("import java.lang.invoke.MethodHandle;\n");
-        builder.append("import java.lang.invoke.VarHandle;\n");
-        builder.append("import jdk.incubator.foreign.*;\n");
-        builder.append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
-        builder.append("import static ");
-        builder.append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
-        builder.append(".*;\n\n");
-    }
-
     private String getMethodHandleFieldName(String javaName) {
         return javaName + "$MH_";
     }
