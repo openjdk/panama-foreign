@@ -36,12 +36,11 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
-    FunctionalInterfaceBuilder(JavaSourceBuilder prev, String className, MethodType fiType,
+    FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className, MethodType fiType,
                                FunctionDescriptor fiDesc, Type funcType) {
-        super(prev, Kind.INTERFACE, className);
+        super(enclosing, Kind.INTERFACE, className);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
-        this.prev = prev;
         this.fiAnno = annotationWriter.getCAnnotation(funcType);
     }
 

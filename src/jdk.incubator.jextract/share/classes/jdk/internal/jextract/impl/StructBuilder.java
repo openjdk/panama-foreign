@@ -41,10 +41,9 @@ class StructBuilder extends NestedClassBuilder {
     private final String structPtrAnno;
     private final Type structType;
 
-    StructBuilder(JavaSourceBuilder prev, String className, String parentLayoutFieldName,
+    StructBuilder(JavaSourceBuilder enclosing, String className, String parentLayoutFieldName,
                   MemoryLayout parentLayout, Type structType) {
-        super(prev, Kind.CLASS, className);
-        this.prev = prev;
+        super(enclosing, Kind.CLASS, className);
         this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
         this.structAnno = annotationWriter.getCAnnotation(structType);

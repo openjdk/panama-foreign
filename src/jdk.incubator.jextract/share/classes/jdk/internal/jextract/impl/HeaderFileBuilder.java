@@ -43,9 +43,8 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     private String superclass;
 
-    HeaderFileBuilder(String headerfileName, String pkgName, String superclass, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
-        super(new StringSourceBuilder(), Kind.CLASS, Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true), pkgName,
-                constantHelperFactory.make(Utils.javaSafeIdentifier(headerfileName.replace(".h", "_h"), true)), annotationWriter);
+    HeaderFileBuilder(String clsName, String pkgName, String superclass, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
+        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper, annotationWriter);
         this.superclass = superclass;
     }
 
@@ -57,11 +56,6 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     protected String getClassModifiers() {
         return "";
-    }
-
-    @Override
-    JavaSourceBuilder prev() {
-        return null;
     }
 
     void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,

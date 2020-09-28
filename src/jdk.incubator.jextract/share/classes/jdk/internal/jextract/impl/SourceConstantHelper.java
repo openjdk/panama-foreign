@@ -73,11 +73,6 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return baseClassName;
     }
 
-    @Override
-    JavaSourceBuilder prev() {
-        return null;
-    }
-
     public static ConstantHelper make(String packageName, String className, String[] libraryNames,
                                       String baseClassName) {
         ClassDesc CD_constantsHelper = ClassDesc.of(className);

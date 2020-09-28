@@ -71,8 +71,6 @@ abstract class JavaSourceBuilder {
         this.annotationWriter = annotationWriter;
     }
 
-    abstract JavaSourceBuilder prev();
-
     String superClass() {
         return null;
     }
@@ -118,7 +116,7 @@ abstract class JavaSourceBuilder {
     JavaSourceBuilder classEnd() {
         builder.indent();
         builder.append("}\n\n");
-        return prev();
+        return this;
     }
 
     void addLayoutGetter(String javaName, MemoryLayout layout) {

@@ -92,11 +92,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
                 String pkgName, List<String> libraryNames) {
-        ConstantHelper.ConstantHelperFactory constantHelperFactory = ConstantHelper.makeFactory(source, pkgName,
+        String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
+        ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
                 libraryNames.toArray(String[]::new));
         AnnotationWriter annotationWriter = new AnnotationWriter();
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(headerName, pkgName, constantHelperFactory, annotationWriter);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(clsName, pkgName, constantHelper, annotationWriter);
         return new OutputFactory(pkgName, toplevelBuilder, annotationWriter).generate(decl);
     }
 
@@ -176,7 +177,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         String anno = annotationWriter.getCAnnotation(constant.type());
-        builderFor(constant).addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
+        header().addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
                 typeTranslator.getJavaType(constant.type()), constant.value(), anno);
         return null;
@@ -278,7 +279,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
-        toplevelBuilder.addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
+        header().addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
                                           .stream()
@@ -291,7 +292,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 .map(annotationWriter::getCAnnotation)
                 .collect(Collectors.toList());
         String returnAnno = annotationWriter.getCAnnotation(funcTree.type().returnType());
-        builderFor(funcTree).addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
                 Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
@@ -369,7 +370,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         } else if (type instanceof Type.Primitive) {
              String anno = annotationWriter.getCAnnotation(type);
-             builderFor(tree).emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
+             header().emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
         }
         return null;
     }
@@ -432,13 +433,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else {
             if (sizeAvailable) {
                 if (isSegment) {
-                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
+                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
                 } else {
-                    toplevelBuilder.addLayoutGetter(fieldName, layout);
-                    toplevelBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                    toplevelBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
-                    toplevelBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz, anno);
-                    toplevelBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz, anno);
+                    header().addLayoutGetter(fieldName, layout);
+                    header().addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
+                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
+                    header().addGetter(fieldName, tree.name(), treeLayout, clazz, anno);
+                    header().addSetter(fieldName, tree.name(), treeLayout, clazz, anno);
                 }
             } else {
                 warn("Layout size not available for " + fieldName);
@@ -477,8 +478,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         System.err.println("WARNING: " + msg);
     }
 
-    HeaderFileBuilder builderFor(Declaration declaration) {
-        //FIXME: what about declarations which have no path, or where duplicate names are found?
-        return toplevelBuilder.builderFor(declaration.pos().path().getFileName().toString());
+    HeaderFileBuilder header() {
+        return toplevelBuilder.nextHeader();
     }
 }

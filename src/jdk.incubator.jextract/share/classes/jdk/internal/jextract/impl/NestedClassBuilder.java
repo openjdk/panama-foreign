@@ -27,11 +27,11 @@ package jdk.internal.jextract.impl;
 
 public abstract class NestedClassBuilder extends JavaSourceBuilder {
 
-    JavaSourceBuilder prev;
+    private final JavaSourceBuilder enclosing;
 
-    public NestedClassBuilder(JavaSourceBuilder prev, Kind kind, String className) {
-        super(prev.builder, kind, prev.uniqueNestedClassName(className), prev.pkgName, prev.constantHelper, prev.annotationWriter);
-        this.prev = prev;
+    public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
+        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper, enclosing.annotationWriter);
+        this.enclosing = enclosing;
     }
 
     @Override
@@ -42,13 +42,9 @@ public abstract class NestedClassBuilder extends JavaSourceBuilder {
 
     @Override
     JavaSourceBuilder classEnd() {
-        JavaSourceBuilder res = super.classEnd();
+        super.classEnd();
         builder.decrAlign();
-        return res;
-    }
-
-    JavaSourceBuilder prev() {
-        return prev;
+        return enclosing;
     }
 
     @Override

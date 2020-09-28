@@ -38,12 +38,13 @@ import java.util.stream.Collectors;
  * method is called to get overall generated source string.
  */
 class ToplevelBuilder extends HeaderFileBuilder {
-    private final ConstantHelper.ConstantHelperFactory constantHelperFactory;
 
-    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper.ConstantHelperFactory constantHelperFactory, AnnotationWriter annotationWriter) {
-        super(headerFileName, pkgName, null, constantHelperFactory, annotationWriter);
-        headerFileBuilders.put(headerFileName, this);
-        this.constantHelperFactory = constantHelperFactory;
+    private int declCount;
+
+    static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
+
+    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
+        super(headerFileName, pkgName, null, constantHelper, annotationWriter);
     }
 
     @Override
@@ -56,21 +57,13 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return PUB_CLS_MODS;
     }
 
-    @Override
-    JavaSourceBuilder prev() {
-        return null;
-    }
-
     List<JavaFileObject> build() {
         String res = builder.build().replace("extends #{SUPER}",
-                lastHeader == null ?
-                        "" :
-                        "extends " + lastHeader.className);
+                lastHeader().map(h -> "extends " + h.className).orElse(""));
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
         files.addAll(constantHelper.build());
-        files.addAll(headerFileBuilders.values().stream()
-                .skip(1) // skip this builder
+        files.addAll(headers.stream()
                 .flatMap(hf -> hf.build().stream())
                 .collect(Collectors.toList()));
         return files;
@@ -88,21 +81,24 @@ class ToplevelBuilder extends HeaderFileBuilder {
         builder.classEnd();
     }
 
-    private Map<String, HeaderFileBuilder> headerFileBuilders = new LinkedHashMap<>();
-    private HeaderFileBuilder lastHeader = null;
+    private List<HeaderFileBuilder> headers = new ArrayList<>();
 
-    HeaderFileBuilder builderFor(String headerfile) {
-        HeaderFileBuilder headerFileBuilder = headerFileBuilders.get(headerfile);
-        if (headerFileBuilder == null) {
-            headerFileBuilder = new HeaderFileBuilder(headerfile, pkgName,
-                    lastHeader == null ?
-                            null :
-                            lastHeader.className,
-                    constantHelperFactory, annotationWriter);
-            lastHeader = headerFileBuilder;
-            headerFileBuilders.put(headerfile, headerFileBuilder);
-            headerFileBuilder.classBegin();
+    Optional<HeaderFileBuilder> lastHeader() {
+        return headers.size() == 0 ?
+                Optional.empty() :
+                Optional.of(headers.get(headers.size() - 1));
+    }
+
+    HeaderFileBuilder nextHeader() {
+        declCount++;
+        if (declCount > DECLS_PER_HEADER_CLASS) {
+            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "$" + headers.size(), pkgName,
+                    lastHeader().orElse(this).className,
+                    constantHelper, annotationWriter);
+            headers.add(headerFileBuilder);
+            return headerFileBuilder;
+        } else {
+            return this;
         }
-        return headerFileBuilder;
     }
 }
