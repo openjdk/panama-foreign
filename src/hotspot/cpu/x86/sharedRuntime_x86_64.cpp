@@ -3810,10 +3810,11 @@ void NativeInvokerGenerator::generate() {
   __ safepoint_poll(L_safepoint_poll_slow_path, r15_thread, rscratch1);
   __ cmpl(Address(r15_thread, JavaThread::suspend_flags_offset()), 0);
   __ jcc(Assembler::notEqual, L_safepoint_poll_slow_path);
-  // change thread state
-  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
 
   __ bind(L_after_safepoint_poll);
+
+  // change thread state
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
 
   __ block_comment("reguard stack check");
   Label L_reguard;
