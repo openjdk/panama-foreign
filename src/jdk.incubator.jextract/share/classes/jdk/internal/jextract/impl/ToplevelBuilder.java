@@ -92,7 +92,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
     HeaderFileBuilder nextHeader() {
         if (declCount > DECLS_PER_HEADER_CLASS) {
             HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "$" + headers.size(), pkgName,
-                    lastHeader().orElse(this).className,
+                    lastHeader().map(h -> h.className).orElse(null),
                     constantHelper, annotationWriter);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
