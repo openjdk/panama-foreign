@@ -90,14 +90,15 @@ class ToplevelBuilder extends HeaderFileBuilder {
     }
 
     HeaderFileBuilder nextHeader() {
-        declCount++;
         if (declCount > DECLS_PER_HEADER_CLASS) {
             HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "$" + headers.size(), pkgName,
                     lastHeader().orElse(this).className,
                     constantHelper, annotationWriter);
             headers.add(headerFileBuilder);
+            declCount = 1;
             return headerFileBuilder;
         } else {
+            declCount++;
             return this;
         }
     }
