@@ -55,7 +55,7 @@ import java.util.function.Consumer;
  * <p>
  * Non-platform classes should not implement {@linkplain MemorySegment} directly.
  *
- * <h2>Constructing memory segments from different sources</h2>
+ * <h2>Constructing memory segments</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
  * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout)},
@@ -85,7 +85,7 @@ import java.util.function.Consumer;
  * associated with such segments remain inaccessible, and that said memory sources are never aliased by more than one segment
  * at a time - e.g. so as to prevent concurrent modifications of the contents of an array, or buffer segment.
  *
- * <h2>Closing a memory segment</h2>
+ * <h2>Explicit deallocation</h2>
  *
  * Memory segments are closed explicitly (see {@link MemorySegment#close()}). When a segment is closed, it is no longer
  * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on the segment (or on any {@link MemoryAddress} instance
@@ -102,10 +102,6 @@ import java.util.function.Consumer;
  *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
  *     objects.</li>
  * </ul>
- *
- * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
- * that segment will be released when the segment becomes <em>unreachable</em> (see {@link HandoffTransform#registerCleaner(Cleaner)});
- * this might be useful to prevent native memory leaks.
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
@@ -141,7 +137,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
  *
- * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ * <h2><a id = "thread-confinement">Thread confinement and handoff</a></h2>
  *
  * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
  * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
@@ -149,28 +145,66 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
- * {@link HandoffTransform#ofConfined(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
- * a segment in a controlled, cooperative and race-free fashion.
+ * The {@link #handoff(HandoffTransform)} method can be used to change the thread-confinement properties (as well
+ * as other properties) of a memory segment. This method is, like {{@link #close()}} a <em>terminal operation</em>
+ * which marks the original segment as not alive (see {@link #isAlive()} and create a <em>new</em> segment with the
+ * desired thread-confinement and temporal bounds properties. Clients can specify such properties by providing a
+ * {@link HandoffTransform} instance. Calling {@link #handoff(HandoffTransform)} is only possible if the segment
+ * features the corresponding {@link #HANDOFF} access mode.
  * <p>
- * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
- * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
- * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link HandoffTransform#ofShared()},
- * (this assumes that the access mode {@link #HANDOFF} of the original segment is set).
- * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
- * segment and allow multiple thread to work in parallel on disjoint segment slices.
- * For instance, the following code can be used to sum all int values in a memory segment in parallel:
+ * For instance, if client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment aSegment = segment.handoff(HandoffTransform.ofConfined(threadA));
+ * }</pre></blockquote>
+ *
+ * By doing so, the original segment is marked as not alive, and a new segment is returned whose owner thread
+ * is {@code threadA}; this allows, for instance, for two threads {@code A} and {@code B} to share
+ * a segment in a controlled, cooperative and race-free fashion (also known as <em>serial thread confinement</em>).
+ * <p>
+ * The {@link #handoff(HandoffTransform)} method can also be used to remove thread ownership altogether, as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment sharedSegment = segment.handoff(HandoffTransform.ofShared());
+ * }</pre></blockquote>
+ *
+ * Again here, the original segment is marked as not alive, and a new <em>shared</em> segment is returned which features no owner
+ * thread (e.g. {@link #ownerThread()} returns {@code null}). This might be useful when multiple threads need to process
+ * the contents of the same memory segment concurrently (e.g. in the case of parallel processing). For instance, a client
+ * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
+ * thread to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ *
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).rebuild(SegmentRebuilder::removeOwnerThread) {
+try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).handoff(HandoffTransform.ofShared())) {
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
  * }</pre></blockquote>
- * Once shared, a segment can be claimed back by a given thread (see {@link HandoffTransform#ofConfined(Thread)}); in fact, many threads
+ *
+ * Once shared, a segment can be claimed back by a given thread (again using {@link #handoff(HandoffTransform)}); in fact, many threads
  * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
+ *
+ * <h2>Implicit deallocation</h2>
+ *
+ * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
+ * that segment will be released when the segment becomes <em>unreachable</em>, which can be useful to prevent native memory
+ * leaks. This can be achieved using the ({@link #handoff(HandoffTransform)} method, as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment gcSegment = segment.handoff(HandoffTransform.ofConfined()
+                                                              .registerCleaner(cleaner));
+ * }</pre></blockquote>
+ *
+ * Here, the original segment is marked as not alive, and a new confined segment is returned (the owner set is set to
+ * the current thread, see {@link HandoffTransform#ofConfined()}); the new segment will also be registered with the
+ * the {@link Cleaner} instance provided to the {@link HandoffTransform#registerCleaner(Cleaner)} method; as such, if
+ * not closed explicitly (see {@link #close()}), the new segment will be automatically closed by the cleaner.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
@@ -204,7 +238,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * <a href="#access-modes">access modes</a> as the given segment less the {@link #CLOSE} access mode.
      * <p>
      * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
-     * be processed in parallel by multiple threads (if the access mode {@link #SHARE} is set).
+     * be processed in parallel by multiple threads (if the segment is shared).
      * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
      * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
      * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
@@ -234,7 +268,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Obtains a segment view with specific <a href="#access-modes">access modes</a>. Supported access modes are {@link #READ}, {@link #WRITE},
-     * {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
+     * {@link #CLOSE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
      * to one with less strict access modes. For instance, attempting to add {@link #WRITE} access mode to a read-only segment
      * will be met with an exception.
      * @param accessModes an ORed mask of zero or more access modes.
@@ -254,7 +288,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Returns the <a href="#access-modes">access modes</a> associated with this segment; the result is represented as ORed values from
-     * {@link #READ}, {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}.
+     * {@link #READ}, {@link #WRITE}, {@link #CLOSE} and {@link #HANDOFF}.
      * @return the access modes associated with this segment.
      */
     int accessModes();
@@ -349,48 +383,8 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     boolean isAlive();
 
     /**
-     * Obtains a new memory segment backed by the same underlying memory region as this segment, but whose
-     * temporal bounds are independent from that of this segment. The returned segment will feature the same
-     * spatial bounds and access modes (see {@link #accessModes()}) as this segment. Moreover, the
-     * confinement thread, and cleanup action of the new segment will be specified by the provided
-     * {@link HandoffTransform} instance.
-     * <p>
-     * As a side-effect, this segment will be marked as <em>not alive</em>,
-     * and subsequent operations on this segment will result in runtime errors.
-     * <p>
-     * Write accesses to the segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses to the segment's contents on
-     * the new owner thread.
-     *
-     * @param rebuilder the segment rebuilder.
-     * @return a new memory segment backed by the same underlying memory region as this segment, but where certain
-     * characteristics have been modified, according to the supplied {@code rebuilder}.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     * @throws NullPointerException if {@code rebuilder == null}
-     */
-    MemorySegment handoff(HandoffTransform handoffTransform);
-
-    /**
-     * Reconstructs an existing segment, by setting this scope as the temporal bounds of the reconstructed segment.
-     * The input segment (see {@link MemorySegment.HandoffTransform#segment()} must be closeable - that is,
-     * it must feature the {@link MemorySegment#CLOSE} access mode.
-     * <p>
-     * The reconstructed segment will feature only {@link MemorySegment#READ} and
-     * {@link MemorySegment#WRITE} access modes (assuming these were available in the original segment). As such
-     * the reconstructed segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
-     * indirectly when this native scope is closed.
-     * @param handoffTransform the segment rebuilder.
-     * @throws IllegalArgumentException if {@code rebuilder.segment().ownerThread() != ownerThread()} or if
-     * {@code rebuilder.segment()} does not feature the {@link MemorySegment#CLOSE} access mode.
-     *
-     * @see MemorySegment#handoff(Consumer)
-     */
-    MemorySegment handoff(NativeScope nativeScope);
-
-    /**
-     * Closes this memory segment. Once a memory segment has been closed, any attempt to use the memory segment,
-     * or to access any {@link MemoryAddress} instance associated with it will fail with {@link IllegalStateException}.
+     * Closes this memory segment. This is a <em>terminal operation</em>; as a side-effect, this segment will be marked
+     * as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
      * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
@@ -399,6 +393,54 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
     void close();
+
+    /**
+     * Obtains a new memory segment backed by the same underlying memory region as this segment, but whose
+     * temporal bounds are independent from that of this segment. The returned segment will feature the same
+     * spatial bounds and access modes (see {@link #accessModes()}) as this segment. Moreover, the
+     * confinement thread, and cleanup action of the new segment will be specified by the provided
+     * {@link HandoffTransform} instance. This is a <em>terminal operation</em>; as a side-effect, this segment will be
+     * marked as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
+     * <p>
+     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
+     * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
+     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
+     * to the returned segment's contents on the new owner thread.
+     *
+     * @param handoffTransform the handoff transform.
+     * @return a new memory segment backed by the same underlying memory region as this segment, but where certain
+     * characteristics have been modified, according to the supplied {@code handoffTransform}.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment.
+     * @throws NullPointerException if {@code handoffTransform == null}
+     */
+    MemorySegment handoff(HandoffTransform handoffTransform);
+
+    /**
+     * Obtains a new memory segment backed by the same underlying memory region as this segment, but whose
+     * temporal bounds are controlled by the provided {@link NativeScope} instance. This is a <em>terminal operation</em>;
+     * as a side-effect, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
+     * will fail with {@link IllegalStateException}.
+     * <p>
+     * The returned segment will feature only {@link MemorySegment#READ} and {@link MemorySegment#WRITE} access modes
+     * (assuming these were available in the original segment). As such the returned segment cannot be closed directly
+     * using {@link MemorySegment#close()} - but it will be closed indirectly when this native scope is closed. The
+     * returned segment will also be confined by the same thread as the provided native scope (see {@link NativeScope#ownerThread()}).
+     * <p>
+     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
+     * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
+     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
+     * to the returned segment's contents on the new owner thread.
+     *
+     * @param nativeScope the native scope.
+     * @return a new memory segment backed by the same underlying memory region as this segment, but whose life-cycle
+     * is tied to that of {@code nativeScope}.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment.
+     * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
+     * @throws NullPointerException if {@code nativeScope == null}.
+     */
+    MemorySegment handoff(NativeScope nativeScope);
 
     /**
      * Fills a value into this memory segment.
@@ -846,71 +888,90 @@ allocateNative(bytesSize, 1);
     int ALL_ACCESS = READ | WRITE | CLOSE | HANDOFF;
 
     /**
-     * Interface used to reconstruct an existing memory segment (see {@link #segment()}) with fresh temporal bounds and new characteristics,
-     * such as a different confinement thread (see {@link #setOwnerThread(Thread)}), or a custom cleanup action
-     * (see {@link #addCleanupAction(Runnable)}) or implicit deallocation provided by a custom {@link Cleaner}
-     * instance (see {@link #registerCleaner(Cleaner)}).
+     * An <em>handoff transform</em> defines a transformation which applies to an existing memory segment (the
+     * <em>source</em> segment) and results in a new segment (the <em>target</em> segment) with fresh temporal bounds
+     * featuring new characteristics, such as a different confinement thread, or a custom cleanup action, or implicit
+     * deallocation provided by a custom {@link Cleaner} instance. Handoff transforms are applied to segments using the
+     * {@link #handoff(HandoffTransform)} method.
+     * <p>
+     * There are two kinds of handoff transforms: confined (see {@link #ofConfined()}, {@link #ofConfined(Thread)}) and
+     * shared (see {@link #ofShared()}), which produce confined and shared target segments, respectively.
+     *
+     * @apiNote In the future, if the Java language permits, {@link HandoffTransform}
+     * may become a {@code sealed} interface, which would prohibit subclassing except by
+     * explicitly permitted subtypes.
+     *
+     * @implSpec
+     * Implementations of this interface are not thread-safe.
      *
      * @see MemorySegment#handoff(HandoffTransform)
      */
     interface HandoffTransform {
 
         /**
-         * Specifies the reconstructed segment should not be associated with any owner thread.
-         *The reconstructed segment will be a shared segment, and will be accessible concurrently from multiple threads.
-         *
-         * @return this segment rebuilder.
+         * Creates a new shared handoff transform. The target segment produced by the returned transform is a shared
+         * segment, which can be accessible concurrently from multiple threads.
+         * @return a shared handoff transform.
          */
         static HandoffTransform ofShared() {
             return new AbstractMemorySegmentImpl.HandoffTransformImpl(null);
         }
 
         /**
-         * Specifies the new owner thread to be associated with the reconstructed segment.
-         * The reconstructed segment will be a confined segment, whose owner thread is {@code newOwner}.
+         * Creates a new confined handoff transform, bound by a given thread. The target segment produced by the returned transform
+         * is a confinement segment, which will only be accessible to a specific thread.
          *
-         * @param t the new owner thread.
-         * @return this segment rebuilder.
+         * @param t the confinement thread.
+         * @return a confined handoff transform.
          * @throws NullPointerException if {@code t == null}.
          */
         static HandoffTransform ofConfined(Thread t) {
             return new AbstractMemorySegmentImpl.HandoffTransformImpl(t);
         }
 
+        /**
+         * Creates a new confined handoff transform, bound by the current thread (see {@link Thread#currentThread()}).
+         * The target segment produced by the returned transform is a confinement segment, which will only be accessible to a specific thread.
+         *
+         * @return a confined handoff transform.
+         * @throws NullPointerException if {@code t == null}.
+         */
         static HandoffTransform ofConfined() {
             return ofConfined(Thread.currentThread());
         }
 
         /**
-         * Specifies a cleanup action to be associated with the reconstructed segmemt. More specifically, the cleanup action
-         * associated with the reconstructed segment will first call the user-provided action, before delegating back to
-         * the original cleanup action associated with the segment being reconstructed (see {@link #segment()}).
+         * Specifies an additional cleanup action to be associated with the target segment. More specifically, the target
+         * segment produced by this transform will feature a cleanup action which will first call the user-provided action,
+         * before delegating back to cleanup action associated with the source segment.
          * Any errors and/or exceptions thrown by the user-provided action will be discarded, and will not prevent the
-         * release of any memory resources associated with the reconstructed segment.
+         * release of any memory resources associated with the target segment.
          *
          * @param action the new cleanup action
-         * @return this segment rebuilder.
+         * @return this handoff transform.
          * @throws NullPointerException if {@code action == null}
          */
         HandoffTransform addCleanupAction(Runnable action);
 
         /**
-         * Specifies an attachment object which will be kept alive by the reconstructed segment.
-         * This can in cases where the lifecycle of the segment is dependent on that of some other external resource.
+         * Specifies an additional attachment object which will be kept alive by the target segment, in addition
+         * to any attachment object which might also be associated with the source segment.
+         * This can be useful in cases where the lifecycle of the segment is dependent on that of some other external resource.
          *
-         * @param attachment an attachment object that will be kept strongly reachable by the returned segment; can be {@code null}.
-         * @return this segment rebuilder.
+         * @param attachment an attachment object that will be kept strongly reachable by the target segment produced
+         *                   by this transform.
+         * @return this handoff transform.
          * @throws NullPointerException if {@code attachment == null}
          */
         HandoffTransform addAttachment(Object attachment);
 
         /**
-         * Register the reconstructed memory segment instance against a {@link Cleaner} object. This allows for the reconstructed
-         * segment to be closed as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
-         * @param cleaner the {@link Cleaner} object responsible for cleaning up this memory segment.
-         * @return this segment rebuilder.
-         * @throws IllegalStateException if this method is called more than once.
-         * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()} does not feature the {@link #CLOSE} access mode.
+         * Specifies a {@link Cleaner} object which is responsible for calling the cleanup action on the target segment
+         * should such segment become <em>unreachable</em> and not closed explicitly; this might be helpful in preventing
+         * native memory leaks.
+         * @param cleaner the {@link Cleaner} object responsible for cleaning up the target memory segment produced
+         *                by this transform.
+         * @return this handoff transform.
          */
         HandoffTransform registerCleaner(Cleaner cleaner);
     }
