@@ -25,11 +25,11 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.CValueLayout;
 
 enum TypeClass {
     STRUCT_REGISTER,
@@ -42,11 +42,11 @@ enum TypeClass {
     private static final int MAX_AGGREGATE_REGS_SIZE = 2;
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        if (!(type instanceof CValueLayout)) {
+        if (!(type instanceof CLinker.CValueLayout)) {
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
 
-        return switch (((CValueLayout) type).kind()) {
+        return switch (((CLinker.CValueLayout) type).kind()) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
             case POINTER -> POINTER;
             case FLOAT, DOUBLE, LONGDOUBLE -> FLOAT;
