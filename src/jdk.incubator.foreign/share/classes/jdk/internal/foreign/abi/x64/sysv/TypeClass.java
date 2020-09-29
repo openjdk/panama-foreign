@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
@@ -34,8 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static jdk.internal.foreign.abi.x64.sysv.SysVx64Linker.argumentClassFor;
 
 class TypeClass {
     enum Kind {
@@ -55,14 +54,13 @@ class TypeClass {
 
     public static TypeClass ofValue(ValueLayout layout) {
         final Kind kind;
-        ArgumentClassImpl argClass = classifyValueType(layout);
-        switch (argClass) {
-            case POINTER: kind = Kind.POINTER; break;
-            case INTEGER: kind = Kind.INTEGER; break;
-            case SSE: kind = Kind.FLOAT; break;
-            default:
-                throw new IllegalStateException();
-        }
+        ArgumentClassImpl argClass = argumentClassFor(layout);
+        kind = switch (argClass) {
+            case POINTER -> Kind.POINTER;
+            case INTEGER -> Kind.INTEGER;
+            case SSE -> Kind.FLOAT;
+            default -> throw new IllegalStateException("Unexpected argument class: " + argClass);
+        };
         return new TypeClass(kind, List.of(argClass));
     }
 
@@ -108,24 +106,21 @@ class TypeClass {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    // TODO: handle '__int128' and 'long double'
-    private static ArgumentClassImpl classifyValueType(ValueLayout type) {
-        if (type.byteSize() > 8) {
-            throw new IllegalStateException("");
+    private static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
+        if (!(layout instanceof CLinker.CValueLayout)) {
+            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
-        ArgumentClassImpl clazz = SysVx64Linker.argumentClassFor(type)
-                .orElseThrow(() -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-        return clazz;
+
+        return switch (((CLinker.CValueLayout) layout).kind()) {
+            case CHAR, SHORT, INT, LONG, LONGLONG -> ArgumentClassImpl.INTEGER;
+            case FLOAT, DOUBLE -> ArgumentClassImpl.SSE;
+            case LONGDOUBLE -> ArgumentClassImpl.X87;
+            case POINTER -> ArgumentClassImpl.POINTER;
+        };
     }
 
     // TODO: handle zero length arrays
     private static List<ArgumentClassImpl> classifyStructType(GroupLayout type) {
-        if (argumentClassFor(type)
-                .filter(argClass -> argClass == ArgumentClassImpl.COMPLEX_X87)
-                .isPresent()) {
-            return COMPLEX_X87_CLASSES;
-        }
-
         List<ArgumentClassImpl>[] eightbytes = groupByEightBytes(type);
         long nWords = eightbytes.length;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
@@ -230,7 +225,7 @@ class TypeClass {
             }
             // if the aggregate contains unaligned fields, it has class MEMORY
             ArgumentClassImpl argumentClass = (offset % l.byteAlignment()) == 0 ?
-                    classifyValueType((ValueLayout)l) :
+                    argumentClassFor(l) :
                     ArgumentClassImpl.MEMORY;
             layouts.add(argumentClass);
         } else {

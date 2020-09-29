@@ -22,28 +22,16 @@
  *
  */
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.foreign.CABI;
-
-import static jdk.internal.foreign.PlatformLayouts.*;
 
 public class NativeTestHelper {
 
-    public static final CABI ABI = CABI.current();
-
     public static boolean isIntegral(MemoryLayout layout) {
-        return switch (ABI) {
-            case SysV -> layout.attribute(SysV.CLASS_ATTRIBUTE_NAME).get() == SysV.ArgumentClass.INTEGER;
-            case Win64 -> layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get() == Win64.ArgumentClass.INTEGER;
-            case AArch64 -> layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get() == AArch64.ArgumentClass.INTEGER;
-        };
+        return ((CLinker.CValueLayout) layout).kind().isIntergral();
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return switch (ABI) {
-            case SysV -> layout.attribute(SysV.CLASS_ATTRIBUTE_NAME).get() == SysV.ArgumentClass.POINTER;
-            case Win64 -> layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get() == Win64.ArgumentClass.POINTER;
-            case AArch64 -> layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get() == AArch64.ArgumentClass.POINTER;
-        };
+        return ((CLinker.CValueLayout) layout).kind().isPointer();
     }
 }

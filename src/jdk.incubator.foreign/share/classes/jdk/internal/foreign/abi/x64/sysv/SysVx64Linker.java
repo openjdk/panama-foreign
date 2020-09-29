@@ -97,20 +97,6 @@ public class SysVx64Linker implements CLinker {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
-    static Optional<ArgumentClassImpl> argumentClassFor(MemoryLayout layout) {
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        Optional<SysV.ArgumentClass> argClassOpt =
-                (Optional<SysV.ArgumentClass>)(Optional)layout.attribute(SysV.CLASS_ATTRIBUTE_NAME);
-        return argClassOpt.map(argClass -> switch (argClass) {
-            case INTEGER -> ArgumentClassImpl.INTEGER;
-            case SSE -> ArgumentClassImpl.SSE;
-            case X87 -> ArgumentClassImpl.X87;
-            case COMPLEX_87 -> ArgumentClassImpl.COMPLEX_X87;
-            case POINTER -> ArgumentClassImpl.POINTER;
-            default -> null;
-        });
-    }
-
     public static VaList newVaListOfAddress(MemoryAddress ma) {
         return SysVVaList.ofAddress(ma);
     }
