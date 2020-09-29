@@ -104,7 +104,7 @@ import java.util.function.Consumer;
  * </ul>
  *
  * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
- * that segment will be released when the segment becomes <em>unreachable</em> (see {@link Rebuilder#registerCleaner(Cleaner)});
+ * that segment will be released when the segment becomes <em>unreachable</em> (see {@link HandoffTransform#registerCleaner(Cleaner)});
  * this might be useful to prevent native memory leaks.
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
@@ -150,12 +150,12 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * owner thread will result in a runtime failure.
  * <p>
  * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
- * {@link Rebuilder#setOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
+ * {@link HandoffTransform#setOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
  * a segment in a controlled, cooperative and race-free fashion.
  * <p>
  * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
  * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
- * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link Rebuilder#removeOwnerThread()},
+ * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link HandoffTransform#removeOwnerThread()},
  * (this assumes that the access mode {@link #SHARE} of the original segment is set).
  * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
  * segment and allow multiple thread to work in parallel on disjoint segment slices.
@@ -169,7 +169,7 @@ try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).rebui
                            .sum();
 }
  * }</pre></blockquote>
- * Once shared, a segment can be claimed back by a given thread (see {@link Rebuilder#setOwnerThread(Thread)}); in fact, many threads
+ * Once shared, a segment can be claimed back by a given thread (see {@link HandoffTransform#setOwnerThread(Thread)}); in fact, many threads
  * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
@@ -353,7 +353,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * temporal bounds are independent from that of this segment. The returned segment will feature the same
      * spatial bounds and access modes (see {@link #accessModes()}) as this segment. Moreover, the
      * confinement thread, and cleanup action of the new segment will be specified by the provided
-     * {@link Rebuilder} instance.
+     * {@link HandoffTransform} instance.
      * <p>
      * As a side-effect, this segment will be marked as <em>not alive</em>,
      * and subsequent operations on this segment will result in runtime errors.
@@ -369,7 +369,24 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * thread owning this segment.
      * @throws NullPointerException if {@code rebuilder == null}
      */
-    MemorySegment rebuild(Consumer<Rebuilder> rebuilder);
+    MemorySegment handoff(HandoffTransform handoffTransform);
+
+    /**
+     * Reconstructs an existing segment, by setting this scope as the temporal bounds of the reconstructed segment.
+     * The input segment (see {@link MemorySegment.HandoffTransform#segment()} must be closeable - that is,
+     * it must feature the {@link MemorySegment#CLOSE} access mode.
+     * <p>
+     * The reconstructed segment will feature only {@link MemorySegment#READ} and
+     * {@link MemorySegment#WRITE} access modes (assuming these were available in the original segment). As such
+     * the reconstructed segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
+     * indirectly when this native scope is closed.
+     * @param handoffTransform the segment rebuilder.
+     * @throws IllegalArgumentException if {@code rebuilder.segment().ownerThread() != ownerThread()} or if
+     * {@code rebuilder.segment()} does not feature the {@link MemorySegment#CLOSE} access mode.
+     *
+     * @see MemorySegment#handoff(Consumer)
+     */
+    MemorySegment handoff(NativeScope nativeScope);
 
     /**
      * Closes this memory segment. Once a memory segment has been closed, any attempt to use the memory segment,
@@ -814,7 +831,7 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link Rebuilder#removeOwnerThread()}).
+     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link HandoffTransform#removeOwnerThread()}).
      * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
@@ -823,7 +840,7 @@ allocateNative(bytesSize, 1);
 
     /**
      * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
-     * (see {@link Rebuilder#setOwnerThread(Thread)}).
+     * (see {@link HandoffTransform#setOwnerThread(Thread)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
@@ -842,27 +859,21 @@ allocateNative(bytesSize, 1);
      * (see {@link #addCleanupAction(Runnable)}) or implicit deallocation provided by a custom {@link Cleaner}
      * instance (see {@link #registerCleaner(Cleaner)}).
      *
-     * @see MemorySegment#rebuild(Consumer)
+     * @see MemorySegment#handoff(HandoffTransform)
      */
-    interface Rebuilder {
+    interface HandoffTransform {
 
         /**
-         * The segment which is being reconstucted by this segment rebuilder.
-         * @return The segment which is being reconstucted by this segment rebuilder.
-         */
-        MemorySegment segment();
-
-        /**
-         * Specify a new set of <a href="#access-modes">access modes</a> to be associated with the reconstructed segment.
-         * It is not possible to specify access modes that are less strict than that featured by the segment being
-         * reconstructed (see {@link #segment()}).
-         * @param accessModes an ORed mask of zero or more access modes.
+         * Specifies the reconstructed segment should not be associated with any owner thread.
+         *The reconstructed segment will be a shared segment, and will be accessible concurrently from multiple threads.
+         *
          * @return this segment rebuilder.
-         * @throws IllegalArgumentException when {@code mask} is an access mask which is less strict than the one supported by
-         * the segment being reconstructed (see {@link #segment()}), or when {@code mask} contains bits not associated with
-         * any of the supported access modes.
+         * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()}) does not
+         * feature the {@link #SHARE} access mode.
          */
-        Rebuilder setAccessModes(int accessModes);
+        static HandoffTransform ofShared() {
+            return new AbstractMemorySegmentImpl.HandoffTransformImpl(null);
+        }
 
         /**
          * Specifies the new owner thread to be associated with the reconstructed segment.
@@ -874,17 +885,9 @@ allocateNative(bytesSize, 1);
          * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()}) does not
          * feature the {@link #HANDOFF} access mode.
          */
-        Rebuilder setOwnerThread(Thread newOwner);
-
-        /**
-         * Specifies the reconstructed segment should not be associated with any owner thread.
-         *The reconstructed segment will be a shared segment, and will be accessible concurrently from multiple threads.
-         *
-         * @return this segment rebuilder.
-         * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()}) does not
-         * feature the {@link #SHARE} access mode.
-         */
-        Rebuilder removeOwnerThread();
+        static HandoffTransform ofConfined(Thread t) {
+            return new AbstractMemorySegmentImpl.HandoffTransformImpl(t);
+        }
 
         /**
          * Specifies a cleanup action to be associated with the reconstructed segmemt. More specifically, the cleanup action
@@ -897,7 +900,7 @@ allocateNative(bytesSize, 1);
          * @return this segment rebuilder.
          * @throws NullPointerException if {@code action == null}
          */
-        Rebuilder addCleanupAction(Runnable action);
+        HandoffTransform addCleanupAction(Runnable action);
 
         /**
          * Specifies an attachment object which will be kept alive by the reconstructed segment.
@@ -907,7 +910,7 @@ allocateNative(bytesSize, 1);
          * @return this segment rebuilder.
          * @throws NullPointerException if {@code attachment == null}
          */
-        Rebuilder addAttachment(Object attachment);
+        HandoffTransform addAttachment(Object attachment);
 
         /**
          * Register the reconstructed memory segment instance against a {@link Cleaner} object. This allows for the reconstructed
@@ -917,6 +920,6 @@ allocateNative(bytesSize, 1);
          * @throws IllegalStateException if this method is called more than once.
          * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()} does not feature the {@link #CLOSE} access mode.
          */
-        Rebuilder registerCleaner(Cleaner cleaner);
+        HandoffTransform registerCleaner(Cleaner cleaner);
     }
 }

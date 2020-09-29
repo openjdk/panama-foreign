@@ -42,7 +42,7 @@ import java.nio.ByteBuffer;
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE)
-            .rebuild(Rebuilder::removeOwnerThread)
+            .handoff(HandoffTransform.ofShared())
             .withAccessModes(READ | WRITE);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();

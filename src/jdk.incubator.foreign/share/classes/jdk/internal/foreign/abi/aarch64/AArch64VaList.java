@@ -126,7 +126,7 @@ public class AArch64VaList implements VaList {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
                 MemoryAddress.ofLong(ptr), LAYOUT.byteSize())
-                .rebuild(r -> r.setOwnerThread(null)
+                .handoff(MemorySegment.HandoffTransform.ofShared()
                                .addCleanupAction(() -> U.freeMemory(ptr)));
         cleaner.register(AArch64VaList.class, ms::close);
         VH_stack.set(ms, MemoryAddress.NULL);
@@ -561,6 +561,6 @@ public class AArch64VaList implements VaList {
 
     private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
         return segment.ownerThread() == thread ?
-                segment : segment.rebuild(r -> r.setOwnerThread(thread));
+                segment : segment.handoff(MemorySegment.HandoffTransform.ofConfined(thread));
     }
 }

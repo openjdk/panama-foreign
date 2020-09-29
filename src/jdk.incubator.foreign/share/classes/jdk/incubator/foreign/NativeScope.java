@@ -50,12 +50,12 @@ import java.util.stream.Stream;
  * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope.
  * <p>
  * To allow for more usability, it is possible for a native scope to reclaim ownership of an existing memory segments
- * (see {@link #accept(jdk.incubator.foreign.MemorySegment.Rebuilder)}) - that is, this native scope can be passed as a segment rebuilder to
- * {@link MemorySegment#rebuild(Consumer)}. This might be useful to allow one or more segments which were independently
+ * (see {@link #accept(MemorySegment.HandoffTransform)}) - that is, this native scope can be passed as a segment rebuilder to
+ * {@link MemorySegment#handoff(Consumer)}. This might be useful to allow one or more segments which were independently
  * created to share the same life-cycle as a given native scope - which in turns enables client to group all memory
  * allocation and usage under a single <em>try-with-resources block</em>.
  */
-public interface NativeScope extends AutoCloseable, Consumer<MemorySegment.Rebuilder> {
+public interface NativeScope extends AutoCloseable {
 
     /**
      * If this native scope is bounded, returns the size, in bytes, of this native scope.
@@ -404,23 +404,6 @@ public interface NativeScope extends AutoCloseable, Consumer<MemorySegment.Rebui
      * {@code limit() - size() < bytesSize}.
      */
     MemorySegment allocate(long bytesSize, long bytesAlignment);
-
-    /**
-     * Reconstructs an existing segment, by setting this scope as the temporal bounds of the reconstructed segment.
-     * The input segment (see {@link MemorySegment.Rebuilder#segment()} must be closeable - that is,
-     * it must feature the {@link MemorySegment#CLOSE} access mode.
-     * <p>
-     * The reconstructed segment will feature only {@link MemorySegment#READ} and
-     * {@link MemorySegment#WRITE} access modes (assuming these were available in the original segment). As such
-     * the reconstructed segment cannot be closed directly using {@link MemorySegment#close()} - but it will be closed
-     * indirectly when this native scope is closed.
-     * @param rebuilder the segment rebuilder.
-     * @throws IllegalArgumentException if {@code rebuilder.segment().ownerThread() != ownerThread()} or if
-     * {@code rebuilder.segment()} does not feature the {@link MemorySegment#CLOSE} access mode.
-     *
-     * @see MemorySegment#rebuild(Consumer)
-     */
-    void accept(MemorySegment.Rebuilder rebuilder);
 
     /**
      * Close this native scope; calling this method will render any segment obtained through this native scope

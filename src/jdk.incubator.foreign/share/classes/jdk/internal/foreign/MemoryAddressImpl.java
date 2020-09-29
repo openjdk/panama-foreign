@@ -98,6 +98,6 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize)
-                .rebuild(MemorySegment.Rebuilder::removeOwnerThread);
+                .handoff(MemorySegment.HandoffTransform.ofShared());
     }
 }

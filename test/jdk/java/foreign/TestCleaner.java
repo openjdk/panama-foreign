@@ -60,13 +60,13 @@ public class TestCleaner {
     public void test(Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
         SegmentState segmentState = new SegmentState();
         MemorySegment segment = MemorySegment.allocateNative(10)
-                .rebuild(r -> r.addCleanupAction(segmentState::cleanup));
+                .handoff(r -> r.addCleanupAction(segmentState::cleanup));
         // register cleaners before
-        segment = segment.rebuild(r -> r.registerCleaner(cleanerFactory.get()));
+        segment = segment.handoff(r -> r.registerCleaner(cleanerFactory.get()));
         segment = segmentFunction.apply(segment);
         if (segment.isAlive()) {
             // also register cleaners after
-            segment = segment.rebuild(r -> r.registerCleaner(cleanerFactory.get()));
+            segment = segment.handoff(r -> r.registerCleaner(cleanerFactory.get()));
         }
         //check that cleanup has not been called by any cleaner yet!
         assertEquals(segmentState.cleanupCalls(), segment.isAlive() ? 0 : 1);
@@ -86,7 +86,7 @@ public class TestCleaner {
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {
         IDENTITY(Function.identity()),
         CLOSE(s -> { s.close(); return s; }),
-        SHARE(s -> { return s.rebuild(MemorySegment.Rebuilder::removeOwnerThread); });
+        SHARE(s -> { return s.handoff(MemorySegment.HandoffTransform::removeOwnerThread); });
 
         private final Function<MemorySegment, MemorySegment> segmentFunction;
 

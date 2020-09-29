@@ -30,7 +30,7 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
-import jdk.incubator.foreign.MemorySegment.Rebuilder;
+import jdk.incubator.foreign.MemorySegment.HandoffTransform;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
@@ -99,7 +99,7 @@ public interface MemoryAddress extends Addressable {
      * <p>
      * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
      * memory resources which might implicitly be associated with the segment. If the client wants to specify
-     * a cleanup action to be executed when the returned segment is closed, the {@link Rebuilder#addCleanupAction(Runnable)}
+     * a cleanup action to be executed when the returned segment is closed, the {@link HandoffTransform#addCleanupAction(Runnable)}
      * method should be used.
      * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash

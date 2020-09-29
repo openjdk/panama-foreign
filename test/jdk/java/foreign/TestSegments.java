@@ -393,7 +393,7 @@ public class TestSegments {
         SHARE(MemorySegment.SHARE) {
             @Override
             void run(MemorySegment segment) {
-                segment.rebuild(Rebuilder::removeOwnerThread);
+                segment.handoff(HandoffTransform::removeOwnerThread);
             }
         },
         CLOSE(MemorySegment.CLOSE) {
@@ -417,7 +417,7 @@ public class TestSegments {
         HANDOFF(MemorySegment.HANDOFF) {
             @Override
             void run(MemorySegment segment) {
-                segment.rebuild(r -> r.setOwnerThread(new Thread()));
+                segment.handoff(r -> r.setOwnerThread(new Thread()));
             }
         };
 

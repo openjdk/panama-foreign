@@ -133,8 +133,8 @@ public class SysVVaList implements VaList {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment base = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(
                 MemoryAddress.ofLong(ptr), LAYOUT.byteSize())
-                .rebuild(r -> r.removeOwnerThread()
-                               .addCleanupAction(() -> U.freeMemory(ptr)));
+                .handoff(MemorySegment.HandoffTransform.ofShared()
+                        .addCleanupAction(() -> U.freeMemory(ptr)));
         cleaner.register(SysVVaList.class, base::close);
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
@@ -478,6 +478,6 @@ public class SysVVaList implements VaList {
 
     private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
         return segment.ownerThread() == thread ?
-                segment : segment.rebuild(r -> r.setOwnerThread(thread));
+                segment : segment.handoff(MemorySegment.HandoffTransform.ofConfined(thread));
     }
 }

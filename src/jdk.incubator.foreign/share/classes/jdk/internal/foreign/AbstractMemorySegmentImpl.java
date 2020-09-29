@@ -25,11 +25,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.*;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -288,106 +284,90 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public MemorySegment rebuild(Consumer<Rebuilder> rebuilder) {
+    public MemorySegment handoff(HandoffTransform handoffTransform) {
         checkValidState();
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
         try {
-            SegmenentRebuilderImpl segmenentRebuilder = new SegmenentRebuilderImpl();
-            rebuilder.accept(segmenentRebuilder);
-            return segmenentRebuilder.rebuild();
+            return dup(0L, length, mask, ((HandoffTransformImpl)handoffTransform).newScope(scope));
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();
         }
     }
 
-    class SegmenentRebuilderImpl implements Rebuilder {
+    @Override
+    public MemorySegment handoff(NativeScope scope) {
+        checkValidState();
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
+        MemorySegment dup = handoff(HandoffTransform.ofConfined(scope.ownerThread()));
+        ((AbstractNativeScope)scope).register(dup);
+        return dup.withAccessModes(accessModes() & (READ | WRITE));
+    }
 
-        Thread ownerThread = ownerThread();
-        MemoryScope.CleanupAction cleanupAction = scope.cleanupAction.dup();
-        Object attachment = scope.ref;
-        Cleaner cleaner = null;
-        int accessModes = accessModes();
-        MemorySegment newSegment;
+    public static class HandoffTransformImpl implements HandoffTransform {
 
-        @Override
-        public MemorySegment segment() {
-            return AbstractMemorySegmentImpl.this;
+        final Thread ownerThread;
+        List<Runnable> cleanupActions = new ArrayList<>();
+        List<Object> attachments = new ArrayList<>();
+        List<Cleaner> cleaners = new ArrayList<>();
+
+        public HandoffTransformImpl(Thread thread) {
+            this.ownerThread = thread;
         }
 
         @Override
-        public Rebuilder setAccessModes(int accessModes) {
-            checkAccessModes(accessModes);
-            if ((~accessModes() & accessModes) != 0) {
-                throw new IllegalArgumentException("Cannot acquire more access modes");
-            }
-            this.accessModes = accessModes;
-            return this;
-        }
-
-        @Override
-        public Rebuilder setOwnerThread(Thread newOwner) {
-            if (!isSet(HANDOFF)) {
-                throw unsupportedAccessMode(HANDOFF);
-            }
-            ownerThread = newOwner;
-            return this;
-        }
-
-        @Override
-        public Rebuilder removeOwnerThread() {
-            if (!isSet(SHARE)) {
-                throw unsupportedAccessMode(SHARE);
-            }
-            ownerThread = null;
-            return this;
-        }
-
-        @Override
-        public Rebuilder addCleanupAction(Runnable action) {
+        public HandoffTransform addCleanupAction(Runnable action) {
             Objects.requireNonNull(action);
-            cleanupAction = cleanupAction.wrap(action);
+            cleanupActions.add(action);
             return this;
         }
 
         @Override
-        public Rebuilder addAttachment(Object attachment) {
+        public HandoffTransform addAttachment(Object attachment) {
             Objects.requireNonNull(attachment);
-            if (this.attachment == null) {
-                this.attachment = attachment;
-            } else {
-                Object prevAttachment = this.attachment;
-                this.attachment = new Object() {
-                    Object o1 = prevAttachment;
-                    Object o2 = attachment;
-                };
-            }
+            attachments.add(attachment);
             return this;
         }
 
         @Override
-        public Rebuilder registerCleaner(Cleaner cleaner) {
-            if (this.cleaner != null) {
-                throw new IllegalStateException("Already registered with a cleaner");
-            }
-            if (!isSet(CLOSE)) {
-                throw unsupportedAccessMode(CLOSE);
-            }
-            this.cleaner = cleaner;
+        public HandoffTransform registerCleaner(Cleaner cleaner) {
+            cleaners.add(cleaner);
             return this;
         }
 
-        MemorySegment rebuild() {
-            if (newSegment == null) {
-                scope.justClose(); // kill the old scope
-                MemoryScope scope = ownerThread != null ?
-                        new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction) :
-                        new MemoryScope.SharedScope(attachment, cleanupAction);
-                if (cleaner != null) {
-                    cleaner.register(scope, cleanupAction);
-                }
-                newSegment = dup(0L, length, accessModes, scope);
+        MemoryScope newScope(MemoryScope scope) {
+            // compute new composite cleanup action
+            MemoryScope.CleanupAction cleanupAction = scope.cleanupAction.dup();
+            for (Runnable action : cleanupActions) {
+                cleanupAction = cleanupAction.wrap(action);
             }
-            return newSegment;
+            // compute new composite attachment
+            Object attachment = scope.ref;
+            for (Object o : attachments) {
+                Object currentAttachment = attachment;
+                attachment = attachment == null ?
+                        o : new Object() {
+                            Object o1 = currentAttachment;
+                            Object o2 = o;
+                        };
+            }
+            scope.justClose(); // kill the old scope
+            //create a new scope
+            MemoryScope newScope = ownerThread != null ?
+                    new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction) :
+                    new MemoryScope.SharedScope(attachment, cleanupAction);
+            // register all cleaners
+            for (Cleaner c : cleaners) {
+                c.register(newScope, cleanupAction);
+            }
+            return newScope;
         }
     }
 

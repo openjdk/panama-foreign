@@ -45,19 +45,8 @@ public abstract class AbstractNativeScope implements NativeScope {
         return newSegment(size, size);
     }
 
-    @Override
-    public void accept(MemorySegment.Rebuilder rebuilder) {
-        MemorySegment segment = rebuilder.segment();
-        Objects.requireNonNull(segment);
-        if (segment.ownerThread() != null && (segment.ownerThread() != ownerThread())) {
-            throw new IllegalArgumentException("Cannot rebuild a segment owned by a different thread");
-        } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
-            throw new IllegalArgumentException("Cannot rebuild a non-closeable segment");
-        }
-        rebuilder.setOwnerThread(ownerThread())
-                 .setAccessModes(segment.accessModes() & SCOPE_MASK);
-        MemorySegment newSegment = ((AbstractMemorySegmentImpl.SegmenentRebuilderImpl)rebuilder).rebuild();
-        segments.add(newSegment);
+    public void register(MemorySegment segment) {
+        segments.add(segment);
     }
 
     public static class UnboundedNativeScope extends AbstractNativeScope {
