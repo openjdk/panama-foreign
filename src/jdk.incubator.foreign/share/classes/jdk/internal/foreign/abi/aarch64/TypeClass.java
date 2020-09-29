@@ -29,10 +29,7 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.PlatformLayouts;
-
-import static jdk.internal.foreign.PlatformLayouts.*;
-import static jdk.internal.foreign.abi.aarch64.AArch64Linker.argumentClassFor;
+import jdk.internal.foreign.CValueLayout;
 
 enum TypeClass {
     STRUCT_REGISTER,
@@ -45,20 +42,15 @@ enum TypeClass {
     private static final int MAX_AGGREGATE_REGS_SIZE = 2;
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        AArch64.ArgumentClass clazz = argumentClassFor(type);
-        if (clazz == null) {
-            //padding not allowed here
+        if (!(type instanceof CValueLayout)) {
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
 
-        if (clazz == AArch64.ArgumentClass.INTEGER) {
-            return INTEGER;
-        } else if(clazz == AArch64.ArgumentClass.POINTER) {
-            return POINTER;
-        } else if (clazz == AArch64.ArgumentClass.VECTOR) {
-            return FLOAT;
-        }
-        throw new IllegalArgumentException("Unknown ABI class: " + clazz);
+        return switch (((CValueLayout) type).kind()) {
+            case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
+            case POINTER -> POINTER;
+            case FLOAT, DOUBLE, LONGDOUBLE -> FLOAT;
+        };
     }
 
     static boolean isRegisterAggregate(MemoryLayout type) {
@@ -80,15 +72,15 @@ enum TypeClass {
         if (!(baseType instanceof ValueLayout))
             return false;
 
-        AArch64.ArgumentClass baseArgClass = argumentClassFor(baseType);
-        if (baseArgClass != AArch64.ArgumentClass.VECTOR)
+        TypeClass baseArgClass = classifyValueType((ValueLayout) baseType);
+        if (baseArgClass != FLOAT)
            return false;
 
         for (MemoryLayout elem : groupLayout.memberLayouts()) {
             if (!(elem instanceof ValueLayout))
                 return false;
 
-            AArch64.ArgumentClass argClass = argumentClassFor(elem);
+            TypeClass argClass = classifyValueType((ValueLayout) elem);
             if (elem.bitSize() != baseType.bitSize() ||
                     elem.bitAlignment() != baseType.bitAlignment() ||
                     baseArgClass != argClass) {

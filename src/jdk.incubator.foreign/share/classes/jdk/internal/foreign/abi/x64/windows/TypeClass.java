@@ -26,11 +26,9 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.PlatformLayouts;
+import jdk.internal.foreign.CValueLayout;
 
-import static jdk.internal.foreign.PlatformLayouts.*;
 import static jdk.internal.foreign.PlatformLayouts.Win64.VARARGS_ATTRIBUTE_NAME;
 
 enum TypeClass {
@@ -41,11 +39,8 @@ enum TypeClass {
     FLOAT,
     VARARG_FLOAT;
 
-
     private static TypeClass classifyValueType(ValueLayout type) {
-        Win64.ArgumentClass clazz = Windowsx64Linker.argumentClassFor(type);
-        if (clazz == null) {
-            //padding not allowed here
+        if (!(type instanceof CValueLayout)) {
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
 
@@ -58,18 +53,17 @@ enum TypeClass {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        if (clazz == Win64.ArgumentClass.INTEGER) {
-            return INTEGER;
-        } else if(clazz == Win64.ArgumentClass.POINTER) {
-            return POINTER;
-        } else if (clazz == Win64.ArgumentClass.FLOAT) {
-            if (type.attribute(VARARGS_ATTRIBUTE_NAME)
-                    .map(Boolean.class::cast).orElse(false)) {
-                return VARARG_FLOAT;
+        return switch (((CValueLayout) type).kind()) {
+            case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
+            case POINTER -> POINTER;
+            case FLOAT, DOUBLE, LONGDOUBLE -> {
+                 if (type.attribute(VARARGS_ATTRIBUTE_NAME)
+                        .map(Boolean.class::cast).orElse(false)) {
+                    yield VARARG_FLOAT;
+                }
+                yield FLOAT;
             }
-            return FLOAT;
-        }
-        throw new IllegalArgumentException("Unknown ABI class: " + clazz);
+        };
     }
 
     static boolean isRegisterAggregate(MemoryLayout type) {
@@ -92,8 +86,6 @@ enum TypeClass {
             return classifyValueType((ValueLayout) type);
         } else if (type instanceof GroupLayout) {
             return classifyStructType(type);
-        } else if (type instanceof SequenceLayout) {
-            return INTEGER;
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }
