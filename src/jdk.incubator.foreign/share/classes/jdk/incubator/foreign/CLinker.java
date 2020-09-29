@@ -30,12 +30,18 @@ import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
+import java.lang.constant.Constable;
+import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
+import static java.lang.constant.ConstantDescs.BSM_GET_STATIC_FINAL;
 import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
@@ -145,39 +151,39 @@ public interface CLinker {
     /**
      * The layout for the {@code char} C type
      */
-    ValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
+    CValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
     /**
      * The layout for the {@code short} C type
      */
-    ValueLayout C_SHORT = pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
+    CValueLayout C_SHORT = pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
     /**
      * The layout for the {@code int} C type
      */
-    ValueLayout C_INT = pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
+    CValueLayout C_INT = pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
     /**
      * The layout for the {@code long} C type
      */
-    ValueLayout C_LONG = pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
+    CValueLayout C_LONG = pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
     /**
      * The {@code long long} native type.
      */
-    ValueLayout C_LONGLONG = pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
+    CValueLayout C_LONGLONG = pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
     /**
      * The layout for the {@code float} C type
      */
-    ValueLayout C_FLOAT = pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
+    CValueLayout C_FLOAT = pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
     /**
      * The layout for the {@code double} C type
      */
-    ValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
+    CValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
     /**
      * The {@code long double} native type.
      */
-    ValueLayout C_LONGDOUBLE = pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
+    CValueLayout C_LONGDOUBLE = pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
     /**
      * The {@code T*} native type.
      */
-    ValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
+    CValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
     /**
      * The layout for the {@code va_list} C type
      */
@@ -700,4 +706,143 @@ public interface CLinker {
         }
     }
 
+    class CValueLayout extends ValueLayout {
+        public enum Kind {
+            CHAR(findBSM("C_CHAR"), true),
+            SHORT(findBSM("C_SHORT"), true),
+            INT(findBSM("C_INT"), true),
+            LONG(findBSM("C_LONG"), true),
+            LONGLONG(findBSM("C_LONGLONG"), true),
+            FLOAT(findBSM("C_FLOAT"), false),
+            DOUBLE(findBSM("C_DOUBLE"), false),
+            LONGDOUBLE(findBSM("C_LONGDOUBLE"), false),
+            POINTER(findBSM("C_POINTER"), false);
+
+            private final DynamicConstantDesc<ValueLayout> bsm;
+            private final boolean isIntegral;
+
+            Kind(DynamicConstantDesc<ValueLayout> bsm, boolean isIntegral) {
+                this.bsm = bsm;
+                this.isIntegral = isIntegral;
+            }
+
+            public DynamicConstantDesc<ValueLayout> bsm() {
+                return bsm;
+            }
+
+            public boolean isIntergral() {
+                return isIntegral;
+            }
+
+            public boolean isPointer() {
+                return this == POINTER;
+            }
+
+            private static DynamicConstantDesc<ValueLayout> findBSM(String fieldName) {
+                return DynamicConstantDesc.ofNamed(
+                    BSM_GET_STATIC_FINAL,
+                    fieldName,
+                    CValueLayout.class.describeConstable().orElseThrow(),
+                    CLinker.class.describeConstable().orElseThrow()
+                );
+            }
+        }
+
+        private final Kind kind;
+
+        protected CValueLayout(Kind kind, ByteOrder order, long size, long alignment, Map<String, Constable> attributes) {
+            super(order, size, alignment, attributes);
+            this.kind = kind;
+        }
+
+        public static CValueLayout ofChar(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.CHAR, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofShort(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.SHORT, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofInt(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.INT, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofLong(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.LONG, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofLongLong(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.LONGLONG, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofFloat(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.FLOAT, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofDouble(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.DOUBLE, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofLongDouble(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.LONGDOUBLE, order, bitSize, bitSize, Map.of());
+        }
+
+        public static CValueLayout ofPointer(ByteOrder order, long bitSize) {
+            return new CValueLayout(Kind.POINTER, order, bitSize, bitSize, Map.of());
+        }
+
+        public final Kind kind() {
+            return kind;
+        }
+
+        @Override
+        public CValueLayout withOrder(ByteOrder order) {
+            return (CValueLayout) super.withOrder(order);
+        }
+
+        @Override
+        public CValueLayout withName(String name) {
+            return (CValueLayout) super.withName(name);
+        }
+
+        @Override
+        public CValueLayout withBitAlignment(long alignmentBits) {
+            return (CValueLayout) super.withBitAlignment(alignmentBits);
+        }
+
+        @Override
+        public CValueLayout withAttribute(String name, Constable value) {
+            return (CValueLayout) super.withAttribute(name, value);
+        }
+
+        @Override
+        protected CValueLayout dup(long alignment, Map<String, Constable> attributes) {
+            return new CValueLayout(kind, order(), bitSize(), alignment, attributes);
+        }
+
+        @Override
+        public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
+            return Optional.of(decorateLayoutConstant(kind.bsm()));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            if (!super.equals(other)) {
+                return false;
+            }
+            CValueLayout that = (CValueLayout) other;
+            return kind == that.kind;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), kind);
+        }
+    }
 }

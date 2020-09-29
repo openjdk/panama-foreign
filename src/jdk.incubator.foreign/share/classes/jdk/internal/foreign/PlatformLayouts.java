@@ -25,6 +25,8 @@
  */
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.CLinker.CValueLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
 
@@ -58,47 +60,47 @@ public class PlatformLayouts {
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
+        public static final CValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
+        public static final CValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
+        public static final CValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
+        public static final CValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -124,46 +126,46 @@ public class PlatformLayouts {
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
+        public static final CValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
+        public static final CValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
+        public static final CValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.
@@ -193,47 +195,47 @@ public class PlatformLayouts {
         /**
          * The {@code char} native type.
          */
-        public static final ValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
+        public static final CValueLayout C_CHAR = CValueLayout.ofChar(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code short} native type.
          */
-        public static final ValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
+        public static final CValueLayout C_SHORT = CValueLayout.ofShort(LITTLE_ENDIAN, 16);
 
         /**
          * The {@code int} native type.
          */
-        public static final ValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_INT = CValueLayout.ofInt(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code long} native type.
          */
-        public static final ValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONG = CValueLayout.ofLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long long} native type.
          */
-        public static final ValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_LONGLONG = CValueLayout.ofLongLong(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code float} native type.
          */
-        public static final ValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
+        public static final CValueLayout C_FLOAT = CValueLayout.ofFloat(LITTLE_ENDIAN, 32);
 
         /**
          * The {@code double} native type.
          */
-        public static final ValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
+        public static final CValueLayout C_DOUBLE = CValueLayout.ofDouble(LITTLE_ENDIAN, 64);
 
         /**
          * The {@code long double} native type.
          */
-        public static final ValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
+        public static final CValueLayout C_LONGDOUBLE = CValueLayout.ofLongDouble(LITTLE_ENDIAN, 128);
 
         /**
          * The {@code T*} native type.
          */
-        public static final ValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
+        public static final CValueLayout C_POINTER = CValueLayout.ofPointer(LITTLE_ENDIAN, ADDRESS.bitSize());
 
         /**
          * The {@code va_list} native type, as it is passed to a function.

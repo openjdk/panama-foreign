@@ -22,16 +22,16 @@
  *
  */
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.foreign.CValueLayout;
 
 public class NativeTestHelper {
 
     public static boolean isIntegral(MemoryLayout layout) {
-        return ((CValueLayout) layout).kind().isIntergral();
+        return ((CLinker.CValueLayout) layout).kind().isIntergral();
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return ((CValueLayout) layout).kind().isPointer();
+        return ((CLinker.CValueLayout) layout).kind().isPointer();
     }
 }
