@@ -32,6 +32,7 @@ import java.lang.constant.Constable;
 import java.lang.constant.DynamicConstantDesc;
 import java.nio.ByteOrder;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static java.lang.constant.ConstantDescs.BSM_GET_STATIC_FINAL;
@@ -154,5 +155,25 @@ public class CValueLayout extends ValueLayout {
     @Override
     public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
         return Optional.of(decorateLayoutConstant(kind.bsm()));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        if (!super.equals(other)) {
+            return false;
+        }
+        CValueLayout that = (CValueLayout) other;
+        return kind == that.kind;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), kind);
     }
 }

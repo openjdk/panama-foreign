@@ -92,10 +92,10 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
         if (this == other) {
             return true;
         }
-        if (!super.equals(other)) {
+        if (other == null || getClass() != other.getClass()) {
             return false;
         }
-        if (!(other instanceof ValueLayout)) {
+        if (!super.equals(other)) {
             return false;
         }
         ValueLayout v = (ValueLayout)other;
