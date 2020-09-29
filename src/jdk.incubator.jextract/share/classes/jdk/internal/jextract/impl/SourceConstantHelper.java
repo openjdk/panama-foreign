@@ -25,6 +25,7 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -32,7 +33,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.internal.jextract.impl.LayoutUtils.CanonicalABIType;
 
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.internal.jextract.impl.LayoutUtils.CANONICAL_FIELD;
 
 // generates ConstantHelper as java source
 class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
@@ -445,10 +444,17 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     }
 
     private static String typeToLayoutName(ValueLayout vl) {
-        return vl.attribute(CANONICAL_FIELD)
-            .map(CanonicalABIType.class::cast)
-            .map(CanonicalABIType::name)
-            .orElseThrow(() -> new RuntimeException("should not reach here, problematic layout: " + vl));
+        return switch (((CLinker.CValueLayout) vl).kind()) {
+            case CHAR -> "C_CHAR";
+            case SHORT -> "C_SHORT";
+            case INT -> "C_INT";
+            case LONG -> "C_LONG";
+            case LONGLONG -> "C_LONGLONG";
+            case FLOAT -> "C_FLOAT";
+            case DOUBLE -> "C_DOUBLE";
+            case LONGDOUBLE -> "C_LONGDOUBLE";
+            case POINTER -> "C_POINTER";
+        };
     }
 
     private String getSegmentFieldName(String javaName) {
