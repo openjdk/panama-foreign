@@ -158,7 +158,7 @@ public class TestNativeScope {
         }
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testNoReattach() {
         MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
         NativeScope scope1 = NativeScope.boundedScope(10);
@@ -167,25 +167,9 @@ public class TestNativeScope {
     }
 
     @Test
-    public void testNoClaimFromWrongThread() throws InterruptedException {
-        NativeScope scope = NativeScope.boundedScope(10);
-        AtomicBoolean failed = new AtomicBoolean(false);
-        Thread t = new Thread(() -> {
-            try {
-                MemorySegment s = MemorySegment.ofArray(new byte[1]);
-                s.handoff(scope);
-            } catch (IllegalArgumentException ex) {
-                failed.set(true);
-            }
-        });
-        t.start();
-        t.join();
-        assertTrue(failed.get());
-    }
-
-    @Test
     public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.allocateNative(10).handoff(MemorySegment.HandoffTransform::removeOwnerThread);
+        MemorySegment unconfined = MemorySegment.allocateNative(10)
+                .handoff(MemorySegment.HandoffTransform.ofShared());
         NativeScope scope = NativeScope.boundedScope(10);
         MemorySegment registered = unconfined.handoff(scope);
         assertFalse(unconfined.isAlive());

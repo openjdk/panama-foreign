@@ -57,16 +57,23 @@ public class TestCleaner {
     }
 
     @Test(dataProvider = "cleaners")
-    public void test(Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
+    public void test(int n, Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
         SegmentState segmentState = new SegmentState();
         MemorySegment segment = MemorySegment.allocateNative(10)
-                .handoff(r -> r.addCleanupAction(segmentState::cleanup));
+                .handoff(MemorySegment.HandoffTransform.ofConfined()
+                        .addCleanupAction(segmentState::cleanup));
         // register cleaners before
-        segment = segment.handoff(r -> r.registerCleaner(cleanerFactory.get()));
+        for (int i = 0 ; i < n ; i++) {
+            segment = segment.handoff(MemorySegment.HandoffTransform.ofConfined()
+                    .registerCleaner(cleanerFactory.get()));
+        }
         segment = segmentFunction.apply(segment);
         if (segment.isAlive()) {
             // also register cleaners after
-            segment = segment.handoff(r -> r.registerCleaner(cleanerFactory.get()));
+            for (int i = 0; i < n; i++) {
+                segment = segment.handoff(MemorySegment.HandoffTransform.ofConfined()
+                        .registerCleaner(cleanerFactory.get()));
+            }
         }
         //check that cleanup has not been called by any cleaner yet!
         assertEquals(segmentState.cleanupCalls(), segment.isAlive() ? 0 : 1);
@@ -86,7 +93,7 @@ public class TestCleaner {
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {
         IDENTITY(Function.identity()),
         CLOSE(s -> { s.close(); return s; }),
-        SHARE(s -> { return s.handoff(MemorySegment.HandoffTransform::removeOwnerThread); });
+        SHARE(s -> { return s.handoff(MemorySegment.HandoffTransform.ofShared()); });
 
         private final Function<MemorySegment, MemorySegment> segmentFunction;
 
@@ -107,13 +114,17 @@ public class TestCleaner {
                 (Supplier<Cleaner>)CleanerFactory::cleaner
         };
 
-        SegmentFunction[] segmentFunctions = SegmentFunction.values();
-        Object[][] data = new Object[cleaners.length * segmentFunctions.length][3];
+        int[] ncleaners = { 1, 2, 4, 8, 16 };
 
-        for (int cleaner = 0 ; cleaner < cleaners.length ; cleaner++) {
-            for (int segmentFunction = 0 ; segmentFunction < segmentFunctions.length ; segmentFunction++) {
-                data[cleaner + (cleaners.length * segmentFunction)] =
-                        new Object[] { cleaners[cleaner], segmentFunctions[segmentFunction] };
+        SegmentFunction[] segmentFunctions = SegmentFunction.values();
+        Object[][] data = new Object[cleaners.length * ncleaners.length * segmentFunctions.length][3];
+
+        for (int ncleaner = 0 ; ncleaner < ncleaners.length ; ncleaner++) {
+            for (int cleaner = 0 ; cleaner < cleaners.length ; cleaner++) {
+                for (int segmentFunction = 0 ; segmentFunction < segmentFunctions.length ; segmentFunction++) {
+                    data[ncleaner + ncleaners.length * cleaner + (cleaners.length * ncleaners.length * segmentFunction)] =
+                            new Object[] { ncleaners[ncleaner], cleaners[cleaner], segmentFunctions[segmentFunction] };
+                }
             }
         }
 

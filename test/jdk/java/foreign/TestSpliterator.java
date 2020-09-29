@@ -60,7 +60,8 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.ofSequence(size, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout).handoff(HandoffTransform::removeOwnerThread);
+        MemorySegment segment = MemorySegment.allocateNative(layout)
+                .handoff(HandoffTransform.ofShared());
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment, (long) i, i);
         }
@@ -214,8 +215,7 @@ public class TestSpliterator {
             () -> spliterator(mallocSegment.withAccessModes(READ), layout), READ,
             () -> spliterator(mallocSegment.withAccessModes(CLOSE), layout), 0,
             () -> spliterator(mallocSegment.withAccessModes(READ|WRITE), layout), READ|WRITE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE| SHARE), layout), READ|WRITE| SHARE,
-            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE| SHARE |HANDOFF), layout), READ|WRITE| SHARE |HANDOFF
+            () -> spliterator(mallocSegment.withAccessModes(READ|WRITE|HANDOFF), layout), READ|WRITE|HANDOFF
 
         );
         return l.entrySet().stream().map(e -> new Object[] { e.getKey(), e.getValue() }).toArray(Object[][]::new);

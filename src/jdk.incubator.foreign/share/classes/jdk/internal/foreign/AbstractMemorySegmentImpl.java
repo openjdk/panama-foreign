@@ -519,9 +519,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((mode & CLOSE) != 0) {
             modes.add("CLOSE");
         }
-        if ((mode & SHARE) != 0) {
-            modes.add("ACQUIRE");
-        }
         if ((mode & HANDOFF) != 0) {
             modes.add("HANDOFF");
         }

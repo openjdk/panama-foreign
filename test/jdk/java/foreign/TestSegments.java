@@ -324,7 +324,6 @@ public class TestSegments {
         final static List<String> CONFINED_NAMES = List.of(
                 "address",
                 "close",
-                "share",
                 "fill",
                 "copyFrom",
                 "mismatch",
@@ -335,7 +334,7 @@ public class TestSegments {
                 "toFloatArray",
                 "toLongArray",
                 "toDoubleArray",
-                "rebuild"
+                "handoff"
         );
 
         public SegmentMember(Method method, Object[] params) {
@@ -390,12 +389,6 @@ public class TestSegments {
     }
 
     enum AccessActions {
-        SHARE(MemorySegment.SHARE) {
-            @Override
-            void run(MemorySegment segment) {
-                segment.handoff(HandoffTransform::removeOwnerThread);
-            }
-        },
         CLOSE(MemorySegment.CLOSE) {
             @Override
             void run(MemorySegment segment) {
@@ -417,7 +410,7 @@ public class TestSegments {
         HANDOFF(MemorySegment.HANDOFF) {
             @Override
             void run(MemorySegment segment) {
-                segment.handoff(r -> r.setOwnerThread(new Thread()));
+                segment.handoff(HandoffTransform.ofConfined(new Thread()));
             }
         };
 

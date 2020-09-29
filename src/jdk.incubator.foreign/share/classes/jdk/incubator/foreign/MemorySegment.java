@@ -110,7 +110,7 @@ import java.util.function.Consumer;
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
  * Memory segments supports zero or more <em>access modes</em>. Supported access modes are {@link #READ},
- * {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. The set of access modes supported by a segment alters the
+ * {@link #WRITE}, {@link #CLOSE}, and {@link #HANDOFF}. The set of access modes supported by a segment alters the
  * set of operations that are supported by that segment. For instance, attempting to call {@link #close()} on
  * a segment which does not support the {@link #CLOSE} access mode will result in an exception.
  * <p>
@@ -150,13 +150,13 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * owner thread will result in a runtime failure.
  * <p>
  * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
- * {@link HandoffTransform#setOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
+ * {@link HandoffTransform#ofConfined(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
  * a segment in a controlled, cooperative and race-free fashion.
  * <p>
  * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
  * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
- * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link HandoffTransform#removeOwnerThread()},
- * (this assumes that the access mode {@link #SHARE} of the original segment is set).
+ * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link HandoffTransform#ofShared()},
+ * (this assumes that the access mode {@link #HANDOFF} of the original segment is set).
  * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
  * segment and allow multiple thread to work in parallel on disjoint segment slices.
  * For instance, the following code can be used to sum all int values in a memory segment in parallel:
@@ -169,7 +169,7 @@ try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).rebui
                            .sum();
 }
  * }</pre></blockquote>
- * Once shared, a segment can be claimed back by a given thread (see {@link HandoffTransform#setOwnerThread(Thread)}); in fact, many threads
+ * Once shared, a segment can be claimed back by a given thread (see {@link HandoffTransform#ofConfined(Thread)}); in fact, many threads
  * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
@@ -831,27 +831,19 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link HandoffTransform#removeOwnerThread()}).
-     * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
+     * Handoff access mode; this segment support temporal bound changes (see {@link #handoff(NativeScope)} and
+     * {@link #handoff(HandoffTransform)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int SHARE = CLOSE << 1;
-
-    /**
-     * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
-     * (see {@link HandoffTransform#setOwnerThread(Thread)}).
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int HANDOFF = SHARE << 1;
+    int HANDOFF = CLOSE << 1;
 
     /**
      * Default access mode; this is a union of all the access modes supported by memory segments.
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int ALL_ACCESS = READ | WRITE | CLOSE | SHARE | HANDOFF;
+    int ALL_ACCESS = READ | WRITE | CLOSE | HANDOFF;
 
     /**
      * Interface used to reconstruct an existing memory segment (see {@link #segment()}) with fresh temporal bounds and new characteristics,
@@ -868,8 +860,6 @@ allocateNative(bytesSize, 1);
          *The reconstructed segment will be a shared segment, and will be accessible concurrently from multiple threads.
          *
          * @return this segment rebuilder.
-         * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()}) does not
-         * feature the {@link #SHARE} access mode.
          */
         static HandoffTransform ofShared() {
             return new AbstractMemorySegmentImpl.HandoffTransformImpl(null);
@@ -879,14 +869,16 @@ allocateNative(bytesSize, 1);
          * Specifies the new owner thread to be associated with the reconstructed segment.
          * The reconstructed segment will be a confined segment, whose owner thread is {@code newOwner}.
          *
-         * @param newOwner the new owner thread.
+         * @param t the new owner thread.
          * @return this segment rebuilder.
-         * @throws NullPointerException if {@code newOwner == null}.
-         * @throws UnsupportedOperationException if the segment being reconstructed (see {@link #segment()}) does not
-         * feature the {@link #HANDOFF} access mode.
+         * @throws NullPointerException if {@code t == null}.
          */
         static HandoffTransform ofConfined(Thread t) {
             return new AbstractMemorySegmentImpl.HandoffTransformImpl(t);
+        }
+
+        static HandoffTransform ofConfined() {
+            return ofConfined(Thread.currentThread());
         }
 
         /**
