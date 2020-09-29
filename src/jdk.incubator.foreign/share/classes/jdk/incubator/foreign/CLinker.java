@@ -797,7 +797,7 @@ public interface CLinker {
 
         @Override
         public CValueLayout withOrder(ByteOrder order) {
-            return (CValueLayout) super.withOrder(order);
+            return new CValueLayout(kind, order, bitSize(), alignment, attributes);
         }
 
         @Override
@@ -816,7 +816,7 @@ public interface CLinker {
         }
 
         @Override
-        protected CValueLayout dup(long alignment, Map<String, Constable> attributes) {
+        CValueLayout dup(long alignment, Map<String, Constable> attributes) {
             return new CValueLayout(kind, order(), bitSize(), alignment, attributes);
         }
 
