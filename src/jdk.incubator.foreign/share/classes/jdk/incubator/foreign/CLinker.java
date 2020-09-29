@@ -707,12 +707,12 @@ public interface CLinker {
     }
 
     /**
-     * Subclass of ValueLayout that contains information needed when linking
+     * Subclass of {@link ValueLayout} that contains information needed when linking
      * downcalls or upcalls.
      */
     class CValueLayout extends ValueLayout {
         /**
-         * The kind of CValueLayout. Each kind corresponds to a particular
+         * The kind of {@link CValueLayout}. Each kind corresponds to a particular
          * C language builtin type.
          */
         public enum Kind {
