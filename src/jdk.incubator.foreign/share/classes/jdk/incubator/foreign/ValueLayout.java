@@ -110,7 +110,7 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
     }
 
     @Override
-    protected ValueLayout dup(long alignment, Map<String, Constable> attributes) {
+    ValueLayout dup(long alignment, Map<String, Constable> attributes) {
         return new ValueLayout(order, bitSize(), alignment, attributes);
     }
 

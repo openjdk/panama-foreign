@@ -24,10 +24,10 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.CValueLayout;
 
 import static jdk.internal.foreign.PlatformLayouts.Win64.VARARGS_ATTRIBUTE_NAME;
 
@@ -40,7 +40,7 @@ enum TypeClass {
     VARARG_FLOAT;
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        if (!(type instanceof CValueLayout)) {
+        if (!(type instanceof CLinker.CValueLayout)) {
             throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
         }
 
@@ -53,7 +53,7 @@ enum TypeClass {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        return switch (((CValueLayout) type).kind()) {
+        return switch (((CLinker.CValueLayout) type).kind()) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
             case POINTER -> POINTER;
             case FLOAT, DOUBLE, LONGDOUBLE -> {
