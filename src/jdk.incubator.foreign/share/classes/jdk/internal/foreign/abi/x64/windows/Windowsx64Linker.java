@@ -98,10 +98,6 @@ public class Windowsx64Linker implements CLinker {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
-    static Win64.ArgumentClass argumentClassFor(MemoryLayout layout) {
-        return (Win64.ArgumentClass)layout.attribute(Win64.CLASS_ATTRIBUTE_NAME).get();
-    }
-
     public static VaList newVaListOfAddress(MemoryAddress ma) {
         return WinVaList.ofAddress(ma);
     }

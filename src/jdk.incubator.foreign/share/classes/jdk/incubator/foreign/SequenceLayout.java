@@ -252,12 +252,12 @@ public final class SequenceLayout extends AbstractLayout {
     }
 
     @Override
-    SequenceLayout dup(long alignment, Map<String, Constable> attributes) {
+    protected SequenceLayout dup(long alignment, Map<String, Constable> attributes) {
         return new SequenceLayout(elementCount(), elementLayout, alignment, attributes);
     }
 
     @Override
-    boolean hasNaturalAlignment() {
+    protected boolean hasNaturalAlignment() {
         return alignment == elementLayout.bitAlignment();
     }
 

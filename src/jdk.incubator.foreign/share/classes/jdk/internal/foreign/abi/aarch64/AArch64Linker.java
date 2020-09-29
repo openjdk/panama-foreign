@@ -86,10 +86,6 @@ public class AArch64Linker implements CLinker {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
     }
 
-    static AArch64.ArgumentClass argumentClassFor(MemoryLayout layout) {
-        return (AArch64.ArgumentClass)layout.attribute(AArch64.CLASS_ATTRIBUTE_NAME).get();
-    }
-
     public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
         AArch64VaList.Builder builder = AArch64VaList.builder(allocator);
         actions.accept(builder);
