@@ -706,16 +706,51 @@ public interface CLinker {
         }
     }
 
+    /**
+     * Subclass of ValueLayout that contains information needed when linking
+     * downcalls or upcalls.
+     */
     class CValueLayout extends ValueLayout {
+        /**
+         * The kind of CValueLayout. Each kind corresponds to a particular
+         * C language builtin type.
+         */
         public enum Kind {
+            /**
+             * A kind corresponding to the C {@code char} type
+             */
             CHAR(findBSM("C_CHAR"), true),
+            /**
+             * A kind corresponding to the C {@code short} type
+             */
             SHORT(findBSM("C_SHORT"), true),
+            /**
+             * A kind corresponding to the C {@code int} type
+             */
             INT(findBSM("C_INT"), true),
+            /**
+             * A kind corresponding to the C {@code long} type
+             */
             LONG(findBSM("C_LONG"), true),
+            /**
+             * A kind corresponding to the C {@code long long} type
+             */
             LONGLONG(findBSM("C_LONGLONG"), true),
+            /**
+             * A kind corresponding to the C {@code float} type
+             */
             FLOAT(findBSM("C_FLOAT"), false),
+            /**
+             * A kind corresponding to the C {@code double} type
+             */
             DOUBLE(findBSM("C_DOUBLE"), false),
+            /**
+             * A kind corresponding to the C {@code long double} type
+             */
             LONGDOUBLE(findBSM("C_LONGDOUBLE"), false),
+            /**
+             * A kind corresponding to the a C pointer type
+             */
             POINTER(findBSM("C_POINTER"), false);
 
             private final DynamicConstantDesc<ValueLayout> bsm;
@@ -726,14 +761,33 @@ public interface CLinker {
                 this.isIntegral = isIntegral;
             }
 
-            public DynamicConstantDesc<ValueLayout> bsm() {
+            private DynamicConstantDesc<ValueLayout> bsm() {
                 return bsm;
             }
 
+            /**
+             * Is this kind integral?
+             *
+             * @return true if this kind is integral
+             */
             public boolean isIntergral() {
                 return isIntegral;
             }
 
+            /**
+             * Is this kind a floating point type?
+             *
+             * @return true if this kind is a floating point type
+             */
+            public boolean isFloat() {
+                return !isIntergral() && !isPointer();
+            }
+
+            /**
+             * Is this kind a pointer kind?
+             *
+             * @return true if this kind is a pointer kind
+             */
             public boolean isPointer() {
                 return this == POINTER;
             }
@@ -750,66 +804,156 @@ public interface CLinker {
 
         private final Kind kind;
 
-        protected CValueLayout(Kind kind, ByteOrder order, long size, long alignment, Map<String, Constable> attributes) {
-            super(order, size, alignment, attributes);
+        /**
+         * CValueLayout constructor
+         *
+         * @param kind the kind of CValueLayout
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @param bitAlignment the alignment, in bits, of the layout
+         * @param attributes the attribute map of this layout
+         */
+        protected CValueLayout(Kind kind, ByteOrder order, long bitSize, long bitAlignment,
+                               Map<String, Constable> attributes) {
+            super(order, bitSize, bitAlignment, attributes);
             this.kind = kind;
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code CHAR} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofChar(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.CHAR, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code SHORT} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofShort(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.SHORT, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code INT} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofInt(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.INT, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code LONG} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofLong(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.LONG, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code LONGLONG} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofLongLong(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.LONGLONG, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code FLOAT} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofFloat(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.FLOAT, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code DOUBLE} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofDouble(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.DOUBLE, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code LONGDOUBLE} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofLongDouble(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.LONGDOUBLE, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Creates a new CValueLayout with the {@code POINTER} kind
+         *
+         * @param order the byte order of the layout
+         * @param bitSize the size, in bits, of the layout
+         * @return the newly created CValueLayout
+         */
         public static CValueLayout ofPointer(ByteOrder order, long bitSize) {
             return new CValueLayout(Kind.POINTER, order, bitSize, bitSize, Map.of());
         }
 
+        /**
+         * Accessor for the kind of this layout
+         *
+         * @return the kind
+         */
         public final Kind kind() {
             return kind;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public CValueLayout withOrder(ByteOrder order) {
             return new CValueLayout(kind, order, bitSize(), alignment, attributes);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public CValueLayout withName(String name) {
             return (CValueLayout) super.withName(name);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public CValueLayout withBitAlignment(long alignmentBits) {
             return (CValueLayout) super.withBitAlignment(alignmentBits);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public CValueLayout withAttribute(String name, Constable value) {
             return (CValueLayout) super.withAttribute(name, value);
@@ -820,11 +964,17 @@ public interface CLinker {
             return new CValueLayout(kind, order(), bitSize(), alignment, attributes);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
             return Optional.of(decorateLayoutConstant(kind.bsm()));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public boolean equals(Object other) {
             if (this == other) {
@@ -840,6 +990,9 @@ public interface CLinker {
             return kind == that.kind;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public int hashCode() {
             return Objects.hash(super.hashCode(), kind);
