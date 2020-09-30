@@ -187,6 +187,11 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return List.of(result);
     }
 
+    @Override
+    protected String getClassModifiers() {
+        return "";
+    }
+
     protected void classBegin() {
         super.classBegin();
         if (superClass() == null) { // only for the first one

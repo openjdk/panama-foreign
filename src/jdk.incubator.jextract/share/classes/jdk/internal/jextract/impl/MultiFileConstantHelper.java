@@ -65,16 +65,16 @@ public class MultiFileConstantHelper implements ConstantHelper {
 
     private void checkNewConstantsClass() {
         if (constantCount > constantsPerClass) {
-            newConstantsClass(false, null);
+            newConstantsClass(false);
         }
         constantCount++;
     }
 
-    private void newConstantsClass(boolean isFinal, String nameOverride) {
+    private void newConstantsClass(boolean isFinal) {
         finishedClasses.addAll(delegate.build());
         String currentClassName = getConstantClassName();
         constantClassCount++;
-        String newClassName = nameOverride != null ? nameOverride : getConstantClassName();
+        String newClassName = getConstantClassName();
         delegate = delegateFactory.make(newClassName, currentClassName, isFinal);
         this.constantCount = 0;
     }
@@ -123,7 +123,7 @@ public class MultiFileConstantHelper implements ConstantHelper {
 
     @Override
     public List<JavaFileObject> build() {
-        newConstantsClass(true, headerClassName + "$constants");
+        newConstantsClass(true);
         return new ArrayList<>(finishedClasses);
     }
 }
