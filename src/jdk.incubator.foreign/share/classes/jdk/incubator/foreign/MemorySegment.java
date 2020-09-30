@@ -919,7 +919,7 @@ allocateNative(bytesSize, 1);
 
         /**
          * Creates a new confined handoff transform, bound by a given thread. The target segment produced by the returned transform
-         * is a confinement segment, which will only be accessible to a specific thread.
+         * is a confined segment, which will only be accessible by a specific thread.
          *
          * @param t the confinement thread.
          * @return a confined handoff transform.
