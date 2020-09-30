@@ -152,7 +152,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * {@link HandoffTransform} instance. Calling {@link #handoff(HandoffTransform)} is only possible if the segment
  * features the corresponding {@link #HANDOFF} access mode.
  * <p>
- * For instance, if client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
+ * For instance, if a client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
  *
  * <blockquote><pre>{@code
 MemorySegment segment = ...
