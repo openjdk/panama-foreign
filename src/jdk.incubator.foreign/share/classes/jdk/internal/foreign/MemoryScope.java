@@ -162,9 +162,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
         try {
             justClose();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
             return ownerThread() == null ?
                     new SharedScope(ref, cleanupAction, cleaner) :
                     new ConfinedScope(ownerThread(), ref, cleanupAction, cleaner);
@@ -283,7 +280,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
     static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
         final Cleaner cleaner;
-        Runnable cleanupAction;
+        final Runnable cleanupAction;
 
         public ScopeCleanable(MemoryScope referent, Cleaner cleaner, Runnable cleanupAction) {
             super(referent, cleaner);
