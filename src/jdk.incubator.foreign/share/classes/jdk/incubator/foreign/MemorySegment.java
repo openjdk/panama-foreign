@@ -910,7 +910,7 @@ allocateNative(bytesSize, 1);
 
         /**
          * Creates a new shared handoff transform. The target segment produced by the returned transform is a shared
-         * segment, which can be accessible concurrently from multiple threads.
+         * segment, which can be accessed concurrently from multiple threads.
          * @return a shared handoff transform.
          */
         static HandoffTransform ofShared() {
