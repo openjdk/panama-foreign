@@ -267,7 +267,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Obtains a segment view with specific <a href="#access-modes">access modes</a>. Supported access modes are {@link #READ}, {@link #WRITE},
-     * {@link #CLOSE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
+     * {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
      * to one with less strict access modes. For instance, attempting to add {@link #WRITE} access mode to a read-only segment
      * will be met with an exception.
      * @param accessModes an ORed mask of zero or more access modes.
@@ -287,7 +287,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
 
     /**
      * Returns the <a href="#access-modes">access modes</a> associated with this segment; the result is represented as ORed values from
-     * {@link #READ}, {@link #WRITE}, {@link #CLOSE} and {@link #HANDOFF}.
+     * {@link #READ}, {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}.
      * @return the access modes associated with this segment.
      */
     int accessModes();
@@ -915,24 +915,25 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Handoff access mode; this segment support thread confinement changes (see {@link #handoff(NativeScope)} and
-     * {@link #handoff(Thread)}).
+     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #share()}).
+     * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int HANDOFF = CLOSE << 1;
+    int SHARE = CLOSE << 1;
 
     /**
-     * Share access mode; this segment support removal of thread confinement (see {@link #share()}).
+     * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
+     * (see {@link #handoff(NativeScope)} and {@link #handoff(Thread)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int SHARE = HANDOFF << 1;
+    int HANDOFF = SHARE << 1;
 
     /**
      * Default access mode; this is a union of all the access modes supported by memory segments.
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int ALL_ACCESS = READ | WRITE | CLOSE | HANDOFF | SHARE;
+    int ALL_ACCESS = READ | WRITE | CLOSE | SHARE | HANDOFF;
 }
