@@ -424,7 +424,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * <p>
      * The returned segment will feature only {@link MemorySegment#READ} and {@link MemorySegment#WRITE} access modes
      * (assuming these were available in the original segment). As such the returned segment cannot be closed directly
-     * using {@link MemorySegment#close()} - but it will be closed indirectly when this native scope is closed. The
+     * using {@link MemorySegment#close()} - but it will be closed indirectly when the native scope is closed. The
      * returned segment will also be confined by the same thread as the provided native scope (see {@link NativeScope#ownerThread()}).
      * <p>
      * In cases where the owner thread of the returned segment differs from that of this segment, write accesses to this
