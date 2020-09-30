@@ -174,7 +174,7 @@ MemorySegment sharedSegment = segment.handoff(HandoffTransform.ofShared());
  * thread (e.g. {@link #ownerThread()} returns {@code null}). This might be useful when multiple threads need to process
  * the contents of the same memory segment concurrently (e.g. in the case of parallel processing). For instance, a client
  * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
- * thread to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
