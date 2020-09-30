@@ -873,7 +873,7 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Handoff access mode; this segment support temporal bound changes (see {@link #handoff(NativeScope)} and
+     * Handoff access mode; this segment supports temporal bound changes (see {@link #handoff(NativeScope)} and
      * {@link #handoff(HandoffTransform)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
