@@ -59,20 +59,20 @@ public class TestCleaner {
     @Test(dataProvider = "cleaners")
     public void test(int n, Supplier<Cleaner> cleanerFactory, SegmentFunction segmentFunction) {
         SegmentState segmentState = new SegmentState();
-        MemorySegment segment = MemorySegment.allocateNative(10)
-                .handoff(MemorySegment.HandoffTransform.ofConfined()
-                        .addCleanupAction(segmentState::cleanup));
+        MemorySegment root = MemorySegment.allocateNative(10);
+        MemorySegment segment = root.address().asSegmentRestricted(10, () -> {
+            root.close();
+            segmentState.cleanup();
+        }, null);
         // register cleaners before
         for (int i = 0 ; i < n ; i++) {
-            segment = segment.handoff(MemorySegment.HandoffTransform.ofConfined()
-                    .registerCleaner(cleanerFactory.get()));
+            segment.registerCleaner(cleanerFactory.get());
         }
         segment = segmentFunction.apply(segment);
         if (segment.isAlive()) {
             // also register cleaners after
             for (int i = 0; i < n; i++) {
-                segment = segment.handoff(MemorySegment.HandoffTransform.ofConfined()
-                        .registerCleaner(cleanerFactory.get()));
+                segment.registerCleaner(cleanerFactory.get());
             }
         }
         //check that cleanup has not been called by any cleaner yet!
@@ -93,7 +93,7 @@ public class TestCleaner {
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {
         IDENTITY(Function.identity()),
         CLOSE(s -> { s.close(); return s; }),
-        SHARE(s -> { return s.handoff(MemorySegment.HandoffTransform.ofShared()); });
+        SHARE(s -> { return s.share(); });
 
         private final Function<MemorySegment, MemorySegment> segmentFunction;
 

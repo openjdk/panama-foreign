@@ -57,11 +57,11 @@ public class TestSharedAccess {
         for (int i = 0 ; i < 1000 ; i++) {
             threads.add(new Thread(() -> {
                 assertEquals(getInt(confined.get()), 42);
-                confined.set(confined.get().handoff(MemorySegment.HandoffTransform.ofConfined(owner)));
+                confined.set(confined.get().handoff(owner));
             }));
         }
         threads.forEach(t -> {
-            confined.set(confined.get().handoff(MemorySegment.HandoffTransform.ofConfined(t)));
+            confined.set(confined.get().handoff(t));
             t.start();
             try {
                 t.join();
@@ -75,7 +75,7 @@ public class TestSharedAccess {
     @Test
     public void testShared() throws Throwable {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-        try (MemorySegment s = MemorySegment.allocateNative(layout).handoff(MemorySegment.HandoffTransform.ofShared())) {
+        try (MemorySegment s = MemorySegment.allocateNative(layout).share()) {
             for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
                 setInt(s.asSlice(i * 4), 42);
             }
@@ -123,8 +123,7 @@ public class TestSharedAccess {
             setInt(s, 42);
             assertEquals(getInt(s), 42);
             List<Thread> threads = new ArrayList<>();
-            MemorySegment sharedSegment = s.address().asSegmentRestricted(s.byteSize())
-                    .handoff(MemorySegment.HandoffTransform.ofShared());
+            MemorySegment sharedSegment = s.address().asSegmentRestricted(s.byteSize()).share();
             for (int i = 0 ; i < 1000 ; i++) {
                 threads.add(new Thread(() -> {
                     assertEquals(getInt(sharedSegment), 42);
@@ -144,13 +143,13 @@ public class TestSharedAccess {
     @Test(expectedExceptions=UnsupportedOperationException.class)
     public void testBadHandoffNoAccess() {
         MemorySegment.ofArray(new int[4])
-            .withAccessModes(MemorySegment.CLOSE).handoff(MemorySegment.HandoffTransform.ofConfined(new Thread()));
+            .withAccessModes(MemorySegment.CLOSE).handoff(new Thread());
     }
 
     @Test(expectedExceptions=UnsupportedOperationException.class)
     public void testBadShareNoAccess() {
         MemorySegment.ofArray(new int[4])
-                .withAccessModes(MemorySegment.CLOSE).handoff(MemorySegment.HandoffTransform.ofShared());
+                .withAccessModes(MemorySegment.CLOSE).share();
     }
 
     @Test

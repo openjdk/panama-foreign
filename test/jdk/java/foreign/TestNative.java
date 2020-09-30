@@ -172,8 +172,7 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .handoff(HandoffTransform.ofShared().addCleanupAction(() -> free(addr)));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
@@ -190,8 +189,7 @@ public class TestNative {
     @Test
     public void testMallocSegment() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .handoff(HandoffTransform.ofShared().addCleanupAction(() -> free(addr)));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());

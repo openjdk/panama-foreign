@@ -47,7 +47,6 @@ import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -168,8 +167,7 @@ public class TestNativeScope {
 
     @Test
     public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.allocateNative(10)
-                .handoff(MemorySegment.HandoffTransform.ofShared());
+        MemorySegment unconfined = MemorySegment.allocateNative(10).share();
         NativeScope scope = NativeScope.boundedScope(10);
         MemorySegment registered = unconfined.handoff(scope);
         assertFalse(unconfined.isAlive());

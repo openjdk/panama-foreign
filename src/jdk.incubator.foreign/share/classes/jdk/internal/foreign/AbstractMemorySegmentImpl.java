@@ -59,6 +59,7 @@ import java.util.function.IntFunction;
  */
 public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
+    public static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -284,13 +285,28 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public MemorySegment handoff(HandoffTransform handoffTransform) {
+    public MemorySegment handoff(Thread thread) {
+        Objects.requireNonNull(thread);
         checkValidState();
         if (!isSet(HANDOFF)) {
             throw unsupportedAccessMode(HANDOFF);
         }
         try {
-            return dup(0L, length, mask, ((HandoffTransformImpl)handoffTransform).newScope(scope));
+            return dup(0L, length, mask, scope.confineTo(thread));
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
+        }
+    }
+
+    @Override
+    public MemorySegment share() {
+        checkValidState();
+        if (!isSet(SHARE)) {
+            throw unsupportedAccessMode(SHARE);
+        }
+        try {
+            return dup(0L, length, mask, scope.share());
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();
@@ -299,6 +315,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
     @Override
     public MemorySegment handoff(NativeScope scope) {
+        Objects.requireNonNull(scope);
         checkValidState();
         if (!isSet(HANDOFF)) {
             throw unsupportedAccessMode(HANDOFF);
@@ -306,79 +323,19 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
         }
-        MemorySegment dup = handoff(HandoffTransform.ofConfined(scope.ownerThread()));
+        MemorySegment dup = handoff(scope.ownerThread());
         ((AbstractNativeScope)scope).register(dup);
         return dup.withAccessModes(accessModes() & (READ | WRITE));
     }
 
-    public static class HandoffTransformImpl implements HandoffTransform {
-
-        final Thread ownerThread;
-        List<Runnable> cleanupActions = new ArrayList<>();
-        List<Object> attachments = new ArrayList<>();
-        Cleaner cleaner;
-
-        public HandoffTransformImpl(Thread thread) {
-            this.ownerThread = thread;
+    @Override
+    public void registerCleaner(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
+        checkValidState();
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
         }
-
-        @Override
-        public HandoffTransform addCleanupAction(Runnable action) {
-            Objects.requireNonNull(action);
-            cleanupActions.add(action);
-            return this;
-        }
-
-        @Override
-        public HandoffTransform addAttachment(Object attachment) {
-            Objects.requireNonNull(attachment);
-            attachments.add(attachment);
-            return this;
-        }
-
-        @Override
-        public HandoffTransform registerCleaner(Cleaner cleaner) {
-            if (this.cleaner != null) {
-                throw new IllegalStateException("Transform already associated with a cleaner");
-            }
-            this.cleaner = cleaner;
-            return this;
-        }
-
-        MemoryScope newScope(MemoryScope scope) {
-            // compute new composite cleanup action
-            if (scope.scopeCleanable != null) {
-                if (cleaner != null) {
-                    throw new IllegalStateException("Segment already associated with a cleaner");
-                } else {
-                    cleaner = scope.scopeCleanable.cleaner;
-                }
-            }
-            Runnable cleanupAction = scope.cleanupAction;
-            for (Runnable action : cleanupActions) {
-                Runnable prevAction = cleanupAction;
-                cleanupAction = () -> {
-                    prevAction.run();
-                    action.run();
-                };
-            }
-            // compute new composite attachment
-            Object attachment = scope.ref;
-            for (Object o : attachments) {
-                Object currentAttachment = attachment;
-                attachment = attachment == null ?
-                        o : new Object() {
-                            Object o1 = currentAttachment;
-                            Object o2 = o;
-                        };
-            }
-            scope.justClose(); // kill the old scope
-            //create a new scope
-            MemoryScope newScope = ownerThread != null ?
-                    new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction, cleaner) :
-                    new MemoryScope.SharedScope(attachment, cleanupAction, cleaner);
-            return newScope;
-        }
+        cleaner.register(this.scope, scope.cleanupAction);
     }
 
     @Override
@@ -651,7 +608,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, MemoryScope.DUMMY_CLEANUP_ACTION, null);
+            bufferScope = MemoryScope.createConfined(bb, DUMMY_CLEANUP_ACTION, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {

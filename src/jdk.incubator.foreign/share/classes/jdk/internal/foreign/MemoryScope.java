@@ -51,8 +51,6 @@ import java.util.Objects;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
-    static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
-
     private MemoryScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
         Objects.requireNonNull(cleanupAction);
         this.ref = ref;
@@ -115,6 +113,46 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     }
 
     abstract void justClose();
+
+    /**
+     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
+     * @param newOwner new owner thread of the returned memory scope
+     * @return a new confined scope, which is a duplicate of this scope, but with a new owner thread.
+     * @throws IllegalStateException if this scope is already closed or if this is
+     * a confined scope and this method is called outside of the owner thread.
+     */
+    MemoryScope confineTo(Thread newOwner) {
+        try {
+            justClose();
+            if (scopeCleanable != null) {
+                scopeCleanable.clear();
+            }
+            return new ConfinedScope(newOwner, ref, cleanupAction, scopeCleanable != null ?
+                    scopeCleanable.cleaner : null);
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
+
+    /**
+     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
+     * @return a new shared scope, which is a duplicate of this scope.
+     * @throws IllegalStateException if this scope is already closed or if this is
+     * a confined scope and this method is called outside of the owner thread,
+     * or if this is already a shared scope.
+     */
+    MemoryScope share() {
+        try {
+            justClose();
+            if (scopeCleanable != null) {
+                scopeCleanable.clear();
+            }
+            return new SharedScope(ref, cleanupAction, scopeCleanable != null ?
+                    scopeCleanable.cleaner : null);
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
 
     /**
      * Returns "owner" thread of this scope.
