@@ -931,7 +931,7 @@ allocateNative(bytesSize, 1);
 
         /**
          * Creates a new confined handoff transform, bound by the current thread (see {@link Thread#currentThread()}).
-         * The target segment produced by the returned transform is a confinement segment, which will only be accessible to a specific thread.
+         * The target segment produced by the returned transform is a confined segment, which will only be accessible by the current thread.
          *
          * @return a confined handoff transform.
          * @throws NullPointerException if {@code t == null}.
