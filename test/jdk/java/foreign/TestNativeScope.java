@@ -47,6 +47,7 @@ import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -163,6 +164,18 @@ public class TestNativeScope {
         NativeScope scope1 = NativeScope.boundedScope(10);
         NativeScope scope2 = NativeScope.boundedScope(10);
         s1.handoff(scope1).handoff(scope2);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testNullClaim() {
+        MemorySegment.ofArray(new byte[5]).handoff((NativeScope)null);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testNotAliveClaim() {
+        MemorySegment segment = MemorySegment.ofArray(new byte[1]);
+        segment.close();
+        segment.handoff(NativeScope.boundedScope(10));
     }
 
     @Test
