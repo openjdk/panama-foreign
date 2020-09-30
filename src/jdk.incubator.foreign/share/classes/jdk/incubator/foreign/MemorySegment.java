@@ -955,7 +955,7 @@ allocateNative(bytesSize, 1);
 
         /**
          * Specifies an additional attachment object which will be kept alive by the target segment, in addition
-         * to any attachment object which might also be associated with the source segment.
+         * to any attachment object(s) which might also be associated with the source segment.
          * This can be useful in cases where the lifecycle of the segment is dependent on that of some other external resource.
          *
          * @param attachment an attachment object that will be kept strongly reachable by the target segment produced
