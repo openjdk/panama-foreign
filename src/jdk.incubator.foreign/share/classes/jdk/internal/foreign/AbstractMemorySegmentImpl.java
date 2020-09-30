@@ -59,7 +59,6 @@ import java.util.function.IntFunction;
  */
 public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
-    public static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -329,13 +328,13 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public void registerCleaner(Cleaner cleaner) {
+    public MemorySegment registerCleaner(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
         checkValidState();
         if (!isSet(CLOSE)) {
             throw unsupportedAccessMode(CLOSE);
         }
-        cleaner.register(this.scope, scope.cleanupAction);
+        return dup(0L, length, mask, scope.cleanable(cleaner));
     }
 
     @Override
@@ -486,6 +485,9 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         if ((mode & CLOSE) != 0) {
             modes.add("CLOSE");
         }
+        if ((mode & SHARE) != 0) {
+            modes.add("SHARE");
+        }
         if ((mode & HANDOFF) != 0) {
             modes.add("HANDOFF");
         }
@@ -608,7 +610,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, DUMMY_CLEANUP_ACTION, null);
+            bufferScope = MemoryScope.createConfined(bb, MemoryScope.DUMMY_CLEANUP_ACTION, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {

@@ -51,6 +51,8 @@ import java.util.Objects;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
+    static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
+
     private MemoryScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
         Objects.requireNonNull(cleanupAction);
         this.ref = ref;
@@ -149,6 +151,23 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             }
             return new SharedScope(ref, cleanupAction, scopeCleanable != null ?
                     scopeCleanable.cleaner : null);
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
+
+    MemoryScope cleanable(Cleaner cleaner) {
+        if (scopeCleanable != null) {
+            throw new IllegalStateException("Already registered with a cleaner");
+        }
+        try {
+            justClose();
+            if (scopeCleanable != null) {
+                scopeCleanable.clear();
+            }
+            return ownerThread() == null ?
+                    new SharedScope(ref, cleanupAction, cleaner) :
+                    new ConfinedScope(ownerThread(), ref, cleanupAction, cleaner);
         } finally {
             Reference.reachabilityFence(this);
         }

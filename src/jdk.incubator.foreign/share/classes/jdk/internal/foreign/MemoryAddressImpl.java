@@ -92,12 +92,20 @@ public final class MemoryAddressImpl implements MemoryAddress {
         return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
     }
 
+    @Override
+    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
+        Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
+        if (bytesSize <= 0) {
+            throw new IllegalArgumentException("Invalid size : " + bytesSize);
+        }
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize, cleanupAction, attachment);
+    }
+
     public static MemorySegment ofLongUnchecked(long value) {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize)
-                .handoff(MemorySegment.HandoffTransform.ofShared());
+        return MemoryAddress.ofLong(value).asSegmentRestricted(byteSize, null, null).share();
     }
 }

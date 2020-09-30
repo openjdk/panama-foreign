@@ -98,10 +98,9 @@ public interface MemoryAddress extends Addressable {
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
      * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
-     * memory resources which might implicitly be associated with the segment. This method is equivalent (but likely more
-     * efficient) to the following code:
+     * memory resources which might implicitly be associated with the segment. This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, () -> { }, null);
+    asSegmentRestricted(byteSize, null, null);
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -115,7 +114,7 @@ public interface MemoryAddress extends Addressable {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     default MemorySegment asSegmentRestricted(long bytesSize) {
-        return asSegmentRestricted(bytesSize, AbstractMemorySegmentImpl.DUMMY_CLEANUP_ACTION, null);
+        return asSegmentRestricted(bytesSize, null, null);
     }
 
     /**
@@ -149,13 +148,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    default MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
-        Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
-        if (bytesSize <= 0) {
-            throw new IllegalArgumentException("Invalid size : " + bytesSize);
-        }
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize, cleanupAction, attachment);
-    }
+    MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment);
 
     /**
      * Returns the raw long value associated with this memory address.

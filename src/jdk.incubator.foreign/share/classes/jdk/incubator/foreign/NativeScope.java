@@ -34,7 +34,6 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.OptionalLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 

@@ -80,8 +80,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_shared() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE)
-                .handoff(MemorySegment.HandoffTransform.ofShared());
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE).share();
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
