@@ -150,7 +150,7 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * (see {@link #isAlive()}) and creates a <em>new</em> segment with the desired thread-confinement properties. Calling
  * {@link #handoff(Thread)} is only possible if the segment features the corresponding {@link #HANDOFF} access mode.
  * <p>
- * For instance, if client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
+ * For instance, if a client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
  *
  * <blockquote><pre>{@code
 MemorySegment segment = ...
@@ -174,7 +174,7 @@ MemorySegment sharedSegment = segment.share();
  * thread (e.g. {@link #ownerThread()} returns {@code null}). This might be useful when multiple threads need to process
  * the contents of the same memory segment concurrently (e.g. in the case of parallel processing). For instance, a client
  * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
- * thread to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
