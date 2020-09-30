@@ -427,7 +427,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * using {@link MemorySegment#close()} - but it will be closed indirectly when this native scope is closed. The
      * returned segment will also be confined by the same thread as the provided native scope (see {@link NativeScope#ownerThread()}).
      * <p>
-     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
+     * In cases where the owner thread of the returned segment differs from that of this segment, write accesses to this
      * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
      * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
      * to the returned segment's contents on the new owner thread.
