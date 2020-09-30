@@ -316,7 +316,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         final Thread ownerThread;
         List<Runnable> cleanupActions = new ArrayList<>();
         List<Object> attachments = new ArrayList<>();
-        List<Cleaner> cleaners = new ArrayList<>();
+        Cleaner cleaner;
 
         public HandoffTransformImpl(Thread thread) {
             this.ownerThread = thread;
@@ -338,15 +338,29 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
         @Override
         public HandoffTransform registerCleaner(Cleaner cleaner) {
-            cleaners.add(cleaner);
+            if (this.cleaner != null) {
+                throw new IllegalStateException("Transform already associated with a cleaner");
+            }
+            this.cleaner = cleaner;
             return this;
         }
 
         MemoryScope newScope(MemoryScope scope) {
             // compute new composite cleanup action
-            MemoryScope.CleanupAction cleanupAction = scope.cleanupAction.dup();
+            if (scope.scopeCleanable != null) {
+                if (cleaner != null) {
+                    throw new IllegalStateException("Segment already associated with a cleaner");
+                } else {
+                    cleaner = scope.scopeCleanable.cleaner;
+                }
+            }
+            Runnable cleanupAction = scope.cleanupAction;
             for (Runnable action : cleanupActions) {
-                cleanupAction = cleanupAction.wrap(action);
+                Runnable prevAction = cleanupAction;
+                cleanupAction = () -> {
+                    prevAction.run();
+                    action.run();
+                };
             }
             // compute new composite attachment
             Object attachment = scope.ref;
@@ -361,12 +375,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             scope.justClose(); // kill the old scope
             //create a new scope
             MemoryScope newScope = ownerThread != null ?
-                    new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction) :
-                    new MemoryScope.SharedScope(attachment, cleanupAction);
-            // register all cleaners
-            for (Cleaner c : cleaners) {
-                c.register(newScope, cleanupAction);
-            }
+                    new MemoryScope.ConfinedScope(ownerThread, attachment, cleanupAction, cleaner) :
+                    new MemoryScope.SharedScope(attachment, cleanupAction, cleaner);
             return newScope;
         }
     }
@@ -641,7 +651,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, MemoryScope.CleanupAction.DUMMY);
+            bufferScope = MemoryScope.createConfined(bb, MemoryScope.DUMMY_CLEANUP_ACTION, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -655,28 +665,4 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope);
         }
     }
-
-    public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createShared(null, MemoryScope.CleanupAction.DUMMY)
-    ) {
-        @Override
-        ByteBuffer makeByteBuffer() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        long min() {
-            return 0;
-        }
-
-        @Override
-        Object base() {
-            return null;
-        }
-
-        @Override
-        AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-            throw new UnsupportedOperationException();
-        }
-    };
 }

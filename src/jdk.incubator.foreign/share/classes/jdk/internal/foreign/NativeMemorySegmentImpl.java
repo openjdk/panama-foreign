@@ -98,13 +98,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
-            @Override
-            public void doCleanup() {
+        MemoryScope scope = MemoryScope.createConfined(null, () -> {
                 unsafe.freeMemory(buf);
                 nioAccess.unreserveMemory(alignedSize, bytesSize);
-            }
-        });
+            }, null);
         MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
         if (alignedSize != bytesSize) {
@@ -116,6 +113,6 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize) {
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
-                MemoryScope.createConfined(null, MemoryScope.CleanupAction.DUMMY));
+                MemoryScope.createConfined(null, MemoryScope.DUMMY_CLEANUP_ACTION, null));
     }
 }

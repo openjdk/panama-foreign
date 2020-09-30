@@ -27,10 +27,12 @@
 package jdk.internal.foreign;
 
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.ref.PhantomCleanable;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
 import java.util.Objects;
 
@@ -49,10 +51,15 @@ import java.util.Objects;
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
-    private MemoryScope(Object ref, CleanupAction cleanupAction) {
+    static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
+
+    private MemoryScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
         Objects.requireNonNull(cleanupAction);
         this.ref = ref;
         this.cleanupAction = cleanupAction;
+        this.scopeCleanable = cleaner != null ?
+                new ScopeCleanable(this, cleaner, cleanupAction) :
+                null;
     }
 
     /**
@@ -62,8 +69,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a confined memory scope
      */
-    static MemoryScope createConfined(Object ref, CleanupAction cleanupAction) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction);
+    static MemoryScope createConfined(Object ref, Runnable cleanupAction, Cleaner cleaner) {
+        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, cleaner);
     }
 
     /**
@@ -72,12 +79,13 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a shared memory scope
      */
-    static MemoryScope createShared(Object ref, CleanupAction cleanupAction) {
-        return new SharedScope(ref, cleanupAction);
+    static MemoryScope createShared(Object ref, Runnable cleanupAction, Cleaner cleaner) {
+        return new SharedScope(ref, cleanupAction, cleaner);
     }
 
     protected final Object ref;
-    protected final CleanupAction cleanupAction;
+    protected final ScopeCleanable scopeCleanable;
+    protected final Runnable cleanupAction;
     protected boolean closed; // = false
     private static final VarHandle CLOSED;
 
@@ -97,7 +105,10 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     final void close() {
         try {
             justClose();
-            cleanupAction.cleanup();
+            cleanupAction.run();
+            if (scopeCleanable != null) {
+                scopeCleanable.clear();
+            }
         } finally {
             Reference.reachabilityFence(this);
         }
@@ -153,8 +164,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         final Thread owner;
 
-        public ConfinedScope(Thread owner, Object ref, CleanupAction cleanupAction) {
-            super(ref, cleanupAction);
+        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction, Cleaner cleaner) {
+            super(ref, cleanupAction, cleaner);
             this.owner = owner;
         }
 
@@ -191,8 +202,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-        SharedScope(Object ref, CleanupAction cleanupAction) {
-            super(ref, cleanupAction);
+        SharedScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
+            super(ref, cleanupAction, cleaner);
         }
 
         @Override
@@ -213,127 +224,19 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
     }
 
-    /**
-     * A functional interface modelling the cleanup action associated with a scope.
-     */
-    interface CleanupAction extends Runnable {
-        void cleanup();
-        CleanupAction dup();
-        CleanupAction wrap(Runnable runnable);
+    static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
+        final Cleaner cleaner;
+        Runnable cleanupAction;
+
+        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, Runnable cleanupAction) {
+            super(referent, cleaner);
+            this.cleaner = cleaner;
+            this.cleanupAction = cleanupAction;
+        }
 
         @Override
-        default void run() {
-            cleanup();
-        }
-
-        /** Dummy cleanup action */
-        CleanupAction DUMMY = new CleanupAction() {
-            @Override
-            public void cleanup() {
-                // do nothing
-            }
-
-            @Override
-            public CleanupAction dup() {
-                return this;
-            }
-
-            @Override
-            public CleanupAction wrap(Runnable runnable) {
-                return AtMostOnceOnly.of(runnable);
-            }
-        };
-
-        /**
-         * A stateful cleanup action; this action can only be called at most once. The implementation
-         * guarantees this invariant even when multiple threads race to call the {@link #cleanup()} method.
-         */
-        abstract class AtMostOnceOnly implements CleanupAction {
-
-            static final VarHandle CALLED;
-
-            static {
-                try {
-                    CALLED = MethodHandles.lookup().findVarHandle(AtMostOnceOnly.class, "called", boolean.class);
-                } catch (Throwable ex) {
-                    throw new ExceptionInInitializerError(ex);
-                }
-            }
-
-            private boolean called = false;
-
-            abstract void doCleanup();
-
-            public final void cleanup() {
-                if (disable()) {
-                    doCleanup();
-                }
-            };
-
-            @Override
-            public CleanupAction dup() {
-                disable();
-                return new DupAction(this);
-            }
-
-            @Override
-            public CleanupAction wrap(Runnable runnable) {
-                disable();
-                return AtMostOnceOnly.of(() -> {
-                    try {
-                        runnable.run();
-                    } catch (Throwable t) {
-                        // ignore
-                    } finally {
-                        doCleanup();
-                    }
-                });
-            }
-
-            //where
-            static class DupAction extends AtMostOnceOnly {
-                final AtMostOnceOnly root;
-
-                DupAction(AtMostOnceOnly root) {
-                    this.root = root;
-                }
-
-                @Override
-                void doCleanup() {
-                    root.doCleanup();
-                }
-
-                @Override
-                public CleanupAction dup() {
-                    disable();
-                    return new DupAction(root);
-                }
-            }
-
-            final boolean disable() {
-                // This can fail under normal circumstances. The only case where a failure can happen is when
-                // when two cleaners race to cleanup the same scope. It is never possible to have a race
-                // between explicit/implicit close because all the scope terminal operations have
-                // reachability fences which prevent a scope to be deemed unreachable before we are done
-                // marking the original cleanup action as "dead".
-                return CALLED.compareAndSet(this, false, true);
-            }
-
-            /**
-             * Returns a custom {@code BasicCleanupAction} based on given {@link Runnable} instance.
-             * @param runnable the runnable to be executed when {@link #cleanup()} is called on the returned cleanup action.
-             * @return the new cleanup action.
-             */
-            static AtMostOnceOnly of(Runnable runnable) {
-                Objects.requireNonNull(runnable);
-                return new AtMostOnceOnly() {
-                    @Override
-                    void doCleanup() {
-                        runnable.run();
-                    }
-                };
-            }
+        protected void performCleanup() {
+            cleanupAction.run();
         }
     }
-
 }
