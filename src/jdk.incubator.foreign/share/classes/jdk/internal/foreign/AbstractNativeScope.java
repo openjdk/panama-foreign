@@ -5,7 +5,6 @@ import jdk.incubator.foreign.NativeScope;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalLong;
 
 public abstract class AbstractNativeScope implements NativeScope {
@@ -26,7 +25,7 @@ public abstract class AbstractNativeScope implements NativeScope {
 
     @Override
     public void close() {
-        segments.forEach(s -> ((AbstractMemorySegmentImpl)s).scope().close());
+        segments.forEach(MemorySegment::close);
     }
 
     void checkOwnerThread() {

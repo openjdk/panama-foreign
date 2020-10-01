@@ -28,8 +28,14 @@
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
-import jdk.incubator.foreign.*;
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
