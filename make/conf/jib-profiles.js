@@ -1046,7 +1046,7 @@ var getJibProfilesDependencies = function (input, common) {
             organization: common.organization,
             module: "libclang-" + input.build_platform,
             ext: "tar.gz",
-            revision: "9.0.0+1.0"
+            revision: "9.0.0+" + (input.build_platform == "macosx_x64" ? "2.0" : "1.0")
         },
 
         jtreg: {
