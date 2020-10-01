@@ -63,7 +63,7 @@ public class LibTest8246400Test {
             Vector.y$set(v2, 1.0);
 
             sum = add(v1, v2);
-            sum = scope.register(sum);
+            sum = sum.handoff(scope);
 
             assertEquals(Vector.x$get(sum), 1.0, 0.1);
             assertEquals(Vector.y$get(sum), 1.0, 0.1);
