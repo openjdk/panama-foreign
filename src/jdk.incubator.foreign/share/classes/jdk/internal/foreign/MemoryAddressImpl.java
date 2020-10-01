@@ -91,4 +91,13 @@ public final class MemoryAddressImpl implements MemoryAddress {
     public String toString() {
         return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
     }
+
+    @Override
+    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
+        Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
+        if (bytesSize <= 0) {
+            throw new IllegalArgumentException("Invalid size : " + bytesSize);
+        }
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize, cleanupAction, attachment);
+    }
 }

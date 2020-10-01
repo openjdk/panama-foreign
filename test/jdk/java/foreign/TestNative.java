@@ -167,8 +167,7 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .withCleanupAction(() -> free(addr.toRawLongValue()));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr.toRawLongValue()), null);
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
@@ -185,8 +184,7 @@ public class TestNative {
     @Test
     public void testMallocSegment() {
         MemoryAddress addr = MemoryAddress.ofLong(allocate(12));
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .withCleanupAction(() -> free(addr.toRawLongValue()));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr.toRawLongValue()), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());
