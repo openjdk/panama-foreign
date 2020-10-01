@@ -25,11 +25,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.SequenceLayout;
+import jdk.incubator.foreign.*;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
@@ -277,18 +273,14 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
-    @Override
-    public MemorySegment withOwnerThread(Thread newOwner) {
+    public MemorySegment handoff(Thread thread) {
+        Objects.requireNonNull(thread);
         checkValidState();
-        int expectedMode = newOwner != null ? HANDOFF : SHARE;
-        if (!isSet(expectedMode)) {
-            throw unsupportedAccessMode(expectedMode);
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
         }
         try {
-            return dup(0L, length, mask,
-                    expectedMode == HANDOFF ?
-                            scope.confineTo(newOwner) :
-                            scope.share());
+            return dup(0L, length, mask, scope.confineTo(thread));
         } finally {
             //flush read/writes to segment memory before returning the new segment
             VarHandle.fullFence();
@@ -296,16 +288,27 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public MemorySegment withCleanupAction(Runnable action) {
+    public MemorySegment share() {
         checkValidState();
-        return dup(0L, length, mask, scope.wrapAction(action));
+        if (!isSet(SHARE)) {
+            throw unsupportedAccessMode(SHARE);
+        }
+        try {
+            return dup(0L, length, mask, scope.share());
+        } finally {
+            //flush read/writes to segment memory before returning the new segment
+            VarHandle.fullFence();
+        }
     }
 
     @Override
-    public void registerCleaner(Cleaner cleaner) {
-        checkAccessModes(CLOSE);
+    public MemorySegment registerCleaner(Cleaner cleaner) {
+        Objects.requireNonNull(cleaner);
         checkValidState();
-        cleaner.register(this.scope, scope.cleanupAction);
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
+        return dup(0L, length, mask, scope.cleanable(cleaner));
     }
 
     @Override
@@ -457,7 +460,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             modes.add("CLOSE");
         }
         if ((mode & SHARE) != 0) {
-            modes.add("ACQUIRE");
+            modes.add("SHARE");
         }
         if ((mode & HANDOFF) != 0) {
             modes.add("HANDOFF");
@@ -581,7 +584,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, MemoryScope.CleanupAction.DUMMY);
+            bufferScope = MemoryScope.createConfined(bb, MemoryScope.DUMMY_CLEANUP_ACTION, null);
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -595,28 +598,4 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope);
         }
     }
-
-    public static final AbstractMemorySegmentImpl NOTHING = new AbstractMemorySegmentImpl(
-        0, 0, MemoryScope.createShared(null, MemoryScope.CleanupAction.DUMMY)
-    ) {
-        @Override
-        ByteBuffer makeByteBuffer() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        long min() {
-            return 0;
-        }
-
-        @Override
-        Object base() {
-            return null;
-        }
-
-        @Override
-        AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-            throw new UnsupportedOperationException();
-        }
-    };
 }
