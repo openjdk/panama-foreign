@@ -12,9 +12,6 @@
       div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <link rel="stylesheet" href="../make/data/docs-resources/resources/jdk-default.css" />
-  <!--[if lt IE 9]>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
-  <![endif]-->
   <style type="text/css">pre, code, tt { color: #1d6ae5; }</style>
 </head>
 <body>
@@ -162,7 +159,7 @@
 <h3 id="building-on-32-bit-arm">Building on 32-bit arm</h3>
 <p>This is not recommended. Instead, see the section on <a href="#cross-compiling">Cross-compiling</a>.</p>
 <h2 id="operating-system-requirements">Operating System Requirements</h2>
-<p>The mainline JDK project supports Linux, macOS, AIX and Windows. Support for other operating system, e.g. BSD, exists in separate &quot;port&quot; projects.</p>
+<p>The mainline JDK project supports Linux, macOS, AIX and Windows. Support for other operating system, e.g. BSD, exists in separate "port" projects.</p>
 <p>In general, the JDK can be built on a wide range of versions of these operating systems, but the further you deviate from what is tested on a daily basis, the more likely you are to run into problems.</p>
 <p>This table lists the OS versions used by Oracle when building the JDK. Such information is always subject to change, but this table is up to date at the time of writing.</p>
 <table>
@@ -207,7 +204,7 @@
 </ul>
 <p>Often, you can install these packages using the following command line:</p>
 <pre><code>&lt;path to Cygwin setup&gt;/setup-x86_64 -q -P autoconf -P make -P unzip -P zip</code></pre>
-<p>Unfortunately, Cygwin can be unreliable in certain circumstances. If you experience build tool crashes or strange issues when building on Windows, please check the Cygwin FAQ on the <a href="https://cygwin.com/faq/faq.html#faq.using.bloda">&quot;BLODA&quot; list</a> and the section on <a href="https://cygwin.com/faq/faq.html#faq.using.fixing-fork-failures">fork() failures</a>.</p>
+<p>Unfortunately, Cygwin can be unreliable in certain circumstances. If you experience build tool crashes or strange issues when building on Windows, please check the Cygwin FAQ on the <a href="https://cygwin.com/faq/faq.html#faq.using.bloda">"BLODA" list</a> and the section on <a href="https://cygwin.com/faq/faq.html#faq.using.fixing-fork-failures">fork() failures</a>.</p>
 <h4 id="windows-subsystem-for-linux-wsl">Windows Subsystem for Linux (WSL)</h4>
 <p>Windows 10 1809 or newer is supported due to a dependency on the wslpath utility and support for environment variable sharing through WSLENV. Version 1803 can work but intermittent build failures have been observed.</p>
 <p>It's possible to build both Windows and Linux binaries from WSL. To build Windows binaries, you must use a Windows boot JDK (located in a Windows-accessible directory). To build Linux binaries, you must use a Linux boot JDK. The default behavior is to build for Windows. To build for Linux, pass <code>--build=x86_64-unknown-linux-gnu --host=x86_64-unknown-linux-gnu</code> to <code>configure</code>.</p>
@@ -297,8 +294,8 @@
 <h3 id="ibm-xl-cc">IBM XL C/C++</h3>
 <p>Please consult the AIX section of the <a href="https://wiki.openjdk.java.net/display/Build/Supported+Build+Platforms">Supported Build Platforms</a> OpenJDK Build Wiki page for details about which versions of XLC are supported.</p>
 <h2 id="boot-jdk-requirements">Boot JDK Requirements</h2>
-<p>Paradoxically, building the JDK requires a pre-existing JDK. This is called the &quot;boot JDK&quot;. The boot JDK does not, however, have to be a JDK built directly from the source code available in the OpenJDK Community. If you are porting the JDK to a new platform, chances are that there already exists another JDK for that platform that is usable as boot JDK.</p>
-<p>The rule of thumb is that the boot JDK for building JDK major version <em>N</em> should be a JDK of major version <em>N-1</em>, so for building JDK 9 a JDK 8 would be suitable as boot JDK. However, the JDK should be able to &quot;build itself&quot;, so an up-to-date build of the current JDK source is an acceptable alternative. If you are following the <em>N-1</em> rule, make sure you've got the latest update version, since JDK 8 GA might not be able to build JDK 9 on all platforms.</p>
+<p>Paradoxically, building the JDK requires a pre-existing JDK. This is called the "boot JDK". The boot JDK does not, however, have to be a JDK built directly from the source code available in the OpenJDK Community. If you are porting the JDK to a new platform, chances are that there already exists another JDK for that platform that is usable as boot JDK.</p>
+<p>The rule of thumb is that the boot JDK for building JDK major version <em>N</em> should be a JDK of major version <em>N-1</em>, so for building JDK 9 a JDK 8 would be suitable as boot JDK. However, the JDK should be able to "build itself", so an up-to-date build of the current JDK source is an acceptable alternative. If you are following the <em>N-1</em> rule, make sure you've got the latest update version, since JDK 8 GA might not be able to build JDK 9 on all platforms.</p>
 <p>Early in the release cycle, version <em>N-1</em> may not yet have been released. In that case, the preferred boot JDK will be version <em>N-2</em> until version <em>N-1</em> is available.</p>
 <p>If the boot JDK is not automatically detected, or the wrong JDK is picked, use <code>--with-boot-jdk</code> to point to the JDK to use.</p>
 <h3 id="getting-jdk-binaries">Getting JDK binaries</h3>
@@ -357,13 +354,13 @@
 <h3 id="gnu-make">GNU Make</h3>
 <p>The JDK requires <a href="http://www.gnu.org/software/make">GNU Make</a>. No other flavors of make are supported.</p>
 <p>At least version 3.81 of GNU Make must be used. For distributions supporting GNU Make 4.0 or above, we strongly recommend it. GNU Make 4.0 contains useful functionality to handle parallel building (supported by <code>--with-output-sync</code>) and speed and stability improvements.</p>
-<p>Note that <code>configure</code> locates and verifies a properly functioning version of <code>make</code> and stores the path to this <code>make</code> binary in the configuration. If you start a build using <code>make</code> on the command line, you will be using the version of make found first in your <code>PATH</code>, and not necessarily the one stored in the configuration. This initial make will be used as &quot;bootstrap make&quot;, and in a second stage, the make located by <code>configure</code> will be called. Normally, this will present no issues, but if you have a very old <code>make</code>, or a non-GNU Make <code>make</code> in your path, this might cause issues.</p>
+<p>Note that <code>configure</code> locates and verifies a properly functioning version of <code>make</code> and stores the path to this <code>make</code> binary in the configuration. If you start a build using <code>make</code> on the command line, you will be using the version of make found first in your <code>PATH</code>, and not necessarily the one stored in the configuration. This initial make will be used as "bootstrap make", and in a second stage, the make located by <code>configure</code> will be called. Normally, this will present no issues, but if you have a very old <code>make</code>, or a non-GNU Make <code>make</code> in your path, this might cause issues.</p>
 <p>If you want to override the default make found by <code>configure</code>, use the <code>MAKE</code> configure variable, e.g. <code>configure MAKE=/opt/gnu/make</code>.</p>
 <h3 id="gnu-bash">GNU Bash</h3>
 <p>The JDK requires <a href="http://www.gnu.org/software/bash">GNU Bash</a>. No other shells are supported.</p>
 <p>At least version 3.2 of GNU Bash must be used.</p>
 <h2 id="running-configure">Running Configure</h2>
-<p>To build the JDK, you need a &quot;configuration&quot;, which consists of a directory where to store the build output, coupled with information about the platform, the specific build machine, and choices that affect how the JDK is built.</p>
+<p>To build the JDK, you need a "configuration", which consists of a directory where to store the build output, coupled with information about the platform, the specific build machine, and choices that affect how the JDK is built.</p>
 <p>The configuration is created by the <code>configure</code> script. The basic invocation of the <code>configure</code> script looks like this:</p>
 <pre><code>bash configure [options]</code></pre>
 <p>This will create an output directory containing the configuration and setup an area for the build result. This directory typically looks like <code>build/linux-x64-server-release</code>, but the actual name depends on your specific configuration. (It can also be set directly, see <a href="#using-multiple-configurations">Using Multiple Configurations</a>). This directory is referred to as <code>$BUILD</code> in this documentation.</p>
@@ -415,7 +412,7 @@
 <li><code>--with-libffi=&lt;path&gt;</code> - Set the path to <a href="#libffi">libffi</a></li>
 <li><code>--with-jtreg=&lt;path&gt;</code> - Set the path to JTReg. See <a href="#running-tests">Running Tests</a></li>
 </ul>
-<p>Certain third-party libraries used by the JDK (libjpeg, giflib, libpng, lcms and zlib) are included in the JDK repository. The default behavior of the JDK build is to use the included (&quot;bundled&quot;) versions of libjpeg, giflib, libpng and lcms. For zlib, the system lib (if present) is used except on Windows and AIX. However the bundled libraries may be replaced by an external version. To do so, specify <code>system</code> as the <code>&lt;source&gt;</code> option in these arguments. (The default is <code>bundled</code>).</p>
+<p>Certain third-party libraries used by the JDK (libjpeg, giflib, libpng, lcms and zlib) are included in the JDK repository. The default behavior of the JDK build is to use the included ("bundled") versions of libjpeg, giflib, libpng and lcms. For zlib, the system lib (if present) is used except on Windows and AIX. However the bundled libraries may be replaced by an external version. To do so, specify <code>system</code> as the <code>&lt;source&gt;</code> option in these arguments. (The default is <code>bundled</code>).</p>
 <ul>
 <li><code>--with-libjpeg=&lt;source&gt;</code> - Use the specified source for libjpeg</li>
 <li><code>--with-giflib=&lt;source&gt;</code> - Use the specified source for giflib</li>
@@ -435,7 +432,7 @@
 <p>Also note that, despite what autoconf claims, setting <code>CFLAGS</code> will not accomplish anything. Instead use <code>--with-extra-cflags</code> (and similar for <code>cxxflags</code> and <code>ldflags</code>).</p>
 <h2 id="running-make">Running Make</h2>
 <p>When you have a proper configuration, all you need to do to build the JDK is to run <code>make</code>. (But see the warning at <a href="#gnu-make">GNU Make</a> about running the correct version of make.)</p>
-<p>When running <code>make</code> without any arguments, the default target is used, which is the same as running <code>make default</code> or <code>make jdk</code>. This will build a minimal (or roughly minimal) set of compiled output (known as an &quot;exploded image&quot;) needed for a developer to actually execute the newly built JDK. The idea is that in an incremental development fashion, when doing a normal make, you should only spend time recompiling what's changed (making it purely incremental) and only do the work that's needed to actually run and test your code.</p>
+<p>When running <code>make</code> without any arguments, the default target is used, which is the same as running <code>make default</code> or <code>make jdk</code>. This will build a minimal (or roughly minimal) set of compiled output (known as an "exploded image") needed for a developer to actually execute the newly built JDK. The idea is that in an incremental development fashion, when doing a normal make, you should only spend time recompiling what's changed (making it purely incremental) and only do the work that's needed to actually run and test your code.</p>
 <p>The output of the exploded image resides in <code>$BUILD/jdk</code>. You can test the newly built JDK like this: <code>$BUILD/jdk/bin/java -version</code>.</p>
 <h3 id="common-make-targets">Common Make Targets</h3>
 <p>Apart from the default target, here are some common make targets:</p>
@@ -467,7 +464,7 @@
 <h3 id="make-control-variables">Make Control Variables</h3>
 <p>It is possible to control <code>make</code> behavior by overriding the value of <code>make</code> variables, either on the command line or in the environment.</p>
 <p>Normally, this is <strong>not recommended</strong>. If used improperly, it can lead to a broken build. Unless you're well versed in the build system, this is hard to use properly. Therefore, <code>make</code> will print a warning if this is detected.</p>
-<p>However, there are a few <code>make</code> variables, known as <em>control variables</em> that are supposed to be overriden on the command line. These make up the &quot;make time&quot; configuration, as opposed to the &quot;configure time&quot; configuration.</p>
+<p>However, there are a few <code>make</code> variables, known as <em>control variables</em> that are supposed to be overriden on the command line. These make up the "make time" configuration, as opposed to the "configure time" configuration.</p>
 <h4 id="general-make-control-variables">General Make Control Variables</h4>
 <ul>
 <li><code>JOBS</code> - Specify the number of jobs to build with. See <a href="#build-performance">Build Performance</a>.</li>
@@ -542,7 +539,7 @@
 </tr>
 </tbody>
 </table>
-<p><code>BASE_OS</code> must be one of &quot;OEL6&quot; for Oracle Enterprise Linux 6 or &quot;Fedora&quot; (if not specified &quot;OEL6&quot; will be the default). If the base OS is &quot;Fedora&quot; the corresponding Fedora release can be specified with the help of the <code>BASE_OS_VERSION</code> option (with &quot;27&quot; as default version). If the build is successful, the new devkits can be found in the <code>build/devkit/result</code> subdirectory:</p>
+<p><code>BASE_OS</code> must be one of "OEL6" for Oracle Enterprise Linux 6 or "Fedora" (if not specified "OEL6" will be the default). If the base OS is "Fedora" the corresponding Fedora release can be specified with the help of the <code>BASE_OS_VERSION</code> option (with "27" as default version). If the build is successful, the new devkits can be found in the <code>build/devkit/result</code> subdirectory:</p>
 <pre><code>cd make/devkit
 make TARGETS=&quot;ppc64le-linux-gnu aarch64-linux-gnu&quot; BASE_OS=Fedora BASE_OS_VERSION=21
 ls -1 ../../build/devkit/result/
@@ -551,10 +548,10 @@ x86_64-linux-gnu-to-ppc64le-linux-gnu</code></pre>
 <p>Notice that devkits are not only useful for targeting different build platforms. Because they contain the full build dependencies for a system (i.e. compiler and root file system), they can easily be used to build well-known, reliable and reproducible build environments. You can for example create and use a devkit with GCC 7.3 and a Fedora 12 sysroot environment (with glibc 2.11) on Ubuntu 14.04 (which doesn't have GCC 7.3 by default) to produce OpenJDK binaries which will run on all Linux systems with runtime libraries newer than the ones from Fedora 12 (e.g. Ubuntu 16.04, SLES 11 or RHEL 6).</p>
 <h3 id="boot-jdk-and-build-jdk">Boot JDK and Build JDK</h3>
 <p>When cross-compiling, make sure you use a boot JDK that runs on the <em>build</em> system, and not on the <em>target</em> system.</p>
-<p>To be able to build, we need a &quot;Build JDK&quot;, which is a JDK built from the current sources (that is, the same as the end result of the entire build process), but able to run on the <em>build</em> system, and not the <em>target</em> system. (In contrast, the Boot JDK should be from an older release, e.g. JDK 8 when building JDK 9.)</p>
+<p>To be able to build, we need a "Build JDK", which is a JDK built from the current sources (that is, the same as the end result of the entire build process), but able to run on the <em>build</em> system, and not the <em>target</em> system. (In contrast, the Boot JDK should be from an older release, e.g. JDK 8 when building JDK 9.)</p>
 <p>The build process will create a minimal Build JDK for you, as part of building. To speed up the build, you can use <code>--with-build-jdk</code> to <code>configure</code> to point to a pre-built Build JDK. Please note that the build result is unpredictable, and can possibly break in subtle ways, if the Build JDK does not <strong>exactly</strong> match the current sources.</p>
 <h3 id="specifying-the-target-platform">Specifying the Target Platform</h3>
-<p>You <em>must</em> specify the target platform when cross-compiling. Doing so will also automatically turn the build into a cross-compiling mode. The simplest way to do this is to use the <code>--openjdk-target</code> argument, e.g. <code>--openjdk-target=arm-linux-gnueabihf</code>. or <code>--openjdk-target=aarch64-oe-linux</code>. This will automatically set the <code>--build</code>, <code>--host</code> and <code>--target</code> options for autoconf, which can otherwise be confusing. (In autoconf terminology, the &quot;target&quot; is known as &quot;host&quot;, and &quot;target&quot; is used for building a Canadian cross-compiler.)</p>
+<p>You <em>must</em> specify the target platform when cross-compiling. Doing so will also automatically turn the build into a cross-compiling mode. The simplest way to do this is to use the <code>--openjdk-target</code> argument, e.g. <code>--openjdk-target=arm-linux-gnueabihf</code>. or <code>--openjdk-target=aarch64-oe-linux</code>. This will automatically set the <code>--build</code>, <code>--host</code> and <code>--target</code> options for autoconf, which can otherwise be confusing. (In autoconf terminology, the "target" is known as "host", and "target" is used for building a Canadian cross-compiler.)</p>
 <h3 id="toolchain-considerations">Toolchain Considerations</h3>
 <p>You will need two copies of your toolchain, one which generates output that can run on the target system (the normal, or <em>target</em>, toolchain), and one that generates output that can run on the build system (the <em>build</em> toolchain). Note that cross-compiling is only supported for gcc at the time being. The gcc standard is to prefix cross-compiling toolchains with the target denominator. If you follow this standard, <code>configure</code> is likely to pick up the toolchain correctly.</p>
 <p>The <em>build</em> toolchain will be autodetected just the same way the normal <em>build</em>/<em>target</em> toolchain will be autodetected when not cross-compiling. If this is not what you want, or if the autodetection fails, you can specify a devkit containing the <em>build</em> toolchain using <code>--with-build-devkit</code> to <code>configure</code>, or by giving <code>BUILD_CC</code> and <code>BUILD_CXX</code> arguments.</p>
@@ -699,7 +696,7 @@ ls build/linux-aarch64-normal-server-release/</code></pre>
 <li><p><code>--with-memory-size</code> -- memory (in MB) available in the build system, e.g. <code>--with-memory-size=1024</code></p></li>
 </ul>
 <p>You can also specify directly the number of build jobs to use with <code>--with-jobs=N</code> to <code>configure</code>, or <code>JOBS=N</code> to <code>make</code>. Do not use the <code>-j</code> flag to <code>make</code>. In most cases it will be ignored by the makefiles, but it can cause problems for some make targets.</p>
-<p>It might also be necessary to specify the JVM arguments passed to the Boot JDK, using e.g. <code>--with-boot-jdk-jvmargs=&quot;-Xmx8G&quot;</code>. Doing so will override the default JVM arguments passed to the Boot JDK.</p>
+<p>It might also be necessary to specify the JVM arguments passed to the Boot JDK, using e.g. <code>--with-boot-jdk-jvmargs="-Xmx8G"</code>. Doing so will override the default JVM arguments passed to the Boot JDK.</p>
 <p>At the end of a successful execution of <code>configure</code>, you will get a performance summary, indicating how well the build will perform. Here you will also get performance hints. If you want to build fast, pay attention to those!</p>
 <p>If you want to tweak build performance, run with <code>make LOG=info</code> to get a build time summary at the end of the build process.</p>
 <h3 id="disk-speed">Disk Speed</h3>
@@ -748,7 +745,7 @@ Hint: If caused by a warning, try configure --disable-warnings-as-errors.</code>
 <p>Then, between the <code>Output from failing command(s) repeated here</code> and <code>End of repeated output</code> the first lines of output (stdout and stderr) from the actual failing command is repeated. In most cases, this is the error message that caused the build to fail. If multiple commands were failing (this can happen in a parallel build), output from all failed commands will be printed here.</p>
 <p>The path to the <code>failure-logs</code> directory is printed. In this file you will find a <code>&lt;target&gt;.log</code> file that contains the output from this command in its entirety, and also a <code>&lt;target&gt;.cmd</code>, which contain the complete command line used for running this command. You can re-run the failing command by executing <code>. &lt;path to failure-logs&gt;/&lt;target&gt;.cmd</code> in your shell.</p>
 <p>Another way to trace the failure is to follow the chain of make targets, from top-level targets to individual file targets. Between <code>Make failed targets repeated here</code> and <code>End of repeated output</code> the output from make showing this chain is repeated. The first failed recipe will typically contain the full path to the file in question that failed to compile. Following lines will show a trace of make targets why we ended up trying to compile that file.</p>
-<p>Finally, some hints are given on how to locate the error in the complete log. In this example, we would try searching the log file for &quot;<code>psMemoryPool.o</code>&quot;. Another way to quickly locate make errors in the log is to search for &quot;<code>] Error</code>&quot; or &quot;<code>***</code>&quot;.</p>
+<p>Finally, some hints are given on how to locate the error in the complete log. In this example, we would try searching the log file for "<code>psMemoryPool.o</code>". Another way to quickly locate make errors in the log is to search for "<code>] Error</code>" or "<code>***</code>".</p>
 <p>Note that the build failure summary will only help you if the issue was a compilation failure or similar. If the problem is more esoteric, or is due to errors in the build machinery, you will likely get empty output logs, and <code>No indication of failed target found</code> instead of the make target chain.</p>
 <h4 id="checking-the-build-log-file">Checking the Build Log File</h4>
 <p>The output (stdout and stderr) from the latest build is always stored in <code>$BUILD/build.log</code>. The previous build log is stored as <code>build.log.old</code>. This means that it is not necessary to redirect the build output yourself if you want to process it.</p>
@@ -775,7 +772,7 @@ make dist-clean
 bash configure $(cat current-configuration)
 make</code></pre></li>
 <li><p>Re-clone the Mercurial repository</p>
-<p>Sometimes the Mercurial repository gets in a state that causes the product to be un-buildable. In such a case, the simplest solution is often the &quot;sledgehammer approach&quot;: delete the entire repository, and re-clone it. If you have local changes, save them first to a different location using <code>hg export</code>.</p></li>
+<p>Sometimes the Mercurial repository gets in a state that causes the product to be un-buildable. In such a case, the simplest solution is often the "sledgehammer approach": delete the entire repository, and re-clone it. If you have local changes, save them first to a different location using <code>hg export</code>.</p></li>
 </ol>
 <h3 id="specific-build-issues">Specific Build Issues</h3>
 <h4 id="clock-skew">Clock Skew</h4>
@@ -886,7 +883,7 @@ test-support/</code></pre>
 <p>This is what they are used for:</p>
 <ul>
 <li><p><code>images</code>: This is the directory were the output of the <code>*-image</code> make targets end up. For instance, <code>make jdk-image</code> ends up in <code>images/jdk</code>.</p></li>
-<li><p><code>jdk</code>: This is the &quot;exploded image&quot;. After <code>make jdk</code>, you will be able to launch the newly built JDK by running <code>$BUILD/jdk/bin/java</code>.</p></li>
+<li><p><code>jdk</code>: This is the "exploded image". After <code>make jdk</code>, you will be able to launch the newly built JDK by running <code>$BUILD/jdk/bin/java</code>.</p></li>
 <li><p><code>test-results</code>: This directory contains the results from running tests.</p></li>
 <li><p><code>support</code>: This is an area for intermediate files needed during the build, e.g. generated source code, object files and class files. Some noteworthy directories in <code>support</code> is <code>gensrc</code>, which contains the generated source code, and the <code>modules_*</code> directories, which contains the files in a per-module hierarchy that will later be collapsed into the <code>jdk</code> directory of the exploded image.</p></li>
 <li><p><code>buildtools</code>: This is an area for tools compiled for the build platform that are used during the rest of the build.</p></li>

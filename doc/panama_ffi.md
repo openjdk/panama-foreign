@@ -1,8 +1,9 @@
 ## State of foreign function support
 
-**September 2020**
+**October 2020**
 
-* Tweaked references to restricted segments to use new API
+* Adjust reference to NativeScope handoff
+* Tweak references to restricted segments to use new API
 * Tweak signature of LibraryLookup::lookup
 * Replaced usages of ForeignLinker with CLinker, as per new API
 
@@ -259,14 +260,14 @@ To alleviate this problem, and allow *all* segments to be managed using the *sam
 
 ```java
 try (NativeScope scope = NativeScope.unboundedScope()) {
-    comparFunc = scope.register(comparFunc);
+    comparFunc = comparFunc.handoff(scope);
     MemorySegment array = scope.allocateArray(C_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
     qsort.invokeExact(array, 10L, 4L, comparFunc);
     int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 }
 ```
 
-Not only native scope helps in making the allocation of the native array simpler (we no longer need to create an heap segment, and dump its contents onto the off-heap array); but we can also use the native scope to *register* the existing upcall stub segments. When we do that, we obtain a *new* segment, whose temporal bounds are the same as that of the native scope; the old segment will be killed and will no longer be usable. As with all segments returned by native scope, the registered segment we get back will be non-closeable — the only way to close it is to close the native scope it belongs to.
+Not only native scope helps in making the allocation of the native array simpler (we no longer need to create an heap segment, and dump its contents onto the off-heap array); but we can also use the native scope as an *handoff target* for existing upcall stub segments. When we do that, we obtain a *new* segment, whose temporal bounds are the same as that of the native scope; the old segment will be killed and will no longer be usable. As with all segments returned by native scope, the new segment we get back will be non-closeable — the only way to close it is to close the native scope it belongs to.
 
 In short, native scopes are a good way to manage the lifecycle of multiple, logically-related segments, and, despite their simplicity, they provide a fairly good usability and performance boost.
 
@@ -410,7 +411,7 @@ public class Examples {
         );
 
         try (NativeScope scope = NativeScope.unboundedScope()) {
-            comparFunc = scope.register(comparFunc);
+            comparFunc = comparFunc.handoff(scope);
             MemorySegment array = scope.allocateArray(C_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
             qsort.invokeExact(array.address(), 10L, 4L, comparFunc.address());
             int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]

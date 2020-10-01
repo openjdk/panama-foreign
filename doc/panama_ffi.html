@@ -92,9 +92,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 </nav>
 <h2 id="state-of-foreign-function-support">State of foreign function support</h2>
-<p><strong>September 2020</strong></p>
+<p><strong>October 2020</strong></p>
 <ul>
-<li>Tweaked references to restricted segments to use new API</li>
+<li>Adjust reference to NativeScope handoff</li>
+<li>Tweak references to restricted segments to use new API</li>
 <li>Tweak signature of LibraryLookup::lookup</li>
 <li>Replaced usages of ForeignLinker with CLinker, as per new API</li>
 </ul>
@@ -283,12 +284,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>In these cases, the API gives us a segment which feature <em>its own</em> temporal bounds — this is handy, as we can use the segment to control the lifecycle of the resource allocated by the foreign linker support; but it is also a bit unfortunate: if the surrounding code happens to already have a native scope, these new segments won't be able to interoperate with it, and a separate <em>try-with-resource</em> segment should be used.</p>
 <p>To alleviate this problem, and allow <em>all</em> segments to be managed using the <em>same</em> native scope, the native scope API not only supports the ability to allocate <em>new</em> segments, but it also allows to take ownership of <em>existing</em> ones. To see an example of this, let's go back to our <code>qsort</code> example, and see how we can make it better by using native scopes:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb19-1" title="1"><span class="kw">try</span> (NativeScope scope = NativeScope.<span class="fu">unboundedScope</span>()) {</a>
-<a class="sourceLine" id="cb19-2" title="2">    comparFunc = scope.<span class="fu">register</span>(comparFunc);</a>
+<a class="sourceLine" id="cb19-2" title="2">    comparFunc = comparFunc.<span class="fu">handoff</span>(scope);</a>
 <a class="sourceLine" id="cb19-3" title="3">    MemorySegment array = scope.<span class="fu">allocateArray</span>(C_INT, <span class="kw">new</span> <span class="dt">int</span>[] { <span class="dv">0</span>, <span class="dv">9</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">8</span>, <span class="dv">2</span>, <span class="dv">7</span> });</a>
 <a class="sourceLine" id="cb19-4" title="4">    qsort.<span class="fu">invokeExact</span>(array, <span class="dv">10L</span>, <span class="dv">4L</span>, comparFunc);</a>
 <a class="sourceLine" id="cb19-5" title="5">    <span class="dt">int</span>[] sorted = array.<span class="fu">toIntArray</span>(); <span class="co">// [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]</span></a>
 <a class="sourceLine" id="cb19-6" title="6">}</a></code></pre></div>
-<p>Not only native scope helps in making the allocation of the native array simpler (we no longer need to create an heap segment, and dump its contents onto the off-heap array); but we can also use the native scope to <em>register</em> the existing upcall stub segments. When we do that, we obtain a <em>new</em> segment, whose temporal bounds are the same as that of the native scope; the old segment will be killed and will no longer be usable. As with all segments returned by native scope, the registered segment we get back will be non-closeable — the only way to close it is to close the native scope it belongs to.</p>
+<p>Not only native scope helps in making the allocation of the native array simpler (we no longer need to create an heap segment, and dump its contents onto the off-heap array); but we can also use the native scope as an <em>handoff target</em> for existing upcall stub segments. When we do that, we obtain a <em>new</em> segment, whose temporal bounds are the same as that of the native scope; the old segment will be killed and will no longer be usable. As with all segments returned by native scope, the new segment we get back will be non-closeable — the only way to close it is to close the native scope it belongs to.</p>
 <p>In short, native scopes are a good way to manage the lifecycle of multiple, logically-related segments, and, despite their simplicity, they provide a fairly good usability and performance boost.</p>
 <h3 id="varargs">Varargs</h3>
 <p>Some C functions are <em>variadic</em> and can take an arbitrary number of arguments. Perhaps the most common example of this is the <code>printf</code> function, defined in the C standard library:</p>
@@ -393,7 +394,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb27-61" title="61">        );</a>
 <a class="sourceLine" id="cb27-62" title="62"></a>
 <a class="sourceLine" id="cb27-63" title="63">        <span class="kw">try</span> (NativeScope scope = NativeScope.<span class="fu">unboundedScope</span>()) {</a>
-<a class="sourceLine" id="cb27-64" title="64">            comparFunc = scope.<span class="fu">register</span>(comparFunc);</a>
+<a class="sourceLine" id="cb27-64" title="64">            comparFunc = comparFunc.<span class="fu">handoff</span>(scope);</a>
 <a class="sourceLine" id="cb27-65" title="65">            MemorySegment array = scope.<span class="fu">allocateArray</span>(C_INT, <span class="kw">new</span> <span class="dt">int</span>[] { <span class="dv">0</span>, <span class="dv">9</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">8</span>, <span class="dv">2</span>, <span class="dv">7</span> });</a>
 <a class="sourceLine" id="cb27-66" title="66">            qsort.<span class="fu">invokeExact</span>(array.<span class="fu">address</span>(), <span class="dv">10L</span>, <span class="dv">4L</span>, comparFunc.<span class="fu">address</span>());</a>
 <a class="sourceLine" id="cb27-67" title="67">            <span class="dt">int</span>[] sorted = array.<span class="fu">toIntArray</span>(); <span class="co">// [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]</span></a>

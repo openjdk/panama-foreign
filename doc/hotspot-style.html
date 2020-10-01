@@ -12,9 +12,6 @@
       div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <link rel="stylesheet" href="../make/data/docs-resources/resources/jdk-default.css" />
-  <!--[if lt IE 9]>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
-  <![endif]-->
 </head>
 <body>
 <header id="title-block-header">
@@ -64,7 +61,7 @@
 <p>When changing pre-existing code, it is reasonable to adjust it to match these conventions. Exception: If the pre-existing code clearly conforms locally to its own peculiar conventions, it is not worth reformatting the whole thing. Also consider separating changes that make extensive stylistic updates from those which make functional changes.</p>
 <h3 id="counterexamples-and-updates">Counterexamples and Updates</h3>
 <p>Many of the guidelines mentioned here have (sometimes widespread) counterexamples in the HotSpot code base. Finding a counterexample is not sufficient justification for new code to follow the counterexample as a precedent, since readers of your code will rightfully expect your code to follow the greater bulk of precedents documented here.</p>
-<p>Occasionally a guideline mentioned here may be just out of synch with the actual HotSpot code base. If you find that a guideline is consistently contradicted by a large number of counterexamples, please bring it up for discussion and possible change. The architectural rule, of course, is &quot;When in Rome do as the Romans&quot;. Sometimes in the suburbs of Rome the rules are a little different; these differences can be pointed out here.</p>
+<p>Occasionally a guideline mentioned here may be just out of synch with the actual HotSpot code base. If you find that a guideline is consistently contradicted by a large number of counterexamples, please bring it up for discussion and possible change. The architectural rule, of course, is "When in Rome do as the Romans". Sometimes in the suburbs of Rome the rules are a little different; these differences can be pointed out here.</p>
 <p>Proposed changes should be discussed on the <a href="mailto:hotspot-dev@openjdk.java.net">HotSpot Developers</a> mailing list, and approved by <a href="https://en.wikipedia.org/wiki/Rough_consensus">rough consensus</a> of the <a href="https://openjdk.java.net/census#hotspot">HotSpot Group</a> Members. The Group Lead determines whether consensus has been reached. Changes are likely to be cautious and incremental, since HotSpot coders have been using these guidelines for years.</p>
 <h2 id="structure-and-formatting">Structure and Formatting</h2>
 <h3 id="factoring-and-class-design">Factoring and Class Design</h3>
@@ -86,7 +83,7 @@
 <li><p>When you must defactor to optimize, preserve as much structure as possible. If you must hand-inline some name, label the local copy with the original name.</p></li>
 <li><p>If you need to use a hidden detail (e.g., a structure offset), name it (as a constant or function) in the class that owns it.</p></li>
 <li><p>Don't use the Copy and Paste keys to replicate more than a couple lines of code. Name what you must repeat.</p></li>
-<li><p>If a class needs a member function to change a user-visible attribute, the change should be done with a &quot;setter&quot; accessor matched to the simple &quot;getter&quot;.</p></li>
+<li><p>If a class needs a member function to change a user-visible attribute, the change should be done with a "setter" accessor matched to the simple "getter".</p></li>
 </ul>
 <h3 id="source-files">Source Files</h3>
 <ul>
@@ -114,19 +111,19 @@
 <li><p>Choose names consistently. Do not introduce spurious variations. Abbreviate corresponding terms to a consistent length.</p></li>
 <li><p>Global names must be unique, to avoid <a href="https://en.cppreference.com/w/cpp/language/definition" title="One Definition Rule">One Definition Rule</a> (ODR) violations. A common prefixing scheme for related global names is often used. (This is instead of using namespaces, which are mostly avoided in HotSpot.)</p></li>
 <li><p>Don't give two names to the semantically same thing. But use different names for semantically different things, even if they are representationally the same. (So use meaningful <code>typedef</code> or template alias names where appropriate.)</p></li>
-<li><p>When choosing names, avoid categorical nouns like &quot;variable&quot;, &quot;field&quot;, &quot;parameter&quot;, &quot;value&quot;, and verbs like &quot;compute&quot;, &quot;get&quot;. (<code>storeValue(int param)</code> is bad.)</p></li>
+<li><p>When choosing names, avoid categorical nouns like "variable", "field", "parameter", "value", and verbs like "compute", "get". (<code>storeValue(int param)</code> is bad.)</p></li>
 <li><p>Type names and global names should use mixed-case with the first letter of each word capitalized (<code>FooBar</code>).</p></li>
-<li><p>Embedded abbreviations in otherwise mixed-case names are usually capitalized entirely rather than being treated as a single word with only the initial letter capitalized, e.g. &quot;HTML&quot; rather than &quot;Html&quot;.</p></li>
+<li><p>Embedded abbreviations in otherwise mixed-case names are usually capitalized entirely rather than being treated as a single word with only the initial letter capitalized, e.g. "HTML" rather than "Html".</p></li>
 <li><p>Function and local variable names use lowercase with words separated by a single underscore (<code>foo_bar</code>).</p></li>
 <li><p>Class data member names have a leading underscore, and use lowercase with words separated by a single underscore (<code>_foo_bar</code>).</p></li>
 <li><p>Constant names may be upper-case or mixed-case, according to historical necessity. (Note: There are many examples of constants with lowercase names.)</p></li>
 <li><p>Constant names should follow an existing pattern, and must have a distinct appearance from other names in related APIs.</p></li>
-<li><p>Class and type names should be noun phrases. Consider an &quot;er&quot; suffix for a class that represents an action.</p></li>
+<li><p>Class and type names should be noun phrases. Consider an "er" suffix for a class that represents an action.</p></li>
 <li><p>Function names should be verb phrases that reflect changes of state known to a class's user, or else noun phrases if they cause no change of state visible to the class's user.</p></li>
-<li><p>Getter accessor names are noun phrases, with no &quot;<code>get_</code>&quot; noise word. Boolean getters can also begin with &quot;<code>is_</code>&quot; or &quot;<code>has_</code>&quot;. Member function for reading data members usually have the same name as the data member, exclusive of the leading underscore.</p></li>
-<li><p>Setter accessor names prepend &quot;<code>set_</code>&quot; to the getter name.</p></li>
+<li><p>Getter accessor names are noun phrases, with no "<code>get_</code>" noise word. Boolean getters can also begin with "<code>is_</code>" or "<code>has_</code>". Member function for reading data members usually have the same name as the data member, exclusive of the leading underscore.</p></li>
+<li><p>Setter accessor names prepend "<code>set_</code>" to the getter name.</p></li>
 <li><p>Other member function names are verb phrases, as if commands to the receiver.</p></li>
-<li><p>Avoid leading underscores (as &quot;<code>_oop</code>&quot;) except in cases required above. (Names with leading underscores can cause portability problems.)</p></li>
+<li><p>Avoid leading underscores (as "<code>_oop</code>") except in cases required above. (Names with leading underscores can cause portability problems.)</p></li>
 </ul>
 <h3 id="commenting">Commenting</h3>
 <ul>
@@ -205,25 +202,25 @@ while ( test_foo(args...) ) { // No, excess spaces around control</code></pre></
 <p>Rationale: Other than to implement exceptions (which HotSpot doesn't use), most potential uses of <a href="https://en.wikipedia.org/wiki/Run-time_type_information" title="Runtime Type Information">RTTI</a> are better done via virtual functions. Some of the remainder can be replaced by bespoke mechanisms. The cost of the additional runtime data structures needed to support <a href="https://en.wikipedia.org/wiki/Run-time_type_information" title="Runtime Type Information">RTTI</a> are deemed not worthwhile, given the alternatives.</p>
 <h3 id="memory-allocation">Memory Allocation</h3>
 <p>Do not use the standard global allocation and deallocation functions (operator new and related functions). Use of these functions by HotSpot code is disabled for some platforms.</p>
-<p>Rationale: HotSpot often uses &quot;resource&quot; or &quot;arena&quot; allocation. Even where heap allocation is used, the standard global functions are avoided in favor of wrappers around malloc and free that support the VM's Native Memory Tracking (NMT) feature.</p>
-<p>Native memory allocation failures are often treated as non-recoverable. The place where &quot;out of memory&quot; is (first) detected may be an innocent bystander, unrelated to the actual culprit.</p>
+<p>Rationale: HotSpot often uses "resource" or "arena" allocation. Even where heap allocation is used, the standard global functions are avoided in favor of wrappers around malloc and free that support the VM's Native Memory Tracking (NMT) feature.</p>
+<p>Native memory allocation failures are often treated as non-recoverable. The place where "out of memory" is (first) detected may be an innocent bystander, unrelated to the actual culprit.</p>
 <h3 id="class-inheritance">Class Inheritance</h3>
 <p>Use public single inheritance.</p>
 <p>Prefer composition rather than non-public inheritance.</p>
-<p>Restrict inheritance to the &quot;is-a&quot; case; use composition rather than non-is-a related inheritance.</p>
+<p>Restrict inheritance to the "is-a" case; use composition rather than non-is-a related inheritance.</p>
 <p>Avoid multiple inheritance. Never use virtual inheritance.</p>
 <h3 id="namespaces">Namespaces</h3>
-<p>Avoid using namespaces. HotSpot code normally uses &quot;all static&quot; classes rather than namespaces for grouping. An &quot;all static&quot; class is not instantiable, has only static members, and is normally derived (possibly indirectly) from the helper class <code>AllStatic</code>.</p>
+<p>Avoid using namespaces. HotSpot code normally uses "all static" classes rather than namespaces for grouping. An "all static" class is not instantiable, has only static members, and is normally derived (possibly indirectly) from the helper class <code>AllStatic</code>.</p>
 <p>Benefits of using such classes include:</p>
 <ul>
 <li><p>Provides access control for members, which is unavailable with namespaces.</p></li>
 <li><p>Avoids <a href="https://en.cppreference.com/w/cpp/language/adl" title="Argument Dependent Lookup">Argument Dependent Lookup</a> (ADL).</p></li>
 <li><p>Closed for additional members. Namespaces allow names to be added in multiple contexts, making it harder to see the complete API.</p></li>
 </ul>
-<p>Namespaces should be used only in cases where one of those &quot;benefits&quot; is actually a hindrance.</p>
+<p>Namespaces should be used only in cases where one of those "benefits" is actually a hindrance.</p>
 <p>In particular, don't use anonymous namespaces. They seem like they should be useful, and indeed have some real benefits for naming and generated code size on some platforms. Unfortunately, debuggers don't seem to like them at all.</p>
 <p><a href="https://groups.google.com/forum/#!topic/mozilla.dev.platform/KsaG3lEEaRM" class="uri">https://groups.google.com/forum/#!topic/mozilla.dev.platform/KsaG3lEEaRM</a><br> Suggests Visual Studio debugger might not be able to refer to anonymous namespace symbols, so can't set breakpoints in them. Though the discussion seems to go back and forth on that.</p>
-<p><a href="https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html" class="uri">https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html</a><br> Search for &quot;Anonymous namespaces&quot; Suggests preferring &quot;static&quot; to anonymous namespaces where applicable, because of poor debugger support for anonymous namespaces.</p>
+<p><a href="https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html" class="uri">https://firefox-source-docs.mozilla.org/code-quality/coding-style/coding_style_cpp.html</a><br> Search for "Anonymous namespaces" Suggests preferring "static" to anonymous namespaces where applicable, because of poor debugger support for anonymous namespaces.</p>
 <p><a href="https://sourceware.org/bugzilla/show_bug.cgi?id=16874" class="uri">https://sourceware.org/bugzilla/show_bug.cgi?id=16874</a><br> Bug for similar gdb problems.</p>
 <h3 id="c-standard-library">C++ Standard Library</h3>
 <p>Avoid using the C++ Standard Library.</p>
@@ -274,7 +271,7 @@ while ( test_foo(args...) ) { // No, excess spaces around control</code></pre></
 <h3 id="atomic">&lt;atomic&gt;</h3>
 <p>Do not use facilities provided by the <code>&lt;atomic&gt;</code> header (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2427.html">n2427</a>), (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2752.htm">n2752</a>); instead, use the HotSpot <code>Atomic</code> class and related facilities.</p>
 <p>Atomic operations in HotSpot code must have semantics which are consistent with those provided by the JDK's compilers for Java. There are platform-specific implementation choices that a C++ compiler might make or change that are outside the scope of the C++ Standard, and might differ from what the Java compilers implement.</p>
-<p>In addition, HotSpot <code>Atomic</code> has a concept of &quot;conservative&quot; memory ordering, which may differ from (may be stronger than) sequentially consistent. There are algorithms in HotSpot that are believed to rely on that ordering.</p>
+<p>In addition, HotSpot <code>Atomic</code> has a concept of "conservative" memory ordering, which may differ from (may be stronger than) sequentially consistent. There are algorithms in HotSpot that are believed to rely on that ordering.</p>
 <h3 id="additional-permitted-features">Additional Permitted Features</h3>
 <ul>
 <li><p><code>constexpr</code> (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2235.pdf">n2235</a>) (<a href="https://isocpp.org/files/papers/N3652.html">n3652</a>)</p></li>
@@ -310,7 +307,7 @@ while ( test_foo(args...) ) { // No, excess spaces around control</code></pre></
 <li><p>Avoid namespace-scoped variables with non-constexpr initialization. In particular, avoid variables with types requiring non-trivial initialization or destruction. Initialization order problems can be difficult to deal with and lead to surprises, as can destruction ordering. HotSpot doesn't generally try to cleanup on exit, and running destructors at exit can also lead to problems.</p></li>
 <li><p><code>[[deprecated]]</code> attribute (<a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3760.html">n3760</a>) — Not relevant in HotSpot code.</p></li>
 <li><p>Avoid most operator overloading, preferring named functions. When operator overloading is used, ensure the semantics conform to the normal expected behavior of the operation.</p></li>
-<li><p>Avoid most implicit conversion constructors and (implicit or explicit) conversion operators. (Note that conversion to <code>bool</code> isn't needed in HotSpot code because of the &quot;no implicit boolean&quot; guideline.)</p></li>
+<li><p>Avoid most implicit conversion constructors and (implicit or explicit) conversion operators. (Note that conversion to <code>bool</code> isn't needed in HotSpot code because of the "no implicit boolean" guideline.)</p></li>
 <li><p>Avoid covariant return types.</p></li>
 <li><p>Avoid <code>goto</code> statements.</p></li>
 </ul>

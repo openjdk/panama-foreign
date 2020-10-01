@@ -1,7 +1,8 @@
 ## State of foreign memory support
 
-**September 2020**
+**October 2020**
 
+* Reflect latest API changes in handoff/implicit deallocation
 * Updated section on restricted segments reflecting new, simpler API
 * Revamped section on confinement to add description of shared segments
 * Added section on implicit deallocation
@@ -244,17 +245,17 @@ The Foreign Memory Access API provides several ways to relax the thread confinem
 ```java
 MemorySegment segmentA = MemorySegment.allocateNative(10); // confined by thread A
 ...
-var segmentB = segmentA.withOwnerThread(threadB); // confined by thread B
+var segmentB = segmentA.handoff(threadB); // confined by thread B
 ```
 
-This pattern of access is also known as *serial confinement* and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API *kills* the original segment (as if `close` was called, but without releasing the underlying memory) and returns a *new* segment with the correct owner. The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.
+This pattern of access is also known as *serial confinement* and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API *kills* the original segment (as if `close` was called, but without releasing the underlying memory) and returns a *new* segment with the correct owner. That is, handoff operations are *terminal operations* (like `MemorySegment::close`). The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.
 
 When serial confinement is not enough, clients can optionally remove thread ownership, that is, turn a confined segment into a *shared* one which can be accessed — and closed — concurrently, by multiple threads<a href="#2"><sup>2</sup></a>. As before, sharing a segment kills the original segment and returns a new segment with no owner thread:
 
 ```java
 MemorySegment segmentA = MemorySegment.allocateNative(10); // confined by thread A
 ...
-var sharedSegment = segmentA.withOwnerThread(null); // shared segment
+var sharedSegment = segmentA.share() // shared segment
 ```
 
 A shared segments is especially useful when multiple threads need to operate on the segment's contents in *parallel* (e.g. using a framework such as Fork/Join) — by obtaining a `Spliterator` instance out of a memory segment. For instance to sum all the 32 bit values of a memory segment in parallel, we can use the following code:
@@ -264,7 +265,7 @@ SequenceLayout seq = MemoryLayout.ofSequence(1_000_000, MemoryLayouts.JAVA_INT);
 SequenceLayout seq_bulk = seq.reshape(-1, 100);
 VarHandle intHandle = seq.varHandle(int.class, sequenceElement());    
 
-int sum = StreamSupport.stream(MemorySegment.spliterator(segment.withOwnerThread(null), seq_bulk), true)
+int sum = StreamSupport.stream(MemorySegment.spliterator(segment.share(), seq_bulk), true)
                 .mapToInt(slice -> {
 					int res = 0;
         			for (int i = 0; i < 100 ; i++) {
@@ -284,10 +285,10 @@ Shared segment can also be useful to perform serial confinement in cases where t
 // thread A
 MemorySegment segment = MemorySegment.allocateNative(10); // confined by thread A
 //do some work
-segment = segment.withOwnerThread(null);
+segment = segment.share();
 
 // thread B
-segment.withOwnerThread(Thread.currentThread()); // now confined by thread B
+segment.handoff(Thread.currentThread()); // now confined by thread B
 // do some more work
 ```
 
@@ -300,12 +301,12 @@ While memory segment feature *deterministic deallocation* they can also be regis
 ```java
 MemorySegment segment = MemorySegment.allocateNative(100);
 Cleaner cleaner = Cleaner.create();
-segment.registerCleaner(cleaner);
+segment = segment.registerCleaner(cleaner);
 // do some work
 segment = null; // Cleaner might reclaim the segment memory now
 ```
 
-Note that registering a segment with a cleaner doesn't prevent clients from calling `MemorySegment::close` explicitly; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.
+As for handoff, registering a segment with a cleaner *kills* the current segment and returns a new one which features implicit deallocation; this is also a *terminal operation*. Note that registering a segment with a cleaner doesn't prevent clients from calling `MemorySegment::close` explicitly on the returned segment; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.
 
 * <a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small>
 * <a id="2"/>(<sup>2</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.</small>
