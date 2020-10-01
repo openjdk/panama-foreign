@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestNative
  */
 
@@ -172,8 +173,7 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .withCleanupAction(() -> free(addr));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
         try (MemorySegment segment = mallocSegment) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
@@ -190,8 +190,7 @@ public class TestNative {
     @Test
     public void testMallocSegment() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12)
-                .withCleanupAction(() -> free(addr));
+        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
         assertEquals(mallocSegment.byteSize(), 12);
         mallocSegment.close(); //free here
         assertTrue(!mallocSegment.isAlive());

@@ -325,6 +325,8 @@ public class TestSegments {
                 "address",
                 "close",
                 "share",
+                "handoff",
+                "registerCleaner",
                 "fill",
                 "copyFrom",
                 "mismatch",
@@ -334,10 +336,7 @@ public class TestSegments {
                 "toIntArray",
                 "toFloatArray",
                 "toLongArray",
-                "toDoubleArray",
-                "withOwnerThread",
-                "registerCleaner",
-                "withCleanupAction"
+                "toDoubleArray"
         );
 
         public SegmentMember(Method method, Object[] params) {
@@ -395,7 +394,7 @@ public class TestSegments {
         SHARE(MemorySegment.SHARE) {
             @Override
             void run(MemorySegment segment) {
-                segment.withOwnerThread(null);
+                segment.share();
             }
         },
         CLOSE(MemorySegment.CLOSE) {
@@ -419,7 +418,7 @@ public class TestSegments {
         HANDOFF(MemorySegment.HANDOFF) {
             @Override
             void run(MemorySegment segment) {
-                segment.withOwnerThread(new Thread());
+                segment.handoff(new Thread());
             }
         };
 
