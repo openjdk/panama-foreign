@@ -169,7 +169,7 @@ class WinVaList implements VaList {
     public VaList copy(NativeScope scope) {
         MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
                 segment.ownerThread());
-        liveness = scope.register(liveness);
+        liveness = liveness.handoff(scope);
         return new WinVaList(segment, List.of(), liveness);
     }
 
