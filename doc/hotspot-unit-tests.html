@@ -12,6 +12,9 @@
       div.column{display: inline-block; vertical-align: top; width: 50%;}
   </style>
   <link rel="stylesheet" href="../make/data/docs-resources/resources/jdk-default.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
 </head>
 <body>
 <header id="title-block-header">
@@ -87,7 +90,7 @@
 <p>Achieving this property, one can easily make a test too verbose, so it will be really hard to find useful information in the ocean of useless information. Hence they should not only think about how to provide <a href="#error-messages">good information</a>, but also <a href="#uncluttered-output">when to do it</a>.</p>
 <h3 id="testing-instead-of-visiting">Testing instead of visiting</h3>
 <p>Tests should <em>test</em>.</p>
-<p>It is not enough just to "visit" some code, a test should check that code does that it has to do, compare return values with expected values, check that desired side effects are done, and undesired are not, and so on. In other words, a test should contain at least one GoogleTest assertion and do not rely on JVM asserts.</p>
+<p>It is not enough just to &quot;visit&quot; some code, a test should check that code does that it has to do, compare return values with expected values, check that desired side effects are done, and undesired are not, and so on. In other words, a test should contain at least one GoogleTest assertion and do not rely on JVM asserts.</p>
 <p>Generally speaking to write a good test, one should create a model of the system under tests, a model of possible bugs (or bugs which one wants to find) and design tests using those models.</p>
 <h3 id="nearness">Nearness</h3>
 <p>Prefer having checks inside test code.</p>
