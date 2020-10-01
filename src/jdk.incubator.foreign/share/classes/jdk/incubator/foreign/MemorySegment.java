@@ -408,7 +408,6 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      *
      * @param thread the new owner thread
      * @return a new confined memory segment whose owner thread is set to {@code thread}.
-     * characteristics have been modified, according to the supplied {@code handoffTransform}.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment.
      * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
@@ -473,6 +472,9 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * <p>
      * This is a <em>terminal operation</em>; as a side-effect, this segment will be
      * marked as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
+     * <p>
+     * The implicit deallocation behavior associated with the returned segment will be preserved under terminal
+     * operations such as {@link #handoff(Thread)} and {@link #share()}.
      *
      * @param cleaner the cleaner object, responsible for implicit deallocation of the returned segment.
      * @return a new memory segment backed by the same underlying memory region as this segment, which features
