@@ -72,7 +72,7 @@ final class RuntimeHelper {
     static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(s ->
             nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                    .withOwnerThread(null))).orElse(null);
+                    .share())).orElse(null);
     }
 
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
