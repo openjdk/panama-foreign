@@ -106,6 +106,6 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return MemoryAddress.ofLong(value).asSegmentRestricted(byteSize, null, null).share();
+        return MemoryAddress.ofLong(value).asSegmentRestricted(byteSize).share();
     }
 }
