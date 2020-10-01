@@ -41,8 +41,8 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null)
-            .withOwnerThread(null)
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, MemoryScope.DUMMY_CLEANUP_ACTION, null)
+            .share()
             .withAccessModes(READ | WRITE);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
@@ -98,13 +98,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
             unsafe.setMemory(buf, alignedSize, (byte)0);
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
-        MemoryScope scope = MemoryScope.createConfined(null, new MemoryScope.CleanupAction.AtMostOnceOnly() {
-            @Override
-            void doCleanup() {
+        MemoryScope scope = MemoryScope.createConfined(null, () -> {
                 unsafe.freeMemory(buf);
                 nioAccess.unreserveMemory(alignedSize, bytesSize);
-            }
-        });
+            }, null);
         MemorySegment segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
         if (alignedSize != bytesSize) {
@@ -114,12 +111,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize) {
-        return makeNativeSegmentUnchecked(min, bytesSize, null);
-    }
-
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Object attachment) {
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, Object ref) {
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
-                MemoryScope.createConfined(attachment, MemoryScope.CleanupAction.DUMMY));
+                MemoryScope.createConfined(ref, cleanupAction == null ? MemoryScope.DUMMY_CLEANUP_ACTION : cleanupAction, null));
     }
 }

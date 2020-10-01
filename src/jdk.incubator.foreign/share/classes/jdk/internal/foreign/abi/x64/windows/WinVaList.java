@@ -264,6 +264,6 @@ class WinVaList implements VaList {
 
     private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
         return segment.ownerThread() == thread ?
-                segment : segment.withOwnerThread(thread);
+                segment : segment.handoff(thread);
     }
 }

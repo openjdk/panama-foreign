@@ -55,7 +55,7 @@ import java.util.function.Consumer;
  * <p>
  * Non-platform classes should not implement {@linkplain MemorySegment} directly.
  *
- * <h2>Constructing memory segments from different sources</h2>
+ * <h2>Constructing memory segments</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
  * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout)},
@@ -85,7 +85,7 @@ import java.util.function.Consumer;
  * associated with such segments remain inaccessible, and that said memory sources are never aliased by more than one segment
  * at a time - e.g. so as to prevent concurrent modifications of the contents of an array, or buffer segment.
  *
- * <h2>Closing a memory segment</h2>
+ * <h2>Explicit deallocation</h2>
  *
  * Memory segments are closed explicitly (see {@link MemorySegment#close()}). When a segment is closed, it is no longer
  * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on the segment (or on any {@link MemoryAddress} instance
@@ -102,10 +102,6 @@ import java.util.function.Consumer;
  *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
  *     objects.</li>
  * </ul>
- *
- * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
- * that segment will be released when the segment becomes <em>unreachable</em> (see {@link #registerCleaner(Cleaner)});
- * this might be useful to prevent native memory leaks.
  *
  * <h2><a id = "access-modes">Access modes</a></h2>
  *
@@ -149,28 +145,65 @@ MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE
  * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Memory segments support <em>serial thread confinement</em>; that is, ownership of a memory segment can change (see
- * {@link #withOwnerThread(Thread)}). This allows, for instance, for two threads {@code A} and {@code B} to share
- * a segment in a controlled, cooperative and race-free fashion.
+ * The {@link #handoff(Thread)} method can be used to change the thread-confinement properties of a memory segment.
+ * This method is, like {@link #close()}, a <em>terminal operation</em> which marks the original segment as not alive
+ * (see {@link #isAlive()}) and creates a <em>new</em> segment with the desired thread-confinement properties. Calling
+ * {@link #handoff(Thread)} is only possible if the segment features the corresponding {@link #HANDOFF} access mode.
  * <p>
- * In some cases, it might be useful for multiple threads to process the contents of the same memory segment concurrently
- * (e.g. in the case of parallel processing); while memory segments provide strong confinement guarantees, it is possible
- * to derive a <em>shared</em> segment from a confined one. This can be done again, by calling {@link #withOwnerThread(Thread)},
- * and passing a {@code null} owner segment (this assumes that the access mode {@link #SHARE} of the original segment is set).
- * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
- * segment and allow multiple thread to work in parallel on disjoint segment slices.
- * For instance, the following code can be used to sum all int values in a memory segment in parallel:
+ * For instance, if a client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment aSegment = segment.handoff(threadA);
+ * }</pre></blockquote>
+ *
+ * By doing so, the original segment is marked as not alive, and a new segment is returned whose owner thread
+ * is {@code threadA}; this allows, for instance, for two threads {@code A} and {@code B} to share
+ * a segment in a controlled, cooperative and race-free fashion (also known as <em>serial thread confinement</em>).
+ * <p>
+ * Alternatively, the {@link #share()} method can be used to remove thread ownership altogether; this is only possible
+ * if the segment features the corresponding {@link #SHARE} access mode. The following code shows how clients can
+ * obtain a shared segment:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment sharedSegment = segment.share();
+ * }</pre></blockquote>
+ *
+ * Again here, the original segment is marked as not alive, and a new <em>shared</em> segment is returned which features no owner
+ * thread (e.g. {@link #ownerThread()} returns {@code null}). This might be useful when multiple threads need to process
+ * the contents of the same memory segment concurrently (e.g. in the case of parallel processing). For instance, a client
+ * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
+ * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ *
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).withOwnerThread(null)) {
+try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).share()) {
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
  * }</pre></blockquote>
- * Once shared, a segment can be claimed back by a given thread (see {@link #withOwnerThread(Thread)}); in fact, many threads
+ *
+ * Once shared, a segment can be claimed back by a given thread (again using {@link #handoff(Thread)}); in fact, many threads
  * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
+ *
+ * <h2>Implicit deallocation</h2>
+ *
+ * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
+ * that segment will be released when the segment becomes <em>unreachable</em>, which can be useful to prevent native memory
+ * leaks. This can be achieved using the {@link #registerCleaner(Cleaner)} method, as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+MemorySegment gcSegment = segment.registerCleaner(cleaner);
+ * }</pre></blockquote>
+ *
+ * Here, the original segment is marked as not alive, and a new segment is returned (the owner thread of the returned
+ * segment set is set to that of the current thread, see {@link #ownerThread()}); the new segment
+ * will also be registered with the the {@link Cleaner} instance provided to the {@link #registerCleaner(Cleaner)} method;
+ * as such, if not closed explicitly (see {@link #close()}), the new segment will be automatically closed by the cleaner.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
@@ -193,20 +226,6 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     MemoryAddress address();
 
     /**
-     * Register this memory segment instance against a {@link Cleaner} object. This allows for the segment to be closed
-     * as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
-     * @apiNote Calling this method multiple times, even concurrently (from multiple threads, if this segment is shared)
-     * is allowed; the implementation guarantees that the memory resources associated with this segment will be released
-     * at most once. Also, in case the segment has been closed explicitly (see {@link #close}) no further action will be
-     * taken by the GC when the segment later becomes unreachable.
-     * @param cleaner the {@link Cleaner} object responsible for cleaning up this memory segment.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #CLOSE} access mode.
-     */
-    void registerCleaner(Cleaner cleaner);
-
-    /**
      * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
@@ -218,7 +237,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * <a href="#access-modes">access modes</a> as the given segment less the {@link #CLOSE} access mode.
      * <p>
      * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
-     * be processed in parallel by multiple threads (if the access mode {@link #SHARE} is set).
+     * be processed in parallel by multiple threads (if the segment is shared).
      * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
      * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
      * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
@@ -239,50 +258,6 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @return the thread owning this segment.
      */
     Thread ownerThread();
-
-    /**
-     * Obtains a new memory segment backed by the same underlying memory region as this segment,
-     * but with different owner thread. As a side-effect, this segment will be marked as <em>not alive</em>,
-     * and subsequent operations on this segment will result in runtime errors.
-     *<p>If {@code newOwner} is {@code != null}, then the resulting segment will
-     * be a confined segment, whose owner thread is {@code newOwner}. Otherwise, the resulting segment will be
-     * a shared segment, and will be accessible concurrently from multiple threads.
-     * <p>
-     * Write accesses to the segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses to the segment's contents on
-     * the new owner thread.
-     *
-     * @param newOwner the new owner thread (can be {@code null}).
-     * @return a new memory segment backed by the same underlying memory region as this segment; the new segment can
-     * be either a confined segment ({@code newOwner != null}) or a shared segment ({@code newOwner == null}).
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     * @throws IllegalArgumentException if the segment is already a confined segment owner by {@code newOnwer}
-     * @throws UnsupportedOperationException if {@code newOwner != null} and this segment does not support the {@link #HANDOFF} access mode,
-     * or if {@code newOwner == null} and this segment does not support the {@link #SHARE} access mode.
-     */
-    MemorySegment withOwnerThread(Thread newOwner);
-
-    /**
-     * Obtains a new memory segment backed by the same underlying memory region as this segment, and featuring
-     * the same confinement thread (see {@link #ownerThread()} and access modes (see {@link #accessModes()}),
-     * but with a different cleanup action. More specifically, the cleanup action associated with the returned segment will
-     * first call the user-provided action, before delegating back to the original cleanup action associated with
-     * this segment (if any). Any errors and/or exceptions thrown by the user-provided action will be discarded, and will not prevent the
-     * release of any memory resources associated with this segment.
-     * <p>
-     * As a side-effect, this segment will be marked as <em>not alive</em>,
-     * and subsequent operations on this segment will result in runtime errors.
-     *
-     * @param action the new cleanup action
-     * @return a new memory segment backed by the same underlying memory region as this segment; the cleanup action
-     * associated with the new segment is the result of composing this segment's cleanup action with the
-     * supplied {@code action}.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     * @throws NullPointerException if {@code action == null}
-     */
-    MemorySegment withCleanupAction(Runnable action);
 
     /**
      * The size (in bytes) of this memory segment.
@@ -407,8 +382,8 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     boolean isAlive();
 
     /**
-     * Closes this memory segment. Once a memory segment has been closed, any attempt to use the memory segment,
-     * or to access any {@link MemoryAddress} instance associated with it will fail with {@link IllegalStateException}.
+     * Closes this memory segment. This is a <em>terminal operation</em>; as a side-effect, this segment will be marked
+     * as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
      * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
@@ -417,6 +392,71 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
     void close();
+
+    /**
+     * Obtains a new confined memory segment backed by the same underlying memory region as this segment. The returned segment will
+     * be confined on the specified thread, and will feature the same spatial bounds and access modes (see {@link #accessModes()})
+     * as this segment.
+     * <p>
+     * This is a <em>terminal operation</em>; as a side-effect, this segment will be
+     * marked as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
+     * <p>
+     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
+     * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
+     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
+     * to the returned segment's contents on the new owner thread.
+     *
+     * @param thread the new owner thread
+     * @return a new confined memory segment whose owner thread is set to {@code thread}.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment.
+     * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
+     * @throws NullPointerException if {@code thread == null}
+     */
+    MemorySegment handoff(Thread thread);
+
+    /**
+     * Obtains a new shared memory segment backed by the same underlying memory region as this segment. The returned segment will
+     * not be confined on any thread and can therefore be accessed concurrently from multiple threads; moreover, the
+     * returned segment will feature the same spatial bounds and access modes (see {@link #accessModes()})
+     * as this segment.
+     * <p>
+     * This is a <em>terminal operation</em>; as a side-effect, this segment will be
+     * marked as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
+     * <p>
+     * Write accesses to this segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
+     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
+     * to the returned segment's contents on a new thread.
+     *
+     * @return a new memory shared segment backed by the same underlying memory region as this segment.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment.
+     * @throws NullPointerException if {@code thread == null}
+     */
+    MemorySegment share();
+
+    /**
+     * Register this memory segment instance against a {@link Cleaner} object, by returning a new memory segment backed
+     * by the same underlying memory region as this segment. The returned segment will feature the same confinement,
+     * spatial bounds and access modes (see {@link #accessModes()}) as this segment. Moreover, the returned segment
+     * will be associated with the specified {@link Cleaner} object; this allows for the segment to be closed
+     * as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
+     * <p>
+     * This is a <em>terminal operation</em>; as a side-effect, this segment will be
+     * marked as <em>not alive</em>, and subsequent operations on this segment will fail with {@link IllegalStateException}.
+     * <p>
+     * The implicit deallocation behavior associated with the returned segment will be preserved under terminal
+     * operations such as {@link #handoff(Thread)} and {@link #share()}.
+     *
+     * @param cleaner the cleaner object, responsible for implicit deallocation of the returned segment.
+     * @return a new memory segment backed by the same underlying memory region as this segment, which features
+     * implicit deallocation.
+     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
+     * thread owning this segment, or if this segment is already associated with a cleaner.
+     * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
+     * @throws NullPointerException if {@code thread == null}
+     */
+    MemorySegment registerCleaner(Cleaner cleaner);
 
     /**
      * Fills a value into this memory segment.
@@ -849,7 +889,7 @@ allocateNative(bytesSize, 1);
     int CLOSE = WRITE << 1;
 
     /**
-     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #withOwnerThread(Thread)}}).
+     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #share()}).
      * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
@@ -858,7 +898,7 @@ allocateNative(bytesSize, 1);
 
     /**
      * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
-     * (see {@link #withOwnerThread(Thread)}).
+     * (see {@link #handoff(Thread)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */

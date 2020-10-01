@@ -197,7 +197,7 @@ public class TestNativeScope {
 
     @Test
     public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.allocateNative(10).withOwnerThread(null);
+        MemorySegment unconfined = MemorySegment.allocateNative(10).share();
         NativeScope scope = NativeScope.boundedScope(10);
         MemorySegment registered = scope.register(unconfined);
         assertFalse(unconfined.isAlive());

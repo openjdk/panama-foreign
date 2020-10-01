@@ -59,8 +59,7 @@ public abstract class AbstractNativeScope implements NativeScope {
         } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
             throw new IllegalArgumentException("Cannot register a non-closeable segment");
         }
-        MemorySegment attachedSegment = ((AbstractMemorySegmentImpl)segment)
-                .withOwnerThreadInternal(ownerThread(), false);
+        MemorySegment attachedSegment = segment.handoff(ownerThread());
         segments.add(attachedSegment);
         return attachedSegment
                 .withAccessModes(segment.accessModes() & SCOPE_MASK);
