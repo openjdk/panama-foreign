@@ -311,6 +311,22 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
+   @Override
+    public MemorySegment handoff(NativeScope scope) {
+        Objects.requireNonNull(scope);
+        checkValidState();
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
+        MemorySegment dup = handoff(scope.ownerThread());
+        ((AbstractNativeScope)scope).register(dup);
+        return dup.withAccessModes(accessModes() & (READ | WRITE));
+    }
+
+
     @Override
     public MemorySegment registerCleaner(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);

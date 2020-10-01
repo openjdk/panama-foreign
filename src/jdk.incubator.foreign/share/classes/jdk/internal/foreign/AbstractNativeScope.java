@@ -5,7 +5,6 @@ import jdk.incubator.foreign.NativeScope;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalLong;
 
 public abstract class AbstractNativeScope implements NativeScope {
@@ -26,13 +25,7 @@ public abstract class AbstractNativeScope implements NativeScope {
 
     @Override
     public void close() {
-        for (MemorySegment segment : segments) {
-            try {
-                segment.close();
-            } catch (IllegalStateException ex) {
-                //already closed - skip
-            }
-        }
+        segments.forEach(MemorySegment::close);
     }
 
     void checkOwnerThread() {
@@ -51,18 +44,8 @@ public abstract class AbstractNativeScope implements NativeScope {
         return newSegment(size, size);
     }
 
-    @Override
-    public MemorySegment register(MemorySegment segment) {
-        Objects.requireNonNull(segment);
-        if (segment.ownerThread() != null && (segment.ownerThread() != ownerThread())) {
-            throw new IllegalArgumentException("Cannot register segment owned by a different thread");
-        } else if (!segment.hasAccessModes(MemorySegment.CLOSE)) {
-            throw new IllegalArgumentException("Cannot register a non-closeable segment");
-        }
-        MemorySegment attachedSegment = segment.handoff(ownerThread());
-        segments.add(attachedSegment);
-        return attachedSegment
-                .withAccessModes(segment.accessModes() & SCOPE_MASK);
+    public void register(MemorySegment segment) {
+        segments.add(segment);
     }
 
     public static class UnboundedNativeScope extends AbstractNativeScope {

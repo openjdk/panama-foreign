@@ -123,7 +123,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    final MemoryScope confineTo(Thread newOwner) {
+    MemoryScope confineTo(Thread newOwner) {
         try {
             justClose();
             if (scopeCleanable != null) {
