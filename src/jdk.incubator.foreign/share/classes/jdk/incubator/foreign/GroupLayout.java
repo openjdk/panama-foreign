@@ -31,6 +31,7 @@ import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -170,12 +171,12 @@ public final class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    GroupLayout dup(long alignment, Map<String, Constable> attributes) {
+    protected GroupLayout dup(long alignment, Map<String, Constable> attributes) {
         return new GroupLayout(kind, elements, alignment, attributes);
     }
 
     @Override
-    boolean hasNaturalAlignment() {
+    protected boolean hasNaturalAlignment() {
         return alignment == kind.alignof(elements);
     }
 
