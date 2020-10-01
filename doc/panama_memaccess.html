@@ -94,8 +94,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 </nav>
 <h2 id="state-of-foreign-memory-support">State of foreign memory support</h2>
-<p><strong>September 2020</strong></p>
+<p><strong>October 2020</strong></p>
 <ul>
+<li>Reflect latest API changes in handoff/implicit deallocation</li>
 <li>Updated section on restricted segments reflecting new, simpler API</li>
 <li>Revamped section on confinement to add description of shared segments</li>
 <li>Added section on implicit deallocation</li>
@@ -236,18 +237,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The Foreign Memory Access API provides several ways to relax the thread confinement barriers. First, threads can cooperatively share segments by performing explicit <em>handoff</em> operations, where a thread releases its ownership on a given segment and transfers it onto another thread. Consider the following code:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb17-1" title="1">MemorySegment segmentA = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
 <a class="sourceLine" id="cb17-2" title="2">...</a>
-<a class="sourceLine" id="cb17-3" title="3">var segmentB = segmentA.<span class="fu">withOwnerThread</span>(threadB); <span class="co">// confined by thread B</span></a></code></pre></div>
-<p>This pattern of access is also known as <em>serial confinement</em> and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API <em>kills</em> the original segment (as if <code>close</code> was called, but without releasing the underlying memory) and returns a <em>new</em> segment with the correct owner. The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.</p>
+<a class="sourceLine" id="cb17-3" title="3">var segmentB = segmentA.<span class="fu">handoff</span>(threadB); <span class="co">// confined by thread B</span></a></code></pre></div>
+<p>This pattern of access is also known as <em>serial confinement</em> and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API <em>kills</em> the original segment (as if <code>close</code> was called, but without releasing the underlying memory) and returns a <em>new</em> segment with the correct owner. That is, handoff operations are <em>terminal operations</em> (like <code>MemorySegment::close</code>). The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.</p>
 <p>When serial confinement is not enough, clients can optionally remove thread ownership, that is, turn a confined segment into a <em>shared</em> one which can be accessed — and closed — concurrently, by multiple threads<a href="#2"><sup>2</sup></a>. As before, sharing a segment kills the original segment and returns a new segment with no owner thread:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb18-1" title="1">MemorySegment segmentA = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
 <a class="sourceLine" id="cb18-2" title="2">...</a>
-<a class="sourceLine" id="cb18-3" title="3">var sharedSegment = segmentA.<span class="fu">withOwnerThread</span>(<span class="kw">null</span>); <span class="co">// shared segment</span></a></code></pre></div>
+<a class="sourceLine" id="cb18-3" title="3">var sharedSegment = segmentA.<span class="fu">share</span>() <span class="co">// shared segment</span></a></code></pre></div>
 <p>A shared segments is especially useful when multiple threads need to operate on the segment's contents in <em>parallel</em> (e.g. using a framework such as Fork/Join) — by obtaining a <code>Spliterator</code> instance out of a memory segment. For instance to sum all the 32 bit values of a memory segment in parallel, we can use the following code:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb19-1" title="1">SequenceLayout seq = MemoryLayout.<span class="fu">ofSequence</span>(<span class="dv">1_000_000</span>, MemoryLayouts.<span class="fu">JAVA_INT</span>);</a>
 <a class="sourceLine" id="cb19-2" title="2">SequenceLayout seq_bulk = seq.<span class="fu">reshape</span>(-<span class="dv">1</span>, <span class="dv">100</span>);</a>
 <a class="sourceLine" id="cb19-3" title="3">VarHandle intHandle = seq.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>, <span class="fu">sequenceElement</span>());    </a>
 <a class="sourceLine" id="cb19-4" title="4"></a>
-<a class="sourceLine" id="cb19-5" title="5"><span class="dt">int</span> sum = StreamSupport.<span class="fu">stream</span>(MemorySegment.<span class="fu">spliterator</span>(segment.<span class="fu">withOwnerThread</span>(<span class="kw">null</span>), seq_bulk), <span class="kw">true</span>)</a>
+<a class="sourceLine" id="cb19-5" title="5"><span class="dt">int</span> sum = StreamSupport.<span class="fu">stream</span>(MemorySegment.<span class="fu">spliterator</span>(segment.<span class="fu">share</span>(), seq_bulk), <span class="kw">true</span>)</a>
 <a class="sourceLine" id="cb19-6" title="6">                .<span class="fu">mapToInt</span>(slice -&gt; {</a>
 <a class="sourceLine" id="cb19-7" title="7">                    <span class="dt">int</span> res = <span class="dv">0</span>;</a>
 <a class="sourceLine" id="cb19-8" title="8">                    <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">100</span> ; i++) {</a>
@@ -261,20 +262,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb20"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb20-1" title="1"><span class="co">// thread A</span></a>
 <a class="sourceLine" id="cb20-2" title="2">MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
 <a class="sourceLine" id="cb20-3" title="3"><span class="co">//do some work</span></a>
-<a class="sourceLine" id="cb20-4" title="4">segment = segment.<span class="fu">withOwnerThread</span>(<span class="kw">null</span>);</a>
+<a class="sourceLine" id="cb20-4" title="4">segment = segment.<span class="fu">share</span>();</a>
 <a class="sourceLine" id="cb20-5" title="5"></a>
 <a class="sourceLine" id="cb20-6" title="6"><span class="co">// thread B</span></a>
-<a class="sourceLine" id="cb20-7" title="7">segment.<span class="fu">withOwnerThread</span>(<span class="bu">Thread</span>.<span class="fu">currentThread</span>()); <span class="co">// now confined by thread B</span></a>
+<a class="sourceLine" id="cb20-7" title="7">segment.<span class="fu">handoff</span>(<span class="bu">Thread</span>.<span class="fu">currentThread</span>()); <span class="co">// now confined by thread B</span></a>
 <a class="sourceLine" id="cb20-8" title="8"><span class="co">// do some more work</span></a></code></pre></div>
 <p>That is, multiple threads can <em>race</em> to acquire a given shared segment — the API ensures that only one of them will succeed in acquiring ownership of the shared segment.</p>
 <h3 id="implicit-deallocation">Implicit deallocation</h3>
 <p>While memory segment feature <em>deterministic deallocation</em> they can also be registered against a <code>Cleaner</code>, to make sure that the memory resources associated with a segment are released when the GC determines that the segment is no longer <em>reachable</em>:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb21-1" title="1">MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">100</span>);</a>
 <a class="sourceLine" id="cb21-2" title="2">Cleaner cleaner = Cleaner.<span class="fu">create</span>();</a>
-<a class="sourceLine" id="cb21-3" title="3">segment.<span class="fu">registerCleaner</span>(cleaner);</a>
+<a class="sourceLine" id="cb21-3" title="3">segment = segment.<span class="fu">registerCleaner</span>(cleaner);</a>
 <a class="sourceLine" id="cb21-4" title="4"><span class="co">// do some work</span></a>
 <a class="sourceLine" id="cb21-5" title="5">segment = <span class="kw">null</span>; <span class="co">// Cleaner might reclaim the segment memory now</span></a></code></pre></div>
-<p>Note that registering a segment with a cleaner doesn't prevent clients from calling <code>MemorySegment::close</code> explicitly; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.</p>
+<p>As for handoff, registering a segment with a cleaner <em>kills</em> the current segment and returns a new one which features implicit deallocation; this is also a <em>terminal operation</em>. Note that registering a segment with a cleaner doesn't prevent clients from calling <code>MemorySegment::close</code> explicitly on the returned segment; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.</p>
 <ul>
 <li><a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C <code>struct</code> declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small></li>
 <li><a id="2"/>(<sup>2</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP <a href="https://openjdk.java.net/jeps/312">312</a>) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, <code>MemorySegment::close</code> might be slower on shared segments than on confined ones.</small></li>
