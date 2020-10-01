@@ -4212,7 +4212,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_visitChildren$visitor.class, fi, Index_h$constants_1.clang_visitChildren$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitChildren$visitor fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static  MethodHandle clang_visitTemplateSpecializations$MH() {
@@ -4231,7 +4231,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_visitTemplateSpecializations$visitor.class, fi, Index_h$constants_1.clang_visitTemplateSpecializations$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializations$visitor fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static  MethodHandle clang_visitTemplateSpecializationChildren$MH() {
@@ -4250,7 +4250,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_visitTemplateSpecializationChildren$visitor.class, fi, Index_h$constants_1.clang_visitTemplateSpecializationChildren$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializationChildren$visitor fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static  MethodHandle clang_visitChildrenWithBlock$MH() {
@@ -4269,7 +4269,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_visitChildrenWithBlock$block.class, fi, Index_h$constants_1.clang_visitChildrenWithBlock$block$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
         public static  @C("CXCursorVisitorBlock") MemorySegment allocate(clang_visitChildrenWithBlock$block fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static  MethodHandle clang_getCursorUSR$MH() {
@@ -5227,7 +5227,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, Index_h$constants_1.clang_executeOnThread$fn$FUNC(), "(Ljdk/incubator/foreign/MemoryAddress;)V");
         }
         public static  @C("void(*)(void*)") MemorySegment allocate(clang_executeOnThread$fn fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static class CXCompletionResult {
@@ -5755,7 +5755,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_getInclusions$visitor.class, fi, Index_h$constants_1.clang_getInclusions$visitor$FUNC(), "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V");
         }
         public static  @C("CXInclusionVisitor") MemorySegment allocate(clang_getInclusions$visitor fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static @C("int") int CXEval_Int() {
@@ -6023,7 +6023,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_findReferencesInFileWithBlock$x0.class, fi, Index_h$constants_1.clang_findReferencesInFileWithBlock$x0$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
         public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findReferencesInFileWithBlock$x0 fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static  MethodHandle clang_findIncludesInFileWithBlock$MH() {
@@ -6042,7 +6042,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_findIncludesInFileWithBlock$x0.class, fi, Index_h$constants_1.clang_findIncludesInFileWithBlock$x0$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
         public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findIncludesInFileWithBlock$x0 fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static class CXIdxLoc {
@@ -7823,7 +7823,7 @@ public final class Index_h {
             return RuntimeHelper.upcallStub(clang_Type_visitFields$visitor.class, fi, Index_h$constants_1.clang_Type_visitFields$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         public static  @C("CXFieldVisitor") MemorySegment allocate(clang_Type_visitFields$visitor fi, NativeScope scope) {
-            return scope.register(allocate(fi));
+            return allocate(fi).handoff(scope);
         }
     }
     public static @C("int") int CINDEX_VERSION() {
