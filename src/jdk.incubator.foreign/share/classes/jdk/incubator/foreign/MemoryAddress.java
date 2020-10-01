@@ -31,6 +31,8 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
+import java.lang.ref.Cleaner;
+
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
  * {@link MemorySegment#address()} method, and can refer to either off-heap or on-heap memory.
@@ -134,6 +136,9 @@ public interface MemoryAddress extends Addressable {
      * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
      * memory resources which might implicitly be associated with the segment, but will result in calling the
      * provided cleanup action (if any).
+     * <p>
+     * Both the cleanup action and the attachment object (if any) will be preserved under terminal operations such as
+     * {@link MemorySegment#handoff(Thread)}, {@link MemorySegment#share()} and {@link MemorySegment#registerCleaner(Cleaner)}.
      * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
