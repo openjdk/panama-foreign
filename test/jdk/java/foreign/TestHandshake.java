@@ -50,10 +50,11 @@ import static org.testng.Assert.*;
 
 public class TestHandshake {
 
-    static final int ITERATIONS = 10;
+    static final int ITERATIONS = 5;
     static final int SEGMENT_SIZE = 1_000_000;
     static final int MAX_DELAY_MILLIS = 500;
     static final int MAX_EXECUTOR_WAIT_SECONDS = 10;
+    static final int MAX_THREAD_SPIN_WAIT_MILLIS = 200;
 
     @Test(dataProvider = "accessors")
     public void testHandshake(Function<MemorySegment, Runnable> accessorFactory) throws InterruptedException {
@@ -72,141 +73,135 @@ public class TestHandshake {
         }
     }
 
-    static class SegmentAccessor implements Runnable {
-
+    static abstract class AbstractSegmentAccessor implements Runnable {
         final MemorySegment segment;
+
+        AbstractSegmentAccessor(MemorySegment segment) {
+            this.segment = segment;
+        }
+
+        @Override
+        public final void run() {
+            outer: while (segment.isAlive()) {
+                try {
+                    doAccess();
+                } catch (IllegalStateException ex) {
+                    backoff();
+                    continue outer;
+                }
+            }
+        }
+
+        abstract void doAccess();
+
+        private void backoff() {
+            try {
+                Thread.sleep(ThreadLocalRandom.current().nextInt(MAX_THREAD_SPIN_WAIT_MILLIS));
+            } catch (InterruptedException ex) {
+                throw new AssertionError(ex);
+            }
+        }
+    }
+
+    static abstract class AbstractBufferAccessor extends AbstractSegmentAccessor {
+        final ByteBuffer bb;
+
+        AbstractBufferAccessor(MemorySegment segment) {
+            super(segment);
+            this.bb = segment.asByteBuffer();
+        }
+    }
+
+    static class SegmentAccessor extends AbstractSegmentAccessor {
 
         SegmentAccessor(MemorySegment segment) {
-            this.segment = segment;
+            super(segment);
         }
 
         @Override
-        public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < segment.byteSize(); i++) {
-                        sum += MemoryAccess.getByteAtIndex(segment, i);
-                    }
-                }
-            } catch (IllegalStateException ex) {
-                // do nothing
+        void doAccess() {
+            int sum = 0;
+            for (int i = 0; i < segment.byteSize(); i++) {
+                sum += MemoryAccess.getByteAtIndex(segment, i);
             }
         }
     }
 
-    static class SegmentCopyAccessor implements Runnable {
+    static class SegmentCopyAccessor extends AbstractSegmentAccessor {
 
-        final MemorySegment segment;
+        MemorySegment first, second;
+
 
         SegmentCopyAccessor(MemorySegment segment) {
-            this.segment = segment;
+            super(segment);
+            long split = segment.byteSize() / 2;
+            first = segment.asSlice(0, split);
+            second = segment.asSlice(split);
         }
 
         @Override
-        public void run() {
-            try {
-                long split = segment.byteSize() / 2;
-                MemorySegment first = segment.asSlice(0, split);
-                MemorySegment second = segment.asSlice(split);
-                while (true) {
-                    for (int i = 0; i < segment.byteSize(); i++) {
-                        first.copyFrom(second);
-                    }
-                }
-            } catch (IllegalStateException ex) {
-                // do nothing
-            }
+        public void doAccess() {
+            first.copyFrom(second);
         }
     }
 
-    static class SegmentFillAccessor implements Runnable {
-
-        final MemorySegment segment;
+    static class SegmentFillAccessor extends AbstractSegmentAccessor {
 
         SegmentFillAccessor(MemorySegment segment) {
-            this.segment = segment;
+            super(segment);
         }
 
         @Override
-        public void run() {
-            try {
-                segment.fill((byte)ThreadLocalRandom.current().nextInt(10));
-            } catch (IllegalStateException ex) {
-                // do nothing
-            }
+        public void doAccess() {
+            segment.fill((byte) ThreadLocalRandom.current().nextInt(10));
         }
     }
 
-    static class SegmentMismatchAccessor implements Runnable {
+    static class SegmentMismatchAccessor extends AbstractSegmentAccessor {
 
-        final MemorySegment segment;
         final MemorySegment copy;
 
         SegmentMismatchAccessor(MemorySegment segment) {
-            this.segment = segment;
+            super(segment);
             this.copy = MemorySegment.allocateNative(SEGMENT_SIZE).share();
             copy.copyFrom(segment);
             MemoryAccess.setByteAtIndex(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
 
         @Override
-        public void run() {
-            try {
-                long l = 0;
-                while (true) {
-                    l += segment.mismatch(copy);
-                }
-            } catch (IllegalStateException ex) {
-                // do nothing
-            }
+        public void doAccess() {
+            segment.mismatch(copy);
         }
     }
 
-    static class BufferAccessor implements Runnable {
-
-        final ByteBuffer bb;
+    static class BufferAccessor extends AbstractBufferAccessor {
 
         BufferAccessor(MemorySegment segment) {
-            this.bb = segment.asByteBuffer();
+            super(segment);
         }
 
         @Override
-        public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < bb.capacity(); i++) {
-                        sum += bb.get(i);
-                    }
-                }
-            } catch (IllegalStateException ex) {
-                // do nothing
+        public void doAccess() {
+            int sum = 0;
+            for (int i = 0; i < bb.capacity(); i++) {
+                sum += bb.get(i);
             }
         }
     }
 
-    static class BufferHandleAccessor implements Runnable {
+    static class BufferHandleAccessor extends AbstractBufferAccessor {
 
         static VarHandle handle = MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.nativeOrder());
 
-        final ByteBuffer bb;
-
         public BufferHandleAccessor(MemorySegment segment) {
-            this.bb = segment.asByteBuffer();
+            super(segment);
         }
 
         @Override
-        public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < bb.capacity() / 2; i++) {
-                        sum += (short)handle.get(bb, i);
-                    }
-                }
-            } catch (IllegalStateException ex) {
-                // do nothing
+        public void doAccess() {
+            int sum = 0;
+            for (int i = 0; i < bb.capacity() / 2; i++) {
+                sum += (short) handle.get(bb, i);
             }
         }
     };
@@ -222,7 +217,14 @@ public class TestHandshake {
         @Override
         public void run() {
             long prev = System.currentTimeMillis();
-            segment.close();
+            while (true) {
+                try {
+                    segment.close();
+                    break;
+                } catch (IllegalStateException ex) {
+                    Thread.onSpinWait();
+                }
+            }
             long delay = System.currentTimeMillis() - prev;
             System.out.println("Segment closed - delay (ms): " + delay);
         }

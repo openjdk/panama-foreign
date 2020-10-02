@@ -376,7 +376,6 @@ address JVMCIRuntime::exception_handler_for_pc(JavaThread* thread) {
   {
     // Enter VM mode by calling the helper
     ResetNoHandleMark rnhm;
-    ExceptionHandlingMark ehm(thread);
     continuation = exception_handler_for_pc_helper(thread, exception, pc, cm);
   }
   // Back in JAVA, use no oops DON'T safepoint

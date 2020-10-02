@@ -52,7 +52,6 @@ class Thread;
 class Handle;
 class Symbol;
 class JavaCallArguments;
-class JavaThread;
 class methodHandle;
 
 // The ThreadShadow class is a helper class to access the _pending_exception
@@ -338,15 +337,6 @@ class ExceptionMark {
   ~ExceptionMark();
 };
 
-
-class ExceptionHandlingMark {
-private:
-  JavaThread* _jt;
-
-public:
-  ExceptionHandlingMark(JavaThread* jt);
-  ~ExceptionHandlingMark();
-};
 
 
 // Use an EXCEPTION_MARK for 'local' exceptions. EXCEPTION_MARK makes sure that no

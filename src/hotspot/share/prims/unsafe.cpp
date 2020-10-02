@@ -67,10 +67,7 @@
 
 
 #define UNSAFE_ENTRY(result_type, header) \
-   JVM_ENTRY(static result_type, header) \
-   if (JavaThread::thread_from_jni_environment(env)->has_async_exception()) { \
-     return (result_type)0; \
-   } else
+  JVM_ENTRY(static result_type, header)
 
 #define UNSAFE_LEAF(result_type, header) \
   JVM_LEAF(static result_type, header)
@@ -1050,6 +1047,7 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
 
   return ret;
 } UNSAFE_END
+
 
 /// JVM_RegisterUnsafeMethods
 

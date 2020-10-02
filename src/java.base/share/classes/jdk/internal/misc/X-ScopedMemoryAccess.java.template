@@ -76,11 +76,11 @@ public class ScopedMemoryAccess {
         registerNatives();
     }
 
-    public void closeScope(Scope scope) {
-        closeScope0(scope, Scope.ScopedAccessError.INSTANCE);
+    public boolean closeScope(Scope scope) {
+        return closeScope0(scope, Scope.ScopedAccessError.INSTANCE);
     }
 
-    native void closeScope0(Scope scope, Scope.ScopedAccessError exception);
+    native boolean closeScope0(Scope scope, Scope.ScopedAccessError exception);
 
     private ScopedMemoryAccess() {}
 

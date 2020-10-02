@@ -86,16 +86,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     protected final Object ref;
     protected final ScopeCleanable scopeCleanable;
     protected final Runnable cleanupAction;
-    protected boolean closed; // = false
-    private static final VarHandle CLOSED;
-
-    static {
-        try {
-            CLOSED = MethodHandles.lookup().findVarHandle(MemoryScope.class, "closed", boolean.class);
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
 
     /**
      * Closes this scope, executing any cleanup action (where provided).
@@ -180,9 +170,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * Returns true, if this scope is still alive. This method may be called in any thread.
      * @return {@code true} if this scope is not closed yet.
      */
-    final boolean isAlive() {
-        return !((boolean)CLOSED.getVolatile(this));
-    }
+    public abstract boolean isAlive();
 
     /**
      * Checks that this scope is still alive (see {@link #isAlive()}).
@@ -197,18 +185,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     }
 
     /**
-     * Checks that this scope is still alive (see {@link #isAlive()}), by performing
-     * a quick, plain access. As such, this method should be used with care.
-     * @throws ScopedAccessError if this scope is already closed.
-     */
-    @ForceInline
-    private static void checkAliveRaw(MemoryScope scope) {
-        if (scope.closed) {
-            throw ScopedAccessError.INSTANCE;
-        }
-    }
-
-    /**
      * A confined scope, which features an owner thread. The liveness check features an additional
      * confinement check - that is, calling any operation on this scope from a thread other than the
      * owner thread will result in an exception. Because of this restriction, checking the liveness bit
@@ -216,6 +192,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     static class ConfinedScope extends MemoryScope {
 
+        private boolean closed; // = false
         final Thread owner;
 
         public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction, Cleaner cleaner) {
@@ -228,7 +205,14 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (owner != Thread.currentThread()) {
                 throw new IllegalStateException("Attempted access outside owning thread");
             }
-            checkAliveRaw(this);
+            if (closed) {
+                throw ScopedAccessError.INSTANCE;
+            }
+        }
+
+        @Override
+        public boolean isAlive() {
+            return !closed;
         }
 
         void justClose() {
@@ -256,6 +240,22 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
+        final static int ALIVE = 0;
+        final static int CLOSING = 1;
+        final static int CLOSED = 2;
+
+        int state = ALIVE;
+
+        private static final VarHandle STATE;
+
+        static {
+            try {
+                STATE = MethodHandles.lookup().findVarHandle(SharedScope.class, "state", int.class);
+            } catch (Throwable ex) {
+                throw new ExceptionInInitializerError(ex);
+            }
+        }
+
         SharedScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
             super(ref, cleanupAction, cleaner);
         }
@@ -267,14 +267,25 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
         @Override
         public void checkValidState() {
-            MemoryScope.checkAliveRaw(this);
+            if (state != ALIVE) {
+                throw ScopedAccessError.INSTANCE;
+            }
         }
 
         void justClose() {
-            if (!CLOSED.compareAndSet(this, false, true)) {
+            if (!STATE.compareAndSet(this, ALIVE, CLOSING)) {
                 throw new IllegalStateException("Already closed");
             }
-            SCOPED_MEMORY_ACCESS.closeScope(this);
+            boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
+            STATE.setVolatile(this, success ? CLOSED : ALIVE);
+            if (!success) {
+                throw new IllegalStateException("Cannot close while another thread is accessing the segment");
+            }
+        }
+
+        @Override
+        public boolean isAlive() {
+            return (int)STATE.getVolatile(this) != CLOSED;
         }
     }
 

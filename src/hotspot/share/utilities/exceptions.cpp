@@ -73,7 +73,6 @@ void ThreadShadow::clear_pending_exception() {
 void ThreadShadow::clear_pending_nonasync_exception() {
   // Do not clear probable async exceptions.
   if (!_pending_exception->is_a(SystemDictionary::ThreadDeath_klass()) &&
-       _pending_exception->klass() != SystemDictionary::ScopedAccessError_klass() &&
       (_pending_exception->klass() != SystemDictionary::InternalError_klass() ||
        java_lang_InternalError::during_unsafe_access(_pending_exception) != JNI_TRUE)) {
     clear_pending_exception();
@@ -521,16 +520,6 @@ ExceptionMark::~ExceptionMark() {
       vm_exit_during_initialization(exception);
     }
   }
-}
-
-// Implementation of ExceptionHandlingMark
-
-ExceptionHandlingMark::ExceptionHandlingMark(JavaThread* jt) : _jt(jt) {
-  jt->set_is_exception_handling(true);
-}
-
-ExceptionHandlingMark::~ExceptionHandlingMark() {
-  _jt->set_is_exception_handling(false);
 }
 
 // ----------------------------------------------------------------------------------------
