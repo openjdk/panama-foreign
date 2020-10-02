@@ -1702,6 +1702,7 @@ void JavaThread::initialize() {
   set_exception_oop(oop());
   _exception_pc  = 0;
   _exception_handler_pc = 0;
+  _is_exception_handling = false;
   _is_method_handle_return = 0;
   _jvmti_thread_state= NULL;
   _should_post_on_exceptions_flag = JNI_FALSE;
@@ -2406,7 +2407,7 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
   JFR_ONLY(SUSPEND_THREAD_CONDITIONAL(this);)
 }
 
-void JavaThread::send_thread_stop(oop java_throwable)  {
+void JavaThread::install_async_exception(oop java_throwable)  {
   ResourceMark rm;
   assert(is_handshake_safe_for(Thread::current()),
          "should be self or handshakee");
@@ -2446,8 +2447,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
       Exceptions::debug_check_abort(_pending_async_exception->klass()->external_name());
     }
   }
+}
 
-
+void JavaThread::send_thread_stop(oop java_throwable) {
+  this->install_async_exception(java_throwable);
   // Interrupt thread so it will wake up from a potential wait()/sleep()/park()
   java_lang_Thread::set_interrupted(threadObj(), true);
   this->interrupt();
