@@ -50,10 +50,13 @@ class CloseScopedMemoryClosure : public HandshakeClosure {
   jobject _exception;
 
 public:
+  jboolean _found;
+
   CloseScopedMemoryClosure(jobject deopt, jobject exception)
     : HandshakeClosure("CloseScopedMemory")
     , _deopt(deopt)
-    , _exception(exception) {}
+    , _exception(exception)
+    , _found(false) {}
 
   void do_thread(Thread* thread) {
 
@@ -100,7 +103,8 @@ public:
             if (var->get_obj() == JNIHandles::resolve(_deopt)) {
               assert(depth < max_critical_stack_depth, "can't have more than %d critical frames", max_critical_stack_depth);
               if (!jt->is_exception_handling()) {
-                jt->install_async_exception(JNIHandles::resolve(_exception));
+                _found = true;
+                return;
               }
               return;
             }
@@ -126,9 +130,10 @@ public:
  * a less common slow path instead.
  * Top frames containg obj will be deoptimized.
  */
-JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt, jobject exception)) {
+JVM_ENTRY(jboolean, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, jobject deopt, jobject exception)) {
   CloseScopedMemoryClosure cl(deopt, exception);
   Handshake::execute(&cl);
+  return !cl._found;
 } JVM_END
 
 /// JVM_RegisterUnsafeMethods
@@ -143,7 +148,7 @@ JVM_ENTRY(void, ScopedMemoryAccess_closeScope(JNIEnv *env, jobject receiver, job
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod jdk_internal_misc_ScopedMemoryAccess_methods[] = {
-    {CC "closeScope0",   CC "(" SCOPE SCOPED_ERR ")V",           FN_PTR(ScopedMemoryAccess_closeScope)},
+    {CC "closeScope0",   CC "(" SCOPE SCOPED_ERR ")Z",           FN_PTR(ScopedMemoryAccess_closeScope)},
 };
 
 #undef CC

@@ -222,7 +222,14 @@ public class TestHandshake {
         @Override
         public void run() {
             long prev = System.currentTimeMillis();
-            segment.close();
+            while (true) {
+                try {
+                    segment.close();
+                    break;
+                } catch (IllegalStateException ex) {
+                    Thread.onSpinWait();
+                }
+            }
             long delay = System.currentTimeMillis() - prev;
             System.out.println("Segment closed - delay (ms): " + delay);
         }
