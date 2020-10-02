@@ -696,7 +696,7 @@ abstract class MethodHandleImpl {
 
     // Intrinsified by C2. Counters are used during parsing to calculate branch frequencies.
     @Hidden
-    @jdk.internal.HotSpotIntrinsicCandidate
+    @jdk.internal.vm.annotation.IntrinsicCandidate
     static boolean profileBoolean(boolean result, int[] counters) {
         // Profile is int[2] where [0] and [1] correspond to false and true occurrences respectively.
         int idx = result ? 1 : 0;
@@ -711,7 +711,7 @@ abstract class MethodHandleImpl {
 
     // Intrinsified by C2. Returns true if obj is a compile-time constant.
     @Hidden
-    @jdk.internal.HotSpotIntrinsicCandidate
+    @jdk.internal.vm.annotation.IntrinsicCandidate
     static boolean isCompileConstant(Object obj) {
         return false;
     }
