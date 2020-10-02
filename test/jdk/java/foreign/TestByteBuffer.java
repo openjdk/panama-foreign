@@ -25,7 +25,7 @@
  * @test
  * @modules java.base/sun.nio.ch
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @run testng/othervm -XX:MaxDirectMemorySize=3000000000 TestByteBuffer
+ * @run testng/othervm -Dforeign.restricted=permit TestByteBuffer
  */
 
 
@@ -310,8 +310,8 @@ public class TestByteBuffer {
         //outside of scope!!
         for (Map.Entry<Method, Object[]> e : members.entrySet()) {
             if ((!e.getKey().getName().contains("get") &&
-                            !e.getKey().getName().contains("put"))
-                            || e.getValue().length > 2) { // skip bulk ops
+                    !e.getKey().getName().contains("put"))
+                    || e.getValue().length > 2) { // skip bulk ops
                 //skip
                 return;
             }
@@ -436,10 +436,9 @@ public class TestByteBuffer {
         byteBuffer.get(); // should throw
     }
 
-    @Test(expectedExceptions = { UnsupportedOperationException.class,
-                                 IllegalArgumentException.class })
+    @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testTooBigForByteBuffer() {
-        try (MemorySegment segment = MemorySegment.allocateNative((long)Integer.MAX_VALUE + 10L)) {
+        try (MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(Integer.MAX_VALUE + 10L)) {
             segment.asByteBuffer();
         }
     }

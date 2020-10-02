@@ -108,7 +108,7 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-          expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = UnsupportedOperationException.class)
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
@@ -118,7 +118,7 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-          expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = UnsupportedOperationException.class)
     public void testBadSize(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         if (layout.byteSize() == 1) throw new UnsupportedOperationException(); //make it fail
         try (MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1)) {
@@ -135,7 +135,7 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-          expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = UnsupportedOperationException.class)
     public void testArrayFromHeapSegmentWithoutAccess(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemorySegment segment = MemorySegment.ofArray(new byte[(int)layout.byteSize()]);
         segment = segment.withAccessModes(MemorySegment.ALL_ACCESS & ~READ);

@@ -610,7 +610,7 @@ public:
   ClassMask_##cl = ((Bit_##cl << 1) - 1) ,
 
   // This enum is used only for C2 ideal and mach nodes with is_<node>() methods
-  // so that it's values fits into 16 bits.
+  // so that its values fit into 32 bits.
   enum NodeClasses {
     Bit_Node   = 0x00000000,
     Class_Node = 0x00000000,
@@ -723,7 +723,7 @@ public:
     DEFINE_CLASS_ID(Halt, Node, 15)
     DEFINE_CLASS_ID(Opaque1, Node, 16)
 
-    _max_classes  = ClassMask_Halt
+    _max_classes  = ClassMask_Opaque1
   };
   #undef DEFINE_CLASS_ID
 
