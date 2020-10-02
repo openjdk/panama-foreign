@@ -188,6 +188,13 @@ try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).share
  *
  * Once shared, a segment can be claimed back by a given thread (again using {@link #handoff(Thread)}); in fact, many threads
  * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
+ * <p>
+ * When using shared segments, clients should make sure that no other thread is accessing the segment while
+ * the segment is being closed. If one or more threads attempts to access a segment concurrently while the
+ * segment is being closed, an exception might occur on both the accessing and the closing threads. Clients should
+ * refrain from attempting to close a segment repeatedly (e.g. keep calling {@link #close()} until no exception is thrown);
+ * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
+ * accessing/closing the segment.
  *
  * <h2>Implicit deallocation</h2>
  *
@@ -387,7 +394,8 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
      * associated with the memory segment.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment is shared and the segment is concurrently accessed while this method is
+     * called.
      * thread (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
