@@ -50,10 +50,11 @@ import static org.testng.Assert.*;
 
 public class TestHandshake {
 
-    static final int ITERATIONS = 10;
+    static final int ITERATIONS = 5;
     static final int SEGMENT_SIZE = 1_000_000;
     static final int MAX_DELAY_MILLIS = 500;
     static final int MAX_EXECUTOR_WAIT_SECONDS = 10;
+    static final int MAX_THREAD_SPIN_WAIT_MILLIS = 200;
 
     @Test(dataProvider = "accessors")
     public void testHandshake(Function<MemorySegment, Runnable> accessorFactory) throws InterruptedException {
@@ -82,15 +83,16 @@ public class TestHandshake {
 
         @Override
         public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < segment.byteSize(); i++) {
+            outer: while (segment.isAlive()) {
+                int sum = 0;
+                for (int i = 0; i < segment.byteSize(); i++) {
+                    try {
                         sum += MemoryAccess.getByteAtIndex(segment, i);
+                    } catch (IllegalStateException ex) {
+                        backoff();
+                        continue outer;
                     }
                 }
-            } catch (IllegalStateException ex) {
-                // do nothing
             }
         }
     }
@@ -105,17 +107,16 @@ public class TestHandshake {
 
         @Override
         public void run() {
-            try {
-                long split = segment.byteSize() / 2;
-                MemorySegment first = segment.asSlice(0, split);
-                MemorySegment second = segment.asSlice(split);
-                while (true) {
-                    for (int i = 0; i < segment.byteSize(); i++) {
-                        first.copyFrom(second);
-                    }
+            long split = segment.byteSize() / 2;
+            MemorySegment first = segment.asSlice(0, split);
+            MemorySegment second = segment.asSlice(split);
+            outer: while (segment.isAlive()) {
+                try {
+                    first.copyFrom(second);
+                } catch (IllegalStateException ex) {
+                    backoff();
+                    continue outer;
                 }
-            } catch (IllegalStateException ex) {
-                // do nothing
             }
         }
     }
@@ -130,10 +131,13 @@ public class TestHandshake {
 
         @Override
         public void run() {
-            try {
-                segment.fill((byte)ThreadLocalRandom.current().nextInt(10));
-            } catch (IllegalStateException ex) {
-                // do nothing
+            outer: while (segment.isAlive()) {
+                try {
+                    segment.fill((byte) ThreadLocalRandom.current().nextInt(10));
+                } catch (IllegalStateException ex) {
+                    backoff();
+                    continue outer;
+                }
             }
         }
     }
@@ -152,13 +156,14 @@ public class TestHandshake {
 
         @Override
         public void run() {
-            try {
-                long l = 0;
-                while (true) {
+            long l = 0;
+            outer: while (segment.isAlive()) {
+                try {
                     l += segment.mismatch(copy);
+                } catch (IllegalStateException ex) {
+                    backoff();
+                    continue outer;
                 }
-            } catch (IllegalStateException ex) {
-                // do nothing
             }
         }
     }
@@ -166,22 +171,25 @@ public class TestHandshake {
     static class BufferAccessor implements Runnable {
 
         final ByteBuffer bb;
+        final MemorySegment segment;
 
         BufferAccessor(MemorySegment segment) {
             this.bb = segment.asByteBuffer();
+            this.segment = segment;
         }
 
         @Override
         public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < bb.capacity(); i++) {
+            outer: while (segment.isAlive()) {
+                int sum = 0;
+                for (int i = 0; i < bb.capacity(); i++) {
+                    try {
                         sum += bb.get(i);
+                    } catch (IllegalStateException ex) {
+                        backoff();
+                        continue outer;
                     }
                 }
-            } catch (IllegalStateException ex) {
-                // do nothing
             }
         }
     }
@@ -191,22 +199,25 @@ public class TestHandshake {
         static VarHandle handle = MethodHandles.byteBufferViewVarHandle(short[].class, ByteOrder.nativeOrder());
 
         final ByteBuffer bb;
+        final MemorySegment segment;
 
         public BufferHandleAccessor(MemorySegment segment) {
             this.bb = segment.asByteBuffer();
+            this.segment = segment;
         }
 
         @Override
         public void run() {
-            try {
-                while (true) {
-                    int sum = 0;
-                    for (int i = 0; i < bb.capacity() / 2; i++) {
-                        sum += (short)handle.get(bb, i);
+            outer: while (segment.isAlive()) {
+                int sum = 0;
+                for (int i = 0; i < bb.capacity() / 2; i++) {
+                    try {
+                        sum += (short) handle.get(bb, i);
+                    } catch (IllegalStateException ex) {
+                        backoff();
+                        continue outer;
                     }
                 }
-            } catch (IllegalStateException ex) {
-                // do nothing
             }
         }
     };
@@ -232,6 +243,14 @@ public class TestHandshake {
             }
             long delay = System.currentTimeMillis() - prev;
             System.out.println("Segment closed - delay (ms): " + delay);
+        }
+    }
+
+    static void backoff() {
+        try {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(MAX_THREAD_SPIN_WAIT_MILLIS));
+        } catch (InterruptedException ex) {
+            throw new AssertionError(ex);
         }
     }
 

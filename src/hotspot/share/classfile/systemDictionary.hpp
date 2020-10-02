@@ -226,8 +226,6 @@ class TableStatistics;
   /* support for records */                                                                                     \
   do_klass(RecordComponent_klass,                       java_lang_reflect_RecordComponent                     ) \
                                                                                                                 \
-  /* support for Panama */                                                                                      \
-  do_klass(ScopedAccessError_klass,                     jdk_internal_misc_ScopedMemoryAccess_Scope_ScopedAccessError) \
   /*end*/
 
 class SystemDictionary : AllStatic {
