@@ -606,7 +606,7 @@ public abstract class MethodHandle implements Constable {
     static native @PolymorphicSignature Object linkToInterface(Object... args) throws Throwable;
 
     /** TODO */
-    @HotSpotIntrinsicCandidate
+    @IntrinsicCandidate
     /*non-public*/ static native @PolymorphicSignature Object linkToNative(Object... args) throws Throwable;
 
     /**
