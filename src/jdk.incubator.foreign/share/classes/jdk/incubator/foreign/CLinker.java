@@ -31,44 +31,42 @@ import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.constant.Constable;
-import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.nio.ByteOrder;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 
-import static java.lang.constant.ConstantDescs.BSM_GET_STATIC_FINAL;
 import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * A foreign linker specializing for C Application Binary Interface (ABI) calling conventions.
  * Instances of this interface can be used to link foreign functions in native libraries that
  * follow the JVM's target platform C ABI.
- *
- * <p>There are two components that go into linking a foreign function: a method type, and
+ * <p>
+ * There are two components that go into linking a foreign function: a method type, and
  * a function descriptor. The method type, consists of a set of <em>carrier</em> types, which, together,
  * specify the Java signature which clients must adhere to when calling the underlying foreign function.
  * The function descriptor contains a set of memory layouts which, together, specify the foreign function
- * signature and classification information (via custom layout attributes), so that linking can take place.
- * Memory layout attributes are used in the function descriptor to attach ABI classification meta-data to
- * memory layouts, which are required for linking. Clients of this API should build function descriptors
- * using the predefined memory layout constants (based on a subset of the built-in types provided by the C language),
- * found in this interface; a failure to do so might result in linkage errors, given that linking requires additional
- * classification information to determine, for instance, how arguments should be loaded into registers during a
- * foreign function call.</p>
- *
- * <p>Implementations of this interface support the following primitive carrier types:
+ * signature and classification information (via a custom layout attributes, see {@link TypeKind}), so that linking can take place.
+ * Memory layout attributes are used in the function descriptor to attach ABI classification meta-data to memory layouts,
+ * which are required for linking.
+ * <p>
+ * Clients of this API can build function descriptors using the predefined memory layout constants
+ * (based on a subset of the built-in types provided by the C language), found in this interface; alternatively,
+ * they can also decorate existing value layouts using the required {@link TypeKind} classification attribute
+ * (this can be done using the {@link MemoryLayout#withAttribute(String, Constable)} method). A failure to do so might
+ * result in linkage errors, given that linking requires additional classification information to determine, for instance,
+ * how arguments should be loaded into registers during a foreign function call.
+ * <p>
+ * Implementations of this interface support the following primitive carrier types:
  * {@code byte}, {@code short}, {@code char}, {@code int}, {@code long}, {@code float},
  * and {@code double}, as well as {@link MemoryAddress} for passing pointers, and
  * {@link MemorySegment} for passing structs and unions. Finally, the {@link VaList}
- * carrier type can be used to match the native {@code va_list} type.</p>
- *
- * <p>The function descriptor used in linking contains a memory layout to match each carrier type.
- * There are some restrictions on the carrier type and memory layout combinations that are allowed:</p>
+ * carrier type can be used to match the native {@code va_list} type.
+ * <p>
+ * The function descriptor used in linking contains a memory layout to match each carrier type.
+ * There are some restrictions on the carrier type and memory layout combinations that are allowed:
  * <ul>
  *   <li>If a primitve type is used as a carrier type, the corresponding
  *   memory layout must be a {@code ValueLayout}, and the bit size of the layout must match that of the carrier type
@@ -94,7 +92,7 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * function descriptor when linking the function. Furthermore, as memory layouts corresponding to variadic arguments in
  * a function descriptor must contain additional classification information, it is required that
  * {@link #asVarArg(MemoryLayout)} is used to create the memory layouts for each parameter corresponding to a variadic
- * argument in a specialized function descriptor</p>
+ * argument in a specialized function descriptor
  *
  * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
@@ -151,39 +149,39 @@ public interface CLinker {
     /**
      * The layout for the {@code char} C type
      */
-    CValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
+    ValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
     /**
      * The layout for the {@code short} C type
      */
-    CValueLayout C_SHORT = pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
+    ValueLayout C_SHORT = pick(SysV.C_SHORT, Win64.C_SHORT, AArch64.C_SHORT);
     /**
      * The layout for the {@code int} C type
      */
-    CValueLayout C_INT = pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
+    ValueLayout C_INT = pick(SysV.C_INT, Win64.C_INT, AArch64.C_INT);
     /**
      * The layout for the {@code long} C type
      */
-    CValueLayout C_LONG = pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
+    ValueLayout C_LONG = pick(SysV.C_LONG, Win64.C_LONG, AArch64.C_LONG);
     /**
      * The {@code long long} native type.
      */
-    CValueLayout C_LONGLONG = pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
+    ValueLayout C_LONGLONG = pick(SysV.C_LONGLONG, Win64.C_LONGLONG, AArch64.C_LONGLONG);
     /**
      * The layout for the {@code float} C type
      */
-    CValueLayout C_FLOAT = pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
+    ValueLayout C_FLOAT = pick(SysV.C_FLOAT, Win64.C_FLOAT, AArch64.C_FLOAT);
     /**
      * The layout for the {@code double} C type
      */
-    CValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
+    ValueLayout C_DOUBLE = pick(SysV.C_DOUBLE, Win64.C_DOUBLE, AArch64.C_DOUBLE);
     /**
      * The {@code long double} native type.
      */
-    CValueLayout C_LONGDOUBLE = pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
+    ValueLayout C_LONGDOUBLE = pick(SysV.C_LONGDOUBLE, Win64.C_LONGDOUBLE, AArch64.C_LONGDOUBLE);
     /**
      * The {@code T*} native type.
      */
-    CValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
+    ValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
     /**
      * The layout for the {@code va_list} C type
      */
@@ -707,196 +705,90 @@ public interface CLinker {
     }
 
     /**
-     * Subclass of {@link ValueLayout} that contains information needed when linking
-     * downcalls or upcalls.
+     * A C type kind. Each kind corresponds to a particular C language builtin type, and can be attached to
+     * {@link ValueLayout} instances using the {@link MemoryLayout#withAttribute(String, Constable)} in order
+     * to obtain a layout which can be classified accordingly by {@link CLinker#downcallHandle(Addressable, MethodType, FunctionDescriptor)}
+     * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor)}.
      */
-    class CValueLayout extends ValueLayout {
+    enum TypeKind {
         /**
-         * The kind of {@link CValueLayout}. Each kind corresponds to a particular
-         * C language builtin type.
+         * A kind corresponding to the C {@code char} type
          */
-        public enum Kind {
-            /**
-             * A kind corresponding to the C {@code char} type
-             */
-            CHAR(findBSM("C_CHAR"), true),
-            /**
-             * A kind corresponding to the C {@code short} type
-             */
-            SHORT(findBSM("C_SHORT"), true),
-            /**
-             * A kind corresponding to the C {@code int} type
-             */
-            INT(findBSM("C_INT"), true),
-            /**
-             * A kind corresponding to the C {@code long} type
-             */
-            LONG(findBSM("C_LONG"), true),
-            /**
-             * A kind corresponding to the C {@code long long} type
-             */
-            LONGLONG(findBSM("C_LONGLONG"), true),
-            /**
-             * A kind corresponding to the C {@code float} type
-             */
-            FLOAT(findBSM("C_FLOAT"), false),
-            /**
-             * A kind corresponding to the C {@code double} type
-             */
-            DOUBLE(findBSM("C_DOUBLE"), false),
-            /**
-             * A kind corresponding to the C {@code long double} type
-             */
-            LONGDOUBLE(findBSM("C_LONGDOUBLE"), false),
-            /**
-             * A kind corresponding to the a C pointer type
-             */
-            POINTER(findBSM("C_POINTER"), false);
+        CHAR(true),
+        /**
+         * A kind corresponding to the C {@code short} type
+         */
+        SHORT(true),
+        /**
+         * A kind corresponding to the C {@code int} type
+         */
+        INT(true),
+        /**
+         * A kind corresponding to the C {@code long} type
+         */
+        LONG(true),
+        /**
+         * A kind corresponding to the C {@code long long} type
+         */
+        LONGLONG(true),
+        /**
+         * A kind corresponding to the C {@code float} type
+         */
+        FLOAT(false),
+        /**
+         * A kind corresponding to the C {@code double} type
+         */
+        DOUBLE(false),
+        /**
+         * A kind corresponding to the C {@code long double} type
+         */
+        LONGDOUBLE(false),
+        /**
+         * A kind corresponding to the a C pointer type
+         */
+        POINTER(false);
 
-            private final DynamicConstantDesc<ValueLayout> bsm;
-            private final boolean isIntegral;
+        private final boolean isIntegral;
 
-            Kind(DynamicConstantDesc<ValueLayout> bsm, boolean isIntegral) {
-                this.bsm = bsm;
-                this.isIntegral = isIntegral;
-            }
-
-            private DynamicConstantDesc<ValueLayout> bsm() {
-                return bsm;
-            }
-
-            /**
-             * Is this kind integral?
-             *
-             * @return true if this kind is integral
-             */
-            public boolean isIntergral() {
-                return isIntegral;
-            }
-
-            /**
-             * Is this kind a floating point type?
-             *
-             * @return true if this kind is a floating point type
-             */
-            public boolean isFloat() {
-                return !isIntergral() && !isPointer();
-            }
-
-            /**
-             * Is this kind a pointer kind?
-             *
-             * @return true if this kind is a pointer kind
-             */
-            public boolean isPointer() {
-                return this == POINTER;
-            }
-
-            private static DynamicConstantDesc<ValueLayout> findBSM(String fieldName) {
-                return DynamicConstantDesc.ofNamed(
-                    BSM_GET_STATIC_FINAL,
-                    fieldName,
-                    CValueLayout.class.describeConstable().orElseThrow(),
-                    CLinker.class.describeConstable().orElseThrow()
-                );
-            }
+        TypeKind(boolean isIntegral) {
+            this.isIntegral = isIntegral;
         }
 
-        private final Kind kind;
-
         /**
-         * CValueLayout constructor
+         * Is this kind integral?
          *
-         * @param kind the kind of CValueLayout
-         * @param order the byte order of the layout
-         * @param bitSize the size, in bits, of the layout
-         * @param bitAlignment the alignment, in bits, of the layout
-         * @param attributes the attribute map of this layout
+         * @return true if this kind is integral
          */
-        public CValueLayout(Kind kind, ByteOrder order, long bitSize, long bitAlignment,
-                            Map<String, Constable> attributes) {
-            super(order, bitSize, bitAlignment, attributes);
-            this.kind = kind;
+        public boolean isIntergral() {
+            return isIntegral;
         }
 
         /**
-         * Accessor for the kind of this layout
+         * Is this kind a floating point type?
          *
-         * @return the kind
+         * @return true if this kind is a floating point type
          */
-        public final Kind kind() {
-            return kind;
+        public boolean isFloat() {
+            return !isIntergral() && !isPointer();
         }
 
         /**
-         * {@inheritDoc}
+         * Is this kind a pointer kind?
+         *
+         * @return true if this kind is a pointer kind
          */
-        @Override
-        public CValueLayout withOrder(ByteOrder order) {
-            return new CValueLayout(kind, order, bitSize(), alignment, attributes);
+        public boolean isPointer() {
+            return this == POINTER;
         }
 
         /**
-         * {@inheritDoc}
+         * The layout attribute name associated with this classification kind. Clients can retrieve the type kind
+         * of a layout using the following code:
+         * <blockquote><pre>{@code
+        ValueLayout layout = ...
+        TypeKind = layout.attribute(TypeKind.ATTR_NAME).orElse(null);
+         * }</pre></blockquote>
          */
-        @Override
-        public CValueLayout withName(String name) {
-            return (CValueLayout) super.withName(name);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public CValueLayout withBitAlignment(long alignmentBits) {
-            return (CValueLayout) super.withBitAlignment(alignmentBits);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public CValueLayout withAttribute(String name, Constable value) {
-            return (CValueLayout) super.withAttribute(name, value);
-        }
-
-        @Override
-        CValueLayout dup(long alignment, Map<String, Constable> attributes) {
-            return new CValueLayout(kind, order(), bitSize(), alignment, attributes);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public Optional<DynamicConstantDesc<ValueLayout>> describeConstable() {
-            return Optional.of(decorateLayoutConstant(kind.bsm()));
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (other == null || getClass() != other.getClass()) {
-                return false;
-            }
-            if (!super.equals(other)) {
-                return false;
-            }
-            CValueLayout that = (CValueLayout) other;
-            return kind == that.kind;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), kind);
-        }
+        public final static String ATTR_NAME = "abi/kind";
     }
 }

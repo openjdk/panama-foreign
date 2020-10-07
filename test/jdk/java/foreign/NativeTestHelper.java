@@ -27,11 +27,16 @@ import jdk.incubator.foreign.MemoryLayout;
 
 public class NativeTestHelper {
 
+    static CLinker.TypeKind kind(MemoryLayout layout) {
+        return (CLinker.TypeKind)layout.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+                () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
+    }
+
     public static boolean isIntegral(MemoryLayout layout) {
-        return ((CLinker.CValueLayout) layout).kind().isIntergral();
+        return kind(layout).isIntergral();
     }
 
     public static boolean isPointer(MemoryLayout layout) {
-        return ((CLinker.CValueLayout) layout).kind().isPointer();
+        return kind(layout).isPointer();
     }
 }

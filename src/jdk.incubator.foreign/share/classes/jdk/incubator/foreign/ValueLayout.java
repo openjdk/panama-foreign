@@ -48,15 +48,15 @@ import java.util.OptionalLong;
  * @implSpec
  * This class is immutable and thread-safe.
  */
-public class ValueLayout extends AbstractLayout implements MemoryLayout {
+public final class ValueLayout extends AbstractLayout implements MemoryLayout {
 
     private final ByteOrder order;
 
-    protected ValueLayout(ByteOrder order, long size) {
+    ValueLayout(ByteOrder order, long size) {
         this(order, size, size, Map.of());
     }
 
-    protected ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> attributes) {
+    ValueLayout(ByteOrder order, long size, long alignment, Map<String, Constable> attributes) {
         super(OptionalLong.of(size), alignment, attributes);
         this.order = order;
     }
@@ -92,10 +92,10 @@ public class ValueLayout extends AbstractLayout implements MemoryLayout {
         if (this == other) {
             return true;
         }
-        if (other == null || getClass() != other.getClass()) {
+        if (!super.equals(other)) {
             return false;
         }
-        if (!super.equals(other)) {
+        if (!(other instanceof ValueLayout)) {
             return false;
         }
         ValueLayout v = (ValueLayout)other;
