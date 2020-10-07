@@ -449,7 +449,9 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     }
 
     private static String typeToLayoutName(ValueLayout vl) {
-        return switch (((CLinker.CValueLayout) vl).kind()) {
+        CLinker.TypeKind kind = (CLinker.TypeKind)vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+                () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
+        return switch (kind) {
             case CHAR -> "C_CHAR";
             case SHORT -> "C_SHORT";
             case INT -> "C_INT";
