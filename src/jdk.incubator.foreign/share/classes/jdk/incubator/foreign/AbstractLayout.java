@@ -150,7 +150,7 @@ abstract class AbstractLayout implements MemoryLayout {
         return s;
     }
 
-    protected <T> DynamicConstantDesc<T> decorateLayoutConstant(DynamicConstantDesc<T> desc) {
+    <T> DynamicConstantDesc<T> decorateLayoutConstant(DynamicConstantDesc<T> desc) {
         if (!hasNaturalAlignment()) {
             desc = DynamicConstantDesc.ofNamed(BSM_INVOKE, "withBitAlignment", desc.constantType(), MH_WITH_BIT_ALIGNMENT,
                     desc, bitAlignment());
@@ -163,7 +163,7 @@ abstract class AbstractLayout implements MemoryLayout {
         return desc;
     }
 
-    protected boolean hasNaturalAlignment() {
+    boolean hasNaturalAlignment() {
         return size.isPresent() && size.getAsLong() == alignment;
     }
 

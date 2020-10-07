@@ -40,9 +40,8 @@ enum TypeClass {
     VARARG_FLOAT;
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        if (!(type instanceof CLinker.CValueLayout)) {
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
+        CLinker.TypeKind kind = (CLinker.TypeKind)type.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+                () -> { throw new IllegalStateException("Unexpected value layout: could not determine ABI class"); });
 
         // No 128 bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
         // like a struct when passing as an argument (passed by pointer).
@@ -53,7 +52,7 @@ enum TypeClass {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        return switch (((CLinker.CValueLayout) type).kind()) {
+        return switch (kind) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
             case POINTER -> POINTER;
             case FLOAT, DOUBLE, LONGDOUBLE -> {

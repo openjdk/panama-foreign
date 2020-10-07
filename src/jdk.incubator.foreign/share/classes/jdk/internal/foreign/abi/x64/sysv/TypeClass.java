@@ -107,11 +107,10 @@ class TypeClass {
     }
 
     private static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        if (!(layout instanceof CLinker.CValueLayout)) {
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
+        CLinker.TypeKind kind = (CLinker.TypeKind)layout.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+                () -> { throw new IllegalStateException("Unexpected value layout: could not determine ABI class"); });
 
-        return switch (((CLinker.CValueLayout) layout).kind()) {
+        return switch (kind) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> ArgumentClassImpl.INTEGER;
             case FLOAT, DOUBLE -> ArgumentClassImpl.SSE;
             case LONGDOUBLE -> ArgumentClassImpl.X87;

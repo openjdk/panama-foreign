@@ -52,9 +52,9 @@ public class TestLayoutEquality {
         assertEquals(newLayout.bitAlignment(), layout.bitAlignment());
         assertEquals(newLayout.name(), layout.name());
         assertEquals(newLayout.attributes().toArray().length, 0);
-        assertEquals(layout.attributes().toArray().length, 0);
+        assertEquals(layout.attributes().toArray().length, 1);
 
-        // but equals should return false, because one is a CValueLayout
+        // but equals should return false, because one is a ValueLayout with a CLinker kind
         assertNotEquals(newLayout, layout);
     }
 
