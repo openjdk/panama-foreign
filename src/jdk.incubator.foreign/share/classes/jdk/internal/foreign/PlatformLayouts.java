@@ -90,16 +90,14 @@ public class PlatformLayouts {
                 .withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.LONGDOUBLE);
     }
 
-    /**
-     * Creates a new ValueLayout with the {@code POINTER} kind
-     *
-     * @param order the byte order of the layout
-     * @param bitSize the size, in bits, of the layout
-     * @return the newly created ValueLayout
-     */
-    public static ValueLayout ofPointer(ByteOrder order, long bitSize) {
+    private static ValueLayout ofPointer(ByteOrder order, long bitSize) {
         return MemoryLayout.ofValueBits(bitSize, order)
                 .withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.POINTER);
+    }
+
+    public static CLinker.TypeKind getKind(MemoryLayout layout) {
+        return (CLinker.TypeKind)layout.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+            () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
     }
 
     /**

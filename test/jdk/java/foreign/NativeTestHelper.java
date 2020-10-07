@@ -29,7 +29,7 @@ public class NativeTestHelper {
 
     static CLinker.TypeKind kind(MemoryLayout layout) {
         return (CLinker.TypeKind)layout.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
-                () -> { throw new IllegalStateException("Unexpected value layout: could not determine ABI class"); });
+                () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
     }
 
     public static boolean isIntegral(MemoryLayout layout) {

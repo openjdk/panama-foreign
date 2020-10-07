@@ -24,10 +24,10 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.PlatformLayouts;
 
 import static jdk.internal.foreign.PlatformLayouts.Win64.VARARGS_ATTRIBUTE_NAME;
 
@@ -40,9 +40,6 @@ enum TypeClass {
     VARARG_FLOAT;
 
     private static TypeClass classifyValueType(ValueLayout type) {
-        CLinker.TypeKind kind = (CLinker.TypeKind)type.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
-                () -> { throw new IllegalStateException("Unexpected value layout: could not determine ABI class"); });
-
         // No 128 bit integers in the Windows C ABI. There are __m128(i|d) intrinsic types but they act just
         // like a struct when passing as an argument (passed by pointer).
         // https://docs.microsoft.com/en-us/cpp/cpp/m128?view=vs-2019
@@ -52,7 +49,7 @@ enum TypeClass {
         // but must be considered volatile across function calls."
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
-        return switch (kind) {
+        return switch (PlatformLayouts.getKind(type)) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> INTEGER;
             case POINTER -> POINTER;
             case FLOAT, DOUBLE, LONGDOUBLE -> {
