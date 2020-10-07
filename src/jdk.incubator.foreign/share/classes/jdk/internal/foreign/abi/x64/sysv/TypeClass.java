@@ -24,11 +24,11 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 
 import java.util.ArrayList;
@@ -107,11 +107,7 @@ class TypeClass {
     }
 
     private static ArgumentClassImpl argumentClassFor(MemoryLayout layout) {
-        if (!(layout instanceof CLinker.CValueLayout)) {
-            throw new IllegalStateException("Unexpected value layout: could not determine ABI class");
-        }
-
-        return switch (((CLinker.CValueLayout) layout).kind()) {
+        return switch (PlatformLayouts.getKind(layout)) {
             case CHAR, SHORT, INT, LONG, LONGLONG -> ArgumentClassImpl.INTEGER;
             case FLOAT, DOUBLE -> ArgumentClassImpl.SSE;
             case LONGDOUBLE -> ArgumentClassImpl.X87;
