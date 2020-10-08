@@ -38,15 +38,16 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * This class provides a scope of given size, within which several allocations can be performed. An native scope is backed
+ * This class provides a scope, within which several allocations can be performed. An native scope is backed
  * by off-heap memory. Native scopes can be either <em>bounded</em> or <em>unbounded</em>, depending on whether the size
- * of the native scope is known statically. If an application knows before-hand how much memory it needs to allocate the values it needs,
- * using a <em>bounded</em> native scope will typically provide better performances than independently allocating the memory
+ * of the native scope is known statically. If an application knows before-hand how much memory it needs to allocate,
+ * then using a <em>bounded</em> native scope will typically provide better performances than independently allocating the memory
  * for each value (e.g. using {@link MemorySegment#allocateNative(long)}), or using an <em>unbounded</em> native scope.
  * For this reason, using a bounded native scope is recommended in cases where programs might need to emulate native stack allocation.
  * <p>
  * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@link MemorySegment} instances
- * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope.
+ * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope's
+ * owner thread.
  * <p>
  * To allow for more usability, it is possible for a native scope to reclaim ownership of an existing memory segment
  * (see {@link MemorySegment#handoff(NativeScope)}). This might be useful to allow one or more segments which were independently
