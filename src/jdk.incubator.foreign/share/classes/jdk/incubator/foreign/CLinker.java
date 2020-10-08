@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
- * A foreign linker which implements the C Application Binary Interface (ABI) calling conventions.
+ * A C linker implements the C Application Binary Interface (ABI) calling conventions.
  * Instances of this interface can be used to link foreign functions in native libraries that
  * follow the JVM's target platform C ABI.
  * <p>
