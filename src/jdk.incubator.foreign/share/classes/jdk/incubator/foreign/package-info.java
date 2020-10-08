@@ -99,7 +99,7 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * <h2>Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link jdk.incubator.foreign.LibraryLookup} and {@link jdk.incubator.foreign.CLinker}.
  * The former is used to load foreign libraries, as well as to lookup symbols inside said libraries; the latter
- * provides linking capabilities which allow to model foreign functions as {@link jdk.incubator.foreign.MemoryHandles} instance,
+ * provides linking capabilities which allow to model foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as it's the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
@@ -118,7 +118,7 @@ try (var cString = CLinker.toCString("Hello")) {
 }
  * }</pre>
  *
- * Here, we lookup the {@code strlen} symbol in the <em>default</em> library lookup (see {@link jdk.incubator.foreign.LibraryLookup#ofDefault()}.
+ * Here, we lookup the {@code strlen} symbol in the <em>default</em> library lookup (see {@link jdk.incubator.foreign.LibraryLookup#ofDefault()}).
  * Then, we obtain a linker instance (see {@link jdk.incubator.foreign.CLinker#getInstance()}) and we use it to
  * obtain a method handle which targets the {@code strlen} library symbol. To complete the linking successfully,
  * we must provide (i) a {@link java.lang.invoke.MethodType} instance, describing the type of the resulting method handle
@@ -174,7 +174,7 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr.toR
  * }</pre>
  *
  * <h3>Upcalls</h3>
- * The {@link jdk.incubator.foreign.CLinker} class also allows to turn an existing method handle (which might point
+ * The {@link jdk.incubator.foreign.CLinker} interface also allows to turn an existing method handle (which might point
  * to a Java method) into a native memory segment (see {@link jdk.incubator.foreign.MemorySegment}), so that Java code
  * can effectively be passed to other foreign functions. For instance, we can write a method that compares two
  * integer values, as follows:
@@ -198,7 +198,7 @@ MethodHandle intCompareHandle = MethodHandles.lookup().findStatic(IntComparator.
                                                    MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class));
  * }</pre>
  *
- * Now that we have a method handle instance, we can link it into a fresh native memory segment, using the {@link jdk.incubator.foreign.CLinker} class, as follows:
+ * Now that we have a method handle instance, we can link it into a fresh native memory segment, using the {@link jdk.incubator.foreign.CLinker} interface, as follows:
  *
  * <pre>{@code
 MemorySegment comparFunc = CLinker.getInstance().upcallStub(
@@ -209,7 +209,7 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  *
  * As before, we need to provide a {@link jdk.incubator.foreign.FunctionDescriptor} instance describing the signature
  * of the function pointer we want to create; as before, this, coupled with the method handle type, uniquely determines the
- * sequence of steps which will allow foreign code to call the {@code intCompareHandle} according to the rules specified
+ * sequence of steps which will allow foreign code to call {@code intCompareHandle} according to the rules specified
  * by the platform C ABI.
  *
  * <h2>Restricted methods</h2>
