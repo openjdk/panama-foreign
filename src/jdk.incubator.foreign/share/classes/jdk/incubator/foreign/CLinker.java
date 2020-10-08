@@ -70,7 +70,7 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  *     <li>If the return type of {@code M} is {@code void}, then {@code F} should have no return layout
  *     (see {@link FunctionDescriptor#ofVoid(MemoryLayout...)});</li>
  *     <li>for each pair of carrier type {@code C} and layout {@code L} in {@code M} and {@code F}, respectively,
- *     where {@code C} and {@code F} refer to the same argument, or to the return value, the following conditions must hold:
+ *     where {@code C} and {@code L} refer to the same argument, or to the return value, the following conditions must hold:
  *     <ul>
  *       <li>If {@code C} is a primitve type, then {@code L} must be a {@code ValueLayout}, and the size of the layout must match
  *       that of the carrier type (see {@link Integer#SIZE} and similar fields in other primitive wrapper classes);</li>
