@@ -40,17 +40,15 @@ import java.util.function.Consumer;
 import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
- * A foreign linker specializing for C Application Binary Interface (ABI) calling conventions.
+ * A foreign linker which implements the C Application Binary Interface (ABI) calling conventions.
  * Instances of this interface can be used to link foreign functions in native libraries that
  * follow the JVM's target platform C ABI.
  * <p>
- * There are two components that go into linking a foreign function: a method type, and
+ * Linking a foreign function is a process which requires two components: a method type, and
  * a function descriptor. The method type, consists of a set of <em>carrier</em> types, which, together,
  * specify the Java signature which clients must adhere to when calling the underlying foreign function.
  * The function descriptor contains a set of memory layouts which, together, specify the foreign function
  * signature and classification information (via a custom layout attributes, see {@link TypeKind}), so that linking can take place.
- * Memory layout attributes are used in the function descriptor to attach ABI classification meta-data to memory layouts,
- * which are required for linking.
  * <p>
  * Clients of this API can build function descriptors using the predefined memory layout constants
  * (based on a subset of the built-in types provided by the C language), found in this interface; alternatively,
@@ -65,22 +63,24 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * {@link MemorySegment} for passing structs and unions. Finally, the {@link VaList}
  * carrier type can be used to match the native {@code va_list} type.
  * <p>
- * The function descriptor used in linking contains a memory layout to match each carrier type.
- * There are some restrictions on the carrier type and memory layout combinations that are allowed:
+ * For the linking process to be successful, some requirements must be satisfied; if {@code M} and {@code F} are
+ * the method type and the function descriptor, respectively, used during the linking process, then it must be that:
  * <ul>
- *   <li>If a primitve type is used as a carrier type, the corresponding
- *   memory layout must be a {@code ValueLayout}, and the bit size of the layout must match that of the carrier type
- *   (see {@link Integer#SIZE} and similar fields in other primitive wrapper classes).</li>
- *
- *   <li>If the carrier type is {@code MemoryAddress}, then the corresponding memory layout must be a
- *   {@code ValueLayout}, and its bit size must match the platform's address size (see {@link MemoryLayouts#ADDRESS}).
- *   For this purpose, {@link CLinker#C_POINTER} can  be used</li>
- *
- *   <li>If the carrier type is {@code MemorySegment}, then the corresponding memory layout must be a
- *   {@code GroupLayout}</li>
- *
- *   <li>If the carrier type is {@code VaList}, then the corresponding memory layout must be
- *   {@link CLinker#C_VA_LIST}</li>
+ *     <li>The arity of {@code M} is the same as that of {@code M};</li>
+ *     <li>If the return type of {@code M} is {@code void}, then {@code F} should have no return layout
+ *     (see {@link FunctionDescriptor#ofVoid(MemoryLayout...)});</li>
+ *     <li>for each pair of carrier type {@code C} and layout {@code L} in {@code M} and {@code F}, respectively,
+ *     where {@code C} and {@code F} refer to the same argument, or to the return value, the following conditions must hold:
+ *     <ul>
+ *       <li>If {@code C} is a primitve type, then {@code L} must be a {@code ValueLayout}, and the size of the layout must match
+ *       that of the carrier type (see {@link Integer#SIZE} and similar fields in other primitive wrapper classes);</li>
+ *       <li>If {@code C} is {@code MemoryAddress.class}, then {@code L} must be a {@code ValueLayout}, and its size must match
+ *       the platform's address size (see {@link MemoryLayouts#ADDRESS}). For this purpose, the {@link CLinker#C_POINTER} layout
+ *       constant can  be used;</li>
+ *       <li>If {@code C} is {@code MemorySegment.class}, then {@code L} must be a {@code GroupLayout}</li>
+ *       <li>If {@code C} is {@code VaList.class}, then {@code L} must be {@link CLinker#C_VA_LIST}</li>
+ *     </ul>
+ *     </li>
  * </ul>
  *
  * <p>Variadic functions, declared in C either with a trailing ellipses ({@code ...}) at the end of the formal parameter
@@ -88,13 +88,13 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * that takes a variable number of arguments, and neither is it possible to create an upcall stub wrapping a method
  * handle that accepts a variable number of arguments. However, for downcalls only, it is possible to link a native
  * variadic function by using a <em>specialized</em> method type and function descriptor: for each argument that is to be
- * passed as a variadic argument, an explicit carrier type and memory layout must be present in the method type and
- * function descriptor when linking the function. Furthermore, as memory layouts corresponding to variadic arguments in
+ * passed as a variadic argument, an explicit, additional, carrier type and memory layout must be present in the method type and
+ * function descriptor objects passed to the linker. Furthermore, as memory layouts corresponding to variadic arguments in
  * a function descriptor must contain additional classification information, it is required that
  * {@link #asVarArg(MemoryLayout)} is used to create the memory layouts for each parameter corresponding to a variadic
- * argument in a specialized function descriptor
+ * argument in a specialized function descriptor.
  *
- * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
+ * @apiNote In the future, if the Java language permits, {@link CLinker}
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
  *
@@ -645,7 +645,7 @@ public interface CLinker {
         /**
          * A builder interface used to construct a C {@code va_list}.
          *
-         * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
+         * @apiNote In the future, if the Java language permits, {@link Builder}
          * may become a {@code sealed} interface, which would prohibit subclassing except by
          * explicitly permitted types.
          *
@@ -759,7 +759,7 @@ public interface CLinker {
          *
          * @return true if this kind is integral
          */
-        public boolean isIntergral() {
+        public boolean isIntegral() {
             return isIntegral;
         }
 
@@ -769,7 +769,7 @@ public interface CLinker {
          * @return true if this kind is a floating point type
          */
         public boolean isFloat() {
-            return !isIntergral() && !isPointer();
+            return !isIntegral() && !isPointer();
         }
 
         /**
