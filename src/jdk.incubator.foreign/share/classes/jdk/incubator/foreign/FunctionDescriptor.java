@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A function descriptor is made up of zero or more argument layouts and one return  A function descriptor
- * is used to model the signature of native functions.
+ * A function descriptor is made up of zero or more argument layouts and zero or one return layout. A function descriptor
+ * is used to model the signature of foreign functions.
  */
 public final class FunctionDescriptor implements Constable {
 
@@ -62,7 +62,7 @@ public final class FunctionDescriptor implements Constable {
     /**
      * Returns the attribute with the given name (if it exists).
      *
-     * @param name the attribute name
+     * @param name the attribute name.
      * @return the attribute with the given name (if it exists).
      */
     public Optional<Constable> attribute(String name) {
@@ -94,7 +94,7 @@ public final class FunctionDescriptor implements Constable {
     }
 
     /**
-     * Returns the return foreign.layout associated with this function.
+     * Returns the return layout associated with this function.
      * @return the return
      */
     public Optional<MemoryLayout> returnLayout() {
@@ -114,7 +114,7 @@ public final class FunctionDescriptor implements Constable {
      * @param resLayout the return
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
-     * @throws NullPointerException if any of the argument layouts, or the return layout is null
+     * @throws NullPointerException if any of the argument layouts, or the return layout is null.
      */
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
         Objects.requireNonNull(resLayout);
@@ -123,10 +123,10 @@ public final class FunctionDescriptor implements Constable {
     }
 
     /**
-     * Create a void function descriptor with given argument layouts.
+     * Create a function descriptor with given argument layouts and no return layout.
      * @param argLayouts the argument layouts.
      * @return the new function descriptor.
-     * @throws NullPointerException if any of the argument layouts is null
+     * @throws NullPointerException if any of the argument layouts is null.
      */
     public static FunctionDescriptor ofVoid(MemoryLayout... argLayouts) {
         Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
@@ -136,9 +136,9 @@ public final class FunctionDescriptor implements Constable {
     /**
      * Create a new function descriptor with the given argument layouts appended to the argument layout array
      * of this function descriptor.
-     * @param addedLayouts the layouts to append
-     * @return the new function descriptor
-     * @throws NullPointerException if any of the new argument layouts is null
+     * @param addedLayouts the argument layouts to append.
+     * @return the new function descriptor.
+     * @throws NullPointerException if any of the new argument layouts is null.
      */
     public FunctionDescriptor appendArgumentLayouts(MemoryLayout... addedLayouts) {
         Arrays.stream(addedLayouts).forEach(Objects::requireNonNull);
@@ -149,9 +149,9 @@ public final class FunctionDescriptor implements Constable {
 
     /**
      * Create a new function descriptor with the given memory layout as the new return layout.
-     * @param newReturn the new return layout
-     * @return the new function descriptor
-     * @throws NullPointerException if the new return layout is null
+     * @param newReturn the new return layout.
+     * @return the new function descriptor.
+     * @throws NullPointerException if the new return layout is null.
      */
     public FunctionDescriptor changeReturnLayout(MemoryLayout newReturn) {
         Objects.requireNonNull(newReturn);
@@ -160,7 +160,7 @@ public final class FunctionDescriptor implements Constable {
 
     /**
      * Create a new function descriptor with the return layout dropped.
-     * @return the new function descriptor
+     * @return the new function descriptor.
      */
     public FunctionDescriptor dropReturnLayout() {
         return new FunctionDescriptor(null, attributes, argLayouts);
@@ -181,7 +181,11 @@ public final class FunctionDescriptor implements Constable {
 
     /**
      * Compares the specified object with this function descriptor for equality. Returns {@code true} if and only if the specified
-     * object is also a function descriptor, and it is equal to this layout.
+     * object is also a function descriptor, and all of the following conditions are met:
+     * <ul>
+     *     <li>the two function descriptors have equals return layouts (see {@link MemoryLayout#equals(Object)}), or both have no return layout</li>
+     *     <li>the two function descriptors have argument layouts that are pair-wise equal (see {@link MemoryLayout#equals(Object)})
+     * </ul>
      *
      * @param other the object to be compared for equality with this function descriptor.
      * @return {@code true} if the specified object is equal to this function descriptor.

@@ -171,12 +171,12 @@ public final class GroupLayout extends AbstractLayout {
     }
 
     @Override
-    protected GroupLayout dup(long alignment, Map<String, Constable> attributes) {
+    GroupLayout dup(long alignment, Map<String, Constable> attributes) {
         return new GroupLayout(kind, elements, alignment, attributes);
     }
 
     @Override
-    protected boolean hasNaturalAlignment() {
+    boolean hasNaturalAlignment() {
         return alignment == kind.alignof(elements);
     }
 
