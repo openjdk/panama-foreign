@@ -66,7 +66,7 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * For the linking process to be successful, some requirements must be satisfied; if {@code M} and {@code F} are
  * the method type and the function descriptor, respectively, used during the linking process, then it must be that:
  * <ul>
- *     <li>The arity of {@code M} is the same as that of {@code M};</li>
+ *     <li>The arity of {@code M} is the same as that of {@code F};</li>
  *     <li>If the return type of {@code M} is {@code void}, then {@code F} should have no return layout
  *     (see {@link FunctionDescriptor#ofVoid(MemoryLayout...)});</li>
  *     <li>for each pair of carrier type {@code C} and layout {@code L} in {@code M} and {@code F}, respectively,
