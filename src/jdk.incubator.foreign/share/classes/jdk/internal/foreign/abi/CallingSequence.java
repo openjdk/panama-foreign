@@ -46,18 +46,12 @@ public class CallingSequence {
         this.argumentBindings = argumentBindings;
     }
 
-    public Stream<Binding.Move> argMoveBindings() {
-        return argumentBindings.stream()
-                .flatMap(List::stream)
-                .filter(Binding.Move.class::isInstance)
-                .map(Binding.Move.class::cast);
+    public Stream<Binding> argBindings() {
+        return argumentBindings.stream().flatMap(List::stream);
     }
 
-    public Stream<Binding.Move> retMoveBindings() {
-        return returnBindings()
-            .stream()
-            .filter(Binding.Move.class::isInstance)
-            .map(Binding.Move.class::cast);
+    public Stream<Binding> retBindings() {
+        return returnBindings().stream();
     }
 
     public int argumentCount() {

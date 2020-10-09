@@ -115,7 +115,7 @@ public class CallArranger {
         if (!forUpcall) {
             //add extra binding for number of used vector registers (used for variadic calls)
             csb.addArgumentBindings(long.class, SysV.C_LONG,
-                    List.of(move(rax, long.class)));
+                    List.of(vmStore(rax, long.class)));
         }
 
         csb.setTrivial(SharedUtils.isTrivial(cDesc));
@@ -274,26 +274,26 @@ public class CallArranger {
                         if (offset + copy < layout.byteSize()) {
                             bindings.dup();
                         }
-                        bindings.dereference(offset, type)
-                                .move(storage, type);
+                        bindings.bufferLoad(offset, type)
+                                .vmStore(storage, type);
                         offset += copy;
                     }
                     break;
                 }
                 case POINTER: {
-                    bindings.convertAddress();
+                    bindings.unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.move(storage, long.class);
+                    bindings.vmStore(storage, long.class);
                     break;
                 }
                 case INTEGER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.move(storage, carrier);
+                    bindings.vmStore(storage, carrier);
                     break;
                 }
                 case FLOAT: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
-                    bindings.move(storage, carrier);
+                    bindings.vmStore(storage, carrier);
                     break;
                 }
                 default:
@@ -325,26 +325,26 @@ public class CallArranger {
                         VMStorage storage = regs[regIndex++];
                         bindings.dup();
                         Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
-                        bindings.move(storage, type)
-                                .dereference(offset, type);
+                        bindings.vmLoad(storage, type)
+                                .bufferStore(offset, type);
                         offset += copy;
                     }
                     break;
                 }
                 case POINTER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.move(storage, long.class)
-                            .convertAddress();
+                    bindings.vmLoad(storage, long.class)
+                            .boxAddress();
                     break;
                 }
                 case INTEGER: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER);
-                    bindings.move(storage, carrier);
+                    bindings.vmLoad(storage, carrier);
                     break;
                 }
                 case FLOAT: {
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.VECTOR);
-                    bindings.move(storage, carrier);
+                    bindings.vmLoad(storage, carrier);
                     break;
                 }
                 default:

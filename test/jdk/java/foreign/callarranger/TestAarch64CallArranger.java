@@ -86,16 +86,16 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { move(r0, int.class) },
-            { move(r1, int.class) },
-            { move(r2, int.class) },
-            { move(r3, int.class) },
-            { move(r4, int.class) },
-            { move(r5, int.class) },
-            { move(r6, int.class) },
-            { move(r7, int.class) },
-            { move(stackStorage(0), int.class) },
-            { move(stackStorage(1), int.class) },
+            { vmStore(r0, int.class) },
+            { vmStore(r1, int.class) },
+            { vmStore(r2, int.class) },
+            { vmStore(r3, int.class) },
+            { vmStore(r4, int.class) },
+            { vmStore(r5, int.class) },
+            { vmStore(r6, int.class) },
+            { vmStore(r7, int.class) },
+            { vmStore(stackStorage(0), int.class) },
+            { vmStore(stackStorage(1), int.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -115,10 +115,10 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { move(r0, int.class) },
-            { move(r1, int.class) },
-            { move(v0, float.class) },
-            { move(v1, float.class) },
+            { vmStore(r0, int.class) },
+            { vmStore(r1, int.class) },
+            { vmStore(v0, float.class) },
+            { vmStore(v1, float.class) },
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -150,33 +150,33 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
             { MemoryLayout.ofStruct(C_INT, C_INT, C_DOUBLE), new Binding[] {
                 dup(),
                     // s.a & s.b
-                    dereference(0, long.class), move(r0, long.class),
+                    bufferLoad(0, long.class), vmStore(r0, long.class),
                     // s.c --> note AArch64 passes this in an *integer* register
-                    dereference(8, long.class), move(r1, long.class),
+                    bufferLoad(8, long.class), vmStore(r1, long.class),
             }},
             // struct s { int32_t a, b; double c; int32_t d };
             { struct2, new Binding[] {
                 copy(struct2),
                 baseAddress(),
-                convertAddress(),
-                move(r0, long.class)
+                unboxAddress(),
+                vmStore(r0, long.class)
             }},
             // struct s { int32_t a[2]; float b[2] };
             { MemoryLayout.ofStruct(C_INT, C_INT, C_FLOAT, C_FLOAT), new Binding[] {
                 dup(),
                     // s.a[0] & s.a[1]
-                    dereference(0, long.class), move(r0, long.class),
+                    bufferLoad(0, long.class), vmStore(r0, long.class),
                     // s.b[0] & s.b[1]
-                    dereference(8, long.class), move(r1, long.class),
+                    bufferLoad(8, long.class), vmStore(r1, long.class),
             }},
             // struct s { float a; /* padding */ double b };
             { MemoryLayout.ofStruct(C_FLOAT, MemoryLayout.ofPaddingBits(32), C_DOUBLE),
               new Binding[] {
                 dup(),
                 // s.a
-                dereference(0, long.class), move(r0, long.class),
+                bufferLoad(0, long.class), vmStore(r0, long.class),
                 // s.b
-                dereference(8, long.class), move(r1, long.class),
+                bufferLoad(8, long.class), vmStore(r1, long.class),
             }},
         };
     }
@@ -199,16 +199,16 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
             {
                 copy(struct1),
                 baseAddress(),
-                convertAddress(),
-                move(r0, long.class)
+                unboxAddress(),
+                vmStore(r0, long.class)
             },
             {
                 copy(struct2),
                 baseAddress(),
-                convertAddress(),
-                move(r1, long.class)
+                unboxAddress(),
+                vmStore(r1, long.class)
             },
-            { move(r2, int.class) }
+            { vmStore(r2, int.class) }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{});
@@ -229,8 +229,8 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
 
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
-                convertAddress(),
-                move(r8, long.class)
+                unboxAddress(),
+                vmStore(r8, long.class)
             }
         });
 
@@ -255,11 +255,11 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkReturnBindings(callingSequence, new Binding[]{
             allocate(struct),
             dup(),
-            move(r0, long.class),
-            dereference(0, long.class),
+            vmLoad(r0, long.class),
+            bufferStore(0, long.class),
             dup(),
-            move(r1, long.class),
-            dereference(8, long.class),
+            vmLoad(r1, long.class),
+            bufferStore(8, long.class),
         });
     }
 
@@ -277,25 +277,25 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         assertEquals(callingSequence.functionDesc(), fd);
 
         checkArgumentBindings(callingSequence, new Binding[][]{
-            { move(v0, float.class) },
-            { move(r0, int.class) },
+            { vmStore(v0, float.class) },
+            { vmStore(r0, int.class) },
             {
                 dup(),
-                dereference(0, int.class),
-                move(v1, int.class),
-                dereference(4, int.class),
-                move(v2, int.class)
+                bufferLoad(0, int.class),
+                vmStore(v1, int.class),
+                bufferLoad(4, int.class),
+                vmStore(v2, int.class)
             }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{
             allocate(hfa),
             dup(),
-            move(v0, int.class),
-            dereference(0, int.class),
+            vmLoad(v0, int.class),
+            bufferStore(0, int.class),
             dup(),
-            move(v1, int.class),
-            dereference(4, int.class),
+            vmLoad(v1, int.class),
+            bufferStore(4, int.class),
         });
     }
 
@@ -315,30 +315,30 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
                 dup(),
-                dereference(0, int.class),
-                move(v0, int.class),
+                bufferLoad(0, int.class),
+                vmStore(v0, int.class),
                 dup(),
-                dereference(4, int.class),
-                move(v1, int.class),
-                dereference(8, int.class),
-                move(v2, int.class)
+                bufferLoad(4, int.class),
+                vmStore(v1, int.class),
+                bufferLoad(8, int.class),
+                vmStore(v2, int.class)
             },
             {
                 dup(),
-                dereference(0, int.class),
-                move(v3, int.class),
+                bufferLoad(0, int.class),
+                vmStore(v3, int.class),
                 dup(),
-                dereference(4, int.class),
-                move(v4, int.class),
-                dereference(8, int.class),
-                move(v5, int.class)
+                bufferLoad(4, int.class),
+                vmStore(v4, int.class),
+                bufferLoad(8, int.class),
+                vmStore(v5, int.class)
             },
             {
                 dup(),
-                dereference(0, long.class),
-                move(stackStorage(0), long.class),
-                dereference(8, int.class),
-                move(stackStorage(1), int.class),
+                bufferLoad(0, long.class),
+                vmStore(stackStorage(0), long.class),
+                bufferLoad(8, int.class),
+                vmStore(stackStorage(1), int.class),
             }
         });
 

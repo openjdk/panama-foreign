@@ -22,26 +22,25 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.incubator.foreign.NativeScope;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
 public class BindingInterpreter {
 
-    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, NativeScope scope) {
+    static void unbox(Object arg, List<Binding> bindings, StoreFunc storeFunc, SharedUtils.Allocator allocator) {
         Deque<Object> stack = new ArrayDeque<>();
+
         stack.push(arg);
         for (Binding b : bindings) {
-            b.unbox(stack, storeFunc, scope);
+            b.interpret(stack, storeFunc, null, allocator);
         }
     }
 
-    static Object box(List<Binding> bindings, LoadFunc loadFunc) {
+    static Object box(List<Binding> bindings, LoadFunc loadFunc, SharedUtils.Allocator allocator) {
         Deque<Object> stack = new ArrayDeque<>();
         for (Binding b : bindings) {
-            b.box(stack, loadFunc);
+            b.interpret(stack, null, loadFunc, allocator);
         }
        return stack.pop();
     }

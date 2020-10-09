@@ -30,7 +30,11 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+
+import static jdk.internal.foreign.abi.Binding.Tag.*;
 
 public class CallingSequenceBuilder {
     private static final boolean VERIFY_BINDINGS = Boolean.parseBoolean(
@@ -85,12 +89,28 @@ public class CallingSequenceBuilder {
         }
     }
 
+    private static final Set<Binding.Tag> unboxTags = EnumSet.of(
+        VM_STORE,
+        //VM_LOAD,
+        //BUFFER_STORE,
+        BUFFER_LOAD,
+        COPY_BUFFER,
+        //ALLOC_BUFFER,
+        //BOX_ADDRESS,
+        UNBOX_ADDRESS,
+        BASE_ADDRESS,
+        //TO_SEGMENT,
+        DUP
+    );
+
     private static void verifyUnboxBindings(Class<?> inType, List<Binding> bindings) {
         Deque<Class<?>> stack = new ArrayDeque<>();
         stack.push(inType);
 
         for (Binding b : bindings) {
-            b.verifyUnbox(stack);
+            if (!unboxTags.contains(b.tag()))
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
         }
 
         if (!stack.isEmpty()) {
@@ -98,18 +118,34 @@ public class CallingSequenceBuilder {
         }
     }
 
-    private static void verifyBoxBindings(Class<?> expectedReturnType, List<Binding> bindings) {
+    private static final Set<Binding.Tag> boxTags = EnumSet.of(
+        //VM_STORE,
+        VM_LOAD,
+        BUFFER_STORE,
+        //BUFFER_LOAD,
+        COPY_BUFFER,
+        ALLOC_BUFFER,
+        BOX_ADDRESS,
+        //UNBOX_ADDRESS,
+        //BASE_ADDRESS,
+        TO_SEGMENT,
+        DUP
+    );
+
+    private static void verifyBoxBindings(Class<?> expectedOutType, List<Binding> bindings) {
         Deque<Class<?>> stack = new ArrayDeque<>();
 
         for (Binding b : bindings) {
-            b.verifyBox(stack);
+            if (!boxTags.contains(b.tag()))
+                throw new IllegalArgumentException("Unexpected operator: " + b);
+            b.verify(stack);
         }
 
         if (stack.size() != 1) {
             throw new IllegalArgumentException("Stack must contain exactly 1 value");
         }
 
-        Class<?> actualReturnType = stack.pop();
-        SharedUtils.checkType(actualReturnType, expectedReturnType);
+        Class<?> actualOutType = stack.pop();
+        SharedUtils.checkType(actualOutType, expectedOutType);
     }
 }
