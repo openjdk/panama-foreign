@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MappedMemorySegment;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.ScopedMemoryAccess;
 import sun.nio.ch.FileChannelImpl;
 
 import java.io.IOException;
@@ -45,6 +46,8 @@ import java.nio.file.StandardOpenOption;
 public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements MappedMemorySegment {
 
     private final UnmapperProxy unmapper;
+
+    static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope) {
         super(min, length, mask, scope);
@@ -76,22 +79,22 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
 
     @Override
     public void load() {
-        nioAccess.load(min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
     }
 
     @Override
     public void unload() {
-        nioAccess.unload(min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
     }
 
     @Override
     public boolean isLoaded() {
-        return nioAccess.isLoaded(min, unmapper.isSync(), length);
+        return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
     }
 
     @Override
     public void force() {
-        nioAccess.force(unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     // factories

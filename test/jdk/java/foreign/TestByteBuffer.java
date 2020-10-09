@@ -256,6 +256,17 @@ public class TestByteBuffer {
         }
     }
 
+    @Test(dataProvider = "mappedOps", expectedExceptions = IllegalStateException.class)
+    public void testMappedSegmentOperations(MappedSegmentOp mappedBufferOp) throws Throwable {
+        File f = new File("test3.out");
+        f.createNewFile();
+        f.deleteOnExit();
+
+        MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
+        segment.close();
+        mappedBufferOp.apply(segment);
+    }
+
     @Test
     public void testMappedSegmentOffset() throws Throwable {
         File f = new File("test3.out");
@@ -708,5 +719,33 @@ public class TestByteBuffer {
         } catch (IOException ex) {
             throw new ExceptionInInitializerError(ex);
         }
+    }
+
+    enum MappedSegmentOp {
+        LOAD(MappedMemorySegment::load),
+        UNLOAD(MappedMemorySegment::unload),
+        IS_LOADED(MappedMemorySegment::isLoaded),
+        FORCE(MappedMemorySegment::force),
+        BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
+        BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
+        BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());
+
+
+        private Consumer<MappedMemorySegment> segmentOp;
+
+        MappedSegmentOp(Consumer<MappedMemorySegment> segmentOp) {
+            this.segmentOp = segmentOp;
+        }
+
+        void apply(MappedMemorySegment segment) {
+            segmentOp.accept(segment);
+        }
+    }
+
+    @DataProvider(name = "mappedOps")
+    public static Object[][] mappedOps() {
+        return Stream.of(MappedSegmentOp.values())
+                .map(op -> new Object[] { op })
+                .toArray(Object[][]::new);
     }
 }
