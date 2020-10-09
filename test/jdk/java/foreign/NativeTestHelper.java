@@ -33,7 +33,7 @@ public class NativeTestHelper {
     }
 
     public static boolean isIntegral(MemoryLayout layout) {
-        return kind(layout).isIntergral();
+        return kind(layout).isIntegral();
     }
 
     public static boolean isPointer(MemoryLayout layout) {
