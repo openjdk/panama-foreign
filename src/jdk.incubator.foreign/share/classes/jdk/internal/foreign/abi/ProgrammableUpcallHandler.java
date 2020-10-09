@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
+import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
@@ -98,7 +99,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
                                 ? stackArgsBase.asSlice(storage.index() * abi.arch.typeSize(abi.arch.stackType()))
                                 : bufferBase.asSlice(layout.argOffset(storage));
                             return SharedUtils.read(ptr, type);
-                        });
+                        }, DEFAULT_ALLOCATOR);
             }
 
             if (DEBUG) {
