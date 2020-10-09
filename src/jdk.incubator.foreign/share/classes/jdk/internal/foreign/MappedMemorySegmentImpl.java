@@ -25,17 +25,19 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MappedMemorySegment;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import sun.nio.ch.FileChannelImpl;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 
 /**
  * Implementation for a mapped memory segments. A mapped memory segment is a native memory segment, which
@@ -43,7 +45,7 @@ import java.nio.file.StandardOpenOption;
  * memory mapped segment, such as the file descriptor associated with the mapping. This information is crucial
  * in order to correctly reconstruct a byte buffer object from the segment (see {@link #makeByteBuffer()}).
  */
-public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements MappedMemorySegment {
+public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     private final UnmapperProxy unmapper;
 
@@ -78,28 +80,46 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl implements 
     }
 
     @Override
-    public void load() {
-        SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
+    public Optional<MemoryMapping> mapping() {
+        return Optional.of(new MemoryMappingImpl());
     }
 
-    @Override
-    public void unload() {
-        SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
-    }
+    class MemoryMappingImpl implements MemoryMapping {
 
-    @Override
-    public boolean isLoaded() {
-        return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
-    }
+        @Override
+        public FileDescriptor fileDescriptor() {
+            return unmapper.fileDescriptor();
+        }
 
-    @Override
-    public void force() {
-        SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        @Override
+        public MemorySegment segment() {
+            return MappedMemorySegmentImpl.this;
+        }
+
+        @Override
+        public void load() {
+            SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
+        }
+
+        @Override
+        public void unload() {
+            SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
+        }
+
+        @Override
+        public boolean isLoaded() {
+            return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
+        }
+
+        @Override
+        public void force() {
+            SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        }
     }
 
     // factories
 
-    public static MappedMemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
         if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         try (FileChannelImpl channelImpl = (FileChannelImpl)FileChannel.open(path, openOptions(mapMode))) {

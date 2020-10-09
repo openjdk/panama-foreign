@@ -26,6 +26,7 @@
 
 package jdk.incubator.foreign;
 
+import java.io.FileDescriptor;
 import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
@@ -39,8 +40,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
-import java.util.function.Consumer;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -75,8 +76,9 @@ import java.util.function.Consumer;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>
- * (see {@link MappedMemorySegment}).
+ * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>;
+ * mapped memory segments are associated with a {@link MemoryMapping} instance which can be obtained calling the
+ * {@link #mapping()} method.
  * <p>
  * Array and buffer segments are effectively <em>views</em> over existing memory regions which might outlive the
  * lifecycle of the segments derived from them, and can even be manipulated directly (e.g. via array access, or direct use
@@ -180,7 +182,7 @@ MemorySegment sharedSegment = segment.share();
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).share()) {
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
-    int sum = StreamSupport.stream(MemorySegment.spliterator(segment, SEQUENCE_LAYOUT), true)
+    int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
@@ -213,8 +215,7 @@ MemorySegment gcSegment = segment.registerCleaner(cleaner);
  * as such, if not closed explicitly (see {@link #close()}), the new segment will be automatically closed by the cleaner.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
- * may become a {@code sealed} interface, which would prohibit subclassing except by
- * {@link MappedMemorySegment} and other explicitly permitted subtypes.
+ * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
@@ -233,32 +234,25 @@ public interface MemorySegment extends Addressable, AutoCloseable {
     MemoryAddress address();
 
     /**
-     * Returns a spliterator for the given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
+     * Returns a spliterator for this given memory segment. The returned spliterator reports {@link Spliterator#SIZED},
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
      * <p>
-     * The returned spliterator splits the segment according to the specified sequence layout; that is,
+     * The returned spliterator splits this segment according to the specified sequence layout; that is,
      * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
      * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
      * As such, splitting is possible as long as {@code N >= 2}. The spliterator returns segments that feature the same
      * <a href="#access-modes">access modes</a> as the given segment less the {@link #CLOSE} access mode.
      * <p>
-     * The returned spliterator effectively allows to slice a segment into disjoint sub-segments, which can then
+     * The returned spliterator effectively allows to slice this segment into disjoint sub-segments, which can then
      * be processed in parallel by multiple threads (if the segment is shared).
-     * While closing the segment (see {@link #close()}) during pending concurrent execution will generally
-     * fail with an exception, it is possible to close a segment when a spliterator has been obtained but no thread
-     * is actively working on it using {@link Spliterator#tryAdvance(Consumer)}; in such cases, any subsequent call
-     * to {@link Spliterator#tryAdvance(Consumer)} will fail with an exception.
-     * @param segment the segment to be used for splitting.
+     *
      * @param layout the layout to be used for splitting.
-     * @param <S> the memory segment type
      * @return the element spliterator for this segment
      * @throws IllegalStateException if the segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment
      */
-    static <S extends MemorySegment> Spliterator<S> spliterator(S segment, SequenceLayout layout) {
-        return AbstractMemorySegmentImpl.spliterator(segment, layout);
-    }
+    Spliterator<MemorySegment> spliterator(SequenceLayout layout);
 
     /**
      * The thread owning this segment.
@@ -396,7 +390,6 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment, or if this segment is shared and the segment is concurrently accessed while this method is
      * called.
-     * thread (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
      */
     void close();
@@ -802,6 +795,20 @@ allocateNative(bytesSize, 1);
      * The segment will feature all <a href="#access-modes">access modes</a> (see {@link #ALL_ACCESS}),
      * unless the given mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, in which case
      * the segment will not feature the {@link #WRITE} access mode, and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * <p>
+     * The content of a mapped memory segment can change at any time, for example
+     * if the content of the corresponding region of the mapped file is changed by
+     * this (or another) program.  Whether or not such changes occur, and when they
+     * occur, is operating-system dependent and therefore unspecified.
+     * <p>
+     * All or part of a mapped memory segment may become
+     * inaccessible at any time, for example if the backing mapped file is truncated.  An
+     * attempt to access an inaccessible region of a mapped memory segment will not
+     * change the segment's content and will cause an unspecified exception to be
+     * thrown either at the time of the access or at some later time.  It is
+     * therefore strongly recommended that appropriate precautions be taken to
+     * avoid the manipulation of a mapped file by this (or another) program, except to read or write
+     * the file's content.
      *
      * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
      * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
@@ -810,14 +817,14 @@ allocateNative(bytesSize, 1);
      * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegment#force()}).
+     *                might affect the behavior of the returned memory mapped segment (see {@link MemoryMapping#force()}).
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      */
-    static MappedMemorySegment mapFromPath(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    static MemorySegment mapFromPath(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
         return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode);
     }
 
@@ -873,6 +880,122 @@ allocateNative(bytesSize, 1);
         return NativeMemorySegmentImpl.EVERYTHING;
     }
 
+    // mapped segment support
+
+    /**
+     * A memory mapping represents an association between a mapped memory segment and the underlying file
+     * descriptor associated with that segment. A memory mapping provides capabilities to manipulate memory-mapped
+     * memory regions, such as {@link #force()} and {@link #load()}.
+     * <p>
+     * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
+     * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
+     * instances of {@code MemoryMapping} may have unpredictable results and should be avoided. The {@code equals} method should
+     * be used for comparisons.
+     * <p>
+     * Non-platform classes should not implement {@linkplain MemoryMapping} directly.
+     */
+    interface MemoryMapping {
+
+        /**
+         * Obtains the memory segment associated with this memory mapping.
+         * @return the memory segment associated with this memory mapping.
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        MemorySegment segment();
+
+        /**
+         * Obtains the file descriptor associated with this memory mapping.
+         * @return the file descriptor associated with this memory mapping.
+         *
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        FileDescriptor fileDescriptor();
+
+        /**
+         * Tells whether or not the contents of this mapping's segment is resident in physical
+         * memory.
+         *
+         * <p> A return value of {@code true} implies that it is highly likely
+         * that all of the data in this mapping's segment is resident in physical memory and
+         * may therefore be accessed without incurring any virtual-memory page
+         * faults or I/O operations.  A return value of {@code false} does not
+         * necessarily imply that the segment's content is not resident in physical
+         * memory.
+         *
+         * <p> The returned value is a hint, rather than a guarantee, because the
+         * underlying operating system may have paged out some of the segment's data
+         * by the time that an invocation of this method returns.  </p>
+         *
+         * @return  {@code true} if it is likely that the contents of this mapping's segment
+         *          is resident in physical memory
+         *
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        boolean isLoaded();
+
+        /**
+         * Loads the contents of this mapping's segment into physical memory.
+         *
+         * <p> This method makes a best effort to ensure that, when it returns,
+         * this contents of this mapping's segment is resident in physical memory.  Invoking this
+         * method may cause some number of page faults and I/O operations to
+         * occur. </p>
+         *
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        void load();
+
+        /**
+         * Unloads the contents of this mapping's segment from physical memory.
+         *
+         * <p> This method makes a best effort to ensure that the contents of this mapping's segment are
+         * are no longer resident in physical memory. Accessing this segment's contents
+         * after invoking this method may cause some number of page faults and I/O operations to
+         * occur (as this segment's contents might need to be paged back in). </p>
+         *
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        void unload();
+
+        /**
+         * Forces any changes made to the contents of this mapping's segment to be written to the
+         * storage device described by this mapping's file descriptor.
+         *
+         * <p> If this mapping's file descriptor resides on a local storage
+         * device then when this method returns it is guaranteed that all changes
+         * made to the segment since it was created, or since this method was last
+         * invoked, will have been written to that device.
+         *
+         * <p> If this mapping's file descriptor does not reside on a local device then no such guarantee
+         * is made.
+         *
+         * <p> If this mapping's segment was not mapped in read/write mode ({@link
+         * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
+         * invoking this method may have no effect. In particular, the
+         * method has no effect for segments mapped in read-only or private
+         * mapping modes. This method may or may not have an effect for
+         * implementation-specific mapping modes.
+         * </p>
+         *
+         * @throws IllegalStateException if this mapping's segment is not alive, or if this mapping's segment is confined
+         * and this method is called from a thread other than the segment's owner thread.
+         */
+        void force();
+    }
+
+    /**
+     * Obtain the memory mapping associated with this memory segment, assuming this segment is a mapped memory segment,
+     * created using the {@link #mapFromPath(Path, long, long, FileChannel.MapMode)} factory, or a buffer segment
+     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
+     * @return the memory mapping associated with this memory segment (if any).
+     */
+    Optional<MemoryMapping> mapping();
+
     // access mode masks
 
     /**
@@ -898,7 +1021,6 @@ allocateNative(bytesSize, 1);
 
     /**
      * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #share()}).
-     * (see {@link #spliterator(MemorySegment, SequenceLayout)}).
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */

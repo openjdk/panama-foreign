@@ -29,7 +29,6 @@
  */
 
 
-import jdk.incubator.foreign.MappedMemorySegment;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
@@ -72,7 +71,6 @@ import java.util.stream.Stream;
 
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
-import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import org.testng.SkipException;
 import org.testng.annotations.*;
@@ -227,12 +225,12 @@ public class TestByteBuffer {
 
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
-        try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE)) {
+        try (MemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE)) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS));
             assertEquals(segment.accessModes(), ALL_ACCESS);
         }
 
-        try (MappedMemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY)) {
+        try (MemorySegment segment = MemorySegment.mapFromPath(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY)) {
             assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
             assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
         }
@@ -245,9 +243,9 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         //write to channel
-        try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+        try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             initTuples(segment, tuples.elementCount().getAsLong());
-            segment.force();
+            segment.mapping().ifPresent(MemoryMapping::force);
         }
 
         //read from channel
@@ -262,7 +260,7 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
+        MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
         segment.close();
         mappedBufferOp.apply(segment);
     }
@@ -278,9 +276,9 @@ public class TestByteBuffer {
         // write one at a time
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
             //write to channel
-            try (MappedMemorySegment segment = MemorySegment.mapFromPath(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+            try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
                 initTuples(segment, 1);
-                segment.force();
+                segment.mapping().ifPresent(MemoryMapping::force);
             }
         }
 
@@ -722,22 +720,22 @@ public class TestByteBuffer {
     }
 
     enum MappedSegmentOp {
-        LOAD(MappedMemorySegment::load),
-        UNLOAD(MappedMemorySegment::unload),
-        IS_LOADED(MappedMemorySegment::isLoaded),
-        FORCE(MappedMemorySegment::force),
+        LOAD(m -> m.mapping().ifPresent(MemoryMapping::load)),
+        UNLOAD(m -> m.mapping().ifPresent(MemoryMapping::unload)),
+        IS_LOADED(m -> m.mapping().ifPresent(MemoryMapping::isLoaded)),
+        FORCE(m -> m.mapping().ifPresent(MemoryMapping::force)),
         BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
         BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());
 
 
-        private Consumer<MappedMemorySegment> segmentOp;
+        private Consumer<MemorySegment> segmentOp;
 
-        MappedSegmentOp(Consumer<MappedMemorySegment> segmentOp) {
+        MappedSegmentOp(Consumer<MemorySegment> segmentOp) {
             this.segmentOp = segmentOp;
         }
 
-        void apply(MappedMemorySegment segment) {
+        void apply(MemorySegment segment) {
             segmentOp.accept(segment);
         }
     }
