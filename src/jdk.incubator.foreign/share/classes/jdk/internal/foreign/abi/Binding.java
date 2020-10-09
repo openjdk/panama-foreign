@@ -215,11 +215,11 @@ public abstract class Binding {
                     methodType(MemoryAddress.class, long.class));
             MH_BASE_ADDRESS = lookup.findVirtual(MemorySegment.class, "address",
                     methodType(MemoryAddress.class));
-            MH_COPY_BUFFER = lookup.findStatic(Binding.class, "copyBuffer",
+            MH_COPY_BUFFER = lookup.findStatic(Binding.Copy.class, "copyBuffer",
                     methodType(MemorySegment.class, MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
-            MH_ALLOCATE_BUFFER = lookup.findStatic(Binding.class, "allocateBuffer",
+            MH_ALLOCATE_BUFFER = lookup.findStatic(Binding.Allocate.class, "allocateBuffer",
                     methodType(MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
-            MH_TO_SEGMENT = lookup.findStatic(Binding.class, "toSegment",
+            MH_TO_SEGMENT = lookup.findStatic(Binding.ToSegment.class, "toSegment",
                     methodType(MemorySegment.class, MemoryAddress.class, long.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
@@ -288,22 +288,6 @@ public abstract class Binding {
             throw new IllegalArgumentException("Negative offset: " + offset);
     }
 
-    private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
-                                            SharedUtils.Allocator allocator) {
-        MemorySegment copy = allocator.allocate(size, alignment);
-        copy.copyFrom(operand.asSlice(0, size));
-        return copy;
-    }
-
-    private static MemorySegment allocateBuffer(long size, long allignment, SharedUtils.Allocator allocator) {
-        return allocator.allocate(size, allignment);
-    }
-
-    // FIXME should register with scope
-    private static MemorySegment toSegment(MemoryAddress operand, long size) {
-        return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
-    }
-
     public static VMStore vmStore(VMStorage storage, Class<?> type) {
         checkType(type);
         return new VMStore(storage, type);
@@ -314,10 +298,10 @@ public abstract class Binding {
         return new VMLoad(storage, type);
     }
 
-    public static BuffferStore bufferStore(long offset, Class<?> type) {
+    public static BufferStore bufferStore(long offset, Class<?> type) {
         checkType(type);
         checkOffset(offset);
-        return new BuffferStore(offset, type);
+        return new BufferStore(offset, type);
     }
 
     public static BufferLoad bufferLoad(long offset, Class<?> type) {
@@ -588,8 +572,8 @@ public abstract class Binding {
      * [offset into memory region] from it, and pushes it onto the operand stack.
      * The [type] must be one of byte, short, char, int, long, float, or double
      */
-    public static class BuffferStore extends Dereference {
-        private BuffferStore(long offset, Class<?> type) {
+    public static class BufferStore extends Dereference {
+        private BufferStore(long offset, Class<?> type) {
             super(Tag.BUFFER_STORE, offset, type);
         }
 
@@ -619,7 +603,7 @@ public abstract class Binding {
 
         @Override
         public String toString() {
-            return "BuffferStore{" +
+            return "BufferStore{" +
                     "offset=" + offset() +
                     ", type=" + type() +
                     '}';
@@ -686,6 +670,13 @@ public abstract class Binding {
             this.alignment = alignment;
         }
 
+        private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
+                                                    SharedUtils.Allocator allocator) {
+            MemorySegment copy = allocator.allocate(size, alignment);
+            copy.copyFrom(operand.asSlice(0, size));
+            return copy;
+        }
+
         public long size() {
             return size;
         }
@@ -714,7 +705,7 @@ public abstract class Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment copy = Binding.copyBuffer(operand, size, alignment, allocator);
+            MemorySegment copy = copyBuffer(operand, size, alignment, allocator);
             stack.push(copy);
         }
 
@@ -755,6 +746,10 @@ public abstract class Binding {
             this.alignment = alignment;
         }
 
+        private static MemorySegment allocateBuffer(long size, long allignment, SharedUtils.Allocator allocator) {
+            return allocator.allocate(size, allignment);
+        }
+
         public long size() {
             return size;
         }
@@ -780,7 +775,7 @@ public abstract class Binding {
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
-            stack.push(Binding.allocateBuffer(size, alignment, allocator));
+            stack.push(allocateBuffer(size, alignment, allocator));
         }
 
         @Override
@@ -925,6 +920,11 @@ public abstract class Binding {
             this.size = size;
         }
 
+        // FIXME should register with scope
+        private static MemorySegment toSegment(MemoryAddress operand, long size) {
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+        }
+
         @Override
         public void verify(Deque<Class<?>> stack) {
             Class<?> actualType = stack.pop();
@@ -936,7 +936,7 @@ public abstract class Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
             MemoryAddress operand = (MemoryAddress) stack.pop();
-            MemorySegment segment = Binding.toSegment(operand, size);
+            MemorySegment segment = toSegment(operand, size);
             stack.push(segment);
         }
 

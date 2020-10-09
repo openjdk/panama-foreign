@@ -365,7 +365,9 @@ public class SharedUtils {
                 .orElse(false);
     }
 
-    public interface Allocator {
+    public interface Allocator extends AutoCloseable {
+        Allocator THROWING_ALLOCATOR = (size, align) -> { throw new UnsupportedOperationException("Null allocator"); };
+
         default MemorySegment allocate(MemoryLayout layout) {
             return allocate(layout.byteSize(), layout.byteAlignment());
         }
@@ -374,10 +376,23 @@ public class SharedUtils {
             return allocate(size, 1);
         }
 
+        @Override
+        default void close() {}
+
         MemorySegment allocate(long size, long align);
 
         static Allocator ofScope(NativeScope scope) {
-            return scope::allocate;
+            return new Allocator() {
+                @Override
+                public MemorySegment allocate(long size, long align) {
+                    return scope.allocate(size, align);
+                }
+
+                @Override
+                public void close() {
+                    scope.close();
+                }
+            };
         }
     }
 

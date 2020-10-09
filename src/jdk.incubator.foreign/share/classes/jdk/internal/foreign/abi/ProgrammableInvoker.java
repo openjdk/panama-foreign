@@ -53,6 +53,7 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
+import static jdk.internal.foreign.abi.SharedUtils.Allocator.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
@@ -340,10 +341,10 @@ public class ProgrammableInvoker {
     Object invokeInterpBindings(Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        boolean hasBufferCopies = bufferCopySize != 0;
-        NativeScope scope = hasBufferCopies ? NativeScope.boundedScope(bufferCopySize) : null;
-        SharedUtils.Allocator unboxAllocator = hasBufferCopies ? SharedUtils.Allocator.ofScope(scope) : null;
-        try {
+        SharedUtils.Allocator unboxAllocator = bufferCopySize != 0
+                ? SharedUtils.Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
+                : THROWING_ALLOCATOR;
+        try (unboxAllocator) {
             // do argument processing, get Object[] as result
             Object[] moves = new Object[leaf.type().parameterCount()];
             for (int i = 0; i < args.length; i++) {
@@ -367,10 +368,6 @@ public class ProgrammableInvoker {
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
                         DEFAULT_ALLOCATOR);
-            }
-        } finally {
-            if (scope != null) {
-                scope.close();
             }
         }
     }
