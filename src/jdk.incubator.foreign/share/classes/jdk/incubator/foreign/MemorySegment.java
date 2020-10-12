@@ -78,7 +78,8 @@ import java.util.Spliterator;
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
  * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>;
  * mapped memory segments are associated with a {@link FileDescriptor} instance which can be obtained calling the
- * {@link #fileDescriptor()} method.
+ * {@link #fileDescriptor()} method. For more operations on mapped memory segments, please refer to the
+ * {@link MappedMemorySegments} class.
  * <p>
  * Array and buffer segments are effectively <em>views</em> over existing memory regions which might outlive the
  * lifecycle of the segments derived from them, and can even be manipulated directly (e.g. via array access, or direct use
