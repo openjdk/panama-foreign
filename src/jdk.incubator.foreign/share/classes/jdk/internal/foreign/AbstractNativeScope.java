@@ -18,6 +18,10 @@ public abstract class AbstractNativeScope implements NativeScope {
         this.ownerThread = ownerThread;
     }
 
+    public static NativeScope emptyScope() {
+        return new EmptyScope();
+    }
+
     @Override
     public Thread ownerThread() {
         return ownerThread;
@@ -129,6 +133,28 @@ public abstract class AbstractNativeScope implements NativeScope {
             } catch (IndexOutOfBoundsException ex) {
                 throw new OutOfMemoryError("Not enough space left to allocate");
             }
+        }
+    }
+
+    // only for registering
+    private static class EmptyScope extends AbstractNativeScope {
+        public EmptyScope() {
+            super(Thread.currentThread());
+        }
+
+        @Override
+        public OptionalLong byteSize() {
+            return OptionalLong.of(0);
+        }
+
+        @Override
+        public long allocatedBytes() {
+            return 0;
+        }
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            throw new OutOfMemoryError("Not enough space left to allocate");
         }
     }
 }
