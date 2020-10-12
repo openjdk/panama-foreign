@@ -80,7 +80,7 @@ public final class MappedMemorySegments {
      * @throws UnsupportedOperationException if the given segment is not a mapped memory segment, e.g. if
      * {@code segment.fileDescriptor().isEmpty()}.
      */
-    public static void load(MemorySegment segment) { 
+    public static void load(MemorySegment segment) {
         toMappedSegment(segment).load();
     }
 
@@ -134,7 +134,7 @@ public final class MappedMemorySegments {
     public static void force(MemorySegment segment) {
         toMappedSegment(segment).force();
     }
-    
+
     static MappedMemorySegmentImpl toMappedSegment(MemorySegment segment) {
         if (segment instanceof MappedMemorySegmentImpl) {
             return (MappedMemorySegmentImpl)segment;
