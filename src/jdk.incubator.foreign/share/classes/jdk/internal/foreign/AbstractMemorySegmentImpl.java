@@ -36,6 +36,7 @@ import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
+import java.io.FileDescriptor;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
@@ -317,7 +318,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public Optional<MemoryMapping> toMemoryMapping() {
+    public Optional<FileDescriptor> fileDescriptor() {
         return Optional.empty();
     }
 

@@ -29,13 +29,8 @@
  */
 
 
-import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
-import jdk.incubator.foreign.SequenceLayout;
 
 import java.io.File;
 import java.io.IOException;
@@ -245,7 +240,7 @@ public class TestByteBuffer {
         //write to channel
         try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             initTuples(segment, tuples.elementCount().getAsLong());
-            segment.toMemoryMapping().ifPresent(MemoryMapping::force);
+            MappedMemorySegments.force(segment);
         }
 
         //read from channel
@@ -261,6 +256,7 @@ public class TestByteBuffer {
         f.deleteOnExit();
 
         MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
+        assertTrue(segment.fileDescriptor().isPresent());
         segment.close();
         mappedBufferOp.apply(segment);
     }
@@ -278,7 +274,7 @@ public class TestByteBuffer {
             //write to channel
             try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
                 initTuples(segment, 1);
-                segment.toMemoryMapping().ifPresent(MemoryMapping::force);
+                MappedMemorySegments.force(segment);
             }
         }
 
@@ -720,10 +716,10 @@ public class TestByteBuffer {
     }
 
     enum MappedSegmentOp {
-        LOAD(m -> m.toMemoryMapping().ifPresent(MemoryMapping::load)),
-        UNLOAD(m -> m.toMemoryMapping().ifPresent(MemoryMapping::unload)),
-        IS_LOADED(m -> m.toMemoryMapping().ifPresent(MemoryMapping::isLoaded)),
-        FORCE(m -> m.toMemoryMapping().ifPresent(MemoryMapping::force)),
+        LOAD(MappedMemorySegments::load),
+        UNLOAD(MappedMemorySegments::unload),
+        IS_LOADED(MappedMemorySegments::isLoaded),
+        FORCE(MappedMemorySegments::force),
         BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
         BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());

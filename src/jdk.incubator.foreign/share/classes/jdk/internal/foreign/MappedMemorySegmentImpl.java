@@ -80,41 +80,30 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    public Optional<MemoryMapping> toMemoryMapping() {
-        return Optional.of(new MemoryMappingImpl());
+    public Optional<FileDescriptor> fileDescriptor() {
+        return Optional.of(unmapper.fileDescriptor());
     }
 
-    class MemoryMappingImpl implements MemoryMapping {
+    // support for mapped segments
 
-        @Override
-        public FileDescriptor fileDescriptor() {
-            return unmapper.fileDescriptor();
-        }
+    public MemorySegment segment() {
+        return MappedMemorySegmentImpl.this;
+    }
 
-        @Override
-        public MemorySegment segment() {
-            return MappedMemorySegmentImpl.this;
-        }
+    public void load() {
+        SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
+    }
 
-        @Override
-        public void load() {
-            SCOPED_MEMORY_ACCESS.load(scope, min, unmapper.isSync(), length);
-        }
+    public void unload() {
+        SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
+    }
 
-        @Override
-        public void unload() {
-            SCOPED_MEMORY_ACCESS.unload(scope, min, unmapper.isSync(), length);
-        }
+    public boolean isLoaded() {
+        return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
+    }
 
-        @Override
-        public boolean isLoaded() {
-            return SCOPED_MEMORY_ACCESS.isLoaded(scope, min, unmapper.isSync(), length);
-        }
-
-        @Override
-        public void force() {
-            SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
-        }
+    public void force() {
+        SCOPED_MEMORY_ACCESS.force(scope, unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     // factories

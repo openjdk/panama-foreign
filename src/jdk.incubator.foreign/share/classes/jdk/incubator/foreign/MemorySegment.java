@@ -77,8 +77,8 @@ import java.util.Spliterator;
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
  * {@link MemorySegment#mapFromPath(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>;
- * mapped memory segments are associated with a {@link MemoryMapping} instance which can be obtained calling the
- * {@link #toMemoryMapping()} method.
+ * mapped memory segments are associated with a {@link FileDescriptor} instance which can be obtained calling the
+ * {@link #fileDescriptor()} method.
  * <p>
  * Array and buffer segments are effectively <em>views</em> over existing memory regions which might outlive the
  * lifecycle of the segments derived from them, and can even be manipulated directly (e.g. via array access, or direct use
@@ -374,6 +374,14 @@ public interface MemorySegment extends Addressable, AutoCloseable {
         Objects.requireNonNull(newBase);
         return asSlice(newBase.segmentOffset(this));
     }
+
+    /**
+     * Obtain the file descriptor with this memory segment, assuming this segment is a mapped memory segment,
+     * created using the {@link #mapFromPath(Path, long, long, FileChannel.MapMode)} factory, or a buffer segment
+     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
+     * @return the file descriptor associated with this memory segment (if any).
+     */
+    Optional<FileDescriptor> fileDescriptor();
 
     /**
      * Is this segment alive?
@@ -817,7 +825,7 @@ allocateNative(bytesSize, 1);
      * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link MemoryMapping#force()}).
+     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
@@ -879,122 +887,6 @@ allocateNative(bytesSize, 1);
         Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
         return NativeMemorySegmentImpl.EVERYTHING;
     }
-
-    // mapped segment support
-
-    /**
-     * A memory mapping represents an association between a mapped memory segment (referred to as the <em>target</em> segment)
-     * and the underlying file descriptor associated with that segment. A memory mapping provides capabilities to manipulate memory-mapped
-     * memory regions, such as {@link #force()} and {@link #load()}.
-     * <p>
-     * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
-     * use of identity-sensitive operations (including reference equality ({@code ==}), identity hash code, or synchronization) on
-     * instances of {@code MemoryMapping} may have unpredictable results and should be avoided. The {@code equals} method should
-     * be used for comparisons.
-     * <p>
-     * Non-platform classes should not implement {@linkplain MemoryMapping} directly.
-     */
-    interface MemoryMapping {
-
-        /**
-         * Obtains the target memory segment associated with this memory mapping.
-         * @return the target memory segment associated with this memory mapping.
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        MemorySegment segment();
-
-        /**
-         * Obtains the file descriptor associated with this memory mapping.
-         * @return the file descriptor associated with this memory mapping.
-         *
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        FileDescriptor fileDescriptor();
-
-        /**
-         * Tells whether or not the contents of the target segment is resident in physical
-         * memory.
-         *
-         * <p> A return value of {@code true} implies that it is highly likely
-         * that all of the data in the target segment is resident in physical memory and
-         * may therefore be accessed without incurring any virtual-memory page
-         * faults or I/O operations.  A return value of {@code false} does not
-         * necessarily imply that the segment's content is not resident in physical
-         * memory.
-         *
-         * <p> The returned value is a hint, rather than a guarantee, because the
-         * underlying operating system may have paged out some of the segment's data
-         * by the time that an invocation of this method returns.  </p>
-         *
-         * @return  {@code true} if it is likely that the contents of the target segment
-         *          is resident in physical memory
-         *
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        boolean isLoaded();
-
-        /**
-         * Loads the contents of the target segment into physical memory.
-         *
-         * <p> This method makes a best effort to ensure that, when it returns,
-         * this contents of the target segment is resident in physical memory.  Invoking this
-         * method may cause some number of page faults and I/O operations to
-         * occur. </p>
-         *
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        void load();
-
-        /**
-         * Unloads the contents of the target segment from physical memory.
-         *
-         * <p> This method makes a best effort to ensure that the contents of the target segment are
-         * are no longer resident in physical memory. Accessing this segment's contents
-         * after invoking this method may cause some number of page faults and I/O operations to
-         * occur (as this segment's contents might need to be paged back in). </p>
-         *
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        void unload();
-
-        /**
-         * Forces any changes made to the contents of the target segment to be written to the
-         * storage device described by this mapping's file descriptor.
-         *
-         * <p> If this mapping's file descriptor resides on a local storage
-         * device then when this method returns it is guaranteed that all changes
-         * made to the segment since it was created, or since this method was last
-         * invoked, will have been written to that device.
-         *
-         * <p> If this mapping's file descriptor does not reside on a local device then no such guarantee
-         * is made.
-         *
-         * <p> If the target segment was not mapped in read/write mode ({@link
-         * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
-         * invoking this method may have no effect. In particular, the
-         * method has no effect for segments mapped in read-only or private
-         * mapping modes. This method may or may not have an effect for
-         * implementation-specific mapping modes.
-         * </p>
-         *
-         * @throws IllegalStateException if the target segment is not alive, or if the target segment is confined
-         * and this method is called from a thread other than the segment's owner thread.
-         */
-        void force();
-    }
-
-    /**
-     * Obtain the memory mapping associated with this memory segment, assuming this segment is a mapped memory segment,
-     * created using the {@link #mapFromPath(Path, long, long, FileChannel.MapMode)} factory, or a buffer segment
-     * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
-     * @return the memory mapping associated with this memory segment (if any).
-     */
-    Optional<MemoryMapping> toMemoryMapping();
 
     // access mode masks
 
