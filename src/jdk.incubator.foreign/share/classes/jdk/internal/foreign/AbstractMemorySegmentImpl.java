@@ -317,7 +317,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public Optional<MemoryMapping> mapping() {
+    public Optional<MemoryMapping> toMemoryMapping() {
         return Optional.empty();
     }
 

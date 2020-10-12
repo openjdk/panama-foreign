@@ -80,7 +80,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    public Optional<MemoryMapping> mapping() {
+    public Optional<MemoryMapping> toMemoryMapping() {
         return Optional.of(new MemoryMappingImpl());
     }
 

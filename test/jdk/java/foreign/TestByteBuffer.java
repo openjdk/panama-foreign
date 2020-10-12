@@ -245,7 +245,7 @@ public class TestByteBuffer {
         //write to channel
         try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
             initTuples(segment, tuples.elementCount().getAsLong());
-            segment.mapping().ifPresent(MemoryMapping::force);
+            segment.toMemoryMapping().ifPresent(MemoryMapping::force);
         }
 
         //read from channel
@@ -278,7 +278,7 @@ public class TestByteBuffer {
             //write to channel
             try (MemorySegment segment = MemorySegment.mapFromPath(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
                 initTuples(segment, 1);
-                segment.mapping().ifPresent(MemoryMapping::force);
+                segment.toMemoryMapping().ifPresent(MemoryMapping::force);
             }
         }
 
@@ -720,10 +720,10 @@ public class TestByteBuffer {
     }
 
     enum MappedSegmentOp {
-        LOAD(m -> m.mapping().ifPresent(MemoryMapping::load)),
-        UNLOAD(m -> m.mapping().ifPresent(MemoryMapping::unload)),
-        IS_LOADED(m -> m.mapping().ifPresent(MemoryMapping::isLoaded)),
-        FORCE(m -> m.mapping().ifPresent(MemoryMapping::force)),
+        LOAD(m -> m.toMemoryMapping().ifPresent(MemoryMapping::load)),
+        UNLOAD(m -> m.toMemoryMapping().ifPresent(MemoryMapping::unload)),
+        IS_LOADED(m -> m.toMemoryMapping().ifPresent(MemoryMapping::isLoaded)),
+        FORCE(m -> m.toMemoryMapping().ifPresent(MemoryMapping::force)),
         BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
         BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());
