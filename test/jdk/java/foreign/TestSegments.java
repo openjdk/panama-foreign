@@ -328,6 +328,7 @@ public class TestSegments {
                 "handoff",
                 "registerCleaner",
                 "fill",
+                "spliterator",
                 "copyFrom",
                 "mismatch",
                 "toByteArray",
