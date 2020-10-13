@@ -36,6 +36,7 @@ import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.AbstractNativeScope;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
@@ -264,6 +265,27 @@ public class SharedUtils {
         throw new IllegalArgumentException("String too large");
     }
 
+    static long bufferCopySize(CallingSequence callingSequence) {
+        // FIXME: > 16 bytes alignment might need extra space since the
+        // starting address of the allocator might be un-aligned.
+        long size = 0;
+        for (int i = 0; i < callingSequence.argumentCount(); i++) {
+            List<Binding> bindings = callingSequence.argumentBindings(i);
+            for (Binding b : bindings) {
+                if (b instanceof Binding.Copy) {
+                    Binding.Copy c = (Binding.Copy) b;
+                    size = Utils.alignUp(size, c.alignment());
+                    size += c.size();
+                } else if (b instanceof Binding.Allocate) {
+                    Binding.Allocate c = (Binding.Allocate) b;
+                    size = Utils.alignUp(size, c.alignment());
+                    size += c.size();
+                }
+            }
+        }
+        return size;
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
@@ -368,6 +390,10 @@ public class SharedUtils {
     public interface Allocator extends AutoCloseable {
         Allocator THROWING_ALLOCATOR = (size, align) -> { throw new UnsupportedOperationException("Null allocator"); };
 
+        static Allocator empty() {
+            return Allocator.ofScope(AbstractNativeScope.emptyScope());
+        }
+
         default MemorySegment allocate(MemoryLayout layout) {
             return allocate(layout.byteSize(), layout.byteAlignment());
         }
@@ -379,6 +405,10 @@ public class SharedUtils {
         @Override
         default void close() {}
 
+        default MemorySegment handoff(MemorySegment ms) {
+            return ms;
+        }
+
         MemorySegment allocate(long size, long align);
 
         static Allocator ofScope(NativeScope scope) {
@@ -386,6 +416,11 @@ public class SharedUtils {
                 @Override
                 public MemorySegment allocate(long size, long align) {
                     return scope.allocate(size, align);
+                }
+
+                @Override
+                public MemorySegment handoff(MemorySegment ms) {
+                    return ms.handoff(scope);
                 }
 
                 @Override
