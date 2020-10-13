@@ -338,7 +338,9 @@ public final class Cursor {
     private static class CursorChildren {
         private static final ArrayList<Cursor> children = new ArrayList<>();
         private static final MemorySegment callback = Index_h.clang_visitChildren$visitor.allocate((c, p, d) -> {
-            Cursor cursor = new Cursor(c);
+            MemorySegment copy = MemorySegment.allocateNative(c.byteSize());
+            copy.copyFrom(c);
+            Cursor cursor = new Cursor(copy);
             children.add(cursor);
             return Index_h.CXChildVisit_Continue();
         });
