@@ -30,6 +30,13 @@
 
 #include CPU_HEADER(foreign_globals)
 
+struct CallRegs {
+  VMReg* _regs;
+  int _length;
+
+  void calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const;
+};
+
 class ForeignGlobals {
 private:
   struct {
@@ -42,6 +49,7 @@ private:
 
   struct {
     int index_offset;
+    int type_offset;
   } VMS;
 
   struct {
@@ -65,9 +73,11 @@ private:
 
   const ABIDescriptor parse_abi_descriptor_impl(jobject jabi) const;
   const BufferLayout parse_buffer_layout_impl(jobject jlayout) const;
+  const CallRegs parse_call_regs_impl(jobject jconv) const;
 public:
   static const ABIDescriptor parse_abi_descriptor(jobject jabi);
   static const BufferLayout parse_buffer_layout(jobject jlayout);
+  static const CallRegs parse_call_regs(jobject jconv);
 };
 
 #endif // SHARE_PRIMS_FOREIGN_GLOBALS

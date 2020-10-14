@@ -333,8 +333,8 @@ public class SharedUtils {
             : Allocator.empty();
     }
 
-    static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
-                                          int allocatorPos, long bufferCopySize) {
+    static MethodHandle wrapWithAllocatorForDowncall(MethodHandle specializedHandle,
+                                                     int allocatorPos, long bufferCopySize) {
         // insert try-finally to close the NativeScope used for Binding.Copy
         MethodHandle closer = specializedHandle.type().returnType() == void.class
               // (Throwable, Addressable, NativeScope) -> void
@@ -347,6 +347,21 @@ public class SharedUtils {
                         0, Throwable.class),
                     2, Addressable.class),
                                3, MH_CLOSE_ALLOCATOR);
+        specializedHandle = tryFinally(specializedHandle, closer);
+        MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
+        specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);
+        return specializedHandle;
+    }
+
+    static MethodHandle wrapWithAllocatorForUpcall(MethodHandle specializedHandle,
+                                                   int allocatorPos, long bufferCopySize) {
+        // insert try-finally to close the NativeScope used for Binding.Copy
+        MethodHandle closer = specializedHandle.type().returnType() == void.class
+              // (Throwable, NativeScope) -> void
+            ? collectArguments(empty(methodType(void.class, Throwable.class)), 1, MH_CLOSE_ALLOCATOR)
+              // (Throwable, V, NativeScope) -> V
+            : collectArguments(dropArguments(identity(specializedHandle.type().returnType()), 0, Throwable.class),
+                               2, MH_CLOSE_ALLOCATOR);
         specializedHandle = tryFinally(specializedHandle, closer);
         MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
         specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);

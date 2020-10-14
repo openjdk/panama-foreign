@@ -87,3 +87,21 @@ const BufferLayout ForeignGlobals::parse_buffer_layout_impl(jobject jlayout) con
 
   return layout;
 }
+
+const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
+  // jconv is just a VMStorage[]
+  objArrayOop conv_oop = cast<objArrayOop>(JNIHandles::resolve_non_null(jconv));
+
+  CallRegs result;
+  result._length = conv_oop->length();
+  result._regs = NEW_RESOURCE_ARRAY(VMReg, result._length);
+
+  for (int i = 0; i < result._length; i++) {
+    oop storage = conv_oop->obj_at(i);
+    jint index = storage->int_field(VMS.index_offset);
+    jint type = storage->int_field(VMS.type_offset);
+    result._regs[i] = VMRegImpl::vmStorageToVMReg(type, index);
+  }
+
+  return result;
+}

@@ -24,6 +24,7 @@
 #include "precompiled.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "compiler/compilationPolicy.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/universalUpcallHandler.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -96,21 +97,34 @@ JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec,
   return (jlong) ProgrammableUpcallHandler::generate_upcall_stub(global_rec, abi, buffer_layout);
 JNI_END
 
+JVM_ENTRY(jlong, PUH_AllocateOptimzedUpcallStub(JNIEnv *env, jclass unused, jobject mh, jobject abi, jobject conv))
+  Handle mh_h(THREAD, JNIHandles::resolve(mh));
+  jobject mh_j = JNIHandles::make_global(mh_h);
+
+  oop lform = java_lang_invoke_MethodHandle::form(mh_h());
+  oop vmentry = java_lang_invoke_LambdaForm::vmentry(lform);
+  Method* entry = java_lang_invoke_MemberName::vmtarget(vmentry);
+  const methodHandle mh_entry(THREAD, entry);
+
+  assert(entry->method_holder()->is_initialized(), "no clinit barrier");
+  CompilationPolicy::compile_if_required(mh_entry, CHECK_0);
+
+  return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(mh_j, entry, abi, conv);
+JVM_END
+
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod PUH_methods[] = {
-<<<<<<< HEAD
-  {CC "allocateUpcallStub", CC "(L" FOREIGN_ABI "ABIDescriptor;L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
-=======
-  {CC "allocateUpcallStub", CC "(" FOREIGN_ABI "/ProgrammableUpcallHandler$InterpretedHandler;" FOREIGN_ABI "/ABIDescriptor;" FOREIGN_ABI "/BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
->>>>>>> b56cc46bb13... Add upcall MH spec
+  {CC "allocateUpcallStub", CC "(" "L" FOREIGN_ABI "ProgrammableUpcallHandler$InterpretedHandler;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
+  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "[L" FOREIGN_ABI "VMStorage;" ")J", FN_PTR(PUH_AllocateOptimzedUpcallStub)},
 };
 
 /**
  * This one function is exported, used by NativeLookup.
  */
-JNI_LEAF(void, JVM_RegisterProgrammableUpcallHandlerMethods(JNIEnv *env, jclass PUH_class))
+JNI_ENTRY(void, JVM_RegisterProgrammableUpcallHandlerMethods(JNIEnv *env, jclass PUH_class))
+  ThreadToNativeFromVM ttnfv(thread);
   int status = env->RegisterNatives(PUH_class, PUH_methods, sizeof(PUH_methods)/sizeof(JNINativeMethod));
   guarantee(status == JNI_OK && !env->ExceptionOccurred(),
             "register jdk.internal.foreign.abi.ProgrammableUpcallHandler natives");

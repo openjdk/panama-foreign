@@ -59,6 +59,10 @@ const BufferLayout ForeignGlobals::parse_buffer_layout(jobject jlayout) {
   return instance().parse_buffer_layout_impl(jlayout);
 }
 
+const CallRegs ForeignGlobals::parse_call_regs(jobject jconv) {
+  return instance().parse_call_regs_impl(jconv);
+}
+
 ForeignGlobals::ForeignGlobals() {
   Thread* current_thread = Thread::current();
   ResourceMark rm(current_thread);
@@ -76,6 +80,7 @@ ForeignGlobals::ForeignGlobals() {
   // VMStorage
   InstanceKlass* k_VMS = find_InstanceKlass(FOREIGN_ABI "VMStorage", current_thread);
   VMS.index_offset = field_offset(k_VMS, "index", vmSymbols::int_signature());
+  VMS.type_offset = field_offset(k_VMS, "type", vmSymbols::int_signature());
 
   // BufferLayout
   InstanceKlass* k_BL = find_InstanceKlass(FOREIGN_ABI "BufferLayout", current_thread);
@@ -85,4 +90,34 @@ ForeignGlobals::ForeignGlobals() {
   BL.stack_args_offset = field_offset(k_BL, "stack_args", vmSymbols::long_signature());
   BL.input_type_offsets_offset = field_offset(k_BL, "input_type_offsets", vmSymbols::long_array_signature());
   BL.output_type_offsets_offset = field_offset(k_BL, "output_type_offsets", vmSymbols::long_array_signature());
+}
+
+void CallRegs::calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const {
+  int src_pos = 0;
+  for (uint i = 0; i < argcnt; i++) {
+    switch (sig_bt[i]) {
+      case T_BOOLEAN:
+      case T_CHAR:
+      case T_BYTE:
+      case T_SHORT:
+      case T_INT:
+      case T_FLOAT:
+        assert(src_pos < _length, "oob");
+        parm_regs[i].set1(_regs[src_pos++]);
+        break;
+      case T_LONG:
+      case T_DOUBLE:
+        assert((i + 1) < argcnt && sig_bt[i + 1] == T_VOID, "expecting half");
+        assert(src_pos < _length, "oob");
+        parm_regs[i].set2(_regs[src_pos++]);
+        break;
+      case T_VOID: // Halves of longs and doubles
+        assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
+        parm_regs[i].set_bad();
+        break;
+      default:
+        ShouldNotReachHere();
+        break;
+    }
+  }
 }

@@ -28,6 +28,8 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.access.JavaLangInvokeAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import sun.security.action.GetPropertyAction;
@@ -56,11 +58,14 @@ import static sun.security.action.GetBooleanAction.privilegedGetProperty;
  * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
  */
 public class ProgrammableUpcallHandler {
-
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.DEBUG");
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
+    private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS", "false"));
+
+    private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
 
@@ -85,37 +90,55 @@ public class ProgrammableUpcallHandler {
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
 
+        boolean isSimple = !(retMoves.length > 1);
+
+        Class<?> llReturn = !isSimple
+            ? Object[].class
+            : retMoves.length == 1
+                ? retMoves[0].type()
+                : void.class;
+        Class<?>[] llParams = Arrays.stream(argMoves).map(Binding.Move::type).toArray(Class<?>[]::new);
+        MethodType llType = MethodType.methodType(llReturn, llParams);
+
         MethodHandle doBindings;
         long bufferCopySize = SharedUtils.bufferCopySize(callingSequence);
-        boolean isSimple = !(retMoves.length > 1);
         if (USE_SPEC && isSimple) {
-            Class<?> llReturn = retMoves.length == 1 ? retMoves[0].type() : null;
             doBindings = specializedBindingHandle(target, callingSequence, llReturn, bufferCopySize);
-            doBindings = doBindings.asSpreader(Object[].class, doBindings.type().parameterCount());
+            assert doBindings.type() == llType;
         } else {
             Map<VMStorage, Integer> argIndices = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndices = SharedUtils.indexMap(retMoves);
             target = target.asSpreader(Object[].class, callingSequence.methodType().parameterCount());
             doBindings = insertArguments(MH_invokeInterpBindings, 1, target, argIndices, retIndices, callingSequence,
                     bufferCopySize);
+            doBindings = doBindings.asCollector(Object[].class, llType.parameterCount());
+            doBindings.asType(llType);
         }
 
-        BufferLayout layout = BufferLayout.of(abi);
-        MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindings, argMoves, retMoves, abi, layout);
-        InterpretedHandler handler = new InterpretedHandler(invokeMoves);
-        long entryPoint = allocateUpcallStub(handler, abi, layout);
+        long entryPoint;
+        if (USE_INTRINSICS) {
+            JLI.ensureCustomized(doBindings); // FIXME: consider more flexible scheme to customize upcall entry points
+            VMStorage[] conv = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+            entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv);
+        } else {
+            BufferLayout layout = BufferLayout.of(abi);
+            MethodHandle doBindingsErased = doBindings.asSpreader(Object[].class, doBindings.type().parameterCount());
+            MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindingsErased, argMoves, retMoves, abi, layout);
+            InterpretedHandler handler = new InterpretedHandler(invokeMoves);
+            entryPoint = allocateUpcallStub(handler, abi, layout);
+        }
         return () -> entryPoint;
     }
 
     private static Binding.VMLoad[] argMoveBindings(CallingSequence callingSequence) {
-        return callingSequence.argBindings()
+        return callingSequence.argumentBindings()
                 .filter(Binding.VMLoad.class::isInstance)
                 .map(Binding.VMLoad.class::cast)
                 .toArray(Binding.VMLoad[]::new);
     }
 
     private static Binding.VMStore[] retMoveBindings(CallingSequence callingSequence) {
-        return callingSequence.retBindings()
+        return callingSequence.returnBindings().stream()
                 .filter(Binding.VMStore.class::isInstance)
                 .map(Binding.VMStore.class::cast)
                 .toArray(Binding.VMStore[]::new);
@@ -134,7 +157,7 @@ public class ProgrammableUpcallHandler {
             MethodHandle filter = identity(highLevelType.parameterType(i));
             int filterAllocatorPos = 0;
             int filterInsertPos = 1; // +1 for allocator
-            filter = dropArguments(filter, filterAllocatorPos, SharedUtils.Allocator.class);
+            filter = dropArguments(filter, filterAllocatorPos, Allocator.class);
 
             List<Binding> bindings = callingSequence.argumentBindings(i);
             for (int j = bindings.size() - 1; j >= 0; j--) {
@@ -146,7 +169,7 @@ public class ProgrammableUpcallHandler {
             argInsertPos += filter.type().parameterCount() - 1; // -1 for allocator
         }
 
-        if (llReturn != null) {
+        if (llReturn != void.class) {
             int retAllocatorPos = -1; // assumed not needed
             int retInsertPos = 0;
             MethodHandle filter = identity(llReturn);
@@ -158,7 +181,7 @@ public class ProgrammableUpcallHandler {
             specializedHandle = filterReturnValue(specializedHandle, filter);
         }
 
-        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, bufferCopySize);
+        specializedHandle = SharedUtils.wrapWithAllocatorForUpcall(specializedHandle, argAllocatorPos, bufferCopySize);
 
         return specializedHandle;
     }
@@ -268,6 +291,7 @@ public class ProgrammableUpcallHandler {
         }
     }
 
+    public static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, VMStorage[] conv);
     public static native long allocateUpcallStub(InterpretedHandler handler, ABIDescriptor abi, BufferLayout layout);
 
     private static native void registerNatives();

@@ -1138,7 +1138,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
 // 64 bits items (x86_32/64 abi) even though java would only store
 // 32bits for a parameter. On 32bit it will simply be 32 bits
 // So this routine will do 32->32 on 32bit and 32->64 on 64bit
-static void move32_64(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
+void SharedRuntime::move32_64(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
   if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
       // stack to stack
@@ -1256,7 +1256,7 @@ static void object_move(MacroAssembler* masm,
 }
 
 // A float arg may have to do float reg int reg conversion
-static void float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
+void SharedRuntime::float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
   assert(!src.second()->is_valid() && !dst.second()->is_valid(), "bad float_move");
 
   // The calling conventions assures us that each VMregpair is either
@@ -1285,7 +1285,7 @@ static void float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
 }
 
 // A long move
-static void long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
+void SharedRuntime::long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
 
   // The calling conventions assures us that each VMregpair is either
   // all really one physical register or adjacent stack slots.
@@ -1310,7 +1310,7 @@ static void long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
 }
 
 // A double move
-static void double_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
+void SharedRuntime::double_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
 
   // The calling conventions assures us that each VMregpair is either
   // all really one physical register or adjacent stack slots.
@@ -1394,7 +1394,7 @@ static void restore_args(MacroAssembler *masm, int arg_count, int first_arg, VMR
 
 // Unpack an array argument into a pointer to the body and the length
 // if the array is non-null, otherwise pass 0 for both.
-static void unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg) {
+void SharedRuntime::unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg) {
   Register tmp_reg = rax;
   assert(!body_arg.first()->is_Register() || body_arg.first()->as_Register() != tmp_reg,
          "possible collision");
@@ -1512,8 +1512,8 @@ class ComputeMoveOrder: public StackObj {
   GrowableArray<MoveOperation*> edges;
 
  public:
-  ComputeMoveOrder(int total_in_args, VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
-                    BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
+  ComputeMoveOrder(int total_in_args, const VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
+                  const BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
     // Move operations where the dest is the stack can all be
     // scheduled first since they can't interfere with the other moves.
     for (int i = total_in_args - 1, c_arg = total_c_args - 1; i >= 0; i--, c_arg--) {
@@ -4015,3 +4015,13 @@ void OptoRuntime::generate_exception_blob() {
   _exception_blob =  ExceptionBlob::create(&buffer, oop_maps, SimpleRuntimeFrame::framesize >> 1);
 }
 #endif // COMPILER2
+
+void SharedRuntime::compute_move_order(const BasicType* in_sig_bt,
+                                       int total_in_args, const VMRegPair* in_regs,
+                                       int total_out_args, VMRegPair* out_regs,
+                                       GrowableArray<int>& arg_order,
+                                       VMRegPair tmp_vmreg) {
+  ComputeMoveOrder order(total_in_args, in_regs,
+                         total_out_args, out_regs,
+                         in_sig_bt, arg_order, tmp_vmreg);
+}

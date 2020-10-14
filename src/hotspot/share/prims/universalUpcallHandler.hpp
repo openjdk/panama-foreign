@@ -46,6 +46,7 @@ private:
   static void upcall_helper(JavaThread* thread, jobject rec, address buff);
   static void attach_thread_and_do_upcall(jobject rec, address buff);
 public:
+  static address generate_optimized_upcall_stub(jobject mh, Method* entry, jobject jabi, jobject jconv);
   static address generate_upcall_stub(jobject rec, jobject abi, jobject buffer_layout);
 };
 

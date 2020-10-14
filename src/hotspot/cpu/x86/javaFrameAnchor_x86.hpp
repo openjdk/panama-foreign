@@ -78,8 +78,6 @@ public:
 
   intptr_t** saved_rbp_address(void) const       { return _saved_rbp_address; }
 
-private:
-
   static ByteSize last_Java_fp_offset()          { return byte_offset_of(JavaFrameAnchor, _last_Java_fp); }
   static ByteSize saved_rbp_address_offset()     { return byte_offset_of(JavaFrameAnchor, _saved_rbp_address); }
 

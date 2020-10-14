@@ -240,7 +240,7 @@ public class ProgrammableInvoker {
         }
 
         if (bufferCopySize > 0) {
-            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, bufferCopySize);
+            specializedHandle = SharedUtils.wrapWithAllocatorForDowncall(specializedHandle, argAllocatorPos, bufferCopySize);
         }
         return specializedHandle;
     }
