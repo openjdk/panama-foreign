@@ -140,10 +140,10 @@ public class CallArranger {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
-            target = SharedUtils.adaptUpcallForIMR(target);
+            target = SharedUtils.adaptUpcallForIMR(target, false /* need the return value as well */);
         }
 
-        return new ProgrammableUpcallHandler(CWindows, target, bindings.callingSequence);
+        return ProgrammableUpcallHandler.make(CWindows, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {

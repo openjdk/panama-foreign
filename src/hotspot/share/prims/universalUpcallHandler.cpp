@@ -77,20 +77,20 @@ const ProgrammableUpcallHandler& ProgrammableUpcallHandler::instance() {
 ProgrammableUpcallHandler::ProgrammableUpcallHandler() {
   Thread* THREAD = Thread::current();
   ResourceMark rm(THREAD);
-  Symbol* sym = SymbolTable::new_symbol(FOREIGN_ABI "ProgrammableUpcallHandler");
+  Symbol* sym = SymbolTable::new_symbol(FOREIGN_ABI "ProgrammableUpcallHandler$InterpretedHandler");
   Klass* k = SystemDictionary::resolve_or_null(sym, Handle(), Handle(), CATCH);
   k->initialize(CATCH);
 
   upcall_method.klass = k;
   upcall_method.name = SymbolTable::new_symbol("invoke");
-  upcall_method.sig = SymbolTable::new_symbol("(L" FOREIGN_ABI "ProgrammableUpcallHandler;J)V");
+  upcall_method.sig = SymbolTable::new_symbol("(L" FOREIGN_ABI "ProgrammableUpcallHandler$InterpretedHandler;J)V");
 
   assert(upcall_method.klass->lookup_method(upcall_method.name, upcall_method.sig) != nullptr,
     "Could not find upcall method: %s.%s%s", upcall_method.klass->external_name(),
     upcall_method.name->as_C_string(), upcall_method.sig->as_C_string());
 }
 
-JNI_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jobject rec, jobject abi, jobject buffer_layout))
+JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec, jobject abi, jobject buffer_layout))
   Handle receiver(THREAD, JNIHandles::resolve(rec));
   jobject global_rec = JNIHandles::make_global(receiver);
   return (jlong) ProgrammableUpcallHandler::generate_upcall_stub(global_rec, abi, buffer_layout);
@@ -100,7 +100,11 @@ JNI_END
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod PUH_methods[] = {
+<<<<<<< HEAD
   {CC "allocateUpcallStub", CC "(L" FOREIGN_ABI "ABIDescriptor;L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
+=======
+  {CC "allocateUpcallStub", CC "(" FOREIGN_ABI "/ProgrammableUpcallHandler$InterpretedHandler;" FOREIGN_ABI "/ABIDescriptor;" FOREIGN_ABI "/BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
+>>>>>>> b56cc46bb13... Add upcall MH spec
 };
 
 /**

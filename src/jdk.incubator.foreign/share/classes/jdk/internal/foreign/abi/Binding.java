@@ -922,7 +922,7 @@ public abstract class Binding {
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle toSegmentHandle = insertArguments(MH_TO_SEGMENT, 1, size);
-            specializedHandle = filterArguments(specializedHandle, insertPos, toSegmentHandle);
+            specializedHandle = collectArguments(specializedHandle, insertPos, toSegmentHandle);
             return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
