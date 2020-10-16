@@ -221,14 +221,6 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
 
         @Override
-        MemoryScope confineTo(Thread newOwner) {
-            if (newOwner == owner) {
-                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-            }
-            return super.confineTo(newOwner);
-        }
-
-        @Override
         Thread ownerThread() {
             return owner;
         }
