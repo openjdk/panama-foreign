@@ -35,13 +35,13 @@ import jdk.incubator.jextract.Type;
  */
 class StructBuilder extends NestedClassBuilder {
 
-    private final MemoryLayout parentLayout;
+    private final GroupLayout parentLayout;
     private final String structAnno;
     private final String structArrayAnno;
     private final String structPtrAnno;
     private final Type structType;
 
-    StructBuilder(JavaSourceBuilder enclosing, String className, MemoryLayout parentLayout, Type structType) {
+    StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout parentLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
         this.parentLayout = parentLayout;
         this.structAnno = annotationWriter.getCAnnotation(structType);
@@ -291,7 +291,7 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     String layoutField() {
-        GroupLayout groupLayout = (GroupLayout)parentLayout;
+        GroupLayout groupLayout = parentLayout;
         String suffix = groupLayout.isUnion() ? "union" : "struct";
         return qualifiedName(this) + "$" + suffix;
     }

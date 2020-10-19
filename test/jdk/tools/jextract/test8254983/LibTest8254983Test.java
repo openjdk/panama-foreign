@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -47,6 +48,7 @@ import static test.jextract.test8254983.test8254983_h.*;
 public class LibTest8254983Test {
     @Test
     public void testOuterStruct() {
+        assertEquals(((GroupLayout)Foo._struct.$LAYOUT()).memberLayouts().size(), 1);
         MemorySegment str = Foo._struct.allocate();
         Foo._struct.x$set(str, 42);
         assertEquals(Foo._struct.x$get(str), 42);
@@ -54,6 +56,7 @@ public class LibTest8254983Test {
 
     @Test
     public void testInnerStruct() {
+        assertEquals(((GroupLayout)Foo._union._struct.$LAYOUT()).memberLayouts().size(), 2);
         MemorySegment str = Foo._union._struct.allocate();
         Foo._union._struct.x$set(str, 42);
         assertEquals(Foo._union._struct.x$get(str), 42);

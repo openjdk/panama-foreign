@@ -197,7 +197,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 case UNION: {
                     structClass = true;
                     String className = d.name().isEmpty() ? parent.name() : d.name();
-                    MemoryLayout parentLayout = parentLayout(d);
+                    GroupLayout parentLayout = (GroupLayout)parentLayout(d);
                     currentBuilder = currentBuilder.newStructBuilder(className, parentLayout, Type.declared(d));
                     addStructDefinition(d, currentBuilder.className);
                     currentBuilder.classBegin();
