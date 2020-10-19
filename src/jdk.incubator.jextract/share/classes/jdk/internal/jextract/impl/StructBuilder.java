@@ -24,6 +24,7 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
@@ -34,17 +35,14 @@ import jdk.incubator.jextract.Type;
  */
 class StructBuilder extends NestedClassBuilder {
 
-    private final String parentLayoutFieldName;
     private final MemoryLayout parentLayout;
     private final String structAnno;
     private final String structArrayAnno;
     private final String structPtrAnno;
     private final Type structType;
 
-    StructBuilder(JavaSourceBuilder enclosing, String className, String parentLayoutFieldName,
-                  MemoryLayout parentLayout, Type structType) {
+    StructBuilder(JavaSourceBuilder enclosing, String className, MemoryLayout parentLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
-        this.parentLayoutFieldName = parentLayoutFieldName;
         this.parentLayout = parentLayout;
         this.structAnno = annotationWriter.getCAnnotation(structType);
         this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
@@ -71,12 +69,12 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private String getQualifiedName(String fieldName) {
-        return className + "$" + fieldName;
+        return qualifiedName(this) + "$" + fieldName;
     }
 
     @Override
     void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, parentLayoutFieldName, parentLayout);
+        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), parentLayout);
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + javaName + "$VH() {\n");
@@ -277,6 +275,24 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private String fieldVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, parentLayoutFieldName, parentLayout));
+        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), parentLayout));
+    }
+
+    private String qualifiedName(JavaSourceBuilder builder) {
+        if (builder instanceof NestedClassBuilder) {
+            NestedClassBuilder nestedClassBuilder = (NestedClassBuilder)builder;
+            String prefix = qualifiedName(nestedClassBuilder.enclosing);
+            return prefix.isEmpty() ?
+                    nestedClassBuilder.className :
+                    prefix + "$" + nestedClassBuilder.className;
+        } else {
+            return "";
+        }
+    }
+
+    String layoutField() {
+        GroupLayout groupLayout = (GroupLayout)parentLayout;
+        String suffix = groupLayout.isUnion() ? "union" : "struct";
+        return qualifiedName(this) + "$" + suffix;
     }
 }
