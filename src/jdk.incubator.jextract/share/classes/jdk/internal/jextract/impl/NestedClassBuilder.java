@@ -27,7 +27,7 @@ package jdk.internal.jextract.impl;
 
 public abstract class NestedClassBuilder extends JavaSourceBuilder {
 
-    private final JavaSourceBuilder enclosing;
+    protected final JavaSourceBuilder enclosing;
 
     public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
         super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper, enclosing.annotationWriter);

@@ -25,6 +25,7 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Type;
 
@@ -241,7 +242,7 @@ abstract class JavaSourceBuilder {
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
     }
 
-    StructBuilder newStructBuilder(String name, String parentLayoutFieldName, MemoryLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayoutFieldName, parentLayout, type);
+    StructBuilder newStructBuilder(String name, GroupLayout parentLayout, Type type) {
+        return new StructBuilder(this, name, parentLayout, type);
     }
 }
