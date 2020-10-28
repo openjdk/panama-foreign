@@ -136,6 +136,16 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
+    public void copyFromSwap(MemorySegment src, long elemSize) {
+        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
+        long size = that.byteSize();
+        checkAccess(0, size, false);
+        that.checkAccess(0, size, true);
+        SCOPED_MEMORY_ACCESS.copySwapMemory(scope, that.scope,
+                that.base(), that.min(),
+                base(), min(), size, elemSize);
+    }
+
     private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
             .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
@@ -297,6 +307,22 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             VarHandle.fullFence();
         }
     }
+
+   @Override
+    public MemorySegment handoff(NativeScope scope) {
+        Objects.requireNonNull(scope);
+        checkValidState();
+        if (!isSet(HANDOFF)) {
+            throw unsupportedAccessMode(HANDOFF);
+        }
+        if (!isSet(CLOSE)) {
+            throw unsupportedAccessMode(CLOSE);
+        }
+        MemorySegment dup = handoff(scope.ownerThread());
+        ((AbstractNativeScope)scope).register(dup);
+        return dup.withAccessModes(accessModes() & (READ | WRITE));
+    }
+
 
     @Override
     public MemorySegment registerCleaner(Cleaner cleaner) {

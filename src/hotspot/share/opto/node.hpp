@@ -50,6 +50,7 @@ class CallJavaNode;
 class CallLeafNode;
 class CallNode;
 class CallRuntimeNode;
+class CallNativeNode;
 class CallStaticJavaNode;
 class CastIINode;
 class CatchNode;
@@ -91,6 +92,7 @@ class MachCallDynamicJavaNode;
 class MachCallJavaNode;
 class MachCallLeafNode;
 class MachCallNode;
+class MachCallNativeNode;
 class MachCallRuntimeNode;
 class MachCallStaticJavaNode;
 class MachConstantBaseNode;
@@ -630,6 +632,7 @@ public:
             DEFINE_CLASS_ID(Lock,             AbstractLock, 0)
             DEFINE_CLASS_ID(Unlock,           AbstractLock, 1)
           DEFINE_CLASS_ID(ArrayCopy,        Call, 4)
+          DEFINE_CLASS_ID(CallNative,       Call, 5)
       DEFINE_CLASS_ID(MultiBranch, Multi, 1)
         DEFINE_CLASS_ID(PCTable,     MultiBranch, 0)
           DEFINE_CLASS_ID(Catch,       PCTable, 0)
@@ -653,6 +656,7 @@ public:
               DEFINE_CLASS_ID(MachCallDynamicJava,  MachCallJava, 1)
             DEFINE_CLASS_ID(MachCallRuntime,      MachCall, 1)
               DEFINE_CLASS_ID(MachCallLeaf,         MachCallRuntime, 0)
+            DEFINE_CLASS_ID(MachCallNative,       MachCall, 2)
       DEFINE_CLASS_ID(MachBranch, Mach, 1)
         DEFINE_CLASS_ID(MachIf,         MachBranch, 0)
         DEFINE_CLASS_ID(MachGoto,       MachBranch, 1)
@@ -808,6 +812,7 @@ public:
   DEFINE_CLASS_QUERY(Bool)
   DEFINE_CLASS_QUERY(BoxLock)
   DEFINE_CLASS_QUERY(Call)
+  DEFINE_CLASS_QUERY(CallNative)
   DEFINE_CLASS_QUERY(CallDynamicJava)
   DEFINE_CLASS_QUERY(CallJava)
   DEFINE_CLASS_QUERY(CallLeaf)
@@ -848,6 +853,7 @@ public:
   DEFINE_CLASS_QUERY(Mach)
   DEFINE_CLASS_QUERY(MachBranch)
   DEFINE_CLASS_QUERY(MachCall)
+  DEFINE_CLASS_QUERY(MachCallNative)
   DEFINE_CLASS_QUERY(MachCallDynamicJava)
   DEFINE_CLASS_QUERY(MachCallJava)
   DEFINE_CLASS_QUERY(MachCallLeaf)
