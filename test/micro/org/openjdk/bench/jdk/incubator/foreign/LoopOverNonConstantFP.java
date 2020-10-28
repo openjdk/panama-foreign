@@ -60,51 +60,45 @@ public class LoopOverNonConstantFP {
     static final int CARRIER_SIZE = (int)JAVA_DOUBLE.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
-    MemorySegment segmentIn1, segmentIn2, segmentOut;
-    long unsafe_addrIn1, unsafe_addrIn2, unsafe_addrOut;
-    ByteBuffer byteBufferIn1, byteBufferIn2, byteBufferOut;
+    MemorySegment segmentIn, segmentOut;
+    long unsafe_addrIn, unsafe_addrOut;
+    ByteBuffer byteBufferIn, byteBufferOut;
 
     @Setup
     public void setup() {
-        unsafe_addrIn1 = unsafe.allocateMemory(ALLOC_SIZE);
-        unsafe_addrIn2 = unsafe.allocateMemory(ALLOC_SIZE);
+        unsafe_addrIn = unsafe.allocateMemory(ALLOC_SIZE);
         unsafe_addrOut = unsafe.allocateMemory(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            unsafe.putDouble(unsafe_addrIn1 + (i * CARRIER_SIZE) , i);
+            unsafe.putDouble(unsafe_addrIn + (i * CARRIER_SIZE) , i);
         }
         for (int i = 0; i < ELEM_SIZE; i++) {
-            unsafe.putDouble(unsafe_addrIn2 + (i * CARRIER_SIZE) , i);
+            unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE) , i);
         }
-        segmentIn1 = MemorySegment.allocateNative(ALLOC_SIZE);
-        segmentIn2 = MemorySegment.allocateNative(ALLOC_SIZE);
+        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE);
         segmentOut = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            MemoryAccess.setDoubleAtIndex(segmentIn1, i, i);
+            MemoryAccess.setDoubleAtIndex(segmentIn, i, i);
         }
         for (int i = 0; i < ELEM_SIZE; i++) {
-            MemoryAccess.setDoubleAtIndex(segmentIn2, i, i);
+            MemoryAccess.setDoubleAtIndex(segmentOut, i, i);
         }
-        byteBufferIn1 = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
-        byteBufferIn2 = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
+        byteBufferIn = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         byteBufferOut = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
-            byteBufferIn1.putDouble(i * CARRIER_SIZE , i);
+            byteBufferIn.putDouble(i * CARRIER_SIZE , i);
         }
         for (int i = 0; i < ELEM_SIZE; i++) {
-            byteBufferIn2.putDouble(i * CARRIER_SIZE , i);
+            byteBufferOut.putDouble(i * CARRIER_SIZE , i);
         }
     }
 
     @TearDown
     public void tearDown() {
-        segmentIn1.close();
-        segmentIn2.close();
+        segmentIn.close();
         segmentOut.close();
-        unsafe.invokeCleaner(byteBufferIn1);
-        unsafe.invokeCleaner(byteBufferIn2);
+        unsafe.invokeCleaner(byteBufferIn);
         unsafe.invokeCleaner(byteBufferOut);
-        unsafe.freeMemory(unsafe_addrIn1);
-        unsafe.freeMemory(unsafe_addrIn2);
+        unsafe.freeMemory(unsafe_addrIn);
         unsafe.freeMemory(unsafe_addrOut);
     }
 
@@ -112,8 +106,8 @@ public class LoopOverNonConstantFP {
     public void unsafe_loop() {
         for (int i = 0; i < ELEM_SIZE; i ++) {
             unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE),
-                    unsafe.getDouble(unsafe_addrIn1 + (i * CARRIER_SIZE)) +
-                    unsafe.getDouble(unsafe_addrIn2 + (i * CARRIER_SIZE)));
+                    unsafe.getDouble(unsafe_addrIn + (i * CARRIER_SIZE)) +
+                    unsafe.getDouble(unsafe_addrOut + (i * CARRIER_SIZE)));
         }
     }
 
@@ -121,8 +115,8 @@ public class LoopOverNonConstantFP {
     public void segment_loop() {
         for (int i = 0; i < ELEM_SIZE; i ++) {
             MemoryAccess.setDoubleAtIndex(segmentOut, i,
-                    MemoryAccess.getDoubleAtIndex(segmentIn1, i) +
-                    MemoryAccess.getDoubleAtIndex(segmentIn2, i));
+                    MemoryAccess.getDoubleAtIndex(segmentIn, i) +
+                    MemoryAccess.getDoubleAtIndex(segmentOut, i));
         }
     }
 
@@ -130,8 +124,8 @@ public class LoopOverNonConstantFP {
     public void BB_loop() {
         for (int i = 0; i < ELEM_SIZE; i++) {
             byteBufferOut.putDouble(i * CARRIER_SIZE,
-                    byteBufferIn1.getDouble(i * CARRIER_SIZE) +
-                    byteBufferIn2.getDouble(i * CARRIER_SIZE));
+                    byteBufferIn.getDouble(i * CARRIER_SIZE) +
+                    byteBufferOut.getDouble(i * CARRIER_SIZE));
         }
     }
 }
