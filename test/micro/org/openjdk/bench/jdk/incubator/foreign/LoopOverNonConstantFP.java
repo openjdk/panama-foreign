@@ -44,7 +44,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
+import static jdk.incubator.foreign.MemoryLayouts.JAVA_DOUBLE;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -52,116 +52,80 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Fork(3)
-public class LoopOverNonConstant {
+public class LoopOverNonConstantFP {
 
     static final Unsafe unsafe = Utils.unsafe;
 
     static final int ELEM_SIZE = 1_000_000;
-    static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
+    static final int CARRIER_SIZE = (int)JAVA_DOUBLE.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
-    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
-    MemorySegment segment;
-    long unsafe_addr;
-
-    ByteBuffer byteBuffer;
+    MemorySegment segmentIn, segmentOut;
+    long unsafe_addrIn, unsafe_addrOut;
+    ByteBuffer byteBufferIn, byteBufferOut;
 
     @Setup
     public void setup() {
-        unsafe_addr = unsafe.allocateMemory(ALLOC_SIZE);
+        unsafe_addrIn = unsafe.allocateMemory(ALLOC_SIZE);
+        unsafe_addrOut = unsafe.allocateMemory(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
+            unsafe.putDouble(unsafe_addrIn + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment, (long) i, i);
+            unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE) , i);
         }
-        byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
+        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE);
+        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
-            byteBuffer.putInt(i * CARRIER_SIZE , i);
+            MemoryAccess.setDoubleAtIndex(segmentIn, i, i);
+        }
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            MemoryAccess.setDoubleAtIndex(segmentOut, i, i);
+        }
+        byteBufferIn = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
+        byteBufferOut = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            byteBufferIn.putDouble(i * CARRIER_SIZE , i);
+        }
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            byteBufferOut.putDouble(i * CARRIER_SIZE , i);
         }
     }
 
     @TearDown
     public void tearDown() {
-        segment.close();
-        unsafe.invokeCleaner(byteBuffer);
-        unsafe.freeMemory(unsafe_addr);
+        segmentIn.close();
+        segmentOut.close();
+        unsafe.invokeCleaner(byteBufferIn);
+        unsafe.invokeCleaner(byteBufferOut);
+        unsafe.freeMemory(unsafe_addrIn);
+        unsafe.freeMemory(unsafe_addrOut);
     }
 
     @Benchmark
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public int unsafe_get() {
-        return unsafe.getInt(unsafe_addr);
-    }
-
-    @Benchmark
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public int segment_get() {
-        return (int) VH_int.get(segment, 0L);
-    }
-
-    @Benchmark
-    @OutputTimeUnit(TimeUnit.NANOSECONDS)
-    public int BB_get() {
-        return byteBuffer.getInt(0);
-    }
-
-    @Benchmark
-    public int unsafe_loop() {
-        int res = 0;
+    public void unsafe_loop() {
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += unsafe.getInt(unsafe_addr + (i * CARRIER_SIZE));
+            unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE),
+                    unsafe.getDouble(unsafe_addrIn + (i * CARRIER_SIZE)) +
+                    unsafe.getDouble(unsafe_addrOut + (i * CARRIER_SIZE)));
         }
-        return res;
     }
 
     @Benchmark
-    public int segment_loop_static() {
-        int res = 0;
+    public void segment_loop() {
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.getIntAtIndex(segment, i);
+            MemoryAccess.setDoubleAtIndex(segmentOut, i,
+                    MemoryAccess.getDoubleAtIndex(segmentIn, i) +
+                    MemoryAccess.getDoubleAtIndex(segmentOut, i));
         }
-        return res;
     }
 
     @Benchmark
-    public int segment_loop() {
-        int sum = 0;
+    public void BB_loop() {
         for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += (int) VH_int.get(segment, (long) i);
+            byteBufferOut.putDouble(i * CARRIER_SIZE,
+                    byteBufferIn.getDouble(i * CARRIER_SIZE) +
+                    byteBufferOut.getDouble(i * CARRIER_SIZE));
         }
-        return sum;
     }
-
-    @Benchmark
-    public int segment_loop_slice() {
-        int sum = 0;
-        MemorySegment base = segment.asSlice(0, segment.byteSize());
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += (int) VH_int.get(base, (long) i);
-        }
-        return sum;
-    }
-
-    @Benchmark
-    public int segment_loop_readonly() {
-        int sum = 0;
-        MemorySegment base = segment.withAccessModes(MemorySegment.READ);
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += (int) VH_int.get(base, (long) i);
-        }
-        return sum;
-    }
-
-    @Benchmark
-    public int BB_loop() {
-        int sum = 0;
-        ByteBuffer bb = byteBuffer;
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            sum += bb.getInt(i * CARRIER_SIZE);
-        }
-        return sum;
-    }
-
 }
