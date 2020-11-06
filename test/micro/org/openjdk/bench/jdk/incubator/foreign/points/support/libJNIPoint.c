@@ -23,7 +23,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include <math.h>
-  
+
 #include "jlong.h"
 
 #include "points.h"
