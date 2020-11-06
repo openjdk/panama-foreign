@@ -431,6 +431,10 @@ jdk.internal.jvmstat_COPY += aliasmap
 
 ################################################################################
 
+jdk.incubator.jextract_COPY += .properties .template
+
+################################################################################
+
 # -parameters provides method's parameters information in class file,
 # JVMCI compilers make use of that information for various sanity checks.
 # Don't use Indy strings concatenation to have good JVMCI startup performance.

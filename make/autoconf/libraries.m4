@@ -33,6 +33,7 @@ m4_include([lib-std.m4])
 m4_include([lib-x11.m4])
 m4_include([lib-fontconfig.m4])
 m4_include([lib-tests.m4])
+m4_include([lib-clang.m4])
 
 ################################################################################
 # Determine which libraries are needed for this configuration
@@ -105,6 +106,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   LIB_SETUP_MISC_LIBS
   LIB_TESTS_SETUP_GRAALUNIT
   LIB_TESTS_SETUP_GTEST
+  LIB_SETUP_LIBCLANG
 
   BASIC_JDKLIB_LIBS=""
   if test "x$TOOLCHAIN_TYPE" != xmicrosoft; then

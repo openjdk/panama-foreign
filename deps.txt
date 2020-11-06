@@ -1,2 +1,2 @@
-foreign-memaccess
+foreign-abi
 
