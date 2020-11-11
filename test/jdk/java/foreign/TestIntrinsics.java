@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires os.arch=="amd64"
  * @run testng/othervm
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
