@@ -308,7 +308,7 @@ public class CallArranger {
                             .baseAddress()
                             .unboxAddress();
                     VMStorage storage = storageCalculator.nextStorage(
-                        StorageClasses.INTEGER, layout);
+                        StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmStore(storage, long.class);
                     break;
                 }
@@ -403,7 +403,8 @@ public class CallArranger {
                 }
                 case STRUCT_REFERENCE: {
                     assert carrier == MemorySegment.class;
-                    VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
+                    VMStorage storage = storageCalculator.nextStorage(
+                        StorageClasses.INTEGER, AArch64.C_POINTER);
                     bindings.vmLoad(storage, long.class)
                             .boxAddress()
                             .toSegment(layout);
