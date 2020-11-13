@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -38,6 +36,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -172,20 +172,14 @@ public class TestCleaner {
                 (Supplier<Cleaner>)CleanerFactory::cleaner
         };
 
-        RegisterKind[] kinds = RegisterKind.values();
-
-        SegmentFunction[] segmentFunctions = SegmentFunction.values();
-        Object[][] data = new Object[cleaners.length * kinds.length * segmentFunctions.length][3];
-
-        for (int kind = 0 ; kind < kinds.length ; kind++) {
-            for (int cleaner = 0 ; cleaner < cleaners.length ; cleaner++) {
-                for (int segmentFunction = 0 ; segmentFunction < segmentFunctions.length ; segmentFunction++) {
-                    data[kind + kinds.length * cleaner + (cleaners.length * kinds.length * segmentFunction)] =
-                            new Object[] { kinds[kind], cleaners[cleaner], segmentFunctions[segmentFunction] };
+        List<Object[]> data = new ArrayList<>();
+        for (RegisterKind kind : RegisterKind.values()) {
+            for (Object cleaner : cleaners) {
+                for (SegmentFunction segmentFunction : SegmentFunction.values()) {
+                    data.add(new Object[] {kind, cleaner, segmentFunction});
                 }
             }
         }
-
-        return data;
+        return data.toArray(Object[][]::new);
     }
 }
