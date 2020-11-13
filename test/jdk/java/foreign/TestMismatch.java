@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @run testng/othervm -XX:MaxDirectMemorySize=5000000000 TestMismatch
+ * @run testng TestMismatch
  */
 
 import java.lang.invoke.VarHandle;
