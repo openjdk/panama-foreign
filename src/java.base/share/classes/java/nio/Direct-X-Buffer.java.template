@@ -31,6 +31,7 @@ import java.io.FileDescriptor;
 import java.lang.ref.Reference;
 import java.util.Objects;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.misc.ScopedMemoryAccess.Scope;
 import jdk.internal.misc.VM;
 import jdk.internal.ref.Cleaner;
 import sun.nio.ch.DirectBuffer;
@@ -264,6 +265,17 @@ class Direct$Type$Buffer$RW$$BO$
 #if[rw]
 
     public long address() {
+        Scope scope = scope();
+        if (scope != null) {
+            if (scope.ownerThread() == null) {
+                throw new UnsupportedOperationException("ByteBuffer derived from shared segments not supported");
+            }
+            try {
+                scope.checkValidState();
+            } catch (Scope.ScopedAccessError e) {
+                throw new IllegalStateException("This segment is already closed");
+            }
+        }
         return address;
     }
 
@@ -411,7 +423,6 @@ class Direct$Type$Buffer$RW$$BO$
 
     public $Type$Buffer put(int index, $Type$Buffer src, int offset, int length) {
 #if[rw]
-        checkSegment();
         super.put(index, src, offset, length);
         return this;
 #else[rw]
@@ -479,11 +490,9 @@ class Direct$Type$Buffer$RW$$BO$
                                           (long)1 << $LG_BYTES_PER_VALUE$);
                 else
 #end[!byte]
-                    SCOPED_MEMORY_ACCESS.copyMemory(scope(), null, src,
-                                      srcOffset,
-                                      null,
-                                      ix(index),
-                                      (long)length << $LG_BYTES_PER_VALUE$);
+                    SCOPED_MEMORY_ACCESS.copyMemory(
+                            scope(), null, src,
+                            srcOffset, null, ix(index), (long)length << $LG_BYTES_PER_VALUE$);
             } finally {
                 Reference.reachabilityFence(this);
             }
@@ -503,7 +512,8 @@ class Direct$Type$Buffer$RW$$BO$
         assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
         try {
-            SCOPED_MEMORY_ACCESS.copyMemory(scope(), null, null, ix(pos), null, ix(0), (long)rem << $LG_BYTES_PER_VALUE$);
+            SCOPED_MEMORY_ACCESS.copyMemory(scope(), null, null,
+                    ix(pos), null, ix(0), (long)rem << $LG_BYTES_PER_VALUE$);
         } finally {
             Reference.reachabilityFence(this);
         }

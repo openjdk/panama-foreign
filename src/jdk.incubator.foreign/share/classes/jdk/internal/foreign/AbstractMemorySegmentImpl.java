@@ -31,7 +31,6 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
@@ -56,7 +55,6 @@ import java.util.function.IntFunction;
  */
 public abstract class AbstractMemorySegmentImpl implements MemorySegment, MemorySegmentProxy {
 
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     private static final boolean enableSmallSegments =
@@ -136,9 +134,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
                 base(), min(), size);
     }
 
-    private final static VarHandle BYTE_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
-            .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-
     @Override
     public long mismatch(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)other;
@@ -154,7 +149,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
 
         long i = 0;
         if (length > 7) {
-            if ((byte) BYTE_HANDLE.get(this, 0) != (byte) BYTE_HANDLE.get(that, 0)) {
+            if (MemoryAccess.getByte(this) != MemoryAccess.getByte(that)) {
                 return 0;
             }
             i = vectorizedMismatchLargeForBytes(scope, that.scope,
@@ -169,7 +164,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
             i = length - remaining;
         }
         for (; i < length; i++) {
-            if ((byte) BYTE_HANDLE.get(this, i) != (byte) BYTE_HANDLE.get(that, i)) {
+            if (MemoryAccess.getByteAtOffset(this, i) != MemoryAccess.getByteAtOffset(that, i)) {
                 return i;
             }
         }
@@ -318,8 +313,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
     }
 
     @Override
-    public Optional<FileDescriptor> fileDescriptor() {
-        return Optional.empty();
+    public boolean isMapped() {
+        return false;
     }
 
     @Override

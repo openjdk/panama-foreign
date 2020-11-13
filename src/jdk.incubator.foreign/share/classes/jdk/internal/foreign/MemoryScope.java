@@ -47,7 +47,7 @@ import java.util.Objects;
  * Shared scopes do not feature an owner thread - meaning their operations can be called, in a racy
  * manner, by multiple threads. To guarantee temporal safety in the presence of concurrent thread,
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
- * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}.
+ * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
 abstract class MemoryScope implements ScopedMemoryAccess.Scope {
 
@@ -113,7 +113,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    MemoryScope confineTo(Thread newOwner) {
+    final MemoryScope confineTo(Thread newOwner) {
         try {
             justClose();
             if (scopeCleanable != null) {
@@ -133,7 +133,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * a confined scope and this method is called outside of the owner thread,
      * or if this is already a shared scope.
      */
-    MemoryScope share() {
+    final MemoryScope share() {
         try {
             justClose();
             if (scopeCleanable != null) {
@@ -146,7 +146,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
     }
 
-    MemoryScope cleanable(Cleaner cleaner) {
+    final MemoryScope cleanable(Cleaner cleaner) {
         if (scopeCleanable != null) {
             throw new IllegalStateException("Already registered with a cleaner");
         }
@@ -164,7 +164,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * Returns "owner" thread of this scope.
      * @return owner thread (or null for a shared scope)
      */
-    abstract Thread ownerThread();
+    public abstract Thread ownerThread();
 
     /**
      * Returns true, if this scope is still alive. This method may be called in any thread.
@@ -221,15 +221,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
 
         @Override
-        MemoryScope confineTo(Thread newOwner) {
-            if (newOwner == owner) {
-                throw new IllegalArgumentException("Segment already owned by thread: " + newOwner);
-            }
-            return super.confineTo(newOwner);
-        }
-
-        @Override
-        Thread ownerThread() {
+        public Thread ownerThread() {
             return owner;
         }
     }
@@ -269,7 +261,7 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         }
 
         @Override
-        Thread ownerThread() {
+        public Thread ownerThread() {
             return null;
         }
 
