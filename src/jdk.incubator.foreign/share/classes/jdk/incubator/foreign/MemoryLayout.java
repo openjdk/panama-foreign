@@ -31,6 +31,8 @@ import jdk.internal.foreign.Utils;
 
 import java.lang.constant.Constable;
 import java.lang.constant.DynamicConstantDesc;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.EnumSet;
@@ -40,6 +42,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -354,6 +357,17 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
+     * Each unbound sequenceElement path element is turned into a {@code long} coordinate.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle that can be used to compute the bit offset of the layout element
+     * specified by the given layout path elements, when supplied with the missing sequence element indexes.
+     */
+    default MethodHandle bitOffsetHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offsetHandle, EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
+    }
+
+    /**
      * Computes the offset, in bytes, of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
      *
@@ -371,8 +385,20 @@ public interface MemoryLayout extends Constable {
      * in {@code elements} is {@code null}.
      */
     default long byteOffset(PathElement... elements) {
-        return Utils.bitsToBytesOrThrow(bitOffset(elements),
-                () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8"));
+        return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);
+    }
+
+    /**
+     * Each unbound sequenceElement path element is turned into a {@code long} coordinate.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle that can be used to compute the byte offset of the layout element
+     * specified by the given layout path elements, when supplied with the missing sequence element indexes.
+     */
+    default MethodHandle byteOffsetHandle(PathElement... elements) {
+        MethodHandle mh = bitOffsetHandle(elements);
+        mh = MethodHandles.filterReturnValue(mh, Utils.MH_bitsToBytesOrThrowForOffset);
+        return mh;
     }
 
     /**

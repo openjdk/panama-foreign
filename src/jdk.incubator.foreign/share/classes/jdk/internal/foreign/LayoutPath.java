@@ -61,11 +61,15 @@ public class LayoutPath {
     private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle ADD_STRIDE;
+    private static final MethodHandle MH_ADD_SCALED_OFFSET;
 
     static {
         try {
-            ADD_STRIDE = MethodHandles.lookup().findStatic(LayoutPath.class, "addStride",
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            ADD_STRIDE = lookup.findStatic(LayoutPath.class, "addStride",
                     MethodType.methodType(long.class, MemorySegment.class, long.class, long.class, long.class));
+            MH_ADD_SCALED_OFFSET = lookup.findStatic(LayoutPath.class, "addScaledOffset",
+                    MethodType.methodType(long.class, long.class, long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -183,6 +187,26 @@ public class LayoutPath {
             handle = MemoryHandles.permuteCoordinates(handle, expectedCoordinates, perms.stream().mapToInt(i -> i).toArray());
         }
         return handle;
+    }
+
+    private static long addScaledOffset(long base, long index, long stride) {
+        return base + (stride * index);
+    }
+
+    public MethodHandle offsetHandle() {
+        MethodHandle mh = MethodHandles.identity(long.class);
+        LayoutPath cur = this;
+        while (cur.enclosing != null) {
+            if (cur.elementIndex == -1) {
+                MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, sizeFunc.applyAsLong(cur.layout));
+                // (J, ...) -> J to (J, J, ...) -> J
+                // i.e. new coord is prefixed. Last coord will correspond to innermost layout
+                mh = MethodHandles.collectArguments(mh, 0, collector);
+            }
+            cur = cur.enclosing;
+        }
+        mh = MethodHandles.insertArguments(mh, 0, offset);
+        return mh;
     }
 
     public MemoryLayout layout() {

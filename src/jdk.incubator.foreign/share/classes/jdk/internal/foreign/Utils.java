@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.VM;
@@ -47,11 +48,21 @@ public final class Utils {
             .orElse("deny");
 
     private static final MethodHandle SEGMENT_FILTER;
+    public static final MethodHandle MH_bitsToBytesOrThrowForOffset;
+
+    public static final Supplier<RuntimeException> bitsToBytesThrowOffset
+        = () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8");
 
     static {
         try {
-            SEGMENT_FILTER = MethodHandles.lookup().findStatic(Utils.class, "filterSegment",
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            SEGMENT_FILTER = lookup.findStatic(Utils.class, "filterSegment",
                     MethodType.methodType(MemorySegmentProxy.class, MemorySegment.class));
+            MH_bitsToBytesOrThrowForOffset = MethodHandles.insertArguments(
+                lookup.findStatic(Utils.class, "bitsToBytesOrThrow",
+                    MethodType.methodType(long.class, long.class, Supplier.class)),
+                1,
+                bitsToBytesThrowOffset);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
