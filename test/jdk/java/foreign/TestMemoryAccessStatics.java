@@ -137,13 +137,13 @@ public class TestMemoryAccessStatics {
             return null;
         }
     }
-    
+
     static final ByteOrder BE = ByteOrder.BIG_ENDIAN;
     static final ByteOrder LE = ByteOrder.LITTLE_ENDIAN;
     static final ByteOrder NE = ByteOrder.nativeOrder();
 
     @DataProvider(name = "accessors")
-    static Object[][] accessors() {        
+    static Object[][] accessors() {
         return new Object[][]{
 
                 {"byte", new Accessor<>((byte) 42,
@@ -335,7 +335,7 @@ public class TestMemoryAccessStatics {
                 {"float/index/BE", new Accessor<>(42f,
                         s -> MemoryAccess.getFloatAtIndex(s, 2, BE), (s, x) -> MemoryAccess.setFloatAtIndex(s, 2, BE, x),
                         (bb) -> bb.order(BE).asFloatBuffer().get(2), (bb, v) -> bb.order(BE).asFloatBuffer().put(2, v))
-                },                
+                },
                 {"double/index", new Accessor<>(42d,
                         s -> MemoryAccess.getDoubleAtIndex(s, 2), (s, x) -> MemoryAccess.setDoubleAtIndex(s, 2, x),
                         (bb) -> bb.order(NE).asDoubleBuffer().get(2), (bb, v) -> bb.order(NE).asDoubleBuffer().put(2, v))
