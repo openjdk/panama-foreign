@@ -269,6 +269,11 @@ public class TestLayouts {
     }
 
     @Test(expectedExceptions = NullPointerException.class)
+    public void testMapWithNullElements() {
+        MemoryLayouts.BITS_8_BE.map(UnaryOperator.identity(), null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
     public void testMapWithNullOp() {
         MemoryLayouts.BITS_8_BE.map(null);
     }
@@ -279,8 +284,18 @@ public class TestLayouts {
     }
 
     @Test(expectedExceptions = NullPointerException.class)
+    public void testBitOffsetWithNullElements() {
+        MemoryLayouts.BITS_8_BE.bitOffset(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
     public void testByteOffsetWithNullPathElement() {
         MemoryLayouts.BITS_8_BE.byteOffset(new MemoryLayout.PathElement[] { null });
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testByteOffsetWithNullElements() {
+        MemoryLayouts.BITS_8_BE.byteOffset(null);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
@@ -289,8 +304,18 @@ public class TestLayouts {
     }
 
     @Test(expectedExceptions = NullPointerException.class)
+    public void testSelectWithNullElements() {
+        MemoryLayouts.BITS_8_BE.select(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
     public void testHandleWithNullPathElement() {
         MemoryLayouts.BITS_8_BE.varHandle(int.class, new MemoryLayout.PathElement[] { null });
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testhandleWithNullElements() {
+        MemoryLayouts.BITS_8_BE.varHandle(null);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
