@@ -289,6 +289,16 @@ public class TestLayouts {
     }
 
     @Test(expectedExceptions = NullPointerException.class)
+    public void testBitOffsetHandleWithNullPathElement() {
+        MemoryLayouts.BITS_8_BE.bitOffsetHandle(new MemoryLayout.PathElement[] { null });
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testBitOffsetHandleWithNullElements() {
+        MemoryLayouts.BITS_8_BE.bitOffsetHandle(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
     public void testByteOffsetWithNullPathElement() {
         MemoryLayouts.BITS_8_BE.byteOffset(new MemoryLayout.PathElement[] { null });
     }
@@ -296,6 +306,16 @@ public class TestLayouts {
     @Test(expectedExceptions = NullPointerException.class)
     public void testByteOffsetWithNullElements() {
         MemoryLayouts.BITS_8_BE.byteOffset(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testByteOffsetHandleWithNullPathElement() {
+        MemoryLayouts.BITS_8_BE.byteOffsetHandle(new MemoryLayout.PathElement[] { null });
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testByteOffsetHandleWithNullElements() {
+        MemoryLayouts.BITS_8_BE.byteOffsetHandle(null);
     }
 
     @Test(expectedExceptions = NullPointerException.class)

@@ -402,13 +402,15 @@ public interface MemoryLayout extends Constable {
      * ({@link PathElement#sequenceElement()}) are accepted, and translated into {@code long} parameters
      * of the returned method handle, to be specified later.
      *
+     * <p>The returned method handle will throw an {@link UnsupportedOperationException} if the computed
+     * offset in bits is not a multiple of 8.
+     *
      * @param elements the layout path elements.
      * @return a method handle that can be used to compute the byte offset of the layout element
      * specified by the given layout path elements, when supplied with the missing sequence element indexes.
      * @throws IllegalArgumentException if the layout path contains one or more path elements that select
      * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
-     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size,
-     * or if {@code bitOffset(elements)} is not a multiple of 8.
+     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
      * @throws NullPointerException if either {@code elements == null}, or if any of the elements
      * in {@code elements} is {@code null}.
      */

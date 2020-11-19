@@ -168,10 +168,59 @@ public class TestLayoutPaths {
         seq.varHandle(int.class, sequenceElement());
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBitOffsetHandleBadRange() {
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(JAVA_INT));
+        seq.bitOffsetHandle(sequenceElement(0, 1)); // ranges not accepted
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testByteOffsetHandleBadRange() {
+        SequenceLayout seq = MemoryLayout.ofSequence(5, MemoryLayout.ofStruct(JAVA_INT));
+        seq.byteOffsetHandle(sequenceElement(0, 1)); // ranges not accepted
+    }
+
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testBadMultiple() {
         GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(3), JAVA_INT.withName("foo"));
         g.byteOffset(PathElement.groupElement("foo"));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testBitOffsetBadUnboundedSequenceTraverse() {
+        MemoryLayout layout = MemoryLayout.ofSequence(MemoryLayout.ofSequence(JAVA_INT));
+        layout.bitOffset(sequenceElement(1), sequenceElement(0));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testByteOffsetBadUnboundedSequenceTraverse() {
+        MemoryLayout layout = MemoryLayout.ofSequence(MemoryLayout.ofSequence(JAVA_INT));
+        layout.byteOffset(sequenceElement(1), sequenceElement(0));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testBitOffsetHandleBadUnboundedSequenceTraverse() {
+        MemoryLayout layout = MemoryLayout.ofSequence(MemoryLayout.ofSequence(JAVA_INT));
+        layout.bitOffsetHandle(sequenceElement(1), sequenceElement(0));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testByteOffsetHandleBadUnboundedSequenceTraverse() {
+        MemoryLayout layout = MemoryLayout.ofSequence(MemoryLayout.ofSequence(JAVA_INT));
+        layout.byteOffsetHandle(sequenceElement(1), sequenceElement(0));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testBadByteOffsetNoMultipleOf8() {
+        MemoryLayout layout = MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(7), JAVA_INT.withName("x"));
+        layout.byteOffset(groupElement("x"));
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testBadByteOffsetHandleNoMultipleOf8() throws Throwable {
+        MemoryLayout layout = MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(7), JAVA_INT.withName("x"));
+        MethodHandle handle = layout.byteOffsetHandle(groupElement("x"));
+        handle.invoke();
     }
 
     @Test
