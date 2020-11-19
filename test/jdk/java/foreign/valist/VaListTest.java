@@ -46,6 +46,9 @@ import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -61,9 +64,7 @@ import static jdk.incubator.foreign.CLinker.C_VA_LIST;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 import static jdk.internal.foreign.PlatformLayouts.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class VaListTest {
 
@@ -804,4 +805,109 @@ public class VaListTest {
         }
     }
 
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListFromNullAddr() {
+        VaList.ofAddressRestricted(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListFromNullActionsNoScope() {
+        VaList.make(null);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListFromNullActionsScope() {
+        try (NativeScope scope = NativeScope.boundedScope(10)) {
+            VaList.make(null, scope);
+        }
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListFromActionsNullScope() {
+        try (NativeScope scope = NativeScope.boundedScope(10)) {
+            VaList.make(b -> {}, null);
+        }
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListSkipNull() {
+        try (VaList v = VaList.make(b -> b.vargFromLong(C_LONGLONG, 42L))) {
+            v.skip(null);
+        }
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListSkipNullElements() {
+        try (VaList v = VaList.make(b -> b.vargFromLong(C_LONGLONG, 42L))) {
+            v.skip(new MemoryLayout[] { null });
+        }
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testVaListCopyNull() {
+        try (VaList v = VaList.make(b -> b.vargFromLong(C_LONGLONG, 42L))) {
+            v.copy(null);
+        }
+    }
+
+    @Test
+    public void testVaListBuilderNulls() {
+        VaList.make(b -> {
+            for (Method m : VaList.Builder.class.getMethods()) {
+                Object[] args = new Object[m.getParameterCount()];
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = defaultValue(m.getParameterTypes()[i]);
+                }
+                try {
+                    m.invoke(b, args);
+                    fail();
+                } catch (InvocationTargetException ex) {
+                    assertEquals(ex.getCause().getClass(), NullPointerException.class);
+                } catch (Throwable ex) {
+                    fail();
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testVaListGettersNulls() {
+        try (VaList v = VaList.make(b -> b.vargFromLong(C_LONGLONG, 42L))) {
+            for (Method m : VaList.class.getMethods()) {
+                if (!m.getName().startsWith("vargAs")) continue;;
+                Object[] args = new Object[m.getParameterCount()];
+                for (int i = 0; i < args.length; i++) {
+                    args[i] = defaultValue(m.getParameterTypes()[i]);
+                }
+                try {
+                    m.invoke(v, args);
+                    fail();
+                } catch (InvocationTargetException ex) {
+                    assertEquals(ex.getCause().getClass(), NullPointerException.class);
+                } catch (Throwable ex) {
+                    fail();
+                }
+            }
+        }
+    }
+
+    static Object defaultValue(Class<?> carrier) {
+        if (carrier == char.class) {
+            return (char) 0;
+        } else if (carrier == byte.class) {
+            return (byte) 0;
+        } else if (carrier == short.class) {
+            return (short) 0;
+        } else if (carrier == int.class) {
+            return 0;
+        } else if (carrier == long.class) {
+            return 0L;
+        } else if (carrier == float.class) {
+            return 0f;
+        } else if (carrier == double.class) {
+            return 0d;
+        } else {
+            return null;
+        }
+    }
 }

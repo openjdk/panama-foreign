@@ -27,17 +27,15 @@
  * @run testng/othervm TestNativeScope
  */
 
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
-import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.*;
 
-import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
@@ -46,9 +44,11 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -196,6 +196,36 @@ public class TestNativeScope {
             MemorySegment address = allocationFunction.allocate(scope, layout, arr);
             Z found = arrayHelper.toArray(address, layout);
             assertEquals(found, arr);
+        }
+    }
+
+    @Test(dataProvider = "nullSuppliers")
+    public <Z> void testNulls(String testName, String methodName, DefaultValueSupplier defaultValueSupplier) {
+        try (NativeScope nativeScope = NativeScope.unboundedScope()) {
+            for (Method m : NativeScope.class.getMethods()) {
+                if (!m.getName().equals(methodName) ||
+                        Arrays.stream(m.getParameterTypes()).allMatch(Class::isPrimitive)) continue;
+                Object[] args = new Object[m.getParameterCount()];
+                boolean hasNulls = false;
+                for (int i = 0; i < args.length; i++) {
+                    Object v = defaultValueSupplier.defaultValue(m.getParameterTypes()[i]);
+                    args[i] = v;
+                    if (v == null) {
+                        hasNulls = true;
+                    }
+                }
+                try {
+                    m.invoke(nativeScope, args);
+                    assertFalse(hasNulls);
+                } catch (InvocationTargetException ex) {
+                    if (hasNulls) {
+                        assertEquals(ex.getCause().getClass(), NullPointerException.class);
+                        assertTrue(ex.getCause().getStackTrace()[1].getClassName().contains("NativeScope"));
+                    }
+                } catch (Throwable ex) {
+                    fail();
+                }
+            }
         }
     }
 
@@ -523,6 +553,127 @@ public class TestNativeScope {
             private MemoryAddress[] wrap(long[] ints) {
                 return LongStream.of(ints).mapToObj(MemoryAddress::ofLong).toArray(MemoryAddress[]::new);
             }
+        };
+    }
+
+    static abstract class DefaultValueSupplier {
+        Object defaultValue(Class<?> carrier) {
+            if (carrier == char.class) {
+                return (char) 0;
+            } else if (carrier == byte.class) {
+                return (byte) 0;
+            } else if (carrier == short.class) {
+                return (short) 0;
+            } else if (carrier == int.class) {
+                return 0;
+            } else if (carrier == long.class) {
+                return 0L;
+            } else if (carrier == float.class) {
+                return 0f;
+            } else if (carrier == double.class) {
+                return 0d;
+            } else if (carrier == Addressable.class) {
+                return addressableValue(carrier);
+            } else if (MemoryLayout.class.isAssignableFrom(carrier)) {
+                return layoutValue(carrier);
+            } else if (carrier.isArray()) {
+                return arrayValue(carrier);
+            } else {
+                throw new IllegalStateException("Unexpected carrier: " + carrier.getName());
+            }
+        }
+
+        abstract Object addressableValue(Class<?> carrier);
+        abstract Object layoutValue(Class<?> carrier);
+        abstract Object arrayValue(Class<?> carrier);
+
+        static DefaultValueSupplier NULL_LAYOUT = new DefaultValueSupplier() {
+
+            @Override
+            Object addressableValue(Class<?> carrier) {
+                return MemoryAddress.ofLong(42);
+            }
+
+            @Override
+            Object layoutValue(Class<?> carrier) {
+                return null;
+            }
+
+            @Override
+            Object arrayValue(Class<?> carrier) {
+                return Array.newInstance(carrier.componentType(), 0);
+            }
+        };
+
+        static DefaultValueSupplier NULL_ADDRESSABLE = new DefaultValueSupplier() {
+
+            @Override
+            Object addressableValue(Class<?> carrier) {
+                return null;
+            }
+
+            @Override
+            Object layoutValue(Class<?> carrier) {
+                return MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder());
+            }
+
+            @Override
+            Object arrayValue(Class<?> carrier) {
+                return Array.newInstance(carrier.componentType(), 0);
+            }
+        };
+
+        static DefaultValueSupplier NULL_ARRAY = new DefaultValueSupplier() {
+
+            @Override
+            Object addressableValue(Class<?> carrier) {
+                throw new IllegalStateException("Cannot get here!");
+            }
+
+            @Override
+            Object layoutValue(Class<?> carrier) {
+                return MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder());
+            }
+
+            @Override
+            Object arrayValue(Class<?> carrier) {
+                return null;
+            }
+        };
+
+        static DefaultValueSupplier ARRAY_WITH_NULLS = new DefaultValueSupplier() {
+
+            @Override
+            Object addressableValue(Class<?> carrier) {
+                throw new IllegalStateException("Cannot get here!");
+            }
+
+            @Override
+            Object layoutValue(Class<?> carrier) {
+                return MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder());
+            }
+
+            @Override
+            Object arrayValue(Class<?> carrier) {
+                if (!carrier.getComponentType().isPrimitive()) {
+                    Object arr = Array.newInstance(carrier.componentType(), 1);
+                    Array.set(arr, 0, null);
+                    return arr;
+                } else {
+                    return Array.newInstance(carrier.componentType(), 0);
+                }
+            }
+        };
+    }
+
+    @DataProvider(name = "nullSuppliers")
+    static Object[][] nullSuppliers() {
+        return new Object[][]{
+                { "null-layout", "allocate", DefaultValueSupplier.NULL_LAYOUT },
+                { "null-addressable", "allocate", DefaultValueSupplier.NULL_ADDRESSABLE },
+                { "array/null-layout", "allocateArray", DefaultValueSupplier.NULL_LAYOUT },
+                { "array/null-array", "allocateArray", DefaultValueSupplier.NULL_ARRAY },
+                { "array/null-elements", "allocateArray", DefaultValueSupplier.ARRAY_WITH_NULLS },
         };
     }
 }
