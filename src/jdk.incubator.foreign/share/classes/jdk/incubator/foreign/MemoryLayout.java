@@ -340,9 +340,6 @@ public interface MemoryLayout extends Constable {
      * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
      *
-     * @apiNote if the layout path has one (or more) free dimensions,
-     * the offset is computed as if all the indices corresponding to such dimensions were set to {@code 0}.
-     *
      * @param elements the layout path elements.
      * @return The offset, in bits, of the layout selected by the layout path in {@code elements}.
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout, or if the
@@ -353,26 +350,35 @@ public interface MemoryLayout extends Constable {
      * in {@code elements} is {@code null}.
      */
     default long bitOffset(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offset, EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offset,
+                EnumSet.of(PathKind.SEQUENCE_ELEMENT, PathKind.SEQUENCE_RANGE), elements);
     }
 
     /**
-     * Each unbound sequenceElement path element is turned into a {@code long} coordinate.
+     * Creates a method handle that can be used to compute the offset, in bits, of the layout selected
+     * by a given layout path, where the path is considered rooted in this layout.
+     *
+     * <p>This is like {@link #bitOffset(PathElement...)}, except that free dimensions
+     * ({@link PathElement#sequenceElement()}) are accepted, and translated into {@code long} parameters
+     * of the returned method handle, to be specified later.
      *
      * @param elements the layout path elements.
      * @return a method handle that can be used to compute the bit offset of the layout element
      * specified by the given layout path elements, when supplied with the missing sequence element indexes.
+     * @throws IllegalArgumentException if the layout path contains one or more path elements that select
+     * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
+     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
+     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
+     * in {@code elements} is {@code null}.
      */
     default MethodHandle bitOffsetHandle(PathElement... elements) {
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offsetHandle, EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offsetHandle,
+                EnumSet.of(PathKind.SEQUENCE_RANGE), elements);
     }
 
     /**
      * Computes the offset, in bytes, of the layout selected by a given layout path, where the path is considered rooted in this
      * layout.
-     *
-     * @apiNote if the layout path has one (or more) free dimensions,
-     * the offset is computed as if all the indices corresponding to such dimensions were set to {@code 0}.
      *
      * @param elements the layout path elements.
      * @return The offset, in bytes, of the layout selected by the layout path in {@code elements}.
@@ -389,11 +395,22 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Each unbound sequenceElement path element is turned into a {@code long} coordinate.
+     * Creates a method handle that can be used to compute the offset, in bytes, of the layout selected
+     * by a given layout path, where the path is considered rooted in this layout.
+     *
+     * <p>This is like {@link #byteOffset(PathElement...)}, except that free dimensions
+     * ({@link PathElement#sequenceElement()}) are accepted, and translated into {@code long} parameters
+     * of the returned method handle, to be specified later.
      *
      * @param elements the layout path elements.
      * @return a method handle that can be used to compute the byte offset of the layout element
      * specified by the given layout path elements, when supplied with the missing sequence element indexes.
+     * @throws IllegalArgumentException if the layout path contains one or more path elements that select
+     * multiple sequence element indices (see {@link PathElement#sequenceElement(long, long)}).
+     * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size,
+     * or if {@code bitOffset(elements)} is not a multiple of 8.
+     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
+     * in {@code elements} is {@code null}.
      */
     default MethodHandle byteOffsetHandle(PathElement... elements) {
         MethodHandle mh = bitOffsetHandle(elements);
