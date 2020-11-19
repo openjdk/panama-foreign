@@ -439,6 +439,12 @@ public class TestLayoutPaths {
                 JAVA_INT.bitSize() * 2 * 4 + JAVA_INT.bitSize()
             },
             {
+                MemoryLayout.ofSequence(10, MemoryLayout.ofUnion(JAVA_INT, JAVA_INT.withName("y"))),
+                new PathElement[] { sequenceElement(), groupElement("y") },
+                new long[] { 4 },
+                JAVA_INT.bitSize() * 4
+            },
+            {
                 MemoryLayout.ofStruct(
                     MemoryLayout.ofSequence(10, JAVA_INT).withName("data")
                 ),

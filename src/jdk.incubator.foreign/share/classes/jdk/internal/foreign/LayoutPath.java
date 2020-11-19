@@ -63,6 +63,8 @@ public class LayoutPath {
     private static final MethodHandle ADD_STRIDE;
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
 
+    private static final int UNSPECIFIED_ELEM_INDEX = -1;
+
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -97,7 +99,7 @@ public class LayoutPath {
         check(SequenceLayout.class, "attempting to select a sequence element from a non-sequence layout");
         SequenceLayout seq = (SequenceLayout)layout;
         MemoryLayout elem = seq.elementLayout();
-        return LayoutPath.nestedPath(elem, offset, addStride(sizeFunc.applyAsLong(elem)), -1, this);
+        return LayoutPath.nestedPath(elem, offset, addStride(sizeFunc.applyAsLong(elem)), UNSPECIFIED_ELEM_INDEX, this);
     }
 
     public LayoutPath sequenceElement(long start, long step) {
@@ -106,7 +108,8 @@ public class LayoutPath {
         checkSequenceBounds(seq, start);
         MemoryLayout elem = seq.elementLayout();
         long elemSize = sizeFunc.applyAsLong(elem);
-        return LayoutPath.nestedPath(elem, offset + (start * elemSize), addStride(elemSize * step), -1, this);
+        return LayoutPath.nestedPath(elem, offset + (start * elemSize), addStride(elemSize * step),
+                UNSPECIFIED_ELEM_INDEX, this);
     }
 
     public LayoutPath sequenceElement(long index) {
@@ -197,8 +200,9 @@ public class LayoutPath {
         MethodHandle mh = MethodHandles.identity(long.class);
         LayoutPath cur = this;
         while (cur.enclosing != null) {
-            if (cur.elementIndex == -1) {
-                MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, sizeFunc.applyAsLong(cur.layout));
+            if (cur.enclosing.layout instanceof SequenceLayout
+                && cur.elementIndex == UNSPECIFIED_ELEM_INDEX) { // sequenceElement()
+                MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, cur.layout.bitSize());
                 // (J, ...) -> J to (J, J, ...) -> J
                 // i.e. new coord is prefixed. Last coord will correspond to innermost layout
                 mh = MethodHandles.collectArguments(mh, 0, collector);
