@@ -85,36 +85,43 @@ public class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl {
     // factories
 
     public static MemorySegment makeArraySegment(byte[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(char[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(short[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_SHORT_BASE_OFFSET, Unsafe.ARRAY_SHORT_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(int[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(long[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_LONG_BASE_OFFSET, Unsafe.ARRAY_LONG_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(float[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_FLOAT_BASE_OFFSET, Unsafe.ARRAY_FLOAT_INDEX_SCALE);
     }
 
     public static MemorySegment makeArraySegment(double[] arr) {
+        Objects.requireNonNull(arr);
         return makeHeapSegment(() -> arr, arr.length,
                 Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }
