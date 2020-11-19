@@ -97,47 +97,6 @@ public class TestMemoryAccessStatics {
         accessor.test();
     }
 
-    @Test
-    public void testNulls() {
-        for (Method m : MemoryAccess.class.getMethods()) {
-            if ((m.getModifiers() & Modifier.STATIC) == 0) continue;
-            Object[] args = new Object[m.getParameterCount()];
-            for (int i = 0 ; i < args.length ; i++) {
-                args[i] = defaultValue(m.getParameterTypes()[i]);
-            }
-            try {
-                m.invoke(null, args);
-                fail();
-            } catch (InvocationTargetException ex) {
-                assertEquals(ex.getCause().getClass(), NullPointerException.class);
-                assertTrue(ex.getCause().getStackTrace()[1].getClassName().contains("MemoryAccess"));
-            } catch (Throwable ex) {
-                fail();
-            }
-        }
-    }
-
-    static Object defaultValue(Class<?> carrier) {
-        if (carrier == char.class) {
-            return (char)0;
-        } else if (carrier == byte.class) {
-            return (byte)0;
-        } else if (carrier == short.class) {
-            return (short)0;
-        } else if (carrier == int.class) {
-            return 0;
-        } else if (carrier == long.class) {
-            return 0L;
-        } else if (carrier == float.class) {
-            return 0f;
-        } else if (carrier == double.class) {
-            return 0d;
-        } else {
-            // reference type!
-            return null;
-        }
-    }
-
     static final ByteOrder BE = ByteOrder.BIG_ENDIAN;
     static final ByteOrder LE = ByteOrder.LITTLE_ENDIAN;
     static final ByteOrder NE = ByteOrder.nativeOrder();
