@@ -417,10 +417,16 @@ public class TestLayoutPaths {
     @Test(dataProvider =  "offsetHandleCases")
     public void testOffsetHandle(MemoryLayout layout, PathElement[] pathElements, long[] indexes,
                                  long expectedBitOffset) throws Throwable {
-        MethodHandle offsetHandle = layout.bitOffsetHandle(pathElements);
-        offsetHandle = offsetHandle.asSpreader(long[].class, indexes.length);
-        long actualBitOffset = (long) offsetHandle.invokeExact(indexes);
+        MethodHandle bitOffsetHandle = layout.bitOffsetHandle(pathElements);
+        bitOffsetHandle = bitOffsetHandle.asSpreader(long[].class, indexes.length);
+        long actualBitOffset = (long) bitOffsetHandle.invokeExact(indexes);
         assertEquals(actualBitOffset, expectedBitOffset);
+        if (expectedBitOffset % 8 == 0) {
+            MethodHandle byteOffsetHandle = layout.byteOffsetHandle(pathElements);
+            byteOffsetHandle = byteOffsetHandle.asSpreader(long[].class, indexes.length);
+            long actualByteOffset = (long) byteOffsetHandle.invokeExact(indexes);
+            assertEquals(actualByteOffset, expectedBitOffset / 8);
+        }
     }
 
     @DataProvider
@@ -436,7 +442,13 @@ public class TestLayoutPaths {
                 MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(JAVA_INT, JAVA_INT.withName("y"))),
                 new PathElement[] { sequenceElement(), groupElement("y") },
                 new long[] { 4 },
-                JAVA_INT.bitSize() * 2 * 4 + JAVA_INT.bitSize()
+                (JAVA_INT.bitSize() * 2) * 4 + JAVA_INT.bitSize()
+            },
+            {
+                MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(5), JAVA_INT.withName("y"))),
+                new PathElement[] { sequenceElement(), groupElement("y") },
+                new long[] { 4 },
+                (JAVA_INT.bitSize() + 5) * 4 + 5
             },
             {
                 MemoryLayout.ofSequence(10, MemoryLayout.ofUnion(JAVA_INT, JAVA_INT.withName("y"))),
