@@ -196,7 +196,7 @@ public interface CLinker {
      * @param <T> the memory layout type
      * @param layout the layout the adapt
      * @return a potentially newly created layout with the right attributes
-     * @throws NullPointerException if either {@code layout == null}.
+     * @throws NullPointerException if {@code layout == null}.
      */
     @SuppressWarnings("unchecked")
     static <T extends MemoryLayout> T asVarArg(T layout) {

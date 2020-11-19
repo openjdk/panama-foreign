@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.lang.reflect.Array;
@@ -46,8 +47,11 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -79,7 +83,11 @@ public class TestNulls {
             MemoryAccess.class,
             MappedMemorySegments.class,
             MemoryLayouts.class,
-            MemoryHandles.class
+            MemoryHandles.class,
+            NativeScope.class,
+            CLinker.class,
+            CLinker.VaList.class,
+            CLinker.VaList.Builder.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
@@ -125,6 +133,9 @@ public class TestNulls {
         addDefaultMapping(VarHandle.class, MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder()));
         addDefaultMapping(MethodHandle.class, MethodHandles.identity(int.class));
         addDefaultMapping(List.class, List.of());
+        addDefaultMapping(Charset.class, Charset.defaultCharset());
+        addDefaultMapping(Consumer.class, x -> {});
+        addDefaultMapping(MethodType.class, MethodType.methodType(void.class));
         addDefaultMapping(MemoryAddress.class, MemoryAddress.NULL);
         addDefaultMapping(Addressable.class, MemoryAddress.NULL);
         addDefaultMapping(MemoryLayout.class, MemoryLayouts.JAVA_INT);
@@ -132,6 +143,25 @@ public class TestNulls {
         addDefaultMapping(GroupLayout.class, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT));
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
+        addDefaultMapping(NativeScope.class, NativeScope.boundedScope(10));
+        addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
+        addDefaultMapping(CLinker.class, CLinker.getInstance());
+        addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
+        addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
+    }
+
+    static class VaListHelper {
+        static final CLinker.VaList vaList;
+        static final CLinker.VaList.Builder vaListBuilder;
+
+        static {
+            AtomicReference<CLinker.VaList.Builder> builderRef = new AtomicReference<>();
+            vaList = CLinker.VaList.make(b -> {
+                builderRef.set(b);
+                b.vargFromLong(CLinker.C_LONGLONG, 42L);
+            });
+            vaListBuilder = builderRef.get();
+        }
     }
 
     static final Map<Class<?>, Object[]> REPLACEMENT_VALUES = new HashMap<>();
