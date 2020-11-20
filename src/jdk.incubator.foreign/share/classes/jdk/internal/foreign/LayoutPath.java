@@ -198,16 +198,11 @@ public class LayoutPath {
 
     public MethodHandle offsetHandle() {
         MethodHandle mh = MethodHandles.identity(long.class);
-        LayoutPath cur = this;
-        while (cur.enclosing != null) {
-            if (cur.enclosing.layout instanceof SequenceLayout
-                && cur.elementIndex == UNSPECIFIED_ELEM_INDEX) { // sequenceElement()
-                MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, cur.layout.bitSize());
-                // (J, ...) -> J to (J, J, ...) -> J
-                // i.e. new coord is prefixed. Last coord will correspond to innermost layout
-                mh = MethodHandles.collectArguments(mh, 0, collector);
-            }
-            cur = cur.enclosing;
+        for (int i = strides.length - 1; i >=0; i--) {
+            MethodHandle collector = MethodHandles.insertArguments(MH_ADD_SCALED_OFFSET, 2, strides[i]);
+            // (J, ...) -> J to (J, J, ...) -> J
+            // i.e. new coord is prefixed. Last coord will correspond to innermost layout
+            mh = MethodHandles.collectArguments(mh, 0, collector);
         }
         mh = MethodHandles.insertArguments(mh, 0, offset);
         return mh;
