@@ -36,6 +36,8 @@ import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.List;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
@@ -431,40 +433,78 @@ public class TestLayoutPaths {
 
     @DataProvider
     public static Object[][] offsetHandleCases() {
-        return new Object[][]{
-            {
-                MemoryLayout.ofSequence(10, JAVA_INT),
-                new PathElement[] { sequenceElement() },
-                new long[] { 4 },
-                JAVA_INT.bitSize() * 4
-            },
-            {
-                MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(JAVA_INT, JAVA_INT.withName("y"))),
-                new PathElement[] { sequenceElement(), groupElement("y") },
-                new long[] { 4 },
-                (JAVA_INT.bitSize() * 2) * 4 + JAVA_INT.bitSize()
-            },
-            {
-                MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(5), JAVA_INT.withName("y"))),
-                new PathElement[] { sequenceElement(), groupElement("y") },
-                new long[] { 4 },
-                (JAVA_INT.bitSize() + 5) * 4 + 5
-            },
-            {
-                MemoryLayout.ofSequence(10, MemoryLayout.ofUnion(JAVA_INT, JAVA_INT.withName("y"))),
-                new PathElement[] { sequenceElement(), groupElement("y") },
-                new long[] { 4 },
-                JAVA_INT.bitSize() * 4
-            },
-            {
-                MemoryLayout.ofStruct(
-                    MemoryLayout.ofSequence(10, JAVA_INT).withName("data")
-                ),
-                new PathElement[] { groupElement("data"), sequenceElement() },
-                new long[] { 4 },
-                JAVA_INT.bitSize() * 4
-            },
-        };
+        List<Object[]> testCases = new ArrayList<>();
+
+        testCases.add(new Object[] {
+            MemoryLayout.ofSequence(10, JAVA_INT),
+            new PathElement[] { sequenceElement() },
+            new long[] { 4 },
+            JAVA_INT.bitSize() * 4
+        });
+        testCases.add(new Object[] {
+            MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(JAVA_INT, JAVA_INT.withName("y"))),
+            new PathElement[] { sequenceElement(), groupElement("y") },
+            new long[] { 4 },
+            (JAVA_INT.bitSize() * 2) * 4 + JAVA_INT.bitSize()
+        });
+        testCases.add(new Object[] {
+            MemoryLayout.ofSequence(10, MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(5), JAVA_INT.withName("y"))),
+            new PathElement[] { sequenceElement(), groupElement("y") },
+            new long[] { 4 },
+            (JAVA_INT.bitSize() + 5) * 4 + 5
+        });
+        testCases.add(new Object[] {
+            MemoryLayout.ofSequence(10, JAVA_INT),
+            new PathElement[] { sequenceElement() },
+            new long[] { 4 },
+            JAVA_INT.bitSize() * 4
+        });
+        testCases.add(new Object[] {
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(10, JAVA_INT).withName("data")
+            ),
+            new PathElement[] { groupElement("data"), sequenceElement() },
+            new long[] { 4 },
+            JAVA_INT.bitSize() * 4
+        });
+
+        MemoryLayout complexLayout = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(10,
+                MemoryLayout.ofSequence(10,
+                    MemoryLayout.ofStruct(
+                        JAVA_INT.withName("x"),
+                        JAVA_INT.withName("y")
+                    )
+                )
+            ).withName("data")
+        );
+
+        testCases.add(new Object[] {
+            complexLayout,
+            new PathElement[] { groupElement("data"), sequenceElement(), sequenceElement(), groupElement("x") },
+            new long[] { 0, 1 },
+            (JAVA_INT.bitSize() * 2)
+        });
+        testCases.add(new Object[] {
+            complexLayout,
+            new PathElement[] { groupElement("data"), sequenceElement(), sequenceElement(), groupElement("x") },
+            new long[] { 1, 0 },
+            (JAVA_INT.bitSize() * 2) * 10
+        });
+        testCases.add(new Object[] {
+            complexLayout,
+            new PathElement[] { groupElement("data"), sequenceElement(), sequenceElement(), groupElement("y") },
+            new long[] { 0, 1 },
+            (JAVA_INT.bitSize() * 2) + JAVA_INT.bitSize()
+        });
+        testCases.add(new Object[] {
+            complexLayout,
+            new PathElement[] { groupElement("data"), sequenceElement(), sequenceElement(), groupElement("y") },
+            new long[] { 1, 0 },
+            (JAVA_INT.bitSize() * 2) * 10 + JAVA_INT.bitSize()
+        });
+
+        return testCases.toArray(Object[][]::new);
     }
 
 }
