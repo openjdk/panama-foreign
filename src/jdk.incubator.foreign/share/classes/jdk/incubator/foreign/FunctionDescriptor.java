@@ -124,7 +124,6 @@ public final class FunctionDescriptor implements Constable {
     public static FunctionDescriptor of(MemoryLayout resLayout, MemoryLayout... argLayouts) {
         Objects.requireNonNull(resLayout);
         Objects.requireNonNull(argLayouts);
-        Objects.requireNonNull(argLayouts);
         Arrays.stream(argLayouts).forEach(Objects::requireNonNull);
         return new FunctionDescriptor(resLayout, Map.of(), argLayouts);
     }
