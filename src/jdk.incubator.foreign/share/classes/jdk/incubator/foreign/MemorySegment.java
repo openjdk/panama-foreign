@@ -697,7 +697,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(byte[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfByte.fromArray(arr);
     }
 
     /**
@@ -712,7 +712,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(char[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfChar.fromArray(arr);
     }
 
     /**
@@ -727,7 +727,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(short[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfShort.fromArray(arr);
     }
 
     /**
@@ -742,7 +742,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(int[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfInt.fromArray(arr);
     }
 
     /**
@@ -757,7 +757,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(float[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
     }
 
     /**
@@ -772,7 +772,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(long[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfLong.fromArray(arr);
     }
 
     /**
@@ -787,7 +787,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws NullPointerException if {@code arr == null}.
      */
     static MemorySegment ofArray(double[] arr) {
-        return HeapMemorySegmentImpl.makeArraySegment(arr);
+        return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
     }
 
     /**
