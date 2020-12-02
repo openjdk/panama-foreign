@@ -138,7 +138,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     private boolean primitiveKindSupported(Type.Primitive.Kind kind) {
         return switch(kind) {
-            case Short, Int, Long, LongLong, Float, Double, LongDouble, Char -> true;
+            case Short, Int, Long, LongLong, Float, Double, Char -> true;
             default -> false;
         };
     }

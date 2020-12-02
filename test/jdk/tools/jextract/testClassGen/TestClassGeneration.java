@@ -54,7 +54,7 @@ import static jdk.incubator.foreign.CLinker.C_CHAR;
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_FLOAT;
 import static jdk.incubator.foreign.CLinker.C_INT;
-import static jdk.incubator.foreign.CLinker.C_LONGLONG;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
 import static jdk.incubator.foreign.CLinker.C_SHORT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -115,7 +115,7 @@ public class TestClassGeneration extends JextractToolRunner {
             { "global_byte",   byte.class,   C_CHAR,   (byte) 1  },
             { "global_short",  short.class,  C_SHORT, (short) 2  },
             { "global_int",    int.class,    C_INT,           3  },
-            { "global_long",   long.class,   C_LONGLONG,      4L },
+            { "global_long",   long.class,   C_LONG_LONG,      4L },
             { "global_float",  float.class,  C_FLOAT,         5F },
             { "global_double", double.class, C_DOUBLE,        6D },
         };
@@ -127,7 +127,7 @@ public class TestClassGeneration extends JextractToolRunner {
             { "Foo", C_CHAR.withName("c"),      byte.class,   (byte) 10  },
             { "Foo", C_SHORT.withName("s"),     short.class, (short) 10  },
             { "Foo", C_INT.withName("i"),       int.class,           10  },
-            { "Foo", C_LONGLONG.withName("ll"), long.class,          10L },
+            { "Foo", C_LONG_LONG.withName("ll"), long.class,          10L },
             { "Foo", C_FLOAT.withName("f"),     float.class,         10F },
             { "Foo", C_DOUBLE.withName("d"),    double.class,        10D },
             { "Bar", C_INT.withName("a"),       int.class,           10 },
