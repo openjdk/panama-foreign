@@ -2723,13 +2723,11 @@ void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp) 
     get_thread(java_thread);
   }
   // we must set sp to zero to clear frame
-  movslq(Address(java_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
-  // must clear fp, so that compiled frames are not confused; it is
-  // possible that we need it only for debugging
+  movptr(Address(java_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
   // must clear fp, so that compiled frames are not confused; it is
   // possible that we need it only for debugging
   if (clear_fp) {
-    movslq(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
+    movptr(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
   // Always clear the pc because it could have been set by make_walkable()
   movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
