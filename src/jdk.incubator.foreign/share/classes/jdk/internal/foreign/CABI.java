@@ -25,23 +25,38 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.abi.SharedUtils;
+
+import static jdk.incubator.foreign.MemoryLayouts.ADDRESS;
+
 public enum CABI {
     SysV,
     Win64,
     AArch64;
 
-    public static CABI current() {
+    private static final CABI current;
+
+    static {
         String arch = System.getProperty("os.arch");
         String os = System.getProperty("os.name");
-        if (arch.equals("amd64") || arch.equals("x86_64")) {
+        long addressSize = ADDRESS.bitSize();
+        // might be running in a 32-bit VM on a 64-bit platform.
+        // addressSize will be correctly 32
+        if ((arch.equals("amd64") || arch.equals("x86_64")) && addressSize == 64) {
             if (os.startsWith("Windows")) {
-                return Win64;
+                current = Win64;
             } else {
-                return SysV;
+                current = SysV;
             }
         } else if (arch.equals("aarch64")) {
-            return AArch64;
+            current = AArch64;
+        } else {
+            throw new ExceptionInInitializerError(
+                "Unsupported os, arch, or address size: " + os + ", " + arch + ", " + addressSize);
         }
-        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
+    }
+
+    public static CABI current() {
+        return current;
     }
 }

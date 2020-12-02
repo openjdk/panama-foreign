@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,28 +24,27 @@
 #ifndef SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
 #define SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
 
-#include "classfile/javaClasses.hpp"
-#include "classfile/vmSymbols.hpp"
-#include "include/jvm.h"
-#include "runtime/frame.inline.hpp"
-#include "runtime/globals.hpp"
-#include "utilities/macros.hpp"
-#include CPU_HEADER(foreign_globals)
-
-#ifdef ZERO
-# include "entry_zero.hpp"
-#endif
-
-class MacroAssembler;
-class Label;
-class ShuffleRecipe;
-
-typedef void (*ProgrammableStub)(address);
+#include "runtime/stubCodeGenerator.hpp"
+#include "prims/foreign_globals.hpp"
 
 class ProgrammableInvoker: AllStatic {
-public:  
-  static void invoke_native(ProgrammableStub stub, address buff, JavaThread* thread);
-  static jlong generate_adapter(JNIEnv* env, jobject abi, jobject layout);
+private:
+  static constexpr CodeBuffer::csize_t native_invoker_size = 1024;
+
+  class Generator : StubCodeGenerator {
+  private:
+    const ABIDescriptor* _abi;
+    const BufferLayout* _layout;
+  public:
+    Generator(CodeBuffer* code, const ABIDescriptor* abi, const BufferLayout* layout);
+
+    void generate();
+  };
+public:
+  using Stub = void(*)(address);
+
+  static void invoke_native(Stub stub, address buff, JavaThread* thread);
+  static address generate_adapter(jobject abi, jobject layout);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP

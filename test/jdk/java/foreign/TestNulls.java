@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules java.base/jdk.internal.ref
  *          jdk.incubator.foreign
  * @run testng/othervm -Dforeign.restricted=permit TestNulls
@@ -88,7 +89,8 @@ public class TestNulls {
             CLinker.class,
             CLinker.VaList.class,
             CLinker.VaList.Builder.class,
-            FunctionDescriptor.class
+            FunctionDescriptor.class,
+            LibraryLookup.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
@@ -150,6 +152,7 @@ public class TestNulls {
         addDefaultMapping(CLinker.class, CLinker.getInstance());
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
+        addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
     }
 
     static class VaListHelper {
@@ -160,7 +163,7 @@ public class TestNulls {
             AtomicReference<CLinker.VaList.Builder> builderRef = new AtomicReference<>();
             vaList = CLinker.VaList.make(b -> {
                 builderRef.set(b);
-                b.vargFromLong(CLinker.C_LONGLONG, 42L);
+                b.vargFromLong(CLinker.C_LONG_LONG, 42L);
             });
             vaListBuilder = builderRef.get();
         }

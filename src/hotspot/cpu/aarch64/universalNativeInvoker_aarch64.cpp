@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,34 +24,13 @@
 
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
-#include "include/jvm.h"
-#include "logging/log.hpp"
-#include "logging/logStream.hpp"
+#include "code/codeBlob.hpp"
 #include "memory/resourceArea.hpp"
-#include "oops/arrayOop.inline.hpp"
-#include "prims/methodHandles.hpp"
 #include "prims/universalNativeInvoker.hpp"
-#include "runtime/interfaceSupport.inline.hpp"
-#include "runtime/javaCalls.hpp"
 
-static void generate_invoke_native(MacroAssembler* _masm,
-                                   const ABIDescriptor& abi,
-                                   const BufferLayout& layout) {
-  /**
-   * invoke_native_stub(struct ShuffleDowncallContext* ctxt) {
-   *   rbx = ctxt;
-   *
-   *   stack = alloca(ctxt->arguments.stack_args_bytes);
-   *
-   *   load_all_registers();
-   *   memcpy(stack, ctxt->arguments.stack_args, arguments.stack_args_bytes);
-   *
-   *   (*ctxt->arguments.next_pc)();
-   *
-   *   store_all_registers();
-   * }
-   */
+#define __ _masm->
 
+void ProgrammableInvoker::Generator::generate() {
   __ enter();
 
   // Name registers used in the stub code. These are all caller-save so
@@ -72,17 +51,17 @@ static void generate_invoke_native(MacroAssembler* _masm,
   __ mov(Rctx, c_rarg0);
   __ str(Rctx, Address(__ pre(sp, -2 * wordSize)));
 
-  assert(abi._stack_alignment_bytes % 16 == 0, "stack must be 16 byte aligned");
+  assert(_abi->_stack_alignment_bytes % 16 == 0, "stack must be 16 byte aligned");
 
   __ block_comment("allocate_stack");
-  __ ldr(Rstack_size, Address(Rctx, (int) layout.stack_args_bytes));
-  __ add(rscratch2, Rstack_size, abi._stack_alignment_bytes - 1);
-  __ andr(rscratch2, rscratch2, -abi._stack_alignment_bytes);
+  __ ldr(Rstack_size, Address(Rctx, (int) _layout->stack_args_bytes));
+  __ add(rscratch2, Rstack_size, _abi->_stack_alignment_bytes - 1);
+  __ andr(rscratch2, rscratch2, -_abi->_stack_alignment_bytes);
   __ sub(sp, sp, rscratch2);
 
   __ block_comment("load_arguments");
 
-  __ ldr(Rsrc_ptr, Address(Rctx, (int) layout.stack_args));
+  __ ldr(Rsrc_ptr, Address(Rctx, (int) _layout->stack_args));
   __ lsr(Rwords, Rstack_size, LogBytesPerWord);
   __ mov(Rdst_ptr, sp);
 
@@ -95,35 +74,35 @@ static void generate_invoke_native(MacroAssembler* _masm,
   __ b(Lnext);
   __ bind(Ldone);
 
-  for (int i = 0; i < abi._vector_argument_registers.length(); i++) {
-    ssize_t offs = layout.arguments_vector + i * sizeof(VectorRegister);
-    __ ldrq(abi._vector_argument_registers.at(i), Address(Rctx, offs));
+  for (int i = 0; i < _abi->_vector_argument_registers.length(); i++) {
+    ssize_t offs = _layout->arguments_vector + i * float_reg_size;
+    __ ldrq(_abi->_vector_argument_registers.at(i), Address(Rctx, offs));
   }
 
-  for (int i = 0; i < abi._integer_argument_registers.length(); i++) {
-    ssize_t offs = layout.arguments_integer + i * sizeof(uintptr_t);
-    __ ldr(abi._integer_argument_registers.at(i), Address(Rctx, offs));
+  for (int i = 0; i < _abi->_integer_argument_registers.length(); i++) {
+    ssize_t offs = _layout->arguments_integer + i * sizeof(uintptr_t);
+    __ ldr(_abi->_integer_argument_registers.at(i), Address(Rctx, offs));
   }
 
-  assert(abi._shadow_space_bytes == 0, "shadow space not supported on AArch64");
+  assert(_abi->_shadow_space_bytes == 0, "shadow space not supported on AArch64");
 
   // call target function
   __ block_comment("call target function");
-  __ ldr(rscratch2, Address(Rctx, (int) layout.arguments_next_pc));
+  __ ldr(rscratch2, Address(Rctx, (int) _layout->arguments_next_pc));
   __ blr(rscratch2);
 
   __ ldr(Rctx, Address(rfp, -2 * wordSize));   // Might have clobbered Rctx
 
   __ block_comment("store_registers");
 
-  for (int i = 0; i < abi._integer_return_registers.length(); i++) {
-    ssize_t offs = layout.returns_integer + i * sizeof(uintptr_t);
-    __ str(abi._integer_return_registers.at(i), Address(Rctx, offs));
+  for (int i = 0; i < _abi->_integer_return_registers.length(); i++) {
+    ssize_t offs = _layout->returns_integer + i * sizeof(uintptr_t);
+    __ str(_abi->_integer_return_registers.at(i), Address(Rctx, offs));
   }
 
-  for (int i = 0; i < abi._vector_return_registers.length(); i++) {
-    ssize_t offs = layout.returns_vector + i * sizeof(VectorRegister);
-    __ strq(abi._vector_return_registers.at(i), Address(Rctx, offs));
+  for (int i = 0; i < _abi->_vector_return_registers.length(); i++) {
+    ssize_t offs = _layout->returns_vector + i * float_reg_size;
+    __ strq(_abi->_vector_return_registers.at(i), Address(Rctx, offs));
   }
 
   __ leave();
@@ -132,32 +111,17 @@ static void generate_invoke_native(MacroAssembler* _masm,
   __ flush();
 }
 
-class ProgrammableInvokerGenerator : public StubCodeGenerator {
-private:
-  const ABIDescriptor* _abi;
-  const BufferLayout* _layout;
-public:
-  ProgrammableInvokerGenerator(CodeBuffer* code, const ABIDescriptor* abi, const BufferLayout* layout)
-    : StubCodeGenerator(code, PrintMethodHandleStubs),
-      _abi(abi),
-      _layout(layout) {}
-
-  void generate() {
-    generate_invoke_native(_masm, *_abi, *_layout);
-  }
-};
-
-jlong ProgrammableInvoker::generate_adapter(JNIEnv* env, jobject jabi, jobject jlayout) {
+address ProgrammableInvoker::generate_adapter(jobject jabi, jobject jlayout) {
   ResourceMark rm;
-  const ABIDescriptor abi = parseABIDescriptor(env, jabi);
-  const BufferLayout layout = parseBufferLayout(env, jlayout);
+  const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
+  const BufferLayout layout = ForeignGlobals::parse_buffer_layout(jlayout);
 
-  BufferBlob* _invoke_native_blob = BufferBlob::create("invoke_native_blob", MethodHandles::adapter_code_size);
+  BufferBlob* _invoke_native_blob = BufferBlob::create("invoke_native_blob", native_invoker_size);
 
   CodeBuffer code2(_invoke_native_blob);
-  ProgrammableInvokerGenerator g2(&code2, &abi, &layout);
+  ProgrammableInvoker::Generator g2(&code2, &abi, &layout);
   g2.generate();
   code2.log_section_sizes("InvokeNativeBlob");
 
-  return (jlong) _invoke_native_blob->code_begin();
+  return _invoke_native_blob->code_begin();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,7 +293,7 @@ public class SharedUtils {
 
         final static MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
                         MethodType.methodType(MemoryAddress.class, long.class),
-                FunctionDescriptor.of(C_POINTER, C_LONGLONG));
+                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
 
         final static MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
                         MethodType.methodType(void.class, MemoryAddress.class),

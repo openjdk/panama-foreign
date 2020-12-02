@@ -39,12 +39,12 @@ class PcDesc {
   int _obj_decode_offset;
 
   enum {
-    PCDESC_reexecute               = 1 << 0,
-    PCDESC_is_method_handle_invoke = 1 << 1,
-    PCDESC_return_oop              = 1 << 2,
-    PCDESC_rethrow_exception       = 1 << 3,
-    PCDESC_has_ea_local_in_scope   = 1 << 4,
-    PCDESC_arg_escape              = 1 << 5,
+    PCDESC_reexecute                 = 1 << 0,
+    PCDESC_is_method_handle_invoke   = 1 << 1,
+    PCDESC_return_oop                = 1 << 2,
+    PCDESC_rethrow_exception         = 1 << 3,
+    PCDESC_has_ea_local_in_scope     = 1 << 4,
+    PCDESC_arg_escape                = 1 << 5,
     PCDESC_is_optimized_linkToNative = 1 << 6
   };
 

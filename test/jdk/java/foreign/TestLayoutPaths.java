@@ -36,7 +36,6 @@ import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,13 +49,13 @@ public class TestLayoutPaths {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadBitSelectFromSeq() {
         SequenceLayout seq = MemoryLayout.ofSequence(JAVA_INT);
-        seq.bitOffset(PathElement.groupElement("foo"));
+        seq.bitOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadByteSelectFromSeq() {
         SequenceLayout seq = MemoryLayout.ofSequence(JAVA_INT);
-        seq.byteOffset(PathElement.groupElement("foo"));
+        seq.byteOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -86,30 +85,13 @@ public class TestLayoutPaths {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnknownBitStructField() {
         GroupLayout g = MemoryLayout.ofStruct(JAVA_INT);
-        g.bitOffset(PathElement.groupElement("foo"));
+        g.bitOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testUnknownByteStructField() {
         GroupLayout g = MemoryLayout.ofStruct(JAVA_INT);
-        g.byteOffset(PathElement.groupElement("foo"));
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testNullGroupElementName() {
-        PathElement.groupElement(null);
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testBitNullGroupElementName() {
-        GroupLayout g = MemoryLayout.ofStruct(JAVA_INT);
-        g.bitOffset(PathElement.groupElement(null));
-    }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testByteNullGroupElementName() {
-        GroupLayout g = MemoryLayout.ofStruct(JAVA_INT);
-        g.byteOffset(PathElement.groupElement(null));
+        g.byteOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -185,7 +167,7 @@ public class TestLayoutPaths {
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testBadMultiple() {
         GroupLayout g = MemoryLayout.ofStruct(MemoryLayout.ofPaddingBits(3), JAVA_INT.withName("foo"));
-        g.byteOffset(PathElement.groupElement("foo"));
+        g.byteOffset(groupElement("foo"));
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -229,13 +211,13 @@ public class TestLayoutPaths {
     public void testBadContainerAlign() {
         GroupLayout g = MemoryLayout.ofStruct(JAVA_INT.withBitAlignment(16).withName("foo")).withBitAlignment(8);
         try {
-            g.bitOffset(PathElement.groupElement("foo"));
-            g.byteOffset(PathElement.groupElement("foo"));
+            g.bitOffset(groupElement("foo"));
+            g.byteOffset(groupElement("foo"));
         } catch (Throwable ex) {
             throw new AssertionError(ex); // should be ok!
         }
         try {
-            g.varHandle(int.class, PathElement.groupElement("foo")); //ok
+            g.varHandle(int.class, groupElement("foo")); //ok
             assertTrue(false); //should fail!
         } catch (UnsupportedOperationException ex) {
             //ok
@@ -248,13 +230,13 @@ public class TestLayoutPaths {
     public void testBadAlignOffset() {
         GroupLayout g = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, JAVA_INT.withBitAlignment(16).withName("foo"));
         try {
-            g.bitOffset(PathElement.groupElement("foo"));
-            g.byteOffset(PathElement.groupElement("foo"));
+            g.bitOffset(groupElement("foo"));
+            g.byteOffset(groupElement("foo"));
         } catch (Throwable ex) {
             throw new AssertionError(ex); // should be ok!
         }
         try {
-            g.varHandle(int.class, PathElement.groupElement("foo")); //ok
+            g.varHandle(int.class, groupElement("foo")); //ok
             assertTrue(false); //should fail!
         } catch (UnsupportedOperationException ex) {
             //ok
@@ -322,23 +304,23 @@ public class TestLayoutPaths {
         // test select
 
         for (int i = 1 ; i <= 4 ; i++) {
-            MemoryLayout selected = g.select(PathElement.groupElement(String.valueOf(i)));
+            MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
             assertTrue(selected == g.memberLayouts().get(i - 1));
         }
 
         // test offset
 
         for (int i = 1 ; i <= 4 ; i++) {
-            long bitOffset = g.bitOffset(PathElement.groupElement(String.valueOf(i)));
+            long bitOffset = g.bitOffset(groupElement(String.valueOf(i)));
             assertEquals(offsets[i - 1], bitOffset);
-            long byteOffset = g.byteOffset(PathElement.groupElement(String.valueOf(i)));
+            long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
             assertEquals((offsets[i - 1]) >>> 3, byteOffset);
         }
 
         // test map
 
         for (int i = 1 ; i <= 4 ; i++) {
-            GroupLayout g2 = (GroupLayout)g.map(l -> MemoryLayouts.JAVA_DOUBLE, PathElement.groupElement(String.valueOf(i)));
+            GroupLayout g2 = (GroupLayout)g.map(l -> MemoryLayouts.JAVA_DOUBLE, groupElement(String.valueOf(i)));
             assertTrue(g2.isStruct());
             for (int j = 0 ; j < 4 ; j++) {
                 if (j == i - 1) {
@@ -363,23 +345,23 @@ public class TestLayoutPaths {
         // test select
 
         for (int i = 1 ; i <= 4 ; i++) {
-            MemoryLayout selected = g.select(PathElement.groupElement(String.valueOf(i)));
+            MemoryLayout selected = g.select(groupElement(String.valueOf(i)));
             assertTrue(selected == g.memberLayouts().get(i - 1));
         }
 
         // test offset
 
         for (int i = 1 ; i <= 4 ; i++) {
-            long bitOffset = g.bitOffset(PathElement.groupElement(String.valueOf(i)));
+            long bitOffset = g.bitOffset(groupElement(String.valueOf(i)));
             assertEquals(offsets[i - 1], bitOffset);
-            long byteOffset = g.byteOffset(PathElement.groupElement(String.valueOf(i)));
+            long byteOffset = g.byteOffset(groupElement(String.valueOf(i)));
             assertEquals((offsets[i - 1]) >>> 3, byteOffset);
         }
 
         // test map
 
         for (int i = 1 ; i <= 4 ; i++) {
-            GroupLayout g2 = (GroupLayout)g.map(l -> MemoryLayouts.JAVA_DOUBLE, PathElement.groupElement(String.valueOf(i)));
+            GroupLayout g2 = (GroupLayout)g.map(l -> MemoryLayouts.JAVA_DOUBLE, groupElement(String.valueOf(i)));
             assertTrue(g2.isUnion());
             for (int j = 0 ; j < 4 ; j++) {
                 if (j == i - 1) {

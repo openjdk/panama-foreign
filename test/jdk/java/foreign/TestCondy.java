@@ -23,7 +23,7 @@
 
 /*
  * @test
- *
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @run testng TestCondy
  */
 
@@ -57,10 +57,9 @@ public class TestCondy {
         C_SHORT,
         C_INT,
         C_LONG,
-        C_LONGLONG,
+        C_LONG_LONG,
         C_FLOAT,
         C_DOUBLE,
-        C_LONGDOUBLE,
         C_POINTER
     };
 

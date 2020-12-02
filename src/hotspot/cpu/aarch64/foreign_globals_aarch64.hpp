@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,28 +22,13 @@
  * questions.
  */
 
-#include "asm/macroAssembler.hpp"
-#include "utilities/growableArray.hpp"
-
 #ifndef CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP
 #define CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP
 
-#define __ _masm->
+#include "asm/macroAssembler.hpp"
+#include "utilities/growableArray.hpp"
 
-struct VectorRegister {
-  static const size_t VECTOR_MAX_WIDTH_BITS = 128;
-  static const size_t VECTOR_MAX_WIDTH_BYTES = VECTOR_MAX_WIDTH_BITS / 8;
-  static const size_t VECTOR_MAX_WIDTH_U64S = VECTOR_MAX_WIDTH_BITS / 64;
-  static const size_t VECTOR_MAX_WIDTH_FLOATS = VECTOR_MAX_WIDTH_BITS / 32;
-  static const size_t VECTOR_MAX_WIDTH_DOUBLES = VECTOR_MAX_WIDTH_BITS / 64;
-
-  union {
-    uint8_t bits[VECTOR_MAX_WIDTH_BYTES];
-    uint64_t u64[VECTOR_MAX_WIDTH_U64S];
-    float f[VECTOR_MAX_WIDTH_FLOATS];
-    double d[VECTOR_MAX_WIDTH_DOUBLES];
-  };
-};
+constexpr size_t float_reg_size = 16; // bytes
 
 struct ABIDescriptor {
   GrowableArray<Register> _integer_argument_registers;
@@ -71,8 +56,5 @@ struct BufferLayout {
   size_t returns_integer;
   size_t buffer_size;
 };
-
-const ABIDescriptor parseABIDescriptor(JNIEnv* env, jobject jabi);
-const BufferLayout parseBufferLayout(JNIEnv* env, jobject jlayout);
 
 #endif // CPU_AARCH64_VM_FOREIGN_GLOBALS_AARCH64_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @run testng/othervm -Dforeign.restricted=permit StdLibTest
  */
 
@@ -176,7 +177,7 @@ public class StdLibTest {
 
         final static MethodHandle qsort = abi.downcallHandle(lookup.lookup("qsort").get(),
                 MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(C_POINTER, C_LONGLONG, C_LONGLONG, C_POINTER));
+                FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER));
 
         final static FunctionDescriptor qsortComparFunction = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
 
@@ -336,7 +337,7 @@ public class StdLibTest {
             FunctionDescriptor fd = printfBase;
             for (PrintfArg arg : args) {
                 mt = mt.appendParameterTypes(arg.carrier);
-                fd = fd.appendArgumentLayouts(arg.layout);
+                fd = fd.withAppendedArgumentLayouts(arg.layout);
             }
             MethodHandle mh = abi.downcallHandle(printfAddr, mt, fd);
             return mh.asSpreader(1, Object[].class, args.size());

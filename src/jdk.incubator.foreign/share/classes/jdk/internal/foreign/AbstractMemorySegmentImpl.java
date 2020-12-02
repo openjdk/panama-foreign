@@ -141,8 +141,8 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         checkAccess(0, size, false);
         that.checkAccess(0, size, true);
         SCOPED_MEMORY_ACCESS.copySwapMemory(scope, that.scope,
-                that.base(), that.min(),
-                base(), min(), size, elemSize);
+                        that.base(), that.min(),
+                        base(), min(), size, elemSize);
     }
 
     @Override
@@ -304,7 +304,7 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         }
     }
 
-   @Override
+    @Override
     public MemorySegment handoff(NativeScope scope) {
         Objects.requireNonNull(scope);
         checkValidState();
@@ -318,7 +318,6 @@ public abstract class AbstractMemorySegmentImpl implements MemorySegment, Memory
         ((AbstractNativeScope)scope).register(dup);
         return dup.withAccessModes(accessModes() & (READ | WRITE));
     }
-
 
     @Override
     public MemorySegment registerCleaner(Cleaner cleaner) {

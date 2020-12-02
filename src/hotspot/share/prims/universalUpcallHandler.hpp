@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,29 @@
 #ifndef SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP
 #define SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP
 
-#include "classfile/javaClasses.hpp"
-#include "classfile/vmSymbols.hpp"
-#include "include/jvm.h"
-#include "runtime/frame.inline.hpp"
-#include "runtime/globals.hpp"
-#include "utilities/macros.hpp"
-#include CPU_HEADER(foreign_globals)
+#include "asm/codeBuffer.hpp"
+#include "prims/foreign_globals.hpp"
 
-class ProgrammableUpcallHandler : AllStatic {
+class JavaThread;
+
+class ProgrammableUpcallHandler {
+private:
+  static constexpr CodeBuffer::csize_t upcall_stub_size = 1024;
+
+  struct UpcallMethod {
+    Klass* klass;
+    Symbol* name;
+    Symbol* sig;
+  } upcall_method;
+
+  ProgrammableUpcallHandler();
+
+  static const ProgrammableUpcallHandler& instance();
+
+  static void upcall_helper(JavaThread* thread, jobject rec, address buff);
+  static void attach_thread_and_do_upcall(jobject rec, address buff);
 public:
-  static jlong generate_upcall_stub(JNIEnv *env, jobject rec, jobject abi, jobject buffer_layout);
+  static address generate_upcall_stub(jobject rec, jobject abi, jobject buffer_layout);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

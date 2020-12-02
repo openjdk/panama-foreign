@@ -308,6 +308,7 @@ public:
   int       interpreter_frame_size() const;
 
 #ifndef PRODUCT
+  void      print_method_with_lineno(outputStream* st, bool show_name) const;
   void      format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) const;
   void      dump_spec(outputStream *st) const;
   void      dump_on(outputStream* st) const;
@@ -812,8 +813,10 @@ public:
 // Make a direct call into a foreign function with an arbitrary ABI
 // safepoints
 class CallNativeNode : public CallNode {
+  friend class MachCallNativeNode;
   virtual bool cmp( const Node &n ) const;
   virtual uint size_of() const;
+  static void print_regs(const GrowableArray<VMReg>& regs, outputStream* st);
 public:
   GrowableArray<VMReg> _arg_regs;
   GrowableArray<VMReg> _ret_regs;
@@ -851,6 +854,7 @@ public:
                    const TypePtr* adr_type)
     : CallLeafNode(tf, addr, name, adr_type)
   {
+    init_class_id(Class_CallLeafNoFP);
   }
   virtual int   Opcode() const;
 };

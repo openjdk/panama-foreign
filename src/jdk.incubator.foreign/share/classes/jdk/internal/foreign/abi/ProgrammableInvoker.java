@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -177,13 +179,13 @@ public class ProgrammableInvoker {
     }
 
     private Stream<Binding.VMStore> argMoveBindingsStream(CallingSequence callingSequence) {
-        return callingSequence.argBindings()
+        return callingSequence.argumentBindings()
                 .filter(Binding.VMStore.class::isInstance)
                 .map(Binding.VMStore.class::cast);
     }
 
     private Binding.VMLoad[] retMoveBindings(CallingSequence callingSequence) {
-        return callingSequence.retBindings()
+        return callingSequence.returnBindings().stream()
                 .filter(Binding.VMLoad.class::isInstance)
                 .map(Binding.VMLoad.class::cast)
                 .toArray(Binding.VMLoad[]::new);
