@@ -283,9 +283,6 @@ class nmethod : public CompiledMethod {
   ByteSize _native_receiver_sp_offset;
   ByteSize _native_basic_lock_sp_offset;
 
-  address* _native_stubs;
-  int _num_stubs;
-
   friend class nmethodLocker;
 
   // For native wrappers

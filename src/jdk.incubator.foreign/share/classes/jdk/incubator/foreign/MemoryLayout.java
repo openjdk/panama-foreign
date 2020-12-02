@@ -255,7 +255,6 @@ public interface MemoryLayout extends Constable {
      *
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
-     * @throws NullPointerException if {@code name == null}.
      * @see MemoryLayout#name()
      */
     MemoryLayout withName(String name);
@@ -314,7 +313,6 @@ public interface MemoryLayout extends Constable {
      *
      * @param name the attribute name
      * @return the attribute with the given name (if it exists).
-     * @throws NullPointerException if {@code name == null}.
      */
     Optional<Constable> attribute(String name);
 
@@ -326,7 +324,6 @@ public interface MemoryLayout extends Constable {
      * @param name the attribute name.
      * @param value the attribute value.
      * @return a new memory layout which features the same attributes as this layout, plus the newly specified attribute.
-     * @throws NullPointerException if {@code name == null}.
      */
     MemoryLayout withAttribute(String name, Constable value);
 
@@ -480,8 +477,6 @@ public interface MemoryLayout extends Constable {
      * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
      * {@code boolean}, or if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}),
      * or if the selected value layout has a size that that does not match that of the specified carrier type.
-     * @throws NullPointerException if either {@code carrier == null}, {@code elements == null}, or if any of the elements
-     * in {@code elements} is {@code null}.
      */
     default VarHandle varHandle(Class<?> carrier, PathElement... elements) {
         Objects.requireNonNull(carrier);
@@ -497,8 +492,6 @@ public interface MemoryLayout extends Constable {
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout,
      * or if the layout path contains one or more path elements that select one or more sequence element indices
      * (see {@link PathElement#sequenceElement(long)} and {@link PathElement#sequenceElement(long, long)}).
-     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
-     * in {@code elements} is {@code null}.
      */
     default MemoryLayout select(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, l -> 0L), LayoutPath::layout,
@@ -516,8 +509,6 @@ public interface MemoryLayout extends Constable {
      * @throws IllegalArgumentException if the layout path does not select any layout nested in this layout,
      * or if the layout path contains one or more path elements that select one or more sequence element indices
      * (see {@link PathElement#sequenceElement(long)} and {@link PathElement#sequenceElement(long, long)}).
-     * @throws NullPointerException if either {@code op == null}, {@code elements == null}, or if any of the elements
-     * in {@code elements} is {@code null}.
      */
     default MemoryLayout map(UnaryOperator<MemoryLayout> op, PathElement... elements) {
         Objects.requireNonNull(op);
@@ -695,7 +686,6 @@ E * (S + I * F)
      * @param order the value layout's byte order.
      * @return a new value layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
-     * @throws NullPointerException if {@code order == null}.
      */
     static ValueLayout ofValueBits(long size, ByteOrder order) {
         Objects.requireNonNull(order);
@@ -710,7 +700,6 @@ E * (S + I * F)
      * @param elementLayout the sequence element layout.
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
-     * @throws NullPointerException if {@code elementLayout == null}.
      */
     static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
@@ -723,7 +712,6 @@ E * (S + I * F)
      *
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
-     * @throws NullPointerException if {@code elementLayout == null}.
      */
     static SequenceLayout ofSequence(MemoryLayout elementLayout) {
         return new SequenceLayout(OptionalLong.empty(), Objects.requireNonNull(elementLayout));
@@ -734,7 +722,6 @@ E * (S + I * F)
      *
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
-     * @throws NullPointerException if {@code elements == null}, or if any of the layouts in {@code elements} is {@code null}.
      */
     static GroupLayout ofStruct(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
@@ -749,7 +736,6 @@ E * (S + I * F)
      *
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
-     * @throws NullPointerException if {@code elements == null}, or if any of the layouts in {@code elements} is {@code null}.
      */
     static GroupLayout ofUnion(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
