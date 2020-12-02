@@ -59,6 +59,7 @@ import static org.testng.Assert.*;
 public class TestNativeScope {
 
     final static int ELEMS = 128;
+    final static Class<?> ADDRESS_CARRIER = MemoryLayouts.ADDRESS.bitSize() == 64 ? long.class : int.class;
 
     @Test(dataProvider = "nativeScopes")
     public <Z> void testAllocation(Z value, ScopeFactory scopeFactory, ValueLayout layout, AllocationFunction<Z> allocationFunction, Function<MemoryLayout, VarHandle> handleFactory) {
@@ -166,11 +167,6 @@ public class TestNativeScope {
         s1.handoff(scope1).handoff(scope2);
     }
 
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testNullClaim() {
-        MemorySegment.ofArray(new byte[5]).handoff((NativeScope)null);
-    }
-
     @Test(expectedExceptions = IllegalStateException.class)
     public void testNotAliveClaim() {
         MemorySegment segment = MemorySegment.ofArray(new byte[1]);
@@ -208,6 +204,9 @@ public class TestNativeScope {
                 { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
+                { (char)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_BE,
+                        (AllocationFunction<Character>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(char.class) },
                 { 42, (ScopeFactory) NativeScope::boundedScope,
                         MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
@@ -223,7 +222,7 @@ public class TestNativeScope {
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
                 { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
                         (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(ADDRESS_CARRIER)) },
 
                 { (byte)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -231,6 +230,9 @@ public class TestNativeScope {
                 { (short)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
+                { (char)42, (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.BITS_16_LE,
+                        (AllocationFunction<Character>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(char.class) },
                 { 42, (ScopeFactory) NativeScope::boundedScope,
                         MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
@@ -246,7 +248,7 @@ public class TestNativeScope {
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
                 { MemoryAddress.ofLong(42), (ScopeFactory) NativeScope::boundedScope, MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
                         (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(ADDRESS_CARRIER)) },
 
                 { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -254,6 +256,9 @@ public class TestNativeScope {
                 { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
+                { (char)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_BE,
+                        (AllocationFunction<Character>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(char.class) },
                 { 42, (ScopeFactory)size -> NativeScope.unboundedScope(),
                         MemoryLayouts.BITS_32_BE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
@@ -269,7 +274,7 @@ public class TestNativeScope {
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
                 { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.BIG_ENDIAN),
                         (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(ADDRESS_CARRIER)) },
 
                 { (byte)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) NativeScope::allocate,
@@ -277,6 +282,9 @@ public class TestNativeScope {
                 { (short)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) NativeScope::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
+                { (char)42, (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.BITS_16_LE,
+                        (AllocationFunction<Character>) NativeScope::allocate,
+                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(char.class) },
                 { 42, (ScopeFactory)size -> NativeScope.unboundedScope(),
                         MemoryLayouts.BITS_32_LE,
                         (AllocationFunction<Integer>) NativeScope::allocate,
@@ -292,7 +300,7 @@ public class TestNativeScope {
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(double.class) },
                 { MemoryAddress.ofLong(42), (ScopeFactory)size -> NativeScope.unboundedScope(), MemoryLayouts.ADDRESS.withOrder(ByteOrder.LITTLE_ENDIAN),
                         (AllocationFunction<MemoryAddress>) NativeScope::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(long.class)) },
+                        (Function<MemoryLayout, VarHandle>)l -> MemoryHandles.asAddressVarHandle(l.varHandle(ADDRESS_CARRIER)) },
         };
     }
 

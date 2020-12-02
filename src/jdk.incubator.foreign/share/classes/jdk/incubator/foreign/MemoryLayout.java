@@ -84,6 +84,9 @@ SequenceLayout taggedValues = MemoryLayout.ofSequence(5,
  * <p>
  * Non-platform classes should not implement {@linkplain MemoryLayout} directly.
  *
+ * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
+ * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+ *
  * <h2><a id = "layout-align">Size, alignment and byte order</a></h2>
  *
  * All layouts have a size; layout size for value and padding layouts is always explicitly denoted; this means that a layout description
@@ -552,6 +555,9 @@ public interface MemoryLayout extends Constable {
      * <p>
      * Non-platform classes should not implement {@linkplain PathElement} directly.
      *
+     * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
+     * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
+     *
      * @apiNote In the future, if the Java language permits, {@link PathElement}
      * may become a {@code sealed} interface, which would prohibit subclassing except by
      * explicitly permitted types.
@@ -571,7 +577,6 @@ public interface MemoryLayout extends Constable {
          *
          * @param name the name of the group element to be selected.
          * @return a path element which selects the group element with given name.
-         * @throws NullPointerException if the specified group element name is {@code null}.
          */
         static PathElement groupElement(String name) {
             Objects.requireNonNull(name);

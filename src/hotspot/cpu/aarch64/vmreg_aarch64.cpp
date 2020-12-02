@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,7 +54,6 @@ void VMRegImpl::set_regName() {
 
 #define INTEGER_TYPE 0
 #define VECTOR_TYPE 1
-#define X87_TYPE 2
 #define STACK_TYPE 3
 
 VMReg VMRegImpl::vmStorageToVMReg(int type, int index) {

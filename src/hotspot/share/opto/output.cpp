@@ -1003,6 +1003,7 @@ void PhaseOutput::Process_OopMap_Node(MachNode *mach, int current_offset) {
 
   int safepoint_pc_offset = current_offset;
   bool is_method_handle_invoke = false;
+  bool is_opt_native = false;
   bool return_oop = false;
   bool has_ea_local_in_scope = sfn->_has_ea_local_in_scope;
   bool arg_escape = false;
@@ -1021,6 +1022,8 @@ void PhaseOutput::Process_OopMap_Node(MachNode *mach, int current_offset) {
         is_method_handle_invoke = true;
       }
       arg_escape = mcall->as_MachCallJava()->_arg_escape;
+    } else if (mcall->is_MachCallNative()) {
+      is_opt_native = true;
     }
 
     // Check if a call returns an object.
@@ -1141,10 +1144,22 @@ void PhaseOutput::Process_OopMap_Node(MachNode *mach, int current_offset) {
     // Now we can describe the scope.
     methodHandle null_mh;
     bool rethrow_exception = false;
-    C->debug_info()->describe_scope(safepoint_pc_offset, null_mh, scope_method, jvms->bci(),
-                                    jvms->should_reexecute(), rethrow_exception, is_method_handle_invoke,
-                                    mach->is_MachCallNative(), return_oop, has_ea_local_in_scope, arg_escape,
-                                    locvals, expvals, monvals);
+    C->debug_info()->describe_scope(
+      safepoint_pc_offset,
+      null_mh,
+      scope_method,
+      jvms->bci(),
+      jvms->should_reexecute(),
+      rethrow_exception,
+      is_method_handle_invoke,
+      is_opt_native,
+      return_oop,
+      has_ea_local_in_scope,
+      arg_escape,
+      locvals,
+      expvals,
+      monvals
+    );
   } // End jvms loop
 
   // Mark the end of the scope set.
@@ -2855,11 +2870,10 @@ void Scheduling::verify_good_schedule( Block *b, const char *msg ) {
     int n_op = n->Opcode();
     if( n_op == Op_MachProj && n->ideal_reg() == MachProjNode::fat_proj ) {
       // Fat-proj kills a slew of registers
-      RegMask rm = n->out_RegMask();// Make local copy
-      while( rm.is_NotEmpty() ) {
-        OptoReg::Name kill = rm.find_first_elem();
-        rm.Remove(kill);
-        verify_do_def( n, kill, msg );
+      RegMaskIterator rmi(n->out_RegMask());
+      while (rmi.has_next()) {
+        OptoReg::Name kill = rmi.next();
+        verify_do_def(n, kill, msg);
       }
     } else if( n_op != Op_Node ) { // Avoid brand new antidependence nodes
       // Get DEF'd registers the normal way
@@ -3046,11 +3060,10 @@ void Scheduling::ComputeRegisterAntidependencies(Block *b) {
       // This can add edges to 'n' and obscure whether or not it was a def,
       // hence the is_def flag.
       fat_proj_seen = true;
-      RegMask rm = n->out_RegMask();// Make local copy
-      while( rm.is_NotEmpty() ) {
-        OptoReg::Name kill = rm.find_first_elem();
-        rm.Remove(kill);
-        anti_do_def( b, n, kill, is_def );
+      RegMaskIterator rmi(n->out_RegMask());
+      while (rmi.has_next()) {
+        OptoReg::Name kill = rmi.next();
+        anti_do_def(b, n, kill, is_def);
       }
     } else {
       // Get DEF'd registers the normal way
@@ -3065,11 +3078,10 @@ void Scheduling::ComputeRegisterAntidependencies(Block *b) {
       for (DUIterator_Fast imax, i = n->fast_outs(imax); i < imax; i++) {
         Node* use = n->fast_out(i);
         if (use->is_Proj()) {
-          RegMask rm = use->out_RegMask();// Make local copy
-          while( rm.is_NotEmpty() ) {
-            OptoReg::Name kill = rm.find_first_elem();
-            rm.Remove(kill);
-            anti_do_def( b, n, kill, false );
+          RegMaskIterator rmi(use->out_RegMask());
+          while (rmi.has_next()) {
+            OptoReg::Name kill = rmi.next();
+            anti_do_def(b, n, kill, false);
           }
         }
       }
@@ -3378,16 +3390,6 @@ void PhaseOutput::install_code(ciMethod*         target,
       _code_offsets.set_value(CodeOffsets::OSR_Entry, 0);
     }
 
-    address* native_stubs = NULL;
-    int num_stubs = 0;
-    if (!C->native_stubs().is_empty()) {
-      num_stubs = C->native_stubs().length();
-      native_stubs = NEW_C_HEAP_ARRAY(address, num_stubs, mtInternal);
-      for (int i = 0; i < num_stubs; i++) {
-        native_stubs[i] = C->native_stubs().at(i);
-      }
-    }
-
     C->env()->register_method(target,
                                      entry_bci,
                                      &_code_offsets,
@@ -3401,8 +3403,7 @@ void PhaseOutput::install_code(ciMethod*         target,
                                      has_unsafe_access,
                                      SharedRuntime::is_wide_vector(C->max_vector_size()),
                                      C->rtm_state(),
-                                     native_stubs,
-                                     num_stubs);
+                                     C->native_invokers());
 
     if (C->log() != NULL) { // Print code cache state into compiler log
       C->log()->code_cache_state();

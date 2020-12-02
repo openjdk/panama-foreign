@@ -26,11 +26,7 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
-import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.foreign.*;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.VM;
 import sun.invoke.util.Wrapper;
@@ -61,6 +57,7 @@ public final class Utils {
 
     public static final Supplier<RuntimeException> bitsToBytesThrowOffset
         = () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8");
+
 
     static {
         try {

@@ -25,6 +25,7 @@
 #include <math.h>
 
 #include "jlong.h"
+#include <math.h>
 
 #include "points.h"
 

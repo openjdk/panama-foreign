@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -117,6 +118,7 @@ public final class LibrariesHelper {
         @Override
         public Optional<Symbol> lookup(String name) {
             try {
+                Objects.requireNonNull(name);
                 MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
                 return Optional.of(new Symbol() { // inner class - retains a link to enclosing lookup
                     @Override
