@@ -148,7 +148,7 @@ class Index_h$constants_0 {
     static final MemoryLayout CXUnsavedFile$struct$LAYOUT_ = MemoryLayout.ofStruct(
         C_POINTER.withName("Filename"),
         C_POINTER.withName("Contents"),
-        C_LONGLONG.withName("Length")
+        C_LONG_LONG.withName("Length")
     ).withName("CXUnsavedFile");
     static final jdk.incubator.foreign.MemoryLayout CXUnsavedFile$struct$LAYOUT() { return CXUnsavedFile$struct$LAYOUT_; }
 
@@ -164,7 +164,7 @@ class Index_h$constants_0 {
     static final VarHandle CXUnsavedFile$Contents$VH_ = MemoryHandles.asAddressVarHandle(CXUnsavedFile$struct$LAYOUT_.varHandle(long.class, MemoryLayout.PathElement.groupElement("Contents")));
     static final java.lang.invoke.VarHandle CXUnsavedFile$Contents$VH() { return CXUnsavedFile$Contents$VH_; }
 
-    static final MemoryLayout CXUnsavedFile$Length$LAYOUT_ = C_LONGLONG;
+    static final MemoryLayout CXUnsavedFile$Length$LAYOUT_ = C_LONG_LONG;
     static final jdk.incubator.foreign.MemoryLayout CXUnsavedFile$Length$LAYOUT() { return CXUnsavedFile$Length$LAYOUT_; }
 
     static final VarHandle CXUnsavedFile$Length$VH_ = CXUnsavedFile$struct$LAYOUT_.varHandle(long.class, MemoryLayout.PathElement.groupElement("Length"));
@@ -310,7 +310,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_getFileName$MH() { return clang_getFileName$MH_; }
 
-    static final FunctionDescriptor clang_getFileTime$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_getFileTime$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         C_POINTER
     );
     static final jdk.incubator.foreign.FunctionDescriptor clang_getFileTime$FUNC() { return clang_getFileTime$FUNC_; }
@@ -323,7 +323,7 @@ class Index_h$constants_0 {
     static final java.lang.invoke.MethodHandle clang_getFileTime$MH() { return clang_getFileTime$MH_; }
 
     static final MemoryLayout CXFileUniqueID$struct$LAYOUT_ = MemoryLayout.ofStruct(
-        MemoryLayout.ofSequence(3, C_LONGLONG).withName("data")
+        MemoryLayout.ofSequence(3, C_LONG_LONG).withName("data")
     );
     static final jdk.incubator.foreign.MemoryLayout CXFileUniqueID$struct$LAYOUT() { return CXFileUniqueID$struct$LAYOUT_; }
 
@@ -1449,7 +1449,7 @@ class Index_h$constants_0 {
     static final MemoryLayout CXTUResourceUsageEntry$struct$LAYOUT_ = MemoryLayout.ofStruct(
         C_INT.withName("kind"),
         MemoryLayout.ofPaddingBits(32),
-        C_LONGLONG.withName("amount")
+        C_LONG_LONG.withName("amount")
     ).withName("CXTUResourceUsageEntry");
     static final jdk.incubator.foreign.MemoryLayout CXTUResourceUsageEntry$struct$LAYOUT() { return CXTUResourceUsageEntry$struct$LAYOUT_; }
 
@@ -1459,7 +1459,7 @@ class Index_h$constants_0 {
     static final VarHandle CXTUResourceUsageEntry$kind$VH_ = CXTUResourceUsageEntry$struct$LAYOUT_.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
     static final java.lang.invoke.VarHandle CXTUResourceUsageEntry$kind$VH() { return CXTUResourceUsageEntry$kind$VH_; }
 
-    static final MemoryLayout CXTUResourceUsageEntry$amount$LAYOUT_ = C_LONGLONG;
+    static final MemoryLayout CXTUResourceUsageEntry$amount$LAYOUT_ = C_LONG_LONG;
     static final jdk.incubator.foreign.MemoryLayout CXTUResourceUsageEntry$amount$LAYOUT() { return CXTUResourceUsageEntry$amount$LAYOUT_; }
 
     static final VarHandle CXTUResourceUsageEntry$amount$VH_ = CXTUResourceUsageEntry$struct$LAYOUT_.varHandle(long.class, MemoryLayout.PathElement.groupElement("amount"));
@@ -3133,7 +3133,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_getEnumDeclIntegerType$MH() { return clang_getEnumDeclIntegerType$MH_; }
 
-    static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
@@ -3149,7 +3149,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_getEnumConstantDeclValue$MH() { return clang_getEnumConstantDeclValue$MH_; }
 
-    static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
@@ -3292,7 +3292,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_Cursor_getTemplateArgumentType$MH() { return clang_Cursor_getTemplateArgumentType$MH_; }
 
-    static final FunctionDescriptor clang_Cursor_getTemplateArgumentValue$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Cursor_getTemplateArgumentValue$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
@@ -3309,7 +3309,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_Cursor_getTemplateArgumentValue$MH() { return clang_Cursor_getTemplateArgumentValue$MH_; }
 
-    static final FunctionDescriptor clang_Cursor_getTemplateArgumentUnsignedValue$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Cursor_getTemplateArgumentUnsignedValue$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
@@ -3886,7 +3886,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_getElementType$MH() { return clang_getElementType$MH_; }
 
-    static final FunctionDescriptor clang_getNumElements$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_getNumElements$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
@@ -3922,7 +3922,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_getArrayElementType$MH() { return clang_getArrayElementType$MH_; }
 
-    static final FunctionDescriptor clang_getArraySize$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_getArraySize$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
@@ -4010,7 +4010,7 @@ class Index_h$constants_0 {
 
     static final int CXTypeLayoutError_Undeduced() { return (int)-6L; }
 
-    static final FunctionDescriptor clang_Type_getAlignOf$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Type_getAlignOf$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
@@ -4046,7 +4046,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_Type_getClassType$MH() { return clang_Type_getClassType$MH_; }
 
-    static final FunctionDescriptor clang_Type_getSizeOf$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Type_getSizeOf$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
@@ -4062,7 +4062,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_Type_getSizeOf$MH() { return clang_Type_getSizeOf$MH_; }
 
-    static final FunctionDescriptor clang_Type_getOffsetOf$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Type_getOffsetOf$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             MemoryLayout.ofPaddingBits(32),
@@ -4099,7 +4099,7 @@ class Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_Type_getModifiedType$MH() { return clang_Type_getModifiedType$MH_; }
 
-    static final FunctionDescriptor clang_Cursor_getOffsetOfField$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_Cursor_getOffsetOfField$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.ofStruct(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),

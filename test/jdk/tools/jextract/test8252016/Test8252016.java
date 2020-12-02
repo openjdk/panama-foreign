@@ -54,8 +54,8 @@ public class Test8252016 {
             try (VaList vaList = VaList.make(b -> {
                 b.vargFromInt(C_INT, 12);
                 b.vargFromDouble(C_DOUBLE, 5.5d);
-                b.vargFromLong(C_LONGLONG, -200L);
-                b.vargFromLong(C_LONGLONG, Long.MAX_VALUE);
+                b.vargFromLong(C_LONG_LONG, -200L);
+                b.vargFromLong(C_LONG_LONG, Long.MAX_VALUE);
             })) {
                 my_vsprintf(s, toCString("%hhd %.2f %lld %lld"), vaList);
                 String str = toJavaString(s);

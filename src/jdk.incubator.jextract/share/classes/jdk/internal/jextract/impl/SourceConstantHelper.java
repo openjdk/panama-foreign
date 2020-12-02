@@ -456,10 +456,9 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
             case SHORT -> "C_SHORT";
             case INT -> "C_INT";
             case LONG -> "C_LONG";
-            case LONGLONG -> "C_LONGLONG";
+            case LONG_LONG -> "C_LONG_LONG";
             case FLOAT -> "C_FLOAT";
             case DOUBLE -> "C_DOUBLE";
-            case LONGDOUBLE -> "C_LONGDOUBLE";
             case POINTER -> "C_POINTER";
         };
     }

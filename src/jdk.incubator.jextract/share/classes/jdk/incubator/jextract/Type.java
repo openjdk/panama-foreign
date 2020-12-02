@@ -123,7 +123,7 @@ public interface Type {
             /**
              * {@code long long} type.
              */
-            LongLong("long long", CLinker.C_LONGLONG),
+            LongLong("long long", CLinker.C_LONG_LONG),
             /**
              * {@code int128} type.
              */
@@ -136,10 +136,6 @@ public interface Type {
              * {@code double} type.
              */
             Double("double",CLinker.C_DOUBLE),
-            /**
-             * {@code long double} type.
-             */
-            LongDouble("long double", CLinker.C_LONGDOUBLE),
             /**
              * {@code float128} type.
              */

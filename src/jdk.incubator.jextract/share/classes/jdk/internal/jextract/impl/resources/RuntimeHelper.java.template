@@ -202,7 +202,7 @@ final class RuntimeHelper {
 
         private MemoryLayout variadicLayout(Class<?> c) {
             if (c == long.class) {
-                return C_LONGLONG;
+                return C_LONG_LONG;
             } else if (c == double.class) {
                 return C_DOUBLE;
             } else if (MemoryAddress.class.isAssignableFrom(c)) {

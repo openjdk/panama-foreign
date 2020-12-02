@@ -158,7 +158,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private static Class<?> classForType(Primitive.Kind type, MemoryLayout layout) {
         boolean isFloat = switch(type) {
-            case Float, Double, LongDouble -> true;
+            case Float, Double -> true;
             default-> false;
         };
         return TypeTranslator.layoutToClass(isFloat, layout);
@@ -229,24 +229,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
-    private static boolean isLongDouble(MemoryLayout layout) {
-        return CLinker.C_LONGDOUBLE.bitSize() == 128
-            && CLinker.C_LONGDOUBLE.equals(layout);
-    }
-
-    private static boolean usesLongDouble(FunctionDescriptor desc) {
-        if (isLongDouble(desc.returnLayout().orElse(null))) {
-            return true;
-        }
-
-        for (MemoryLayout argLayout : desc.argumentLayouts()) {
-            if (isLongDouble(argLayout)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -257,11 +239,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
-            return null;
-        }
-
-        if (usesLongDouble(descriptor)) {
-            warn("skipping " + funcTree.name() + " because of long double usage");
             return null;
         }
 
@@ -394,9 +371,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (layout == null) {
             //no layout - abort
             return null;
-        }
-        if (isLongDouble(layout)) {
-            warn("skipping " + fieldName + " because of long double usage");
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);

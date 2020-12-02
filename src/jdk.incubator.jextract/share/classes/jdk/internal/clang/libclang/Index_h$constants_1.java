@@ -2192,7 +2192,7 @@ class Index_h$constants_1 extends Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_codeCompleteGetDiagnostic$MH() { return clang_codeCompleteGetDiagnostic$MH_; }
 
-    static final FunctionDescriptor clang_codeCompleteGetContexts$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_codeCompleteGetContexts$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         C_POINTER
     );
     static final jdk.incubator.foreign.FunctionDescriptor clang_codeCompleteGetContexts$FUNC() { return clang_codeCompleteGetContexts$FUNC_; }
@@ -2351,7 +2351,7 @@ class Index_h$constants_1 extends Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_EvalResult_getAsInt$MH() { return clang_EvalResult_getAsInt$MH_; }
 
-    static final FunctionDescriptor clang_EvalResult_getAsLongLong$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_EvalResult_getAsLongLong$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         C_POINTER
     );
     static final jdk.incubator.foreign.FunctionDescriptor clang_EvalResult_getAsLongLong$FUNC() { return clang_EvalResult_getAsLongLong$FUNC_; }
@@ -2375,7 +2375,7 @@ class Index_h$constants_1 extends Index_h$constants_0 {
     );
     static final java.lang.invoke.MethodHandle clang_EvalResult_isUnsignedInt$MH() { return clang_EvalResult_isUnsignedInt$MH_; }
 
-    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC_ = FunctionDescriptor.of(C_LONGLONG,
+    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC_ = FunctionDescriptor.of(C_LONG_LONG,
         C_POINTER
     );
     static final jdk.incubator.foreign.FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC() { return clang_EvalResult_getAsUnsigned$FUNC_; }

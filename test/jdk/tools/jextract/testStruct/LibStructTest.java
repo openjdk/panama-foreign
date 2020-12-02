@@ -95,10 +95,9 @@ public class LibStructTest {
         checkField(g, "ui", CLinker.C_INT);
         checkField(g, "l",  CLinker.C_LONG);
         checkField(g, "ul", CLinker.C_LONG);
-        checkField(g, "ll", CLinker.C_LONGLONG);
-        checkField(g, "ull",CLinker.C_LONGLONG);
+        checkField(g, "ll", CLinker.C_LONG_LONG);
+        checkField(g, "ull",CLinker.C_LONG_LONG);
         checkField(g, "f",  CLinker.C_FLOAT);
         checkField(g, "d",  CLinker.C_DOUBLE);
-        checkField(g, "ld", CLinker.C_LONGDOUBLE);
     }
 }

@@ -49,7 +49,6 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
             case Float128:
             case HalfFloat:
             case Double:
-            case LongDouble:
                 return true;
             default:
                 return false;
@@ -63,10 +62,9 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
             case Short -> "C_SHORT";
             case Int -> "C_INT";
             case Long -> "C_LONG";
-            case LongLong -> "C_LONGLONG";
+            case LongLong -> "C_LONG_LONG";
             case Float -> "C_FLOAT";
             case Double -> "C_DOUBLE";
-            case LongDouble -> "C_LONGDOUBLE";
             default -> throw new RuntimeException("should not reach here: " + type);
         };
     }

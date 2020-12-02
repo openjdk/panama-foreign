@@ -160,8 +160,6 @@ class TypeMaker {
                 return Type.primitive(Primitive.Kind.Bool);
             case Double:
                 return Type.primitive(Primitive.Kind.Double);
-            case LongDouble:
-                return Type.primitive(Primitive.Kind.LongDouble);
             case Float:
                 return Type.primitive(Primitive.Kind.Float);
             case Unexposed:
