@@ -41,6 +41,7 @@ tier1_part3 = \
     :jdk_math \
     :jdk_svc_sanity \
     :jdk_foreign \
+    :jdk_jextract \
     java/nio/Buffer \
     com/sun/crypto/provider/Cipher \
     sun/nio/cs/ISO8859x.java
@@ -341,6 +342,10 @@ jdk_foreign = \
 
 jdk_vector = \
     jdk/incubator/vector
+
+jdk_jextract = \
+    java/jextract \
+    tools/jextract
 
 #############################
 
