@@ -814,7 +814,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb38-33" title="33">            }</a>
 <a class="sourceLine" id="cb38-34" title="34"></a>
 <a class="sourceLine" id="cb38-35" title="35">            <span class="co">// print operations</span></a>
-<a class="sourceLine" id="cb38-36" title="36">            var size = scope.<span class="fu">allocate</span>(C_LONGLONG);</a>
+<a class="sourceLine" id="cb38-36" title="36">            var size = scope.<span class="fu">allocate</span>(C_LONG_LONG);</a>
 <a class="sourceLine" id="cb38-37" title="37">            var operation = NULL;</a>
 <a class="sourceLine" id="cb38-38" title="38">            <span class="kw">while</span> (!(operation = <span class="fu">TF_GraphNextOperation</span>(graph, size)).<span class="fu">equals</span>(NULL)) {</a>
 <a class="sourceLine" id="cb38-39" title="39">                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> : </span><span class="sc">%s\n</span><span class="st">&quot;</span>,</a>

@@ -51,6 +51,7 @@ struct AllTypes {
     unsigned long long ull;
     float f;
     double d;
+    long double ld;
 };
 
 #ifdef __cplusplus

@@ -229,18 +229,42 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
+    private static boolean isUnsupported(MemoryLayout layout) {
+        return UnsupportedLayouts.isUnsupported(layout);
+    }
+
+    private boolean warnUnsupported(FunctionDescriptor desc, String name) {
+        if (isUnsupported(desc.returnLayout().orElse(null))) {
+            MemoryLayout layout = desc.returnLayout().get();
+            warn("skipping " + name + " because of unsupported type usage: " + layout.name().get());
+            return true;
+        }
+
+        for (MemoryLayout argLayout : desc.argumentLayouts()) {
+            if (isUnsupported(argLayout)) {
+                warn("skipping " + name + " because of unsupported type usage: " + argLayout.name().get());
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
             return null;
         }
 
-        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
             return null;
         }
+
+        if (warnUnsupported(descriptor, funcTree.name())) {
+            return null;
+        }
+        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
 
         if (isVaList(descriptor)) {
             MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
@@ -371,6 +395,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (layout == null) {
             //no layout - abort
             return null;
+        }
+
+        if (isUnsupported(layout)) {
+            warn("skipping " + fieldName + " because of unsupported type usage: " + layout.name().get());
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
