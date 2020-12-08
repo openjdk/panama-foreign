@@ -51,7 +51,8 @@ public final class UnsupportedLayouts {
             withName("wchar_t").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.SHORT);
 
     public static boolean isUnsupported(MemoryLayout layout) {
-        return layout == __INT128 || layout == LONG_DOUBLE || layout == _FLOAT128  ||
-                layout == __FP16 || layout == WCHAT_T;
+        return layout == __INT128 || layout == LONG_DOUBLE ||
+                layout == _FLOAT128  || layout == __FP16 ||
+                layout == CHAR16 ||  layout == WCHAT_T;
     }
 }
