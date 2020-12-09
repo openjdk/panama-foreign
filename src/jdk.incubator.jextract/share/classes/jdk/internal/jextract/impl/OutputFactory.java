@@ -230,7 +230,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static boolean isUnsupported(MemoryLayout layout) {
-        return UnsupportedLayouts.isUnsupported(layout);
+        if (layout instanceof ValueLayout) {
+            return UnsupportedLayouts.isUnsupported((ValueLayout)layout);
+        } else if (layout instanceof GroupLayout) {
+            GroupLayout gl = (GroupLayout)layout;
+            for (MemoryLayout ml : gl.memberLayouts()) {
+                if (isUnsupported(ml)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private boolean warnUnsupported(FunctionDescriptor desc, String name) {
@@ -398,7 +409,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         if (isUnsupported(layout)) {
-            warn("skipping " + fieldName + " because of unsupported type usage: " + layout.name().get());
+            String name = parent != null? parent.name() + "." : "";
+            name += fieldName;
+            warn("skipping " + name + " because of unsupported type usage: " + layout.name().get());
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);

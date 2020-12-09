@@ -24,35 +24,38 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.ValueLayout;
 import java.nio.ByteOrder;
 
+/*
+ * Layouts for the primitive types not supported by ABI implementations.
+ */
 public final class UnsupportedLayouts {
     private UnsupportedLayouts() {}
 
+    private static final String ATTR_UNSUPPORTED = "jextract.abi.unsupported.types";
+    private static final String ATTR_SOURCE_FORM = "jextract.abi.unsupported.types.source.form";
+
     public static final ValueLayout __INT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("__int128").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.LONG_LONG);
+            withName("__int128").withAttribute(ATTR_UNSUPPORTED, true);
 
     public static final ValueLayout LONG_DOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("long double").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.DOUBLE);
+            withName("long double").withAttribute(ATTR_UNSUPPORTED, true);
 
     public static final ValueLayout _FLOAT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("_float128").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.DOUBLE);
+            withName("_float128").withAttribute(ATTR_UNSUPPORTED, true);
 
     public static final ValueLayout __FP16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("__fp16").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.FLOAT);
+            withName("__fp16").withAttribute(ATTR_UNSUPPORTED, true);
 
     public static final ValueLayout CHAR16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("char16").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.SHORT);
+            withName("char16").withAttribute(ATTR_UNSUPPORTED, true);
 
     public static final ValueLayout WCHAT_T = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("wchar_t").withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.SHORT);
+            withName("wchar_t").withAttribute(ATTR_UNSUPPORTED, true);
 
-    public static boolean isUnsupported(MemoryLayout layout) {
-        return layout == __INT128 || layout == LONG_DOUBLE ||
-                layout == _FLOAT128  || layout == __FP16 ||
-                layout == CHAR16 ||  layout == WCHAT_T;
+    static boolean isUnsupported(ValueLayout vl) {
+        return vl.attribute(ATTR_UNSUPPORTED).isPresent();
     }
 }
