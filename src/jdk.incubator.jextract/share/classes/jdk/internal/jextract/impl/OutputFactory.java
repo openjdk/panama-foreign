@@ -245,8 +245,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private static MemoryLayout isUnsupported(FunctionDescriptor desc) {
-        if (isUnsupported(desc.returnLayout().orElse(null))) {
-            return desc.returnLayout().orElse(null);
+        MemoryLayout resultLayout = desc.returnLayout().orElse(null);
+        if (resultLayout != null && isUnsupported(resultLayout)) {
+            return resultLayout;
         }
 
         for (MemoryLayout argLayout : desc.argumentLayouts()) {
