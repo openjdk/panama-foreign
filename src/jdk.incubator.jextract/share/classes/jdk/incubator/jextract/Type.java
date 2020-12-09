@@ -148,7 +148,7 @@ public interface Type {
             /**
              * {@code wchar} type.
              */
-            WChar("wchar_t", UnsupportedLayouts.WCHAT_T);
+            WChar("wchar_t", UnsupportedLayouts.WCHAR_T);
 
             private final String typeName;
             private final MemoryLayout layout;

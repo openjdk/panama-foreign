@@ -52,7 +52,7 @@ public final class UnsupportedLayouts {
     public static final ValueLayout CHAR16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
             withName("char16").withAttribute(ATTR_UNSUPPORTED, true);
 
-    public static final ValueLayout WCHAT_T = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
+    public static final ValueLayout WCHAR_T = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
             withName("wchar_t").withAttribute(ATTR_UNSUPPORTED, true);
 
     static boolean isUnsupported(ValueLayout vl) {
