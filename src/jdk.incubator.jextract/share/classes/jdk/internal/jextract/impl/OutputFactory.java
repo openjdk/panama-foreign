@@ -244,6 +244,20 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
+    private static MemoryLayout isUnsupported(FunctionDescriptor desc) {
+        if (isUnsupported(desc.returnLayout().orElse(null))) {
+            return desc.returnLayout().orElse(null);
+        }
+
+        for (MemoryLayout argLayout : desc.argumentLayouts()) {
+            if (isUnsupported(argLayout)) {
+                return argLayout;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -256,17 +270,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        if (isUnsupported(descriptor.returnLayout().orElse(null))) {
-            MemoryLayout layout = descriptor.returnLayout().get();
-            warn("skipping " + funcTree.name() + " because of unsupported type usage: " + layout.name().get());
+        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
+        if (unsupportedLayout != null) {
+            warn("skipping " + funcTree.name() + " because of unsupported type usage: " + unsupportedLayout.name().get());
             return null;
-        }
-
-        for (MemoryLayout argLayout : descriptor.argumentLayouts()) {
-            if (isUnsupported(argLayout)) {
-                warn("skipping " + funcTree.name() + " because of unsupported type usage: " + argLayout.name().get());
-                return null;
-            }
         }
 
         MethodType mtype = typeTranslator.getMethodType(funcTree.type());
@@ -296,8 +303,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 .map(annotationWriter::getCAnnotation)
                 .collect(Collectors.toList());
         String returnAnno = annotationWriter.getCAnnotation(funcTree.type().returnType());
-        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
-                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
+
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
             Type.Function f = getAsFunctionPointer(param.type());
@@ -309,11 +315,22 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                toplevelBuilder.addFunctionalInterface(name, fitype,
-                        Type.descriptorFor(f).orElseThrow(), param.type());
+                FunctionDescriptor fpDesc = Type.descriptorFor(f).orElseThrow();
+                unsupportedLayout = isUnsupported(fpDesc);
+                if (unsupportedLayout != null) {
+                    warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
+                            unsupportedLayout.name().get() + " in " + param.name());
+                    return null;
+                }
+
+                toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, param.type());
                 i++;
             }
         }
+
+        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
+
         return null;
     }
 

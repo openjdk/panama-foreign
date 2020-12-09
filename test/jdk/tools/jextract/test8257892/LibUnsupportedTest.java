@@ -84,6 +84,9 @@ public class LibUnsupportedTest {
     @Test
     public void testIgnoredMethods() {
         assertNull(findMethod(unsupported_h.class, "func"));
+        assertNull(findMethod(unsupported_h.class, "func2"));
+        assertNull(findMethod(unsupported_h.class, "func3"));
+        assertNull(findMethod(unsupported_h.class, "func4"));
         assertNull(findMethod(unsupported_h.class, "makeFoo"));
         assertNull(findMethod(unsupported_h.class, "copyFoo"));
     }
