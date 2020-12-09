@@ -212,10 +212,19 @@ class TypeMaker {
                 return Type.vector(t.getNumberOfElements(), __type);
             }
             case WChar: //unsupported
+                return Type.primitive(Primitive.Kind.WChar);
             case Char16: //unsupported
+                return Type.primitive(Primitive.Kind.Char16);
             case Half: //unsupported
+                return Type.primitive(Primitive.Kind.HalfFloat);
             case Int128: //unsupported
-            case UInt128: //unsupported
+                return Type.primitive(Primitive.Kind.Int128);
+            case LongDouble: //unsupported
+                return Type.primitive(Primitive.Kind.LongDouble);
+            case UInt128: { //unsupported
+                Type iType = Type.primitive(Primitive.Kind.Int128);
+                return Type.qualified(Delegated.Kind.UNSIGNED, iType);
+            }
             default:
                 return TypeImpl.ERROR;
         }

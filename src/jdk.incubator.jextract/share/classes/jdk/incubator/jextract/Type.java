@@ -31,6 +31,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.jextract.impl.LayoutUtils;
 import jdk.internal.jextract.impl.TypeImpl;
+import jdk.internal.jextract.impl.UnsupportedLayouts;
 
 import java.util.List;
 import java.util.Optional;
@@ -103,11 +104,7 @@ public interface Type {
             /**
              * {@code char16} type.
              */
-            Char16("char16", null),
-            /**
-             * {@code char32} type.
-             */
-            Char32("char32", null),
+            Char16("char16", UnsupportedLayouts.CHAR16),
             /**
              * {@code short} type.
              */
@@ -127,7 +124,7 @@ public interface Type {
             /**
              * {@code int128} type.
              */
-            Int128("__int128", null),
+            Int128("__int128", UnsupportedLayouts.__INT128),
             /**
              * {@code float} type.
              */
@@ -137,17 +134,21 @@ public interface Type {
              */
             Double("double",CLinker.C_DOUBLE),
             /**
+              * {@code long double} type.
+              */
+            LongDouble("long double", UnsupportedLayouts.LONG_DOUBLE),
+            /**
              * {@code float128} type.
              */
-            Float128("float128", null),
+            Float128("float128", UnsupportedLayouts._FLOAT128),
             /**
              * {@code float16} type.
              */
-            HalfFloat("__fp16", null),
+            HalfFloat("__fp16", UnsupportedLayouts.__FP16),
             /**
              * {@code wchar} type.
              */
-            WChar("wchar_t", null);
+            WChar("wchar_t", UnsupportedLayouts.WCHAR_T);
 
             private final String typeName;
             private final MemoryLayout layout;

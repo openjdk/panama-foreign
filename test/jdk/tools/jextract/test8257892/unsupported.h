@@ -31,28 +31,21 @@ extern "C" {
 #define EXPORT
 #endif
 
-typedef struct Point {
-    int x;
-    int y;
-} Point;
-
-EXPORT Point makePoint(int x, int y);
-
-struct AllTypes {
-    signed char sc;
-    unsigned char uc;
-    short s;
-    unsigned short us;
+typedef struct Foo {
     int i;
-    unsigned int ui;
-    long l;
-    unsigned long ul;
-    long long ll;
-    unsigned long long ull;
-    float f;
-    double d;
     long double ld;
-};
+    char c;
+} Foo;
+
+EXPORT void func(long double ll);
+EXPORT void func2(void (*f)(long double l));
+EXPORT void func3(long double (*f)());
+EXPORT void func4(void (*f)(Foo f));
+EXPORT Foo* getFoo();
+EXPORT Foo makeFoo();
+EXPORT void copyFoo(Foo f1, Foo f2);
+
+long double ld;
 
 #ifdef __cplusplus
 }

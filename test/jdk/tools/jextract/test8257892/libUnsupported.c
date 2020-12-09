@@ -21,39 +21,10 @@
  * questions.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#include "unsupported.h"
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
+static Foo f = { 42, 343.55, 'j' };
 
-typedef struct Point {
-    int x;
-    int y;
-} Point;
-
-EXPORT Point makePoint(int x, int y);
-
-struct AllTypes {
-    signed char sc;
-    unsigned char uc;
-    short s;
-    unsigned short us;
-    int i;
-    unsigned int ui;
-    long l;
-    unsigned long ul;
-    long long ll;
-    unsigned long long ull;
-    float f;
-    double d;
-    long double ld;
-};
-
-#ifdef __cplusplus
+EXPORT Foo* getFoo() {
+    return &f;
 }
-#endif // __cplusplus

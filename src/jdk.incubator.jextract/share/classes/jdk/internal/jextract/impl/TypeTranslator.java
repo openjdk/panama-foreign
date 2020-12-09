@@ -49,6 +49,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
             case Float128:
             case HalfFloat:
             case Double:
+            case LongDouble:
                 return true;
             default:
                 return false;

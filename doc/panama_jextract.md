@@ -866,7 +866,7 @@ public class TensorflowLoadSavedModel {
             }
 
             // print operations
-            var size = scope.allocate(C_LONGLONG);
+            var size = scope.allocate(C_LONG_LONG);
             var operation = NULL;
             while (!(operation = TF_GraphNextOperation(graph, size)).equals(NULL)) {
                 System.out.printf("%s : %s\n",

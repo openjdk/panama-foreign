@@ -229,18 +229,55 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
+    private static boolean isUnsupported(MemoryLayout layout) {
+        if (layout instanceof ValueLayout) {
+            return UnsupportedLayouts.isUnsupported((ValueLayout)layout);
+        } else if (layout instanceof GroupLayout) {
+            GroupLayout gl = (GroupLayout)layout;
+            for (MemoryLayout ml : gl.memberLayouts()) {
+                if (isUnsupported(ml)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static MemoryLayout isUnsupported(FunctionDescriptor desc) {
+        MemoryLayout resultLayout = desc.returnLayout().orElse(null);
+        if (resultLayout != null && isUnsupported(resultLayout)) {
+            return resultLayout;
+        }
+
+        for (MemoryLayout argLayout : desc.argumentLayouts()) {
+            if (isUnsupported(argLayout)) {
+                return argLayout;
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
             return null;
         }
 
-        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
         FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
         if (descriptor == null) {
             //abort
             return null;
         }
+
+        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
+        if (unsupportedLayout != null) {
+            warn("skipping " + funcTree.name() + " because of unsupported type usage: " + unsupportedLayout.name().get());
+            return null;
+        }
+
+        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
 
         if (isVaList(descriptor)) {
             MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
@@ -267,8 +304,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 .map(annotationWriter::getCAnnotation)
                 .collect(Collectors.toList());
         String returnAnno = annotationWriter.getCAnnotation(funcTree.type().returnType());
-        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
-                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
+
         int i = 0;
         for (Declaration.Variable param : funcTree.parameters()) {
             Type.Function f = getAsFunctionPointer(param.type());
@@ -280,11 +316,22 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     warn("varargs in callbacks is not supported");
                 }
                 MethodType fitype = typeTranslator.getMethodType(f, false);
-                toplevelBuilder.addFunctionalInterface(name, fitype,
-                        Type.descriptorFor(f).orElseThrow(), param.type());
+                FunctionDescriptor fpDesc = Type.descriptorFor(f).orElseThrow();
+                unsupportedLayout = isUnsupported(fpDesc);
+                if (unsupportedLayout != null) {
+                    warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
+                            unsupportedLayout.name().get() + " in " + param.name());
+                    return null;
+                }
+
+                toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, param.type());
                 i++;
             }
         }
+
+        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames, annos, returnAnno);
+
         return null;
     }
 
@@ -371,6 +418,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (layout == null) {
             //no layout - abort
             return null;
+        }
+
+        if (isUnsupported(layout)) {
+            String name = parent != null? parent.name() + "." : "";
+            name += fieldName;
+            warn("skipping " + name + " because of unsupported type usage: " + layout.name().get());
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);

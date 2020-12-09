@@ -85,6 +85,8 @@ public final class LayoutUtils {
                 return Primitive.Kind.Float.layout().orElseThrow(unsupported);
             case Double:
                 return Primitive.Kind.Double.layout().orElseThrow(unsupported);
+            case LongDouble:
+                return Primitive.Kind.LongDouble.layout().orElseThrow(unsupported);
             case Complex:
                 throw new UnsupportedOperationException("unsupported: " + t.kind());
             case Record:
