@@ -244,22 +244,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
-    private boolean warnUnsupported(FunctionDescriptor desc, String name) {
-        if (isUnsupported(desc.returnLayout().orElse(null))) {
-            MemoryLayout layout = desc.returnLayout().get();
-            warn("skipping " + name + " because of unsupported type usage: " + layout.name().get());
-            return true;
-        }
-
-        for (MemoryLayout argLayout : desc.argumentLayouts()) {
-            if (isUnsupported(argLayout)) {
-                warn("skipping " + name + " because of unsupported type usage: " + argLayout.name().get());
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -272,9 +256,19 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        if (warnUnsupported(descriptor, funcTree.name())) {
+        if (isUnsupported(descriptor.returnLayout().orElse(null))) {
+            MemoryLayout layout = descriptor.returnLayout().get();
+            warn("skipping " + funcTree.name() + " because of unsupported type usage: " + layout.name().get());
             return null;
         }
+
+        for (MemoryLayout argLayout : descriptor.argumentLayouts()) {
+            if (isUnsupported(argLayout)) {
+                warn("skipping " + funcTree.name() + " because of unsupported type usage: " + argLayout.name().get());
+                return null;
+            }
+        }
+
         MethodType mtype = typeTranslator.getMethodType(funcTree.type());
 
         if (isVaList(descriptor)) {
