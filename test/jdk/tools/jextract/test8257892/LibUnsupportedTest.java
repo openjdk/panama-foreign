@@ -37,7 +37,7 @@ import static test.jextract.unsupported.unsupported_h.*;
  * @test id=classes
  * @library ..
  * @modules jdk.incubator.jextract
- * @run driver JtregJextract -l unsupported -t test.jextract.unsupported -- unsupported.h
+ * @run driver JtregJextract -l Unsupported -t test.jextract.unsupported -- unsupported.h
  * @run testng/othervm -Dforeign.restricted=permit LibUnsupportedTest
  */
 
@@ -46,7 +46,7 @@ import static test.jextract.unsupported.unsupported_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  *
- * @run driver JtregJextractSources -l unsupported -t test.jextract.unsupported -- unsupported.h
+ * @run driver JtregJextractSources -l Unsupported -t test.jextract.unsupported -- unsupported.h
  * @run testng/othervm -Dforeign.restricted=permit LibUnsupportedTest
  */
 
