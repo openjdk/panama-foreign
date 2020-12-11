@@ -52,7 +52,7 @@ public final class Utils {
     private static final String foreignRestrictedAccess = Optional.ofNullable(VM.getSavedProperty("foreign.restricted"))
             .orElse("deny");
 
-    public static final MethodHandle SEGMENT_FILTER;
+    private static final MethodHandle SEGMENT_FILTER;
     public static final MethodHandle MH_bitsToBytesOrThrowForOffset;
 
     public static final Supplier<RuntimeException> bitsToBytesThrowOffset
