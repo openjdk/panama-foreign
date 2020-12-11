@@ -1275,13 +1275,6 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
       mach_call_native->_arg_regs = call_native->_arg_regs;
       mach_call_native->_ret_regs = call_native->_ret_regs;
     }
-    else if( mcall->is_MachCallNative() ) {
-      MachCallNativeNode* mach_call_native = mcall->as_MachCallNative();
-      CallNativeNode* call_native = call->as_CallNative();
-      mach_call_native->_name = call_native->_name;
-      mach_call_native->_arg_regs = call_native->_arg_regs;
-      mach_call_native->_ret_regs = call_native->_ret_regs;
-    }
     msfpt = mcall;
   }
   // This is a non-call safepoint

@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import jdk.internal.loader.NativeLibrary;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
@@ -209,6 +208,11 @@ public interface JavaLangAccess {
      * Updates module m to read all unnamed modules.
      */
     void addReadsAllUnnamed(Module m);
+
+    /**
+     * Updates module m1 to export a package unconditionally.
+     */
+    void addExports(Module m1, String pkg);
 
     /**
      * Updates module m1 to export a package to module m2. The export does

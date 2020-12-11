@@ -171,7 +171,6 @@ public final class MemoryHandles {
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
-     * @throws NullPointerException if {@code carrier == null}, or {@code byteOrder == null}.
      */
     public static VarHandle varHandle(Class<?> carrier, ByteOrder byteOrder) {
         Objects.requireNonNull(carrier);
@@ -199,7 +198,6 @@ public final class MemoryHandles {
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException if an illegal carrier type is used, or if {@code alignmentBytes} is not a power of two.
-     * @throws NullPointerException if {@code carrier == null}, or {@code byteOrder == null}.
      */
     public static VarHandle varHandle(Class<?> carrier, long alignmentBytes, ByteOrder byteOrder) {
         Objects.requireNonNull(carrier);
@@ -226,7 +224,6 @@ public final class MemoryHandles {
      * @return the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code varHandle} is either {@code boolean},
      * {@code float}, or {@code double}, or is not a primitive type.
-     * @throws NullPointerException if {@code target == null}.
      */
     public static VarHandle asAddressVarHandle(VarHandle target) {
         Objects.requireNonNull(target);
