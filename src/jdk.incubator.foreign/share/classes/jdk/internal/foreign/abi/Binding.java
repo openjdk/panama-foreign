@@ -222,7 +222,7 @@ public abstract class Binding {
             MH_ALLOCATE_BUFFER = lookup.findStatic(Binding.Allocate.class, "allocateBuffer",
                     methodType(MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
             MH_TO_SEGMENT = lookup.findStatic(Binding.ToSegment.class, "toSegment",
-                    methodType(MemorySegment.class, MemoryAddress.class, long.class));
+                    methodType(MemorySegment.class, MemoryAddress.class, long.class, SharedUtils.Allocator.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -839,7 +839,7 @@ public abstract class Binding {
     }
 
     /**
-     * Box_ADDRESS()
+     * BOX_ADDRESS()
      * Pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
      *     and pushes that onto the operand stack.
      */
@@ -909,8 +909,8 @@ public abstract class Binding {
     }
 
     /**
-     * BASE_ADDRESS([size])
-     *   Pops a MemoryAddress from the operand stack, and takes the converts it to a MemorySegment
+     * TO_SEGMENT([size])
+     *   Pops a MemoryAddress from the operand stack, and converts it to a MemorySegment
      *   with the given size, and pushes that onto the operand stack
      */
     public static class ToSegment extends Binding {
@@ -922,9 +922,9 @@ public abstract class Binding {
             this.size = size;
         }
 
-        // FIXME should register with scope
-        private static MemorySegment toSegment(MemoryAddress operand, long size) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+        private static MemorySegment toSegment(MemoryAddress operand, long size, SharedUtils.Allocator allocator) {
+            MemorySegment ms = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+            return allocator.handoff(ms);
         }
 
         @Override
@@ -938,14 +938,15 @@ public abstract class Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
             MemoryAddress operand = (MemoryAddress) stack.pop();
-            MemorySegment segment = toSegment(operand, size);
+            MemorySegment segment = toSegment(operand, size, allocator);
             stack.push(segment);
         }
 
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle toSegmentHandle = insertArguments(MH_TO_SEGMENT, 1, size);
-            return filterArguments(specializedHandle, insertPos, toSegmentHandle);
+            specializedHandle = filterArguments(specializedHandle, insertPos, toSegmentHandle);
+            return Binding.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
         @Override

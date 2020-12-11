@@ -463,7 +463,7 @@ public class VaListTest {
                 { winVaListFactory,      sumStackJavaFact.apply(Win64.C_LONG_LONG, Win64.C_DOUBLE),     Win64.C_LONG_LONG,   Win64.C_DOUBLE   },
                 { sysvVaListFactory,     sumStackJavaFact.apply(SysV.C_LONG_LONG, SysV.C_DOUBLE),       SysV.C_LONG_LONG,    SysV.C_DOUBLE    },
                 { aarch64VaListFactory,  sumStackJavaFact.apply(AArch64.C_LONG_LONG, AArch64.C_DOUBLE), AArch64.C_LONG_LONG, AArch64.C_DOUBLE },
-                { platformVaListFactory, sumStackNative, C_LONG_LONG,         C_DOUBLE         },
+                { platformVaListFactory, sumStackNative,                                                C_LONG_LONG,         C_DOUBLE         },
         };
     }
 

@@ -410,9 +410,6 @@ public class CallArranger {
                     bindings.vmLoad(storage, long.class)
                             .boxAddress()
                             .toSegment(layout);
-                    // ASSERT SCOPE OF BOXED ADDRESS HERE
-                    // caveat. buffer should instead go out of scope after call
-                    bindings.copy(layout);
                     break;
                 }
                 case STRUCT_HFA: {

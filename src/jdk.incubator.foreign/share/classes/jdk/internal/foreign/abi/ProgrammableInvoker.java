@@ -30,7 +30,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.invoke.VMStorageProxy;
 import sun.security.action.GetPropertyAction;
@@ -96,8 +96,8 @@ public class ProgrammableInvoker {
                     methodType(NativeScope.class, long.class));
             MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
                     methodType(void.class));
-            MH_WRAP_SCOPE = lookup.findStatic(SharedUtils.Allocator.class, "ofScope",
-                    methodType(SharedUtils.Allocator.class, NativeScope.class));
+            MH_WRAP_SCOPE = lookup.findStatic(Allocator.class, "ofScope",
+                    methodType(Allocator.class, NativeScope.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -128,24 +128,7 @@ public class ProgrammableInvoker {
                 .count()
                 * abi.arch.typeSize(abi.arch.stackType());
 
-        this.bufferCopySize = bufferCopySize(callingSequence);
-    }
-
-    private static long bufferCopySize(CallingSequence callingSequence) {
-        // FIXME: > 16 bytes alignment might need extra space since the
-        // starting address of the allocator might be un-aligned.
-        long size = 0;
-        for (int i = 0; i < callingSequence.argumentCount(); i++) {
-            List<Binding> bindings = callingSequence.argumentBindings(i);
-            for (Binding b : bindings) {
-                if (b instanceof Binding.Copy) {
-                    Binding.Copy c = (Binding.Copy) b;
-                    size = Utils.alignUp(size, c.alignment());
-                    size += c.size();
-                }
-            }
-        }
-        return size;
+        this.bufferCopySize = SharedUtils.bufferCopySize(callingSequence);
     }
 
     public MethodHandle getBoundMethodHandle() {
@@ -223,7 +206,7 @@ public class ProgrammableInvoker {
         int argAllocatorPos = -1;
         if (bufferCopySize > 0) {
             argAllocatorPos = 0;
-            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, SharedUtils.Allocator.class);
+            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Allocator.class);
             argInsertPos++;
         }
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
@@ -244,7 +227,7 @@ public class ProgrammableInvoker {
             MethodHandle returnFilter = identity(highLevelType.returnType());
             int retAllocatorPos = 0;
             int retInsertPos = 1;
-            returnFilter = dropArguments(returnFilter, retAllocatorPos, SharedUtils.Allocator.class);
+            returnFilter = dropArguments(returnFilter, retAllocatorPos, Allocator.class);
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
@@ -343,8 +326,8 @@ public class ProgrammableInvoker {
     Object invokeInterpBindings(Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        SharedUtils.Allocator unboxAllocator = bufferCopySize != 0
-                ? SharedUtils.Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
+        Allocator unboxAllocator = bufferCopySize != 0
+                ? Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
                 : THROWING_ALLOCATOR;
         try (unboxAllocator) {
             // do argument processing, get Object[] as result

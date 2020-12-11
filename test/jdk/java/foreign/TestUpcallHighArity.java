@@ -99,25 +99,34 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER)
             );
             MH_passAndSave = MethodHandles.lookup().findStatic(TestUpcallHighArity.class, "passAndSave",
-                    MethodType.methodType(void.class, Object[].class, AtomicReference.class));
+                    MethodType.methodType(void.class, Object[].class, AtomicReference.class, List.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
     }
 
-    static void passAndSave(Object[] o, AtomicReference<Object[]> ref) {
+    static void passAndSave(Object[] o, AtomicReference<Object[]> ref, List<MemorySegment> copies) {
+        for (int i = 0; i < o.length; i++) {
+            if (o[i] instanceof MemorySegment) {
+                MemorySegment ms = (MemorySegment) o[i];
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
+                copy.copyFrom(ms);
+                o[i] = copy;
+                copies.add(copy);
+            }
+        }
         ref.set(o);
     }
 
     @Test(dataProvider = "args")
     public void testUpcall(MethodHandle downcall, MethodType upcallType,
                            FunctionDescriptor upcallDescriptor) throws Throwable {
+        List<MemorySegment> segments = new ArrayList<>();
         AtomicReference<Object[]> capturedArgs = new AtomicReference<>();
-        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
+        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs, segments)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor)) {
-            List<MemorySegment> segments = new ArrayList<>();
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub.address();
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();
