@@ -159,6 +159,7 @@ DOCS_MODULES += \
     jdk.jshell \
     jdk.jstatd \
     jdk.incubator.foreign \
+    jdk.incubator.jextract \
     jdk.localedata \
     jdk.management \
     jdk.management.agent \
@@ -184,6 +185,7 @@ LANGTOOLS_MODULES := \
     jdk.javadoc \
     jdk.jdeps \
     jdk.jshell \
+    jdk.incubator.jextract \
     #
 
 HOTSPOT_MODULES := \
