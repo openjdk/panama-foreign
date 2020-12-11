@@ -58,7 +58,6 @@ public final class Utils {
     public static final Supplier<RuntimeException> bitsToBytesThrowOffset
         = () -> new UnsupportedOperationException("Cannot compute byte offset; bit offset is not a multiple of 8");
 
-
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
