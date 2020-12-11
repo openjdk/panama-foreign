@@ -26,14 +26,8 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
 import jdk.internal.vm.annotation.ForceInline;
-import jdk.internal.misc.ScopedMemoryAccess;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Objects;
@@ -61,8 +55,6 @@ import java.util.Objects;
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
 public final class MemoryAccess {
-
-    static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
     private MemoryAccess() {
         // just the one
@@ -431,33 +423,6 @@ public final class MemoryAccess {
         ((order == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).set(segment, offset, value);
     }
 
-    static final MethodHandle intGetter_MH;
-    static final MethodHandle intSetter_MH;
-
-    static {
-        try {
-            intGetter_MH = MethodHandles.filterArguments(MethodHandles.lookup().findStatic(MemoryAccess.class, "getIntInternal", MethodType.methodType(int.class, MemorySegmentProxy.class, long.class, ByteOrder.class)),
-                    0, Utils.SEGMENT_FILTER);
-
-            intSetter_MH = MethodHandles.filterArguments(MethodHandles.lookup().findStatic(MemoryAccess.class, "setIntInternal", MethodType.methodType(void.class, MemorySegmentProxy.class, long.class, ByteOrder.class, int.class)),
-                    0, Utils.SEGMENT_FILTER);
-        } catch (Throwable ex) {
-            throw new ExceptionInInitializerError(ex);
-        }
-    }
-
-    @ForceInline
-    static int getIntInternal(MemorySegmentProxy impl, long offset, ByteOrder be) {
-        impl.checkAccess(offset, 4, true);
-        return SCOPED_MEMORY_ACCESS.getIntUnaligned(impl.scope(), impl.unsafeGetBase(), impl.unsafeGetOffset() + offset, be == ByteOrder.BIG_ENDIAN);
-    }
-
-    @ForceInline
-    static void setIntInternal(MemorySegmentProxy impl, long offset, ByteOrder be, int value) {
-        impl.checkAccess(offset, 4, false);
-        SCOPED_MEMORY_ACCESS.putIntUnaligned(impl.scope(), impl.unsafeGetBase(), impl.unsafeGetOffset() + offset, value, be == ByteOrder.BIG_ENDIAN);
-    }
-
     /**
      * Reads an int from given segment and offset with given byte order.
      * <p>
@@ -475,11 +440,7 @@ public final class MemoryAccess {
     public static int getIntAtOffset(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
-        try {
-            return (int)intGetter_MH.invokeExact(segment, offset, order);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
+        return (int)((order == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).get(segment, offset);
     }
 
     /**
@@ -499,11 +460,7 @@ public final class MemoryAccess {
     public static void setIntAtOffset(MemorySegment segment, long offset, ByteOrder order, int value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
-        try {
-            intSetter_MH.invokeExact(segment, offset, order, value);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
+        ((order == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).set(segment, offset, value);
     }
 
     /**
