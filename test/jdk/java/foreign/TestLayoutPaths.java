@@ -36,7 +36,6 @@ import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
