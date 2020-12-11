@@ -852,16 +852,16 @@ julong os::physical_memory() {
   return win32::physical_memory();
 }
 
-bool os::has_allocatable_memory_limit(julong* limit) {
+bool os::has_allocatable_memory_limit(size_t* limit) {
   MEMORYSTATUSEX ms;
   ms.dwLength = sizeof(ms);
   GlobalMemoryStatusEx(&ms);
 #ifdef _LP64
-  *limit = (julong)ms.ullAvailVirtual;
+  *limit = (size_t)ms.ullAvailVirtual;
   return true;
 #else
   // Limit to 1400m because of the 2gb address space wall
-  *limit = MIN2((julong)1400*M, (julong)ms.ullAvailVirtual);
+  *limit = MIN2((size_t)1400*M, (size_t)ms.ullAvailVirtual);
   return true;
 #endif
 }
@@ -3118,12 +3118,9 @@ void os::large_page_init() {
   }
 
   _large_page_size = large_page_init_decide_size();
-
   const size_t default_page_size = (size_t) vm_page_size();
   if (_large_page_size > default_page_size) {
-    _page_sizes[0] = _large_page_size;
-    _page_sizes[1] = default_page_size;
-    _page_sizes[2] = 0;
+    _page_sizes.add(_large_page_size);
   }
 
   UseLargePages = _large_page_size != 0;
@@ -4167,7 +4164,7 @@ void os::init(void) {
 
   win32::initialize_system_info();
   win32::setmode_streams();
-  init_page_sizes((size_t) win32::vm_page_size());
+  _page_sizes.add(win32::vm_page_size());
 
   // This may be overridden later when argument processing is done.
   FLAG_SET_ERGO(UseLargePagesIndividualAllocation, false);
