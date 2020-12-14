@@ -34,28 +34,32 @@ import java.nio.ByteOrder;
 public final class UnsupportedLayouts {
     private UnsupportedLayouts() {}
 
-    private static final String ATTR_UNSUPPORTED = "jextract.abi.unsupported.types";
-    private static final String ATTR_SOURCE_FORM = "jextract.abi.unsupported.types.source.form";
+    private static final String ATTR_LAYOUT_KIND = "jextract.abi.unsupported.layout.kind";
 
     public static final ValueLayout __INT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("__int128").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "__int128");
 
     public static final ValueLayout LONG_DOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("long double").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "long double");
 
     public static final ValueLayout _FLOAT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
-            withName("_float128").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "_float128");
 
     public static final ValueLayout __FP16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("__fp16").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "__fp16");
 
     public static final ValueLayout CHAR16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("char16").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "char16");
 
     public static final ValueLayout WCHAR_T = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
-            withName("wchar_t").withAttribute(ATTR_UNSUPPORTED, true);
+            withAttribute(ATTR_LAYOUT_KIND, "wchar_t");
 
-    static boolean isUnsupported(ValueLayout vl) {
-        return vl.attribute(ATTR_UNSUPPORTED).isPresent();
+    static boolean isUnsupported(MemoryLayout vl) {
+        return vl.attribute(ATTR_LAYOUT_KIND).isPresent();
+    }
+
+    static String getUnsupportedTypeName(MemoryLayout vl) {
+        return (String)
+                vl.attribute(ATTR_LAYOUT_KIND).orElseThrow(IllegalArgumentException::new);
     }
 }
