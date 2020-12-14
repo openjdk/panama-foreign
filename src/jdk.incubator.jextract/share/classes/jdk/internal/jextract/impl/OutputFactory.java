@@ -229,30 +229,37 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return false;
     }
 
-    private static boolean isUnsupported(MemoryLayout layout) {
+    private static MemoryLayout isUnsupported(MemoryLayout layout) {
         if (layout instanceof ValueLayout) {
-            return UnsupportedLayouts.isUnsupported((ValueLayout)layout);
+            if (UnsupportedLayouts.isUnsupported((ValueLayout)layout)) {
+                return layout;
+            }
         } else if (layout instanceof GroupLayout) {
             GroupLayout gl = (GroupLayout)layout;
             for (MemoryLayout ml : gl.memberLayouts()) {
-                if (isUnsupported(ml)) {
-                    return true;
+                MemoryLayout ul = isUnsupported(ml);
+                if (ul != null) {
+                    return ul;
                 }
             }
         }
 
-        return false;
+        return null;
     }
 
     private static MemoryLayout isUnsupported(FunctionDescriptor desc) {
         MemoryLayout resultLayout = desc.returnLayout().orElse(null);
-        if (resultLayout != null && isUnsupported(resultLayout)) {
-            return resultLayout;
+        if (resultLayout != null) {
+            MemoryLayout ul = isUnsupported(resultLayout);
+            if (ul != null) {
+                return ul;
+            }
         }
 
         for (MemoryLayout argLayout : desc.argumentLayouts()) {
-            if (isUnsupported(argLayout)) {
-                return argLayout;
+            MemoryLayout ul = isUnsupported(argLayout);
+            if (ul != null) {
+                return ul;
             }
         }
 
@@ -273,7 +280,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         MemoryLayout unsupportedLayout = isUnsupported(descriptor);
         if (unsupportedLayout != null) {
-            warn("skipping " + funcTree.name() + " because of unsupported type usage: " + unsupportedLayout.name().get());
+            warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
+                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
             return null;
         }
 
@@ -320,7 +328,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 unsupportedLayout = isUnsupported(fpDesc);
                 if (unsupportedLayout != null) {
                     warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
-                            unsupportedLayout.name().get() + " in " + param.name());
+                            UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout) + " in " + param.name());
                     return null;
                 }
 
@@ -420,10 +428,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        if (isUnsupported(layout)) {
+        MemoryLayout ul = isUnsupported(layout);
+        if (ul != null) {
             String name = parent != null? parent.name() + "." : "";
             name += fieldName;
-            warn("skipping " + name + " because of unsupported type usage: " + layout.name().get());
+            warn("skipping " + name + " because of unsupported type usage: " +
+                    UnsupportedLayouts.getUnsupportedTypeName(ul));
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
