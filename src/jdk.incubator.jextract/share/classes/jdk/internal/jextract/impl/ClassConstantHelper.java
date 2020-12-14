@@ -190,7 +190,7 @@ class ClassConstantHelper implements ConstantHelper {
 
     private void classBegin(String baseClassName) {
         String baseName = baseClassName != null ? toInternalName(baseClassName) : INTR_OBJECT;
-        cw.visit(V15, 0, internalClassName, null, baseName, null);
+        cw.visit(V16, 0, internalClassName, null, baseName, null);
     }
 
     private static DirectMethodHandleDesc findRuntimeHelperBootstrap(ClassDesc runtimeHelper, String name, MethodType type) {
