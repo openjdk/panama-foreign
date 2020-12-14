@@ -925,7 +925,7 @@ allocateNative(bytesSize, 1);
      * Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
     MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
-                 .withOwnerThread(null)
+                 .share()
                  .withAccessModes(READ | WRITE);
      * }</pre>
      * <p>
