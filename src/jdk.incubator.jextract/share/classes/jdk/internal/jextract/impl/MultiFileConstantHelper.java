@@ -60,7 +60,7 @@ public class MultiFileConstantHelper implements ConstantHelper {
     }
 
     private String getConstantClassName() {
-        return headerClassName + "$constants$" + constantClassCount;
+        return headerClassName + "_constants_" + constantClassCount;
     }
 
     private void checkNewConstantsClass() {
