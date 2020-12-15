@@ -60,11 +60,6 @@ ciNativeEntryPoint::ciNativeEntryPoint(instanceHandle h_i) : ciInstance(h_i), _n
   _ret_moves = getVMRegArray(CURRENT_ENV->get_object(jdk_internal_invoke_NativeEntryPoint::returnMoves(get_oop()))->as_array());
 }
 
-address ciNativeEntryPoint::entry_point() const {
-  VM_ENTRY_MARK;
-  return jdk_internal_invoke_NativeEntryPoint::addr(get_oop());
-}
-
 jint ciNativeEntryPoint::shadow_space() const {
   VM_ENTRY_MARK;
   return jdk_internal_invoke_NativeEntryPoint::shadow_space(get_oop());

@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.*;
 import jdk.internal.access.foreign.MemorySegmentProxy;
+import jdk.internal.foreign.abi.ProgrammableInvoker;
 import jdk.internal.misc.VM;
 import sun.invoke.util.Wrapper;
 

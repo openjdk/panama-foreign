@@ -32,6 +32,7 @@ import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -136,7 +137,13 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
+    default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
+        Objects.requireNonNull(symbol);
+        // Do it with filter so we keep a  strong ref to the symbol
+        return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
+    }
+
+    MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
      * Allocates a native segment whose base address (see {@link MemorySegment#address}) can be

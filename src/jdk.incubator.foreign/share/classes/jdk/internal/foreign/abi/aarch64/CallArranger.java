@@ -126,10 +126,10 @@ public class CallArranger {
         return new Bindings(csb.build(), returnInMemory);
     }
 
-    public static MethodHandle arrangeDowncall(Addressable addr, MethodType mt, FunctionDescriptor cDesc) {
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
         Bindings bindings = getBindings(mt, cDesc, false);
 
-        MethodHandle handle = new ProgrammableInvoker(C, addr, bindings.callingSequence).getBoundMethodHandle();
+        MethodHandle handle = new ProgrammableInvoker(C, bindings.callingSequence).getBoundMethodHandle();
 
         if (bindings.isInMemoryReturn) {
             handle = SharedUtils.adaptDowncallForIMR(handle, cDesc);

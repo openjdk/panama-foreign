@@ -156,20 +156,16 @@ public class SharedUtils {
     public static MethodHandle adaptDowncallForIMR(MethodHandle handle, FunctionDescriptor cDesc) {
         if (handle.type().returnType() != void.class)
             throw new IllegalArgumentException("return expected to be void for in memory returns");
-        if (handle.type().parameterType(0) != MemoryAddress.class)
+        if (handle.type().parameterType(1) != MemoryAddress.class)
             throw new IllegalArgumentException("MemoryAddress expected as first param");
         if (cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return layout needed: " + cDesc);
 
         MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
-        handle = collectArguments(ret, 1, handle); // (MemorySegment, MemoryAddress ...) MemorySegment
-        handle = collectArguments(handle, 1, MH_BASEADDRESS); // (MemorySegment, MemorySegment ...) MemorySegment
-        MethodType oldType = handle.type(); // (MemorySegment, MemorySegment, ...) MemorySegment
-        MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, ...) MemorySegment
-        int[] reorder = IntStream.range(-1, newType.parameterCount()).toArray();
-        reorder[0] = 0; // [0, 0, 1, 2, 3, ...]
-        handle = permuteArguments(handle, newType, reorder); // (MemorySegment, ...) MemoryAddress
-        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (...) MemoryAddress
+        handle = collectArguments(ret, 1, handle); // (MemorySegment, Addressable, MemoryAddress, ...) MemorySegment
+        handle = collectArguments(handle, 2, MH_BASEADDRESS); // (MemorySegment, Addressable, MemorySegment, ...) MemorySegment
+        handle = mergeArguments(handle, 0, 2);  // (MemorySegment, Addressable, ...) MemorySegment
+        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (Addressable, ...) MemoryAddress
 
         return handle;
     }
@@ -286,6 +282,27 @@ public class SharedUtils {
         return size;
     }
 
+    static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
+        MethodType oldType = mh.type();
+        Class<?> sourceType = oldType.parameterType(sourceIndex);
+        Class<?> destType = oldType.parameterType(destIndex);
+        if (sourceType != destType) {
+            // TODO meet?
+            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
+        }
+        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
+        int[] reorder = new int[oldType.parameterCount()];
+        assert destIndex > sourceIndex;
+        for (int i = 0, index = 0; i < reorder.length; i++) {
+            if (i != destIndex) {
+                reorder[i] = index++;
+            } else {
+                reorder[i] = sourceIndex;
+            }
+        }
+        return permuteArguments(mh, newType, reorder);
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
@@ -358,7 +375,7 @@ public class SharedUtils {
     public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i, unboxer);
+               handle = MethodHandles.filterArguments(handle, i + 1, unboxer); // +1 for leading address
             }
         }
         return handle;

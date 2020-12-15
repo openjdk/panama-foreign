@@ -44,7 +44,6 @@ public:
   // What kind of ciObject is this?
   bool is_native_entry_point() const { return true; }
 
-  address        entry_point() const;
   jint           shadow_space() const;
   VMReg*         argMoves() const;
   VMReg*        returnMoves() const;

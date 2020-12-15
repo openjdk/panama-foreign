@@ -1058,10 +1058,11 @@ CallGenerator* CallGenerator::for_method_handle_call(JVMState* jvms, ciMethod* c
 
 class NativeCallGenerator : public CallGenerator {
 private:
+  address _call_addr;
   ciNativeEntryPoint* _nep;
 public:
-  NativeCallGenerator(ciMethod* m, ciNativeEntryPoint* nep)
-   : CallGenerator(m), _nep(nep) {}
+  NativeCallGenerator(ciMethod* m, address call_addr, ciNativeEntryPoint* nep)
+   : CallGenerator(m), _call_addr(call_addr), _nep(nep) {}
 
   virtual JVMState* generate(JVMState* jvms);
 };
@@ -1069,13 +1070,12 @@ public:
 JVMState* NativeCallGenerator::generate(JVMState* jvms) {
   GraphKit kit(jvms);
 
-  Node* call = kit.make_native_call(tf(), method()->arg_size(), _nep); // -fallback, - nep
+  Node* call = kit.make_native_call(_call_addr, tf(), method()->arg_size(), _nep); // -fallback, - nep
   if (call == NULL) return NULL;
 
   kit.C->print_inlining_update(this);
-  address addr = _nep->entry_point();
   if (kit.C->log() != NULL) {
-    kit.C->log()->elem("l2n_intrinsification_success bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+    kit.C->log()->elem("l2n_intrinsification_success bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(_call_addr));
   }
 
   return kit.transfer_exceptions_into_jvms();
@@ -1208,12 +1208,15 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
 
     case vmIntrinsics::_linkToNative:
     {
-      Node* nep = kit.argument(callee->arg_size() - 1);
-      if (nep->Opcode() == Op_ConP) {
+      Node* addr_n = kit.argument(1);
+      Node* nep_n = kit.argument(callee->arg_size() - 1);
+      if (addr_n->Opcode() == Op_ConL && nep_n->Opcode() == Op_ConP) {
         input_not_const = false;
-        const TypeOopPtr* oop_ptr = nep->bottom_type()->is_oopptr();
+        const TypeLong* addr_t = addr_n->bottom_type()->is_long();
+        const TypeOopPtr* oop_ptr = nep_n->bottom_type()->is_oopptr();
+        address addr = (address) addr_t->get_con();
         ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
-        return new NativeCallGenerator(callee, nep);
+        return new NativeCallGenerator(callee, addr, nep);
       } else {
         print_inlining_failure(C, callee, jvms->depth() - 1, jvms->bci(),
                                "NativeEntryPoint not constant");

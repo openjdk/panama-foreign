@@ -25,6 +25,7 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
@@ -79,25 +80,33 @@ public class ProgrammableInvoker {
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
 
+    private static final MethodHandle MH_ADDR_TO_LONG;
     private static final MethodHandle MH_MAKE_SCOPE;
     private static final MethodHandle MH_CLOSE_SCOPE;
     private static final MethodHandle MH_WRAP_SCOPE;
 
     private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
 
+    private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
+
     static {
         try {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
-                    methodType(Object.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
+                    methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
-                    methodType(Object.class, Object[].class, MethodHandle.class, Map.class, Map.class));
+                    methodType(Object.class, Addressable.class, Object[].class, MethodHandle.class, Map.class, Map.class));
             MH_MAKE_SCOPE = lookup.findStatic(NativeScope.class, "boundedScope",
                     methodType(NativeScope.class, long.class));
             MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
                     methodType(void.class));
             MH_WRAP_SCOPE = lookup.findStatic(Allocator.class, "ofScope",
                     methodType(Allocator.class, NativeScope.class));
+            MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
+                    methodType(MemoryAddress.class));
+            MethodHandle MH_MemoryAddress_toRawLongValue = lookup.findVirtual(MemoryAddress.class, "toRawLongValue",
+                    methodType(long.class));
+            MH_ADDR_TO_LONG = filterArguments(MH_MemoryAddress_toRawLongValue, 0, MH_Addressable_address);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -109,17 +118,15 @@ public class ProgrammableInvoker {
 
     private final CallingSequence callingSequence;
 
-    private final Addressable addr;
     private final long stubAddress;
 
     private final long bufferCopySize;
 
-    public ProgrammableInvoker(ABIDescriptor abi, Addressable addr, CallingSequence callingSequence) {
+    public ProgrammableInvoker(ABIDescriptor abi, CallingSequence callingSequence) {
         this.abi = abi;
         this.layout = BufferLayout.of(abi);
         this.stubAddress = adapterStubs.computeIfAbsent(abi, key -> generateAdapter(key, layout));
 
-        this.addr = addr;
         this.callingSequence = callingSequence;
 
         this.stackArgsBytes = argMoveBindingsStream(callingSequence)
@@ -143,26 +150,28 @@ public class ProgrammableInvoker {
                     : Object[].class;
 
         MethodType leafType = methodType(returnType, argMoveTypes);
+        MethodType leafTypeWithAddress = leafType.insertParameterTypes(0, long.class);
 
-        MethodHandle handle = insertArguments(MH_INVOKE_MOVES.bindTo(this), 1, argMoves, retMoves)
-                                            .asCollector(Object[].class, leafType.parameterCount())
-                                            .asType(leafType);
+        MethodHandle handle = insertArguments(MH_INVOKE_MOVES.bindTo(this), 2, argMoves, retMoves);
+        MethodHandle collector = makeCollectorHandle(leafType);
+        handle = collectArguments(handle, 1, collector);
+        handle = handle.asType(leafTypeWithAddress);
 
         boolean isSimple = !(retMoves.length > 1);
         boolean usesStackArgs = stackArgsBytes != 0;
         if (USE_INTRINSICS && isSimple && !usesStackArgs) {
             NativeEntryPoint nep = NativeEntryPoint.make(
-                addr.address().toRawLongValue(),
                 "native_call",
                 abi,
                 toStorageArray(argMoves),
                 toStorageArray(retMoves),
                 !callingSequence.isTrivial(),
-                leafType
+                leafTypeWithAddress
             );
 
             handle = JLIA.nativeMethodHandle(nep, handle);
         }
+        handle = filterArguments(handle, 0, MH_ADDR_TO_LONG);
 
         if (USE_SPEC && isSimple) {
             handle = specialize(handle);
@@ -170,12 +179,23 @@ public class ProgrammableInvoker {
             Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
 
-            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 1, handle, argIndexMap, retIndexMap);
-            handle = handle.asCollector(Object[].class, callingSequence.methodType().parameterCount())
-                                             .asType(callingSequence.methodType());
+            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argIndexMap, retIndexMap);
+            MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
+            handle = collectArguments(handle, 1, collectorInterp);
+            handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
          }
 
         return handle;
+    }
+
+    // Funnel from type to Object[]
+    private static MethodHandle makeCollectorHandle(MethodType type) {
+        return type.parameterCount() == 0
+            ? EMPTY_OBJECT_ARRAY_HANDLE
+            : identity(Object[].class)
+                .asType(methodType(Object[].class, Object[].class))
+                .asCollector(Object[].class, type.parameterCount())
+                .asType(type.changeReturnType(Object[].class));
     }
 
     private Stream<Binding.VMStore> argMoveBindingsStream(CallingSequence callingSequence) {
@@ -202,10 +222,10 @@ public class ProgrammableInvoker {
 
         MethodHandle specializedHandle = leafHandle; // initial
 
-        int argInsertPos = -1;
+        int argInsertPos = 0; // +1 for addr
         int argAllocatorPos = -1;
         if (bufferCopySize > 0) {
-            argAllocatorPos = 0;
+            argAllocatorPos = 1;
             specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Allocator.class);
             argInsertPos++;
         }
@@ -240,11 +260,16 @@ public class ProgrammableInvoker {
         if (bufferCopySize > 0) {
             // insert try-finally to close the NativeScope used for Binding.Copy
             MethodHandle closer = leafType.returnType() == void.class
-                  // (Throwable, NativeScope) -> void
-                ? collectArguments(empty(methodType(void.class, Throwable.class)), 1, MH_CLOSE_SCOPE)
-                  // (Throwable, V, NativeScope) -> V
-                : collectArguments(dropArguments(identity(specializedHandle.type().returnType()), 0, Throwable.class),
-                                   2, MH_CLOSE_SCOPE);
+                  // (Throwable, Addressable, NativeScope) -> void
+                ? collectArguments(empty(methodType(void.class, Throwable.class, Addressable.class)), 2, MH_CLOSE_SCOPE)
+                  // (Throwable, V, Addressable, NativeScope) -> V
+                : collectArguments( // (Throwable, V, Addressable, NativeScope) -> V
+                    dropArguments( // (Throwable, V, Addressable) -> V
+                        dropArguments( // (Throwable, V) -> V
+                            identity(specializedHandle.type().returnType()), // (V) -> V
+                            0, Throwable.class),
+                        2, Addressable.class),
+                                   3, MH_CLOSE_SCOPE);
             // Handle takes a SharedUtils.Allocator, so need to wrap our NativeScope
             specializedHandle = filterArguments(specializedHandle, argAllocatorPos, MH_WRAP_SCOPE);
             specializedHandle = tryFinally(specializedHandle, closer);
@@ -269,14 +294,14 @@ public class ProgrammableInvoker {
      * @param returnBindings Binding.Move values describing how return values should be copied
      * @return null, a single primitive value, or an Object[] of primitive values
      */
-    Object invokeMoves(Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
+    Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
         try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
             }
 
-            VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr.address().toRawLongValue());
+            VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr);
             VH_LONG.set(argBuffer.asSlice(layout.stack_args_bytes), stackArgsBytes);
             VH_LONG.set(argBuffer.asSlice(layout.stack_args), stackArgsSeg == null ? 0L : stackArgsSeg.address().toRawLongValue());
 
@@ -323,7 +348,7 @@ public class ProgrammableInvoker {
         }
     }
 
-    Object invokeInterpBindings(Object[] args, MethodHandle leaf,
+    Object invokeInterpBindings(Addressable address, Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
         Allocator unboxAllocator = bufferCopySize != 0
@@ -332,11 +357,12 @@ public class ProgrammableInvoker {
         try (unboxAllocator) {
             // do argument processing, get Object[] as result
             Object[] moves = new Object[leaf.type().parameterCount()];
+            moves[0] = address; // addr
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
-                            moves[argIndexMap.get(storage)] = value;
+                            moves[argIndexMap.get(storage) + 1] = value; // +1 to skip addr
                         }, unboxAllocator);
             }
 
@@ -346,8 +372,7 @@ public class ProgrammableInvoker {
             // return value processing
             if (o == null) {
                 return null;
-            } else if (o instanceof Object[]) {
-                Object[] oArr = (Object[]) o;
+            } else if (o instanceof Object[] oArr) {
                 return BindingInterpreter.box(callingSequence.returnBindings(),
                         (storage, type) -> oArr[retIndexMap.get(storage)], DEFAULT_ALLOCATOR);
             } else {

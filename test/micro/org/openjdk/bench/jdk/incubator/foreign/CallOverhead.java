@@ -60,6 +60,10 @@ public class CallOverhead {
     static final MethodHandle identity;
     static final MethodHandle identity_struct;
     static final MethodHandle identity_memory_address;
+    static final MethodHandle args1;
+    static final MethodHandle args2;
+    static final MethodHandle args3;
+    static final MethodHandle args4;
     static final MethodHandle args5;
     static final MethodHandle args10;
     static final MethodHandle func_trivial;
@@ -95,6 +99,18 @@ public class CallOverhead {
         identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address").get(),
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
+        args1 = abi.downcallHandle(ll.lookup("args1").orElseThrow(),
+                MethodType.methodType(void.class, long.class),
+                FunctionDescriptor.ofVoid(C_LONG_LONG));
+        args2 = abi.downcallHandle(ll.lookup("args2").orElseThrow(),
+                MethodType.methodType(void.class, long.class, double.class),
+                FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE));
+        args3 = abi.downcallHandle(ll.lookup("args3").orElseThrow(),
+                MethodType.methodType(void.class, long.class, double.class, long.class),
+                FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
+        args4 = abi.downcallHandle(ll.lookup("args4").orElseThrow(),
+                MethodType.methodType(void.class, long.class, double.class, long.class, double.class),
+                FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));
         args5 = abi.downcallHandle(ll.lookup("args5").get(),
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
@@ -149,12 +165,32 @@ public class CallOverhead {
     }
 
     @Benchmark
-    public void panama_args5() throws Throwable {
+    public void panama_args_01() throws Throwable {
+        args1.invokeExact(10L);
+    }
+
+    @Benchmark
+    public void panama_args_02() throws Throwable {
+        args2.invokeExact(10L, 11D);
+    }
+
+    @Benchmark
+    public void panama_args_03() throws Throwable {
+        args3.invokeExact(10L, 11D, 12L);
+    }
+
+    @Benchmark
+    public void panama_args_04() throws Throwable {
+        args4.invokeExact(10L, 11D, 12L, 13D);
+    }
+
+    @Benchmark
+    public void panama_args_05() throws Throwable {
         args5.invokeExact(10L, 11D, 12L, 13D, 14L);
     }
 
     @Benchmark
-    public void panama_args10() throws Throwable {
+    public void panama_args_10() throws Throwable {
         args10.invokeExact(10L, 11D, 12L, 13D, 14L,
                            15D, 16L, 17D, 18L, 19D);
     }

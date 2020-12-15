@@ -86,12 +86,11 @@ public class Windowsx64Linker implements CLinker {
     }
 
     @Override
-    public MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(symbol);
+    public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         MethodType llMt = SharedUtils.convertVaListCarriers(type, WinVaList.CARRIER);
-        MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
+        MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
         handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
