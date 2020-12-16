@@ -266,6 +266,25 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
+    private boolean generateFunctionalInterface(Type.Function func, Type type, String name) {
+        name = Utils.javaSafeIdentifier(name);
+        //generate functional interface
+        if (func.varargs()) {
+            warn("varargs in callbacks is not supported: " + name);
+        }
+        MethodType fitype = typeTranslator.getMethodType(func, false);
+        FunctionDescriptor fpDesc = Type.descriptorFor(func).orElseThrow();
+        MemoryLayout unsupportedLayout = isUnsupported(fpDesc);
+        if (unsupportedLayout != null) {
+            warn("skipping " + name + " because of unsupported type usage: " +
+                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
+            return false;
+        }
+
+        toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, type);
+        return true;
+    }
+
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
@@ -318,21 +337,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             Type.Function f = getAsFunctionPointer(param.type());
             if (f != null) {
                 String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                name = Utils.javaSafeIdentifier(name);
-                //generate functional interface
-                if (f.varargs()) {
-                    warn("varargs in callbacks is not supported");
-                }
-                MethodType fitype = typeTranslator.getMethodType(f, false);
-                FunctionDescriptor fpDesc = Type.descriptorFor(f).orElseThrow();
-                unsupportedLayout = isUnsupported(fpDesc);
-                if (unsupportedLayout != null) {
-                    warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
-                            UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout) + " in " + param.name());
+                if (! generateFunctionalInterface(f, param.type(), name)) {
                     return null;
                 }
-
-                toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, param.type());
                 i++;
             }
         }
@@ -418,6 +425,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         fieldName = Utils.javaSafeIdentifier(fieldName);
 
         Type type = tree.type();
+
         if (type instanceof Type.Declared && ((Type.Declared) type).tree().name().isEmpty()) {
             // anon type - let's generate something
             ((Type.Declared) type).tree().accept(this, tree);
@@ -434,6 +442,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             name += fieldName;
             warn("skipping " + name + " because of unsupported type usage: " +
                     UnsupportedLayouts.getUnsupportedTypeName(ul));
+            return null;
+        }
+
+        Type.Function func = getAsFunctionPointer(type);
+        if (func != null) {
+            generateFunctionalInterface(func, type, fieldName);
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
