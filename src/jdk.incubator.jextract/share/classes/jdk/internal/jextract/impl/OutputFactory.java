@@ -361,6 +361,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 default:
                     return getAsFunctionPointer(((Type.Delegated) type).type());
             }
+        } else if (type instanceof Type.Function) {
+            /*
+             * // pointer function declared as function like this
+             *
+             * typedef void CB(int);
+             * void func(CB cb);
+             */
+            return (Type.Function)type;
         } else {
             return null;
         }
