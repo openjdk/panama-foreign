@@ -144,7 +144,7 @@ public final class LayoutUtils {
         @Override
         public MemoryLayout visitFunction(jdk.incubator.jextract.Type.Function t, Void _ignored) {
             /*
-             * // pointer function declared as function like this
+             * // pointer to function declared as function like this
              *
              * typedef void CB(int);
              * void func(CB cb);
