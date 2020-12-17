@@ -143,7 +143,13 @@ public final class LayoutUtils {
 
         @Override
         public MemoryLayout visitFunction(jdk.incubator.jextract.Type.Function t, Void _ignored) {
-            throw new UnsupportedOperationException();
+            /*
+             * // pointer to function declared as function like this
+             *
+             * typedef void CB(int);
+             * void func(CB cb);
+             */
+            return C_POINTER;
         }
 
         @Override
