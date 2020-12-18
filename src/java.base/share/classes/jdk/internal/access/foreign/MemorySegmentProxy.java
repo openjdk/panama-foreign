@@ -29,7 +29,7 @@ package jdk.internal.access.foreign;
 import jdk.internal.misc.ScopedMemoryAccess;
 
 /**
- * This proxy interface is required to allow instances of the {@code MemorySegment} interface (which is defined inside
+ * This abstract class is required to allow implementations of the {@code MemorySegment} interface (which is defined inside
  * an incubating module) to be accessed from the memory access var handles.
  */
 public abstract class MemorySegmentProxy {
