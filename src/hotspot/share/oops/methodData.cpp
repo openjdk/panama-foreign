@@ -1613,18 +1613,6 @@ bool MethodData::profile_memory_access(const methodHandle& m, int bci) {
   return false;
 }
 
-bool MethodData::profile_memory_access(const methodHandle& m, int bci) {
-  Bytecode_invoke inv(m , bci);
-  if (inv.is_invokestatic()) {
-    if (inv.klass() == vmSymbols::jdk_incubator_foreign_MemoryAccess()) {
-      if (inv.name()->starts_with("get") || inv.name()->starts_with("set")) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 int MethodData::profile_arguments_flag() {
   return TypeProfileLevel % 10;
 }
