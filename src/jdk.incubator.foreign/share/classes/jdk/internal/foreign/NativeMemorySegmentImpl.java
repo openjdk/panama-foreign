@@ -26,8 +26,10 @@
 
 package jdk.internal.foreign;
 
+import java.lang.ref.Cleaner;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.internal.foreign.MemoryScope.SharedScope;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
@@ -41,9 +43,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, MemoryScope.DUMMY_CLEANUP_ACTION, null)
-            .share()
-            .withAccessModes(READ | WRITE);
+    public static final MemorySegment EVERYTHING = new EverythingSegment();
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -114,5 +114,60 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, Object ref) {
         return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize),
                 MemoryScope.createConfined(ref, cleanupAction == null ? MemoryScope.DUMMY_CLEANUP_ACTION : cleanupAction, null));
+    }
+
+    /**
+     * Special class for the whole memory, don't make checks - this optimizes a lot of routines
+     */
+    private static final class EverythingSegment extends NativeMemorySegmentImpl {
+        private static final Scope SCOPE = new Scope();
+
+        EverythingSegment() {
+            super(0, Long.MAX_VALUE, READ | WRITE, SCOPE);
+        }
+
+        @Override
+        public void checkAccess(long offset, long length, boolean readOnly) {
+            // No need to check access, as everything is always RW and allows access to whole world
+        }
+
+        @Override
+        NativeMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
+            return new NativeMemorySegmentImpl(min + offset, size, mask, scope);
+        }
+
+        @Override
+        public Object unsafeGetBase() {
+            return null;
+        }
+
+        @Override
+        public MemoryScope scope() {
+            // Return JVM const pointer, better for optimizations
+            return SCOPE;
+        }
+
+        /**
+         * Special scope - can't be closed & it's always ALIVE
+         */
+        private static final class Scope extends SharedScope {
+            Scope() {
+                super(null, MemoryScope.DUMMY_CLEANUP_ACTION, null);
+            }
+
+            @Override
+            void justClose() {
+                throw new IllegalStateException("Should never be called");
+            }
+
+            @Override
+            public boolean isAlive() {
+                return true;
+            }
+
+            @Override
+            public void checkValidState() {
+            }
+        }
     }
 }
