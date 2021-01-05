@@ -46,7 +46,7 @@ import static org.testng.Assert.assertTrue;
 public class JextractToolProviderTest extends JextractToolRunner {
     @Test
     public void testHelp() {
-        run().checkFailure(); // no options
+        run().checkFailure(OPTION_ERROR); // no options
         run("--help").checkSuccess();
         run("-h").checkSuccess();
         run("-?").checkSuccess();
@@ -56,8 +56,24 @@ public class JextractToolProviderTest extends JextractToolRunner {
     @Test
     public void testNonExistentHeader() {
         run(getInputFilePath("non_existent.h").toString())
-            .checkFailure()
+            .checkFailure(INPUT_ERROR)
             .checkContainsOutput("cannot read header file");
+    }
+
+    // error for header including non_existent.h file
+    @Test
+    public void testNonExistentIncluder() {
+        run(getInputFilePath("non_existent_includer.h").toString())
+            .checkFailure(CLANG_ERROR)
+            .checkContainsOutput("file not found");
+    }
+
+    // error for header with parser errors
+    @Test
+    public void testHeaderWithDeclarationErrors() {
+        run(getInputFilePath("illegal_decls.h").toString())
+            .checkFailure(CLANG_ERROR)
+            .checkContainsOutput("cannot combine with previous 'short' declaration specifier");
     }
 
     @Test

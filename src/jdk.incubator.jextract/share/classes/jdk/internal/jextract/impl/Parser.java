@@ -54,7 +54,7 @@ public class Parser {
         TranslationUnit tu = index.parse(path.toString(),
             d -> {
                 if (d.severity() > Diagnostic.CXDiagnostic_Warning) {
-                    throw new RuntimeException(d.toString());
+                    throw new ClangException(d.toString());
                 }
             },
             true, args.toArray(new String[0]));
