@@ -61,7 +61,7 @@ public enum AccessSpecifier {
     public final static AccessSpecifier valueOf(int value) {
         AccessSpecifier x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException("Invalid AccessSpecifier kind value: " + value);
+            throw new ClangException("Invalid AccessSpecifier kind value: " + value);
         }
         return x;
     }

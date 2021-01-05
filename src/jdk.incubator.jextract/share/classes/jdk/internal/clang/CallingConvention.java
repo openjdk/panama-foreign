@@ -68,7 +68,7 @@ public enum CallingConvention {
     public final static CallingConvention valueOf(int value) {
         CallingConvention x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException();
+            throw new ClangException("Invalid calling convention: " + value);
         }
         return x;
     }

@@ -23,64 +23,20 @@
  *  questions.
  *
  */
-
 package jdk.internal.clang;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
-public class TypeLayoutError extends IllegalStateException {
-
+public class ClangException extends RuntimeException {
     private static final long serialVersionUID = 0L;
 
-    private final Kind kind;
-
-    public TypeLayoutError(long value, String message) {
-        super(Kind.valueOf(value) + ". " + message);
-        this.kind = Kind.valueOf(value);
+    public ClangException(String message) {
+        super(message);
     }
 
-    public Kind kind() {
-        return kind;
+    public ClangException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public static boolean isError(long value) {
-        return Kind.isError(value);
-    }
-
-    public enum Kind {
-        Invalid(-1),
-        Incomplete(-2),
-        Dependent(-3),
-        NotConstantSize(-4),
-        InvalidFieldName(-5);
-
-        private final long value;
-
-        Kind(long value) {
-            this.value = value;
-        }
-
-        private final static Map<Long, Kind> lookup;
-
-        static {
-            lookup = new HashMap<>();
-            for (Kind e: Kind.values()) {
-                lookup.put(e.value, e);
-            }
-        }
-
-        public final static Kind valueOf(long value) {
-            Kind x = lookup.get(value);
-            if (null == x) {
-                throw new NoSuchElementException("TypeLayoutError = " + value);
-            }
-            return x;
-        }
-
-        public static boolean isError(long value) {
-            return lookup.containsKey(value);
-        }
+    public ClangException(Throwable cause) {
+        super(cause);
     }
 }

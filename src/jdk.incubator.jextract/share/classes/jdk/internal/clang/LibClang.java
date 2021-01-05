@@ -56,7 +56,7 @@ public class LibClang {
                                 FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
                 int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
             } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
+                throw new ClangException(ex);
             }
         }
     }

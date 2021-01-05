@@ -293,7 +293,7 @@ public enum CursorKind {
     public final static CursorKind valueOf(int value) {
         CursorKind x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException("Invalid Cursor kind value: " + value);
+            throw new ClangException("Invalid Cursor kind value: " + value);
         }
         return x;
     }

@@ -30,59 +30,57 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public enum PrintingPolicyProperty {
-    Indentation(0),
-    SuppressSpecifiers(1),
-    SuppressTagKeyword(2),
-    IncludeTagDefinition(3),
-    SuppressScope(4),
-    SuppressUnwrittenScope(5),
-    SuppressInitializers(6),
-    ConstantArraySizeAsWritten(7),
-    AnonymousTagLocations(8),
-    SuppressStrongLifetime(9),
-    SuppressLifetimeQualifiers(10),
-    SuppressTemplateArgsInCXXConstructors(11),
-    Bool(12),
-    Restrict(13),
-    Alignof(14),
-    UnderscoreAlignof(15),
-    UseVoidForZeroParams(16),
-    TerseOutput(17),
-    PolishForDeclaration(18),
-    Half(19),
-    MSWChar(20),
-    IncludeNewlines(21),
-    MSVCFormatting(22),
-    ConstantsAsWritten(23),
-    SuppressImplicitBase(24),
-    FullyQualifiedName(25),
-    LastProperty(25);
+public class TypeLayoutException extends ClangException {
 
-    private final int value;
+    private static final long serialVersionUID = 0L;
 
-    PrintingPolicyProperty(int value) {
-        this.value = value;
+    private final Kind kind;
+
+    public TypeLayoutException(long value, String message) {
+        super(Kind.valueOf(value) + ". " + message);
+        this.kind = Kind.valueOf(value);
     }
 
-    public int value() {
-        return value;
+    public Kind kind() {
+        return kind;
     }
 
-    private final static Map<Integer, PrintingPolicyProperty> lookup;
+    public static boolean isError(long value) {
+        return Kind.isError(value);
+    }
 
-    static {
-        lookup = new HashMap<>();
-        for (PrintingPolicyProperty e: PrintingPolicyProperty.values()) {
-            lookup.put(e.value(), e);
+    public enum Kind {
+        Invalid(-1),
+        Incomplete(-2),
+        Dependent(-3),
+        NotConstantSize(-4),
+        InvalidFieldName(-5);
+
+        private final long value;
+
+        Kind(long value) {
+            this.value = value;
         }
-    }
 
-    public final static PrintingPolicyProperty valueOf(int value) {
-        PrintingPolicyProperty x = lookup.get(value);
-        if (null == x) {
-            throw new ClangException("Invalid PrintingPolicyProperty value: " + value);
+        private final static Map<Long, Kind> lookup;
+
+        static {
+            lookup = new HashMap<>();
+            for (Kind e: Kind.values()) {
+                lookup.put(e.value, e);
+            }
         }
-        return x;
+
+        public final static Kind valueOf(long value) {
+            Kind x = lookup.get(value);
+            if (null == x) {
+                throw new ClangException("Invalid TypeLayout Kind: " + value);
+            }
+            return x;
+        }
+
+        public static boolean isError(long value) {
+            return lookup.containsKey(value);
+        }
     }
 }

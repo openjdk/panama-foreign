@@ -60,7 +60,7 @@ public enum RefQualifierKind {
     public final static RefQualifierKind valueOf(int value) {
         RefQualifierKind x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException("Invalid RefQualifierKind kind value: " + value);
+            throw new ClangException("Invalid RefQualifierKind kind value: " + value);
         }
         return x;
     }

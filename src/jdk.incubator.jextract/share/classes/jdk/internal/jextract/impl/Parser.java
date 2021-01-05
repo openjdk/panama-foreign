@@ -26,6 +26,7 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
+import jdk.internal.clang.ClangException;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -54,7 +55,7 @@ public class Parser {
         TranslationUnit tu = index.parse(path.toString(),
             d -> {
                 if (d.severity() > Diagnostic.CXDiagnostic_Warning) {
-                    throw new RuntimeException(d.toString());
+                    throw new ClangException(d.toString());
                 }
             },
             true, args.toArray(new String[0]));

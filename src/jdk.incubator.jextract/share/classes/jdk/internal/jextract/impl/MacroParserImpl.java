@@ -30,6 +30,7 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.JextractTool;
+import jdk.internal.clang.ClangException;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -65,8 +66,8 @@ class MacroParserImpl {
         ClangReparser reparser;
         try {
             reparser = new ClangReparser(tu, args);
-        } catch (IOException | Index.ParsingFailedException ex) {
-            throw new RuntimeException(ex);
+        } catch (IOException ex) {
+            throw new ClangException(ex);
         }
 
         return new MacroParserImpl(reparser, treeMaker);

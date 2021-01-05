@@ -25,6 +25,7 @@
 
 package jdk.incubator.jextract;
 
+import jdk.internal.clang.ClangException;
 import jdk.internal.jextract.impl.Filter;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
@@ -71,8 +72,9 @@ public final class JextractTool {
     private static final int SUCCESS       = 0;
     private static final int OPTION_ERROR  = 1;
     private static final int INPUT_ERROR   = 2;
-    private static final int OUTPUT_ERROR  = 3;
+    private static final int CLANG_ERROR   = 3;
     private static final int RUNTIME_ERROR = 4;
+    private static final int OUTPUT_ERROR  = 5;
 
     private final PrintWriter out;
     private final PrintWriter err;
@@ -234,7 +236,7 @@ public final class JextractTool {
             return INPUT_ERROR;
         }
 
-        //parse    //generate
+        List<JavaFileObject> files = null;
         try {
             Declaration.Scoped toplevel = parse(List.of(header), options.clangArgs.toArray(new String[0]));
 
@@ -247,20 +249,34 @@ public final class JextractTool {
                 System.out.println(toplevel);
             }
 
-            Path output = Path.of(options.outputDir);
-
-            List<JavaFileObject> files = generate(
+            files = generate(
                 toplevel, header.getFileName().toString(), options.source,
                 options.targetPackage, options.libraryNames);
-
-            write(output, !options.source, files);
+        } catch (ClangException ce) {
+            err.println(ce.getMessage());
+            if (JextractTool.DEBUG) {
+                ce.printStackTrace(err);
+            }
+            return CLANG_ERROR;
         } catch (RuntimeException re) {
-            err.println(re);
+            err.println(re.getMessage());
             if (JextractTool.DEBUG) {
                 re.printStackTrace(err);
             }
             return RUNTIME_ERROR;
         }
+
+        try {
+            Path output = Path.of(options.outputDir);
+            write(output, !options.source, files);
+        } catch (RuntimeException re) {
+            err.println(re.getMessage());
+            if (JextractTool.DEBUG) {
+                re.printStackTrace(err);
+            }
+            return OUTPUT_ERROR;
+        }
+
         return SUCCESS;
     }
 

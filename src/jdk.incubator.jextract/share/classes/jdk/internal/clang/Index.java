@@ -66,7 +66,7 @@ public class Index implements AutoCloseable {
         }
     }
 
-    public static class ParsingFailedException extends RuntimeException {
+    public static class ParsingFailedException extends ClangException {
         private static final long serialVersionUID = -1L;
         private final Path srcFile;
         private final ErrorCode code;

@@ -71,7 +71,7 @@ public class EvalResult implements AutoCloseable {
             case Integral:
                 return getAsInt0();
             default:
-                throw new IllegalStateException("Unexpected kind: " + kind);
+                throw new ClangException("Unexpected kind: " + kind);
         }
     }
 
@@ -85,7 +85,7 @@ public class EvalResult implements AutoCloseable {
             case FloatingPoint:
                 return getAsFloat0();
             default:
-                throw new IllegalStateException("Unexpected kind: " + kind);
+                throw new ClangException("Unexpected kind: " + kind);
         }
     }
 
@@ -100,7 +100,7 @@ public class EvalResult implements AutoCloseable {
             case StrLiteral:
                 return getAsString0();
             default:
-                throw new IllegalStateException("Unexpected kind: " + kind);
+                throw new ClangException("Unexpected kind: " + kind);
         }
     }
 

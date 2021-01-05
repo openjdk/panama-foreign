@@ -68,7 +68,7 @@ public enum TemplateArgumentKind {
     public final static TemplateArgumentKind valueOf(int value) {
         TemplateArgumentKind x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException("Invalid TemplateArgumentKind kind value: " + value);
+            throw new ClangException("Invalid TemplateArgumentKind kind value: " + value);
         }
         return x;
     }

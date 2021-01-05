@@ -171,7 +171,7 @@ public enum TypeKind {
     public final static TypeKind valueOf(int value) {
         TypeKind x = lookup.get(value);
         if (null == x) {
-            throw new NoSuchElementException("kind = " + value);
+            throw new ClangException("Invalid type kind: " + value);
         }
         return x;
     }

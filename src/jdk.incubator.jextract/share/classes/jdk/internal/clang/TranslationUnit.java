@@ -100,7 +100,7 @@ public class TranslationUnit implements AutoCloseable {
                         Index_h.clang_defaultReparseOptions(tu)));
 
             if (code != ErrorCode.Success) {
-                throw new IllegalStateException("Re-parsing failed: " + code);
+                throw new ClangException("Re-parsing failed: " + code);
             }
         }
     }
@@ -209,7 +209,7 @@ public class TranslationUnit implements AutoCloseable {
         }
     }
 
-    public static class TranslationUnitSaveException extends IOException {
+    public static class TranslationUnitSaveException extends ClangException {
 
         static final long serialVersionUID = 1L;
 

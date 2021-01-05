@@ -58,6 +58,6 @@ public enum ErrorCode {
             .collect(toMap(ErrorCode::code, Function.identity()));
 
     public static ErrorCode valueOf(int code) {
-        return lookup.computeIfAbsent(code, k -> { throw new NoSuchElementException("No ErrorCode with code: " + k); });
+        return lookup.computeIfAbsent(code, k -> { throw new ClangException("No ErrorCode with code: " + k); });
     }
 }

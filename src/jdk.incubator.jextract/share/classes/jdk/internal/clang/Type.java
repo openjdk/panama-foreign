@@ -116,8 +116,8 @@ public final class Type {
 
     public long getOffsetOf(String fieldName) {
         long res = getOffsetOf0(fieldName);
-        if(TypeLayoutError.isError(res)) {
-            throw new TypeLayoutError(res, String.format("type: %s, fieldName: %s", this, fieldName));
+        if(TypeLayoutException.isError(res)) {
+            throw new TypeLayoutException(res, String.format("type: %s, fieldName: %s", this, fieldName));
         }
         return res;
     }
@@ -195,8 +195,8 @@ public final class Type {
 
     public long size() {
         long res = size0();
-        if(TypeLayoutError.isError(res)) {
-            throw new TypeLayoutError(res, String.format("type: %s", this));
+        if(TypeLayoutException.isError(res)) {
+            throw new TypeLayoutException(res, String.format("type: %s", this));
         }
         return res;
     }
