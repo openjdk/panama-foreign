@@ -52,6 +52,15 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 public class JextractToolRunner {
+
+    // (private) exit codes from jextract tool. Copied from JextractTool.
+    static final int SUCCESS       = 0;
+    static final int OPTION_ERROR  = 1;
+    static final int INPUT_ERROR   = 2;
+    static final int CLANG_ERROR   = 3;
+    static final int RUNTIME_ERROR = 4;
+    static final int OUTPUT_ERROR  = 5;
+
     private static String safeFileName(String filename) {
         int ext = filename.lastIndexOf('.');
         return ext != -1 ? filename.substring(0, ext) : filename;
@@ -94,12 +103,17 @@ public class JextractToolRunner {
         }
 
         protected JextractResult checkSuccess() {
-            assertEquals(exitCode, 0, "Sucess expected, failed: " + exitCode);
+            assertEquals(exitCode, SUCCESS, "Sucess expected, failed: " + exitCode);
             return this;
         }
 
         protected JextractResult checkFailure() {
-            assertNotEquals(exitCode, 0, "Failure expected, succeeded!");
+            assertNotEquals(exitCode, SUCCESS, "Failure expected, succeeded!");
+            return this;
+        }
+
+        protected JextractResult checkFailure(int expectedExitCode) {
+            assertEquals(exitCode, expectedExitCode, "Expected error code " + expectedExitCode);
             return this;
         }
 
