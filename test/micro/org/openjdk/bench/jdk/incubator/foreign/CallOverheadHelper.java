@@ -22,52 +22,61 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.CLinker;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.concurrent.TimeUnit;
 
+import static java.lang.invoke.MethodHandles.insertArguments;
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_INT;
 import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
 import static jdk.incubator.foreign.CLinker.C_POINTER;
 
-@BenchmarkMode(Mode.AverageTime)
-@Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
-@State(org.openjdk.jmh.annotations.Scope.Thread)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
-public class CallOverhead {
+public class CallOverheadHelper {
 
     static final CLinker abi = CLinker.getInstance();
 
     static final MethodHandle func;
+    static final MethodHandle func_v;
+    static Addressable func_addr;
     static final MethodHandle identity;
+    static final MethodHandle identity_v;
+    static Addressable identity_addr;
     static final MethodHandle identity_struct;
+    static final MethodHandle identity_struct_v;
+    static Addressable identity_struct_addr;
     static final MethodHandle identity_memory_address;
+    static final MethodHandle identity_memory_address_v;
+    static Addressable identity_memory_address_addr;
     static final MethodHandle args1;
+    static final MethodHandle args1_v;
+    static Addressable args1_addr;
     static final MethodHandle args2;
+    static final MethodHandle args2_v;
+    static Addressable args2_addr;
     static final MethodHandle args3;
+    static final MethodHandle args3_v;
+    static Addressable args3_addr;
     static final MethodHandle args4;
+    static final MethodHandle args4_v;
+    static Addressable args4_addr;
     static final MethodHandle args5;
+    static final MethodHandle args5_v;
+    static Addressable args5_addr;
     static final MethodHandle args10;
+    static final MethodHandle args10_v;
+    static Addressable args10_addr;
     static final MethodHandle func_trivial;
+    static final MethodHandle func_trivial_v;
     static final MethodHandle identity_trivial;
+    static final MethodHandle identity_trivial_v;
 
     static final MemoryLayout POINT_LAYOUT = MemoryLayout.ofStruct(
             C_LONG_LONG, C_LONG_LONG
@@ -80,118 +89,74 @@ public class CallOverhead {
 
         LibraryLookup ll = LibraryLookup.ofLibrary("CallOverhead");
         {
-            LibraryLookup.Symbol addr = ll.lookup("func").get();
+            func_addr = ll.lookup("func").orElseThrow();
             MethodType mt = MethodType.methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
-            func = abi.downcallHandle(addr, mt, fd);
-            func_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            func_v = abi.downcallHandle(mt, fd);
+            func = insertArguments(func_v, 0, func_addr);
+            func_trivial_v = abi.downcallHandle(mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            func_trivial = insertArguments(func_trivial_v, 0, func_addr);
         }
         {
-            LibraryLookup.Symbol addr = ll.lookup("identity").get();
+            identity_addr = ll.lookup("identity").orElseThrow();
             MethodType mt = MethodType.methodType(int.class, int.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
-            identity = abi.downcallHandle(addr, mt, fd);
-            identity_trivial = abi.downcallHandle(addr, mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            identity_v = abi.downcallHandle(mt, fd);
+            identity = insertArguments(identity_v, 0, identity_addr);
+            identity_trivial_v = abi.downcallHandle(mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+            identity_trivial = insertArguments(identity_trivial_v, 0, identity_addr);
         }
-        identity_struct = abi.downcallHandle(ll.lookup("identity_struct").get(),
+        identity_struct_addr = ll.lookup("identity_struct").orElseThrow();
+        identity_struct_v = abi.downcallHandle(
                 MethodType.methodType(MemorySegment.class, MemorySegment.class),
                 FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
-        identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address").get(),
+        identity_struct = insertArguments(identity_struct_v, 0, identity_struct_addr);
+
+        identity_memory_address_addr = ll.lookup("identity_memory_address").orElseThrow();
+        identity_memory_address_v = abi.downcallHandle(
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
-        args1 = abi.downcallHandle(ll.lookup("args1").orElseThrow(),
+        identity_memory_address = insertArguments(identity_memory_address_v, 0, identity_memory_address_addr);
+
+        args1_addr = ll.lookup("args1").orElseThrow();
+        args1_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG));
-        args2 = abi.downcallHandle(ll.lookup("args2").orElseThrow(),
+        args1 = insertArguments(args1_v, 0, args1_addr);
+
+        args2_addr = ll.lookup("args2").orElseThrow();
+        args2_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE));
-        args3 = abi.downcallHandle(ll.lookup("args3").orElseThrow(),
+        args2 = insertArguments(args2_v, 0, args2_addr);
+
+        args3_addr = ll.lookup("args3").orElseThrow();
+        args3_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
-        args4 = abi.downcallHandle(ll.lookup("args4").orElseThrow(),
+        args3 = insertArguments(args3_v, 0, args3_addr);
+
+        args4_addr = ll.lookup("args4").orElseThrow();
+        args4_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));
-        args5 = abi.downcallHandle(ll.lookup("args5").get(),
+        args4 = insertArguments(args4_v, 0, args4_addr);
+
+        args5_addr = ll.lookup("args5").orElseThrow();
+        args5_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
-        args10 = abi.downcallHandle(ll.lookup("args10").get(),
+        args5 = insertArguments(args5_v, 0, args5_addr);
+
+        args10_addr = ll.lookup("args10").orElseThrow();
+        args10_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class,
                                                   double.class, long.class, double.class, long.class, double.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG,
                                           C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));
+        args10 = insertArguments(args10_v, 0, args10_addr);
     }
 
     static native void blank();
     static native int identity(int x);
-
-    @Benchmark
-    public void jni_blank() throws Throwable {
-        blank();
-    }
-
-    @Benchmark
-    public void panama_blank() throws Throwable {
-        func.invokeExact();
-    }
-
-    @Benchmark
-    public void panama_blank_trivial() throws Throwable {
-        func_trivial.invokeExact();
-    }
-
-    @Benchmark
-    public int jni_identity() throws Throwable {
-        return identity(10);
-    }
-
-    @Benchmark
-    public int panama_identity() throws Throwable {
-        return (int) identity.invokeExact(10);
-    }
-
-    @Benchmark
-    public int panama_identity_trivial() throws Throwable {
-        return (int) identity_trivial.invokeExact(10);
-    }
-
-    @Benchmark
-    public MemorySegment panama_identity_struct() throws Throwable {
-        return (MemorySegment) identity_struct.invokeExact(point);
-    }
-
-    @Benchmark
-    public MemoryAddress panama_identity_memory_address() throws Throwable {
-        return (MemoryAddress) identity_memory_address.invokeExact(MemoryAddress.NULL);
-    }
-
-    @Benchmark
-    public void panama_args_01() throws Throwable {
-        args1.invokeExact(10L);
-    }
-
-    @Benchmark
-    public void panama_args_02() throws Throwable {
-        args2.invokeExact(10L, 11D);
-    }
-
-    @Benchmark
-    public void panama_args_03() throws Throwable {
-        args3.invokeExact(10L, 11D, 12L);
-    }
-
-    @Benchmark
-    public void panama_args_04() throws Throwable {
-        args4.invokeExact(10L, 11D, 12L, 13D);
-    }
-
-    @Benchmark
-    public void panama_args_05() throws Throwable {
-        args5.invokeExact(10L, 11D, 12L, 13D, 14L);
-    }
-
-    @Benchmark
-    public void panama_args_10() throws Throwable {
-        args10.invokeExact(10L, 11D, 12L, 13D, 14L,
-                           15D, 16L, 17D, 18L, 19D);
-    }
 }

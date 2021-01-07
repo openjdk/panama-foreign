@@ -28,12 +28,12 @@ int identity(int x) {
   return x;
 }
 
-JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_blank
+JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverheadHelper_blank
   (JNIEnv *env, jclass cls) {
     func();
 }
 
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_identity
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverheadHelper_identity
   (JNIEnv *env, jclass cls, jint x) {
     return identity(x);
 }
