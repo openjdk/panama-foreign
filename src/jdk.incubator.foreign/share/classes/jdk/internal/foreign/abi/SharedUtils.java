@@ -155,9 +155,9 @@ public class SharedUtils {
      */
     public static MethodHandle adaptDowncallForIMR(MethodHandle handle, FunctionDescriptor cDesc) {
         if (handle.type().returnType() != void.class)
-            throw new IllegalArgumentException("return expected to be void for in memory returns");
+            throw new IllegalArgumentException("return expected to be void for in memory returns: " + handle.type());
         if (handle.type().parameterType(1) != MemoryAddress.class)
-            throw new IllegalArgumentException("MemoryAddress expected as first param");
+            throw new IllegalArgumentException("MemoryAddress expected as second param: " + handle.type());
         if (cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return layout needed: " + cDesc);
 

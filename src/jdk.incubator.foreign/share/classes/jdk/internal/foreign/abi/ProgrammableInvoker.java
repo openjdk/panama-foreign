@@ -193,7 +193,6 @@ public class ProgrammableInvoker {
         return type.parameterCount() == 0
             ? EMPTY_OBJECT_ARRAY_HANDLE
             : identity(Object[].class)
-                .asType(methodType(Object[].class, Object[].class))
                 .asCollector(Object[].class, type.parameterCount())
                 .asType(type.changeReturnType(Object[].class));
     }
@@ -356,23 +355,24 @@ public class ProgrammableInvoker {
                 : THROWING_ALLOCATOR;
         try (unboxAllocator) {
             // do argument processing, get Object[] as result
-            Object[] moves = new Object[leaf.type().parameterCount()];
-            moves[0] = address; // addr
+            Object[] leafArgs = new Object[leaf.type().parameterCount()];
+            leafArgs[0] = address; // addr
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
-                            moves[argIndexMap.get(storage) + 1] = value; // +1 to skip addr
+                            leafArgs[argIndexMap.get(storage) + 1] = value; // +1 to skip addr
                         }, unboxAllocator);
             }
 
             // call leaf
-            Object o = leaf.invokeWithArguments(moves);
+            Object o = leaf.invokeWithArguments(leafArgs);
 
             // return value processing
             if (o == null) {
                 return null;
-            } else if (o instanceof Object[] oArr) {
+            } else if (o instanceof Object[]) {
+                Object[] oArr = (Object[]) o;
                 return BindingInterpreter.box(callingSequence.returnBindings(),
                         (storage, type) -> oArr[retIndexMap.get(storage)], DEFAULT_ALLOCATOR);
             } else {

@@ -2590,18 +2590,20 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   GrowableArray<VMReg> arg_regs(C->comp_arena(), n_filtered_args, n_filtered_args, VMRegImpl::Bad());
 
   VMReg* argRegs = nep->argMoves();
-  for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
-      vm_arg_pos < n_filtered_args; vm_arg_pos++) {
-    uint vm_unfiltered_arg_pos = vm_arg_pos + 3; // +3 to skip fallback handle argument and addr (2 since long)
-    Node* node = argument(vm_unfiltered_arg_pos);
-    const Type* type = call_type->domain()->field_at(TypeFunc::Parms + vm_unfiltered_arg_pos);
-    VMReg reg = type == Type::HALF
-      ? VMRegImpl::Bad()
-      : argRegs[java_arg_read_pos++];
+  {
+    for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
+        vm_arg_pos < n_filtered_args; vm_arg_pos++) {
+      uint vm_unfiltered_arg_pos = vm_arg_pos + 3; // +3 to skip fallback handle argument and addr (2 since long)
+      Node* node = argument(vm_unfiltered_arg_pos);
+      const Type* type = call_type->domain()->field_at(TypeFunc::Parms + vm_unfiltered_arg_pos);
+      VMReg reg = type == Type::HALF
+        ? VMRegImpl::Bad()
+        : argRegs[java_arg_read_pos++];
 
-    argument_nodes[vm_arg_pos] = node;
-    arg_types[TypeFunc::Parms + vm_arg_pos] = type;
-    arg_regs.at_put(vm_arg_pos, reg);
+      argument_nodes[vm_arg_pos] = node;
+      arg_types[TypeFunc::Parms + vm_arg_pos] = type;
+      arg_regs.at_put(vm_arg_pos, reg);
+    }
   }
 
   uint n_returns = call_type->range()->cnt() - TypeFunc::Parms;
@@ -2609,15 +2611,17 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   const Type** ret_types = TypeTuple::fields(n_returns);
 
   VMReg* retRegs = nep->returnMoves();
-  for (uint vm_ret_pos = 0, java_ret_read_pos = 0;
-      vm_ret_pos < n_returns; vm_ret_pos++) { // 0 or 1
-    const Type* type = call_type->range()->field_at(TypeFunc::Parms + vm_ret_pos);
-    VMReg reg = type == Type::HALF
-      ? VMRegImpl::Bad()
-      : retRegs[java_ret_read_pos++];
+  {
+    for (uint vm_ret_pos = 0, java_ret_read_pos = 0;
+        vm_ret_pos < n_returns; vm_ret_pos++) { // 0 or 1
+      const Type* type = call_type->range()->field_at(TypeFunc::Parms + vm_ret_pos);
+      VMReg reg = type == Type::HALF
+        ? VMRegImpl::Bad()
+        : retRegs[java_ret_read_pos++];
 
-    ret_regs.at_put(vm_ret_pos, reg);
-    ret_types[TypeFunc::Parms + vm_ret_pos] = type;
+      ret_regs.at_put(vm_ret_pos, reg);
+      ret_types[TypeFunc::Parms + vm_ret_pos] = type;
+    }
   }
 
   const TypeFunc* new_call_type = TypeFunc::make(
