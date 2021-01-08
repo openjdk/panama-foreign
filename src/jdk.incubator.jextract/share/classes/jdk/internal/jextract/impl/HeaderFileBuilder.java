@@ -105,13 +105,17 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         if (!mtype.returnType().equals(void.class)) {
             builder.append("return (" + mtype.returnType().getName() + ")");
         }
-        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
+        builder.append("Objects.requireNonNull(");
+        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs));
+        builder.append(", \"no such native function: ");
+        builder.append(javaName);
+        builder.append("\").invokeExact(" + String.join(", ", pExprs) + ");\n");
         builder.decrAlign();
         builder.indent();
         builder.append("} catch (Throwable ex) {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("throw new AssertionError(ex);\n");
+        builder.append("throw new AssertionError(\"should not reach here\", ex);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
