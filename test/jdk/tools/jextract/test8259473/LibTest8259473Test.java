@@ -54,50 +54,50 @@ public class LibTest8259473Test {
         try {
             func();
             throw new AssertionError("should not reach here");
-        } catch (AssertionError ae) {
-            assertTrue(ae.getCause().getMessage().contains("no such native function: func"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: func"));
         }
 
         try {
             func$MH();
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native function: func"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: func"));
         }
 
         try {
             x$get();
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native variable: x"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: x"));
         }
 
         try {
             x$set(1);
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native variable: x"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: x"));
         }
 
         try {
             x$SEGMENT();
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native variable: x"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: x"));
         }
 
         try {
             y$SEGMENT();
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native variable: y"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: y"));
         }
 
         try {
             pt$SEGMENT();
             throw new AssertionError("should not reach here");
-        } catch (NullPointerException npe) {
-            assertTrue(npe.getMessage().contains("no such native variable: pt"));
+        } catch (UnsatisfiedLinkError ule) {
+            assertTrue(ule.getMessage().contains("unresolved symbol: pt"));
         }
     }
 }

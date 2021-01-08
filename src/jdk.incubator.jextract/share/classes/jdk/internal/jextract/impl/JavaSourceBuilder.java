@@ -130,12 +130,12 @@ abstract class JavaSourceBuilder {
 
     void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
         emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs), "",
-            true, "no such native function: " + nativeName);
+            true, "unresolved symbol: " + nativeName);
     }
 
     void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout), "",
-            true, "no such native variable: " + nativeName);
+            true, "unresolved symbol: " + nativeName);
     }
 
     void addConstantGetter(String javaName, Class<?> type, Object value, String anno) {
@@ -151,9 +151,9 @@ abstract class JavaSourceBuilder {
         String vhParam = addressGetCallString(javaName, nativeName, layout);
         builder.append("return (" + type.getName() + ") ");
         builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".get(Objects.requireNonNull(");
+        builder.append(".get(RuntimeHelper.requireNonNull(");
         builder.append(vhParam);
-        builder.append(", \"no such native variable: ");
+        builder.append(", \"unresolved symbol: ");
         builder.append(nativeName);
         builder.append("\"));\n");
         builder.decrAlign();
@@ -170,9 +170,9 @@ abstract class JavaSourceBuilder {
         builder.indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
         builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".set(Objects.requireNonNull(");
+        builder.append(".set(RuntimeHelper.requireNonNull(");
         builder.append(vhParam);
-        builder.append(", \"no such native variable: ");
+        builder.append(", \"unresolved symbol: ");
         builder.append(nativeName);
         builder.append("\"), x);\n");
         builder.decrAlign();
@@ -216,7 +216,7 @@ abstract class JavaSourceBuilder {
         builder.indent();
         builder.append("return ");
         if (nullCheck) {
-            builder.append("Objects.requireNonNull(");
+            builder.append("RuntimeHelper.requireNonNull(");
         }
         builder.append(getCallString(desc));
         if (nullCheck) {
