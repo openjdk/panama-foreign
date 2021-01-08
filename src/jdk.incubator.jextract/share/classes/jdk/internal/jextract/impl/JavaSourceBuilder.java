@@ -129,11 +129,13 @@ abstract class JavaSourceBuilder {
     }
 
     void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs), "");
+        emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs), "",
+            true, "unresolved symbol: " + nativeName);
     }
 
     void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout), "");
+        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout), "",
+            true, "unresolved symbol: " + nativeName);
     }
 
     void addConstantGetter(String javaName, Class<?> type, Object value, String anno) {
@@ -147,8 +149,13 @@ abstract class JavaSourceBuilder {
         builder.incrAlign();
         builder.indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append("return (" + type.getName() + ")"
-                + globalVarHandleGetCallString(javaName, nativeName, layout, type) + ".get(" + vhParam + ");\n");
+        builder.append("return (" + type.getName() + ") ");
+        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
+        builder.append(".get(RuntimeHelper.requireNonNull(");
+        builder.append(vhParam);
+        builder.append(", \"unresolved symbol: ");
+        builder.append(nativeName);
+        builder.append("\"));\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -162,7 +169,12 @@ abstract class JavaSourceBuilder {
         builder.incrAlign();
         builder.indent();
         String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type) + ".set(" + vhParam + ", x);\n");
+        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
+        builder.append(".set(RuntimeHelper.requireNonNull(");
+        builder.append(vhParam);
+        builder.append(", \"unresolved symbol: ");
+        builder.append(nativeName);
+        builder.append("\"), x);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -184,6 +196,7 @@ abstract class JavaSourceBuilder {
     protected void addImportSection() {
         builder.append("import java.lang.invoke.MethodHandle;\n");
         builder.append("import java.lang.invoke.VarHandle;\n");
+        builder.append("import java.util.Objects;\n");
         builder.append("import jdk.incubator.foreign.*;\n");
         builder.append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
         builder.append("import static ");
@@ -192,12 +205,26 @@ abstract class JavaSourceBuilder {
     }
 
     protected void emitForwardGetter(DirectMethodHandleDesc desc, String anno) {
+        emitForwardGetter(desc, anno, false, "");
+    }
+
+    protected void emitForwardGetter(DirectMethodHandleDesc desc, String anno, boolean nullCheck, String errMsg) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + anno + " " + displayName(desc.invocationType().returnType()) + " " + desc.methodName() + "() {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("return " + getCallString(desc) + ";\n");
+        builder.append("return ");
+        if (nullCheck) {
+            builder.append("RuntimeHelper.requireNonNull(");
+        }
+        builder.append(getCallString(desc));
+        if (nullCheck) {
+            builder.append(",\"");
+            builder.append(errMsg);
+            builder.append("\")");
+        }
+        builder.append(";\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");

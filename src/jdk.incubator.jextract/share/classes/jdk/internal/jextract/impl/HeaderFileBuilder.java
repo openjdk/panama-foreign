@@ -99,19 +99,25 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.append(") {\n");
         builder.incrAlign();
         builder.indent();
+        builder.append("var mh$ = RuntimeHelper.requireNonNull(");
+        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs));
+        builder.append(", \"unresolved symbol: ");
+        builder.append(nativeName);
+        builder.append("\");\n");
+        builder.indent();
         builder.append("try {\n");
         builder.incrAlign();
         builder.indent();
         if (!mtype.returnType().equals(void.class)) {
             builder.append("return (" + mtype.returnType().getName() + ")");
         }
-        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs) + ".invokeExact(" + String.join(", ", pExprs) + ");\n");
+        builder.append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
         builder.decrAlign();
         builder.indent();
-        builder.append("} catch (Throwable ex) {\n");
+        builder.append("} catch (Throwable ex$) {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("throw new AssertionError(ex);\n");
+        builder.append("throw new AssertionError(\"should not reach here\", ex$);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");

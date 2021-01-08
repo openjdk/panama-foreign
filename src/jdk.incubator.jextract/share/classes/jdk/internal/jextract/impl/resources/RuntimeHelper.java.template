@@ -26,6 +26,13 @@ final class RuntimeHelper {
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
 
+    static <T> T requireNonNull(T obj, String msg) {
+        if (obj == null) {
+            throw new UnsatisfiedLinkError(msg);
+        }
+        return obj;
+    }
+
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
             return new LibraryLookup[] { LibraryLookup.ofDefault() };
