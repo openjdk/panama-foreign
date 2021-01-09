@@ -26,7 +26,6 @@
 
 package jdk.internal.foreign;
 
-import java.lang.ref.Cleaner;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryScope.SharedScope;
@@ -43,7 +42,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = new EverythingSegment();
+    public static final MemorySegment EVERYTHING = new GlobalMemorySegment();
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -117,12 +116,14 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     /**
-     * Special class for the whole memory, don't make checks - this optimizes a lot of routines
+     * Segment representing whole native memory. Because of this
+     * it doesn't perform range checks, and attached scope doesn't do temporal checks.
+     * As the consequence it can be faster than ordinal memory segment.
      */
-    private static final class EverythingSegment extends NativeMemorySegmentImpl {
+    private static final class GlobalMemorySegment extends NativeMemorySegmentImpl {
         private static final Scope SCOPE = new Scope();
 
-        EverythingSegment() {
+        GlobalMemorySegment() {
             super(0, Long.MAX_VALUE, READ | WRITE, SCOPE);
         }
 
@@ -157,6 +158,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
             @Override
             void justClose() {
+                // In normal circumstances this method should not be called, as segment
+                // should prevent it.
                 throw new IllegalStateException("Should never be called");
             }
 
