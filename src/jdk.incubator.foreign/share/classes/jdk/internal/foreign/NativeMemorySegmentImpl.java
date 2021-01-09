@@ -120,11 +120,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
      * Special class for the whole memory, don't make checks - this optimizes a lot of routines
      */
     private static final class EverythingSegment extends NativeMemorySegmentImpl {
+        private static final Scope SCOPE = new Scope();
+
         EverythingSegment() {
-            // O and MAX_VAL are just dummy values, in fact last address in x64 is -1
-            // however it's typically not addressable.
-            // Null scope - will skip checking scope in VarHandles @Scoped methods
-            super(0, Long.MAX_VALUE, READ | WRITE, null);
+            super(0, Long.MAX_VALUE, READ | WRITE, SCOPE);
         }
 
         @Override
@@ -140,6 +139,35 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         @Override
         public Object unsafeGetBase() {
             return null;
+        }
+
+        @Override
+        public MemoryScope scope() {
+            // Return JVM const pointer, better for optimizations
+            return SCOPE;
+        }
+
+        /**
+         * Special scope - can't be closed & it's always ALIVE
+         */
+        private static final class Scope extends SharedScope {
+            Scope() {
+                super(null, MemoryScope.DUMMY_CLEANUP_ACTION, null);
+            }
+
+            @Override
+            void justClose() {
+                throw new IllegalStateException("Should never be called");
+            }
+
+            @Override
+            public boolean isAlive() {
+                return true;
+            }
+
+            @Override
+            public void checkValidState() {
+            }
         }
     }
 }
