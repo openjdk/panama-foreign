@@ -418,8 +418,9 @@ class LateInlineMHCallGenerator : public LateInlineCallGenerator {
 bool LateInlineMHCallGenerator::do_late_inline_check(Compile* C, JVMState* jvms) {
   // Even if inlining is not allowed, a virtual call can be strength-reduced to a direct call.
   bool allow_inline = C->inlining_incrementally();
-  CallGenerator* cg = for_method_handle_inline(jvms, _caller, method(), allow_inline, _input_not_const);
-  assert(!_input_not_const, "sanity"); // shouldn't have been scheduled for inlining in the first place
+  bool input_not_const = true;
+  CallGenerator* cg = for_method_handle_inline(jvms, _caller, method(), allow_inline, input_not_const);
+  assert(!input_not_const, "sanity"); // shouldn't have been scheduled for inlining in the first place
 
   if (cg != NULL) {
     assert(!cg->is_late_inline() || cg->is_mh_late_inline() || AlwaysIncrementalInline, "we're doing late inlining");
@@ -1208,8 +1209,9 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
 
     case vmIntrinsics::_linkToNative:
     {
-      Node* addr_n = kit.argument(1);
-      Node* nep_n = kit.argument(callee->arg_size() - 1);
+      Node* addr_n = kit.argument(1); // target address
+      Node* nep_n = kit.argument(callee->arg_size() - 1); // NativeEntryPoint
+      // This check needs to be kept in sync with the one in CallStaticJavaNode::Ideal
       if (addr_n->Opcode() == Op_ConL && nep_n->Opcode() == Op_ConP) {
         input_not_const = false;
         const TypeLong* addr_t = addr_n->bottom_type()->is_long();

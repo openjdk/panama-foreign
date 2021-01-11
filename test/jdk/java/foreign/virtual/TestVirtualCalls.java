@@ -50,7 +50,7 @@ import static org.testng.Assert.assertEquals;
 public class TestVirtualCalls {
 
     static final CLinker abi = CLinker.getInstance();
-    static final LibraryLookup lookup = LibraryLookup.ofLibrary("virtual");
+    static final LibraryLookup lookup = LibraryLookup.ofLibrary("Virtual");
 
     static final MethodHandle func;
     static final LibraryLookup.Symbol funcA;
