@@ -36,15 +36,10 @@ import jdk.incubator.foreign.LibraryLookup;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.List;
 
-import jdk.incubator.foreign.MemoryLayout;
 import org.testng.annotations.*;
 
-import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
-import static jdk.incubator.foreign.FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME;
 import static org.testng.Assert.assertEquals;
 
 public class TestVirtualCalls {
