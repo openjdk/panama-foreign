@@ -116,7 +116,11 @@ public interface MemoryAddress extends Addressable {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     default MemorySegment asSegmentRestricted(long bytesSize) {
-        return asSegmentRestricted(bytesSize, null, null);
+        return asSegmentRestricted(bytesSize, null, ResourceScope.ofConfined());
+    }
+
+    default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {
+        return asSegmentRestricted(bytesSize, null, scope);
     }
 
     /**
@@ -153,7 +157,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment);
+    MemorySegment asSegmentRestricted(long bytesSize, Cleaner.Cleanable cleanupAction, ResourceScope scope);
 
     /**
      * Returns the raw long value associated with this memory address.

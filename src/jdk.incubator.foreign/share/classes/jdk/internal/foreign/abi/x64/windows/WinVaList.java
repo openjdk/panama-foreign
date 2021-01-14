@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
+import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 
 // see vadefs.h (VC header)
 //
@@ -121,14 +122,11 @@ class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    MemorySegment struct = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(structAddr, layout.byteSize(),
-                            () -> {}, SharedUtils.dupScope(segment));
-                    try {
+                    try (ResourceScope scope = SharedUtils.dupScope(segment)) {
+                        MemorySegment struct = structAddr.asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout.byteSize());
                         seg.copyFrom(struct);
                         yield seg;
-                    } finally {
-                        struct.scope().close();
                     }
                 }
                 case STRUCT_REGISTER -> {
@@ -171,16 +169,15 @@ class WinVaList implements VaList {
 
     @Override
     public VaList copy() {
-        MemorySegment liveness = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL, 1,
-                () -> {}, SharedUtils.dupScope(segment));
+        MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1,
+                SharedUtils.dupScope(segment));
         return new WinVaList(segment, List.of(), liveness);
     }
 
     @Override
     public VaList copy(NativeScope scope) {
         Objects.requireNonNull(scope);
-        MemorySegment liveness = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL, 1,
-                () -> {}, (MemoryScope)scope);
+        MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1, scope);
         return new WinVaList(segment, List.of(), liveness);
     }
 

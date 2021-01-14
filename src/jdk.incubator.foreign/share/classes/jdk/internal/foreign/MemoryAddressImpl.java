@@ -27,7 +27,9 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 
+import java.lang.ref.Cleaner;
 import java.util.Objects;
 
 /**
@@ -93,13 +95,13 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
-    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
+    public MemorySegment asSegmentRestricted(long bytesSize, Cleaner.Cleanable cleanupAction, ResourceScope scope) {
         Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
-                cleanupAction != null ? cleanupAction::run : MemoryScope.DUMMY_CLEANUP_ACTION, MemoryScope.createConfined(attachment, null));
+                cleanupAction != null ? cleanupAction : MemoryScope.DUMMY_CLEANUP_ACTION, (MemoryScope)scope);
     }
 
     public static MemorySegment ofLongUnchecked(long value) {

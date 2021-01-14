@@ -134,8 +134,8 @@ public class SysVVaList implements VaList {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment base = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(ptr),
-                LAYOUT.byteSize(), () -> U.freeMemory(ptr), MemoryScope.createShared(null, null));
+        MemorySegment base = MemoryAddress.ofLong(ptr).asSegmentRestricted(
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
         cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
@@ -177,8 +177,8 @@ public class SysVVaList implements VaList {
     }
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked((MemoryAddress)VH_reg_save_area.get(segment),
-                LAYOUT_REG_SAVE_AREA.byteSize(), () -> {}, SharedUtils.dupScope(segment));
+        return ((MemoryAddress)VH_reg_save_area.get(segment)).asSegmentRestricted(
+                LAYOUT_REG_SAVE_AREA.byteSize(), SharedUtils.dupScope(segment));
     }
 
     private void preAlignStack(MemoryLayout layout) {
@@ -235,27 +235,21 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
-                            layout.byteSize(), () -> {}, dupScope(segment));
-                    try {
+                    try (ResourceScope scope = dupScope(segment)) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
                         yield seg;
-                    } finally {
-                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
-                            layout.byteSize(), () -> {}, dupScope(segment));
-                    try {
+                    try (ResourceScope scope = dupScope(segment)) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
-                    } finally {
-                        slice.scope().close();
                     }
                 }
             };

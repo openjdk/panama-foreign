@@ -29,7 +29,7 @@ import jdk.internal.foreign.MemoryScope;
 
 import java.lang.ref.Cleaner;
 
-public interface ResourceScope {
+public interface ResourceScope extends AutoCloseable {
     /**
      * Is this segment alive?
      * @return true, if the segment is alive.
@@ -65,17 +65,25 @@ public interface ResourceScope {
      */
     void close();
 
-    static ResourceScope ofShared() {
-        return MemoryScope.createShared(null, null);
-    }
     static ResourceScope ofConfined() {
-        return MemoryScope.createConfined(null, null);
-    }
-
-    static ResourceScope ofShared(Cleaner cleaner) {
-        return MemoryScope.createShared(null, null);
+        return ofConfined(null, null);
     }
     static ResourceScope ofConfined(Cleaner cleaner) {
-        return MemoryScope.createConfined(null, null);
+        return ofConfined(null, cleaner);
     }
+    static ResourceScope ofConfined(Object attachment, Cleaner cleaner) {
+        return MemoryScope.createConfined(attachment, cleaner);
+    }
+
+    static ResourceScope ofShared() {
+        return ofShared(null, null);
+    }
+    static ResourceScope ofShared(Cleaner cleaner) {
+        return ofShared(null, cleaner);
+    }
+    static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
+        return MemoryScope.createShared(attachment, cleaner);
+    }
+    
 }
+

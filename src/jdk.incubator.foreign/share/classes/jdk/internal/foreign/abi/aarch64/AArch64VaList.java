@@ -117,18 +117,18 @@ public class AArch64VaList implements VaList {
     }
 
     private static AArch64VaList readFromSegment(MemorySegment segment) {
-        MemorySegment gpRegsArea = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(grTop(segment).addOffset(-MAX_GP_OFFSET),
-                MAX_GP_OFFSET, () -> {}, SharedUtils.dupScope(segment));
+        MemorySegment gpRegsArea = grTop(segment).addOffset(-MAX_GP_OFFSET).asSegmentRestricted(
+                MAX_GP_OFFSET, SharedUtils.dupScope(segment));
 
-        MemorySegment fpRegsArea = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(vrTop(segment).addOffset(-MAX_FP_OFFSET),
-                MAX_FP_OFFSET, () -> {}, SharedUtils.dupScope(segment));
+        MemorySegment fpRegsArea = vrTop(segment).addOffset(-MAX_FP_OFFSET).asSegmentRestricted(
+                MAX_FP_OFFSET, SharedUtils.dupScope(segment));
         return new AArch64VaList(segment, gpRegsArea, fpRegsArea, List.of(gpRegsArea, fpRegsArea));
     }
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(ptr),
-                LAYOUT.byteSize(), () -> U.freeMemory(ptr), MemoryScope.createShared(null, null));
+        MemorySegment ms = MemoryAddress.ofLong(ptr).asSegmentRestricted(
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
         cleaner.register(AArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
@@ -258,27 +258,21 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
-                            layout.byteSize(), () -> {}, dupScope(segment));
-                    try {
+                    try (ResourceScope scope = dupScope(segment)) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
                         yield seg;
-                    } finally {
-                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
-                            layout.byteSize(), () -> {}, dupScope(segment));
-                    try {
+                    try (ResourceScope scope = dupScope(segment)) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
-                    } finally {
-                        slice.scope().close();
                     }
                 }
             };
@@ -321,14 +315,11 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(ptr,
-                            layout.byteSize(), () -> {}, dupScope(segment));
-                    try {
+                    try (ResourceScope scope = dupScope(segment)) {
+                        MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         yield seg;
-                    } finally {
-                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER -> {
