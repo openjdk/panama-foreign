@@ -24,6 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -37,6 +38,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +60,8 @@ public class LoopOverNew {
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
+    static final Cleaner cleaner = Cleaner.create();
+
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
     @Benchmark
@@ -71,7 +75,16 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE);
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
+        }
+        segment.scope().close();
+    }
+
+    @Benchmark
+    public void segment_loop_cleaner() {
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined(cleaner));
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -80,7 +93,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_shared() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE).share();
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofShared());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

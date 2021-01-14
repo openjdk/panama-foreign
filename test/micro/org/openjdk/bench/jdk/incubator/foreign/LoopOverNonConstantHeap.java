@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -39,6 +40,7 @@ import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -77,14 +79,13 @@ public class LoopOverNonConstantHeap {
             MemorySegment intI = MemorySegment.ofArray(new int[ALLOC_SIZE]);
             MemorySegment intD = MemorySegment.ofArray(new double[ALLOC_SIZE]);
             MemorySegment intF = MemorySegment.ofArray(new float[ALLOC_SIZE]);
-            try (MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE)) {
-                for (int i = 0; i < ALLOC_SIZE; i++) {
-                    MemoryAccess.setByteAtOffset(intB, i, (byte)i);
-                    MemoryAccess.setIntAtIndex(intI, i, i);
-                    MemoryAccess.setDoubleAtIndex(intD, i, i);
-                    MemoryAccess.setFloatAtIndex(intF, i, i);
-                    MemoryAccess.setByteAtOffset(s, i, (byte) i);
-                }
+            MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.ofConfined(Cleaner.create()));
+            for (int i = 0; i < ALLOC_SIZE; i++) {
+                MemoryAccess.setByteAtOffset(intB, i, (byte)i);
+                MemoryAccess.setIntAtIndex(intI, i, i);
+                MemoryAccess.setDoubleAtIndex(intD, i, i);
+                MemoryAccess.setFloatAtIndex(intF, i, i);
+                MemoryAccess.setByteAtOffset(s, i, (byte) i);
             }
         }
 

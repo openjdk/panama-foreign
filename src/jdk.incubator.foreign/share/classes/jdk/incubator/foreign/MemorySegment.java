@@ -780,6 +780,10 @@ allocateNative(bytesSize, 1);
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
+        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined());
+    }
+
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }
@@ -789,7 +793,7 @@ allocateNative(bytesSize, 1);
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope)ResourceScope.ofConfined());
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope)scope);
     }
 
     /**
