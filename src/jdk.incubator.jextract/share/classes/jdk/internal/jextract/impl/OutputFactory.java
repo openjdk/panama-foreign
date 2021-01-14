@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
+
 /*
  * Scan a header file and generate Java source items for entities defined in that header
  * file. Tree visitor visit methods return true/false depending on whether a
@@ -189,28 +191,54 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             //skip decl-only
             return null;
         }
-        boolean structClass = false;
-        if (!d.name().isEmpty() || !isRecord(parent)) {
-            //only add explicit struct layout if the struct is not to be flattened inside another struct
-            switch (d.kind()) {
-                case STRUCT:
-                case UNION: {
-                    structClass = true;
-                    String className = d.name().isEmpty() ? parent.name() : d.name();
-                    GroupLayout parentLayout = (GroupLayout)parentLayout(d);
-                    currentBuilder = currentBuilder.newStructBuilder(className, parentLayout, Type.declared(d));
-                    addStructDefinition(d, currentBuilder.className);
-                    currentBuilder.classBegin();
-                    currentBuilder.addLayoutGetter(((StructBuilder)currentBuilder).layoutField(), d.layout().get());
-                    break;
-                }
+        boolean isStructKind = switch (d.kind()) {
+            case STRUCT, UNION -> true;
+            default -> false;
+        };
+        boolean isAnonNested = d.name().isEmpty() && isRecord(parent);
+        if (isStructKind) {
+            if (!isAnonNested) {
+                //only add explicit struct layout if the struct is not to be flattened inside another struct
+                String className = d.name().isEmpty() ? parent.name() : d.name();
+                GroupLayout parentLayout = (GroupLayout) layoutFor(d);
+                currentBuilder = currentBuilder.newStructBuilder(className, parentLayout, Type.declared(d));
+                addStructDefinition(d, currentBuilder.className);
+                currentBuilder.classBegin();
+                currentBuilder.addLayoutGetter(((StructBuilder) currentBuilder).layoutField(), d.layout().get());
+            } else {
+                // for anonymous nested structs, add a prefix for field layout lookups
+                // but don't generate a separate class
+                String anonymousStructName = findAnonymousStructName(d, (Declaration.Scoped) parent);
+                ((StructBuilder) currentBuilder).pushPrefixElement(anonymousStructName);
             }
         }
         d.members().forEach(fieldTree -> fieldTree.accept(this, d));
-        if (structClass) {
-            currentBuilder = currentBuilder.classEnd();
+        if (isStructKind) {
+            if (!isAnonNested) {
+                currentBuilder = currentBuilder.classEnd();
+            } else {
+                ((StructBuilder) currentBuilder).popPrefixElement();
+            }
         }
         return null;
+    }
+
+    private String findAnonymousStructName(Declaration.Scoped d, Declaration.Scoped parent) {
+        // nested anonymous struct or union
+        GroupLayout layout = (GroupLayout) layoutFor(d);
+        // look up layout in parent, which will have the right context-dependent name
+        GroupLayout parentLayout = (GroupLayout) parent.layout().orElseThrow();
+        for (MemoryLayout ml : parentLayout.memberLayouts()) {
+            // look for anonymous structs
+            if (ml.attribute(JEXTRACT_ANONYMOUS).isPresent()) {
+                // it's enough to just compare the member layouts, since the member names
+                // have to be unique within the parent layout (in C)
+                if (((GroupLayout) ml).memberLayouts().equals(layout.memberLayouts())) {
+                    return ml.name().orElseThrow();
+                }
+            }
+        }
+        throw new IllegalStateException("Could not find layout in parent");
     }
 
     private static final boolean isVaList(FunctionDescriptor desc) {
@@ -511,12 +539,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
     }
 
-    protected static MemoryLayout parentLayout(Declaration parent) {
-        if (parent instanceof Declaration.Typedef) {
-            Declaration.Typedef alias = (Declaration.Typedef) parent;
+    protected static MemoryLayout layoutFor(Declaration decl) {
+        if (decl instanceof Declaration.Typedef) {
+            Declaration.Typedef alias = (Declaration.Typedef) decl;
             return Type.layoutFor(alias.type()).orElseThrow();
-        } else if (parent instanceof Declaration.Scoped) {
-            return ((Declaration.Scoped) parent).layout().orElseThrow();
+        } else if (decl instanceof Declaration.Scoped) {
+            return ((Declaration.Scoped) decl).layout().orElseThrow();
         } else {
             throw new IllegalArgumentException("Unexpected parent declaration");
         }

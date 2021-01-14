@@ -38,7 +38,8 @@ import static jdk.internal.jextract.impl.MultiFileConstantHelper.CONSTANTS_PER_C
 
 interface ConstantHelper {
     DirectMethodHandleDesc addLayout(String javaName, MemoryLayout layout);
-    DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout);
+    DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+                                             String rootJavaName, MemoryLayout rootLayout, List<String> elementNames);
     DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type);
     DirectMethodHandleDesc addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs);
     DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout);

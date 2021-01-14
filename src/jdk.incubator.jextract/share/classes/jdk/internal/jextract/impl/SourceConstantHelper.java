@@ -94,22 +94,25 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout ignored) {
-        return addVarHandle(javaName, nativeName, layout, type, parentJavaName);
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
+                                                    Class<?> type, String rootJavaName, MemoryLayout ignored,
+                                                    List<String> prefixElementNames) {
+        return addVarHandle(javaName, nativeName, layout, type, rootJavaName, prefixElementNames);
     }
 
     @Override
     public DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return addVarHandle(javaName, nativeName, layout, type, null);
+        return addVarHandle(javaName, nativeName, layout, type, null, List.of());
     }
 
-    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaFieldName) {
+    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+                                                String rootLayoutName, List<String> prefixElementNames) {
         String varHandleName = javaName + "$VH";
 
         if (namesGenerated.containsKey(varHandleName)) {
             return namesGenerated.get(varHandleName);
         } else {
-            String fieldName = emitVarHandleField(javaName, nativeName, type, layout, parentJavaFieldName);
+            String fieldName = emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames);
             DirectMethodHandleDesc getter = emitGetter(varHandleName, VarHandle.class, fieldName);
             namesGenerated.put(varHandleName, getter);
             return getter;
@@ -261,7 +264,8 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return name + "$VH_";
     }
 
-    private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout, String parentJavaName) {
+    private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
+                                      String rootLayoutName, List<String> prefixElementNames) {
         addLayout(javaName, layout);
         builder.incrAlign();
         String typeName = type.getName();
@@ -275,9 +279,12 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         if (isAddr) {
             builder.append("MemoryHandles.asAddressVarHandle(");
         }
-        builder.append(getLayoutFieldName(parentJavaName != null ? parentJavaName : javaName));
+        builder.append(getLayoutFieldName(rootLayoutName != null ? rootLayoutName : javaName));
         builder.append(".varHandle(" + typeName + ".class");
-        if (parentJavaName != null) {
+        if (rootLayoutName != null) {
+            for (String prefixElementName : prefixElementNames) {
+                builder.append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
+            }
             builder.append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
         }
         builder.append(")");

@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
+
 /**
  * Base class for C struct, union MemoryLayout computer helper classes.
  */
@@ -51,6 +53,8 @@ abstract class RecordLayoutComputer {
     // cursor of this struct
     final Cursor cursor;
     final List<MemoryLayout> fieldLayouts;
+
+    private int anonCount = 0;
 
     RecordLayoutComputer(Type parent, Type type) {
         this.parent = parent;
@@ -101,12 +105,16 @@ abstract class RecordLayoutComputer {
     }
 
     void addFieldLayout(long offset, Type parent, Cursor c) {
-        if (c.isAnonymousStruct()) {
-            GroupLayout layout = (GroupLayout) compute(offset, parent, c.type());
-            fieldLayouts.addAll(layout.memberLayouts());
-        } else {
-            addFieldLayout(fieldLayout(c));
-        }
+        MemoryLayout memoryLayout = c.isAnonymousStruct()
+            ? compute(offset, parent, c.type())
+                .withName(nextAnonymousName())
+                .withAttribute(JEXTRACT_ANONYMOUS, true)
+            : fieldLayout(c);
+        addFieldLayout(memoryLayout);
+    }
+
+    private String nextAnonymousName() {
+        return "$anon$" + anonCount++;
     }
 
     MemoryLayout fieldLayout(Cursor c) {
