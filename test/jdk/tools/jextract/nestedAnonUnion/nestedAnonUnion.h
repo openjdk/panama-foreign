@@ -22,9 +22,9 @@
  */
 
 struct Foo {
-	int x;
-	union {
-		int y;
-		int z;
-	};
+    int x;
+    union {
+        int y;
+        int z;
+    };
 };
