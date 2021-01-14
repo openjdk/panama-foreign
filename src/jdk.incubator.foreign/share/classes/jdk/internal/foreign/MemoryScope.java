@@ -26,6 +26,8 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.PhantomCleanable;
 import jdk.internal.vm.annotation.ForceInline;
@@ -49,17 +51,31 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-abstract class MemoryScope implements ScopedMemoryAccess.Scope {
+public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope {
 
-    static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
+    static final Cleaner.Cleanable DUMMY_CLEANUP_ACTION = () -> { };
 
-    private MemoryScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        Objects.requireNonNull(cleanupAction);
+    Resource fst;
+    final Cleaner cleaner;
+    public abstract void add(Resource resource);
+
+    static final VarHandle FST;
+
+    static {
+        try {
+            FST = MethodHandles.lookup().findVarHandle(MemoryScope.class, "fst", Resource.class);
+        } catch (Throwable ex) {
+            throw new ExceptionInInitializerError();
+        }
+    }
+
+    private MemoryScope(Object ref, Cleaner cleaner) {
         this.ref = ref;
-        this.cleanupAction = cleanupAction;
-        this.scopeCleanable = cleaner != null ?
-                new ScopeCleanable(this, cleaner, cleanupAction) :
-                null;
+        this.cleaner = cleaner;
+    }
+
+    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
+        return new ConfinedScope(thread, ref, cleaner);
     }
 
     /**
@@ -69,8 +85,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a confined memory scope
      */
-    static MemoryScope createConfined(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, cleaner);
+    public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
+        return new ConfinedScope(Thread.currentThread(), ref, cleaner);
     }
 
     /**
@@ -79,86 +95,31 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a shared memory scope
      */
-    static MemoryScope createShared(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        return new SharedScope(ref, cleanupAction, cleaner);
+    public static MemoryScope createShared(Object ref, Cleaner cleaner) {
+        return new SharedScope(ref, cleaner);
     }
 
     protected final Object ref;
-    protected final ScopeCleanable scopeCleanable;
-    protected final Runnable cleanupAction;
 
     /**
      * Closes this scope, executing any cleanup action (where provided).
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    final void close() {
+    public final void close() {
         try {
-            justClose();
-            cleanupAction.run();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
+            Resource current = justClose();
+            //ok from now on, no more adds will be valid, so let's walk the chain
+            while (current != null) {
+                current.cleanup();
+                current = current.next();
             }
         } finally {
             Reference.reachabilityFence(this);
         }
     }
 
-    abstract void justClose();
-
-    /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @param newOwner new owner thread of the returned memory scope
-     * @return a new confined scope, which is a duplicate of this scope, but with a new owner thread.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread.
-     */
-    final MemoryScope confineTo(Thread newOwner) {
-        try {
-            justClose();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
-            return new ConfinedScope(newOwner, ref, cleanupAction, scopeCleanable != null ?
-                    scopeCleanable.cleaner : null);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @return a new shared scope, which is a duplicate of this scope.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread,
-     * or if this is already a shared scope.
-     */
-    final MemoryScope share() {
-        try {
-            justClose();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
-            return new SharedScope(ref, cleanupAction, scopeCleanable != null ?
-                    scopeCleanable.cleaner : null);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    final MemoryScope cleanable(Cleaner cleaner) {
-        if (scopeCleanable != null) {
-            throw new IllegalStateException("Already registered with a cleaner");
-        }
-        try {
-            justClose();
-            return ownerThread() == null ?
-                    new SharedScope(ref, cleanupAction, cleaner) :
-                    new ConfinedScope(ownerThread(), ref, cleanupAction, cleaner);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
+    abstract Resource justClose();
 
     /**
      * Returns "owner" thread of this scope.
@@ -195,8 +156,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
         private boolean closed; // = false
         final Thread owner;
 
-        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction, Cleaner cleaner) {
-            super(ref, cleanupAction, cleaner);
+        public ConfinedScope(Thread owner, Object ref, Cleaner cleaner) {
+            super(ref, cleaner);
             this.owner = owner;
         }
 
@@ -215,9 +176,17 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             return !closed;
         }
 
-        void justClose() {
+        @Override
+        public void add(Resource resource) {
+            checkValidState();
+            resource.setNext(fst);
+            fst = resource;
+        }
+
+        Resource justClose() {
             checkValidState();
             closed = true;
+            return fst;
         }
 
         @Override
@@ -256,8 +225,8 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             }
         }
 
-        SharedScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-            super(ref, cleanupAction, cleaner);
+        SharedScope(Object ref, Cleaner cleaner) {
+            super(ref, cleaner);
         }
 
         @Override
@@ -272,7 +241,24 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             }
         }
 
-        void justClose() {
+        @Override
+        public void add(Resource segment) {
+            while (true) {
+                Resource prev = (Resource)FST.getAcquire(this);
+                segment.setNext(prev);
+                Resource newSegment = (Resource)FST.compareAndExchangeRelease(this, prev, segment);
+                if (newSegment == DUMMY) {
+                    // too late
+                    segment.cleanup();
+                    throw new IllegalStateException("Already closed");
+                } else if (newSegment == prev) {
+                    return; //victory
+                }
+                // keep trying
+            }
+        }
+
+        Resource justClose() {
             if (!STATE.compareAndSet(this, ALIVE, CLOSING)) {
                 throw new IllegalStateException("Already closed");
             }
@@ -281,6 +267,16 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
             if (!success) {
                 throw new IllegalStateException("Cannot close while another thread is accessing the segment");
             }
+            //ok now we're really closing down
+            Resource prev = null;
+            while (true) {
+                prev = (Resource)FST.getAcquire(this);
+                // no need to check for DUMMY, since only one thread can get here!
+                if (FST.weakCompareAndSetRelease(this, prev, DUMMY)) {
+                    break;
+                }
+            }
+            return prev;
         }
 
         @Override
@@ -290,18 +286,65 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     }
 
     static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
-        final Cleaner cleaner;
-        final Runnable cleanupAction;
+        final Cleaner.Cleanable cleanupAction;
 
-        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, Runnable cleanupAction) {
-            super(referent, cleaner);
-            this.cleaner = cleaner;
+        public ScopeCleanable(MemoryScope referent, Cleaner.Cleanable cleanupAction) {
+            super(referent, referent.cleaner);
             this.cleanupAction = cleanupAction;
         }
 
         @Override
         protected void performCleanup() {
-            cleanupAction.run();
+            cleanupAction.clean();
         }
     }
+
+    static final Resource DUMMY = new Resource() {
+        @Override
+        public ResourceScope scope() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Resource next() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setNext(Resource next) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void cleanup() {
+            throw new UnsupportedOperationException();
+        }
+    };
+
+    public static MemoryScope PRIMORDIAL = new MemoryScope(null, null) {
+        @Override
+        public void add(Resource resource) {
+            // do nothing
+        }
+
+        @Override
+        Resource justClose() {
+            throw new UnsupportedOperationException("Cannot close primordial scope");
+        }
+
+        @Override
+        public Thread ownerThread() {
+            return null;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return true;
+        }
+
+        @Override
+        public void checkValidState() {
+            // do nothing
+        }
+    };
 }

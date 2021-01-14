@@ -101,7 +101,7 @@ public class LoopOverNonConstantMapped {
 
     @TearDown
     public void tearDown() {
-        segment.close();
+        segment.scope().close();
         unsafe.invokeCleaner(byteBuffer);
     }
 

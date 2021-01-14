@@ -75,7 +75,7 @@ public class LoopOverNew {
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
-        segment.close();
+        segment.scope().close();
     }
 
     @Benchmark
@@ -84,7 +84,7 @@ public class LoopOverNew {
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
-        segment.close();
+        segment.scope().close();
     }
 
     @Benchmark

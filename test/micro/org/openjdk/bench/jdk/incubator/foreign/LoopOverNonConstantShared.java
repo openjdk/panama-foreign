@@ -83,7 +83,7 @@ public class LoopOverNonConstantShared {
 
     @TearDown
     public void tearDown() {
-        segment.close();
+        segment.scope().close();
         unsafe.invokeCleaner(byteBuffer);
         unsafe.freeMemory(unsafe_addr);
     }

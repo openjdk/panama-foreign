@@ -47,9 +47,6 @@ import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -570,11 +567,11 @@ public class VaListTest {
                     assertEquals((int) VH_Point_x.get(pointOut), 3);
                     assertEquals((int) VH_Point_y.get(pointOut), 6);
                 }
-                assertTrue(pointOut.isAlive()); // after VaList freed
+                assertTrue(pointOut.scope().isAlive()); // after VaList freed
             }
-            assertTrue(pointOut.isAlive()); // after input MS freed
+            assertTrue(pointOut.scope().isAlive()); // after input MS freed
         }
-        assertFalse(pointOut.isAlive()); // after scope freed
+        assertFalse(pointOut.scope().isAlive()); // after scope freed
     }
 
     @DataProvider

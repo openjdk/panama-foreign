@@ -152,7 +152,11 @@ public interface CLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
+    default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
+        return upcallStub(target, function, ResourceScope.ofShared());
+    }
+
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
      * The layout for the {@code char} C type

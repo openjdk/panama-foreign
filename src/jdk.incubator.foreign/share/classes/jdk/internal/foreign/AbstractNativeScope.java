@@ -27,44 +27,35 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
 
+import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 
-public abstract class AbstractNativeScope implements NativeScope {
+public abstract class AbstractNativeScope extends MemoryScope.ConfinedScope implements NativeScope {
 
     private final List<MemorySegment> segments = new ArrayList<>();
-    private final Thread ownerThread;
 
     private static final int SCOPE_MASK = MemorySegment.READ | MemorySegment.WRITE; // no terminal operations allowed
 
-    AbstractNativeScope() {
-        this.ownerThread = Thread.currentThread();
+    public AbstractNativeScope() {
+        super(Thread.currentThread(), null, null);
     }
 
     public static NativeScope emptyScope() {
         return new EmptyScope();
     }
 
-    @Override
-    public Thread ownerThread() {
-        return ownerThread;
-    }
-
-    @Override
-    public void close() {
-        segments.forEach(MemorySegment::close);
-    }
-
     void checkOwnerThread() {
-        if (Thread.currentThread() != ownerThread()) {
+        if (Thread.currentThread() != owner) {
             throw new IllegalStateException("Attempt to access scope from different thread");
         }
     }
 
     MemorySegment newSegment(long size, long align) {
-        MemorySegment segment = MemorySegment.allocateNative(size, align);
+        MemorySegment segment = NativeMemorySegmentImpl.makeNativeSegment(size, align, this);
         segments.add(segment);
         return segment;
     }

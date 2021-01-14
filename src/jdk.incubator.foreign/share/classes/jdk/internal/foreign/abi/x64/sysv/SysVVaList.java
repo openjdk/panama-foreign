@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -43,6 +44,7 @@ import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
+import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
@@ -132,10 +134,9 @@ public class SysVVaList implements VaList {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment base = MemoryAddress.ofLong(ptr)
-                .asSegmentRestricted(LAYOUT.byteSize(), () -> U.freeMemory(ptr), null)
-                .share();
-        cleaner.register(SysVVaList.class, base::close);
+        MemorySegment base = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(ptr),
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), MemoryScope.createShared(null, null));
+        cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
@@ -176,8 +177,8 @@ public class SysVVaList implements VaList {
     }
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
-        return handoffIfNeeded(((MemoryAddress)VH_reg_save_area.get(segment))
-                .asSegmentRestricted(LAYOUT_REG_SAVE_AREA.byteSize()), segment.ownerThread());
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked((MemoryAddress)VH_reg_save_area.get(segment),
+                LAYOUT_REG_SAVE_AREA.byteSize(), () -> {}, SharedUtils.dupScope(segment));
     }
 
     private void preAlignStack(MemoryLayout layout) {
@@ -234,21 +235,27 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
-                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
+                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
+                            layout.byteSize(), () -> {}, dupScope(segment));
+                    try {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
                         yield seg;
+                    } finally {
+                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
-                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
+                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
+                            layout.byteSize(), () -> {}, dupScope(segment));
+                    try {
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
+                    } finally {
+                        slice.scope().close();
                     }
                 }
             };
@@ -315,13 +322,13 @@ public class SysVVaList implements VaList {
 
     @Override
     public boolean isAlive() {
-        return segment.isAlive();
+        return segment.scope().isAlive();
     }
 
     @Override
     public void close() {
-        segment.close();
-        attachedSegments.forEach(MemorySegment::close);
+        segment.scope().close();
+        attachedSegments.forEach(segment1 -> segment1.scope().close());
     }
 
     @Override
@@ -478,13 +485,8 @@ public class SysVVaList implements VaList {
             VH_overflow_arg_area.set(vaListSegment, stackArgsPtr);
             VH_reg_save_area.set(vaListSegment, reg_save_area.address());
             attachedSegments.add(reg_save_area);
-            assert reg_save_area.ownerThread() == vaListSegment.ownerThread();
+            assert reg_save_area.scope().ownerThread() == vaListSegment.scope().ownerThread();
             return new SysVVaList(vaListSegment, reg_save_area, attachedSegments);
         }
-    }
-
-    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
-        return segment.ownerThread() == thread ?
-            segment : segment.handoff(thread);
     }
 }

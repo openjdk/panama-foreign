@@ -113,6 +113,6 @@ public class PanamaPoint implements AutoCloseable {
 
     @Override
     public void close() {
-        segment.close();
+        segment.scope().close();
     }
 }

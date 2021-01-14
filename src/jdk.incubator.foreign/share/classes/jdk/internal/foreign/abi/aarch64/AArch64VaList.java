@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -43,6 +44,7 @@ import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
+import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMENTS;
 
@@ -115,20 +117,19 @@ public class AArch64VaList implements VaList {
     }
 
     private static AArch64VaList readFromSegment(MemorySegment segment) {
-        MemorySegment gpRegsArea = handoffIfNeeded(grTop(segment).addOffset(-MAX_GP_OFFSET)
-                .asSegmentRestricted(MAX_GP_OFFSET), segment.ownerThread());
+        MemorySegment gpRegsArea = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(grTop(segment).addOffset(-MAX_GP_OFFSET),
+                MAX_GP_OFFSET, () -> {}, SharedUtils.dupScope(segment));
 
-        MemorySegment fpRegsArea = handoffIfNeeded(vrTop(segment).addOffset(-MAX_FP_OFFSET)
-                .asSegmentRestricted(MAX_FP_OFFSET), segment.ownerThread());
+        MemorySegment fpRegsArea = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(vrTop(segment).addOffset(-MAX_FP_OFFSET),
+                MAX_FP_OFFSET, () -> {}, SharedUtils.dupScope(segment));
         return new AArch64VaList(segment, gpRegsArea, fpRegsArea, List.of(gpRegsArea, fpRegsArea));
     }
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment ms = MemoryAddress.ofLong(ptr)
-                .asSegmentRestricted(LAYOUT.byteSize(), () -> U.freeMemory(ptr), null)
-                .share();
-        cleaner.register(AArch64VaList.class, ms::close);
+        MemorySegment ms = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(ptr),
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), MemoryScope.createShared(null, null));
+        cleaner.register(AArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
         VH_vr_top.set(ms, MemoryAddress.NULL);
@@ -257,21 +258,27 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
-                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
+                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
+                            layout.byteSize(), () -> {}, dupScope(segment));
+                    try {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         postAlignStack(layout);
                         yield seg;
+                    } finally {
+                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (MemorySegment slice = handoffIfNeeded(stackPtr()
-                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
+                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(stackPtr(),
+                            layout.byteSize(), () -> {}, dupScope(segment));
+                    try {
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
+                    } finally {
+                        slice.scope().close();
                     }
                 }
             };
@@ -314,11 +321,14 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    try (MemorySegment slice = handoffIfNeeded(ptr
-                            .asSegmentRestricted(layout.byteSize()), segment.ownerThread())) {
+                    MemorySegment slice = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(ptr,
+                            layout.byteSize(), () -> {}, dupScope(segment));
+                    try {
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
                         yield seg;
+                    } finally {
+                        slice.scope().close();
                     }
                 }
                 case POINTER, INTEGER -> {
@@ -366,13 +376,13 @@ public class AArch64VaList implements VaList {
 
     @Override
     public boolean isAlive() {
-        return segment.isAlive();
+        return segment.scope().isAlive();
     }
 
     @Override
     public void close() {
-        segment.close();
-        attachedSegments.forEach(MemorySegment::close);
+        segment.scope().close();
+        attachedSegments.forEach(segment1 -> segment1.scope().close());
     }
 
     @Override
@@ -560,14 +570,9 @@ public class AArch64VaList implements VaList {
 
             attachedSegments.add(gpRegs);
             attachedSegments.add(fpRegs);
-            assert gpRegs.ownerThread() == vaListSegment.ownerThread();
-            assert fpRegs.ownerThread() == vaListSegment.ownerThread();
+            assert gpRegs.scope().ownerThread() == vaListSegment.scope().ownerThread();
+            assert fpRegs.scope().ownerThread() == vaListSegment.scope().ownerThread();
             return new AArch64VaList(vaListSegment, gpRegs, fpRegs, attachedSegments);
         }
-    }
-
-    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
-        return segment.ownerThread() == thread ?
-                segment : segment.handoff(thread);
     }
 }

@@ -74,7 +74,7 @@ public class TestHandshake {
             accessExecutor.execute(new Handshaker(segment));
             accessExecutor.shutdown();
             assertTrue(accessExecutor.awaitTermination(MAX_EXECUTOR_WAIT_SECONDS, TimeUnit.SECONDS));
-            assertTrue(!segment.isAlive());
+            assertTrue(!segment.scope().isAlive());
         }
     }
 
@@ -89,7 +89,7 @@ public class TestHandshake {
 
         @Override
         public final void run() {
-            outer: while (segment.isAlive()) {
+            outer: while (segment.scope().isAlive()) {
                 try {
                     doAccess();
                 } catch (IllegalStateException ex) {
@@ -191,7 +191,7 @@ public class TestHandshake {
 
         @Override
         void cleanup() {
-            copy.close();
+            copy.scope().close();
         }
     }
 
@@ -239,7 +239,7 @@ public class TestHandshake {
         public void run() {
             while (true) {
                 try {
-                    segment.close();
+                    segment.scope().close();
                     break;
                 } catch (IllegalStateException ex) {
                     Thread.onSpinWait();

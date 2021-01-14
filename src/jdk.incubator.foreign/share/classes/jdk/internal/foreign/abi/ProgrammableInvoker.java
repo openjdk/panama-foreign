@@ -271,7 +271,8 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
+        MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64);
+        try {
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
             }
@@ -317,8 +318,9 @@ public class ProgrammableInvoker {
                 return returns;
             }
         } finally {
+            argBuffer.scope().close();
             if (stackArgsSeg != null) {
-                stackArgsSeg.close();
+                stackArgsSeg.scope().close();
             }
         }
     }

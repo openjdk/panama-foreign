@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public class TestCleaner {
 
@@ -62,7 +61,7 @@ public class TestCleaner {
         SegmentState segmentState = new SegmentState();
         MemorySegment root = MemorySegment.allocateNative(10).share();
         MemorySegment segment = root.address().asSegmentRestricted(10, () -> {
-            root.close();
+            root.scope().close();
             segmentState.cleanup();
         }, null);
 
@@ -77,7 +76,7 @@ public class TestCleaner {
 
         kickGCAndCheck(segmentState, segment);
 
-        if (segment.isAlive() && registerKind == RegisterKind.AFTER) {
+        if (segment.scope().isAlive() && registerKind == RegisterKind.AFTER) {
             // register cleaners after
             segment = segment.registerCleaner(cleanerFactory.get());
         }
@@ -103,7 +102,7 @@ public class TestCleaner {
             Thread.onSpinWait();
         }
         //check that cleanup has not been called by any cleaner yet!
-        assertEquals(segmentState.cleanupCalls(), segment.isAlive() ? 0 : 1);
+        assertEquals(segmentState.cleanupCalls(), segment.scope().isAlive() ? 0 : 1);
     }
 
     @Test(dataProvider = "segmentFunctions")
@@ -115,7 +114,7 @@ public class TestCleaner {
             segment.registerCleaner(cleanerFactory.get()); // error here!
             fail();
         } catch (IllegalStateException ex) {
-            if (!segment.isAlive()) {
+            if (!segment.scope().isAlive()) {
                 assertTrue(ex.getMessage().contains("This segment is already closed"));
             } else {
                 assertTrue(ex.getMessage().contains("Already registered with a cleaner"));
@@ -125,7 +124,9 @@ public class TestCleaner {
 
     enum SegmentFunction implements Function<MemorySegment, MemorySegment> {
         IDENTITY(Function.identity()),
-        CLOSE(s -> { s.close(); return s; }),
+        CLOSE(s -> {
+            s.scope().close();
+            return s; }),
         SHARE(s -> { return s.share(); });
 
         private final Function<MemorySegment, MemorySegment> segmentFunction;

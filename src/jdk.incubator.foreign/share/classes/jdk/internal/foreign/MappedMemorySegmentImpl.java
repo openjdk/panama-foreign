@@ -32,6 +32,7 @@ import sun.nio.ch.FileChannelImpl;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
@@ -52,8 +53,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope) {
-        super(min, length, mask, scope);
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope, Cleaner.Cleanable cleanup) {
+        super(min, length, mask, scope, cleanup);
         this.unmapper = unmapper;
     }
 
@@ -64,7 +65,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     @Override
     MappedMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope);
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope, null);
     }
 
     // mapped segment methods
@@ -109,7 +110,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemoryScope scope) throws IOException {
         Objects.requireNonNull(path);
         Objects.requireNonNull(mapMode);
         if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
@@ -121,11 +122,12 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
                 modes &= ~WRITE;
             }
             if (unmapperProxy != null) {
-                MemoryScope scope = MemoryScope.createConfined(null, unmapperProxy::unmap, null);
-                return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
-                        modes, scope);
+                AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
+                        modes, scope, unmapperProxy::unmap);
+                scope.add(segment);
+                return segment;
             } else {
-                return new EmptyMappedMemorySegmentImpl(modes);
+                return new EmptyMappedMemorySegmentImpl(modes, scope);
             }
         }
     }
@@ -142,9 +144,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes) {
-            super(0, null, 0, modes,
-                    MemoryScope.createConfined(null, MemoryScope.DUMMY_CLEANUP_ACTION, null));
+        public EmptyMappedMemorySegmentImpl(int modes, MemoryScope scope) {
+            super(0, null, 0, modes, scope, MemoryScope.DUMMY_CLEANUP_ACTION);
         }
 
         @Override

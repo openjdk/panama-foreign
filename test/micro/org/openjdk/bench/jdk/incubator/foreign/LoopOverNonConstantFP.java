@@ -23,8 +23,6 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -38,7 +36,6 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
-import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -94,8 +91,8 @@ public class LoopOverNonConstantFP {
 
     @TearDown
     public void tearDown() {
-        segmentIn.close();
-        segmentOut.close();
+        segmentIn.scope().close();
+        segmentOut.scope().close();
         unsafe.invokeCleaner(byteBufferIn);
         unsafe.invokeCleaner(byteBufferOut);
         unsafe.freeMemory(unsafe_addrIn);

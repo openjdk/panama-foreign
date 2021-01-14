@@ -82,7 +82,7 @@ public class TestDowncall extends CallGeneratorHelper {
         if (ret == Ret.NON_VOID) {
             checks.forEach(c -> c.accept(res));
         }
-        segments.forEach(MemorySegment::close);
+        segments.forEach(segment -> segment.scope().close());
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {

@@ -30,6 +30,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -97,11 +99,11 @@ public class Windowsx64Linker implements CLinker {
     }
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
-        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
+        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (MemoryScope)scope);
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma) {

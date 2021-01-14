@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
-import jdk.incubator.foreign.MemoryAddress;
+
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.DataProvider;
@@ -151,7 +151,7 @@ public class TestMismatch {
     public void testClosed() {
         var s1 = MemorySegment.ofArray(new byte[4]);
         var s2 = MemorySegment.ofArray(new byte[4]);
-        s1.close();
+        s1.scope().close();
         assertThrows(ISE, () -> s1.mismatch(s1));
         assertThrows(ISE, () -> s1.mismatch(s2));
         assertThrows(ISE, () -> s2.mismatch(s1));

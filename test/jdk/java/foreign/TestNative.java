@@ -193,8 +193,9 @@ public class TestNative {
         MemoryAddress addr = allocate(12);
         MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
         assertEquals(mallocSegment.byteSize(), 12);
-        mallocSegment.close(); //free here
-        assertTrue(!mallocSegment.isAlive());
+        //free here
+        mallocSegment.scope().close();
+        assertTrue(!mallocSegment.scope().isAlive());
     }
 
     @Test

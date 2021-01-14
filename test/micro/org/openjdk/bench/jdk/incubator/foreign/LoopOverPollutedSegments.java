@@ -93,7 +93,7 @@ public class LoopOverPollutedSegments {
 
     @TearDown
     public void tearDown() {
-        nativeSegment.close();
+        nativeSegment.scope().close();
         heapSegmentBytes = null;
         heapSegmentFloats = null;
         arr = null;

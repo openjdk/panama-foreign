@@ -65,7 +65,6 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
@@ -144,7 +143,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     assertEquals(capturedArgsArr[i], args[i + 1]);
                 }
             }
-            segments.forEach(MemorySegment::close);
+            segments.forEach(segment -> segment.scope().close());
         }
     }
 

@@ -923,8 +923,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, SharedUtils.Allocator allocator) {
-            MemorySegment ms = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
-            return allocator.handoff(ms);
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, allocator.scope());
         }
 
         @Override

@@ -56,7 +56,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -102,7 +101,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @AfterClass
     void teardown() {
-        dummyStub.close();
+        dummyStub.scope().close();
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
@@ -119,7 +118,7 @@ public class TestUpcall extends CallGeneratorHelper {
         if (ret == Ret.NON_VOID) {
             returnChecks.forEach(c -> c.accept(res));
         }
-        segments.forEach(MemorySegment::close);
+        segments.forEach(segment -> segment.scope().close());
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {

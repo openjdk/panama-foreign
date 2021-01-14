@@ -27,28 +27,22 @@
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
  */
 
-import jdk.incubator.foreign.MappedMemorySegments;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
@@ -95,7 +89,7 @@ public class TestSegments {
     @Test(dataProvider = "segmentOperations")
     public void testOpAfterClose(SegmentMember member) throws Throwable {
         MemorySegment segment = MemorySegment.allocateNative(4);
-        segment.close();
+        segment.scope().close();
         try {
             Object o = member.method.invoke(segment, member.params);
             assertFalse(member.isConfined());
@@ -219,7 +213,7 @@ public class TestSegments {
     @Test(dataProvider = "segmentFactories", expectedExceptions = IllegalStateException.class)
     public void testFillClosed(Supplier<MemorySegment> memorySegmentSupplier) {
         MemorySegment segment = memorySegmentSupplier.get();
-        segment.close();
+        segment.scope().close();
         segment.fill((byte) 0xFF);
     }
 
@@ -423,7 +417,7 @@ public class TestSegments {
         CLOSE(MemorySegment.CLOSE) {
             @Override
             void run(MemorySegment segment) {
-                segment.close();
+                segment.scope().close();
             }
         },
         READ(MemorySegment.READ) {

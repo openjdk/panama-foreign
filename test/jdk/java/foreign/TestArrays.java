@@ -130,7 +130,7 @@ public class TestArrays {
             expectedExceptions = IllegalStateException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemorySegment segment = MemorySegment.allocateNative(layout);
-        segment.close();
+        segment.scope().close();
         arrayFactory.apply(segment);
     }
 

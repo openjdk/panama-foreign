@@ -26,13 +26,13 @@
 
 package jdk.incubator.foreign;
 
-import java.io.FileDescriptor;
 import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Spliterator;
 
 /**
@@ -223,7 +222,7 @@ MemorySegment gcSegment = segment.registerCleaner(cleaner);
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface MemorySegment extends Addressable, AutoCloseable {
+public interface MemorySegment extends Addressable {
 
     /**
      * The base memory address associated with this memory segment. The returned address is
@@ -257,11 +256,7 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      */
     Spliterator<MemorySegment> spliterator(SequenceLayout layout);
 
-    /**
-     * The thread owning this segment.
-     * @return the thread owning this segment.
-     */
-    Thread ownerThread();
+    ResourceScope scope();
 
     /**
      * The size (in bytes) of this memory segment.
@@ -383,127 +378,6 @@ public interface MemorySegment extends Addressable, AutoCloseable {
      * @return {@code true} if this segment is a mapped segment.
      */
     boolean isMapped();
-
-    /**
-     * Is this segment alive?
-     * @return true, if the segment is alive.
-     * @see MemorySegment#close()
-     */
-    boolean isAlive();
-
-    /**
-     * Closes this memory segment. This is a <em>terminal operation</em>; as a side-effect, if this operation completes
-     * without exceptions, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
-     * associated with the memory segment.
-     *
-     * @apiNote This operation is not idempotent; that is, closing an already closed segment <em>always</em> results in an
-     * exception being thrown. This reflects a deliberate design choice: segment state transitions should be
-     * manifest in the client code; a failure in any of these transitions reveals a bug in the underlying application
-     * logic. This is especially useful when reasoning about the lifecycle of dependent segment views (see {@link #asSlice(MemoryAddress)},
-     * where closing one segment might side-effect multiple segments. In such cases it might in fact not be obvious, looking
-     * at the code, as to whether a given segment is alive or not.
-     *
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment is shared and the segment is concurrently accessed while this method is
-     * called.
-     * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
-     */
-    void close();
-
-    /**
-     * Obtains a new confined memory segment backed by the same underlying memory region as this segment. The returned segment will
-     * be confined on the specified thread, and will feature the same spatial bounds and access modes (see {@link #accessModes()})
-     * as this segment.
-     * <p>
-     * This is a <em>terminal operation</em>; as a side-effect, if this operation completes
-     * without exceptions, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
-     * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
-     * to the returned segment's contents on the new owner thread.
-     *
-     * @param thread the new owner thread
-     * @return a new confined memory segment whose owner thread is set to {@code thread}.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
-     */
-    MemorySegment handoff(Thread thread);
-
-    /**
-     * Obtains a new confined memory segment backed by the same underlying memory region as this segment, but whose
-     * temporal bounds are controlled by the provided {@link NativeScope} instance.
-     * <p>
-     * This is a <em>terminal operation</em>;
-     * as a side-effect, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * The returned segment will feature only {@link MemorySegment#READ} and {@link MemorySegment#WRITE} access modes
-     * (assuming these were available in the original segment). As such the returned segment cannot be closed directly
-     * using {@link MemorySegment#close()} - but it will be closed indirectly when this native scope is closed. The
-     * returned segment will also be confined by the same thread as the provided native scope (see {@link NativeScope#ownerThread()}).
-     * <p>
-     * In case where the owner thread of the returned segment differs from that of this segment, write accesses to this
-     * segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
-     * to the returned segment's contents on the new owner thread.
-     *
-     * @param nativeScope the native scope.
-     * @return a new confined memory segment backed by the same underlying memory region as this segment, but whose life-cycle
-     * is tied to that of {@code nativeScope}.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     * @throws UnsupportedOperationException if this segment does not support the {@link #HANDOFF} access mode.
-     */
-    MemorySegment handoff(NativeScope nativeScope);
-
-    /**
-     * Obtains a new shared memory segment backed by the same underlying memory region as this segment. The returned segment will
-     * not be confined on any thread and can therefore be accessed concurrently from multiple threads; moreover, the
-     * returned segment will feature the same spatial bounds and access modes (see {@link #accessModes()})
-     * as this segment.
-     * <p>
-     * This is a <em>terminal operation</em>; as a side-effect, if this operation completes
-     * without exceptions, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * Write accesses to this segment's content <a href="../../../java/util/concurrent/package-summary.html#MemoryVisibility"><i>happens-before</i></a>
-     * hand-over from the current owner thread to the new owner thread, which in turn <i>happens before</i> read accesses
-     * to the returned segment's contents on a new thread.
-     *
-     * @return a new memory shared segment backed by the same underlying memory region as this segment.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment.
-     */
-    MemorySegment share();
-
-    /**
-     * Register this memory segment instance against a {@link Cleaner} object, by returning a new memory segment backed
-     * by the same underlying memory region as this segment. The returned segment will feature the same confinement,
-     * spatial bounds and access modes (see {@link #accessModes()}) as this segment. Moreover, the returned segment
-     * will be associated with the specified {@link Cleaner} object; this allows for the segment to be closed
-     * as soon as it becomes <em>unreachable</em>, which might be helpful in preventing native memory leaks.
-     * <p>
-     * This is a <em>terminal operation</em>; as a side-effect, if this operation completes
-     * without exceptions, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * The implicit deallocation behavior associated with the returned segment will be preserved under terminal
-     * operations such as {@link #handoff(Thread)} and {@link #share()}.
-     *
-     * @param cleaner the cleaner object, responsible for implicit deallocation of the returned segment.
-     * @return a new memory segment backed by the same underlying memory region as this segment, which features
-     * implicit deallocation.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment is already associated with a cleaner.
-     * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
-     */
-    MemorySegment registerCleaner(Cleaner cleaner);
 
     /**
      * Fills a value into this memory segment.
@@ -887,7 +761,7 @@ allocateNative(bytesSize, 1);
      * write access if the file is opened for writing.
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode);
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, (MemoryScope)ResourceScope.ofConfined());
     }
 
     /**
@@ -915,7 +789,7 @@ allocateNative(bytesSize, 1);
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope)ResourceScope.ofConfined());
     }
 
     /**

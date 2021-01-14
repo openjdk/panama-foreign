@@ -66,7 +66,7 @@ public class VarHandleExact {
 
     @TearDown
     public void tearDown() {
-        data.close();
+        data.scope().close();
     }
 
     @Benchmark

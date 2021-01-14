@@ -71,15 +71,16 @@ public class TestUpcallStubs {
     @Test
     public void testFree() {
         MemorySegment stub = getStub();
-        stub.close();
-        assertFalse(stub.isAlive());
+        stub.scope().close();
+        assertFalse(stub.scope().isAlive());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testAlreadyFreed() {
         MemorySegment stub = getStub();
-        stub.close();
-        stub.close(); // should fail
+        stub.scope().close();
+        // should fail
+        stub.scope().close();
     }
 
     @DataProvider

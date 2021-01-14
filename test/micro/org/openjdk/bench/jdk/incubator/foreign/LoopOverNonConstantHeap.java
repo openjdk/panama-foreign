@@ -23,7 +23,6 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -99,7 +98,7 @@ public class LoopOverNonConstantHeap {
 
     @TearDown
     public void tearDown() {
-        segment.close();
+        segment.scope().close();
     }
 
     @Benchmark

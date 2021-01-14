@@ -99,7 +99,7 @@ public class TestUpcallStructScope {
         }
 
         MemorySegment captured = capturedSegment.get();
-        assertFalse(captured.isAlive());
+        assertFalse(captured.scope().isAlive());
     }
 
 }

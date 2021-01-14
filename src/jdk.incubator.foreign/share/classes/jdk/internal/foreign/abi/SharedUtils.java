@@ -36,9 +36,11 @@ import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.AbstractNativeScope;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -398,16 +400,16 @@ public class SharedUtils {
             return allocate(layout.byteSize(), layout.byteAlignment());
         }
 
+        default MemoryScope scope() {
+            return MemoryScope.PRIMORDIAL;
+        }
+
         default MemorySegment allocate(long size) {
             return allocate(size, 1);
         }
 
         @Override
         default void close() {}
-
-        default MemorySegment handoff(MemorySegment ms) {
-            return ms;
-        }
 
         MemorySegment allocate(long size, long align);
 
@@ -419,8 +421,8 @@ public class SharedUtils {
                 }
 
                 @Override
-                public MemorySegment handoff(MemorySegment ms) {
-                    return ms.handoff(scope);
+                public MemoryScope scope() {
+                    return (MemoryScope)scope;
                 }
 
                 @Override
@@ -580,6 +582,14 @@ public class SharedUtils {
             return MemoryAccess.getDouble(ptr);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
+        }
+    }
+
+    public static MemoryScope dupScope(MemorySegment segment) {
+        if (segment.scope().ownerThread() == null) {
+            return MemoryScope.createShared(null, null);
+        } else {
+            return MemoryScope.createConfined(segment.scope().ownerThread(), null, null);
         }
     }
 }

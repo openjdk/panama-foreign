@@ -35,7 +35,6 @@ import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
-import java.io.FileDescriptor;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
@@ -53,7 +52,7 @@ import java.util.function.IntFunction;
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
-public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment {
+public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment, Resource {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -69,12 +68,27 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     final long length;
     final int mask;
     final MemoryScope scope;
+    final Cleaner.Cleanable cleanupAction;
+    Resource next;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, int mask, MemoryScope scope) {
+    AbstractMemorySegmentImpl(long length, int mask, MemoryScope scope, Cleaner.Cleanable cleanupAction) {
         this.length = length;
         this.mask = mask;
         this.scope = scope;
+        this.cleanupAction = scope.cleaner != null ?
+                new MemoryScope.ScopeCleanable(scope, cleanupAction) :
+                cleanupAction;
+    }
+
+    @Override
+    public Resource next() {
+        return next;
+    }
+
+    @Override
+    public void setNext(Resource next) {
+        this.next = next;
     }
 
     abstract long min();
@@ -245,12 +259,10 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         return length;
     }
 
-    @Override
     public final boolean isAlive() {
         return scope.isAlive();
     }
 
-    @Override
     public Thread ownerThread() {
         return scope.ownerThread();
     }
@@ -276,66 +288,9 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         }
     }
 
-    public MemorySegment handoff(Thread thread) {
-        Objects.requireNonNull(thread);
-        checkValidState();
-        if (!isSet(HANDOFF)) {
-            throw unsupportedAccessMode(HANDOFF);
-        }
-        try {
-            return dup(0L, length, mask, scope.confineTo(thread));
-        } finally {
-            //flush read/writes to segment memory before returning the new segment
-            VarHandle.fullFence();
-        }
-    }
-
     @Override
-    public MemorySegment share() {
-        checkValidState();
-        if (!isSet(SHARE)) {
-            throw unsupportedAccessMode(SHARE);
-        }
-        try {
-            return dup(0L, length, mask, scope.share());
-        } finally {
-            //flush read/writes to segment memory before returning the new segment
-            VarHandle.fullFence();
-        }
-    }
-
-    @Override
-    public MemorySegment handoff(NativeScope scope) {
-        Objects.requireNonNull(scope);
-        checkValidState();
-        if (!isSet(HANDOFF)) {
-            throw unsupportedAccessMode(HANDOFF);
-        }
-        if (!isSet(CLOSE)) {
-            throw unsupportedAccessMode(CLOSE);
-        }
-        MemorySegment dup = handoff(scope.ownerThread());
-        ((AbstractNativeScope)scope).register(dup);
-        return dup.withAccessModes(accessModes() & (READ | WRITE));
-    }
-
-    @Override
-    public MemorySegment registerCleaner(Cleaner cleaner) {
-        Objects.requireNonNull(cleaner);
-        checkValidState();
-        if (!isSet(CLOSE)) {
-            throw unsupportedAccessMode(CLOSE);
-        }
-        return dup(0L, length, mask, scope.cleanable(cleaner));
-    }
-
-    @Override
-    public final void close() {
-        checkValidState();
-        if (!isSet(CLOSE)) {
-            throw unsupportedAccessMode(CLOSE);
-        }
-        scope.close();
+    public void cleanup() {
+        cleanupAction.clean();
     }
 
     @Override
@@ -608,18 +563,18 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.createConfined(bb, MemoryScope.DUMMY_CLEANUP_ACTION, null);
+            bufferScope = MemoryScope.PRIMORDIAL;
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
             modes &= ~WRITE;
         }
         if (base != null) {
-            return new HeapMemorySegmentImpl.OfByte(bbAddress + pos, (byte[])base, size, modes, bufferScope);
+            return new HeapMemorySegmentImpl.OfByte(bbAddress + pos, (byte[])base, size, modes);
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferScope);
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferScope, MemoryScope.DUMMY_CLEANUP_ACTION);
         } else {
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope, MemoryScope.DUMMY_CLEANUP_ACTION);
         }
     }
 }

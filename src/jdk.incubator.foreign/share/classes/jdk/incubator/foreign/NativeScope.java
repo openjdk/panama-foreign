@@ -62,19 +62,13 @@ import java.util.stream.Stream;
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
  */
-public interface NativeScope extends AutoCloseable {
+public interface NativeScope extends AutoCloseable, ResourceScope {
 
     /**
      * If this native scope is bounded, returns the size, in bytes, of this native scope.
      * @return the size, in bytes, of this native scope (if available).
      */
     OptionalLong byteSize();
-
-    /**
-     * The thread owning this native scope.
-     * @return the thread owning this native scope.
-     */
-    Thread ownerThread();
 
     /**
      * Returns the number of allocated bytes in this native scope.

@@ -265,7 +265,7 @@ public class TestByteBuffer {
 
         MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
         assertTrue(segment.isMapped());
-        segment.close();
+        segment.scope().close();
         mappedBufferOp.apply(segment);
     }
 
@@ -593,7 +593,8 @@ public class TestByteBuffer {
         MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT);
         MemorySegment s2 = MemorySegment.ofByteBuffer(s1.asByteBuffer());
 
-        s1.close(); // memory freed
+        // memory freed
+        s1.scope().close();
 
         MemoryAccess.setInt(s2, 10); // Dead access!
     }
@@ -608,7 +609,7 @@ public class TestByteBuffer {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            segment.close();
+            segment.scope().close();
             channel.write(bb);
         }
     }
@@ -623,7 +624,7 @@ public class TestByteBuffer {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            segment.close();
+            segment.scope().close();
             channel.write(bb);
         }
     }

@@ -26,10 +26,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
 
 import java.lang.ref.Cleaner;
 

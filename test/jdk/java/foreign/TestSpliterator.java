@@ -78,7 +78,7 @@ public class TestSpliterator {
         long streamParallel = StreamSupport.stream(segment.spliterator(layout), true)
                 .reduce(0L, TestSpliterator::sumSingle, Long::sum);
         assertEquals(streamParallel, expected);
-        segment.close();
+        segment.scope().close();
     }
 
     public void testSumSameThread() {

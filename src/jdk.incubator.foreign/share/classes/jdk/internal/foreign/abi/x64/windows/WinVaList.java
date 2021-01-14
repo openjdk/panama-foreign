@@ -27,6 +27,8 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CLinker.VaList;
+import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -119,11 +121,14 @@ class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    try (MemorySegment struct = handoffIfNeeded(structAddr.asSegmentRestricted(layout.byteSize()),
-                         segment.ownerThread())) {
+                    MemorySegment struct = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(structAddr, layout.byteSize(),
+                            () -> {}, SharedUtils.dupScope(segment));
+                    try {
                         MemorySegment seg = allocator.allocate(layout.byteSize());
                         seg.copyFrom(struct);
                         yield seg;
+                    } finally {
+                        struct.scope().close();
                     }
                 }
                 case STRUCT_REGISTER -> {
@@ -160,23 +165,22 @@ class WinVaList implements VaList {
     @Override
     public void close() {
         if (livenessCheck != null)
-            livenessCheck.close();
-        attachedSegments.forEach(MemorySegment::close);
+            livenessCheck.scope().close();
+        attachedSegments.forEach(segment1 -> segment1.scope().close());
     }
 
     @Override
     public VaList copy() {
-        MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
-                segment.ownerThread());
+        MemorySegment liveness = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL, 1,
+                () -> {}, SharedUtils.dupScope(segment));
         return new WinVaList(segment, List.of(), liveness);
     }
 
     @Override
     public VaList copy(NativeScope scope) {
         Objects.requireNonNull(scope);
-        MemorySegment liveness = handoffIfNeeded(MemoryAddress.NULL.asSegmentRestricted(1),
-                segment.ownerThread());
-        liveness = liveness.handoff(scope);
+        MemorySegment liveness = NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.NULL, 1,
+                () -> {}, (MemoryScope)scope);
         return new WinVaList(segment, List.of(), liveness);
     }
 
@@ -188,8 +192,8 @@ class WinVaList implements VaList {
     @Override
     public boolean isAlive() {
         if (livenessCheck != null)
-            return livenessCheck.isAlive();
-        return segment.isAlive();
+            return livenessCheck.scope().isAlive();
+        return segment.scope().isAlive();
     }
 
     static class Builder implements VaList.Builder {
@@ -269,10 +273,5 @@ class WinVaList implements VaList {
 
             return new WinVaList(segment, attachedSegments, null);
         }
-    }
-
-    private static MemorySegment handoffIfNeeded(MemorySegment segment, Thread thread) {
-        return segment.ownerThread() == thread ?
-                segment : segment.handoff(thread);
     }
 }
