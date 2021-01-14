@@ -116,9 +116,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     /**
-     * Segment representing whole native memory. Because of this
-     * it doesn't perform range checks, and attached scope doesn't do temporal checks.
-     * As the consequence it can be faster than ordinal memory segment.
+     * Segment representing whole native memory.
+     * It doesn't perform range checks, and attached scope doesn't do temporal checks,
+     * as the consequence it can be faster than ordinal memory segment.
      */
     private static final class GlobalMemorySegment extends NativeMemorySegmentImpl {
         private static final Scope SCOPE = new Scope();
@@ -135,17 +135,6 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         @Override
         NativeMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
             return new NativeMemorySegmentImpl(min + offset, size, mask, scope);
-        }
-
-        @Override
-        public Object unsafeGetBase() {
-            return null;
-        }
-
-        @Override
-        public MemoryScope scope() {
-            // Return JVM const pointer, better for optimizations
-            return SCOPE;
         }
 
         /**
