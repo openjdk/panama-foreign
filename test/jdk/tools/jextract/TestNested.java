@@ -119,6 +119,11 @@ public class TestNested extends JextractToolRunner {
             checkClass(loader, "X2",
                 checkField("y", int.class, 0, "$anon$0", "$anon$0")
             );
+            checkClass(loader, "NestedUnion",
+                checkField("x", int.class, 0),
+                checkField("y", int.class, 4, "$anon$0"),
+                checkField("z", int.class, 4, "$anon$0")
+            );
         } finally {
             deleteDir(nestedOutput);
         }

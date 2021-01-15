@@ -108,3 +108,11 @@ struct X2 {
         }; // no name this time
     };
 };
+
+struct NestedUnion {
+    int x;
+    union {
+        int y;
+        int z;
+    };
+};
