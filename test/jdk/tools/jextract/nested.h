@@ -57,7 +57,7 @@ struct MyStruct {
     };
     union {
         int g;
-        long h;
+        long long h;
     };
     enum {
         X, Y, Z
@@ -89,7 +89,7 @@ union MyUnion {
     };
     union {
         int i;
-        long j;
+        long long j;
     } k;
 };
 
