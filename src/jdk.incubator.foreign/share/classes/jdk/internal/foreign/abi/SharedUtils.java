@@ -36,7 +36,6 @@ import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.AbstractNativeScope;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -401,7 +400,7 @@ public class SharedUtils {
         }
 
         default MemoryScope scope() {
-            return MemoryScope.PRIMORDIAL;
+            return MemoryScope.GLOBAL;
         }
 
         default MemorySegment allocate(long size) {

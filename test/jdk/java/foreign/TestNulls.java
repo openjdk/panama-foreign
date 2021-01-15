@@ -97,7 +97,7 @@ public class TestNulls {
             "jdk.incubator.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/2/0",
-            "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.ref.Cleaner$Cleanable,jdk.incubator.foreign.ResourceScope)/1/0",
+            "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,jdk.incubator.foreign.ResourceScope)/1/0",
             "jdk.incubator.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
@@ -159,7 +159,6 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
         addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
-        addDefaultMapping(Cleaner.Cleanable.class, () -> {});
     }
 
     static class VaListHelper {

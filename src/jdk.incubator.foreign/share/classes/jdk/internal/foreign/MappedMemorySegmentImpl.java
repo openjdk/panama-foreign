@@ -30,16 +30,13 @@ import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import sun.nio.ch.FileChannelImpl;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
-import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Implementation for a mapped memory segments. A mapped memory segment is a native memory segment, which
@@ -53,19 +50,20 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope, Cleaner.Cleanable cleanup) {
-        super(min, length, mask, scope, cleanup);
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope) {
+        super(min, length, mask, scope);
         this.unmapper = unmapper;
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
+        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null,
+                scope == MemoryScope.GLOBAL ? null : this);
     }
 
     @Override
     MappedMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope, null);
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope);
     }
 
     // mapped segment methods
@@ -123,8 +121,13 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             }
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
-                        modes, scope, unmapperProxy::unmap);
-                scope.add(segment);
+                        modes, scope);
+                scope.add(new ResourceList.ResourceCleanup() {
+                    @Override
+                    public void cleanup() {
+                        unmapperProxy.unmap();
+                    }
+                });
                 return segment;
             } else {
                 return new EmptyMappedMemorySegmentImpl(modes, scope);
@@ -145,7 +148,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
         public EmptyMappedMemorySegmentImpl(int modes, MemoryScope scope) {
-            super(0, null, 0, modes, scope, MemoryScope.DUMMY_CLEANUP_ACTION);
+            super(0, null, 0, modes, scope);
         }
 
         @Override

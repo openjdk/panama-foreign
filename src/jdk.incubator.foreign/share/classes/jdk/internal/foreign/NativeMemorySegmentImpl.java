@@ -33,7 +33,6 @@ import jdk.internal.misc.VM;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetBooleanAction;
 
-import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
 /**
@@ -42,7 +41,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, MemoryScope.DUMMY_CLEANUP_ACTION, MemoryScope.createShared(null, null));
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.createShared(null, null));
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -55,20 +54,20 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, int mask, MemoryScope scope, Cleaner.Cleanable cleanup) {
-        super(length, mask, scope, cleanup);
+    NativeMemorySegmentImpl(long min, long length, int mask, MemoryScope scope) {
+        super(length, mask, scope);
         this.min = min;
     }
 
     @Override
     NativeMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
-        return new NativeMemorySegmentImpl(min + offset, size, mask, scope, null);
+        return new NativeMemorySegmentImpl(min + offset, size, mask, scope);
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newDirectByteBuffer(min(), (int) this.length, null,
-                scope == MemoryScope.PRIMORDIAL ? null : this);
+                scope == MemoryScope.GLOBAL ? null : this);
     }
 
     @Override
@@ -99,11 +98,14 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                defaultAccessModes(alignedSize), scope, () -> {
-            unsafe.freeMemory(buf);
-            nioAccess.unreserveMemory(alignedSize, bytesSize);
+                defaultAccessModes(alignedSize), scope);
+        scope.add(new ResourceList.ResourceCleanup() {
+            @Override
+            public void cleanup() {
+                unsafe.freeMemory(buf);
+                nioAccess.unreserveMemory(alignedSize, bytesSize);
+            }
         });
-        scope.add(segment);
         if (alignedSize != bytesSize) {
             long delta = alignedBuf - buf;
             segment = segment.asSlice(delta, bytesSize);
@@ -111,9 +113,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Cleaner.Cleanable cleanupAction, MemoryScope scope) {
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope, cleanupAction);
-        scope.add(segment);
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceList.ResourceCleanup cleanupAction, MemoryScope scope) {
+        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
+        scope.add(cleanupAction);
         return segment;
     }
 }

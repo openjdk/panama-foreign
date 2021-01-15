@@ -35,8 +35,6 @@ import jdk.internal.util.ArraysSupport;
 import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
-import java.lang.invoke.VarHandle;
-import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
@@ -52,7 +50,7 @@ import java.util.function.IntFunction;
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
-public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment, Resource {
+public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy implements MemorySegment {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
@@ -68,27 +66,12 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     final long length;
     final int mask;
     final MemoryScope scope;
-    final Cleaner.Cleanable cleanupAction;
-    Resource next;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, int mask, MemoryScope scope, Cleaner.Cleanable cleanupAction) {
+    AbstractMemorySegmentImpl(long length, int mask, MemoryScope scope) {
         this.length = length;
         this.mask = mask;
         this.scope = scope;
-        this.cleanupAction = scope.cleaner != null ?
-                new MemoryScope.ScopeCleanable(scope, cleanupAction) :
-                cleanupAction;
-    }
-
-    @Override
-    public Resource next() {
-        return next;
-    }
-
-    @Override
-    public void setNext(Resource next) {
-        this.next = next;
     }
 
     abstract long min();
@@ -286,11 +269,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         if ((accessModes & ~ALL_ACCESS) != 0) {
             throw new IllegalArgumentException("Invalid access modes");
         }
-    }
-
-    @Override
-    public void cleanup() {
-        cleanupAction.clean();
     }
 
     @Override
@@ -554,7 +532,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.PRIMORDIAL;
+            bufferScope = MemoryScope.GLOBAL;
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
@@ -563,9 +541,9 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         if (base != null) {
             return new HeapMemorySegmentImpl.OfByte(bbAddress + pos, (byte[])base, size, modes);
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferScope, MemoryScope.DUMMY_CLEANUP_ACTION);
+            return new NativeMemorySegmentImpl(bbAddress + pos, size, modes, bufferScope);
         } else {
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope, MemoryScope.DUMMY_CLEANUP_ACTION);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, modes, bufferScope);
         }
     }
 }

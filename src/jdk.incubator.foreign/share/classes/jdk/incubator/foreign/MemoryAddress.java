@@ -157,7 +157,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    MemorySegment asSegmentRestricted(long bytesSize, Cleaner.Cleanable cleanupAction, ResourceScope scope);
+    MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**
      * Returns the raw long value associated with this memory address.

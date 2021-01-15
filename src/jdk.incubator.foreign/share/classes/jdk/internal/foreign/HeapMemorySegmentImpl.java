@@ -34,7 +34,6 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * Implementation for heap memory segments. An heap memory segment is composed by an offset and
@@ -53,7 +52,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
     @ForceInline
     HeapMemorySegmentImpl(long offset, H base, long length, int mask) {
-        super(length, mask, MemoryScope.PRIMORDIAL, MemoryScope.DUMMY_CLEANUP_ACTION);
+        super(length, mask, MemoryScope.GLOBAL);
         this.offset = offset;
         this.base = base;
     }
@@ -240,4 +239,5 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
             return new OfDouble(Unsafe.ARRAY_DOUBLE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
         }
     }
+
 }

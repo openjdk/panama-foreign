@@ -29,7 +29,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 
-import java.lang.ref.Cleaner;
 import java.util.Objects;
 
 /**
@@ -95,14 +94,17 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
-    public MemorySegment asSegmentRestricted(long bytesSize, Cleaner.Cleanable cleanupAction, ResourceScope scope) {
+    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
         Objects.requireNonNull(scope);
         Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
-                cleanupAction != null ? cleanupAction : MemoryScope.DUMMY_CLEANUP_ACTION, (MemoryScope)scope);
+                cleanupAction != null ?
+                        ResourceList.ResourceCleanup.ofRunnable(cleanupAction) :
+                        ResourceList.ResourceCleanup.DUMMY_CLEANUP,
+                (MemoryScope)scope);
     }
 
     public static MemorySegment ofLongUnchecked(long value) {
@@ -110,10 +112,10 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize, MemoryScope memoryScope) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, MemoryScope.DUMMY_CLEANUP_ACTION, memoryScope);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceList.ResourceCleanup.DUMMY_CLEANUP, memoryScope);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, MemoryScope.DUMMY_CLEANUP_ACTION, MemoryScope.PRIMORDIAL);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.GLOBAL);
     }
 }
