@@ -27,27 +27,46 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * This class generates static utilities class for C structs, unions.
  */
 class StructBuilder extends NestedClassBuilder {
 
-    private final GroupLayout parentLayout;
+    private final GroupLayout structLayout;
     private final String structAnno;
     private final String structArrayAnno;
     private final String structPtrAnno;
     private final Type structType;
+    private final Deque<String> prefixElementNames;
 
-    StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout parentLayout, Type structType) {
+    StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
-        this.parentLayout = parentLayout;
+        this.structLayout = structLayout;
         this.structAnno = annotationWriter.getCAnnotation(structType);
         this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
         this.structPtrAnno = annotationWriter.getCAnnotation(Type.pointer(structType));
         this.structType = structType;
+        prefixElementNames = new ArrayDeque<>();
+    }
+
+    public void pushPrefixElement(String prefixElementName) {
+        this.prefixElementNames.push(prefixElementName);
+    }
+
+    public void popPrefixElement() {
+        this.prefixElementNames.pop();
+    }
+
+    private List<String> prefixNamesList() {
+        return Collections.unmodifiableList(new ArrayList<>(prefixElementNames));
     }
 
     @Override
@@ -74,7 +93,7 @@ class StructBuilder extends NestedClassBuilder {
 
     @Override
     void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), parentLayout);
+        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + javaName + "$VH() {\n");
@@ -136,6 +155,17 @@ class StructBuilder extends NestedClassBuilder {
         addIndexSetter(javaName, nativeName, layout, type, anno);
     }
 
+    private MemoryLayout.PathElement[] elementPaths(String nativeFieldName) {
+        List<String> prefixElements = prefixNamesList();
+        MemoryLayout.PathElement[] elems = new MemoryLayout.PathElement[prefixElements.size() + 1];
+        int i = 0;
+        for (; i < prefixElements.size(); i++) {
+            elems[i] = MemoryLayout.PathElement.groupElement(prefixElements.get(i));
+        }
+        elems[i] = MemoryLayout.PathElement.groupElement(nativeFieldName);
+        return elems;
+    }
+
     @Override
     void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         builder.incrAlign();
@@ -144,7 +174,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
-        builder.append(parentLayout.byteOffset(MemoryLayout.PathElement.groupElement(nativeName)));
+        builder.append(structLayout.byteOffset(elementPaths(nativeName)));
         builder.append(", ");
         builder.append(layout.byteSize());
         builder.append("));\n");
@@ -275,7 +305,7 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private String fieldVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), parentLayout));
+        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), structLayout, prefixNamesList()));
     }
 
     private String qualifiedName(JavaSourceBuilder builder) {
@@ -291,8 +321,12 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     String layoutField() {
-        GroupLayout groupLayout = parentLayout;
-        String suffix = groupLayout.isUnion() ? "union" : "struct";
+        String suffix = structLayout.isUnion() ? "union" : "struct";
         return qualifiedName(this) + "$" + suffix;
+    }
+
+    @Override
+    StructBuilder newStructBuilder(String name, GroupLayout structLayout, Type type) {
+        return new StructBuilder(this, name, structLayout, type);
     }
 }

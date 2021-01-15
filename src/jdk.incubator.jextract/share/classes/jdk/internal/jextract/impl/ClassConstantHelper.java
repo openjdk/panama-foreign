@@ -208,17 +208,21 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String ignored, MemoryLayout parentLayout) {
-        return addVarHandle(javaName, nativeName, layout, type, parentLayout);
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
+                                                    Class<?> type, String ignored, MemoryLayout rootLayout,
+                                                    List<String> prefixElementNames) {
+        return addVarHandle(javaName, nativeName, layout, type, rootLayout, prefixElementNames);
     }
 
     @Override
     public DirectMethodHandleDesc addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return addVarHandle(javaName, nativeName, layout, type, null);
+        return addVarHandle(javaName, nativeName, layout, type, null, List.of());
     }
 
-    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
-        return emitCondyGetter(javaName + "$VH", VarHandle.class, varHandleDesc(javaName, nativeName, layout, type, parentLayout));
+    private DirectMethodHandleDesc addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+                                                MemoryLayout rootLayout, List<String> prefixElementNames) {
+        return emitCondyGetter(javaName + "$VH", VarHandle.class,
+                varHandleDesc(javaName, nativeName, layout, type, rootLayout, prefixElementNames));
     }
 
     @Override
@@ -440,8 +444,13 @@ class ClassConstantHelper implements ConstantHelper {
         return DynamicConstantDesc.ofNamed(BSM_INVOKE, "libraries", CD_LIBRARIES, args);
     }
 
-    private static ConstantDesc varHandleDesc(String name, ConstantDesc memoryLayout, ClassDesc carrier, ConstantDesc path) {
-        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "VH_" + name, CD_VarHandle, MH_MemoryLayout_varHandle, memoryLayout, carrier, path);
+    private static ConstantDesc varHandleDesc(String name, ConstantDesc memoryLayout, ClassDesc carrier, ConstantDesc[] path) {
+        ConstantDesc[] args = new ConstantDesc[path.length + 3];
+        args[0] = MH_MemoryLayout_varHandle;
+        args[1] = memoryLayout;
+        args[2] = carrier;
+        System.arraycopy(path, 0, args, 3, path.length);
+        return DynamicConstantDesc.ofNamed(BSM_INVOKE, "VH_" + name, CD_VarHandle, args);
     }
 
     private static ConstantDesc varHandleDesc(String name, ConstantDesc memoryLayout, ClassDesc carrier) {
@@ -456,15 +465,25 @@ class ClassConstantHelper implements ConstantHelper {
         return DynamicConstantDesc.ofNamed(BSM_INVOKE, "groupElement_" + fieldName, CD_PathElelemt, MH_PathElement_groupElement, fieldName);
     }
 
-    private static ConstantDesc varHandleDesc(String javaName, String nativeName, MemoryLayout layout, Class<?> type, MemoryLayout parentLayout) {
+    private static ConstantDesc varHandleDesc(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+                                              MemoryLayout rootLayout, List<String> prefixElementNames) {
         var carrier = CARRIERS.get(type);
         if (carrier == null) {
             carrier = desc(type);
         }
 
-        var varHandle = parentLayout != null ?
-                varHandleDesc(javaName, desc(parentLayout), carrier, groupElementDesc(nativeName)) :
-                varHandleDesc(javaName, desc(layout), carrier);
+        ConstantDesc varHandle;
+        if (rootLayout != null) {
+            ConstantDesc[] pathElems = new ConstantDesc[prefixElementNames.size() + 1];
+            int i = 0;
+            for (; i < prefixElementNames.size(); i++) {
+                pathElems[i] = groupElementDesc(prefixElementNames.get(i));
+            }
+            pathElems[i] = groupElementDesc(nativeName);
+            varHandle = varHandleDesc(javaName, desc(rootLayout), carrier, pathElems);
+        } else {
+            varHandle = varHandleDesc(javaName, desc(layout), carrier);
+        }
 
         return type == MemoryAddress.class ? addressVarHandleDesc(javaName, varHandle) : varHandle;
     }

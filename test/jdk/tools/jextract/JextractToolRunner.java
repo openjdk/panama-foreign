@@ -246,7 +246,7 @@ public class JextractToolRunner {
         return m;
     }
 
-    protected MemoryLayout findLayout(Class<?> cls, String name) {
+    protected static MemoryLayout findLayout(Class<?> cls, String name) {
         Method method = findMethod(cls, name + "$LAYOUT");
         assertNotNull(method);
         assertEquals(method.getReturnType(), MemoryLayout.class);
@@ -259,7 +259,7 @@ public class JextractToolRunner {
         return null;
     }
 
-    protected MemoryLayout findLayout(Class<?> cls) {
+    protected static MemoryLayout findLayout(Class<?> cls) {
         return findLayout(cls, "");
     }
 

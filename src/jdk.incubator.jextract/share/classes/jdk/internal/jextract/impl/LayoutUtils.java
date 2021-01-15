@@ -41,6 +41,9 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
  * General Layout utility functions
  */
 public final class LayoutUtils {
+
+    public static final String JEXTRACT_ANONYMOUS = "jextract/anonymous";
+
     private LayoutUtils() {}
 
     public static String getName(Type type) {

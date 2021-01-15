@@ -86,9 +86,11 @@ public class MultiFileConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String parentJavaName, MemoryLayout parentLayout) {
+    public DirectMethodHandleDesc addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
+                                                    Class<?> type, String rootJavaName, MemoryLayout rootLayout,
+                                                    List<String> elementNames) {
         checkNewConstantsClass();
-        return delegate.addFieldVarHandle(javaName, nativeName, layout, type, parentJavaName, parentLayout);
+        return delegate.addFieldVarHandle(javaName, nativeName, layout, type, rootJavaName, rootLayout, elementNames);
     }
 
     @Override
