@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.lang.invoke.VarHandle;
@@ -101,10 +102,9 @@ public class TestArrays {
 
     @Test(dataProvider = "arrays")
     public void testArrays(Consumer<MemorySegment> init, Consumer<MemorySegment> checker, MemoryLayout layout) {
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
-            init.accept(segment);
-            checker.accept(segment);
-        }
+        MemorySegment segment = MemorySegment.allocateNative(layout);
+        init.accept(segment);
+        checker.accept(segment);
     }
 
     @Test(dataProvider = "elemLayouts",
@@ -112,16 +112,16 @@ public class TestArrays {
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
-        try (MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(seq.byteSize())) {
-            arrayFactory.apply(segment);
-        }
+        MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(seq.byteSize());
+        arrayFactory.apply(segment);
     }
 
     @Test(dataProvider = "elemLayouts",
             expectedExceptions = UnsupportedOperationException.class)
     public void testBadSize(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         if (layout.byteSize() == 1) throw new UnsupportedOperationException(); //make it fail
-        try (MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1, layout.byteSize(), scope);
             arrayFactory.apply(segment);
         }
     }
@@ -145,7 +145,8 @@ public class TestArrays {
     @Test(dataProvider = "elemLayouts",
             expectedExceptions = UnsupportedOperationException.class)
     public void testArrayFromNativeSegmentWithoutAccess(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        try (MemorySegment segment = MemorySegment.allocateNative(layout).withAccessModes(MemorySegment.ALL_ACCESS & ~READ)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope).withAccessModes(MemorySegment.ALL_ACCESS & ~READ);
             arrayFactory.apply(segment);
         }
     }

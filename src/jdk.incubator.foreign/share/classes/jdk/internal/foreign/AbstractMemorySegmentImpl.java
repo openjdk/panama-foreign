@@ -129,7 +129,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
             throw new IllegalArgumentException();
         }
         return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
-                withAccessModes(accessModes() & ~CLOSE));
+                this);
     }
 
     @Override
@@ -433,15 +433,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         }
         if ((mode & WRITE) != 0) {
             modes.add("WRITE");
-        }
-        if ((mode & CLOSE) != 0) {
-            modes.add("CLOSE");
-        }
-        if ((mode & SHARE) != 0) {
-            modes.add("SHARE");
-        }
-        if ((mode & HANDOFF) != 0) {
-            modes.add("HANDOFF");
         }
         return modes;
     }

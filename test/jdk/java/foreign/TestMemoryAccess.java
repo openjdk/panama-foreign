@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
@@ -83,7 +84,8 @@ public class TestMemoryAccess {
 
     private void testAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, MemoryLayout layout, VarHandle handle, Checker checker) {
         MemorySegment outer_segment;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout))) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(layout, scope));
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             try {
                 checker.check(handle, segment);
@@ -114,7 +116,8 @@ public class TestMemoryAccess {
 
     private void testArrayAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, ArrayChecker checker) {
         MemorySegment outer_segment;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
@@ -182,7 +185,8 @@ public class TestMemoryAccess {
 
     private void testMatrixAccessInternal(Function<MemorySegment, MemorySegment> viewFactory, SequenceLayout seq, VarHandle handle, MatrixChecker checker) {
         MemorySegment outer_segment;
-        try (MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq))) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = viewFactory.apply(MemorySegment.allocateNative(seq, scope));
             boolean isRO = !segment.hasAccessModes(MemorySegment.WRITE);
             try {
                 for (int i = 0; i < seq.elementCount().getAsLong(); i++) {
@@ -217,7 +221,7 @@ public class TestMemoryAccess {
     }
 
     static Function<MemorySegment, MemorySegment> ID = Function.identity();
-    static Function<MemorySegment, MemorySegment> IMMUTABLE = ms -> ms.withAccessModes(MemorySegment.READ | MemorySegment.CLOSE);
+    static Function<MemorySegment, MemorySegment> IMMUTABLE = ms -> ms.withAccessModes(MemorySegment.READ);
 
     @DataProvider(name = "elements")
     public Object[][] createData() {

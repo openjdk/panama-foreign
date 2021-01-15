@@ -696,8 +696,13 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
     static MemorySegment allocateNative(MemoryLayout layout) {
+        return allocateNative(layout, ResourceScope.ofConfined());
+    }
+
+    static MemorySegment allocateNative(MemoryLayout layout, ResourceScope scope) {
+        Objects.requireNonNull(scope);
         Objects.requireNonNull(layout);
-        return allocateNative(layout.byteSize(), layout.byteAlignment());
+        return allocateNative(layout.byteSize(), layout.byteAlignment(), scope);
     }
 
     /**
@@ -761,7 +766,12 @@ allocateNative(bytesSize, 1);
      * write access if the file is opened for writing.
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, (MemoryScope)ResourceScope.ofConfined());
+        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined());
+    }
+
+    static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScope scope) throws IOException {
+        Objects.requireNonNull(scope);
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, (MemoryScope)scope);
     }
 
     /**
@@ -784,6 +794,7 @@ allocateNative(bytesSize, 1);
     }
 
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
+        Objects.requireNonNull(scope);
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }
@@ -837,31 +848,9 @@ allocateNative(bytesSize, 1);
     int WRITE = READ << 1;
 
     /**
-     * Close access mode; calling {@link #close()} is supported by a segment which supports this access mode.
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int CLOSE = WRITE << 1;
-
-    /**
-     * Share access mode; this segment support sharing with threads other than the owner thread (see {@link #share()}).
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int SHARE = CLOSE << 1;
-
-    /**
-     * Handoff access mode; this segment support serial thread-confinement via thread ownership changes
-     * (see {@link #handoff(NativeScope)} and {@link #handoff(Thread)}).
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int HANDOFF = SHARE << 1;
-
-    /**
      * Default access mode; this is a union of all the access modes supported by memory segments.
      * @see MemorySegment#accessModes()
      * @see MemorySegment#withAccessModes(int)
      */
-    int ALL_ACCESS = READ | WRITE | CLOSE | SHARE | HANDOFF;
+    int ALL_ACCESS = READ | WRITE;
 }

@@ -96,6 +96,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public MemorySegment asSegmentRestricted(long bytesSize, Cleaner.Cleanable cleanupAction, ResourceScope scope) {
+        Objects.requireNonNull(scope);
         Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);

@@ -56,6 +56,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -125,7 +126,8 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs, segments)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
-        try (MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub.address();
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();

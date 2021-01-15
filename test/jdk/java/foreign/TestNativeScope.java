@@ -45,8 +45,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import static jdk.incubator.foreign.MemorySegment.CLOSE;
-import static jdk.incubator.foreign.MemorySegment.HANDOFF;
 import static org.testng.Assert.*;
 
 public class TestNativeScope {
@@ -72,13 +70,6 @@ public class TestNativeScope {
                     addressList.add(address);
                     VarHandle handle = handleFactory.apply(alignedLayout);
                     assertEquals(value, handle.get(address));
-                    try {
-                        address.scope().close();
-                        fail();
-                    } catch (UnsupportedOperationException uoe) {
-                        //failure is expected
-                        assertTrue(true);
-                    }
                 }
                 boolean isBound = scope.byteSize().isPresent();
                 try {
@@ -109,73 +100,6 @@ public class TestNativeScope {
                 assertTrue(address.address().toRawLongValue() % i == 0);
             }
         }
-    }
-
-    @Test
-    public void testAttachClose() {
-        MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
-        MemorySegment s2 = MemorySegment.ofArray(new byte[1]);
-        MemorySegment s3 = MemorySegment.ofArray(new byte[1]);
-        assertTrue(s1.scope().isAlive());
-        assertTrue(s2.scope().isAlive());
-        assertTrue(s3.scope().isAlive());
-        try (NativeScope scope = NativeScope.boundedScope(10)) {
-            MemorySegment ss1 = s1.handoff(scope);
-            assertFalse(s1.scope().isAlive());
-            assertTrue(ss1.scope().isAlive());
-            s1 = ss1;
-            MemorySegment ss2 = s2.handoff(scope);
-            assertFalse(s2.scope().isAlive());
-            assertTrue(ss2.scope().isAlive());
-            s2 = ss2;
-            MemorySegment ss3 = s3.handoff(scope);
-            assertFalse(s3.scope().isAlive());
-            assertTrue(ss3.scope().isAlive());
-            s3 = ss3;
-        }
-        assertFalse(s1.scope().isAlive());
-        assertFalse(s2.scope().isAlive());
-        assertFalse(s3.scope().isAlive());
-    }
-
-    @Test
-    public void testNoTerminalOps() {
-        try (NativeScope scope = NativeScope.boundedScope(10)) {
-            MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
-            MemorySegment attached = s1.handoff(scope);
-            int[] terminalOps = {CLOSE, HANDOFF};
-            for (int mode : terminalOps) {
-                if (attached.hasAccessModes(mode)) {
-                    fail();
-                }
-            }
-        }
-    }
-
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testNoReattach() {
-        MemorySegment s1 = MemorySegment.ofArray(new byte[1]);
-        NativeScope scope1 = NativeScope.boundedScope(10);
-        NativeScope scope2 = NativeScope.boundedScope(10);
-        s1.handoff(scope1).handoff(scope2);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testNotAliveClaim() {
-        MemorySegment segment = MemorySegment.ofArray(new byte[1]);
-        segment.scope().close();
-        segment.handoff(NativeScope.boundedScope(10));
-    }
-
-    @Test
-    public void testRegisterFromUnconfined() {
-        MemorySegment unconfined = MemorySegment.allocateNative(10).share();
-        NativeScope scope = NativeScope.boundedScope(10);
-        MemorySegment registered = unconfined.handoff(scope);
-        assertFalse(unconfined.scope().isAlive());
-        assertEquals(registered.scope().ownerThread(), scope.ownerThread());
-        scope.close();
-        assertFalse(registered.scope().isAlive());
     }
 
     @Test(dataProvider = "arrayScopes")

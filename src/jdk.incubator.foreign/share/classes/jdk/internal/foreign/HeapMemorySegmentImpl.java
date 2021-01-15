@@ -75,7 +75,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
             throw new UnsupportedOperationException("Not an address to an heap-allocated byte array");
         }
         JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
-        return nioAccess.newHeapByteBuffer((byte[]) base(), (int)min() - BYTE_ARR_BASE, (int) byteSize(), this);
+        return nioAccess.newHeapByteBuffer((byte[]) base(), (int)min() - BYTE_ARR_BASE, (int) byteSize(), null);
     }
 
     // factories

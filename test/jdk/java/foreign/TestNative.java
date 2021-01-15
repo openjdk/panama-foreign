@@ -36,6 +36,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -153,7 +154,8 @@ public class TestNative {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(seq, scope);
             initializer.accept(segment);
             checker.accept(segment);
         }
@@ -162,7 +164,8 @@ public class TestNative {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
-        try (MemorySegment segment = MemorySegment.allocateNative(doubles)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(doubles, scope);
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
             int expected = capacity / elemSize;
@@ -174,10 +177,10 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
-        try (MemorySegment segment = mallocSegment) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS));
-            assertEquals(segment.accessModes(), ALL_ACCESS);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), scope);
+            assertTrue(mallocSegment.hasAccessModes(ALL_ACCESS));
+            assertEquals(mallocSegment.accessModes(), ALL_ACCESS);
         }
     }
 
@@ -191,10 +194,12 @@ public class TestNative {
     @Test
     public void testMallocSegment() {
         MemoryAddress addr = allocate(12);
-        MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), null);
-        assertEquals(mallocSegment.byteSize(), 12);
-        //free here
-        mallocSegment.scope().close();
+        MemorySegment mallocSegment = null;
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), scope);
+            assertEquals(mallocSegment.byteSize(), 12);
+            //free here
+        }
         assertTrue(!mallocSegment.scope().isAlive());
     }
 
@@ -209,7 +214,8 @@ public class TestNative {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
-        try (MemorySegment segment = MemorySegment.allocateNative(4)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
             segment.address().asSegmentRestricted(0);
         }
     }

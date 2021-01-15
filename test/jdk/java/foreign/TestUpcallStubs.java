@@ -60,12 +60,12 @@ public class TestUpcallStubs {
         return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid());
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
+    @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testNoAccess() {
-        try (MemorySegment stub = getStub()) {
-            VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub, 10);
-        }
+        MemorySegment stub = getStub();
+        VarHandle vh = JAVA_INT.varHandle(int.class);
+        vh.set(stub, 10);
+        stub.scope().close();
     }
 
     @Test

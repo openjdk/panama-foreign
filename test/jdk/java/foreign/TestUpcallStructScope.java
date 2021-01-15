@@ -42,6 +42,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -92,9 +93,9 @@ public class TestUpcallStructScope {
         AtomicReference<MemorySegment> capturedSegment = new AtomicReference<>();
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
-        try (MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc);
-             MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT)) {
-
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
+            MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, scope);
             MH_do_upcall.invokeExact(upcallStub.address(), argSegment);
         }
 

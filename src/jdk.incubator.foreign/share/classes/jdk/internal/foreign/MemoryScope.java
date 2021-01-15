@@ -346,5 +346,9 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         public void checkValidState() {
             // do nothing
         }
+
+        public boolean isGlobal() {
+            return true;
+        }
     };
 }

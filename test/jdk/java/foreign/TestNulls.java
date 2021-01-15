@@ -97,11 +97,16 @@ public class TestNulls {
             "jdk.incubator.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/2/0",
+            "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.ref.Cleaner$Cleanable,jdk.incubator.foreign.ResourceScope)/1/0",
             "jdk.incubator.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
-            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
+            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.ref.Cleaner)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.ref.Cleaner)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/1/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -153,6 +158,8 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
+        addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
+        addDefaultMapping(Cleaner.Cleanable.class, () -> {});
     }
 
     static class VaListHelper {
