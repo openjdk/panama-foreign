@@ -23,7 +23,7 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -63,8 +63,11 @@ public class LoopOverNonConstant {
     static final MemorySegment globalRestrictedSegment = MemorySegment.ofNativeRestricted();
 
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+    /** Used to test access using raw pointers. */
+    static final VarHandle VH_int_ptr = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
+    static final VarHandle VH_int_ptr_noalign = MemoryHandles.varHandle(int.class, 1, ByteOrder.nativeOrder());
+
     MemorySegment segment;
-    long segment_addr_idx; // The segment address divided by carrier size, as it's sequence layout
     long unsafe_addr;
 
     ByteBuffer byteBuffer;
@@ -77,12 +80,10 @@ public class LoopOverNonConstant {
         }
 
         // Allocate bigger size for aligning
-        segment = MemorySegment.allocateNative(ALLOC_SIZE + CARRIER_SIZE);
+        segment = MemorySegment.allocateNative(ALLOC_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
-        // Get index of segment's address aligned up
-        segment_addr_idx = (segment.address().toRawLongValue() + CARRIER_SIZE - 1) / CARRIER_SIZE;
 
         byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
@@ -114,7 +115,7 @@ public class LoopOverNonConstant {
     public int global_segment_get() {
         // The segment used inside this benchmarks should have range & temporal checks
         // removed. Results should be better than for other kinds of segments
-        return (int) VH_int.get(globalRestrictedSegment, segment_addr_idx);
+        return (int) VH_int_ptr.get(globalRestrictedSegment, unsafe_addr);
     }
 
     @Benchmark
@@ -134,10 +135,20 @@ public class LoopOverNonConstant {
 
     @Benchmark
     public int global_segment_loop() {
-        // In fact, we operate inside `segment`
+        // Note: this benchmarks slightly differs from other by using VH_int_ptr
         int res = 0;
-        for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += (int) VH_int.get(globalRestrictedSegment, segment_addr_idx + i);
+        for (long i = 0; i < ELEM_SIZE; i ++) {
+            res += (int) VH_int_ptr.get(globalRestrictedSegment, unsafe_addr + (i * CARRIER_SIZE));
+        }
+        return res;
+    }
+
+    @Benchmark
+    public int global_segment_loop_no_align() {
+        // Note: this benchmarks slightly differs from other by using VH_int_ptr
+        int res = 0;
+        for (long i = 0; i < ELEM_SIZE; i ++) {
+            res += (int) VH_int_ptr_noalign.get(globalRestrictedSegment, unsafe_addr + (i * CARRIER_SIZE));
         }
         return res;
     }
