@@ -51,7 +51,7 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class LoopOverNonConstant {
 
     static final Unsafe unsafe = Utils.unsafe;
@@ -60,8 +60,11 @@ public class LoopOverNonConstant {
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
+    static final MemorySegment globalRestrictedSegment = MemorySegment.ofNativeRestricted();
+
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
+    long segment_addr_idx; // The segment address divided by carrier size, as it's sequence layout
     long unsafe_addr;
 
     ByteBuffer byteBuffer;
@@ -72,10 +75,15 @@ public class LoopOverNonConstant {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE);
+
+        // Allocate bigger size for aligning
+        segment = MemorySegment.allocateNative(ALLOC_SIZE + CARRIER_SIZE);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
+        // Get index of segment's address aligned up
+        segment_addr_idx = (segment.address().toRawLongValue() + CARRIER_SIZE - 1) / CARRIER_SIZE;
+
         byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
             byteBuffer.putInt(i * CARRIER_SIZE , i);
@@ -103,6 +111,14 @@ public class LoopOverNonConstant {
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public int global_segment_get() {
+        // The segment used inside this benchmarks should have range & temporal checks
+        // removed. Results should be better than for other kinds of segments
+        return (int) VH_int.get(globalRestrictedSegment, segment_addr_idx);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public int BB_get() {
         return byteBuffer.getInt(0);
     }
@@ -112,6 +128,16 @@ public class LoopOverNonConstant {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
             res += unsafe.getInt(unsafe_addr + (i * CARRIER_SIZE));
+        }
+        return res;
+    }
+
+    @Benchmark
+    public int global_segment_loop() {
+        // In fact, we operate inside `segment`
+        int res = 0;
+        for (int i = 0; i < ELEM_SIZE; i ++) {
+            res += (int) VH_int.get(globalRestrictedSegment, segment_addr_idx + i);
         }
         return res;
     }
