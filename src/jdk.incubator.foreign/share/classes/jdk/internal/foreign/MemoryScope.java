@@ -53,14 +53,15 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
     final ScopeCleanable scopeCleanable;
     final ResourceList resourceList;
-    final MemoryScope parent;
 
     public abstract void add(ResourceList.ResourceCleanup resource);
 
     protected MemoryScope(MemoryScope parent, Object ref, Cleaner cleaner, ResourceList resourceList) {
-        this.parent = parent;
         this.ref = ref;
         this.resourceList = resourceList;
+        if (parent != null) {
+            resourceList.add(ResourceList.ResourceCleanup.ofRunnable(parent::release));
+        }
         this.scopeCleanable = cleaner != null ?
                 new ScopeCleanable(this, cleaner, resourceList) :
                 null;
@@ -99,9 +100,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     public final void close() {
         try {
             justClose();
-            if (parent != null) {
-                parent.release();
-            }
             resourceList.cleanup();
             if (scopeCleanable != null) {
                 scopeCleanable.clear();
@@ -162,7 +160,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                 throw new IllegalStateException("Attempted access outside owning thread");
             }
             if (closed) {
-                throw ScopedAccessError.INSTANCE;
+                throw new IllegalStateException("Already closed");
             }
         }
 
@@ -284,8 +282,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         void justClose() {
-            if (!STATE.compareAndSet(this, ALIVE, CLOSING)) {
+            int prevState = (int)STATE.compareAndExchange(this, ALIVE, CLOSING);
+            if (prevState < 0) {
                 throw new IllegalStateException("Already closed");
+            } else if (prevState != ALIVE) {
+                throw new IllegalStateException("Cannot close a scope which has active forks");
             }
             boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
             STATE.setVolatile(this, success ? CLOSED : ALIVE);

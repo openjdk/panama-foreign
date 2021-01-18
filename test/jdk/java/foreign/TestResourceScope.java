@@ -39,6 +39,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -146,6 +147,72 @@ public class TestResourceScope {
             while (acc.get() != expected) {
                 kickGC();
             }
+        }
+    }
+
+    @Test(dataProvider = "cleaners")
+    public void testForkSingleThread(Supplier<Cleaner> cleanerSupplier) {
+        Cleaner cleaner = cleanerSupplier.get();
+        ResourceScope scope = ResourceScope.ofConfined(cleaner);
+        List<ResourceScope> forkedScopes = new ArrayList<>();
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            forkedScopes.add(scope.fork());
+        }
+
+        if (cleaner != null) {
+            forkedScopes = null;
+        }
+        while (true) {
+            try {
+                scope.close();
+                if (forkedScopes != null) {
+                    assertEquals(forkedScopes.size(), 0);
+                }
+                break;
+            } catch (IllegalStateException ex) {
+                if (forkedScopes != null) {
+                    assertTrue(forkedScopes.size() > 0);
+                    forkedScopes.remove(0).close();
+                } else {
+                    kickGC();
+                }
+            }
+        }
+    }
+
+    @Test(dataProvider = "cleaners")
+    public void testForkSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
+        Cleaner cleaner = cleanerSupplier.get();
+        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            new Thread(() -> {
+                ResourceScope forked = scope.fork();
+                waitSomeTime();
+                if (cleaner == null) {
+                    forked.close();
+                }
+            }).start();
+        }
+
+        while (true) {
+            try {
+                scope.close();
+                break;
+            } catch (IllegalStateException ex) {
+                if (cleaner == null) {
+                    waitSomeTime();
+                } else {
+                    kickGC();
+                }
+            }
+        }
+    }
+
+    private void waitSomeTime() {
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException ex) {
+            // ignore
         }
     }
 
