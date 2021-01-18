@@ -77,77 +77,77 @@ public class TestResourceScope {
         }
     }
 
-//    @Test(dataProvider = "cleaners")
-//    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
-//        AtomicInteger acc = new AtomicInteger();
-//        Cleaner cleaner = cleanerSupplier.get();
-//        ResourceScope scope = ResourceScope.ofShared(cleaner);
-//        for (int i = 0 ; i < N_THREADS ; i++) {
-//            int delta = i;
-//            makeSegment(scope, () -> acc.addAndGet(delta));
-//        }
-//        assertEquals(acc.get(), 0);
-//
-//        if (cleaner == null) {
-//            scope.close();
-//            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
-//        } else {
-//            scope = null;
-//            int expected = IntStream.range(0, N_THREADS).sum();
-//            while (acc.get() != expected) {
-//                kickGC();
-//            }
-//        }
-//    }
-//
-//    @Test(dataProvider = "cleaners")
-//    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
-//        AtomicInteger acc = new AtomicInteger();
-//        Cleaner cleaner = cleanerSupplier.get();
-//        List<Thread> threads = new ArrayList<>();
-//        ResourceScope scope = ResourceScope.ofShared(cleaner);
-//        AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
-//        for (int i = 0 ; i < N_THREADS ; i++) {
-//            int delta = i;
-//            Thread thread = new Thread(() -> {
-//                try {
-//                    makeSegment(scopeRef.get(), () -> {
-//                        acc.addAndGet(delta);
-//                    });
-//                } catch (IllegalStateException ex) {
-//                    // already closed - ignore
-//                }
-//            });
-//            threads.add(thread);
-//        }
-//        assertEquals(acc.get(), 0);
-//        threads.forEach(Thread::start);
-//
-//        // if no cleaner, close - not all segments might have been added to the scope!
-//        // if cleaner, don't unset the scope - after all, the scope is kept alive by threads
-//        if (cleaner == null) {
-//            scope.close();
-//        }
-//
-//        threads.forEach(t -> {
-//            try {
-//                t.join();
-//            } catch (InterruptedException ex) {
-//                fail();
-//            }
-//        });
-//
-//        if (cleaner == null) {
-//            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
-//        } else {
-//            scope = null;
-//            scopeRef.set(null);
-//            int expected = IntStream.range(0, N_THREADS).sum();
-//            while (acc.get() != expected) {
-//                kickGC();
-//            }
-//        }
-//    }
+    @Test(dataProvider = "cleaners")
+    public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
+        AtomicInteger acc = new AtomicInteger();
+        Cleaner cleaner = cleanerSupplier.get();
+        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            int delta = i;
+            makeSegment(scope, () -> acc.addAndGet(delta));
+        }
+        assertEquals(acc.get(), 0);
+
+        if (cleaner == null) {
+            scope.close();
+            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
+        } else {
+            scope = null;
+            int expected = IntStream.range(0, N_THREADS).sum();
+            while (acc.get() != expected) {
+                kickGC();
+            }
+        }
+    }
+
+    @Test(dataProvider = "cleaners")
+    public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
+        AtomicInteger acc = new AtomicInteger();
+        Cleaner cleaner = cleanerSupplier.get();
+        List<Thread> threads = new ArrayList<>();
+        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            int delta = i;
+            Thread thread = new Thread(() -> {
+                try {
+                    makeSegment(scopeRef.get(), () -> {
+                        acc.addAndGet(delta);
+                    });
+                } catch (IllegalStateException ex) {
+                    // already closed - ignore
+                }
+            });
+            threads.add(thread);
+        }
+        assertEquals(acc.get(), 0);
+        threads.forEach(Thread::start);
+
+        // if no cleaner, close - not all segments might have been added to the scope!
+        // if cleaner, don't unset the scope - after all, the scope is kept alive by threads
+        if (cleaner == null) {
+            scope.close();
+        }
+
+        threads.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException ex) {
+                fail();
+            }
+        });
+
+        if (cleaner == null) {
+            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
+        } else {
+            scope = null;
+            scopeRef.set(null);
+            int expected = IntStream.range(0, N_THREADS).sum();
+            while (acc.get() != expected) {
+                kickGC();
+            }
+        }
+    }
 
     private void kickGC() {
         for (int i = 0 ; i < 100 ; i++) {

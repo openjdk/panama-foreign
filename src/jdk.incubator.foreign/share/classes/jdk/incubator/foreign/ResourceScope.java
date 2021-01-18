@@ -65,6 +65,8 @@ public interface ResourceScope extends AutoCloseable {
      */
     void close();
 
+    ResourceScope fork();
+
     static ResourceScope ofConfined() {
         return ofConfined(null, null);
     }

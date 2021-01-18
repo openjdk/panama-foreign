@@ -41,7 +41,7 @@ public abstract class AbstractNativeScope extends MemoryScope.ConfinedScope impl
     private static final int SCOPE_MASK = MemorySegment.READ | MemorySegment.WRITE; // no terminal operations allowed
 
     public AbstractNativeScope() {
-        super(Thread.currentThread(), null, null);
+        super(null, Thread.currentThread(), null, null);
     }
 
     public static NativeScope emptyScope() {
