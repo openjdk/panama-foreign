@@ -36,7 +36,6 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
 
@@ -257,7 +256,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, NativeScope scope) {
+    static MemorySegment toCString(String str, NativeAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -277,7 +276,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, Charset charset, NativeScope scope) {
+    static MemorySegment toCString(String str, Charset charset, NativeAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -378,7 +377,7 @@ public interface CLinker {
         return segment;
     }
 
-    private static MemorySegment toCString(byte[] bytes, NativeScope scope) {
+    private static MemorySegment toCString(byte[] bytes, NativeAllocator scope) {
         MemorySegment addr = scope.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
@@ -504,7 +503,7 @@ public interface CLinker {
         /**
          * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
          * <p>
-         * The memory segment returned by this method will be allocated using the given {@code NativeScope}.
+         * The memory segment returned by this method will be allocated using the given {@code NativeAllocator}.
          *
          * @param layout the layout of the value
          * @param scope the scope to allocate the segment in
@@ -513,7 +512,7 @@ public interface CLinker {
          * (see {@link #close()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
-        MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
+        MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope);
 
         /**
          * Skips a number of elements with the given memory layouts, and advances this va list's position.
@@ -570,7 +569,7 @@ public interface CLinker {
          * allowing the elements to be traversed multiple times.
          * <p>
          * If this method needs to allocate native memory for the copy, it will use
-         * the given {@code NativeScope} to do so.
+         * the given {@code NativeAllocator} to do so.
          * <p>
          * This method only copies the va list cursor itself and not the memory that may be attached to the
          * va list which holds its elements. That means that if this va list was created with the
@@ -582,7 +581,7 @@ public interface CLinker {
          * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
          * (see {@link #close()}).
          */
-        VaList copy(NativeScope scope);
+        VaList copy(ResourceScope scope);
 
         /**
          * Returns the memory address of the C {@code va_list} associated with this instance.
@@ -634,10 +633,10 @@ public interface CLinker {
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
          * <p>
          * If this method needs to allocate native memory for the va list, it will use
-         * the given {@code NativeScope} to do so.
+         * the given {@code NativeAllocator} to do so.
          * <p>
          * This method will allocate native memory to hold the elements in the va list. This memory
-         * will be managed by the given {@code NativeScope}, and will be released when the scope is closed.
+         * will be managed by the given {@code NativeAllocator}, and will be released when the scope is closed.
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.
@@ -647,7 +646,7 @@ public interface CLinker {
          * @param scope the scope to be used for the valist allocation.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
-        static VaList make(Consumer<Builder> actions, NativeScope scope) {
+        static VaList make(Consumer<Builder> actions, ResourceScope scope) {
             Objects.requireNonNull(actions);
             Objects.requireNonNull(scope);
             return SharedUtils.newVaList(actions, SharedUtils.Allocator.ofScope(scope));

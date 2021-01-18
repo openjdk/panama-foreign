@@ -27,8 +27,6 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CLinker.VaList;
-import jdk.internal.foreign.MemoryScope;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -39,7 +37,6 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static jdk.internal.foreign.PlatformLayouts.Win64.C_POINTER;
-import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 
 // see vadefs.h (VC header)
 //
@@ -104,9 +101,9 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope) {
+    public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
         Objects.requireNonNull(scope);
-        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofScope(scope));
+        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
@@ -175,7 +172,7 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public VaList copy(NativeScope scope) {
+    public VaList copy(ResourceScope scope) {
         Objects.requireNonNull(scope);
         MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1, scope);
         return new WinVaList(segment, List.of(), liveness);

@@ -325,15 +325,8 @@ public class StdLibTest {
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
             try (NativeScope scope = NativeScope.unboundedScope()) {
                 MemorySegment formatStr = toCString(format, scope);
-                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)));
-                int result = (int)vprintf.invokeExact(formatStr.address(), vaList);
-                try {
-                    vaList.close();
-                }
-                catch (UnsupportedOperationException e) {
-                    assertEquals(e.getMessage(), "Empty VaList");
-                }
-                return result;
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)), scope);
+                return (int)vprintf.invokeExact(formatStr.address(), vaList);
             }
         }
 

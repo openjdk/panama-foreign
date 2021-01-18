@@ -32,7 +32,9 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.NativeAllocator;
 import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
@@ -389,7 +391,17 @@ public class SharedUtils {
     }
 
     public interface Allocator extends AutoCloseable {
-        Allocator THROWING_ALLOCATOR = (size, align) -> { throw new UnsupportedOperationException("Null allocator"); };
+        Allocator THROWING_ALLOCATOR = new Allocator() {
+            @Override
+            public MemorySegment allocate(long size, long align) {
+                throw new UnsupportedOperationException("Null allocator");
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+        };
 
         static Allocator empty() {
             return Allocator.ofScope(AbstractNativeScope.emptyScope());
@@ -400,17 +412,33 @@ public class SharedUtils {
         }
 
         default MemoryScope scope() {
-            return MemoryScope.GLOBAL;
+            throw new UnsupportedOperationException();
         }
 
         default MemorySegment allocate(long size) {
             return allocate(size, 1);
         }
 
-        @Override
-        default void close() {}
-
         MemorySegment allocate(long size, long align);
+
+        @Override
+        default void close() {
+            throw new UnsupportedOperationException();
+        }
+
+        static Allocator ofScope(ResourceScope scope) {
+            return new Allocator() {
+                @Override
+                public MemorySegment allocate(long size, long align) {
+                    return MemorySegment.allocateNative(size, align, scope);
+                }
+
+                @Override
+                public MemoryScope scope() {
+                    return (MemoryScope)scope;
+                }
+            };
+        }
 
         static Allocator ofScope(NativeScope scope) {
             return new Allocator() {
@@ -427,6 +455,15 @@ public class SharedUtils {
                 @Override
                 public void close() {
                     scope.close();
+                }
+            };
+        }
+
+        static Allocator ofAllocator(NativeAllocator scope) {
+            return new Allocator() {
+                @Override
+                public MemorySegment allocate(long size, long align) {
+                    return scope.allocate(size, align);
                 }
             };
         }
@@ -488,7 +525,7 @@ public class SharedUtils {
         }
 
         @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope) {
+        public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
             throw uoe();
         }
 
@@ -513,7 +550,7 @@ public class SharedUtils {
         }
 
         @Override
-        public VaList copy(NativeScope scope) {
+        public VaList copy(ResourceScope scope) {
             throw uoe();
         }
 

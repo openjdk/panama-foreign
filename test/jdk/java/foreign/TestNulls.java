@@ -159,6 +159,7 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
         addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
+        addDefaultMapping(NativeAllocator.class, MemorySegment::allocateNative);
     }
 
     static class VaListHelper {

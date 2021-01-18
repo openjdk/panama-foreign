@@ -26,8 +26,6 @@
 package jdk.internal.foreign.abi.aarch64;
 
 import jdk.incubator.foreign.*;
-import jdk.internal.foreign.MemoryScope;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -38,6 +36,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static jdk.internal.foreign.PlatformLayouts.AArch64;
 import static jdk.incubator.foreign.CLinker.VaList;
@@ -240,9 +239,9 @@ public class AArch64VaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope) {
+    public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
         Objects.requireNonNull(scope);
-        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofScope(scope));
+        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
@@ -378,17 +377,17 @@ public class AArch64VaList implements VaList {
 
     @Override
     public VaList copy() {
-        return copy(MemorySegment::allocateNative);
+        return copyInternal(MemorySegment::allocateNative);
     }
 
     @Override
-    public VaList copy(NativeScope scope) {
+    public VaList copy(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return copy(SharedUtils.Allocator.ofScope(scope));
+        return copyInternal(layout -> MemorySegment.allocateNative(layout, scope));
     }
 
-    private VaList copy(SharedUtils.Allocator allocator) {
-        MemorySegment copy = allocator.allocate(LAYOUT);
+    private VaList copyInternal(Function<MemoryLayout, MemorySegment> segmentAllocator) {
+        MemorySegment copy = segmentAllocator.apply(LAYOUT);
         copy.copyFrom(segment);
         return new AArch64VaList(copy, gpRegsArea, fpRegsArea, List.of());
     }
