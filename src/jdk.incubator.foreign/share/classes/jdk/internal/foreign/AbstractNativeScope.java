@@ -34,29 +34,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 
-public abstract class AbstractNativeScope extends MemoryScope.ConfinedScope implements NativeScope {
+public abstract class AbstractNativeScope implements NativeScope {
 
-    private final List<MemorySegment> segments = new ArrayList<>();
+    private final ResourceScope publicScope = ResourceScope.ofConfined();
+    private final ResourceScope forkedScope = publicScope.fork();
 
     private static final int SCOPE_MASK = MemorySegment.READ | MemorySegment.WRITE; // no terminal operations allowed
-
-    public AbstractNativeScope() {
-        super(null, Thread.currentThread(), null, null);
-    }
 
     public static NativeScope emptyScope() {
         return new EmptyScope();
     }
 
     void checkOwnerThread() {
-        if (Thread.currentThread() != owner) {
+        if (Thread.currentThread() != publicScope.ownerThread()) {
             throw new IllegalStateException("Attempt to access scope from different thread");
         }
     }
 
+    @Override
+    public boolean isAlive() {
+        return publicScope.isAlive();
+    }
+
+    @Override
+    public Thread ownerThread() {
+        return publicScope.ownerThread();
+    }
+
+    @Override
+    public ResourceScope fork() {
+        return forkedScope.fork();
+    }
+
     MemorySegment newSegment(long size, long align) {
-        MemorySegment segment = NativeMemorySegmentImpl.makeNativeSegment(size, align, this);
-        segments.add(segment);
+        MemorySegment segment = NativeMemorySegmentImpl.makeNativeSegment(size, align, (MemoryScope) publicScope);
         return segment;
     }
 
@@ -64,8 +75,10 @@ public abstract class AbstractNativeScope extends MemoryScope.ConfinedScope impl
         return newSegment(size, size);
     }
 
-    public void register(MemorySegment segment) {
-        segments.add(segment);
+    @Override
+    public void close() {
+        forkedScope.close();
+        publicScope.close();
     }
 
     public static class UnboundedNativeScope extends AbstractNativeScope {

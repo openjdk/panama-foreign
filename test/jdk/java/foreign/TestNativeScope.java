@@ -70,6 +70,13 @@ public class TestNativeScope {
                     addressList.add(address);
                     VarHandle handle = handleFactory.apply(alignedLayout);
                     assertEquals(value, handle.get(address));
+                    try {
+                        address.scope().close();
+                        fail();
+                    } catch (IllegalStateException ex) {
+                        //failure is expected
+                        assertTrue(true);
+                    }
                 }
                 boolean isBound = scope.byteSize().isPresent();
                 try {
