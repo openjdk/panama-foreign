@@ -147,7 +147,7 @@ public class LoopOverNonConstantShared {
     @Benchmark
     public int segment_loop_readonly() {
         int sum = 0;
-        MemorySegment base = segment.withAccessModes(MemorySegment.READ);
+        MemorySegment base = segment.asReadOnly();
         for (int i = 0; i < ELEM_SIZE; i++) {
             sum += (int) VH_int.get(base, (long) i);
         }

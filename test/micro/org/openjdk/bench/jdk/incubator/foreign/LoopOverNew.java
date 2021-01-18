@@ -83,8 +83,8 @@ public class LoopOverNew {
     }
 
     @Benchmark
-    public void segment_loop_cleaner() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined(cleaner));
+    public void segment_loop_nocleaner() {
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

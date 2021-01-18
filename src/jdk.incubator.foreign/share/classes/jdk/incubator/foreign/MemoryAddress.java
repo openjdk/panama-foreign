@@ -27,6 +27,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.ref.CleanerFactory;
 
 import java.lang.ref.Cleaner;
 
@@ -116,7 +117,7 @@ public interface MemoryAddress extends Addressable {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     default MemorySegment asSegmentRestricted(long bytesSize) {
-        return asSegmentRestricted(bytesSize, null, ResourceScope.ofConfined());
+        return asSegmentRestricted(bytesSize, null, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
     default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {

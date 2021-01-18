@@ -35,6 +35,7 @@ import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
+import jdk.internal.ref.CleanerFactory;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -669,7 +670,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
     static MemorySegment allocateNative(MemoryLayout layout) {
-        return allocateNative(layout, ResourceScope.ofConfined());
+        return allocateNative(layout, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
     static MemorySegment allocateNative(MemoryLayout layout, ResourceScope scope) {
@@ -739,7 +740,7 @@ allocateNative(bytesSize, 1);
      * write access if the file is opened for writing.
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined());
+        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScope scope) throws IOException {
@@ -763,7 +764,7 @@ allocateNative(bytesSize, 1);
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined());
+        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
