@@ -179,16 +179,14 @@ public class TestNative {
         MemoryAddress addr = allocate(12);
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), scope);
-            assertTrue(mallocSegment.hasAccessModes(ALL_ACCESS));
-            assertEquals(mallocSegment.accessModes(), ALL_ACCESS);
+            assertFalse(mallocSegment.isReadOnly());
         }
     }
 
     @Test
     public void testDefaultAccessModesEverthing() {
         MemorySegment everything = MemorySegment.ofNativeRestricted();
-        assertTrue(everything.hasAccessModes(READ | WRITE));
-        assertEquals(everything.accessModes(), READ | WRITE);
+        assertFalse(everything.isReadOnly());
     }
 
     @Test

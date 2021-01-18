@@ -38,7 +38,6 @@ import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static java.lang.System.out;
-import static jdk.incubator.foreign.MemorySegment.READ;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertThrows;
 
@@ -160,18 +159,6 @@ public class TestMismatch {
         assertThrows(ISE, () -> s1.mismatch(s1));
         assertThrows(ISE, () -> s1.mismatch(s2));
         assertThrows(ISE, () -> s2.mismatch(s1));
-    }
-
-    @Test
-    public void testInsufficientAccessModes() {
-        var s1 = MemorySegment.ofArray(new byte[4]);
-        var s2 = MemorySegment.ofArray(new byte[4]);
-        var s1WithoutRead = s1.withAccessModes(s1.accessModes() & ~READ);
-        var s2WithoutRead = s2.withAccessModes(s2.accessModes() & ~READ);
-
-        assertThrows(UOE, () -> s1.mismatch(s2WithoutRead));
-        assertThrows(UOE, () -> s1WithoutRead.mismatch(s2));
-        assertThrows(UOE, () -> s1WithoutRead.mismatch(s2WithoutRead));
     }
 
     @Test

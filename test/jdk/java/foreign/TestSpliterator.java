@@ -83,6 +83,7 @@ public class TestSpliterator {
         }
     }
 
+    @Test
     public void testSumSameThread() {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 
@@ -95,7 +96,7 @@ public class TestSpliterator {
 
         //check that a segment w/o ACQUIRE access mode can still be used from same thread
         AtomicLong spliteratorSum = new AtomicLong();
-        segment.withAccessModes(MemorySegment.READ).spliterator(layout)
+        segment.spliterator(layout)
                 .forEachRemaining(s -> spliteratorSum.addAndGet(sumSingle(0L, s)));
         assertEquals(spliteratorSum.get(), expected);
     }
@@ -203,30 +204,5 @@ public class TestSpliterator {
                 { 1000, 10000 },
                 { 10000, 10000 },
         };
-    }
-
-    @DataProvider(name = "accessScenarios")
-    public Object[][] accessScenarios() {
-        SequenceLayout layout = MemoryLayout.ofSequence(16, MemoryLayouts.JAVA_INT);
-        var mallocSegment = MemorySegment.allocateNative(layout);
-
-        Map<Supplier<Spliterator<MemorySegment>>,Integer> l = Map.of(
-            () -> mallocSegment.withAccessModes(ALL_ACCESS).spliterator(layout), ALL_ACCESS,
-            () -> mallocSegment.withAccessModes(0).spliterator(layout), 0,
-            () -> mallocSegment.withAccessModes(READ).spliterator(layout), READ,
-            () -> mallocSegment.withAccessModes(READ|WRITE).spliterator(layout), READ|WRITE
-        );
-        return l.entrySet().stream().map(e -> new Object[] { e.getKey(), e.getValue() }).toArray(Object[][]::new);
-    }
-
-    static void splitOrConsume(Spliterator<MemorySegment> spliterator,
-                               Consumer<MemorySegment> consumer) {
-        var s1 = spliterator.trySplit();
-        if (s1 != null) {
-            splitOrConsume(s1, consumer);
-            splitOrConsume(spliterator, consumer);
-        } else {
-            spliterator.forEachRemaining(consumer);
-        }
     }
 }

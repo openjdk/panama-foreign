@@ -104,7 +104,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
                 cleanupAction != null ?
                         ResourceList.ResourceCleanup.ofRunnable(cleanupAction) :
                         ResourceList.ResourceCleanup.DUMMY_CLEANUP,
-                (MemoryScope)scope);
+                Utils.asScope(scope));
     }
 
     public static MemorySegment ofLongUnchecked(long value) {

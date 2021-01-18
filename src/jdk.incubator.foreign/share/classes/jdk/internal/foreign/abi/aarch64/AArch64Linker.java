@@ -33,6 +33,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -92,7 +93,7 @@ public class AArch64Linker implements CLinker {
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
-        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (MemoryScope)scope);
+        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), Utils.asScope(scope));
     }
 
     public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {

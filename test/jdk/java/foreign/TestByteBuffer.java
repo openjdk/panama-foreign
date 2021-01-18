@@ -232,14 +232,12 @@ public class TestByteBuffer {
     public void testDefaultAccessModesMappedSegment() throws Throwable {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE, scope);
-            assertTrue(segment.hasAccessModes(ALL_ACCESS));
-            assertEquals(segment.accessModes(), ALL_ACCESS);
+            assertFalse(segment.isReadOnly());
         }
 
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY, scope);
-            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
+            assertTrue(segment.isReadOnly());
         }
     }
 
@@ -510,7 +508,7 @@ public class TestByteBuffer {
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_WRITE, scope);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
-            assertTrue((segment.accessModes() & (READ | WRITE)) == (READ | WRITE));
+            assertFalse(segment.isReadOnly());
             MappedMemorySegments.force(segment);
             MappedMemorySegments.load(segment);
             MappedMemorySegments.isLoaded(segment);
@@ -521,7 +519,7 @@ public class TestByteBuffer {
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_ONLY, scope);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
-            assertTrue((segment.accessModes() & (READ | WRITE)) == READ);
+            assertTrue(segment.isReadOnly());
             MappedMemorySegments.force(segment);
             MappedMemorySegments.load(segment);
             MappedMemorySegments.isLoaded(segment);
@@ -560,32 +558,28 @@ public class TestByteBuffer {
         ByteBuffer rwBuffer = ByteBuffer.wrap(new byte[4]);
         {
             MemorySegment segment = MemorySegment.ofByteBuffer(rwBuffer);
-            assertTrue(segment.hasAccessModes(ALL_ACCESS));
-            assertEquals(segment.accessModes(), ALL_ACCESS);
+            assertFalse(segment.isReadOnly());
         }
 
         {
             ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
             MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer);
-            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
+            assertTrue(segment.isReadOnly());
         }
     }
 
     @Test(dataProvider="bufferSources")
     public void testBufferToSegment(ByteBuffer bb, Predicate<MemorySegment> segmentChecker) {
         MemorySegment segment = MemorySegment.ofByteBuffer(bb);
-        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
+        assertEquals(segment.isReadOnly(), bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
-        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
         //another round trip
         segment = MemorySegment.ofByteBuffer(segment.asByteBuffer());
-        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
+        assertEquals(segment.isReadOnly(), bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
-        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
     }
 
@@ -602,9 +596,9 @@ public class TestByteBuffer {
     public void testRoundTripAccess() {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment ms = MemorySegment.allocateNative(4, 1, scope);
-            MemorySegment msNoAccess = ms.withAccessModes(MemorySegment.READ); // READ is required to make BB
+            MemorySegment msNoAccess = ms.asReadOnly();
             MemorySegment msRoundTrip = MemorySegment.ofByteBuffer(msNoAccess.asByteBuffer());
-            assertEquals(msNoAccess.accessModes(), msRoundTrip.accessModes());
+            assertEquals(msNoAccess.isReadOnly(), msRoundTrip.isReadOnly());
         }
     }
 

@@ -43,7 +43,6 @@ import java.util.function.Function;
 
 import org.testng.annotations.*;
 
-import static jdk.incubator.foreign.MemorySegment.READ;
 import static org.testng.Assert.*;
 
 public class TestArrays {
@@ -104,6 +103,7 @@ public class TestArrays {
     public void testArrays(Consumer<MemorySegment> init, Consumer<MemorySegment> checker, MemoryLayout layout) {
         MemorySegment segment = MemorySegment.allocateNative(layout);
         init.accept(segment);
+        assertFalse(segment.isReadOnly());
         checker.accept(segment);
     }
 
@@ -132,23 +132,6 @@ public class TestArrays {
         MemorySegment segment = MemorySegment.allocateNative(layout);
         segment.scope().close();
         arrayFactory.apply(segment);
-    }
-
-    @Test(dataProvider = "elemLayouts",
-            expectedExceptions = UnsupportedOperationException.class)
-    public void testArrayFromHeapSegmentWithoutAccess(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemorySegment segment = MemorySegment.ofArray(new byte[(int)layout.byteSize()]);
-        segment = segment.withAccessModes(MemorySegment.ALL_ACCESS & ~READ);
-        arrayFactory.apply(segment);
-    }
-
-    @Test(dataProvider = "elemLayouts",
-            expectedExceptions = UnsupportedOperationException.class)
-    public void testArrayFromNativeSegmentWithoutAccess(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, scope).withAccessModes(MemorySegment.ALL_ACCESS & ~READ);
-            arrayFactory.apply(segment);
-        }
     }
 
     @DataProvider(name = "arrays")

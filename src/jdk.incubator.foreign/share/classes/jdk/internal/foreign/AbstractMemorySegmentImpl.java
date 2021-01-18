@@ -57,8 +57,8 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
-    final static int FIRST_RESERVED_FLAG = 1 << 16; // upper 16 bits are reserved
-    final static int SMALL = FIRST_RESERVED_FLAG;
+    final static int READ_ONLY = 1;
+    final static int SMALL = READ_ONLY << 1;
     final static long NONCE = new Random().nextLong();
 
     final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
@@ -84,8 +84,17 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     static int defaultAccessModes(long size) {
         return (enableSmallSegments && size < Integer.MAX_VALUE) ?
-                ALL_ACCESS | SMALL :
-                ALL_ACCESS;
+                SMALL : 0;
+    }
+
+    @Override
+    public AbstractMemorySegmentImpl asReadOnly() {
+        return dup(0, length, mask | READ_ONLY, scope);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return isSet(READ_ONLY);
     }
 
     @Override
@@ -220,21 +229,13 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     @Override
     public final ByteBuffer asByteBuffer() {
-        if (!isSet(READ)) {
-            throw unsupportedAccessMode(READ);
-        }
         checkArraySize("ByteBuffer", 1);
         ByteBuffer _bb = makeByteBuffer();
-        if (!isSet(WRITE)) {
+        if (isSet(READ_ONLY)) {
             //scope is IMMUTABLE - obtain a RO byte buffer
             _bb = _bb.asReadOnlyBuffer();
         }
         return _bb;
-    }
-
-    @Override
-    public final int accessModes() {
-        return mask & ALL_ACCESS;
     }
 
     @Override
@@ -248,27 +249,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     public Thread ownerThread() {
         return scope.ownerThread();
-    }
-
-    @Override
-    public AbstractMemorySegmentImpl withAccessModes(int accessModes) {
-        checkAccessModes(accessModes);
-        if ((~accessModes() & accessModes) != 0) {
-            throw new IllegalArgumentException("Cannot acquire more access modes");
-        }
-        return dup(0, length, (mask & ~ALL_ACCESS) | accessModes, scope);
-    }
-
-    @Override
-    public boolean hasAccessModes(int accessModes) {
-        checkAccessModes(accessModes);
-        return (accessModes() & accessModes) == accessModes;
-    }
-
-    private void checkAccessModes(int accessModes) {
-        if ((accessModes & ~ALL_ACCESS) != 0) {
-            throw new IllegalArgumentException("Invalid access modes");
-        }
     }
 
     @Override
@@ -326,10 +306,8 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     @Override
     public void checkAccess(long offset, long length, boolean readOnly) {
-        if (!readOnly && !isSet(WRITE)) {
-            throw unsupportedAccessMode(WRITE);
-        } else if (readOnly && !isSet(READ)) {
-            throw unsupportedAccessMode(READ);
+        if (!readOnly && isSet(READ_ONLY)) {
+            throw new UnsupportedOperationException("Attempt to write a read-only segment");
         }
         checkBounds(offset, length);
     }
@@ -397,22 +375,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
                 offset > (int)this.length - length) { // careful of overflow
             throw outOfBoundException(offset, length);
         }
-    }
-
-    UnsupportedOperationException unsupportedAccessMode(int expected) {
-        return new UnsupportedOperationException((String.format("Required access mode %s ; current access modes: %s",
-                modeStrings(expected).get(0), modeStrings(mask))));
-    }
-
-    private List<String> modeStrings(int mode) {
-        List<String> modes = new ArrayList<>();
-        if ((mode & READ) != 0) {
-            modes.add("READ");
-        }
-        if ((mode & WRITE) != 0) {
-            modes.add("WRITE");
-        }
-        return modes;
     }
 
     private IndexOutOfBoundsException outOfBoundException(long offset, long length) {
@@ -536,7 +498,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {
-            modes &= ~WRITE;
+            modes |= READ_ONLY;
         }
         if (base != null) {
             return new HeapMemorySegmentImpl.OfByte(bbAddress + pos, (byte[])base, size, modes);

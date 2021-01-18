@@ -141,7 +141,7 @@ public class SysVVaList implements VaList {
         VH_fp_offset.set(base, MAX_FP_OFFSET);
         VH_overflow_arg_area.set(base, MemoryAddress.NULL);
         VH_reg_save_area.set(base, MemoryAddress.NULL);
-        return base.withAccessModes(0).address();
+        return base.address();
     }
 
     public static VaList empty() {

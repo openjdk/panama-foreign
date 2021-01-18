@@ -75,11 +75,6 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    public MappedMemorySegmentImpl withAccessModes(int accessModes) {
-        return (MappedMemorySegmentImpl)super.withAccessModes(accessModes);
-    }
-
-    @Override
     public boolean isMapped() {
         return true;
     }
@@ -117,7 +112,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             UnmapperProxy unmapperProxy = channelImpl.mapInternal(mapMode, bytesOffset, bytesSize);
             int modes = defaultAccessModes(bytesSize);
             if (mapMode == FileChannel.MapMode.READ_ONLY) {
-                modes &= ~WRITE;
+                modes |= READ_ONLY;
             }
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,

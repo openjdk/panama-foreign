@@ -265,33 +265,6 @@ public interface MemorySegment extends Addressable {
     long byteSize();
 
     /**
-     * Obtains a segment view with specific <a href="#access-modes">access modes</a>. Supported access modes are {@link #READ}, {@link #WRITE},
-     * {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. It is generally not possible to go from a segment with stricter access modes
-     * to one with less strict access modes. For instance, attempting to add {@link #WRITE} access mode to a read-only segment
-     * will be met with an exception.
-     * @param accessModes an ORed mask of zero or more access modes.
-     * @return a segment view with specific access modes.
-     * @throws IllegalArgumentException when {@code mask} is an access mask which is less strict than the one supported by this
-     * segment, or when {@code mask} contains bits not associated with any of the supported access modes.
-     */
-    MemorySegment withAccessModes(int accessModes);
-
-    /**
-     * Does this segment support a given set of access modes?
-     * @param accessModes an ORed mask of zero or more access modes.
-     * @return true, if the access modes in {@code accessModes} are stricter than the ones supported by this segment.
-     * @throws IllegalArgumentException when {@code mask} contains bits not associated with any of the supported access modes.
-     */
-    boolean hasAccessModes(int accessModes);
-
-    /**
-     * Returns the <a href="#access-modes">access modes</a> associated with this segment; the result is represented as ORed values from
-     * {@link #READ}, {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}.
-     * @return the access modes associated with this segment.
-     */
-    int accessModes();
-
-    /**
      * Obtains a new memory segment view whose base address is the same as the base address of this segment plus a given offset,
      * and whose new size is specified by the given argument.
      *
@@ -771,7 +744,7 @@ allocateNative(bytesSize, 1);
 
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScope scope) throws IOException {
         Objects.requireNonNull(scope);
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, (MemoryScope)scope);
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, Utils.asScope(scope));
     }
 
     /**
@@ -804,8 +777,12 @@ allocateNative(bytesSize, 1);
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope)scope);
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, Utils.asScope(scope));
     }
+
+    boolean isReadOnly();
+
+    MemorySegment asReadOnly();
 
     /**
      * Returns a shared native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
@@ -830,27 +807,4 @@ allocateNative(bytesSize, 1);
         Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
         return NativeMemorySegmentImpl.EVERYTHING;
     }
-
-    // access mode masks
-
-    /**
-     * Read access mode; read operations are supported by a segment which supports this access mode.
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int READ = 1;
-
-    /**
-     * Write access mode; write operations are supported by a segment which supports this access mode.
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int WRITE = READ << 1;
-
-    /**
-     * Default access mode; this is a union of all the access modes supported by memory segments.
-     * @see MemorySegment#accessModes()
-     * @see MemorySegment#withAccessModes(int)
-     */
-    int ALL_ACCESS = READ | WRITE;
 }

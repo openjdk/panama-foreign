@@ -151,4 +151,11 @@ public final class Utils {
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
 
+    public static MemoryScope asScope(ResourceScope scope) {
+        if (scope instanceof NativeScope) {
+            return ((AbstractNativeScope)scope).scope();
+        } else {
+            return (MemoryScope)scope;
+        }
+    }
 }

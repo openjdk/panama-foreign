@@ -39,8 +39,6 @@ public abstract class AbstractNativeScope implements NativeScope {
     private final ResourceScope publicScope = ResourceScope.ofConfined();
     private final ResourceScope forkedScope = publicScope.fork();
 
-    private static final int SCOPE_MASK = MemorySegment.READ | MemorySegment.WRITE; // no terminal operations allowed
-
     public static NativeScope emptyScope() {
         return new EmptyScope();
     }
@@ -64,6 +62,10 @@ public abstract class AbstractNativeScope implements NativeScope {
     @Override
     public ResourceScope fork() {
         return forkedScope.fork();
+    }
+
+    public MemoryScope scope() {
+        return (MemoryScope)publicScope;
     }
 
     MemorySegment newSegment(long size, long align) {
@@ -109,8 +111,7 @@ public abstract class AbstractNativeScope implements NativeScope {
         public MemorySegment allocate(long bytesSize, long bytesAlignment) {
             checkOwnerThread();
             if (Utils.alignUp(bytesSize, bytesAlignment) > MAX_ALLOC_SIZE) {
-                MemorySegment segment = newSegment(bytesSize, bytesAlignment);
-                return segment.withAccessModes(SCOPE_MASK);
+                return newSegment(bytesSize, bytesAlignment);
             }
             // try to slice from current segment first...
             MemorySegment slice = trySlice(bytesSize, bytesAlignment);
@@ -134,8 +135,7 @@ public abstract class AbstractNativeScope implements NativeScope {
             if (segment.byteSize() - start < bytesSize) {
                 return null;
             } else {
-                MemorySegment slice = segment.asSlice(start, bytesSize)
-                        .withAccessModes(SCOPE_MASK);
+                MemorySegment slice = segment.asSlice(start, bytesSize);
                 sp = start + bytesSize;
                 size += Utils.alignUp(bytesSize, bytesAlignment);
                 return slice;
@@ -168,8 +168,7 @@ public abstract class AbstractNativeScope implements NativeScope {
             long min = segment.address().toRawLongValue();
             long start = Utils.alignUp(min + sp, bytesAlignment) - min;
             try {
-                MemorySegment slice = segment.asSlice(start, bytesSize)
-                        .withAccessModes(SCOPE_MASK);
+                MemorySegment slice = segment.asSlice(start, bytesSize);
                 sp = start + bytesSize;
                 return slice;
             } catch (IndexOutOfBoundsException ex) {

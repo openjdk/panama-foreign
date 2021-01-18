@@ -146,8 +146,7 @@ public class TestSegments {
     @Test(dataProvider = "segmentFactories")
     public void testAccessModesOfFactories(Supplier<MemorySegment> memorySegmentSupplier) {
         MemorySegment segment = memorySegmentSupplier.get();
-        assertTrue(segment.hasAccessModes(ALL_ACCESS));
-        assertEquals(segment.accessModes(), ALL_ACCESS);
+        assertFalse(segment.isReadOnly());
         tryClose(segment);
     }
 
@@ -156,23 +155,6 @@ public class TestSegments {
             segment.scope().close();
         } catch (Throwable ex) {
             // heap segment - ignore...
-        }
-    }
-
-    @Test(dataProvider = "accessModes")
-    public void testAccessModes(int accessModes) {
-        int[] arr = new int[1];
-        for (AccessActions action : AccessActions.values()) {
-            MemorySegment segment = MemorySegment.ofArray(arr);
-            MemorySegment restrictedSegment = segment.withAccessModes(accessModes);
-            assertEquals(restrictedSegment.accessModes(), accessModes);
-            boolean shouldFail = !restrictedSegment.hasAccessModes(action.accessMode);
-            try {
-                action.run(restrictedSegment);
-                assertFalse(shouldFail);
-            } catch (UnsupportedOperationException ex) {
-                assertTrue(shouldFail);
-            }
         }
     }
 
@@ -237,7 +219,7 @@ public class TestSegments {
     @Test(dataProvider = "segmentFactories", expectedExceptions = UnsupportedOperationException.class)
     public void testFillIllegalAccessMode(Supplier<MemorySegment> memorySegmentSupplier) {
         MemorySegment segment = memorySegmentSupplier.get();
-        segment.withAccessModes(segment.accessModes() & ~WRITE).fill((byte) 0xFF);
+        segment.asReadOnly().fill((byte) 0xFF);
         tryClose(segment);
     }
 
@@ -272,27 +254,6 @@ public class TestSegments {
         MemorySegment.ofArray(new byte[] { }).fill((byte) 0xFF);
         MemorySegment.ofArray(new byte[2]).asSlice(0, 0).fill((byte) 0xFF);
         MemorySegment.ofByteBuffer(ByteBuffer.allocateDirect(0)).fill((byte) 0xFF);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testWithAccessModesBadUnsupportedMode() {
-        int[] arr = new int[1];
-        MemorySegment segment = MemorySegment.ofArray(arr);
-        segment.withAccessModes((1 << AccessActions.values().length) + 1);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadWithAccessModesBadStrongerMode() {
-        int[] arr = new int[1];
-        MemorySegment segment = MemorySegment.ofArray(arr).withAccessModes(READ);
-        segment.withAccessModes(WRITE);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBadHasAccessModes() {
-        int[] arr = new int[1];
-        MemorySegment segment = MemorySegment.ofArray(arr);
-        segment.hasAccessModes((1 << AccessActions.values().length) + 1);
     }
 
     @Test(dataProvider = "heapFactories")
@@ -416,41 +377,6 @@ public class TestSegments {
         } else {
             return null;
         }
-    }
-
-    @DataProvider(name = "accessModes")
-    public Object[][] accessModes() {
-        int nActions = AccessActions.values().length;
-        Object[][] results = new Object[1 << nActions][];
-        for (int accessModes = 0 ; accessModes < results.length ; accessModes++) {
-            results[accessModes] = new Object[] { accessModes };
-        }
-        return results;
-    }
-
-    enum AccessActions {
-        READ(MemorySegment.READ) {
-            @Override
-            void run(MemorySegment segment) {
-                INT_HANDLE.get(segment);
-            }
-        },
-        WRITE(MemorySegment.WRITE) {
-            @Override
-            void run(MemorySegment segment) {
-                INT_HANDLE.set(segment, 42);
-            }
-        };
-
-        final int accessMode;
-
-        static VarHandle INT_HANDLE = MemoryLayouts.JAVA_INT.varHandle(int.class);
-
-        AccessActions(int accessMode) {
-            this.accessMode = accessMode;
-        }
-
-        abstract void run(MemorySegment segment);
     }
 
     @DataProvider(name = "heapFactories")

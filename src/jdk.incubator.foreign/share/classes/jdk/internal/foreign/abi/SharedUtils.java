@@ -435,7 +435,7 @@ public class SharedUtils {
 
                 @Override
                 public MemoryScope scope() {
-                    return (MemoryScope)scope;
+                    return Utils.asScope(scope);
                 }
             };
         }
@@ -449,7 +449,7 @@ public class SharedUtils {
 
                 @Override
                 public MemoryScope scope() {
-                    return (MemoryScope)scope;
+                    return ((AbstractNativeScope)scope).scope();
                 }
 
                 @Override
