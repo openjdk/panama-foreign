@@ -29,10 +29,12 @@ import jdk.incubator.foreign.MemoryAddress;
 
 import java.io.File;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.ref.CleanerFactory;
 
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -40,6 +42,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -49,7 +52,7 @@ public final class LibrariesHelper {
     private final static NativeLibraries nativeLibraries =
             NativeLibraries.rawNativeLibraries(LibrariesHelper.class, true);
 
-    private final static Map<NativeLibrary, AtomicInteger> loadedLibraries = new IdentityHashMap<>();
+    private final static Map<NativeLibrary, WeakReference<ResourceScope>> loadedLibraries = new ConcurrentHashMap<>();
 
     /**
      * Load the specified shared library.
@@ -76,43 +79,33 @@ public final class LibrariesHelper {
                 "Library not found: " + path);
     }
 
-    // return the absolute path of the library of given name by searching
-    // in the given array of paths.
-    private static Optional<Path> findLibraryPath(Path[] paths, String libName) {
-         return Arrays.stream(paths).
-              map(p -> p.resolve(System.mapLibraryName(libName))).
-              filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
-    }
-
     public static LibraryLookup getDefaultLibrary() {
         return LibraryLookupImpl.DEFAULT_LOOKUP;
     }
 
-    synchronized static LibraryLookupImpl lookup(Supplier<NativeLibrary> librarySupplier, String notFoundMsg) {
+    static LibraryLookupImpl lookup(Supplier<NativeLibrary> librarySupplier, String notFoundMsg) {
         NativeLibrary library = librarySupplier.get();
         if (library == null) {
             throw new IllegalArgumentException(notFoundMsg);
         }
-        AtomicInteger refCount = loadedLibraries.computeIfAbsent(library, lib -> new AtomicInteger());
-        refCount.incrementAndGet();
-        LibraryLookupImpl lookup = new LibraryLookupImpl(library);
-        CleanerFactory.cleaner().register(lookup, () -> tryUnload(library));
-        return lookup;
-    }
-
-    synchronized static void tryUnload(NativeLibrary library) {
-        AtomicInteger refCount = loadedLibraries.get(library);
-        if (refCount.decrementAndGet() == 0) {
-            loadedLibraries.remove(library);
-            nativeLibraries.unload(library);
-        }
+        WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
+            ResourceScope s = ResourceScope.ofShared(CleanerFactory.cleaner());
+            ((MemoryScope)s).add(ResourceList.ResourceCleanup.ofRunnable(() -> {
+                nativeLibraries.unload(library);
+                loadedLibraries.remove(library);
+            }));
+            return new WeakReference<>(s);
+        });
+        return new LibraryLookupImpl(library, scopeRef.get());
     }
 
     static class LibraryLookupImpl implements LibraryLookup {
         final NativeLibrary library;
+        final ResourceScope scope;
 
-        LibraryLookupImpl(NativeLibrary library) {
+        LibraryLookupImpl(NativeLibrary library, ResourceScope scope) {
             this.library = library;
+            this.scope = scope;
         }
 
         @Override
@@ -120,7 +113,7 @@ public final class LibrariesHelper {
             try {
                 Objects.requireNonNull(name);
                 MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
-                return Optional.of(new Symbol() { // inner class - retains a link to enclosing lookup
+                return Optional.of(new Symbol() { // inner class - retains a link to the scope
                     @Override
                     public String name() {
                         return name;
@@ -136,7 +129,7 @@ public final class LibrariesHelper {
             }
         }
 
-        static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary);
+        static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary, MemoryScope.GLOBAL);
     }
 
     /* used for testing */
