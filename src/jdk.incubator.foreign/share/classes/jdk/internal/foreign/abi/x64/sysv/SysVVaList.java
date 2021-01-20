@@ -44,7 +44,6 @@ import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
-import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
@@ -178,7 +177,7 @@ public class SysVVaList implements VaList {
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
         return ((MemoryAddress)VH_reg_save_area.get(segment)).asSegmentRestricted(
-                LAYOUT_REG_SAVE_AREA.byteSize(), SharedUtils.dupScope(segment));
+                LAYOUT_REG_SAVE_AREA.byteSize(), segment.scope());
     }
 
     private void preAlignStack(MemoryLayout layout) {
@@ -235,7 +234,7 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    try (ResourceScope scope = dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
@@ -245,7 +244,7 @@ public class SysVVaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope scope = dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);

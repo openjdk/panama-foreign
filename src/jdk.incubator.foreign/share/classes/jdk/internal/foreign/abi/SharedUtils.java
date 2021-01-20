@@ -620,12 +620,4 @@ public class SharedUtils {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
     }
-
-    public static MemoryScope dupScope(MemorySegment segment) {
-        if (segment.scope().ownerThread() == null) {
-            return MemoryScope.createShared(null, null);
-        } else {
-            return MemoryScope.createConfined(segment.scope().ownerThread(), null, null);
-        }
-    }
 }

@@ -43,7 +43,6 @@ import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
-import static jdk.internal.foreign.abi.SharedUtils.dupScope;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMENTS;
 
@@ -117,10 +116,10 @@ public class AArch64VaList implements VaList {
 
     private static AArch64VaList readFromSegment(MemorySegment segment) {
         MemorySegment gpRegsArea = grTop(segment).addOffset(-MAX_GP_OFFSET).asSegmentRestricted(
-                MAX_GP_OFFSET, SharedUtils.dupScope(segment));
+                MAX_GP_OFFSET, segment.scope());
 
         MemorySegment fpRegsArea = vrTop(segment).addOffset(-MAX_FP_OFFSET).asSegmentRestricted(
-                MAX_FP_OFFSET, SharedUtils.dupScope(segment));
+                MAX_FP_OFFSET, segment.scope());
         return new AArch64VaList(segment, gpRegsArea, fpRegsArea, List.of(gpRegsArea, fpRegsArea));
     }
 
@@ -257,7 +256,7 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    try (ResourceScope scope = dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);
@@ -267,7 +266,7 @@ public class AArch64VaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope scope = dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
@@ -314,7 +313,7 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    try (ResourceScope scope = dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);

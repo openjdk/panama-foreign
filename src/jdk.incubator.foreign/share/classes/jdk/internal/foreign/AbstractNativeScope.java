@@ -55,6 +55,11 @@ public abstract class AbstractNativeScope implements NativeScope {
     }
 
     @Override
+    public boolean isCloseable() {
+        return publicScope.isCloseable();
+    }
+
+    @Override
     public Thread ownerThread() {
         return publicScope.ownerThread();
     }

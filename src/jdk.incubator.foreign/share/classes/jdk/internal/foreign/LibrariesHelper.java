@@ -44,6 +44,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public final class LibrariesHelper {
@@ -88,8 +89,10 @@ public final class LibrariesHelper {
         if (library == null) {
             throw new IllegalArgumentException(notFoundMsg);
         }
+        ResourceScope[] holder = new ResourceScope[1];
         WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
-            ResourceScope s = ResourceScope.ofShared(CleanerFactory.cleaner());
+            ResourceScope s = ResourceScope.ofShared(null, CleanerFactory.cleaner(), false);
+            holder[0] = s; // keep the scope alive at least until the outer method returns
             ((MemoryScope)s).add(ResourceList.ResourceCleanup.ofRunnable(() -> {
                 nativeLibraries.unload(library);
                 loadedLibraries.remove(library);
@@ -99,6 +102,7 @@ public final class LibrariesHelper {
         return new LibraryLookupImpl(library, scopeRef.get());
     }
 
+    //Todo: in principle we could expose a scope accessor, so that users could unload libraries at will
     static class LibraryLookupImpl implements LibraryLookup {
         final NativeLibrary library;
         final ResourceScope scope;

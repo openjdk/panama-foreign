@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.createShared(null, null));
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.GLOBAL);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 

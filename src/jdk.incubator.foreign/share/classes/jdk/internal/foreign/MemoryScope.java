@@ -53,12 +53,14 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
     final ScopeCleanable scopeCleanable;
     final ResourceList resourceList;
+    final boolean closeable;
 
     public abstract void add(ResourceList.ResourceCleanup resource);
 
-    protected MemoryScope(MemoryScope parent, Object ref, Cleaner cleaner, ResourceList resourceList) {
+    protected MemoryScope(MemoryScope parent, Object ref, Cleaner cleaner, boolean closeable, ResourceList resourceList) {
         this.ref = ref;
         this.resourceList = resourceList;
+        this.closeable = closeable;
         if (parent != null) {
             resourceList.add(ResourceList.ResourceCleanup.ofRunnable(parent::release));
         }
@@ -67,8 +69,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                 null;
     }
 
-    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
-        return new ConfinedScope(null, thread, ref, cleaner);
+    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner, boolean closeable) {
+        return new ConfinedScope(null, thread, ref, cleaner, closeable);
     }
 
     /**
@@ -77,8 +79,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a confined memory scope
      */
-    public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
-        return new ConfinedScope(null, Thread.currentThread(), ref, cleaner);
+    public static MemoryScope createConfined(Object ref, Cleaner cleaner, boolean closeable) {
+        return new ConfinedScope(null, Thread.currentThread(), ref, cleaner, closeable);
     }
 
     /**
@@ -86,8 +88,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a shared memory scope
      */
-    public static MemoryScope createShared(Object ref, Cleaner cleaner) {
-        return new SharedScope(null, ref, cleaner);
+    public static MemoryScope createShared(Object ref, Cleaner cleaner, boolean closeable) {
+        return new SharedScope(null, ref, cleaner, closeable);
     }
 
     protected final Object ref;
@@ -98,6 +100,9 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * a confined scope and this method is called outside of the owner thread.
      */
     public final void close() {
+        if (!closeable) {
+            throw new IllegalStateException("Scope is not closeable");
+        }
         try {
             justClose();
             resourceList.cleanup();
@@ -107,6 +112,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         } finally {
             Reference.reachabilityFence(this);
         }
+    }
+
+    @Override
+    public boolean isCloseable() {
+        return closeable;
     }
 
     abstract void release();
@@ -149,8 +159,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         int forkedCount = 0;
         final Thread owner;
 
-        public ConfinedScope(MemoryScope parent, Thread owner, Object ref, Cleaner cleaner) {
-            super(parent, ref, cleaner, new ResourceList.ConfinedResourceList());
+        public ConfinedScope(MemoryScope parent, Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
+            super(parent, ref, cleaner, closeable, new ResourceList.ConfinedResourceList());
             this.owner = owner;
         }
 
@@ -178,8 +188,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         @Override
         public ResourceScope fork() {
             forkedCount++;
-            return new ConfinedScope(this, owner, null,
-                    scopeCleanable != null ? scopeCleanable.cleaner : null);
+            return new ConfinedScope(this, owner, null, scopeCleanable != null ? scopeCleanable.cleaner : null, closeable
+            );
         }
 
         @Override
@@ -233,8 +243,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             }
         }
 
-        SharedScope(MemoryScope parent, Object ref, Cleaner cleaner) {
-            super(parent, ref, cleaner, new ResourceList.SharedResourceList());
+        SharedScope(MemoryScope parent, Object ref, Cleaner cleaner, boolean closeable) {
+            super(parent, ref, cleaner, closeable, new ResourceList.SharedResourceList());
         }
 
         @Override
@@ -261,8 +271,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                     throw new IllegalStateException("Segment acquire limit exceeded");
                 }
             } while (!STATE.compareAndSet(this, value, value + 1));
-            return new MemoryScope.SharedScope(this, null,
-                    scopeCleanable != null ? scopeCleanable.cleaner : null);
+            return new MemoryScope.SharedScope(this, null, scopeCleanable != null ? scopeCleanable.cleaner : null, closeable
+            );
         }
 
         void release() {
@@ -321,7 +331,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    public static MemoryScope GLOBAL = new MemoryScope(null, null, null, null) {
+    public static MemoryScope GLOBAL = new MemoryScope(null, null, null, false, null) {
         @Override
         public void add(ResourceList.ResourceCleanup resource) {
             // do nothing
@@ -329,7 +339,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
         @Override
         void justClose() {
-            throw new UnsupportedOperationException("Cannot close global scope");
+            // do nothing
         }
 
         @Override

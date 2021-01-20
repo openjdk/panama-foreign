@@ -29,6 +29,7 @@ import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CLinker.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
+import jdk.internal.ref.CleanerFactory;
 
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
@@ -119,7 +120,7 @@ class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    try (ResourceScope scope = SharedUtils.dupScope(segment)) {
+                    try (ResourceScope scope = segment.scope().fork()) {
                         MemorySegment struct = structAddr.asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout.byteSize());
                         seg.copyFrom(struct);
@@ -167,7 +168,7 @@ class WinVaList implements VaList {
     @Override
     public VaList copy() {
         MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1,
-                SharedUtils.dupScope(segment));
+                ResourceScope.ofConfined(CleanerFactory.cleaner()));
         return new WinVaList(segment, List.of(), liveness);
     }
 

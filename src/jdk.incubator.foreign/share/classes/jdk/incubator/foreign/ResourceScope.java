@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.MemoryScope;
 
 import java.lang.ref.Cleaner;
+import java.nio.ByteBuffer;
 
 public interface ResourceScope extends AutoCloseable {
     /**
@@ -36,6 +37,8 @@ public interface ResourceScope extends AutoCloseable {
      * @see MemorySegment#close()
      */
     boolean isAlive();
+
+    boolean isCloseable();
 
     /**
      * The thread owning this segment.
@@ -68,23 +71,23 @@ public interface ResourceScope extends AutoCloseable {
     ResourceScope fork();
 
     static ResourceScope ofConfined() {
-        return ofConfined(null, null);
+        return ofConfined(null, null, true);
     }
     static ResourceScope ofConfined(Cleaner cleaner) {
-        return ofConfined(null, cleaner);
+        return ofConfined(null, cleaner, true);
     }
-    static ResourceScope ofConfined(Object attachment, Cleaner cleaner) {
-        return MemoryScope.createConfined(attachment, cleaner);
+    static ResourceScope ofConfined(Object attachment, Cleaner cleaner, boolean closeable) {
+        return MemoryScope.createConfined(attachment, cleaner, closeable);
     }
 
     static ResourceScope ofShared() {
-        return ofShared(null, null);
+        return ofShared(null, null, true);
     }
     static ResourceScope ofShared(Cleaner cleaner) {
-        return ofShared(null, cleaner);
+        return ofShared(null, cleaner, true);
     }
-    static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
-        return MemoryScope.createShared(attachment, cleaner);
+    static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
+        return MemoryScope.createShared(attachment, cleaner, closeable);
     }
     
 }
