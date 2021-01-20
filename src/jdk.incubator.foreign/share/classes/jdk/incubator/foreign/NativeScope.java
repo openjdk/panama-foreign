@@ -41,12 +41,6 @@ import java.util.OptionalLong;
  * Allocation scopes are thread-confined (see {@link #ownerThread()}; as such, the resulting {@link MemorySegment} instances
  * returned by the native scope will be backed by memory segments confined by the same owner thread as the native scope's
  * owner thread.
- * <p>
- * To allow for more usability, it is possible for a native scope to reclaim ownership of an existing memory segment
- * (see {@link MemorySegment#handoff(NativeScope)}). This might be useful to allow one or more segments which were independently
- * created to share the same life-cycle as a given native scope - which in turns enables a client to group all memory
- * allocation and usage under a single <em>try-with-resources block</em>.
- *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  *

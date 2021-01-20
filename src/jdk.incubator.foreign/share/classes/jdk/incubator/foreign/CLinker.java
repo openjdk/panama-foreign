@@ -138,12 +138,11 @@ public interface CLinker {
     MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
-     * Allocates a native segment whose base address (see {@link MemorySegment#address}) can be
+     * Allocates a native segment whose base address (see {@link MemorySegment#address}) which can be
      * passed to other foreign functions (as a function pointer); calling such a function pointer
      * from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned segment is <a href=MemorySegment.html#thread-confinement>shared</a>, and it only features
-     * the {@link MemorySegment#CLOSE} access mode. When the returned segment is closed,
+     * <p>The returned segment is associated with a shared, closeable resource scope. When such scope is closed,
      * the corresponding native stub will be deallocated.</p>
      *
      * @param target   the target method handle.
@@ -155,6 +154,20 @@ public interface CLinker {
         return upcallStub(target, function, ResourceScope.ofShared());
     }
 
+    /**
+     * Allocates a native segment whose base address (see {@link MemorySegment#address}) and scope which can be
+     * passed to other foreign functions (as a function pointer); calling such a function pointer
+     * from native code will result in the execution of the provided method handle.
+     *
+     * <p>The returned segment is associated with the provided scope. When such scope is closed,
+     * the corresponding native stub will be deallocated.</p>
+     *
+     * @param target   the target method handle.
+     * @param function the function descriptor.
+     * @param scope the upcall stub scope.
+     * @return the native stub segment.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     */
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**

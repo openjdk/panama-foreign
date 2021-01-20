@@ -28,65 +28,204 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.MemoryScope;
 
 import java.lang.ref.Cleaner;
-import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.Spliterator;
 
+/**
+ * A resource scope manages the lifecycle of one or more resources. Resources (e.g. {@link MemorySegment}) associated
+ * with a resource scope can only be accessed while the resource scope is <em>alive</em> (see {@link #isAlive()}),
+ * and by the thread associated with the resource scope (if any).
+ *
+ * <h2>Explicit deallocation</h2>
+ *
+ * Certain resource scopes can be closed explicitly (see {@link ResourceScope#close()}). To check if a resource scope supports
+ * explicit closure, the {@link #isCloseable()} predicate can be used. When a resource scope is closed, it is no longer
+ * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on resources derived from that scope (e.g. attempting to
+ * access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
+ * <p>
+ * Closing a segment might trigger the releasing of the underlying memory resources associated with said scope; for instance:
+ * <ul>
+ *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it</li>
+ *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
+ *     <li>closing the scope associated with an upcall stub results in releasing the stub</li>
+ * </ul>
+ *
+ * <h2>Implicit deallocation</h2>
+ *
+ * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
+ * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
+ * becomes <em>unreachable</em>.
+ * <p>
+ * Managed resource scopes can also be made closeable (see {@link #isCloseable()}), in which
+ * case a scope will feature both explicit and implicit deallocation modes. This can be useful to allow for predictable,
+ * deterministic resource deallocation, while still prevent accidental native memory leaks.
+ *
+ * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ *
+ * Resource scopes can be further divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
+ * resource scopes.
+ * <p>
+ * Confined resource scopes (see {@link #ofConfined()}), support strong thread-confinement guarantees. Upon creation,
+ * they are assigned an <em>owner thread</em>, typically the thread which initiated the creation operation (see {@link #ownerThread()}).
+ * After creating a confined resource scopeon, only the owner thread will be allowed to directly manipulate the resources
+ * associated with this resource scope. Any attempt to perform resource access from a thread other than the
+ * owner thread will result in a runtime failure.
+ * <p>
+ * Shared resource scopes (see {@link #ofShared()}), support strong thread-confinement guarantees. A shared resource scope
+ * has no owner thread; as such resources associated with this scope can be accessed by multiple threads. This might be useful
+ * when multiple threads need to access the same resource concurrently (e.g. in the case of parallel processing). For instance, a client
+ * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
+ * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ *
+ * <blockquote><pre>{@code
+SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+try (ResourceScope scope = ResourceScope.ofShared()) {
+    MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
+    VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
+    int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+        .mapToInt(s -> (int)VH_int.get(s.address()))
+        .sum();
+}
+ * }</pre></blockquote>
+ *
+ * <p>
+ * When using shared resource scopes, clients should make sure that no other thread is accessing the segment while
+ * the segment is being closed. If one or more threads attempts to access a segment concurrently while the
+ * segment is being closed, an exception might occur on both the accessing and the closing threads. Clients should
+ * refrain from attempting to close a shared resource scope repeatedly (e.g. keep calling {@link #close()} until no exception is thrown);
+ * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
+ * accessing/closing the resources associated with the shared resource scope.
+ *
+ * <h2>Forking</h2>
+ *
+ * Resource scopes can be <em>forked</em>. When a resource scope, said the <em>parent</em> scope, is forked, a new resource scope,
+ * namely the <em>forked</em> scope, is obtained, with same characteristics as the parent scope; for instance
+ * if the parent scope has {@code T} as its owner thread, the forked scope will also have {@code T} as its owner thread.
+ * A forked scope can be used to make sure that the parent scope cannot be closed (either explicitly, or implicitly)
+ * for a certain period of time - e.g. when one or more resources associated with the parent scope need to be accessed.
+ * <p>
+ * In the presence of forked scope, a parent scope will in fact reject closure requests, until all the resource scopes
+ * derived from it have also been closed.
+ *
+ * @apiNote In the future, if the Java language permits, {@link ResourceScope}
+ * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
+ *
+ * @implSpec
+ * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
+ */
 public interface ResourceScope extends AutoCloseable {
     /**
-     * Is this segment alive?
-     * @return true, if the segment is alive.
-     * @see MemorySegment#close()
+     * Is this resource scope alive?
+     * @return true, if this resource scope is alive.
+     * @see ResourceScope#close()
      */
     boolean isAlive();
 
+    /**
+     * Is this resource scope closeable?
+     * @return true, if this resource scope is closeable.
+     * @see ResourceScope#close()
+     */
     boolean isCloseable();
 
     /**
-     * The thread owning this segment.
-     * @return the thread owning this segment.
+     * The thread owning this resource scope.
+     * @return the thread owning this resource scope, or {@code null} if this resource scope is shared.
      */
     Thread ownerThread();
 
     /**
-     * Closes this memory segment. This is a <em>terminal operation</em>; as a side-effect, if this operation completes
-     * without exceptions, this segment will be marked as <em>not alive</em>, and subsequent operations on this segment
-     * will fail with {@link IllegalStateException}.
-     * <p>
-     * Depending on the kind of memory segment being closed, calling this method further triggers deallocation of all the resources
-     * associated with the memory segment.
+     * Closes this resource scope. As a side-effect, if this operation completes without exceptions, this scope will be marked
+     * as <em>not alive</em>, and subsequent operations on resources associated with this scope will fail with {@link IllegalStateException}.
+     * Additionally, upon successful closure, all native resources associated with this resource scope will be released.
      *
-     * @apiNote This operation is not idempotent; that is, closing an already closed segment <em>always</em> results in an
-     * exception being thrown. This reflects a deliberate design choice: segment state transitions should be
+     * @apiNote This operation is not idempotent; that is, closing an already closed resource scope <em>always</em> results in an
+     * exception being thrown. This reflects a deliberate design choice: resource scope state transitions should be
      * manifest in the client code; a failure in any of these transitions reveals a bug in the underlying application
-     * logic. This is especially useful when reasoning about the lifecycle of dependent segment views (see {@link #asSlice(MemoryAddress)},
-     * where closing one segment might side-effect multiple segments. In such cases it might in fact not be obvious, looking
-     * at the code, as to whether a given segment is alive or not.
+     * logic.
      *
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment is shared and the segment is concurrently accessed while this method is
-     * called.
-     * @throws UnsupportedOperationException if this segment does not support the {@link #CLOSE} access mode.
+     * @throws IllegalStateException if one of the following condition is met:
+     * <ul>
+     *     <li>this resource scope is not <em>alive</em>
+     *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
+     *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
+     *     <li>this resource scope has one or more forked scopes that have not been closed</li>
+     * </ul>
      */
     void close();
 
+    /**
+     * Create a forked scope based on this resource scope. The returned scope will feature the same characteristics
+     * as this scope. This scope cannot be closed unless all its forked scopes have also been closed first.
+     * @return a forked scope based on this resource scope.
+     */
     ResourceScope fork();
 
+    /**
+     * Create a new confined scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.
+     * @return a new confined scope.
+     */
     static ResourceScope ofConfined() {
-        return ofConfined(null, null, true);
+        return MemoryScope.createConfined(null, null, true);
     }
+
+    /**
+     * Create a new confined scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new confined scope, managed by {@code cleaner}.
+     * @throws NullPointerException if {@code cleaner == null}.
+     */
     static ResourceScope ofConfined(Cleaner cleaner) {
-        return ofConfined(null, cleaner, true);
+        Objects.requireNonNull(cleaner);
+        return MemoryScope.createConfined(null, cleaner, true);
     }
+
+    /**
+     * Create a new confined scope. The resulting scope is managed by a {@link Cleaner} and might be closeable,
+     * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
+     * scope.
+     * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
+     * @return a new confined scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
+     * @throws NullPointerException if {@code cleaner == null}.
+     */
     static ResourceScope ofConfined(Object attachment, Cleaner cleaner, boolean closeable) {
+        Objects.requireNonNull(cleaner);
         return MemoryScope.createConfined(attachment, cleaner, closeable);
     }
 
+    /**
+     * Create a new shared scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * @return a new shared scope, managed by {@code cleaner}.
+     */
     static ResourceScope ofShared() {
-        return ofShared(null, null, true);
+        return MemoryScope.createShared(null, null, true);
     }
+
+    /**
+     * Create a new shared scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @return a new shared scope, managed by {@code cleaner}.
+     * @throws NullPointerException if {@code cleaner == null}.
+     */
     static ResourceScope ofShared(Cleaner cleaner) {
-        return ofShared(null, cleaner, true);
+        Objects.requireNonNull(cleaner);
+        return MemoryScope.createShared(null, cleaner, true);
     }
+
+    /**
+     * Create a new shared scope. The resulting scope is managed by a {@link Cleaner} and might be closeable,
+     * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
+     * scope.
+     * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
+     * @param cleaner the cleaner to be associated with the returned scope.
+     * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
+     * @return a new shared scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
+     * @throws NullPointerException if {@code cleaner == null}.
+     */
     static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
+        Objects.requireNonNull(cleaner);
         return MemoryScope.createShared(attachment, cleaner, closeable);
     }
     

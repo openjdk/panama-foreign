@@ -35,8 +35,21 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ *  This is interface models a native memory allocator. Clients implementing this interface
+ *  must implement the {@link #allocate(long, long)} method. This interface defines several default methods
+ *  which can be useful to create native segments from several kinds of Java values such as primitives and arrays.
+ *  As such, this interface can be seen as a thin wrapper around the basic capabilities for creating native segments
+ *  (e.g. {@link MemorySegment#allocateNative(long, long)}). Since {@link NativeAllocator} is a <em>functional interface</em>,
+ *  clients can easily obtain a native allocator instance as follows:
+ * <blockquote><pre>{@code
+NativeAllocator defaultAllocator = MemorySegment::allocateNative;
+NativeAllocator confinedAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofConfined());
+NativeAllocator sharedAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofShared());
+ * }</pre></blockquote>
+ */
+@FunctionalInterface
 public interface NativeAllocator {
-
 
     /**
      * Allocate a block of memory in this native scope with given layout and initialize it with given byte value.

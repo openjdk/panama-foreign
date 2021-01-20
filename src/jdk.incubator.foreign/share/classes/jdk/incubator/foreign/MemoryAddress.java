@@ -89,28 +89,27 @@ public interface MemoryAddress extends Addressable {
     long segmentOffset(MemorySegment segment);
 
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address; the returned segment has its own temporal
-     * bounds, and can therefore be closed. This method can be useful when interacting with custom native memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * <p>
-     * The returned segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link MemorySegment#ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * Returns a new confined native memory segment with given size, and whose base address is this address. This method
+     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with a fresh
+     * confined resource scope whose owner thread is the thread calling this method.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
-     * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
-     * memory resources which might implicitly be associated with the segment. This method is equivalent to the following code:
+     * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will <em>not</em> result in releasing any
+     * memory resources. This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, null);
+    asSegmentRestricted(byteSize, null, ResourceScope.ofConfined(Cleaner.create()));
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param bytesSize the desired size.
-     * @return a new confined native memory segment with given base address and size.
+     * @return a new native memory segment with given base address and size.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
@@ -120,30 +119,51 @@ public interface MemoryAddress extends Addressable {
         return asSegmentRestricted(bytesSize, null, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
-    default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {
-        return asSegmentRestricted(bytesSize, null, scope);
-    }
-
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address; the returned segment has its own temporal
-     * bounds, and can therefore be closed. This method can be useful when interacting with custom native memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * <p>
-     * The returned segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link MemorySegment#ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
-     * Moreover, the returned segment will keep a strong reference to the supplied attachment object (if any), which can
-     * be useful in cases where the lifecycle of the segment is dependent on that of some other external resource.
+     * Returns a new confined native memory segment with given size, and whose base address is this address. This method
+     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
+     * provided resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
-     * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
-     * memory resources which might implicitly be associated with the segment, but will result in calling the
-     * provided cleanup action (if any).
+     * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will <em>not</em> result in releasing any
+     * memory resources. This method is equivalent to the following code:
+     * <pre>{@code
+    asSegmentRestricted(byteSize, null, ResourceScope.ofConfined(Cleaner.create()));
+     * }</pre>
+     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @param bytesSize the desired size.
+     * @param scope the native segment scope.
+     * @return a new native memory segment with given base address, size and scope.
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws UnsupportedOperationException if this address is an heap address.
+     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
+     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
+     */
+    default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {
+        return asSegmentRestricted(bytesSize, null, scope);
+    }
+
+    /**
+     * Returns a new native memory segment with given size, and whose base address is this address. This method
+     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
+     * provided resource scope.
      * <p>
-     * Both the cleanup action and the attachment object (if any) will be preserved under terminal operations such as
-     * {@link MemorySegment#handoff(Thread)}, {@link MemorySegment#share()} and {@link MemorySegment#registerCleaner(Cleaner)}.
+     * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
+     * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
+     * have no visible effect, or cause an unspecified exception to be thrown.
+     * <p>
+     * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will result in calling
+     * the provided cleanup action (if any).
      * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -151,8 +171,8 @@ public interface MemoryAddress extends Addressable {
      *
      * @param bytesSize the desired size.
      * @param cleanupAction the cleanup action; can be {@code null}.
-     * @param attachment an attachment object that will be kept strongly reachable by the returned segment; can be {@code null}.
-     * @return a new confined native memory segment with given base address and size.
+     * @param scope the native segment scope.
+     * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either

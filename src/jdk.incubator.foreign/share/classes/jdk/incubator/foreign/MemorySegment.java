@@ -26,13 +26,11 @@
 
 package jdk.incubator.foreign;
 
-import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
-import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 import jdk.internal.ref.CleanerFactory;
@@ -45,12 +43,12 @@ import java.util.Spliterator;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
- * and temporal bounds. Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
+ * and temporal bounds (e.g. a {@link ResourceScope}). Spatial bounds ensure that memory access operations on a memory segment cannot affect a memory location
  * which falls <em>outside</em> the boundaries of the memory segment being accessed. Temporal bounds ensure that memory access
- * operations on a segment cannot occur after a memory segment has been closed (see {@link MemorySegment#close()}).
+ * operations on a segment cannot occur after the resource scope associated with a memory segment has been closed (see {@link ResourceScope#close()}).
  * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
- * programmers should treat instances that are {@linkplain #equals(Object) equal} as interchangeable and should not
+ * programmers should treat instances that are {@linkplain Object#equals(Object) equal} as interchangeable and should not
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
  * synchronization may fail. The {@code equals} method should be used for comparisons.
  * <p>
@@ -82,140 +80,61 @@ import java.util.Spliterator;
  * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>;
  * mapped memory segments are associated with an underlying file descriptor. For more operations on mapped memory segments, please refer to the
  * {@link MappedMemorySegments} class.
+ *
+ * <h2>Lifecycle and confinement</h2>
+ *
+ * Memory segments are associated to a resource scope (see {@link ResourceScope}), which can be accessed using
+ * the {@link #scope()} method. As for all resources associated with a resource scope, a segment cannot be
+ * accessed after its corresponding scope has been closed. For instance, the following code will result in an
+ * exception:
+ * <blockquote><pre>{@code
+MemorySegment segment = null;
+try (ResourceScope scope = ResourceScope.ofConfined()) {}
+    segment = MemorySegment.allocateNative(8, 1, scope);
+}
+MemoryAccess.getLong(segment); // already closed!
+ * }</pre></blockquote>
+ * Additionally, access to a memory segment in subject to the thread-confinement checks enforced by the owning scope; that is,
+ * if the segment is associated with a shared scope, it can be accessed by multiple threads; if it is associated with a confined
+ * scope, it can only be accessed by the thread which own the scope.
  * <p>
- * Array and buffer segments are effectively <em>views</em> over existing memory regions which might outlive the
- * lifecycle of the segments derived from them, and can even be manipulated directly (e.g. via array access, or direct use
- * of the {@link ByteBuffer} API) by other clients. As a result, while sharing array or buffer segments is possible,
- * it is strongly advised that clients wishing to do so take extra precautions to make sure that the underlying memory sources
- * associated with such segments remain inaccessible, and that said memory sources are never aliased by more than one segment
- * at a time - e.g. so as to prevent concurrent modifications of the contents of an array, or buffer segment.
- *
- * <h2>Explicit deallocation</h2>
- *
- * Memory segments are closed explicitly (see {@link MemorySegment#close()}). When a segment is closed, it is no longer
- * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on the segment (or on any {@link MemoryAddress} instance
- * derived from it) will fail with {@link IllegalStateException}.
- * <p>
- * Closing a segment might trigger the releasing of the underlying memory resources associated with said segment, depending on
- * the kind of memory segment being considered:
- * <ul>
- *     <li>closing a native memory segment results in <em>freeing</em> the native memory associated with it</li>
- *     <li>closing a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
- *     <li>closing a buffer, or a heap segment does not have any side-effect, other than marking the segment
- *     as <em>not alive</em> (see {@link MemorySegment#isAlive()}). Also, since the buffer and heap segments might keep
- *     strong references to the original buffer or array instance, it is the responsibility of clients to ensure that
- *     these segments are discarded in a timely manner, so as not to prevent garbage collection to reclaim the underlying
- *     objects.</li>
- * </ul>
- *
- * <h2><a id = "access-modes">Access modes</a></h2>
- *
- * Memory segments supports zero or more <em>access modes</em>. Supported access modes are {@link #READ},
- * {@link #WRITE}, {@link #CLOSE}, {@link #SHARE} and {@link #HANDOFF}. The set of access modes supported by a segment alters the
- * set of operations that are supported by that segment. For instance, attempting to call {@link #close()} on
- * a segment which does not support the {@link #CLOSE} access mode will result in an exception.
- * <p>
- * The set of supported access modes can only be made stricter (by supporting <em>fewer</em> access modes). This means
- * that restricting the set of access modes supported by a segment before sharing it with other clients
- * is generally a good practice if the creator of the segment wants to retain some control over how the segment
- * is going to be accessed.
+ * Heap and buffer segments are always associated with a <em>global</em>, shared scope. This scope cannot be closed,
+ * and can be considered as <em>always alive</em>.
  *
  * <h2>Memory segment views</h2>
  *
- * Memory segments support <em>views</em>. For instance, it is possible to alter the set of supported access modes,
- * by creating an <em>immutable</em> view of a memory segment, as follows:
+ * Memory segments support <em>views</em>. For instance, it is possible to create an <em>immutable</em> view of a memory segment, as follows:
  * <blockquote><pre>{@code
 MemorySegment segment = ...
-MemorySegment roSegment = segment.withAccessModes(segment.accessModes() & ~WRITE);
+MemorySegment roSegment = segment.asReadOnly();
  * }</pre></blockquote>
  * It is also possible to create views whose spatial bounds are stricter than the ones of the original segment
  * (see {@link MemorySegment#asSlice(long, long)}).
  * <p>
- * Temporal bounds of the original segment are inherited by the view; that is, closing a segment view, such as a sliced
- * view, will cause the original segment to be closed; as such special care must be taken when sharing views
- * between multiple clients. If a client want to protect itself against early closure of a segment by
- * another actor, it is the responsibility of that client to take protective measures, such as removing {@link #CLOSE}
- * from the set of supported access modes, before sharing the view with another client.
+ * Temporal bounds of the original segment are inherited by the views; that is, when the scope associated with a segment
+ * is closed, all the views associated with that segment will also be rendered inaccessible.
  * <p>
  * To allow for interoperability with existing code, a byte buffer view can be obtained from a memory segment
  * (see {@link #asByteBuffer()}). This can be useful, for instance, for those clients that want to keep using the
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
  *
- * <h2><a id = "thread-confinement">Thread confinement</a></h2>
+ * <h2>Spliterator support</h2>
  *
- * Memory segments support strong thread-confinement guarantees. Upon creation, they are assigned an <em>owner thread</em>,
- * typically the thread which initiated the creation operation. After creation, only the owner thread will be allowed
- * to directly manipulate the memory segment (e.g. close the memory segment) or access the underlying memory associated with
- * the segment using a memory access var handle. Any attempt to perform such operations from a thread other than the
- * owner thread will result in a runtime failure.
- * <p>
- * The {@link #handoff(Thread)} method can be used to change the thread-confinement properties of a memory segment.
- * This method is, like {@link #close()}, a <em>terminal operation</em> which marks the original segment as not alive
- * (see {@link #isAlive()}) and creates a <em>new</em> segment with the desired thread-confinement properties. Calling
- * {@link #handoff(Thread)} is only possible if the segment features the corresponding {@link #HANDOFF} access mode.
- * <p>
- * For instance, if a client wants to transfer ownership of a segment to another (known) thread, it can do so as follows:
+ * A client might obtain a {@link Spliterator} from a segment, which can then be used to slice the segment and allow multiple
+ * threads to work in parallel on disjoint segment slices (to do this, the segment has to be associated with a shared scope).
+ * The following code can be used to sum all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
-MemorySegment segment = ...
-MemorySegment aSegment = segment.handoff(threadA);
- * }</pre></blockquote>
- *
- * By doing so, the original segment is marked as not alive, and a new segment is returned whose owner thread
- * is {@code threadA}; this allows, for instance, for two threads {@code A} and {@code B} to share
- * a segment in a controlled, cooperative and race-free fashion (also known as <em>serial thread confinement</em>).
- * <p>
- * Alternatively, the {@link #share()} method can be used to remove thread ownership altogether; this is only possible
- * if the segment features the corresponding {@link #SHARE} access mode. The following code shows how clients can
- * obtain a shared segment:
- *
- * <blockquote><pre>{@code
-MemorySegment segment = ...
-MemorySegment sharedSegment = segment.share();
- * }</pre></blockquote>
- *
- * Again here, the original segment is marked as not alive, and a new <em>shared</em> segment is returned which features no owner
- * thread (e.g. {@link #ownerThread()} returns {@code null}). This might be useful when multiple threads need to process
- * the contents of the same memory segment concurrently (e.g. in the case of parallel processing). For instance, a client
- * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
- * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
- *
- * <blockquote><pre>{@code
-SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-try (MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT).share()) {
+try (ResourceScope scope = ResourceScope.ofShared()) {
+    SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+    MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
  * }</pre></blockquote>
- *
- * Once shared, a segment can be claimed back by a given thread (again using {@link #handoff(Thread)}); in fact, many threads
- * can attempt to gain ownership of the same segment, concurrently, and only one of them is guaranteed to succeed.
- * <p>
- * When using shared segments, clients should make sure that no other thread is accessing the segment while
- * the segment is being closed. If one or more threads attempts to access a segment concurrently while the
- * segment is being closed, an exception might occur on both the accessing and the closing threads. Clients should
- * refrain from attempting to close a segment repeatedly (e.g. keep calling {@link #close()} until no exception is thrown);
- * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
- * accessing/closing the segment.
- *
- * <h2>Implicit deallocation</h2>
- *
- * Clients can register a memory segment against a {@link Cleaner}, to make sure that underlying resources associated with
- * that segment will be released when the segment becomes <em>unreachable</em>, which can be useful to prevent native memory
- * leaks. This can be achieved using the {@link #registerCleaner(Cleaner)} method, as follows:
- *
- * <blockquote><pre>{@code
-MemorySegment segment = ...
-MemorySegment gcSegment = segment.registerCleaner(cleaner);
- * }</pre></blockquote>
- *
- * Here, the original segment is marked as not alive, and a new segment is returned (the owner thread of the returned
- * segment set is set to that of the current thread, see {@link #ownerThread()}); the new segment
- * will also be registered with the the {@link Cleaner} instance provided to the {@link #registerCleaner(Cleaner)} method;
- * as such, if not closed explicitly (see {@link #close()}), the new segment will be automatically closed by the cleaner.
  *
  * @apiNote In the future, if the Java language permits, {@link MemorySegment}
  * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
@@ -245,7 +164,7 @@ public interface MemorySegment extends Addressable {
      * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
      * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
      * As such, splitting is possible as long as {@code N >= 2}. The spliterator returns segments that feature the same
-     * <a href="#access-modes">access modes</a> as the given segment less the {@link #CLOSE} access mode.
+     * scope as the given segment.
      * <p>
      * The returned spliterator effectively allows to slice this segment into disjoint sub-segments, which can then
      * be processed in parallel by multiple threads (if the segment is shared).
@@ -257,6 +176,10 @@ public interface MemorySegment extends Addressable {
      */
     Spliterator<MemorySegment> spliterator(SequenceLayout layout);
 
+    /**
+     * Returns the resource scope associated with this memory segment.
+     * @return the resource scope associated with this memory segment.
+     */
     ResourceScope scope();
 
     /**
@@ -346,6 +269,21 @@ public interface MemorySegment extends Addressable {
     }
 
     /**
+     * Is this segment read-only?
+     * @return {@code true}, if this segment is read-only.
+     * @see #asReadOnly()
+     */
+    boolean isReadOnly();
+
+    /**
+     * Obtains a read-only view of this segment. The resulting segment will be identical to this one, but
+     * attempts to overwrite the contents of the returned segment will cause runtime exceptions.
+     * @return a read-only view of this segment
+     * @see #isReadOnly()
+     */
+    MemorySegment asReadOnly();
+
+    /**
      * Is this a mapped segment? Returns true if this segment is a mapped memory segment,
      * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
@@ -376,7 +314,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @return this memory segment
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment
-     * @throws UnsupportedOperationException if this segment does not support the {@link #WRITE} access mode
+     * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
     MemorySegment fill(byte value);
 
@@ -397,9 +335,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
      * @throws IllegalStateException if either the source segment or this segment have been already closed,
      * or if access occurs from a thread other than the thread owning either segment.
-     * @throws UnsupportedOperationException if either the source segment or this segment do not feature required access modes;
-     * more specifically, {@code src} should feature at least the {@link MemorySegment#READ} access mode,
-     * while this segment should feature at least the {@link MemorySegment#WRITE} access mode.
+     * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
     void copyFrom(MemorySegment src);
 
@@ -424,15 +360,13 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalStateException if either this segment of the other segment
      * have been already closed, or if access occurs from a thread other than the
      * thread owning either segment
-     * @throws UnsupportedOperationException if either this segment or the other
-     * segment does not feature at least the {@link MemorySegment#READ} access mode
      */
     long mismatch(MemorySegment other);
 
     /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
      * the properties of this segment. For instance, if this segment is <em>immutable</em>
-     * (e.g. the segment has access mode {@link #READ} but not {@link #WRITE}), then the resulting buffer is <em>read-only</em>
+     * (e.g. the segment is a read-only segment, see {@link #isReadOnly()}), then the resulting buffer is <em>read-only</em>
      * (see {@link ByteBuffer#isReadOnly()}. Additionally, if this is a native memory segment, the resulting buffer is
      * <em>direct</em> (see {@link ByteBuffer#isDirect()}).
      * <p>
@@ -441,11 +375,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * are set to this segment' size (see {@link MemorySegment#byteSize()}). For this reason, a byte buffer cannot be
      * returned if this segment' size is greater than {@link Integer#MAX_VALUE}.
      * <p>
-     * The life-cycle of the returned buffer will be tied to that of this segment. That means that if the this segment
-     * is closed (see {@link MemorySegment#close()}, accessing the returned
-     * buffer will throw an {@link IllegalStateException}.
+     * The life-cycle of the returned buffer will be tied to that of this segment. That is, accessing the returned buffer
+     * after the scope associated with this segment has been closed (see {@link ResourceScope#close()}, will throw an {@link IllegalStateException}.
      * <p>
-     * If this segment is <em>shared</em>, calling certain I/O operations on the resulting buffer might result in
+     * If this segment is associated with a shared scope, calling certain I/O operations on the resulting buffer might result in
      * an unspecified exception being thrown. Examples of such problematic operations are {@link FileChannel#read(ByteBuffer)},
      * {@link FileChannel#write(ByteBuffer)}, {@link java.nio.channels.SocketChannel#read(ByteBuffer)} and
      * {@link java.nio.channels.SocketChannel#write(ByteBuffer)}.
@@ -456,15 +389,15 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @return a {@link ByteBuffer} view of this memory segment.
      * @throws UnsupportedOperationException if this segment cannot be mapped onto a {@link ByteBuffer} instance,
      * e.g. because it models an heap-based segment that is not based on a {@code byte[]}), or if its size is greater
-     * than {@link Integer#MAX_VALUE}, or if the segment does not support the {@link #READ} access mode.
+     * than {@link Integer#MAX_VALUE}.
      */
     ByteBuffer asByteBuffer();
 
     /**
      * Copy the contents of this memory segment into a fresh byte array.
      * @return a fresh byte array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link byte[]} instance, e.g. its size is greater than {@link Integer#MAX_VALUE},
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link byte[]} instance,
+     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -473,9 +406,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link short[]} instance, e.g. because {@code byteSize() % 2 != 0},
-     * or {@code byteSize() / 2 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link short[]} instance,
+     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -484,9 +416,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh char array.
      * @return a fresh char array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link char[]} instance, e.g. because {@code byteSize() % 2 != 0},
-     * or {@code byteSize() / 2 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link char[]} instance,
+     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -495,9 +426,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh int array.
      * @return a fresh int array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link int[]} instance, e.g. because {@code byteSize() % 4 != 0},
-     * or {@code byteSize() / 4 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link int[]} instance,
+     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -506,9 +436,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh float array.
      * @return a fresh float array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link float[]} instance, e.g. because {@code byteSize() % 4 != 0},
-     * or {@code byteSize() / 4 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link float[]} instance,
+     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -517,9 +446,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh long array.
      * @return a fresh long array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link long[]} instance, e.g. because {@code byteSize() % 8 != 0},
-     * or {@code byteSize() / 8 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link long[]} instance,
+     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -528,9 +456,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh double array.
      * @return a fresh double array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment does not feature the {@link #READ} access mode, or if this
-     * segment's contents cannot be copied into a {@link double[]} instance, e.g. because {@code byteSize() % 8 != 0},
-     * or {@code byteSize() / 8 > Integer#MAX_VALUE}.
+     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link double[]} instance,
+     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
      * thread owning this segment.
      */
@@ -541,15 +468,15 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
-     * The segment will feature all <a href="#access-modes">access modes</a> (see {@link #ALL_ACCESS}),
-     * unless the given buffer is {@linkplain ByteBuffer#isReadOnly() read-only} in which case the segment will
-     * not feature the {@link #WRITE} access mode, and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * If the buffer is read-only (see {@link ByteBuffer#isReadOnly()}), the resulting segment will also be read-only
+     * (see {@link #isReadOnly()}). The scope associated with this segment can either be the <em>global</em> scope,
+     * in case the buffer has been created independently, or to some other (possibly closeable) resource scope,
+     * in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>
-     * The resulting memory segment keeps a reference to the backing buffer, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment.
+     * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
      * @param bb the byte buffer backing the buffer memory segment.
-     * @return a new confined buffer memory segment.
+     * @return a new buffer memory segment.
      */
     static MemorySegment ofByteBuffer(ByteBuffer bb) {
         return AbstractMemorySegmentImpl.ofBuffer(bb);
@@ -558,12 +485,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated byte array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(byte[] arr) {
         return HeapMemorySegmentImpl.OfByte.fromArray(arr);
@@ -572,12 +498,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(char[] arr) {
         return HeapMemorySegmentImpl.OfChar.fromArray(arr);
@@ -586,12 +511,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated short array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(short[] arr) {
         return HeapMemorySegmentImpl.OfShort.fromArray(arr);
@@ -600,12 +524,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated int array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(int[] arr) {
         return HeapMemorySegmentImpl.OfInt.fromArray(arr);
@@ -614,12 +537,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated float array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(float[] arr) {
         return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
@@ -628,12 +550,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated long array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(long[] arr) {
         return HeapMemorySegmentImpl.OfLong.fromArray(arr);
@@ -642,12 +563,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated double array.
      * <p>
-     * The resulting memory segment keeps a reference to the backing array, to ensure it remains <em>reachable</em>
-     * for the life-time of the segment. The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}).
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
+     * the <em>global</em>, shared scope.
      *
      * @param arr the primitive array backing the array memory segment.
-     * @return a new confined array memory segment.
+     * @return a new array memory segment.
      */
     static MemorySegment ofArray(double[] arr) {
         return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
@@ -658,12 +578,12 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(layout.bytesSize(), layout.bytesAlignment());
+    allocateNative(layout.bytesSize(), layout.bytesAlignment(), ResourceScope.ofConfined(null, Cleaner.create(), true));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible to call the {@link MemorySegment#close()} on a native memory segment,
-     * to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so will result in off-heap memory leaks.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
@@ -673,6 +593,24 @@ for (long l = 0; l < segment.byteSize(); l++) {
         return allocateNative(layout, ResourceScope.ofConfined(CleanerFactory.cleaner()));
     }
 
+    /**
+     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout
+     * and resource scope.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    allocateNative(layout.bytesSize(), layout.bytesAlignment(), scope);
+     * }</pre></blockquote>
+     *
+     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     *
+     * @param layout the layout of the off-heap memory block backing the native memory segment.
+     * @param scope the segment scope.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
+     */
     static MemorySegment allocateNative(MemoryLayout layout, ResourceScope scope) {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(layout);
@@ -684,15 +622,15 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-allocateNative(bytesSize, 1);
+    allocateNative(bytesSize, 1, ResourceScope.ofConfined(null, Cleaner.create(), true));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible to call the {@link MemorySegment#close()} on a native memory segment,
-     * to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so will result in off-heap memory leaks.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new confined native memory segment.
+     * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
      */
     static MemorySegment allocateNative(long bytesSize) {
@@ -700,11 +638,115 @@ allocateNative(bytesSize, 1);
     }
 
     /**
-     * Creates a new confined mapped memory segment that models a memory-mapped region of a file from a given path.
+     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
+     * and resource scope.
      * <p>
-     * The segment will feature all <a href="#access-modes">access modes</a> (see {@link #ALL_ACCESS}),
-     * unless the given mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, in which case
-     * the segment will not feature the {@link #WRITE} access mode, and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    allocateNative(bytesSize, 1, scope);
+     * }</pre></blockquote>
+     *
+     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     *
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param scope the segment scope.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     */
+    static MemorySegment allocateNative(long bytesSize, ResourceScope scope) {
+        return allocateNative(bytesSize, 1, scope);
+    }
+
+    /**
+     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
+     * and alignment constraints (in bytes).
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(null, Cleaner.create(), true));
+     * }</pre></blockquote>
+     *
+     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     *
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
+     * is not a power of 2.
+     */
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
+        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+    }
+
+    /**
+     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
+     * (in bytes), alignment constraint (in bytes) and resource scope. The returned segment is not read-only (see {@link #isReadOnly()}).
+     *
+     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
+     *
+     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
+     * @param scope the segment scope.
+     * @return a new native memory segment.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
+     * is not a power of 2.
+     */
+    static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
+        Objects.requireNonNull(scope);
+        if (bytesSize <= 0) {
+            throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
+        }
+
+        if (alignmentBytes < 0 ||
+                ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
+            throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
+        }
+
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, Utils.asScope(scope));
+    }
+
+    /**
+     * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(null, Cleaner.create(), true));
+     * }</pre></blockquote>
+     *
+     * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
+     * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
+     *
+     * @param path the path to the file to memory map.
+     * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
+     * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
+     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
+     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
+     * @return a new mapped memory segment.
+     * @throws IllegalArgumentException if {@code bytesOffset < 0}.
+     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws UnsupportedOperationException if an unsupported map mode is specified, or if the {@code path} is associated
+     * with a provider that does not support creating file channels.
+     * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
+     * @throws  SecurityException If a security manager is installed and it denies an unspecified permission required by the implementation.
+     * In the case of the default provider, the {@link SecurityManager#checkRead(String)} method is invoked to check
+     * read access if the file is opened for reading. The {@link SecurityManager#checkWrite(String)} method is invoked to check
+     * write access if the file is opened for writing.
+     */
+    static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+    }
+
+    /**
+     * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
+     * <p>
+     * If the specified mapping mode is {@linkplain FileChannel.MapMode#READ_ONLY READ_ONLY}, the resulting segment
+     * will be read-only (see {@link #isReadOnly()}).
      * <p>
      * The content of a mapped memory segment can change at any time, for example
      * if the content of the corresponding region of the mapped file is changed by
@@ -728,6 +770,7 @@ allocateNative(bytesSize, 1);
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
      *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
+     * @param scope the segment scope.
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}.
      * @throws IllegalArgumentException if {@code bytesSize < 0}.
@@ -739,57 +782,16 @@ allocateNative(bytesSize, 1);
      * read access if the file is opened for reading. The {@link SecurityManager#checkWrite(String)} method is invoked to check
      * write access if the file is opened for writing.
      */
-    static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(CleanerFactory.cleaner()));
-    }
-
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScope scope) throws IOException {
         Objects.requireNonNull(scope);
         return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, Utils.asScope(scope));
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size and
-     * alignment constraint (in bytes). The segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link #ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible to call the {@link MemorySegment#close()} on a native memory segment,
-     * to make sure the backing off-heap memory block is deallocated accordingly. Failure to do so will result in off-heap memory leaks.
-     *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new confined native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
-     * is not a power of 2.
-     */
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(CleanerFactory.cleaner()));
-    }
-
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        if (bytesSize <= 0) {
-            throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
-        }
-
-        if (alignmentBytes < 0 ||
-                ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
-            throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
-        }
-
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, Utils.asScope(scope));
-    }
-
-    boolean isReadOnly();
-
-    MemorySegment asReadOnly();
-
-    /**
-     * Returns a shared native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
+     * Returns a native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
      * This method can be very useful when dereferencing memory addresses obtained when interacting with native libraries.
-     * The segment will feature the {@link #READ} and {@link #WRITE} <a href="#access-modes">access modes</a>.
-     * Equivalent to (but likely more efficient than) the following code:
+     * The returned segment is not read-only (see {@link #isReadOnly()}), and is associated with the <em>global</em>, non-closeable
+     * scope. Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
     MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
                  .withOwnerThread(null)

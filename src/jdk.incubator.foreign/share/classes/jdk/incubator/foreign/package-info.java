@@ -45,19 +45,15 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * <pre>{@code
-try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
-    for (int i = 0 ; i < 10 ; i++) {
-       MemoryAccess.setIntAtIndex(segment, i);
-    }
+MemorySegment segment = MemorySegment.allocateNative(10 * 4);
+for (int i = 0 ; i < 10 ; i++) {
+   MemoryAccess.setIntAtIndex(segment, i);
 }
  * }</pre>
  *
  * Here create a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
- * The segment is created inside a <em>try-with-resources</em> construct: this idiom ensures that all the memory resources
- * associated with the segment will be released at the end of the block, according to the semantics described in
- * Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>. Inside the try-with-resources block, we initialize
- * the contents of the memory segment using the
+ * Inside a loop, we then initialize the contents of the memory segment using the
  * {@link jdk.incubator.foreign.MemoryAccess#setIntAtIndex(jdk.incubator.foreign.MemorySegment, long, int)} helper method;
  * more specifically, if we view the memory segment as a set of 10 adjacent slots,
  * {@code s[i]}, where {@code 0 <= i < 10}, where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
@@ -66,16 +62,25 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * <h3><a id="deallocation"></a>Deterministic deallocation</h3>
  *
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
- * crucial that the resources associated with a memory segment are released when the segment is no longer in use, by calling the {@link jdk.incubator.foreign.MemorySegment#close()}
- * method either explicitly, or implicitly, by relying on try-with-resources construct (as demonstrated in the example above).
- * Closing a given memory segment is an <em>atomic</em> operation which can either succeed - and result in the underlying
- * memory associated with the segment to be released, or <em>fail</em> with an exception.
- * <p>
- * The deterministic deallocation model differs significantly from the implicit strategies adopted within other APIs, most
- * notably the {@link java.nio.ByteBuffer} API: in that case, when a native byte buffer is created (see {@link java.nio.ByteBuffer#allocateDirect(int)}),
- * the underlying memory is not released until the byte buffer reference becomes <em>unreachable</em>. While implicit deallocation
- * models such as this can be very convenient - clients do not have to remember to <em>close</em> a direct buffer - such models can also make it
- * hard for clients to ensure that the memory associated with a direct buffer has indeed been released.
+ * often crucial that the resources associated with a memory segment are released when the segment is no longer in use,
+ * and in a timely fashion. For this reason, there might be cases where waiting for the garbage collector to determine that a segment
+ * is <em>unreachable</em> is not optimal. Clients that operate under these assumptions might want to be able to programmatically
+ * release the memory associated with a memory segment. This can be done, using the {@link jdk.incubator.foreign.ResourceScope}
+ * abstraction, as shown below:
+ *
+ * <pre>{@code
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    MemorySegment segment = MemorySegment.allocateNative(10 * 4, scope);
+    for (int i = 0 ; i < 10 ; i++) {
+        MemoryAccess.setIntAtIndex(segment, i);
+    }
+}
+ * }</pre>
+ *
+ * This example is almost identical to the one shown above; this time we first create a so called <em>resource scope</em>,
+ * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
+ * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
+ * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
  *
  * <h3><a id="safety"></a>Safety</h3>
  *
@@ -86,14 +91,9 @@ try (MemorySegment segment = MemorySegment.allocateNative(10 * 4)) {
  * Section {@jls 15.10.4} of <cite>The Java Language Specification</cite>.
  * <p>
  * Since memory segments can be closed (see above), segments are also validated (upon access) to make sure that
- * the segment being accessed has not been closed prematurely. We call this guarantee <em>temporal safety</em>. Note that,
- * in the general case, guaranteeing temporal safety can be hard, as multiple threads could attempt to access and/or close
- * the same memory segment concurrently. The memory access API addresses this problem by imposing strong
- * <em>thread-confinement</em> guarantees on memory segments: upon creation, a memory segment is associated with an owner thread,
- * which is the only thread that can either access or close the segment.
- * <p>
- * Together, spatial and temporal safety ensure that each memory access operation either succeeds - and accesses a valid
- * memory location - or fails.
+ * the resource scope associated with the segment being accessed has not been closed prematurely.
+ * We call this guarantee <em>temporal safety</em>. Together, spatial and temporal safety ensure that each memory access
+ * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link jdk.incubator.foreign.LibraryLookup} and {@link jdk.incubator.foreign.CLinker}.
