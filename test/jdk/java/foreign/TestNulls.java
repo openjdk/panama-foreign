@@ -90,7 +90,9 @@ public class TestNulls {
             CLinker.VaList.class,
             CLinker.VaList.Builder.class,
             FunctionDescriptor.class,
-            LibraryLookup.class
+            LibraryLookup.class,
+            NativeAllocator.class,
+            ResourceScope.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
@@ -103,10 +105,10 @@ public class TestNulls {
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
             "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.ref.Cleaner)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.ref.Cleaner)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/1/0"
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner,boolean)/0/0",
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner,boolean)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner,boolean)/0/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner,boolean)/1/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -127,6 +129,7 @@ public class TestNulls {
         addDefaultMapping(float.class, 0f);
         addDefaultMapping(long.class, 0L);
         addDefaultMapping(double.class, 0d);
+        addDefaultMapping(boolean.class, true);
         addDefaultMapping(ByteOrder.class, ByteOrder.nativeOrder());
         addDefaultMapping(Thread.class, Thread.currentThread());
         addDefaultMapping(Cleaner.class, CleanerFactory.cleaner());

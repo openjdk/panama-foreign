@@ -188,7 +188,6 @@ public interface ResourceScope extends AutoCloseable {
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
      * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new confined scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
-     * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofConfined(Object attachment, Cleaner cleaner, boolean closeable) {
         return MemoryScope.createConfined(attachment, cleaner, closeable);
@@ -221,7 +220,6 @@ public interface ResourceScope extends AutoCloseable {
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
      * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new shared scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
-     * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
         return MemoryScope.createShared(attachment, cleaner, closeable);
