@@ -39,7 +39,7 @@ import java.lang.ref.Reference;
 /**
  * This class manages the temporal bounds associated with a memory segment as well
  * as thread confinement. A scope has a liveness bit, which is updated when the scope is closed
- * (this operation is triggered by {@link AbstractMemorySegmentImpl#close()}). This bit is consulted prior
+ * (this operation is triggered by {@link ResourceScope#close()}). This bit is consulted prior
  * to memory access (see {@link #checkValidState()}).
  * There are two kinds of memory scope: confined memory scope and shared memory scope.
  * A confined memory scope has an associated owner thread that confines some operations to
@@ -151,7 +151,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * A confined scope, which features an owner thread. The liveness check features an additional
      * confinement check - that is, calling any operation on this scope from a thread other than the
      * owner thread will result in an exception. Because of this restriction, checking the liveness bit
-     * can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}).
+     * can be performed in plain mode.
      */
     static class ConfinedScope extends MemoryScope {
 
@@ -219,8 +219,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
      * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
      * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
-     * checking the liveness bit upon access can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}),
-     * as in the confined case.
+     * checking the liveness bit upon access can be performed in plain mode, as in the confined case.
      */
     static class SharedScope extends MemoryScope {
 
