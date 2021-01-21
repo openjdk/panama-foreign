@@ -93,7 +93,7 @@ public interface MemoryAddress extends Addressable {
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with a fresh
-     * confined resource scope whose owner thread is the thread calling this method.
+     * shared, non-closeable resource scope whose owner thread is the thread calling this method.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
@@ -102,7 +102,7 @@ public interface MemoryAddress extends Addressable {
      * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will <em>not</em> result in releasing any
      * memory resources. This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, ResourceScope.ofConfined(Cleaner.create()));
+    asSegmentRestricted(byteSize, null, ResourceScope.ofShared(Cleaner.create()));
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -116,7 +116,7 @@ public interface MemoryAddress extends Addressable {
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     default MemorySegment asSegmentRestricted(long bytesSize) {
-        return asSegmentRestricted(bytesSize, null, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+        return asSegmentRestricted(bytesSize, null, ResourceScope.ofShared(CleanerFactory.cleaner()));
     }
 
     /**

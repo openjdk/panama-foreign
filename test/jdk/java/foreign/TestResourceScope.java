@@ -208,6 +208,16 @@ public class TestResourceScope {
         }
     }
 
+    @Test
+    public void testCloseEmptyConfinedScope() {
+        ResourceScope.ofConfined().close();
+    }
+
+    @Test
+    public void testCloseEmptySharedScope() {
+        ResourceScope.ofShared().close();
+    }
+
     private void waitSomeTime() {
         try {
             Thread.sleep(10);

@@ -48,7 +48,7 @@ public abstract class ResourceList {
 
         public abstract void cleanup();
 
-        static ResourceCleanup DUMMY_CLEANUP = new ResourceCleanup() {
+        final static ResourceCleanup DUMMY_CLEANUP = new ResourceCleanup() {
             @Override
             public void cleanup() {
                 // do nothing
@@ -68,13 +68,21 @@ public abstract class ResourceList {
     static class ConfinedResourceList extends ResourceList {
         @Override
         void add(ResourceCleanup cleanup) {
-            cleanup.next = fst;
-            fst = cleanup;
+            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+                cleanup.next = fst;
+                fst = cleanup;
+            } else {
+                throw new IllegalStateException("Already closed!");
+            }
         }
 
         @Override
         void cleanup() {
-            cleanup(fst);
+            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+                ResourceCleanup prev = fst;
+                fst = ResourceCleanup.DUMMY_CLEANUP;
+                cleanup(prev);
+            }
         }
     }
 
@@ -108,16 +116,18 @@ public abstract class ResourceList {
         }
 
         void cleanup() {
-            //ok now we're really closing down
-            ResourceCleanup prev = null;
-            while (true) {
-                prev = (ResourceCleanup) FST.getAcquire(this);
-                // no need to check for DUMMY, since only one thread can get here!
-                if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.DUMMY_CLEANUP)) {
-                    break;
+            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+                //ok now we're really closing down
+                ResourceCleanup prev = null;
+                while (true) {
+                    prev = (ResourceCleanup) FST.getAcquire(this);
+                    // no need to check for DUMMY, since only one thread can get here!
+                    if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.DUMMY_CLEANUP)) {
+                        break;
+                    }
                 }
+                cleanup(prev);
             }
-            cleanup(prev);
         }
     }
 }

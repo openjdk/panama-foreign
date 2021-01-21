@@ -115,7 +115,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceList.ResourceCleanup cleanupAction, MemoryScope scope) {
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
-        scope.add(cleanupAction);
+        if (cleanupAction != ResourceList.ResourceCleanup.DUMMY_CLEANUP) {
+            scope.add(cleanupAction);
+        }
         return segment;
     }
 }

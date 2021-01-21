@@ -51,7 +51,7 @@ import java.lang.ref.Reference;
  */
 public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope {
 
-    final ScopeCleanable scopeCleanable;
+    final Cleaner cleaner;
     final ResourceList resourceList;
     final boolean closeable;
 
@@ -61,12 +61,14 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         this.ref = ref;
         this.resourceList = resourceList;
         this.closeable = closeable;
+        this.cleaner = cleaner;
         if (parent != null) {
             resourceList.add(ResourceList.ResourceCleanup.ofRunnable(parent::release));
         }
-        this.scopeCleanable = cleaner != null ?
-                new ScopeCleanable(this, cleaner, resourceList) :
-                null;
+        if (cleaner != null) {
+            Runnable r = resourceList::cleanup;
+            cleaner.register(this, r);
+        }
     }
 
     public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner, boolean closeable) {
@@ -106,9 +108,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         try {
             justClose();
             resourceList.cleanup();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
         } finally {
             Reference.reachabilityFence(this);
         }
@@ -188,8 +187,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         @Override
         public ResourceScope fork() {
             forkedCount++;
-            return new ConfinedScope(this, owner, null, scopeCleanable != null ? scopeCleanable.cleaner : null, closeable
-            );
+            return new ConfinedScope(this, owner, null, cleaner, closeable);
         }
 
         @Override
@@ -253,7 +251,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
         @Override
         public void checkValidState() {
-            if (state != ALIVE) {
+            if (state < ALIVE) {
                 throw ScopedAccessError.INSTANCE;
             }
         }
@@ -270,8 +268,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                     throw new IllegalStateException("Segment acquire limit exceeded");
                 }
             } while (!STATE.compareAndSet(this, value, value + 1));
-            return new MemoryScope.SharedScope(this, null, scopeCleanable != null ? scopeCleanable.cleaner : null, closeable
-            );
+            return new MemoryScope.SharedScope(this, null, cleaner, closeable);
         }
 
         void release() {
@@ -302,6 +299,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             if (!success) {
                 throw new IllegalStateException("Cannot close while another thread is accessing the segment");
             }
+            System.out.println("");
         }
 
         @Override
@@ -310,25 +308,25 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
-        final ResourceList resourceList;
-        final Cleaner cleaner;
-
-        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, ResourceList resourceList) {
-            super(referent, cleaner);
-            this.resourceList = resourceList;
-            this.cleaner = cleaner;
-        }
-
-        @Override
-        protected void performCleanup() {
-            resourceList.cleanup();
-        }
-
-        Cleaner cleaner() {
-            return cleaner;
-        }
-    }
+//    static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
+//        final ResourceList resourceList;
+//        final Cleaner cleaner;
+//
+//        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, ResourceList resourceList) {
+//            super(referent, cleaner);
+//            this.resourceList = resourceList;
+//            this.cleaner = cleaner;
+//        }
+//
+//        @Override
+//        protected void performCleanup() {
+//            resourceList.cleanup();
+//        }
+//
+//        Cleaner cleaner() {
+//            return cleaner;
+//        }
+//    }
 
     public static MemoryScope GLOBAL = new MemoryScope(null, null, null, false, null) {
         @Override

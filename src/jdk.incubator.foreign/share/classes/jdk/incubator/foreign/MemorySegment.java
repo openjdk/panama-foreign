@@ -33,6 +33,7 @@ import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
+import jdk.internal.ref.Cleaner;
 import jdk.internal.ref.CleanerFactory;
 
 import java.io.IOException;
@@ -590,7 +591,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
     static MemorySegment allocateNative(MemoryLayout layout) {
-        return allocateNative(layout, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+        return allocateNative(layout, ResourceScope.ofShared(CleanerFactory.cleaner()));
     }
 
     /**
@@ -622,7 +623,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bytesSize, 1, ResourceScope.ofConfined(Cleaner.create()));
+    allocateNative(bytesSize, 1, ResourceScope.ofShared(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -665,7 +666,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(Cleaner.create()));
+    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofShared(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -679,7 +680,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofShared(CleanerFactory.cleaner()));
     }
 
     /**
@@ -716,7 +717,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(Cleaner.create()));
+    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofShared(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
@@ -739,7 +740,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * write access if the file is opened for writing.
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(CleanerFactory.cleaner()));
+        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofShared(CleanerFactory.cleaner()));
     }
 
     /**
