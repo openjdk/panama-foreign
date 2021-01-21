@@ -357,15 +357,13 @@ public class CallGeneratorHelper extends NativeTestHelper {
     //helper methods
 
     @SuppressWarnings("unchecked")
-    static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check, List<MemorySegment> segments) throws ReflectiveOperationException {
+    static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
             MemorySegment segment = MemorySegment.allocateNative(layout);
-            initStruct(segment, (GroupLayout)layout, checks, check, segments);
-            segments.add(segment);
+            initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
             MemorySegment segment = MemorySegment.allocateNative(1);
-            segments.add(segment);
             if (check) {
                 checks.add(o -> {
                     try {
@@ -398,12 +396,12 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-    static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check, List<MemorySegment> segments) throws ReflectiveOperationException {
+    static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         for (MemoryLayout l : g.memberLayouts()) {
             if (l.isPadding()) continue;
             VarHandle accessor = g.varHandle(structFieldCarrier(l), MemoryLayout.PathElement.groupElement(l.name().get()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
-            Object value = makeArg(l, fieldsCheck, check, segments);
+            Object value = makeArg(l, fieldsCheck, check);
             if (isPointer(l)) {
                 value = ((MemoryAddress)value).toRawLongValue();
             }

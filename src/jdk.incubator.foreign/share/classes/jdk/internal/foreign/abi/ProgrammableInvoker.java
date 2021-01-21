@@ -28,6 +28,7 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils.Allocator;
@@ -271,10 +272,10 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64);
-        try {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
             if (stackArgsBytes > 0) {
-                stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
+                stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);
             }
 
             VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr.address().toRawLongValue());
@@ -316,11 +317,6 @@ public class ProgrammableInvoker {
                     returns[i] = SharedUtils.read(argBuffer.asSlice(layout.retOffset(storage)), move.type());
                 }
                 return returns;
-            }
-        } finally {
-            argBuffer.scope().close();
-            if (stackArgsSeg != null) {
-                stackArgsSeg.scope().close();
             }
         }
     }

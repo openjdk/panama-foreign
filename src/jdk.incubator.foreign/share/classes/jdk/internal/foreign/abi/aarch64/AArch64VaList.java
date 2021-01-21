@@ -256,22 +256,22 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    try (ResourceScope scope = segment.scope().fork()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                        MemorySegment seg = allocator.allocate(layout);
-                        seg.copyFrom(slice);
-                        postAlignStack(layout);
-                        yield seg;
-                    }
+                    ResourceScope scope = segment.scope().fork();
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
+                    MemorySegment seg = allocator.allocate(layout);
+                    seg.copyFrom(slice);
+                    if (scope.isCloseable()) scope.close();
+                    postAlignStack(layout);
+                    yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope scope = segment.scope().fork()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                        Object res = reader.get(slice);
-                        postAlignStack(layout);
-                        yield res;
-                    }
+                    ResourceScope scope = segment.scope().fork();
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
+                    Object res = reader.get(slice);
+                    if (scope.isCloseable()) scope.close();
+                    postAlignStack(layout);
+                    yield res;
                 }
             };
         } else {
@@ -371,7 +371,10 @@ public class AArch64VaList implements VaList {
     @Override
     public void close() {
         segment.scope().close();
-        attachedSegments.forEach(segment1 -> segment1.scope().close());
+        attachedSegments.stream()
+                .map(MemorySegment::scope)
+                .filter(ResourceScope::isCloseable)
+                .forEach(ResourceScope::close);
     }
 
     @Override

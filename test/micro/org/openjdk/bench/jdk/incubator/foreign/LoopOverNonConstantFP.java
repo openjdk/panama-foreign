@@ -24,6 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -71,8 +72,8 @@ public class LoopOverNonConstantFP {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE), i);
         }
-        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE);
-        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE);
+        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.ofConfined());
+        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.ofConfined());
         for (int i = 0; i < ELEM_SIZE; i++) {
             MemoryAccess.setDoubleAtIndex(segmentIn, i, i);
         }

@@ -90,7 +90,7 @@ public class TestSegments {
 
     @Test(dataProvider = "segmentOperations")
     public void testOpAfterClose(SegmentMember member) throws Throwable {
-        MemorySegment segment = MemorySegment.allocateNative(4);
+        MemorySegment segment = MemorySegment.allocateNative(4, ResourceScope.ofConfined());
         segment.scope().close();
         try {
             Object o = member.method.invoke(segment, member.params);
@@ -151,10 +151,8 @@ public class TestSegments {
     }
 
     static void tryClose(MemorySegment segment) {
-        try {
+        if (segment.scope().isCloseable()) {
             segment.scope().close();
-        } catch (Throwable ex) {
-            // heap segment - ignore...
         }
     }
 
@@ -170,7 +168,11 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
                 () -> MemorySegment.allocateNative(4),
                 () -> MemorySegment.allocateNative(4, 8),
-                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()))
+                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder())),
+                () -> MemorySegment.allocateNative(4, ResourceScope.ofConfined()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.ofConfined()),
+                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()), ResourceScope.ofConfined())
+
         );
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
     }

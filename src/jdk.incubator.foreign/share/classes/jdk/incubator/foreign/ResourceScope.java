@@ -166,32 +166,31 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new confined scope.
      */
     static ResourceScope ofConfined() {
-        return MemoryScope.createConfined(null, null, true);
+        return ofConfined(null, null, true);
     }
 
     /**
-     * Create a new confined scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * Create a new confined scope. The resulting scope is not closeable, and is managed by a {@link Cleaner}.
      * @param cleaner the cleaner to be associated with the returned scope.
      * @return a new confined scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofConfined(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return MemoryScope.createConfined(null, cleaner, true);
+        return ofConfined(null, cleaner, false);
     }
 
     /**
-     * Create a new confined scope. The resulting scope is managed by a {@link Cleaner} and might be closeable,
+     * Create a new confined scope. The resulting scope might be managed by a {@link Cleaner} (where provided) and might be closeable,
      * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
      * scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
-     * @param cleaner the cleaner to be associated with the returned scope.
+     * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
      * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new confined scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofConfined(Object attachment, Cleaner cleaner, boolean closeable) {
-        Objects.requireNonNull(cleaner);
         return MemoryScope.createConfined(attachment, cleaner, closeable);
     }
 
@@ -200,32 +199,31 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new shared scope, managed by {@code cleaner}.
      */
     static ResourceScope ofShared() {
-        return MemoryScope.createShared(null, null, true);
+        return ofShared(null, null, true);
     }
 
     /**
-     * Create a new shared scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * Create a new shared scope. The resulting scope is not closeable, and is managed by a {@link Cleaner}.
      * @param cleaner the cleaner to be associated with the returned scope.
      * @return a new shared scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofShared(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return MemoryScope.createShared(null, cleaner, true);
+        return ofShared(null, cleaner, false);
     }
 
     /**
-     * Create a new shared scope. The resulting scope is managed by a {@link Cleaner} and might be closeable,
+     * Create a new shared scope. The resulting scope might be managed by a {@link Cleaner} (where provided) and might be closeable,
      * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
      * scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
-     * @param cleaner the cleaner to be associated with the returned scope.
+     * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
      * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new shared scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
-        Objects.requireNonNull(cleaner);
         return MemoryScope.createShared(attachment, cleaner, closeable);
     }
     

@@ -59,7 +59,7 @@ public class TestResourceScope {
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofConfined(cleaner);
+        ResourceScope scope = ResourceScope.ofConfined(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             makeSegment(scope, () -> acc.addAndGet(delta));
@@ -82,7 +82,7 @@ public class TestResourceScope {
     public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        ResourceScope scope = ResourceScope.ofShared(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             makeSegment(scope, () -> acc.addAndGet(delta));
@@ -106,7 +106,7 @@ public class TestResourceScope {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
-        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        ResourceScope scope = ResourceScope.ofShared(null, cleaner, true);
         AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -153,7 +153,7 @@ public class TestResourceScope {
     @Test(dataProvider = "cleaners")
     public void testForkSingleThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofConfined(cleaner);
+        ResourceScope scope = ResourceScope.ofConfined(null, cleaner, true);
         List<ResourceScope> forkedScopes = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
             forkedScopes.add(scope.fork());
@@ -183,7 +183,7 @@ public class TestResourceScope {
     @Test(dataProvider = "cleaners")
     public void testForkSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofShared(cleaner);
+        ResourceScope scope = ResourceScope.ofShared(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
                 ResourceScope forked = scope.fork();

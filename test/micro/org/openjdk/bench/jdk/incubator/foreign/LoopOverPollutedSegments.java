@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -71,7 +72,7 @@ public class LoopOverPollutedSegments {
             unsafe.putInt(addr + (i * 4), i);
         }
         arr = new byte[ALLOC_SIZE];
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4);
+        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined());
         heapSegmentBytes = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
         heapSegmentFloats = MemorySegment.ofArray(new float[ELEM_SIZE]);
 

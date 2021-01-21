@@ -73,16 +73,14 @@ public class TestDowncall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncall(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        List<MemorySegment> segments = new ArrayList<>();
         LibraryLookup.Symbol addr = lib.lookup(fName).get();
         MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
-        Object[] args = makeArgs(paramTypes, fields, checks, segments);
+        Object[] args = makeArgs(paramTypes, fields, checks);
         mh = mh.asSpreader(Object[].class, paramTypes.size());
         Object res = mh.invoke(args);
         if (ret == Ret.NON_VOID) {
             checks.forEach(c -> c.accept(res));
         }
-        segments.forEach(segment -> segment.scope().close());
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -101,10 +99,10 @@ public class TestDowncall extends CallGeneratorHelper {
                 FunctionDescriptor.of(paramLayouts[0], paramLayouts);
     }
 
-    static Object[] makeArgs(List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<MemorySegment> segments) throws ReflectiveOperationException {
+    static Object[] makeArgs(List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks) throws ReflectiveOperationException {
         Object[] args = new Object[params.size()];
         for (int i = 0 ; i < params.size() ; i++) {
-            args[i] = makeArg(params.get(i).layout(fields), checks, i == 0, segments);
+            args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
         }
         return args;
     }

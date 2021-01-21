@@ -24,6 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -61,7 +62,7 @@ public class VarHandleExact {
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT);
+        data = MemorySegment.allocateNative(JAVA_INT, ResourceScope.ofConfined());
     }
 
     @TearDown

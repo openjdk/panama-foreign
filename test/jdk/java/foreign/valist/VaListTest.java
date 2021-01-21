@@ -105,14 +105,18 @@ public class VaListTest {
 
     }
 
+    private static final SharedUtils.Allocator confinedAllocator() {
+        return (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofConfined());
+    }
+
     private static final Function<Consumer<VaList.Builder>, VaList> winVaListFactory
-            = actions -> Windowsx64Linker.newVaList(actions, MemorySegment::allocateNative);
+            = actions -> Windowsx64Linker.newVaList(actions, confinedAllocator());
     private static final Function<Consumer<VaList.Builder>, VaList> sysvVaListFactory
-            = actions -> SysVx64Linker.newVaList(actions, MemorySegment::allocateNative);
+            = actions -> SysVx64Linker.newVaList(actions, confinedAllocator());
     private static final Function<Consumer<VaList.Builder>, VaList> aarch64VaListFactory
-            = actions -> AArch64Linker.newVaList(actions, MemorySegment::allocateNative);
+            = actions -> AArch64Linker.newVaList(actions, confinedAllocator());
     private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
-            = VaList::make;
+            = (builder) -> VaList.make(builder, ResourceScope.ofConfined());
 
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
             = (actions, scope) -> Windowsx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
@@ -595,7 +599,7 @@ public class VaListTest {
     public void testCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, ValueLayout intLayout) {
         try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8))) {
-            VaList  copy = list.copy();
+            VaList  copy = list.copy(ResourceScope.ofConfined());
             assertEquals(copy.vargAsInt(intLayout), 4);
             assertEquals(copy.vargAsInt(intLayout), 8);
             copy.close();
@@ -631,7 +635,7 @@ public class VaListTest {
                                                     ValueLayout intLayout) {
         VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8));
-        try (VaList copy = list.copy()) {
+        try (VaList copy = list.copy(ResourceScope.ofConfined())) {
             list.close();
 
             copy.vargAsInt(intLayout); // should throw
@@ -686,7 +690,6 @@ public class VaListTest {
                     MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT);
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
-                    struct.scope().close();
                 })},
                 { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                     VaList copy = vaList.copy();
@@ -696,32 +699,27 @@ public class VaListTest {
 
                     VH_BigPoint_x.set(struct, 0);
                     VH_BigPoint_y.set(struct, 0);
-                    struct.scope().close();
 
                     // should be independent
                     struct = copy.vargAsSegment(BigPoint_LAYOUT);
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
-                    struct.scope().close();
                 })},
                 { linkVaListCB("upcallStruct"), VaListConsumer.mh(vaList -> {
                     MemorySegment struct = vaList.vargAsSegment(Point_LAYOUT);
                     assertEquals((int) VH_Point_x.get(struct), 5);
                     assertEquals((int) VH_Point_y.get(struct), 10);
-                    struct.scope().close();
                 })},
                 { linkVaListCB("upcallHugeStruct"), VaListConsumer.mh(vaList -> {
                     MemorySegment struct = vaList.vargAsSegment(HugePoint_LAYOUT);
                     assertEquals((long) VH_HugePoint_x.get(struct), 1);
                     assertEquals((long) VH_HugePoint_y.get(struct), 2);
                     assertEquals((long) VH_HugePoint_z.get(struct), 3);
-                    struct.scope().close();
                 })},
                 { linkVaListCB("upcallFloatStruct"), VaListConsumer.mh(vaList -> {
                     MemorySegment struct = vaList.vargAsSegment(FloatPoint_LAYOUT);
                     assertEquals((float) VH_FloatPoint_x.get(struct), 1.0f);
                     assertEquals((float) VH_FloatPoint_y.get(struct), 2.0f);
-                    struct.scope().close();
                 })},
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
@@ -767,7 +765,6 @@ public class VaListTest {
                     MemorySegment point = vaList.vargAsSegment(Point_LAYOUT);
                     assertEquals((int) VH_Point_x.get(point), 5);
                     assertEquals((int) VH_Point_y.get(point), 10);
-                    point.scope().close();
 
                     VaList copy = vaList.copy();
                     MemorySegment bigPoint = vaList.vargAsSegment(BigPoint_LAYOUT);
@@ -776,13 +773,11 @@ public class VaListTest {
 
                     VH_BigPoint_x.set(bigPoint, 0);
                     VH_BigPoint_y.set(bigPoint, 0);
-                    bigPoint.scope().close();
 
                     // should be independent
                     MemorySegment struct = copy.vargAsSegment(BigPoint_LAYOUT);
                     assertEquals((long) VH_BigPoint_x.get(struct), 15);
                     assertEquals((long) VH_BigPoint_y.get(struct), 20);
-                    struct.scope().close();
                 })},
                 // test skip
                 { linkVaListCB("upcallStack"), VaListConsumer.mh(vaList -> {

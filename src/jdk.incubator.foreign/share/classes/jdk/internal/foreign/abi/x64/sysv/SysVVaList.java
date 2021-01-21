@@ -234,22 +234,22 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    try (ResourceScope scope = segment.scope().fork()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                        MemorySegment seg = allocator.allocate(layout);
-                        seg.copyFrom(slice);
-                        postAlignStack(layout);
-                        yield seg;
-                    }
+                    ResourceScope scope = segment.scope().fork();
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
+                    MemorySegment seg = allocator.allocate(layout);
+                    seg.copyFrom(slice);
+                    if (scope.isCloseable()) scope.close();
+                    postAlignStack(layout);
+                    yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope scope = segment.scope().fork()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                        Object res = reader.get(slice);
-                        postAlignStack(layout);
-                        yield res;
-                    }
+                    ResourceScope scope = segment.scope().fork();
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
+                    Object res = reader.get(slice);
+                    if (scope.isCloseable()) scope.close();
+                    postAlignStack(layout);
+                    yield res;
                 }
             };
         } else {
@@ -321,7 +321,11 @@ public class SysVVaList implements VaList {
     @Override
     public void close() {
         segment.scope().close();
-        attachedSegments.forEach(segment1 -> segment1.scope().close());
+        attachedSegments.stream()
+                .map(MemorySegment::scope)
+                .filter(ResourceScope::isCloseable)
+                .filter(ResourceScope::isAlive)
+                .forEach(ResourceScope::close);
     }
 
     @Override

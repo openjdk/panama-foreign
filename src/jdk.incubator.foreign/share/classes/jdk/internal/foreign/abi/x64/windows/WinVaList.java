@@ -120,12 +120,12 @@ class WinVaList implements VaList {
             res = switch (typeClass) {
                 case STRUCT_REFERENCE -> {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
-                    try (ResourceScope scope = segment.scope().fork()) {
-                        MemorySegment struct = structAddr.asSegmentRestricted(layout.byteSize(), scope);
-                        MemorySegment seg = allocator.allocate(layout.byteSize());
-                        seg.copyFrom(struct);
-                        yield seg;
-                    }
+                    ResourceScope scope = segment.scope().fork();
+                    MemorySegment struct = structAddr.asSegmentRestricted(layout.byteSize(), scope);
+                    MemorySegment seg = allocator.allocate(layout.byteSize());
+                    seg.copyFrom(struct);
+                    if (scope.isCloseable()) scope.close();
+                    yield seg;
                 }
                 case STRUCT_REGISTER -> {
                     MemorySegment struct = allocator.allocate(layout);
@@ -162,7 +162,10 @@ class WinVaList implements VaList {
     public void close() {
         if (livenessCheck != null)
             livenessCheck.scope().close();
-        attachedSegments.forEach(segment1 -> segment1.scope().close());
+        attachedSegments.stream()
+                .map(MemorySegment::scope)
+                .filter(ResourceScope::isCloseable)
+                .forEach(ResourceScope::close);
     }
 
     @Override

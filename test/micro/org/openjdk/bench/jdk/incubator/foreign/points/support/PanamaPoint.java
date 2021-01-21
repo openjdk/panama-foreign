@@ -28,6 +28,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
@@ -66,7 +67,7 @@ public class PanamaPoint implements AutoCloseable {
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this(MemorySegment.allocateNative(LAYOUT), x, y);
+        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.ofConfined()), x, y);
     }
 
     public PanamaPoint(MemorySegment segment, int x, int y) {

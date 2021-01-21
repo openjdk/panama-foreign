@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -95,7 +96,7 @@ public class LoopOverNonConstantMapped {
             }
             ((MappedByteBuffer)byteBuffer).force();
         }
-        segment = MemorySegment.mapFile(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE);
+        segment = MemorySegment.mapFile(tempPath, 0L, ALLOC_SIZE, FileChannel.MapMode.READ_WRITE, ResourceScope.ofConfined());
         unsafe_addr = segment.address().toRawLongValue();
     }
 

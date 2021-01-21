@@ -38,7 +38,6 @@ import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Cleaner;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -60,8 +59,6 @@ public class LoopOverNew {
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
-    static final Cleaner cleaner = Cleaner.create();
-
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
     @Benchmark
@@ -74,30 +71,23 @@ public class LoopOverNew {
     }
 
     @Benchmark
-    public void segment_loop() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4);
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment, (long) i, i);
+    public void segment_loop_confined() {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+            for (int i = 0; i < ELEM_SIZE; i++) {
+                VH_int.set(segment, (long) i, i);
+            }
         }
-        segment.scope().close();
-    }
-
-    @Benchmark
-    public void segment_loop_nocleaner() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined());
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment, (long) i, i);
-        }
-        segment.scope().close();
     }
 
     @Benchmark
     public void segment_loop_shared() {
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofShared());
-        for (int i = 0; i < ELEM_SIZE; i++) {
-            VH_int.set(segment, (long) i, i);
+        try (ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
+            for (int i = 0; i < ELEM_SIZE; i++) {
+                VH_int.set(segment, (long) i, i);
+            }
         }
-        segment.scope().close();
     }
 
     @Benchmark

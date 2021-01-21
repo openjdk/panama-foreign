@@ -578,7 +578,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(layout.bytesSize(), layout.bytesAlignment(), ResourceScope.ofConfined(null, Cleaner.create(), true));
+    allocateNative(layout.bytesSize(), layout.bytesAlignment(), ResourceScope.ofConfined(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -622,7 +622,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bytesSize, 1, ResourceScope.ofConfined(null, Cleaner.create(), true));
+    allocateNative(bytesSize, 1, ResourceScope.ofConfined(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -665,7 +665,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(null, Cleaner.create(), true));
+    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofConfined(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -716,7 +716,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(null, Cleaner.create(), true));
+    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofConfined(Cleaner.create()));
      * }</pre></blockquote>
      *
      * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
