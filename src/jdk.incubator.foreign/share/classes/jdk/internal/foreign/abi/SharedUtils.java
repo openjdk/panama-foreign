@@ -38,7 +38,7 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
-import jdk.internal.foreign.AbstractNativeScope;
+import jdk.internal.foreign.NativeScopeImpl;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemoryScope;
@@ -403,10 +403,6 @@ public class SharedUtils {
             }
         };
 
-        static Allocator empty() {
-            return Allocator.ofScope(AbstractNativeScope.emptyScope());
-        }
-
         default MemorySegment allocate(MemoryLayout layout) {
             return allocate(layout.byteSize(), layout.byteAlignment());
         }
@@ -449,7 +445,7 @@ public class SharedUtils {
 
                 @Override
                 public MemoryScope scope() {
-                    return ((AbstractNativeScope)scope).scope();
+                    return ((NativeScopeImpl)scope).scope();
                 }
 
                 @Override

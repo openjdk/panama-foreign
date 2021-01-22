@@ -153,7 +153,7 @@ public final class Utils {
 
     public static MemoryScope asScope(ResourceScope scope) {
         if (scope instanceof NativeScope) {
-            return ((AbstractNativeScope)scope).scope();
+            return ((NativeScopeImpl)scope).scope();
         } else {
             return (MemoryScope)scope;
         }

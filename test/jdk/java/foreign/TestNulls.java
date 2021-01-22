@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -163,6 +164,7 @@ public class TestNulls {
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
         addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
         addDefaultMapping(NativeAllocator.class, MemorySegment::allocateNative);
+        addDefaultMapping(Supplier.class, () -> null);
     }
 
     static class VaListHelper {

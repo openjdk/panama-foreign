@@ -26,7 +26,8 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractNativeScope;
+import jdk.internal.foreign.AbstractArenaAllocator;
+import jdk.internal.foreign.NativeScopeImpl;
 
 import java.util.OptionalLong;
 
@@ -75,7 +76,7 @@ public interface NativeScope extends ResourceScope, NativeAllocator {
      * @return a new bounded native scope, with given size (in bytes).
      */
     static NativeScope boundedScope(long size) {
-        return new AbstractNativeScope.BoundedNativeScope(size);
+        return new NativeScopeImpl(scope -> (AbstractArenaAllocator)NativeAllocator.arenaBounded(size, scope));
     }
 
     /**
@@ -83,6 +84,6 @@ public interface NativeScope extends ResourceScope, NativeAllocator {
      * @return a new unbounded native scope.
      */
     static NativeScope unboundedScope() {
-        return new AbstractNativeScope.UnboundedNativeScope();
+        return new NativeScopeImpl(scope -> (AbstractArenaAllocator)NativeAllocator.arenaUnbounded(scope));
     }
 }

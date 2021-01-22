@@ -217,7 +217,8 @@ class WinVaList implements VaList {
             if (args.isEmpty()) {
                 return EMPTY;
             }
-            MemorySegment segment = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size(), scope);
+            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
             List<MemorySegment> attachedSegments = new ArrayList<>();
             attachedSegments.add(segment);
             MemorySegment cursor = segment;
@@ -228,7 +229,7 @@ class WinVaList implements VaList {
                     TypeClass typeClass = TypeClass.typeClassFor(arg.layout);
                     switch (typeClass) {
                         case STRUCT_REFERENCE -> {
-                            MemorySegment copy = MemorySegment.allocateNative(arg.layout, scope);
+                            MemorySegment copy = allocator.allocate(arg.layout);
                             copy.copyFrom(msArg); // by-value
                             attachedSegments.add(copy);
                             VH_address.set(cursor, copy.address());

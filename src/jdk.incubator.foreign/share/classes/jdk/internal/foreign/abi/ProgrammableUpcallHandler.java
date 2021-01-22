@@ -86,7 +86,7 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     private void invoke(MemoryAddress buffer) {
         Allocator allocator = bufferCopySize != 0
                 ? Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
-                : Allocator.empty();
+                : Allocator.THROWING_ALLOCATOR;
         try (allocator) {
             MemorySegment bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
 

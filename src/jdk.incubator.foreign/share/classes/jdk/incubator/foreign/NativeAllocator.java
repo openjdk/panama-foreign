@@ -25,6 +25,7 @@
 
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.AbstractArenaAllocator;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
@@ -33,6 +34,7 @@ import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -44,8 +46,8 @@ import java.util.stream.Stream;
  *  clients can easily obtain a native allocator instance as follows:
  * <blockquote><pre>{@code
 NativeAllocator defaultAllocator = MemorySegment::allocateNative;
-NativeAllocator confinedAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofConfined());
-NativeAllocator sharedAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofShared());
+NativeAllocator confinedAllocator = NativeAllocator.malloc(ResourceScope::ofConfined);
+NativeAllocator sharedAllocator = NativeAllocator.malloc(ResourceScope::ofShared);
  * }</pre></blockquote>
  */
 @FunctionalInterface
@@ -414,4 +416,73 @@ public interface NativeAllocator {
      * {@code limit() - size() < bytesSize}.
      */
     MemorySegment allocate(long bytesSize, long bytesAlignment);
+
+    /**
+     * Returns a native allocator which allocates memory segments using the {@code malloc} allocation primitive,
+     * each backed by a resource scope that is obtained using the provided supplier. For instance, to create an allocator which
+     * returns independent, confined segments, clients can use the following code:
+     *
+     * <blockquote><pre>{@code
+    NativeAllocator confinedAllocator = malloc(ResourceScope::ofConfined);
+    NativeAllocator sharedAllocator = malloc(ResourceScope::ofShared);
+     * }</pre></blockquote>
+     *
+     * @param scopeFactory the factory used to generate the resource scope attached to each newly allocated segment.
+     * @return a native allocator using the {@code malloc} allocation primitive.
+     */
+    static NativeAllocator malloc(Supplier<ResourceScope> scopeFactory) {
+        Objects.requireNonNull(scopeFactory);
+        return (size, align) -> MemorySegment.allocateNative(size, align, scopeFactory.get());
+    }
+
+    /**
+     * Returns a native arena-based allocator which allocates a single memory segment, of given size, and then responds to
+     * allocation request by returning different slices of that same segment (until no further allocation is possible).
+     * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
+     * with allocating a new off-heap memory region upon each allocation request.
+     *
+     * @param size the size (in bytes) of the allocation arena.
+     * @param scope the scope associated with the segments returned by this allocator.
+     * @return a new bounded arena-based allocator
+     */
+    static NativeAllocator arenaBounded(long size, ResourceScope scope) {
+        Objects.requireNonNull(scope);
+        return new AbstractArenaAllocator.BoundedArenaAllocator(size, scope);
+    }
+
+    /**
+     * Returns a native arena-based allocator which allocates memory segments (of a certain fixed size) and then
+     * responds to allocation request by returning different slices of the same segment (until no further allocation is possible,
+     * in which case a new segment, of the same fixed size, is allocated). This can be useful when clients want to
+     * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
+     * region upon each allocation request.
+     *
+     * @param scope the scope associated with the segments returned by this allocator.
+     * @return a new unbounded arena-based allocator
+     */
+    static NativeAllocator arenaUnbounded(ResourceScope scope) {
+        Objects.requireNonNull(scope);
+        return new AbstractArenaAllocator.UnboundedArenaAllocator(scope);
+    }
+
+    /**
+     * Returns a native allocator which responds to allocation requests by recycling a single segment, with given layout
+     * and resource scope. This can be useful to limit allocation requests in case a client knows that he has
+     * fully processed the contents of the allocated segment before the subsequent allocation request takes place.
+     *
+     * @param layout the layout of the memory segment to be recycled by the returned allocator.
+     * @param scope the resource scope of the memory segment to be recycled by the returned allocator.
+     * @return an allocator which recycles an existing segment upon each new allocation request.
+     */
+    static NativeAllocator recycling(MemoryLayout layout, ResourceScope scope) {
+        Objects.requireNonNull(layout);
+        Objects.requireNonNull(scope);
+        MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+        return (size, align) -> {
+            long addr = segment.address().toRawLongValue();
+            long alignedAddr = Utils.alignUp(addr, align);
+            long delta = alignedAddr - addr;
+            return segment.asSlice(delta, size);
+        };
+    }
 }

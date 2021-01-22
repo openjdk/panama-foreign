@@ -433,11 +433,12 @@ public class SysVVaList implements VaList {
                 return EMPTY;
             }
 
-            MemorySegment vaListSegment = MemorySegment.allocateNative(LAYOUT, scope);
+            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {
                 long stackArgsSize = stackArgs.stream().reduce(0L, (acc, e) -> acc + e.layout.byteSize(), Long::sum);
-                MemorySegment stackArgsSegment = MemorySegment.allocateNative(stackArgsSize, 16, scope);
+                MemorySegment stackArgsSegment = allocator.allocate(stackArgsSize, 16);
                 MemorySegment maOverflowArgArea = stackArgsSegment;
                 for (SimpleVaArg arg : stackArgs) {
                     if (arg.layout.byteSize() > 8) {

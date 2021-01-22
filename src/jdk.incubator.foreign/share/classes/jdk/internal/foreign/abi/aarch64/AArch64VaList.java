@@ -514,12 +514,13 @@ public class AArch64VaList implements VaList {
                 return EMPTY;
             }
 
-            MemorySegment vaListSegment = MemorySegment.allocateNative(LAYOUT, scope);
+            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {
                 long stackArgsSize = stackArgs.stream()
                     .reduce(0L, (acc, e) -> acc + Utils.alignUp(e.layout.byteSize(), 8), Long::sum);
-                MemorySegment stackArgsSegment = MemorySegment.allocateNative(stackArgsSize, 16);
+                MemorySegment stackArgsSegment = allocator.allocate(stackArgsSize, 16);
                 stackArgsPtr = stackArgsSegment.address();
                 for (SimpleVaArg arg : stackArgs) {
                     final long alignedSize = Utils.alignUp(arg.layout.byteSize(), 8);
