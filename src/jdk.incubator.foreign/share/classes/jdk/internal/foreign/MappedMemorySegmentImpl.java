@@ -117,7 +117,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
                         modes, scope);
-                scope.add(new ResourceList.ResourceCleanup() {
+                scope.addOrCleanupIfFail(new ResourceList.ResourceCleanup() {
                     @Override
                     public void cleanup() {
                         unmapperProxy.unmap();

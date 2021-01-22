@@ -106,7 +106,6 @@ public abstract class ResourceList {
                 ResourceCleanup newSegment = (ResourceCleanup) FST.compareAndExchangeRelease(this, prev, cleanup);
                 if (newSegment == ResourceCleanup.DUMMY_CLEANUP) {
                     // too late
-                    cleanup.cleanup();
                     throw new IllegalStateException("Already closed");
                 } else if (newSegment == prev) {
                     return; //victory

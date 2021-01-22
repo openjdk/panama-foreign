@@ -35,16 +35,10 @@ import jdk.internal.loader.NativeLibrary;
 import jdk.internal.ref.CleanerFactory;
 
 import java.lang.ref.WeakReference;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public final class LibrariesHelper {
@@ -93,7 +87,7 @@ public final class LibrariesHelper {
         WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
             ResourceScope s = ResourceScope.ofShared(null, CleanerFactory.cleaner(), false);
             holder[0] = s; // keep the scope alive at least until the outer method returns
-            ((MemoryScope)s).add(ResourceList.ResourceCleanup.ofRunnable(() -> {
+            ((MemoryScope)s).addOrCleanupIfFail(ResourceList.ResourceCleanup.ofRunnable(() -> {
                 nativeLibraries.unload(library);
                 loadedLibraries.remove(library);
             }));

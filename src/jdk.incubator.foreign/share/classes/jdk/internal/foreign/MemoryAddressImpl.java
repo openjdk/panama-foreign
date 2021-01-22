@@ -101,9 +101,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
-                cleanupAction != null ?
-                        ResourceList.ResourceCleanup.ofRunnable(cleanupAction) :
-                        ResourceList.ResourceCleanup.DUMMY_CLEANUP,
+                cleanupAction,
                 Utils.asScope(scope));
     }
 
@@ -112,10 +110,10 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize, MemoryScope memoryScope) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceList.ResourceCleanup.DUMMY_CLEANUP, memoryScope);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, memoryScope);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.GLOBAL);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemoryScope.GLOBAL);
     }
 }

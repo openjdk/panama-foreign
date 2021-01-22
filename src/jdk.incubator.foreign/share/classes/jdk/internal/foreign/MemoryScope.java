@@ -60,10 +60,17 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     @Override
     public void addOnClose(Runnable runnable) {
         Objects.requireNonNull(runnable);
-        add(ResourceList.ResourceCleanup.ofRunnable(runnable));
+        checkValidState();
+        resourceList.add(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
-    public abstract void add(ResourceList.ResourceCleanup resource);
+    public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
+        try {
+            resourceList.add(resource);
+        } catch (Throwable ex) {
+            resource.cleanup();
+        }
+    }
 
     protected MemoryScope(MemoryScope parent, Object ref, Cleaner cleaner, boolean closeable, ResourceList resourceList) {
         this.ref = ref;
@@ -187,12 +194,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         @Override
-        public void add(ResourceList.ResourceCleanup resource) {
-            checkValidState();
-            resourceList.add(resource);
-        }
-
-        @Override
         public Lock lock() {
             forkedCount++;
             return new ConfinedLock(this);
@@ -309,11 +310,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             } while (!STATE.compareAndSet(this, value, value - 1));
         }
 
-        @Override
-        public void add(ResourceList.ResourceCleanup segment) {
-            resourceList.add(segment);
-        }
-
         void justClose() {
             int prevState = (int)STATE.compareAndExchange(this, ALIVE, CLOSING);
             if (prevState < 0) {
@@ -367,7 +363,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
     public static MemoryScope GLOBAL = new MemoryScope(null, null, null, false, null) {
         @Override
-        public void add(ResourceList.ResourceCleanup resource) {
+        public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
             // do nothing
         }
 

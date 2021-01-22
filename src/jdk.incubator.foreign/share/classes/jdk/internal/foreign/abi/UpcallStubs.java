@@ -35,12 +35,7 @@ public class UpcallStubs {
     public static MemorySegment upcallAddress(UpcallHandler handler, MemoryScope scope) {
         long stubAddress = handler.entryPoint();
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0,
-                new ResourceList.ResourceCleanup() {
-                    @Override
-                    public void cleanup() {
-                        freeUpcallStub(stubAddress);
-                    }
-                }, scope);
+                () -> freeUpcallStub(stubAddress), scope);
     }
 
     private static void freeUpcallStub(long stubAddress) {

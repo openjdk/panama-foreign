@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceList.ResourceCleanup.DUMMY_CLEANUP, MemoryScope.GLOBAL);
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null, MemoryScope.GLOBAL);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
@@ -99,7 +99,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
-        scope.add(new ResourceList.ResourceCleanup() {
+        scope.addOrCleanupIfFail(new ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
@@ -113,10 +113,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceList.ResourceCleanup cleanupAction, MemoryScope scope) {
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, MemoryScope scope) {
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
-        if (cleanupAction != ResourceList.ResourceCleanup.DUMMY_CLEANUP) {
-            scope.add(cleanupAction);
+        if (cleanupAction != null) {
+            scope.addOnClose(cleanupAction);
         }
         return segment;
     }
