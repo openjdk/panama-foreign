@@ -256,22 +256,22 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    ResourceScope scope = segment.scope().fork();
-                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                    MemorySegment seg = allocator.allocate(layout);
-                    seg.copyFrom(slice);
-                    if (scope.isCloseable()) scope.close();
-                    postAlignStack(layout);
-                    yield seg;
+                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
+                        MemorySegment seg = allocator.allocate(layout);
+                        seg.copyFrom(slice);
+                        postAlignStack(layout);
+                        yield seg;
+                    }
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    ResourceScope scope = segment.scope().fork();
-                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope);
-                    Object res = reader.get(slice);
-                    if (scope.isCloseable()) scope.close();
-                    postAlignStack(layout);
-                    yield res;
+                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
+                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
+                        Object res = reader.get(slice);
+                        postAlignStack(layout);
+                        yield res;
+                    }
                 }
             };
         } else {
