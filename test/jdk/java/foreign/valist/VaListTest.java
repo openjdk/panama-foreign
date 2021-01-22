@@ -142,13 +142,13 @@ public class VaListTest {
     public void testIntSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                            BiFunction<Integer, VaList, Integer> sumInts,
                            ValueLayout intLayout) {
-        try (VaList vaList = vaListFactory.apply(b ->
-                b.vargFromInt(intLayout, 10)
-                        .vargFromInt(intLayout, 15)
-                        .vargFromInt(intLayout, 20))) {
-            int x = sumInts.apply(3, vaList);
-            assertEquals(x, 45);
-        }
+        VaList vaList = vaListFactory.apply(b ->
+            b.vargFromInt(intLayout, 10)
+                    .vargFromInt(intLayout, 15)
+                    .vargFromInt(intLayout, 20));
+        int x = sumInts.apply(3, vaList);
+        assertEquals(x, 45);
+        vaList.scope().close();
     }
 
     @DataProvider
@@ -170,13 +170,13 @@ public class VaListTest {
     public void testDoubleSum(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
                               BiFunction<Integer, VaList, Double> sumDoubles,
                               ValueLayout doubleLayout) {
-        try (VaList vaList = vaListFactory.apply(b ->
-                b.vargFromDouble(doubleLayout, 3.0D)
-                        .vargFromDouble(doubleLayout, 4.0D)
-                        .vargFromDouble(doubleLayout, 5.0D))) {
-            double x = sumDoubles.apply(3, vaList);
-            assertEquals(x, 12.0D);
-        }
+        VaList vaList = vaListFactory.apply(b ->
+            b.vargFromDouble(doubleLayout, 3.0D)
+                    .vargFromDouble(doubleLayout, 4.0D)
+                    .vargFromDouble(doubleLayout, 5.0D));
+        double x = sumDoubles.apply(3, vaList);
+        assertEquals(x, 12.0D);
+        vaList.scope().close();
     }
 
     @DataProvider
@@ -203,10 +203,10 @@ public class VaListTest {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT, scope);
             MemoryAccess.setInt(msInt, 10);
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()))) {
-                int x = getFromPointer.apply(vaList);
-                assertEquals(x, 10);
-            }
+            VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()));
+            int x = getFromPointer.apply(vaList);
+            assertEquals(x, 10);
+            vaList.scope().close();
         }
     }
 
@@ -259,10 +259,10 @@ public class VaListTest {
             VH_Point_x.set(struct, 5);
             VH_Point_y.set(struct, 10);
 
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, struct))) {
-                int sum = sumStruct.apply(vaList);
-                assertEquals(sum, 15);
-            }
+            VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, struct));
+            int sum = sumStruct.apply(vaList);
+            assertEquals(sum, 15);
+            vaList.scope().close();
         }
     }
 
@@ -311,10 +311,10 @@ public class VaListTest {
             VH_BigPoint_x.set(struct, 5);
             VH_BigPoint_y.set(struct, 10);
 
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(BigPoint_LAYOUT, struct))) {
-                long sum = sumBigStruct.apply(vaList);
-                assertEquals(sum, 15);
-            }
+            VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(BigPoint_LAYOUT, struct));
+            long sum = sumBigStruct.apply(vaList);
+            assertEquals(sum, 15);
+            vaList.scope().close();
         }
     }
 
@@ -364,10 +364,10 @@ public class VaListTest {
             VH_FloatPoint_x.set(struct, 1.234f);
             VH_FloatPoint_y.set(struct, 3.142f);
 
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct))) {
-                float sum = sumFloatStruct.apply(vaList);
-                assertEquals(sum, 4.376f, 0.00001f);
-            }
+            VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(FloatPoint_LAYOUT, struct));
+            float sum = sumFloatStruct.apply(vaList);
+            assertEquals(sum, 4.376f, 0.00001f);
+            vaList.scope().close();
         }
     }
 
@@ -428,10 +428,10 @@ public class VaListTest {
             VH_HugePoint_y.set(struct, 2);
             VH_HugePoint_z.set(struct, 3);
 
-            try (VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(HugePoint_LAYOUT, struct))) {
-                long sum = sumHugeStruct.apply(vaList);
-                assertEquals(sum, 6);
-            }
+            VaList vaList = vaListFactory.apply(b -> b.vargFromSegment(HugePoint_LAYOUT, struct));
+            long sum = sumHugeStruct.apply(vaList);
+            assertEquals(sum, 6);
+            vaList.scope().close();
         }
     }
 
@@ -489,8 +489,10 @@ public class VaListTest {
                 }
             });
 
-            try (list) {
+            try {
                 sumStack.invoke(longSum, doubleSum, list);
+            } finally {
+                list.scope().close();
             }
 
             long lSum = MemoryAccess.getLong(longSum);
@@ -522,11 +524,11 @@ public class VaListTest {
         };
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class,
-            expectedExceptionsMessageRegExp = ".*Empty VaList.*",
+    @Test(expectedExceptions = IllegalStateException.class,
+            expectedExceptionsMessageRegExp = ".*Scope is not closeable.*",
             dataProvider = "emptyVaLists")
     public void testEmptyNotCloseable(VaList emptyList) {
-        emptyList.close();
+        emptyList.scope().close();
     }
 
     @DataProvider
@@ -557,7 +559,7 @@ public class VaListTest {
             assertEquals(x, 12);
             listLeaked = list;
         }
-        assertFalse(listLeaked.isAlive());
+        assertFalse(listLeaked.scope().isAlive());
     }
 
     @Test(dataProvider = "structs")
@@ -570,11 +572,11 @@ public class VaListTest {
                 MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT, innerScope);
                 VH_Point_x.set(pointIn, 3);
                 VH_Point_y.set(pointIn, 6);
-                try (VaList list = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, pointIn))) {
-                    pointOut = list.vargAsSegment(Point_LAYOUT, scope);
-                    assertEquals((int) VH_Point_x.get(pointOut), 3);
-                    assertEquals((int) VH_Point_y.get(pointOut), 6);
-                }
+                VaList list = vaListFactory.apply(b -> b.vargFromSegment(Point_LAYOUT, pointIn));
+                pointOut = list.vargAsSegment(Point_LAYOUT, scope);
+                assertEquals((int) VH_Point_x.get(pointOut), 3);
+                assertEquals((int) VH_Point_y.get(pointOut), 6);
+                list.scope().close();
                 assertTrue(pointOut.scope().isAlive()); // after VaList freed
             }
             assertTrue(pointOut.scope().isAlive()); // after inner scope freed
@@ -593,36 +595,22 @@ public class VaListTest {
 
     @Test(dataProvider = "copy")
     public void testCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, ValueLayout intLayout) {
-        try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
-                .vargFromInt(intLayout, 8))) {
-            VaList  copy = list.copy(ResourceScope.ofConfined());
-            assertEquals(copy.vargAsInt(intLayout), 4);
-            assertEquals(copy.vargAsInt(intLayout), 8);
-            copy.close();
+        VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
+                .vargFromInt(intLayout, 8));
+        VaList  copy = list.copy();
+        assertEquals(copy.vargAsInt(intLayout), 4);
+        assertEquals(copy.vargAsInt(intLayout), 8);
 
-            assertFalse(copy.isAlive());
+//        try { // this logic only works on Windows!
+//            int x = copy.vargAsInt(intLayout);
+//            fail();
+//        } catch (IndexOutOfBoundsException ex) {
+//            // ok - we exhausted the list
+//        }
 
-            assertEquals(list.vargAsInt(intLayout), 4);
-            assertEquals(list.vargAsInt(intLayout), 8);
-        }
-    }
-
-    @Test(dataProvider = "copy")
-    public void testScopedCopy(Function<Consumer<VaList.Builder>, VaList> vaListFactory, ValueLayout intLayout) {
-        try (VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
-                .vargFromInt(intLayout, 8))) {
-            VaList copy;
-            try (NativeScope scope = NativeScope.unboundedScope()) {
-                copy = list.copy(scope);
-
-                assertEquals(copy.vargAsInt(intLayout), 4);
-                assertEquals(copy.vargAsInt(intLayout), 8);
-            }
-            assertFalse(copy.isAlive());
-
-            assertEquals(list.vargAsInt(intLayout), 4);
-            assertEquals(list.vargAsInt(intLayout), 8);
-        }
+        assertEquals(list.vargAsInt(intLayout), 4);
+        assertEquals(list.vargAsInt(intLayout), 8);
+        list.scope().close();
     }
 
     @Test(dataProvider = "copy",
@@ -631,25 +619,10 @@ public class VaListTest {
                                                     ValueLayout intLayout) {
         VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                 .vargFromInt(intLayout, 8));
-        try (VaList copy = list.copy(ResourceScope.ofConfined())) {
-            list.close();
+        VaList copy = list.copy();
+        list.scope().close();
 
-            copy.vargAsInt(intLayout); // should throw
-        }
-    }
-
-    @Test(dataProvider = "copy",
-            expectedExceptions = IllegalStateException.class)
-    public void testCopyUnusableAfterOriginalClosedScope(Function<Consumer<VaList.Builder>, VaList> vaListFactory,
-                                                         ValueLayout intLayout) {
-        VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
-                .vargFromInt(intLayout, 8));
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            VaList copy = list.copy(scope);
-            list.close();
-
-            copy.vargAsInt(intLayout); // should throw
-        }
+        copy.vargAsInt(intLayout); // should throw
     }
 
     @DataProvider

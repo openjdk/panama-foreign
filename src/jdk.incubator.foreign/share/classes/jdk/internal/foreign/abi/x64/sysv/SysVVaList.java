@@ -312,28 +312,13 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public boolean isAlive() {
-        return segment.scope().isAlive();
-    }
-
-    @Override
-    public void close() {
-        segment.scope().close();
+    public ResourceScope scope() {
+        return segment.scope();
     }
 
     @Override
     public VaList copy() {
-        return copyInternal(MemorySegment::allocateNative);
-    }
-
-    @Override
-    public VaList copy(ResourceScope scope) {
-        Objects.requireNonNull(scope);
-        return copyInternal(layout -> MemorySegment.allocateNative(layout, scope));
-    }
-
-    private VaList copyInternal(Function<MemoryLayout, MemorySegment> segmentAllocator) {
-        MemorySegment copy = segmentAllocator.apply(LAYOUT);
+        MemorySegment copy = MemorySegment.allocateNative(LAYOUT, segment.scope());
         copy.copyFrom(segment);
         return new SysVVaList(copy, regSaveArea);
     }

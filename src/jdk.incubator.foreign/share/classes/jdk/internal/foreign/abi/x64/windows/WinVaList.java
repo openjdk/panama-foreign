@@ -157,29 +157,18 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public void close() {
-        scope.close();
+    public ResourceScope scope() {
+        return scope;
     }
 
     @Override
     public VaList copy() {
-        return new WinVaList(segment, ResourceScope.ofConfined(null, CleanerFactory.cleaner(), false));
-    }
-
-    @Override
-    public VaList copy(ResourceScope scope) {
-        Objects.requireNonNull(scope);
         return new WinVaList(segment, scope);
     }
 
     @Override
     public MemoryAddress address() {
         return segment.address();
-    }
-
-    @Override
-    public boolean isAlive() {
-        return scope.isAlive();
     }
 
     static class Builder implements VaList.Builder {

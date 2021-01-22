@@ -454,15 +454,15 @@ public interface CLinker {
      * explicitly permitted types.
      *
      */
-    interface VaList extends Addressable, AutoCloseable {
+    interface VaList extends Addressable {
 
         /**
          * Reads the next value as an {@code int} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code int}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code int}
          */
         int vargAsInt(MemoryLayout layout);
@@ -472,8 +472,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code long}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code long}
          */
         long vargAsLong(MemoryLayout layout);
@@ -483,8 +483,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code double}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code double}
          */
         double vargAsDouble(MemoryLayout layout);
@@ -494,8 +494,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemoryAddress}
          */
         MemoryAddress vargAsAddress(MemoryLayout layout);
@@ -508,8 +508,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
         MemorySegment vargAsSegment(MemoryLayout layout);
@@ -522,8 +522,8 @@ public interface CLinker {
          * @param layout the layout of the value
          * @param scope the scope to allocate the segment in
          * @return the value read as an {@code MemorySegment}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
         MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope);
@@ -532,39 +532,24 @@ public interface CLinker {
          * Skips a number of elements with the given memory layouts, and advances this va list's position.
          *
          * @param layouts the layout of the value
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          */
         void skip(MemoryLayout... layouts);
 
         /**
-         * A predicate used to check if the memory associated with the C {@code va_list} modelled
-         * by this instance is still valid to use.
-         *
-         * @return true, if the memory associated with the C {@code va_list} modelled by this instance is still valid
-         * @see #close()
+         * Returns the resource scope associated with this instance.
+         * @return the resource scope associated with this instance.
          */
-        boolean isAlive();
-
-        /**
-         * Releases the underlying C {@code va_list} modelled by this instance, and any native memory that is attached
-         * to this va list that holds its elements (see {@link VaList#make(Consumer)}).
-         * <p>
-         * After calling this method, {@link #isAlive()} will return {@code false} and further attempts to read values
-         * from this va list will result in an exception.
-         *
-         * @see #isAlive()
-         */
-        void close();
+        ResourceScope scope();
 
         /**
          * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
          * starting from the current position, without affecting the state of the original va list, essentially
          * allowing the elements to be traversed multiple times.
          * <p>
-         * If this method needs to allocate native memory for the copy, it will use
-         * {@link MemorySegment#allocateNative(long, long)} to do so. {@link #close()} will have to be called on the
-         * returned va list instance to release the allocated memory.
+         * Any native resource required by the execution of this method will be allocated in the resource scope
+         * associated with this instance (see {@link #scope()}).
          * <p>
          * This method only copies the va list cursor itself and not the memory that may be attached to the
          * va list which holds its elements. That means that if this va list was created with the
@@ -572,30 +557,10 @@ public interface CLinker {
          * elements, making the copy unusable.
          *
          * @return a copy of this C {@code va_list}.
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          */
         VaList copy();
-
-        /**
-         * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
-         * starting from the current position, without affecting the state of the original va list, essentially
-         * allowing the elements to be traversed multiple times.
-         * <p>
-         * If this method needs to allocate native memory for the copy, it will use
-         * the given {@code NativeAllocator} to do so.
-         * <p>
-         * This method only copies the va list cursor itself and not the memory that may be attached to the
-         * va list which holds its elements. That means that if this va list was created with the
-         * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
-         * elements, making the copy unusable.
-         *
-         * @param scope the scope to allocate the copy in
-         * @return a copy of this C {@code va_list}.
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
-         */
-        VaList copy(ResourceScope scope);
 
         /**
          * Returns the memory address of the C {@code va_list} associated with this instance.
@@ -627,9 +592,8 @@ public interface CLinker {
          * If this method needs to allocate native memory for the va list, it will use
          * {@link MemorySegment#allocateNative(long, long)} to do so.
          * <p>
-         * This method will allocate native memory to hold the elements in the va list. This memory
-         * will be 'attached' to the returned va list instance, and will be released when {@link VaList#close()}
-         * is called.
+         * Any native resource required by the execution of this method will be allocated in the resource scope
+         * associated with this instance (see {@link #scope()}).
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.

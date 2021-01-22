@@ -535,23 +535,13 @@ public class SharedUtils {
         }
 
         @Override
-        public boolean isAlive() {
-            return true;
-        }
-
-        @Override
-        public void close() {
-            throw uoe();
+        public ResourceScope scope() {
+            return MemoryScope.GLOBAL;
         }
 
         @Override
         public VaList copy() {
             return this;
-        }
-
-        @Override
-        public VaList copy(ResourceScope scope) {
-            throw uoe();
         }
 
         @Override
