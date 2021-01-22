@@ -105,25 +105,21 @@ public class VaListTest {
 
     }
 
-    private static final SharedUtils.Allocator confinedAllocator() {
-        return (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofConfined());
-    }
-
     private static final Function<Consumer<VaList.Builder>, VaList> winVaListFactory
-            = actions -> Windowsx64Linker.newVaList(actions, confinedAllocator());
+            = actions -> Windowsx64Linker.newVaList(actions, ResourceScope.ofConfined());
     private static final Function<Consumer<VaList.Builder>, VaList> sysvVaListFactory
-            = actions -> SysVx64Linker.newVaList(actions, confinedAllocator());
+            = actions -> SysVx64Linker.newVaList(actions, ResourceScope.ofConfined());
     private static final Function<Consumer<VaList.Builder>, VaList> aarch64VaListFactory
-            = actions -> AArch64Linker.newVaList(actions, confinedAllocator());
+            = actions -> AArch64Linker.newVaList(actions, ResourceScope.ofConfined());
     private static final Function<Consumer<VaList.Builder>, VaList> platformVaListFactory
             = (builder) -> VaList.make(builder, ResourceScope.ofConfined());
 
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
-            = (actions, scope) -> Windowsx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+            = Windowsx64Linker::newVaList;
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> sysvVaListScopedFactory
-            = (actions, scope) -> SysVx64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+            = SysVx64Linker::newVaList;
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> aarch64VaListScopedFactory
-            = (actions, scope) -> AArch64Linker.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+            = AArch64Linker::newVaList;
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> platformVaListScopedFactory
             = VaList::make;
 

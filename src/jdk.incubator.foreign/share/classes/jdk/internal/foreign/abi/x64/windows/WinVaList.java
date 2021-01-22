@@ -63,12 +63,10 @@ class WinVaList implements VaList {
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private MemorySegment segment;
-    private final List<MemorySegment> attachedSegments;
     private final MemorySegment livenessCheck;
 
-    private WinVaList(MemorySegment segment, List<MemorySegment> attachedSegments, MemorySegment livenessCheck) {
+    private WinVaList(MemorySegment segment, MemorySegment livenessCheck) {
         this.segment = segment;
-        this.attachedSegments = attachedSegments;
         this.livenessCheck = livenessCheck;
     }
 
@@ -151,35 +149,34 @@ class WinVaList implements VaList {
 
     static WinVaList ofAddress(MemoryAddress addr) {
         MemorySegment segment = addr.asSegmentRestricted(Long.MAX_VALUE);
-        return new WinVaList(segment, List.of(segment), null);
+        return new WinVaList(segment, null);
     }
 
-    static Builder builder(SharedUtils.Allocator allocator) {
-        return new Builder(allocator);
+    static Builder builder(ResourceScope scope) {
+        return new Builder(scope);
     }
 
     @Override
     public void close() {
-        if (livenessCheck != null)
+        if (livenessCheck != null) {
             livenessCheck.scope().close();
-        attachedSegments.stream()
-                .map(MemorySegment::scope)
-                .filter(ResourceScope::isCloseable)
-                .forEach(ResourceScope::close);
+        } else {
+            segment.scope().close();
+        }
     }
 
     @Override
     public VaList copy() {
         MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1,
                 ResourceScope.ofConfined(CleanerFactory.cleaner()));
-        return new WinVaList(segment, List.of(), liveness);
+        return new WinVaList(segment, liveness);
     }
 
     @Override
     public VaList copy(ResourceScope scope) {
         Objects.requireNonNull(scope);
         MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1, scope);
-        return new WinVaList(segment, List.of(), liveness);
+        return new WinVaList(segment, liveness);
     }
 
     @Override
@@ -196,11 +193,11 @@ class WinVaList implements VaList {
 
     static class Builder implements VaList.Builder {
 
-        private final SharedUtils.Allocator allocator;
+        private final ResourceScope scope;
         private final List<SimpleVaArg> args = new ArrayList<>();
 
-        public Builder(SharedUtils.Allocator allocator) {
-            this.allocator = allocator;
+        public Builder(ResourceScope scope) {
+            this.scope = scope;
         }
 
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
@@ -240,7 +237,7 @@ class WinVaList implements VaList {
             if (args.isEmpty()) {
                 return EMPTY;
             }
-            MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
+            MemorySegment segment = MemorySegment.allocateNative(VA_SLOT_SIZE_BYTES * args.size(), scope);
             List<MemorySegment> attachedSegments = new ArrayList<>();
             attachedSegments.add(segment);
             MemorySegment cursor = segment;
@@ -251,7 +248,7 @@ class WinVaList implements VaList {
                     TypeClass typeClass = TypeClass.typeClassFor(arg.layout);
                     switch (typeClass) {
                         case STRUCT_REFERENCE -> {
-                            MemorySegment copy = allocator.allocate(arg.layout);
+                            MemorySegment copy = MemorySegment.allocateNative(arg.layout, scope);
                             copy.copyFrom(msArg); // by-value
                             attachedSegments.add(copy);
                             VH_address.set(cursor, copy.address());
@@ -269,7 +266,7 @@ class WinVaList implements VaList {
                 cursor = cursor.asSlice(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(segment, attachedSegments, null);
+            return new WinVaList(segment, null);
         }
     }
 }

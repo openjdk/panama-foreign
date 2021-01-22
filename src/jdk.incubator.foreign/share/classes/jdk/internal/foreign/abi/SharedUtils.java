@@ -319,11 +319,11 @@ public class SharedUtils {
         }
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, Allocator allocator) {
+    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaList(actions, allocator);
-            case SysV -> SysVx64Linker.newVaList(actions, allocator);
-            case AArch64 -> AArch64Linker.newVaList(actions, allocator);
+            case Win64 -> Windowsx64Linker.newVaList(actions, scope);
+            case SysV -> SysVx64Linker.newVaList(actions, scope);
+            case AArch64 -> AArch64Linker.newVaList(actions, scope);
         };
     }
 

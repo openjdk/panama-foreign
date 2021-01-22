@@ -29,6 +29,7 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.ref.CleanerFactory;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
@@ -639,7 +640,7 @@ public interface CLinker {
          */
         static VaList make(Consumer<Builder> actions) {
             Objects.requireNonNull(actions);
-            return SharedUtils.newVaList(actions, MemorySegment::allocateNative);
+            return SharedUtils.newVaList(actions, ResourceScope.ofShared(null, CleanerFactory.cleaner(), false));
         }
 
         /**
@@ -662,7 +663,7 @@ public interface CLinker {
         static VaList make(Consumer<Builder> actions, ResourceScope scope) {
             Objects.requireNonNull(actions);
             Objects.requireNonNull(scope);
-            return SharedUtils.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+            return SharedUtils.newVaList(actions, scope);
         }
 
         /**

@@ -81,8 +81,8 @@ public class SysVx64Linker implements CLinker {
         return instance;
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
-        SysVVaList.Builder builder = SysVVaList.builder(allocator);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+        SysVVaList.Builder builder = SysVVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }

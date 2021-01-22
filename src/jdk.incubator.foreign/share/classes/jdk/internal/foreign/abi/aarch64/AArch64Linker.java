@@ -96,8 +96,8 @@ public class AArch64Linker implements CLinker {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), Utils.asScope(scope));
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
-        AArch64VaList.Builder builder = AArch64VaList.builder(allocator);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+        AArch64VaList.Builder builder = AArch64VaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }

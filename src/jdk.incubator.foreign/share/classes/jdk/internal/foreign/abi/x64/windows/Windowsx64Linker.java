@@ -82,8 +82,8 @@ public class Windowsx64Linker implements CLinker {
         return instance;
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
-        WinVaList.Builder builder = WinVaList.builder(allocator);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+        WinVaList.Builder builder = WinVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }
