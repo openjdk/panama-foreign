@@ -63,11 +63,11 @@ class WinVaList implements VaList {
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private MemorySegment segment;
-    private final MemorySegment livenessCheck;
+    private final ResourceScope scope;
 
-    private WinVaList(MemorySegment segment, MemorySegment livenessCheck) {
+    private WinVaList(MemorySegment segment, ResourceScope scope) {
         this.segment = segment;
-        this.livenessCheck = livenessCheck;
+        this.scope = scope;
     }
 
     public static final VaList empty() {
@@ -158,25 +158,18 @@ class WinVaList implements VaList {
 
     @Override
     public void close() {
-        if (livenessCheck != null) {
-            livenessCheck.scope().close();
-        } else {
-            segment.scope().close();
-        }
+        scope.close();
     }
 
     @Override
     public VaList copy() {
-        MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1,
-                ResourceScope.ofConfined(CleanerFactory.cleaner()));
-        return new WinVaList(segment, liveness);
+        return new WinVaList(segment, ResourceScope.ofConfined(null, CleanerFactory.cleaner(), false));
     }
 
     @Override
     public VaList copy(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        MemorySegment liveness = MemoryAddress.NULL.asSegmentRestricted(1, scope);
-        return new WinVaList(segment, liveness);
+        return new WinVaList(segment, scope);
     }
 
     @Override
@@ -186,9 +179,7 @@ class WinVaList implements VaList {
 
     @Override
     public boolean isAlive() {
-        if (livenessCheck != null)
-            return livenessCheck.scope().isAlive();
-        return segment.scope().isAlive();
+        return scope.isAlive();
     }
 
     static class Builder implements VaList.Builder {
@@ -266,7 +257,7 @@ class WinVaList implements VaList {
                 cursor = cursor.asSlice(VA_SLOT_SIZE_BYTES);
             }
 
-            return new WinVaList(segment, null);
+            return new WinVaList(segment, scope);
         }
     }
 }
