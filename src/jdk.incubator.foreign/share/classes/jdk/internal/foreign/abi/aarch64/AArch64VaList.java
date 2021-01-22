@@ -310,7 +310,7 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    try (ResourceScope scope = segment.scope().fork()) {
+                    try (ResourceScope scope = ResourceScope.ofConfined()) {
                         MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope);
                         MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(slice);

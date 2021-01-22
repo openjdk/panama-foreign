@@ -35,6 +35,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -54,6 +56,12 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     final Cleaner cleaner;
     final ResourceList resourceList;
     final boolean closeable;
+
+    @Override
+    public void addOnClose(Runnable runnable) {
+        Objects.requireNonNull(runnable);
+        add(ResourceList.ResourceCleanup.ofRunnable(runnable));
+    }
 
     public abstract void add(ResourceList.ResourceCleanup resource);
 
@@ -185,9 +193,9 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         @Override
-        public ResourceScope fork() {
+        public Lock lock() {
             forkedCount++;
-            return new ConfinedScope(this, owner, null, cleaner, closeable);
+            return new ConfinedLock(this);
         }
 
         @Override
@@ -207,6 +215,24 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         @Override
         public Thread ownerThread() {
             return owner;
+        }
+
+        static class ConfinedLock extends LockImpl {
+            boolean released = false;
+
+            ConfinedLock(MemoryScope scope) {
+                super(scope);
+            }
+
+            @Override
+            public void close() {
+                scope.checkValidState(); // thread check
+                if (!released) {
+                    scope.release();
+                } else {
+                    throw new IllegalStateException("Already released");
+                }
+            }
         }
     }
 
@@ -256,7 +282,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             }
         }
 
-        public MemoryScope fork() {
+        @Override
+        public Lock lock() {
             int value;
             do {
                 value = (int)STATE.getVolatile(this);
@@ -268,7 +295,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                     throw new IllegalStateException("Segment acquire limit exceeded");
                 }
             } while (!STATE.compareAndSet(this, value, value + 1));
-            return new MemoryScope.SharedScope(this, null, cleaner, closeable);
+            return new SharedLock(this);
         }
 
         void release() {
@@ -306,27 +333,37 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         public boolean isAlive() {
             return (int)STATE.getVolatile(this) != CLOSED;
         }
+
+        static class SharedLock extends LockImpl {
+            AtomicBoolean released = new AtomicBoolean(false);
+
+            SharedLock(MemoryScope scope) {
+                super(scope);
+            }
+
+            @Override
+            public void close() {
+                if (released.compareAndSet(false, true)) {
+                    scope.release();
+                } else {
+                    throw new IllegalStateException("Already released");
+                }
+            }
+        }
     }
 
-//    static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
-//        final ResourceList resourceList;
-//        final Cleaner cleaner;
-//
-//        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, ResourceList resourceList) {
-//            super(referent, cleaner);
-//            this.resourceList = resourceList;
-//            this.cleaner = cleaner;
-//        }
-//
-//        @Override
-//        protected void performCleanup() {
-//            resourceList.cleanup();
-//        }
-//
-//        Cleaner cleaner() {
-//            return cleaner;
-//        }
-//    }
+    static abstract class LockImpl implements Lock {
+        final MemoryScope scope;
+
+        LockImpl(MemoryScope scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public ResourceScope scope() {
+            return scope;
+        }
+    }
 
     public static MemoryScope GLOBAL = new MemoryScope(null, null, null, false, null) {
         @Override
@@ -355,8 +392,18 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         @Override
-        public ResourceScope fork() {
-            throw new UnsupportedOperationException("Cannot fork global scope");
+        public Lock lock() {
+            return new Lock() {
+                @Override
+                public ResourceScope scope() {
+                    return GLOBAL;
+                }
+
+                @Override
+                public void close() {
+                    // do nothing
+                }
+            };
         }
 
         @Override

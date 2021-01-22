@@ -96,16 +96,13 @@ try (ResourceScope scope = ResourceScope.ofShared()) {
  * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
  * accessing/closing the resources associated with the shared resource scope.
  *
- * <h2>Forking</h2>
+ * <h2>Locking</h2>
  *
- * Resource scopes can be <em>forked</em>. When a resource scope, said the <em>parent</em> scope, is forked, a new resource scope,
- * namely the <em>forked</em> scope, is obtained, with same characteristics as the parent scope; for instance
- * if the parent scope has {@code T} as its owner thread, the forked scope will also have {@code T} as its owner thread.
- * A forked scope can be used to make sure that the parent scope cannot be closed (either explicitly, or implicitly)
+ * Resource scopes can be <em>locked</em>. When a resource scope is locked, a new instance of type {@link ResourceScope.Lock}
+ * is created; a resource scope lock can be used to make sure that its corresponding scope cannot be closed (either explicitly, or implicitly)
  * for a certain period of time - e.g. when one or more resources associated with the parent scope need to be accessed.
- * <p>
- * In the presence of forked scope, a parent scope will in fact reject closure requests, until all the resource scopes
- * derived from it have also been closed.
+ * A resource scope can be acquired multiple times; the resource scope can only be closed <em>after</em> all
+ * the locks held against that scope have been closed.
  *
  * @apiNote In the future, if the Java language permits, {@link ResourceScope}
  * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
@@ -155,11 +152,37 @@ public interface ResourceScope extends AutoCloseable {
     void close();
 
     /**
-     * Create a forked scope based on this resource scope. The returned scope will feature the same characteristics
-     * as this scope. This scope cannot be closed unless all its forked scopes have also been closed first.
-     * @return a forked scope based on this resource scope.
+     * Add a custom cleanup action which will be executed when the resource scope is closed.
+     * @param runnable the custom cleanup action to be associated with this scope.
+     * @throws IllegalStateException if this scope has already been closed.
      */
-    ResourceScope fork();
+    void addOnClose(Runnable runnable);
+
+    /**
+     * Locks this resource scope by acquiring a new resource scope lock. This scope cannot be closed unless all its
+     * locks have been released first.
+     * @return a resource scope lock.
+     */
+    Lock lock();
+
+    /**
+     * An abstraction modelling a lock on a resource scope. Features a method (see {@link #close()}) which
+     * can be used by clients to release the lock.
+     */
+    interface Lock extends AutoCloseable {
+
+        /**
+         * The scope being locked by this instance.
+         * @return The scope being locked by this instance.
+         */
+        ResourceScope scope();
+
+        /**
+         * Release the lock on the resource scope associated with this instance.
+         */
+        @Override
+        void close();
+    }
 
     /**
      * Create a new confined scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.

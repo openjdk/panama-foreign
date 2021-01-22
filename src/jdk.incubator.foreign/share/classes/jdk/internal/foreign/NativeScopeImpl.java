@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.loader.Resource;
 
 import java.lang.ref.Cleaner;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ import java.util.function.Function;
 
 public class NativeScopeImpl implements NativeScope {
     ResourceScope publicScope = ResourceScope.ofConfined();
-    ResourceScope forkedScope = publicScope.fork();
+    ResourceScope.Lock lock = publicScope.lock();
     AbstractArenaAllocator allocator;
 
     public NativeScopeImpl(Function<ResourceScope, AbstractArenaAllocator> allocatorFactory) {
@@ -62,7 +63,7 @@ public class NativeScopeImpl implements NativeScope {
 
     @Override
     public void close() {
-        forkedScope.close();
+        lock.close();
         publicScope.close();
     }
 
@@ -82,8 +83,13 @@ public class NativeScopeImpl implements NativeScope {
     }
 
     @Override
-    public ResourceScope fork() {
-        throw new UnsupportedOperationException();
+    public Lock lock() {
+        return publicScope.lock();
+    }
+
+    @Override
+    public void addOnClose(Runnable runnable) {
+        publicScope.addOnClose(runnable);
     }
 
     public MemoryScope scope() {

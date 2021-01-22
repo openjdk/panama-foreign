@@ -28,8 +28,6 @@
  * @run testng/othervm -Dforeign.restricted=permit TestResourceScope
  */
 
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
 
 import jdk.incubator.foreign.ResourceScope;
@@ -39,7 +37,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,10 +48,6 @@ public class TestResourceScope {
 
     final static int N_THREADS = 1000;
 
-    static MemorySegment makeSegment(ResourceScope scope, Runnable cleanupAction) {
-        return MemoryAddress.NULL.asSegmentRestricted(1, cleanupAction, scope);
-    }
-
     @Test(dataProvider = "cleaners")
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
@@ -62,7 +55,7 @@ public class TestResourceScope {
         ResourceScope scope = ResourceScope.ofConfined(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            makeSegment(scope, () -> acc.addAndGet(delta));
+            scope.addOnClose(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -85,7 +78,7 @@ public class TestResourceScope {
         ResourceScope scope = ResourceScope.ofShared(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            makeSegment(scope, () -> acc.addAndGet(delta));
+            scope.addOnClose(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -112,7 +105,7 @@ public class TestResourceScope {
             int delta = i;
             Thread thread = new Thread(() -> {
                 try {
-                    makeSegment(scopeRef.get(), () -> {
+                    scopeRef.get().addOnClose(() -> {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {
@@ -151,45 +144,34 @@ public class TestResourceScope {
     }
 
     @Test(dataProvider = "cleaners")
-    public void testForkSingleThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testLockSingleThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
         ResourceScope scope = ResourceScope.ofConfined(null, cleaner, true);
-        List<ResourceScope> forkedScopes = new ArrayList<>();
+        List<ResourceScope.Lock> locks = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
-            forkedScopes.add(scope.fork());
+            locks.add(scope.lock());
         }
 
-        if (cleaner != null) {
-            forkedScopes = null;
-        }
         while (true) {
             try {
                 scope.close();
-                if (forkedScopes != null) {
-                    assertEquals(forkedScopes.size(), 0);
-                }
+                assertEquals(locks.size(), 0);
                 break;
             } catch (IllegalStateException ex) {
-                if (forkedScopes != null) {
-                    assertTrue(forkedScopes.size() > 0);
-                    forkedScopes.remove(0).close();
-                } else {
-                    kickGC();
-                }
+                assertTrue(locks.size() > 0);
+                locks.remove(0).close();
             }
         }
     }
 
     @Test(dataProvider = "cleaners")
-    public void testForkSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
+    public void testLockSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
         ResourceScope scope = ResourceScope.ofShared(null, cleaner, true);
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
-                ResourceScope forked = scope.fork();
-                waitSomeTime();
-                if (cleaner == null) {
-                    forked.close();
+                try (ResourceScope.Lock lock = scope.lock()) {
+                    waitSomeTime();
                 }
             }).start();
         }
@@ -199,11 +181,7 @@ public class TestResourceScope {
                 scope.close();
                 break;
             } catch (IllegalStateException ex) {
-                if (cleaner == null) {
-                    waitSomeTime();
-                } else {
-                    kickGC();
-                }
+                waitSomeTime();
             }
         }
     }
@@ -216,6 +194,27 @@ public class TestResourceScope {
     @Test
     public void testCloseEmptySharedScope() {
         ResourceScope.ofShared().close();
+    }
+
+    @Test
+    public void testCloseConfinedLock() {
+        ResourceScope.Lock lock = ResourceScope.ofConfined().lock();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            try {
+                lock.close();
+            } catch (Throwable ex) {
+                failure.set(ex);
+            }
+        });
+        t.start();
+        try {
+            t.join();
+            assertNotNull(failure.get());
+            assertEquals(failure.get().getClass(), IllegalStateException.class);
+        } catch (Throwable ex) {
+            throw new AssertionError(ex);
+        }
     }
 
     private void waitSomeTime() {
