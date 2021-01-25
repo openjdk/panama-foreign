@@ -166,7 +166,9 @@ class TreeMaker {
         for (int i = 0 ; i < c.numberOfArgs() ; i++) {
             params.add((Declaration.Variable)createTree(c.getArgument(i)));
         }
-        return Declaration.function(toPos(c), c.spelling(), (Type.Function)toType(c),
+        Type type = toType(c);
+        Type funcType = type instanceof Type.Delegated? ((Type.Delegated)type).type() : type;
+        return Declaration.function(toPos(c), c.spelling(), (Type.Function)funcType,
                 params.toArray(new Declaration.Variable[0]));
     }
 
