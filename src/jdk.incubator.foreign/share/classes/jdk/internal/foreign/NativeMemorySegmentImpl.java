@@ -83,6 +83,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     // factories
 
     public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemoryScope scope) {
+        scope.checkValidStateSlow();
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
@@ -114,6 +115,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, MemoryScope scope) {
+        scope.checkValidStateSlow();
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
         if (cleanupAction != null) {
             scope.addOnClose(cleanupAction);

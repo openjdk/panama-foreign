@@ -312,11 +312,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         checkBounds(offset, length);
     }
 
-    private void checkAccessAndScope(long offset, long length, boolean readOnly) {
-        checkValidState();
-        checkAccess(offset, length, readOnly);
-    }
-
     private void checkValidState() {
         try {
             scope.checkValidState();

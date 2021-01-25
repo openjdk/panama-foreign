@@ -470,9 +470,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * and ends relative to the buffer's limit (exclusive).
      * <p>
      * If the buffer is read-only (see {@link ByteBuffer#isReadOnly()}), the resulting segment will also be read-only
-     * (see {@link #isReadOnly()}). The scope associated with this segment can either be the <em>global</em> scope,
-     * in case the buffer has been created independently, or to some other (possibly closeable) resource scope,
-     * in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * (see {@link #isReadOnly()}). The scope associated with this segment can either be the <em>global</em> resource scope
+     * (see {@link ResourceScope#globalScope()}), in case the buffer has been created independently, or to some other
+     * (possibly closeable) resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
@@ -485,9 +485,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated byte array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -498,9 +496,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -511,9 +507,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated short array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -524,9 +518,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated int array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -537,9 +529,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated float array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -550,9 +540,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated long array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -563,9 +551,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated double array.
-     * <p>
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and its resource scope is set to
-     * the <em>global</em>, shared scope.
+     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -620,6 +606,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes).
+     * The returned segment is associated with a fresh shared, non-closeable resource scope.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -662,7 +649,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * and alignment constraints (in bytes).
+     * and alignment constraints (in bytes). The returned segment is associated with a fresh shared, non-closeable resource scope.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -685,7 +672,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * (in bytes), alignment constraint (in bytes) and resource scope. The returned segment is not read-only (see {@link #isReadOnly()}).
+     * (in bytes), alignment constraint (in bytes) and resource scope.
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
@@ -791,8 +778,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Returns a native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
      * This method can be very useful when dereferencing memory addresses obtained when interacting with native libraries.
-     * The returned segment is not read-only (see {@link #isReadOnly()}), and is associated with the <em>global</em>, non-closeable
-     * scope. Equivalent to (but likely more efficient than) the following code:
+     * The returned is associated with the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
     MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
                  .withOwnerThread(null)

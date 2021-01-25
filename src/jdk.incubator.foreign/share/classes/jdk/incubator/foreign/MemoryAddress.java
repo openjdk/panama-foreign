@@ -92,8 +92,7 @@ public interface MemoryAddress extends Addressable {
      * Returns a new confined native memory segment with given size, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with a fresh
-     * shared, non-closeable resource scope whose owner thread is the thread calling this method.
+     * The returned segment is associated with a fresh shared, non-closeable resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
@@ -155,8 +154,7 @@ public interface MemoryAddress extends Addressable {
      * Returns a new native memory segment with given size, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
-     * provided resource scope.
+     * The returned segment is associated with the provided resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,

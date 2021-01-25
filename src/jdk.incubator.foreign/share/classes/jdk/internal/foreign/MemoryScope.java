@@ -28,7 +28,6 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.ref.PhantomCleanable;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
@@ -82,7 +81,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
     final void addInternal(ResourceList.ResourceCleanup resource) {
         try {
-            checkValidState();
+            checkValidStateSlow();
             resourceList.add(resource);
         } catch (ScopedMemoryAccess.Scope.ScopedAccessError err) {
             throw new IllegalStateException("Already closed");
@@ -162,12 +161,27 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      */
     public abstract boolean isAlive();
 
+
+    /**
+     * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
+     * relies on invariants associated with the memory scope implementations (typically, volatile access
+     * to the closed state bit is replaced with plain access, and ownership check is removed where not needed.
+     * Should be used with care.
+     */
+    public abstract void checkValidState();
+
     /**
      * Checks that this scope is still alive (see {@link #isAlive()}).
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    public abstract void checkValidState();
+    public final void checkValidStateSlow() {
+        if (ownerThread() != null && Thread.currentThread() != ownerThread()) {
+            throw new IllegalStateException("Attempted access outside owning thread");
+        } else if (!isAlive()) {
+            throw new IllegalStateException("Already closed");
+        }
+    }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
@@ -218,7 +232,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         void justClose() {
-            checkValidState();
+            this.checkValidState();
             if (forkedCount == 0) {
                 closed = true;
             } else {

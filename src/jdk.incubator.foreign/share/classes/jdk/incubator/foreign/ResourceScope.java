@@ -27,7 +27,10 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryScope;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.ref.Cleaner;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Spliterator;
 
@@ -43,11 +46,15 @@ import java.util.Spliterator;
  * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on resources derived from that scope (e.g. attempting to
  * access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
- * Closing a segment might trigger the releasing of the underlying memory resources associated with said scope; for instance:
+ * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addOnClose(Runnable)}) to be called.
+ * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
- *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it</li>
- *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped</li>
- *     <li>closing the scope associated with an upcall stub results in releasing the stub</li>
+ *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
+ *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link NativeAllocator#arenaUnbounded(ResourceScope)})</li>
+ *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped
+ *     (see {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)})</li>
+ *     <li>closing the scope associated with an upcall stub results in releasing the stub
+ *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
  * </ul>
  *
  * <h2>Implicit deallocation</h2>
@@ -59,6 +66,9 @@ import java.util.Spliterator;
  * Managed resource scopes can also be made closeable (see {@link #isCloseable()}), in which
  * case a scope will feature both explicit and implicit deallocation modes. This can be useful to allow for predictable,
  * deterministic resource deallocation, while still prevent accidental native memory leaks.
+ * <p>
+ * Even when both explicit and implicit deallocation is enabled, cleanup actions associated with a given scope
+ * (see {@link #addOnClose(Runnable)}) must be called <em>exactly once</em>.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
@@ -102,7 +112,16 @@ try (ResourceScope scope = ResourceScope.ofShared()) {
  * is created; a resource scope lock can be used to make sure that its corresponding scope cannot be closed (either explicitly, or implicitly)
  * for a certain period of time - e.g. when one or more resources associated with the parent scope need to be accessed.
  * A resource scope can be acquired multiple times; the resource scope can only be closed <em>after</em> all
- * the locks held against that scope have been closed.
+ * the locks held against that scope have been closed. This can be useful when clients need to perform a critical
+ * operation on a memory segment, during which they have to ensure that the segment will not be released; this
+ * can be done as follows:
+ *
+ * <blockquote><pre>{@code
+MemorySegment segment = ...
+try (ResourceScope.Lock segmentLock = segment.scope().lock()) {
+   <critical operation on segment>
+} // release scope lock
+ * }</pre></blockquote>
  *
  * @apiNote In the future, if the Java language permits, {@link ResourceScope}
  * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
@@ -247,6 +266,13 @@ public interface ResourceScope extends AutoCloseable {
     static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
         return MemoryScope.createShared(attachment, cleaner, closeable);
     }
-    
+
+    /**
+     * A non-closeable, shared, global scope which is assumed to be always alive.
+     * @return the global scope.
+     */
+    static ResourceScope globalScope() {
+        return MemoryScope.GLOBAL;
+    }
 }
 

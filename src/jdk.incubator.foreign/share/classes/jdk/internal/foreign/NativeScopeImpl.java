@@ -28,11 +28,7 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.internal.loader.Resource;
 
-import java.lang.ref.Cleaner;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
@@ -47,7 +43,6 @@ public class NativeScopeImpl implements NativeScope {
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        ((MemoryScope)publicScope).checkValidState();
         return allocator.allocate(bytesSize, bytesAlignment);
     }
 
