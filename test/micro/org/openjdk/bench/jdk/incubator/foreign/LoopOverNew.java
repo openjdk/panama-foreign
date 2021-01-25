@@ -64,7 +64,7 @@ public class LoopOverNew {
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
     final ResourceScope scope = ResourceScope.ofConfined();
-    final NativeAllocator recyclingAlloc = NativeAllocator.recycling(ALLOC_LAYOUT, ResourceScope.ofConfined());
+    final NativeAllocator recyclingAlloc = NativeAllocator.recycling(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
 
     @TearDown
     public void tearDown() throws Throwable {

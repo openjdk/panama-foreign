@@ -466,18 +466,15 @@ public interface NativeAllocator {
     }
 
     /**
-     * Returns a native allocator which responds to allocation requests by recycling a single segment, with given layout
-     * and resource scope. This can be useful to limit allocation requests in case a client knows that he has
+     * Returns a native allocator which responds to allocation requests by recycling a single segment.
+     * This can be useful to limit allocation requests in case a client knows that he has
      * fully processed the contents of the allocated segment before the subsequent allocation request takes place.
      *
-     * @param layout the layout of the memory segment to be recycled by the returned allocator.
-     * @param scope the resource scope of the memory segment to be recycled by the returned allocator.
+     * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
-    static NativeAllocator recycling(MemoryLayout layout, ResourceScope scope) {
-        Objects.requireNonNull(layout);
-        Objects.requireNonNull(scope);
-        MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+    static NativeAllocator recycling(MemorySegment segment) {
+        Objects.requireNonNull(segment);
         return (size, align) -> {
             long addr = segment.address().toRawLongValue();
             long alignedAddr = Utils.alignUp(addr, align);
