@@ -53,7 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope {
 
-    final Cleaner cleaner;
     final ResourceList resourceList;
     final boolean closeable;
 
@@ -72,14 +71,10 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    protected MemoryScope(MemoryScope parent, Object ref, Cleaner cleaner, boolean closeable, ResourceList resourceList) {
+    protected MemoryScope(Object ref, Cleaner cleaner, boolean closeable, ResourceList resourceList) {
         this.ref = ref;
         this.resourceList = resourceList;
         this.closeable = closeable;
-        this.cleaner = cleaner;
-        if (parent != null) {
-            resourceList.add(ResourceList.ResourceCleanup.ofRunnable(parent::release));
-        }
         if (cleaner != null) {
             Runnable r = resourceList::cleanup;
             cleaner.register(this, r);
@@ -87,7 +82,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner, boolean closeable) {
-        return new ConfinedScope(null, thread, ref, cleaner, closeable);
+        return new ConfinedScope(thread, ref, cleaner, closeable);
     }
 
     /**
@@ -97,7 +92,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @return a confined memory scope
      */
     public static MemoryScope createConfined(Object ref, Cleaner cleaner, boolean closeable) {
-        return new ConfinedScope(null, Thread.currentThread(), ref, cleaner, closeable);
+        return new ConfinedScope(Thread.currentThread(), ref, cleaner, closeable);
     }
 
     /**
@@ -106,7 +101,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @return a shared memory scope
      */
     public static MemoryScope createShared(Object ref, Cleaner cleaner, boolean closeable) {
-        return new SharedScope(null, ref, cleaner, closeable);
+        return new SharedScope(ref, cleaner, closeable);
     }
 
     protected final Object ref;
@@ -173,8 +168,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         int forkedCount = 0;
         final Thread owner;
 
-        public ConfinedScope(MemoryScope parent, Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
-            super(parent, ref, cleaner, closeable, new ResourceList.ConfinedResourceList());
+        public ConfinedScope(Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
+            super(ref, cleaner, closeable, new ResourceList.ConfinedResourceList());
             this.owner = owner;
         }
 
@@ -267,8 +262,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             }
         }
 
-        SharedScope(MemoryScope parent, Object ref, Cleaner cleaner, boolean closeable) {
-            super(parent, ref, cleaner, closeable, new ResourceList.SharedResourceList());
+        SharedScope(Object ref, Cleaner cleaner, boolean closeable) {
+            super(ref, cleaner, closeable, new ResourceList.SharedResourceList());
         }
 
         @Override
@@ -361,7 +356,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    public static MemoryScope GLOBAL = new MemoryScope(null, null, null, false, null) {
+    public static MemoryScope GLOBAL = new MemoryScope( null, null, false, null) {
         @Override
         public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
             // do nothing
