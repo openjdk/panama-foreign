@@ -349,7 +349,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             if (!success) {
                 throw new IllegalStateException("Cannot close while another thread is accessing the segment");
             }
-            System.out.println("");
         }
 
         @Override

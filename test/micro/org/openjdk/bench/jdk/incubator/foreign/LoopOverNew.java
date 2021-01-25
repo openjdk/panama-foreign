@@ -24,6 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeAllocator;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -58,8 +59,17 @@ public class LoopOverNew {
     static final int ELEM_SIZE = 1_000_000;
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
+    static final MemoryLayout ALLOC_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, JAVA_INT);
 
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+
+    final ResourceScope scope = ResourceScope.ofConfined();
+    final NativeAllocator recyclingAlloc = NativeAllocator.recycling(ALLOC_LAYOUT, ResourceScope.ofConfined());
+
+    @TearDown
+    public void tearDown() throws Throwable {
+        scope.close();
+    }
 
     @Benchmark
     public void unsafe_loop() {
@@ -87,6 +97,14 @@ public class LoopOverNew {
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
             }
+        }
+    }
+
+    @Benchmark
+    public void segment_loop_recycle() {
+        MemorySegment segment = recyclingAlloc.allocate(ALLOC_SIZE, 4);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
         }
     }
 
