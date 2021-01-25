@@ -165,7 +165,7 @@ public interface ResourceScope extends AutoCloseable {
      *     <li>this resource scope is not <em>alive</em>
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
-     *     <li>one or more locks (see {@link #lock()} associated with this resource scope have not been closed</li>
+     *     <li>one or more locks (see {@link #lock()}) associated with this resource scope have not been closed</li>
      * </ul>
      */
     void close();
