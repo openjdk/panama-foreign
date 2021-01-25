@@ -90,7 +90,7 @@ import java.util.Spliterator;
  * exception:
  * <blockquote><pre>{@code
 MemorySegment segment = null;
-try (ResourceScope scope = ResourceScope.ofConfined()) {}
+try (ResourceScope scope = ResourceScope.ofConfined()) {
     segment = MemorySegment.allocateNative(8, 1, scope);
 }
 MemoryAccess.getLong(segment); // already closed!

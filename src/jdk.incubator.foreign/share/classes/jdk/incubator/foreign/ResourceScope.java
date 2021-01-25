@@ -106,7 +106,7 @@ try (ResourceScope scope = ResourceScope.ofShared()) {
  * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
  * accessing/closing the resources associated with the shared resource scope.
  *
- * <h2>Locking</h2>
+ * <h2>Scope locks</h2>
  *
  * Resource scopes can be <em>locked</em>. When a resource scope is locked, a new instance of type {@link ResourceScope.Lock}
  * is created; a resource scope lock can be used to make sure that its corresponding scope cannot be closed (either explicitly, or implicitly)
