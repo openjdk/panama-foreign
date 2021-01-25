@@ -59,15 +59,33 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     @Override
     public void addOnClose(Runnable runnable) {
         Objects.requireNonNull(runnable);
-        checkValidState();
-        resourceList.add(ResourceList.ResourceCleanup.ofRunnable(runnable));
+        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
 
+    /**
+     * Add a cleanup action. If a failure occurred (because of a add vs. close race), call the cleanup action.
+     * This semantics is useful when allocating new memory segments, since we first do a malloc/mmap and _then_
+     * we register the cleanup (free/munmap) against the scope; so, if registration fails, we still have to
+     * cleanup memory. From the perspective of the client, such a failure would manifest as a factory
+     * returning a segment that is already "closed" - which is always possible anyway (e.g. if the scope
+     * is closed _after_ the cleanup for the segment is registered but _before_ the factory returns the
+     * new segment to the client). For this reason, it's not worth adding extra complexity to the segment
+     * initialization logic here - and using an optimistic logic works well in practice.
+     */
     public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
         try {
-            resourceList.add(resource);
+            addInternal(resource);
         } catch (Throwable ex) {
             resource.cleanup();
+        }
+    }
+
+    final void addInternal(ResourceList.ResourceCleanup resource) {
+        try {
+            checkValidState();
+            resourceList.add(resource);
+        } catch (ScopedMemoryAccess.Scope.ScopedAccessError err) {
+            throw new IllegalStateException("Already closed");
         }
     }
 

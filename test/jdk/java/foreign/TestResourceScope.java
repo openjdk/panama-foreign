@@ -46,7 +46,7 @@ import java.util.stream.IntStream;
 
 public class TestResourceScope {
 
-    final static int N_THREADS = 1000;
+    final static int N_THREADS = 10000;
 
     @Test(dataProvider = "cleaners")
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
@@ -109,7 +109,8 @@ public class TestResourceScope {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {
-                    // already closed - ignore
+                    // already closed - we need to call cleanup manually
+                    acc.addAndGet(delta);
                 }
             });
             threads.add(thread);
