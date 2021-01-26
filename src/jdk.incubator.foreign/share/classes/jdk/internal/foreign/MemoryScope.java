@@ -222,6 +222,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
         @Override
         public Lock lock() {
+            checkValidState();
             forkedCount++;
             return new ConfinedLock(this);
         }

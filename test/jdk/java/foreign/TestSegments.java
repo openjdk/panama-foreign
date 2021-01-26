@@ -69,41 +69,6 @@ public class TestSegments {
         MemorySegment.allocateNative(Long.MAX_VALUE);
     }
 
-    @Test(dataProvider = "segmentOperations")
-    public void testOpOutsideConfinement(SegmentMember member) throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
-            MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
-            AtomicBoolean failed = new AtomicBoolean(false);
-            Thread t = new Thread(() -> {
-                try {
-                    Object o = member.method.invoke(segment, member.params);
-                } catch (ReflectiveOperationException ex) {
-                    throw new IllegalStateException(ex);
-                }
-            });
-            t.setUncaughtExceptionHandler((thread, ex) -> failed.set(true));
-            t.start();
-            t.join();
-            assertEquals(failed.get(), member.isConfined());
-        }
-    }
-
-    @Test(dataProvider = "segmentOperations")
-    public void testOpAfterClose(SegmentMember member) throws Throwable {
-        MemorySegment segment = MemorySegment.allocateNative(4, ResourceScope.ofConfined());
-        segment.scope().close();
-        try {
-            Object o = member.method.invoke(segment, member.params);
-            assertFalse(member.isConfined());
-        } catch (InvocationTargetException ex) {
-            assertTrue(member.isConfined());
-            Throwable target = ex.getTargetException();
-            assertTrue(target instanceof NullPointerException ||
-                          target instanceof UnsupportedOperationException ||
-                          target instanceof IllegalStateException);
-        }
-    }
-
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testNativeAllocationTooBig() {
         MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2); // 2M
@@ -298,86 +263,6 @@ public class TestSegments {
 
         MemoryLayout make(long size) {
             return factory.apply(size);
-        }
-    }
-
-    @DataProvider(name = "segmentOperations")
-    static Object[][] segmentMembers() {
-        List<SegmentMember> members = new ArrayList<>();
-        for (Method m : MemorySegment.class.getDeclaredMethods()) {
-            //skip defaults, statics and method declared in j.l.Object
-            if (m.isDefault() ||
-                    m.getDeclaringClass().equals(Object.class) ||
-                    (m.getModifiers() & Modifier.STATIC) != 0) continue;
-            Object[] args = Stream.of(m.getParameterTypes())
-                    .map(TestSegments::defaultValue)
-                    .toArray();
-            members.add(new SegmentMember(m, args));
-        }
-        return members.stream().map(ms -> new Object[] { ms }).toArray(Object[][]::new);
-    }
-
-    static class SegmentMember {
-        final Method method;
-        final Object[] params;
-
-        final static List<String> CONFINED_NAMES = List.of(
-                "address",
-                "close",
-                "share",
-                "handoff",
-                "registerCleaner",
-                "fill",
-                "spliterator",
-                "copyFrom",
-                "mismatch",
-                "toByteArray",
-                "toCharArray",
-                "toShortArray",
-                "toIntArray",
-                "toFloatArray",
-                "toLongArray",
-                "toDoubleArray"
-        );
-
-        public SegmentMember(Method method, Object[] params) {
-            this.method = method;
-            this.params = params;
-        }
-
-        boolean isConfined() {
-            return CONFINED_NAMES.contains(method.getName());
-        }
-
-        @Override
-        public String toString() {
-            return method.getName();
-        }
-    }
-
-    static Object defaultValue(Class<?> c) {
-        if (c.isPrimitive()) {
-            if (c == char.class) {
-                return (char)0;
-            } else if (c == boolean.class) {
-                return false;
-            } else if (c == byte.class) {
-                return (byte)0;
-            } else if (c == short.class) {
-                return (short)0;
-            } else if (c == int.class) {
-                return 0;
-            } else if (c == long.class) {
-                return 0L;
-            } else if (c == float.class) {
-                return 0f;
-            } else if (c == double.class) {
-                return 0d;
-            } else {
-                throw new IllegalStateException();
-            }
-        } else {
-            return null;
         }
     }
 
