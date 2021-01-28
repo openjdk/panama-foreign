@@ -138,7 +138,7 @@ public class TestClassGeneration extends JextractToolRunner {
     @DataProvider
     public static Object[][] functionalInterfaces() {
         return new Object[][]{
-            { "func_cb$cb", methodType(void.class, int.class) }
+            { "CB", methodType(void.class, int.class) }
         };
     }
 
