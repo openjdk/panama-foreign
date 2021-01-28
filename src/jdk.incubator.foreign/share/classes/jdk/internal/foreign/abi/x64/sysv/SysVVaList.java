@@ -28,7 +28,6 @@ package jdk.internal.foreign.abi.x64.sysv;
 import jdk.incubator.foreign.*;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.aarch64.AArch64VaList;
 import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
@@ -37,7 +36,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static jdk.internal.foreign.PlatformLayouts.SysV;
 import static jdk.incubator.foreign.CLinker.VaList;
@@ -214,7 +212,7 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
+    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
         Objects.requireNonNull(scope);
         return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
     }
@@ -433,7 +431,7 @@ public class SysVVaList implements VaList {
                 return EMPTY;
             }
 
-            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

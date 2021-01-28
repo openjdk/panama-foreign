@@ -50,7 +50,7 @@ import java.util.Spliterator;
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
  *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
- *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link NativeAllocator#arenaUnbounded(ResourceScope)})</li>
+ *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#arenaUnbounded(ResourceScope)})</li>
  *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped
  *     (see {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)})</li>
  *     <li>closing the scope associated with an upcall stub results in releasing the stub

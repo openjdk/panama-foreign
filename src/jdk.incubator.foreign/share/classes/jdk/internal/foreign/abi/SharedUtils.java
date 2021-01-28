@@ -32,7 +32,7 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.NativeAllocator;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
@@ -455,7 +455,7 @@ public class SharedUtils {
             };
         }
 
-        static Allocator ofAllocator(NativeAllocator scope) {
+        static Allocator ofAllocator(SegmentAllocator scope) {
             return new Allocator() {
                 @Override
                 public MemorySegment allocate(long size, long align) {
@@ -521,7 +521,7 @@ public class SharedUtils {
         }
 
         @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
+        public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
             throw uoe();
         }
 

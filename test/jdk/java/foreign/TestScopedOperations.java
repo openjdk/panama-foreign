@@ -31,8 +31,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeAllocator;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -114,7 +114,7 @@ public class TestScopedOperations {
             ScopedOperation.ofVaList(list -> list.vargAsDouble(MemoryLayouts.JAVA_DOUBLE), "VaList::vargAsDouble");
             ScopedOperation.ofVaList(CLinker.VaList::skip, "VaList::skip");
             ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT)), "VaList::vargAsSegment/1");
-            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), NativeAllocator.malloc(list::scope)), "VaList::vargAsSegment/2");
+            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), SegmentAllocator.malloc(list::scope)), "VaList::vargAsSegment/2");
             // allocator operations
             ScopedOperation.ofAllocator(a -> a.allocate(1), "NativeAllocator::allocate/size");
             ScopedOperation.ofAllocator(a -> a.allocate(1, 1), "NativeAllocator::allocate/size/align");
@@ -176,10 +176,10 @@ public class TestScopedOperations {
             }
         }
 
-        static void ofAllocator(Consumer<NativeAllocator> allocatorConsumer, String name) {
+        static void ofAllocator(Consumer<SegmentAllocator> allocatorConsumer, String name) {
             for (AllocatorFactory allocatorFactory : AllocatorFactory.values()) {
                 scopedOperations.add(new ScopedOperation(scope -> {
-                    NativeAllocator allocator = allocatorFactory.allocatorFactory.apply(scope);
+                    SegmentAllocator allocator = allocatorFactory.allocatorFactory.apply(scope);
                     allocatorConsumer.accept(allocator);
                 }, allocatorFactory.name() + "/" + name));
             }
@@ -215,16 +215,17 @@ public class TestScopedOperations {
         }
 
         enum AllocatorFactory {
-            ARENA_BOUNDED(scope -> NativeAllocator.arenaBounded(1000, scope)),
-            ARENA_UNBOUNDED(NativeAllocator::arenaUnbounded),
+            MALLOC(scope -> SegmentAllocator.malloc(() -> scope)),
+            ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
+            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded),
             RECYCLING(scope -> {
                 MemorySegment segment = MemorySegment.allocateNative(10, scope);
-                return NativeAllocator.recycling(segment);
+                return SegmentAllocator.recycling(segment);
             });
 
-            final Function<ResourceScope, NativeAllocator> allocatorFactory;
+            final Function<ResourceScope, SegmentAllocator> allocatorFactory;
 
-            AllocatorFactory(Function<ResourceScope, NativeAllocator> allocatorFactory) {
+            AllocatorFactory(Function<ResourceScope, SegmentAllocator> allocatorFactory) {
                 this.allocatorFactory = allocatorFactory;
             }
         }

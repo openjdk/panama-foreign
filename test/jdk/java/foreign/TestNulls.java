@@ -92,7 +92,7 @@ public class TestNulls {
             CLinker.VaList.Builder.class,
             FunctionDescriptor.class,
             LibraryLookup.class,
-            NativeAllocator.class,
+            SegmentAllocator.class,
             ResourceScope.class
     };
 
@@ -163,7 +163,7 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
         addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
-        addDefaultMapping(NativeAllocator.class, MemorySegment::allocateNative);
+        addDefaultMapping(SegmentAllocator.class, MemorySegment::allocateNative);
         addDefaultMapping(Supplier.class, () -> null);
     }
 

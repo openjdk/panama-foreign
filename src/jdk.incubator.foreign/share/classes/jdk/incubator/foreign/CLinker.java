@@ -270,7 +270,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, NativeAllocator scope) {
+    static MemorySegment toCString(String str, SegmentAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -290,7 +290,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, Charset charset, NativeAllocator scope) {
+    static MemorySegment toCString(String str, Charset charset, SegmentAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -391,7 +391,7 @@ public interface CLinker {
         return segment;
     }
 
-    private static MemorySegment toCString(byte[] bytes, NativeAllocator scope) {
+    private static MemorySegment toCString(byte[] bytes, SegmentAllocator scope) {
         MemorySegment addr = scope.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
@@ -526,7 +526,7 @@ public interface CLinker {
          * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
-        MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope);
+        MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope);
 
         /**
          * Skips a number of elements with the given memory layouts, and advances this va list's position.

@@ -33,12 +33,12 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 
 public class NativeScopeImpl implements NativeScope {
-    ResourceScope publicScope = ResourceScope.ofConfined();
-    ResourceScope.Lock lock = publicScope.lock();
-    AbstractArenaAllocator allocator;
+    final ResourceScope publicScope = ResourceScope.ofConfined();
+    final ResourceScope.Lock lock = publicScope.lock();
+    final ArenaAllocator allocator;
 
-    public NativeScopeImpl(Function<ResourceScope, AbstractArenaAllocator> allocatorFactory) {
-        this.allocator = allocatorFactory.apply(publicScope);
+    public NativeScopeImpl(Function<ResourceScope, ArenaAllocator> blockAllocatorFactory) {
+        this.allocator = blockAllocatorFactory.apply(publicScope);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class NativeScopeImpl implements NativeScope {
 
     @Override
     public OptionalLong byteSize() {
-        return allocator.size();
+        return allocator.byteSize();
     }
 
     @Override

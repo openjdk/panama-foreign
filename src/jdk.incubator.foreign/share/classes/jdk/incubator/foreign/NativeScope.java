@@ -26,7 +26,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractArenaAllocator;
+import jdk.internal.foreign.ArenaAllocator;
 import jdk.internal.foreign.NativeScopeImpl;
 
 import java.util.OptionalLong;
@@ -49,7 +49,7 @@ import java.util.OptionalLong;
  * may become a {@code sealed} interface, which would prohibit subclassing except by
  * explicitly permitted types.
  */
-public interface NativeScope extends ResourceScope, NativeAllocator {
+public interface NativeScope extends ResourceScope, SegmentAllocator {
 
     /**
      * If this native scope is bounded, returns the size, in bytes, of this native scope.
@@ -71,12 +71,13 @@ public interface NativeScope extends ResourceScope, NativeAllocator {
     void close();
 
     /**
-     * Creates a new bounded native scope, backed by off-heap memory.
+     * Creates a new bounded native scope, backed by off-heap memory. The returned native scope might throw an {@link OutOfMemoryError}
+     * if an incoming allocation request exceeds the native scope capacity.
      * @param size the size of the native scope.
      * @return a new bounded native scope, with given size (in bytes).
      */
     static NativeScope boundedScope(long size) {
-        return new NativeScopeImpl(scope -> (AbstractArenaAllocator)NativeAllocator.arenaBounded(size, scope));
+        return new NativeScopeImpl(scope -> (ArenaAllocator)SegmentAllocator.arenaBounded(size, scope));
     }
 
     /**
@@ -84,6 +85,6 @@ public interface NativeScope extends ResourceScope, NativeAllocator {
      * @return a new unbounded native scope.
      */
     static NativeScope unboundedScope() {
-        return new NativeScopeImpl(scope -> (AbstractArenaAllocator)NativeAllocator.arenaUnbounded(scope));
+        return new NativeScopeImpl(scope -> (ArenaAllocator)SegmentAllocator.arenaUnbounded(scope));
     }
 }

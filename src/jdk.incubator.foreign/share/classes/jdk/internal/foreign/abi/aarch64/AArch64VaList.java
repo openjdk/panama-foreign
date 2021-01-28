@@ -36,7 +36,6 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static jdk.internal.foreign.PlatformLayouts.AArch64;
 import static jdk.incubator.foreign.CLinker.VaList;
@@ -235,7 +234,7 @@ public class AArch64VaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
+    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
         Objects.requireNonNull(scope);
         return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
     }
@@ -514,7 +513,7 @@ public class AArch64VaList implements VaList {
                 return EMPTY;
             }
 
-            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

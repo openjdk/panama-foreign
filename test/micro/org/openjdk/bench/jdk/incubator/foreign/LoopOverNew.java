@@ -24,7 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeAllocator;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -64,7 +64,7 @@ public class LoopOverNew {
     static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
 
     final ResourceScope scope = ResourceScope.ofConfined();
-    final NativeAllocator recyclingAlloc = NativeAllocator.recycling(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
+    final SegmentAllocator recyclingAlloc = SegmentAllocator.recycling(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
 
     @TearDown
     public void tearDown() throws Throwable {

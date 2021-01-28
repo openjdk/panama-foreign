@@ -25,7 +25,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractArenaAllocator;
+import jdk.internal.foreign.ArenaAllocator;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
@@ -38,30 +38,30 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- *  This is interface models a native memory allocator. Clients implementing this interface
+ *  This is interface models a memory allocator. Clients implementing this interface
  *  must implement the {@link #allocate(long, long)} method. This interface defines several default methods
- *  which can be useful to create native segments from several kinds of Java values such as primitives and arrays.
- *  As such, this interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- *  (e.g. {@link MemorySegment#allocateNative(long, long)}). Since {@link NativeAllocator} is a <em>functional interface</em>,
+ *  which can be useful to create segments from several kinds of Java values such as primitives and arrays.
+ *  This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
+ *  (e.g. {@link MemorySegment#allocateNative(long, long)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  *  clients can easily obtain a native allocator instance as follows:
  * <blockquote><pre>{@code
-NativeAllocator defaultAllocator = MemorySegment::allocateNative;
-NativeAllocator confinedAllocator = NativeAllocator.malloc(ResourceScope::ofConfined);
-NativeAllocator sharedAllocator = NativeAllocator.malloc(ResourceScope::ofShared);
+SegmentAllocator defaultAllocator = MemorySegment::allocateNative;
  * }</pre></blockquote>
+ * This interface also defines factories for commonly used allocators; for instance, {@link #malloc(Supplier)} returns a
+ * native allocator which returns segments backed by separate resources scopes, while {@link #arenaUnbounded(ResourceScope)}
+ * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #recycling(MemorySegment)}
+ * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  */
 @FunctionalInterface
-public interface NativeAllocator {
+public interface SegmentAllocator {
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given byte value.
+     * Allocate a block of memory  with given layout and initialize it with given byte value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a byte value.
      */
     default MemorySegment allocate(ValueLayout layout, byte value) {
@@ -73,14 +73,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given char value.
+     * Allocate a block of memory  with given layout and initialize it with given char value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a char value.
      */
     default MemorySegment allocate(ValueLayout layout, char value) {
@@ -92,14 +90,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given short value.
+     * Allocate a block of memory  with given layout and initialize it with given short value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a short value.
      */
     default MemorySegment allocate(ValueLayout layout, short value) {
@@ -111,14 +107,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given int value.
+     * Allocate a block of memory  with given layout and initialize it with given int value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a int value.
      */
     default MemorySegment allocate(ValueLayout layout, int value) {
@@ -130,14 +124,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given float value.
+     * Allocate a block of memory  with given layout and initialize it with given float value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a float value.
      */
     default MemorySegment allocate(ValueLayout layout, float value) {
@@ -149,14 +141,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given long value.
+     * Allocate a block of memory  with given layout and initialize it with given long value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a long value.
      */
     default MemorySegment allocate(ValueLayout layout, long value) {
@@ -168,14 +158,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given double value.
+     * Allocate a block of memory  with given layout and initialize it with given double value.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a double value.
      */
     default MemorySegment allocate(ValueLayout layout, double value) {
@@ -187,7 +175,7 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given address value
+     * Allocate a block of memory  with given layout and initialize it with given address value
      * (expressed as an {@link Addressable} instance).
      * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
      * The segment returned by this method cannot be closed. Moreover, the returned
@@ -195,8 +183,6 @@ public interface NativeAllocator {
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
      */
     default MemorySegment allocate(ValueLayout layout, Addressable value) {
@@ -213,14 +199,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given byte array.
+     * Allocate a block of memory  with given layout and initialize it with given byte array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a byte value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, byte[] array) {
@@ -228,14 +212,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given short array.
+     * Allocate a block of memory  with given layout and initialize it with given short array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a short value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, short[] array) {
@@ -243,14 +225,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given char array.
+     * Allocate a block of memory  with given layout and initialize it with given char array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a char value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, char[] array) {
@@ -258,14 +238,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given int array.
+     * Allocate a block of memory  with given layout and initialize it with given int array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a int value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, int[] array) {
@@ -273,14 +251,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given float array.
+     * Allocate a block of memory  with given layout and initialize it with given float array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a float value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, float[] array) {
@@ -288,14 +264,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given long array.
+     * Allocate a block of memory  with given layout and initialize it with given long array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a long value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, long[] array) {
@@ -303,14 +277,12 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given double array.
+     * Allocate a block of memory  with given layout and initialize it with given double array.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a double value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, double[] array) {
@@ -318,15 +290,13 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout and initialize it with given address array.
+     * Allocate a block of memory  with given layout and initialize it with given address array.
      * The address value of each array element might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
      * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * array.length)}.
      * @throws IllegalArgumentException if {@code layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()}.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, Addressable[] array) {
@@ -362,12 +332,10 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given layout. The segment returned by this method is
+     * Allocate a block of memory  with given layout. The segment returned by this method is
      * associated with a segment which cannot be closed. Moreover, the returned segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < layout.byteSize()}.
      */
     default MemorySegment allocate(MemoryLayout layout) {
         Objects.requireNonNull(layout);
@@ -385,8 +353,6 @@ public interface NativeAllocator {
      * @param elementLayout the array element layout.
      * @param count the array element count.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if this is a
-     * bounded allocation scope, and {@code byteSize().getAsLong() - allocatedBytes() < (elementLayout.byteSize() * count)}.
      */
     default MemorySegment allocateArray(MemoryLayout elementLayout, long count) {
         Objects.requireNonNull(elementLayout);
@@ -394,26 +360,22 @@ public interface NativeAllocator {
     }
 
     /**
-     * Allocate a block of memory in this native scope with given size. The segment returned by this method is
+     * Allocate a block of memory  with given size. The segment returned by this method is
      * associated with a segment which cannot be closed. Moreover, the returned segment must be aligned to {@code size}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
-     * {@code limit() - size() < bytesSize}.
      */
     default MemorySegment allocate(long bytesSize) {
         return allocate(bytesSize, bytesSize);
     }
 
     /**
-     * Allocate a block of memory in this native scope with given size and alignment constraint.
+     * Allocate a block of memory  with given size and alignment constraint.
      * The segment returned by this method is associated with a segment which cannot be closed. Moreover,
      * the returned segment must be aligned to {@code alignment}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
-     * @throws OutOfMemoryError if there is not enough space left in this native scope, that is, if
-     * {@code limit() - size() < bytesSize}.
      */
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
@@ -423,63 +385,84 @@ public interface NativeAllocator {
      * returns independent, confined segments, clients can use the following code:
      *
      * <blockquote><pre>{@code
-    NativeAllocator confinedAllocator = malloc(ResourceScope::ofConfined);
-    NativeAllocator sharedAllocator = malloc(ResourceScope::ofShared);
+    SegmentAllocator confinedAllocator = malloc(ResourceScope::ofConfined);
+    SegmentAllocator sharedAllocator = malloc(ResourceScope::ofShared);
      * }</pre></blockquote>
      *
      * @param scopeFactory the factory used to generate the resource scope attached to each newly allocated segment.
      * @return a native allocator using the {@code malloc} allocation primitive.
      */
-    static NativeAllocator malloc(Supplier<ResourceScope> scopeFactory) {
+    static SegmentAllocator malloc(Supplier<ResourceScope> scopeFactory) {
         Objects.requireNonNull(scopeFactory);
         return (size, align) -> MemorySegment.allocateNative(size, align, scopeFactory.get());
     }
 
     /**
-     * Returns a native arena-based allocator which allocates a single memory segment, of given size, and then responds to
-     * allocation request by returning different slices of that same segment (until no further allocation is possible).
+     * Returns a native arena-based allocator which allocates a single memory segment, of given size (using malloc),
+     * and then responds to allocation request by returning different slices of that same segment
+     * (until no further allocation is possible).
      * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
      * with allocating a new off-heap memory region upon each allocation request.
+     * <p>
+     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
+     * the allocator capacity.
      *
      * @param size the size (in bytes) of the allocation arena.
      * @param scope the scope associated with the segments returned by this allocator.
      * @return a new bounded arena-based allocator
      */
-    static NativeAllocator arenaBounded(long size, ResourceScope scope) {
+    static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return new AbstractArenaAllocator.BoundedArenaAllocator(size, scope);
+        return arena(new ArenaAllocator.OneOffBlockAllocator(scope, size));
     }
 
     /**
-     * Returns a native arena-based allocator which allocates memory segments (of a certain fixed size) and then
-     * responds to allocation request by returning different slices of the same segment (until no further allocation is possible,
+     * Returns a native arena-based allocator which allocates a memory segment of a certain fixed size (using malloc)
+     * and then responds to allocation request by returning different slices of the same segment (until no further allocation is possible,
      * in which case a new segment, of the same fixed size, is allocated). This can be useful when clients want to
      * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
-     * region upon each allocation request.
+     * region upon each allocation request. This is equivalent to the following code:
+     *
+     * <blockquote><pre>{@code
+    arena(malloc(() -> scope))
+     * }</pre></blockquote>
      *
      * @param scope the scope associated with the segments returned by this allocator.
      * @return a new unbounded arena-based allocator
      */
-    static NativeAllocator arenaUnbounded(ResourceScope scope) {
+    static SegmentAllocator arenaUnbounded(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return new AbstractArenaAllocator.UnboundedArenaAllocator(scope);
+        return arena(malloc(() -> scope));
     }
 
     /**
-     * Returns a native allocator which responds to allocation requests by recycling a single segment.
-     * This can be useful to limit allocation requests in case a client knows that he has
-     * fully processed the contents of the allocated segment before the subsequent allocation request takes place.
+     * Returns an arena-based allocator which allocates a memory segment of a certain fixed size (using a given
+     * block allocator) and then responds to allocation request by returning different slices of the same segment
+     * (until no further allocation is possible, in which case a new segment, of the same fixed size, is allocated, also
+     * using the given block allocator). This can be useful when clients want to
+     * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
+     * region upon each allocation request.
+     *
+     * @param blockAllocator the sub-allocator to be used by the returned arena allocator to allocate new memory blocks.
+     * @return a new arena-based allocator
+     */
+    static SegmentAllocator arena(SegmentAllocator blockAllocator) {
+        Objects.requireNonNull(blockAllocator);
+        return new ArenaAllocator(blockAllocator);
+    }
+
+    /**
+     * Returns a native allocator which responds to allocation requests by recycling a single segment; that is,
+     * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
+     * constraints are ignored by this allocator). This can be useful to limit allocation requests in case a client
+     * knows that he has fully processed the contents of the allocated segment before the subsequent allocation request
+     * takes place.
      *
      * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
-    static NativeAllocator recycling(MemorySegment segment) {
+    static SegmentAllocator recycling(MemorySegment segment) {
         Objects.requireNonNull(segment);
-        return (size, align) -> {
-            long addr = segment.address().toRawLongValue();
-            long alignedAddr = Utils.alignUp(addr, align);
-            long delta = alignedAddr - addr;
-            return segment.asSlice(delta, size);
-        };
+        return (size, align) -> segment.asSlice(0, size);
     }
 }

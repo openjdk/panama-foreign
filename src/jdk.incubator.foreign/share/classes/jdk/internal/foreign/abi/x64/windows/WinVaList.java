@@ -29,7 +29,6 @@ import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CLinker.VaList;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
-import jdk.internal.ref.CleanerFactory;
 
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
@@ -100,7 +99,7 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, NativeAllocator scope) {
+    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
         Objects.requireNonNull(scope);
         return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
     }
@@ -217,7 +216,7 @@ class WinVaList implements VaList {
             if (args.isEmpty()) {
                 return EMPTY;
             }
-            NativeAllocator allocator = NativeAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
             MemorySegment segment = allocator.allocate(VA_SLOT_SIZE_BYTES * args.size());
             List<MemorySegment> attachedSegments = new ArrayList<>();
             attachedSegments.add(segment);
