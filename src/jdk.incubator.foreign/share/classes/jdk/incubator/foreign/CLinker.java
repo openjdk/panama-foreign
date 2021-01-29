@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import jdk.internal.foreign.abi.SharedUtils;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -125,8 +126,8 @@ public interface CLinker {
     }
 
     /**
-     * Obtain a foreign method handle, with given type, which can be used to call a
-     * target foreign function at a given address and featuring a given function descriptor.
+     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * which can be used to call a target foreign function at the given address.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -136,7 +137,27 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
+    default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
+        Objects.requireNonNull(symbol);
+        return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
+    }
+
+    /**
+     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * which can be used to call a target foreign function at an address passed in as a leading argument.
+     * <p>
+     * For a given method type {@code (As...) -> R}, the returned method handle shall have the method type
+     * {@code (Addressable, As...) -> R}, where {@code As...} are zero or more parameter types, and {@code R}
+     * is the return type (which can be {@code void}).
+     *
+     * @see LibraryLookup#lookup(String)
+     *
+     * @param type     the method type.
+     * @param function the function descriptor.
+     * @return the downcall method handle.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
+     */
+    MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
      * Allocates a native segment whose base address (see {@link MemorySegment#address}) can be

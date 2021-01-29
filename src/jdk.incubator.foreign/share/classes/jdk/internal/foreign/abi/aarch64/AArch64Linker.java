@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2019, 2020, Arm Limited. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -74,12 +74,11 @@ public class AArch64Linker implements CLinker {
     }
 
     @Override
-    public MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(symbol);
+    public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         MethodType llMt = SharedUtils.convertVaListCarriers(type, AArch64VaList.CARRIER);
-        MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
+        MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
         handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
