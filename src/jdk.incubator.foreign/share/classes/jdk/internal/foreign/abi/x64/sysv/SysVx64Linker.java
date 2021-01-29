@@ -26,13 +26,16 @@ package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -92,10 +95,10 @@ public class SysVx64Linker implements CLinker {
         Objects.requireNonNull(symbol);
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
-        MethodType llMt = SharedUtils.convertVaListCarriers(type, SysVVaList.CARRIER);
-        MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
-        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
-        return handle;
+        return SharedUtils.adaptDowncall(type, function, MH_unboxVaList, sigType -> {
+            MethodType llMt = SharedUtils.convertVaListCarriers(sigType, SysVVaList.CARRIER);
+            return CallArranger.arrangeDowncall(symbol, llMt, function);
+        });
     }
 
     @Override

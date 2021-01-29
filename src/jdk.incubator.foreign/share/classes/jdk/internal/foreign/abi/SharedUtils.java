@@ -44,6 +44,8 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.x64.sysv.CallArranger;
+import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
@@ -51,9 +53,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.invoke.WrongMethodTypeException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
@@ -72,7 +76,7 @@ public class SharedUtils {
     static {
         try {
             var lookup = MethodHandles.lookup();
-            MH_ALLOC_BUFFER = lookup.findStatic(SharedUtils.class, "allocateNative",
+            MH_ALLOC_BUFFER = lookup.findVirtual(SegmentAllocator.class, "allocate",
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "address",
                     methodType(MemoryAddress.class));
@@ -157,21 +161,25 @@ public class SharedUtils {
     public static MethodHandle adaptDowncallForIMR(MethodHandle handle, FunctionDescriptor cDesc) {
         if (handle.type().returnType() != void.class)
             throw new IllegalArgumentException("return expected to be void for in memory returns");
-        if (handle.type().parameterType(0) != MemoryAddress.class)
+        if (handle.type().parameterType(1) != MemoryAddress.class)
             throw new IllegalArgumentException("MemoryAddress expected as first param");
         if (cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return layout needed: " + cDesc);
 
         MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
-        handle = collectArguments(ret, 1, handle); // (MemorySegment, MemoryAddress ...) MemorySegment
-        handle = collectArguments(handle, 1, MH_BASEADDRESS); // (MemorySegment, MemorySegment ...) MemorySegment
-        MethodType oldType = handle.type(); // (MemorySegment, MemorySegment, ...) MemorySegment
-        MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, ...) MemorySegment
+        handle = collectArguments(ret, 1, handle); // (MemorySegment, SegmentAllocator, MemoryAddress ...) MemorySegment
+        handle = collectArguments(handle, 2, MH_BASEADDRESS); // (MemorySegment, SegmentAllocator, MemorySegment ...) MemorySegment
+        MethodType oldType = handle.type(); // (MemorySegment, SegmentAllocator, MemorySegment, ...) MemorySegment
+        MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, SegmentAllocator, MemorySegment, ...) MemorySegment
         int[] reorder = IntStream.range(-1, newType.parameterCount()).toArray();
+        reorder[0] = 1; // [1, 0, 1, 2, 3, ...]
+        handle = permuteArguments(handle, newType, reorder); // (SegmentAllocator, MemorySegment, ...) MemorySegment
+        handle = collectArguments(handle, 1, insertArguments(MH_ALLOC_BUFFER, 1, cDesc.returnLayout().get())); // (SegmentAllocator, SegmentAllocator, ...) MemorySegment
+        oldType = handle.type(); // (SegmentAllocator, SegmentAllocator, ...) MemorySegment
+        newType = oldType.dropParameterTypes(0, 1); // (SegmentAllocator, ...) MemorySegment
+        reorder = IntStream.range(-1, newType.parameterCount()).toArray();
         reorder[0] = 0; // [0, 0, 1, 2, 3, ...]
-        handle = permuteArguments(handle, newType, reorder); // (MemorySegment, ...) MemoryAddress
-        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (...) MemoryAddress
-
+        handle = permuteArguments(handle, newType, reorder); // (SegmentAllocator, ...) MemorySegment
         return handle;
     }
 
@@ -212,6 +220,9 @@ public class SharedUtils {
     }
 
     public static void checkFunctionTypes(MethodType mt, FunctionDescriptor cDesc, long addressSize) {
+        if (mt.parameterCount() > 0 && mt.parameterType(0).equals(SegmentAllocator.class)) {
+            mt = mt.dropParameterTypes(0, 1);
+        }
         if (mt.returnType() == void.class != cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return type mismatch: " + mt + " != " + cDesc);
         List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
@@ -222,7 +233,8 @@ public class SharedUtils {
         for (int i = 0; i < paramCount; i++) {
             checkCompatibleType(mt.parameterType(i), argLayouts.get(i), addressSize);
         }
-        cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
+        Class<?> ret = mt.returnType();
+        cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(ret, rl, addressSize));
     }
 
     public static Class<?> primitiveCarrierForSize(long size) {
@@ -354,6 +366,33 @@ public class SharedUtils {
             params[i] = ((pType == VaList.class) ? carrier : pType);
         }
         return methodType(mt.returnType(), params);
+    }
+
+    public static MethodHandle adaptDowncall(MethodType type, FunctionDescriptor descriptor,
+                                             MethodHandle MH_unboxVaList, Function<MethodType, MethodHandle> downcallFactory) {
+        MethodType sigMethodType = type;
+        if (type.parameterCount() > 0 && type.parameterType(0).equals(SegmentAllocator.class)) {
+            if (descriptor.returnLayout().isEmpty() || !(descriptor.returnLayout().get() instanceof GroupLayout)) {
+                throw new IllegalArgumentException("Unexpected allocator prefix argument: " + type.descriptorString());
+            }
+            sigMethodType = type.dropParameterTypes(0, 1);
+        }
+        MethodHandle handle = downcallFactory.apply(sigMethodType);
+        if (sigMethodType == type) {
+            handle = prependAllocatorIfNeeded(sigMethodType, handle);
+        }
+        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
+        return handle;
+    }
+
+    static MethodHandle prependAllocatorIfNeeded(MethodType type, MethodHandle handle) {
+        boolean allocatorProvided = type.parameterCount() != 0 &&
+                type.parameterType(0).equals(SegmentAllocator.class);
+        if (!allocatorProvided) {
+            handle = MethodHandles.insertArguments(handle, 0, Binding.Context.DEFAULT.allocator());
+        }
+
+        return handle;
     }
 
     public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {

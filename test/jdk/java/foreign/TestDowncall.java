@@ -62,7 +62,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.SegmentAllocator;
+import jdk.internal.foreign.Utils;
 import org.testng.annotations.*;
+import static org.testng.Assert.*;
 
 public class TestDowncall extends CallGeneratorHelper {
 
@@ -74,13 +78,36 @@ public class TestDowncall extends CallGeneratorHelper {
     public void testDowncall(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
         LibraryLookup.Symbol addr = lib.lookup(fName).get();
-        MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
+        MethodType mt = methodType(ret, paramTypes, fields);
+        FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
-        mh = mh.asSpreader(Object[].class, paramTypes.size());
-        Object res = mh.invoke(args);
+        // call w/o allocator
+        Object res = doCall(addr, mt, descriptor, args);
         if (ret == Ret.NON_VOID) {
             checks.forEach(c -> c.accept(res));
         }
+        if (mt.returnType().equals(MemorySegment.class)) {
+            // try with allocator
+            MethodType allocatorMt = mt.insertParameterTypes(0, SegmentAllocator.class);
+            Object[] allocatorArgs = new Object[args.length + 1];
+            System.arraycopy(args, 0, allocatorArgs, 1, args.length);
+            try (NativeScope scope = NativeScope.unboundedScope()) {
+                allocatorArgs[0] = scope;
+                Object allocatorRes = doCall(addr, allocatorMt, descriptor, allocatorArgs);
+                checks.forEach(c -> c.accept(allocatorRes));
+                // check that return struct has indeed been allocated in the native scope
+                assertEquals(
+                        Utils.alignUp(descriptor.returnLayout().get().byteSize(),
+                        descriptor.returnLayout().get().byteAlignment()), scope.allocatedBytes());
+            }
+        }
+    }
+
+    Object doCall(LibraryLookup.Symbol addr, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+        MethodHandle mh = abi.downcallHandle(addr, type, descriptor);
+        mh = mh.asSpreader(Object[].class, args.length);
+        Object res = mh.invoke(args);
+        return res;
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {

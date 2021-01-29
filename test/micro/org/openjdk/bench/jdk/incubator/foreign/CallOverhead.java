@@ -28,6 +28,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -59,6 +60,7 @@ public class CallOverhead {
     static final MethodHandle func;
     static final MethodHandle identity;
     static final MethodHandle identity_struct;
+    static final MethodHandle identity_struct_alloc;
     static final MethodHandle identity_memory_address;
     static final MethodHandle args5;
     static final MethodHandle args10;
@@ -70,6 +72,7 @@ public class CallOverhead {
     );
 
     static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
+    static final SegmentAllocator recyclingAllocator = SegmentAllocator.recycling(MemorySegment.allocateNative(POINT_LAYOUT));
 
     static {
         System.loadLibrary("CallOverheadJNI");
@@ -91,6 +94,9 @@ public class CallOverhead {
         }
         identity_struct = abi.downcallHandle(ll.lookup("identity_struct").get(),
                 MethodType.methodType(MemorySegment.class, MemorySegment.class),
+                FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
+        identity_struct_alloc = abi.downcallHandle(ll.lookup("identity_struct").get(),
+                MethodType.methodType(MemorySegment.class, SegmentAllocator.class, MemorySegment.class),
                 FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
         identity_memory_address = abi.downcallHandle(ll.lookup("identity_memory_address").get(),
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
@@ -141,6 +147,11 @@ public class CallOverhead {
     @Benchmark
     public MemorySegment panama_identity_struct() throws Throwable {
         return (MemorySegment) identity_struct.invokeExact(point);
+    }
+
+    @Benchmark
+    public MemorySegment panama_identity_struct_alloc() throws Throwable {
+        return (MemorySegment) identity_struct_alloc.invokeExact(recyclingAllocator, point);
     }
 
     @Benchmark

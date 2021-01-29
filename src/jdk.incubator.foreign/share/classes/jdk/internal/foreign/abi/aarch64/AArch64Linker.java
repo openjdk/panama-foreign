@@ -81,10 +81,10 @@ public class AArch64Linker implements CLinker {
         Objects.requireNonNull(symbol);
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
-        MethodType llMt = SharedUtils.convertVaListCarriers(type, AArch64VaList.CARRIER);
-        MethodHandle handle = CallArranger.arrangeDowncall(symbol, llMt, function);
-        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
-        return handle;
+        return SharedUtils.adaptDowncall(type, function, MH_unboxVaList, sigType -> {
+                MethodType llMt = SharedUtils.convertVaListCarriers(type, AArch64VaList.CARRIER);
+                return CallArranger.arrangeDowncall(symbol, llMt, function);
+        });
     }
 
     @Override

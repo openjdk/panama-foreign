@@ -238,7 +238,7 @@ public abstract class Binding {
      * the allocation operation, or {@link ToSegment} bindings, by providing the {@link ResourceScope} that
      * should be used to create an unsafe struct from a memory address.
      */
-    static class Context implements AutoCloseable {
+    public static class Context implements AutoCloseable {
         private final SegmentAllocator allocator;
         private final ResourceScope scope;
         
@@ -263,7 +263,7 @@ public abstract class Binding {
         /**
          * Create a binding context from given native scope.
          */
-        static Context ofNativeScope(NativeScope scope) {
+        public static Context ofNativeScope(NativeScope scope) {
             return new Context(scope, scope);
         }
 
@@ -271,7 +271,7 @@ public abstract class Binding {
          * Create a binding context from given segment allocator. The resulting context will throw when
          * the context's scope is accessed.
          */
-        static Context ofAllocator(SegmentAllocator allocator) {
+        public static Context ofAllocator(SegmentAllocator allocator) {
             return new Context(allocator, null) {
                 @Override
                 public ResourceScope scope() {
@@ -284,7 +284,7 @@ public abstract class Binding {
          * Dummy binding context. Throws exceptions when attempting to access allocator/scope, and its
          * {@link #close()} is idempotent.
          */
-        static Context DUMMY = new Context(null, null) {
+        public static Context DUMMY = new Context(null, null) {
             @Override
             public SegmentAllocator allocator() {
                 throw new UnsupportedOperationException();
@@ -305,7 +305,7 @@ public abstract class Binding {
          * Default binding context. Does not provide a resource scope, but provides a default {@link SegmentAllocator}
          * which uses {@link MemorySegment#allocateNative(long, long)}.
          */
-        static Context DEFAULT = ofAllocator(MemorySegment::allocateNative);
+        public static Context DEFAULT = ofAllocator(MemorySegment::allocateNative);
     }
 
     enum Tag {

@@ -65,7 +65,8 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * carrier type can be used to match the native {@code va_list} type.
  * <p>
  * For the linking process to be successful, some requirements must be satisfied; if {@code M} and {@code F} are
- * the method type and the function descriptor, respectively, used during the linking process, then it must be that:
+ * the method type (obtained after dropping any prefix arguments) and the function descriptor, respectively,
+ * used during the linking process, then it must be that:
  * <ul>
  *     <li>The arity of {@code M} is the same as that of {@code F};</li>
  *     <li>If the return type of {@code M} is {@code void}, then {@code F} should have no return layout
@@ -127,6 +128,10 @@ public interface CLinker {
     /**
      * Obtain a foreign method handle, with given type, which can be used to call a
      * target foreign function at a given address and featuring a given function descriptor.
+     * The provided method type can specify a prefix carrier type (of type {@link SegmentAllocator}); this doesn't affect
+     * the linking process, and the checks associated with it (which are performed as if such prefix type was not there).
+     * In such cases, the resulting method handle will accept an additional prefix argument (of type {@link SegmentAllocator}),
+     * which is used by the linker runtime to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -134,7 +139,9 @@ public interface CLinker {
      * @param type     the method type.
      * @param function the function descriptor.
      * @return the downcall method handle.
-     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch,
+     * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
+     * in {@code function} is not a {@link GroupLayout}.
      */
     MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
