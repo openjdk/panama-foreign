@@ -52,7 +52,7 @@ public class LibTest8258605Test {
     public void testFunctionCallback() {
         try (var scope = NativeScope.unboundedScope()) {
              boolean[] callbackReached = new boolean[1];
-             f(f$x.allocate(i -> {
+             f(CB.allocate(i -> {
                  assertTrue(i == 10);
                  callbackReached[0] = true;
              }, scope));
@@ -70,7 +70,7 @@ public class LibTest8258605Test {
              // make sure that foo.bar is not NULL
              assertFalse(Foo.bar$get(foo).equals(NULL));
 
-             f2(foo, f2$cb.allocate(i -> {
+             f2(foo, CB.allocate(i -> {
                  assertTrue(i == 42);
                  callbackReached[0] = true;
              }, scope));

@@ -380,7 +380,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     Type.Function getAsFunctionPointer(Type type) {
         if (type instanceof Type.Delegated) {
-            return getAsFunctionPointer(((Type.Delegated) type).type());
+            Type.Delegated delegated = (Type.Delegated)type;
+            return switch (delegated.kind()) {
+                case POINTER -> getAsFunctionPointer(delegated.type());
+                default -> null;
+            };
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -436,6 +440,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else if (type instanceof Type.Primitive) {
              String anno = annotationWriter.getCAnnotation(type);
              header().emitPrimitiveTypedef((Type.Primitive)type, tree.name(), anno);
+        } else {
+            Type.Function func = getAsFunctionPointer(type);
+            if (func != null) {
+                generateFunctionalInterface(func, type, tree.name());
+            }
         }
         return null;
     }
