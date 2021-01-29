@@ -2284,18 +2284,18 @@ WB_ENTRY(void, WB_CheckThreadObjOfTerminatingThread(JNIEnv* env, jobject wb, job
   }
 WB_END
 
-WB_ENTRY(void, WB_WalkFrames(JNIEnv* env, jobject wb, jboolean log, jboolean verify_oops))
+WB_ENTRY(void, WB_WalkFrames(JNIEnv* env, jobject wb, jboolean log, jboolean update_reg_map_and_verify_oops))
   intx tty_token = -1;
   if (log) {
     tty_token = ttyLocker::hold_tty();
     tty->print_cr("[WhiteBox::WalkFrames] Walking Frames");
   }
-  for (StackFrameStream fst(JavaThread::current(), verify_oops, true); !fst.is_done(); fst.next()) {
+  for (StackFrameStream fst(JavaThread::current(), update_reg_map_and_verify_oops, true); !fst.is_done(); fst.next()) {
     frame* current_frame = fst.current();
     if (log) {
       current_frame->print_value();
     }
-    if (verify_oops) {
+    if (update_reg_map_and_verify_oops) {
       current_frame->verify(fst.register_map());
     }
   }
