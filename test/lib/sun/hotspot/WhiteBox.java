@@ -638,7 +638,7 @@ public class WhiteBox {
   public native String getLibcName();
 
   // Walk stack frames of current thread
-  public native void walkFrames(boolean log, boolean updateRegMapAndVerifyOops);
+  public native void verifyFrames(boolean log, boolean updateRegisterMap);
 
   public native boolean isJVMTIIncluded();
 

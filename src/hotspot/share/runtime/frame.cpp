@@ -1105,7 +1105,9 @@ void frame::verify(const RegisterMap* map) const {
 #if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_empty(), "must be empty before verify");
 #endif
-  oops_do_internal(&VerifyOopClosure::verify_oop, NULL, map, false, DerivedPointerIterationMode::_ignore);
+  if (map->update_map()) { // does map have oops?
+    oops_do_internal(&VerifyOopClosure::verify_oop, NULL, map, false, DerivedPointerIterationMode::_ignore);
+  }
 }
 
 

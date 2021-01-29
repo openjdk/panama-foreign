@@ -2284,23 +2284,21 @@ WB_ENTRY(void, WB_CheckThreadObjOfTerminatingThread(JNIEnv* env, jobject wb, job
   }
 WB_END
 
-WB_ENTRY(void, WB_WalkFrames(JNIEnv* env, jobject wb, jboolean log, jboolean update_reg_map_and_verify_oops))
+WB_ENTRY(void, WB_VerifyFrames(JNIEnv* env, jobject wb, jboolean log, jboolean update_map))
   intx tty_token = -1;
   if (log) {
     tty_token = ttyLocker::hold_tty();
-    tty->print_cr("[WhiteBox::WalkFrames] Walking Frames");
+    tty->print_cr("[WhiteBox::VerifyFrames] Walking Frames");
   }
-  for (StackFrameStream fst(JavaThread::current(), update_reg_map_and_verify_oops, true); !fst.is_done(); fst.next()) {
+  for (StackFrameStream fst(JavaThread::current(), update_map, true); !fst.is_done(); fst.next()) {
     frame* current_frame = fst.current();
     if (log) {
       current_frame->print_value();
     }
-    if (update_reg_map_and_verify_oops) {
-      current_frame->verify(fst.register_map());
-    }
+    current_frame->verify(fst.register_map());
   }
   if (log) {
-    tty->print_cr("[WhiteBox::WalkFrames] Done");
+    tty->print_cr("[WhiteBox::VerifyFrames] Done");
     ttyLocker::release_tty(tty_token);
   }
 WB_END
@@ -2541,7 +2539,7 @@ static JNINativeMethod methods[] = {
   {CC"handshakeWalkStack", CC"(Ljava/lang/Thread;Z)I", (void*)&WB_HandshakeWalkStack },
   {CC"asyncHandshakeWalkStack", CC"(Ljava/lang/Thread;)V", (void*)&WB_AsyncHandshakeWalkStack },
   {CC"checkThreadObjOfTerminatingThread", CC"(Ljava/lang/Thread;)V", (void*)&WB_CheckThreadObjOfTerminatingThread },
-  {CC"walkFrames",                CC"(ZZ)V",            (void*)&WB_WalkFrames },
+  {CC"verifyFrames",                CC"(ZZ)V",            (void*)&WB_VerifyFrames },
   {CC"addCompilerDirective",    CC"(Ljava/lang/String;)I",
                                                       (void*)&WB_AddCompilerDirective },
   {CC"removeCompilerDirective",   CC"(I)V",           (void*)&WB_RemoveCompilerDirective },
