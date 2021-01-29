@@ -100,7 +100,7 @@ public class TestNativeScope {
     public void testBigAllocationInUnboundedScope() {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
-                MemorySegment address = scope.allocate(i);
+                MemorySegment address = scope.allocate(i, i);
                 //check size
                 assertEquals(address.byteSize(), i);
                 //check alignment

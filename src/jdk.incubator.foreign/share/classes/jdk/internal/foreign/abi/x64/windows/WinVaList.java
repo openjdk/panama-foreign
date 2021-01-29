@@ -99,16 +99,16 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
-        Objects.requireNonNull(scope);
-        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
+    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
+        Objects.requireNonNull(allocator);
+        return (MemorySegment) read(MemorySegment.class, layout, allocator);
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
         return read(carrier, layout, MemorySegment::allocateNative);
     }
 
-    private Object read(Class<?> carrier, MemoryLayout layout, SharedUtils.Allocator allocator) {
+    private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(layout);
         SharedUtils.checkCompatibleType(carrier, layout, Windowsx64Linker.ADDRESS_SIZE);
         Object res;
@@ -119,7 +119,7 @@ class WinVaList implements VaList {
                     MemoryAddress structAddr = (MemoryAddress) VH_address.get(segment);
                     try (ResourceScope localScope = ResourceScope.ofConfined()) {
                         MemorySegment struct = structAddr.asSegmentRestricted(layout.byteSize(), localScope);
-                        MemorySegment seg = allocator.allocate(layout.byteSize());
+                        MemorySegment seg = allocator.allocate(layout);
                         seg.copyFrom(struct);
                         yield seg;
                     }

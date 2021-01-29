@@ -234,16 +234,16 @@ public class AArch64VaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
-        Objects.requireNonNull(scope);
-        return (MemorySegment) read(MemorySegment.class, layout, SharedUtils.Allocator.ofAllocator(scope));
+    public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
+        Objects.requireNonNull(allocator);
+        return (MemorySegment) read(MemorySegment.class, layout, allocator);
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
         return read(carrier, layout, MemorySegment::allocateNative);
     }
 
-    private Object read(Class<?> carrier, MemoryLayout layout, SharedUtils.Allocator allocator) {
+    private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(layout);
         checkCompatibleType(carrier, layout, AArch64Linker.ADDRESS_SIZE);
 

@@ -31,7 +31,6 @@ import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.invoke.VMStorageProxy;
 import sun.security.action.GetPropertyAction;
@@ -56,8 +55,6 @@ import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.internal.foreign.abi.SharedUtils.Allocator.THROWING_ALLOCATOR;
-import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
@@ -97,8 +94,8 @@ public class ProgrammableInvoker {
                     methodType(NativeScope.class, long.class));
             MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
                     methodType(void.class));
-            MH_WRAP_SCOPE = lookup.findStatic(Allocator.class, "ofScope",
-                    methodType(Allocator.class, NativeScope.class));
+            MH_WRAP_SCOPE = lookup.findStatic(Binding.Context.class, "ofNativeScope",
+                    methodType(Binding.Context.class, NativeScope.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -207,7 +204,7 @@ public class ProgrammableInvoker {
         int argAllocatorPos = -1;
         if (bufferCopySize > 0) {
             argAllocatorPos = 0;
-            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Allocator.class);
+            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Binding.Context.class);
             argInsertPos++;
         }
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
@@ -228,13 +225,13 @@ public class ProgrammableInvoker {
             MethodHandle returnFilter = identity(highLevelType.returnType());
             int retAllocatorPos = 0;
             int retInsertPos = 1;
-            returnFilter = dropArguments(returnFilter, retAllocatorPos, Allocator.class);
+            returnFilter = dropArguments(returnFilter, retAllocatorPos, Binding.Context.class);
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
                 returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
             }
-            returnFilter = insertArguments(returnFilter, retAllocatorPos, DEFAULT_ALLOCATOR);
+            returnFilter = insertArguments(returnFilter, retAllocatorPos, Binding.Context.DEFAULT);
             specializedHandle = MethodHandles.filterReturnValue(specializedHandle, returnFilter);
         }
 
@@ -324,10 +321,10 @@ public class ProgrammableInvoker {
     Object invokeInterpBindings(Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        Allocator unboxAllocator = bufferCopySize != 0
-                ? Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
-                : THROWING_ALLOCATOR;
-        try (unboxAllocator) {
+        Binding.Context unboxContext = bufferCopySize != 0
+                ? Binding.Context.ofNativeScope(NativeScope.boundedScope(bufferCopySize))
+                : Binding.Context.DUMMY;
+        try (unboxContext) {
             // do argument processing, get Object[] as result
             Object[] moves = new Object[leaf.type().parameterCount()];
             for (int i = 0; i < args.length; i++) {
@@ -335,7 +332,7 @@ public class ProgrammableInvoker {
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
                             moves[argIndexMap.get(storage)] = value;
-                        }, unboxAllocator);
+                        }, unboxContext);
             }
 
             // call leaf
@@ -347,10 +344,10 @@ public class ProgrammableInvoker {
             } else if (o instanceof Object[]) {
                 Object[] oArr = (Object[]) o;
                 return BindingInterpreter.box(callingSequence.returnBindings(),
-                        (storage, type) -> oArr[retIndexMap.get(storage)], DEFAULT_ALLOCATOR);
+                        (storage, type) -> oArr[retIndexMap.get(storage)], Binding.Context.DEFAULT);
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
-                        DEFAULT_ALLOCATOR);
+                        Binding.Context.DEFAULT);
             }
         }
     }

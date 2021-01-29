@@ -30,7 +30,6 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import jdk.internal.vm.annotation.Stable;
 
 import java.lang.invoke.MethodHandle;
@@ -84,9 +83,9 @@ public class ProgrammableUpcallHandler implements UpcallHandler {
     }
 
     private void invoke(MemoryAddress buffer) {
-        Allocator allocator = bufferCopySize != 0
-                ? Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
-                : Allocator.THROWING_ALLOCATOR;
+        Binding.Context allocator = bufferCopySize != 0
+                ? Binding.Context.ofNativeScope(NativeScope.boundedScope(bufferCopySize))
+                : Binding.Context.DUMMY;
         try (allocator) {
             MemorySegment bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
 

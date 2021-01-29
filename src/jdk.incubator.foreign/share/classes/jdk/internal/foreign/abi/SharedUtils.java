@@ -69,8 +69,6 @@ public class SharedUtils {
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
 
-    static final Allocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
-
     static {
         try {
             var lookup = MethodHandles.lookup();
@@ -388,81 +386,6 @@ public class SharedUtils {
         return cDesc.attribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME)
                 .map(Boolean.class::cast)
                 .orElse(false);
-    }
-
-    public interface Allocator extends AutoCloseable {
-        Allocator THROWING_ALLOCATOR = new Allocator() {
-            @Override
-            public MemorySegment allocate(long size, long align) {
-                throw new UnsupportedOperationException("Null allocator");
-            }
-
-            @Override
-            public void close() {
-                // do nothing
-            }
-        };
-
-        default MemorySegment allocate(MemoryLayout layout) {
-            return allocate(layout.byteSize(), layout.byteAlignment());
-        }
-
-        default MemoryScope scope() {
-            throw new UnsupportedOperationException();
-        }
-
-        default MemorySegment allocate(long size) {
-            return allocate(size, 1);
-        }
-
-        MemorySegment allocate(long size, long align);
-
-        @Override
-        default void close() {
-            throw new UnsupportedOperationException();
-        }
-
-        static Allocator ofScope(ResourceScope scope) {
-            return new Allocator() {
-                @Override
-                public MemorySegment allocate(long size, long align) {
-                    return MemorySegment.allocateNative(size, align, scope);
-                }
-
-                @Override
-                public MemoryScope scope() {
-                    return Utils.asScope(scope);
-                }
-            };
-        }
-
-        static Allocator ofScope(NativeScope scope) {
-            return new Allocator() {
-                @Override
-                public MemorySegment allocate(long size, long align) {
-                    return scope.allocate(size, align);
-                }
-
-                @Override
-                public MemoryScope scope() {
-                    return ((NativeScopeImpl)scope).scope();
-                }
-
-                @Override
-                public void close() {
-                    scope.close();
-                }
-            };
-        }
-
-        static Allocator ofAllocator(SegmentAllocator scope) {
-            return new Allocator() {
-                @Override
-                public MemorySegment allocate(long size, long align) {
-                    return scope.allocate(size, align);
-                }
-            };
-        }
     }
 
     public static class SimpleVaArg {

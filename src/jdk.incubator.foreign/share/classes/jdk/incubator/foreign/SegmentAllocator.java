@@ -366,7 +366,7 @@ public interface SegmentAllocator {
      * @return a segment for the newly allocated memory block.
      */
     default MemorySegment allocate(long bytesSize) {
-        return allocate(bytesSize, bytesSize);
+        return allocate(bytesSize, 1);
     }
 
     /**
