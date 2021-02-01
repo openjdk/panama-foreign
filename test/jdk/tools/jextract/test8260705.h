@@ -37,3 +37,18 @@ struct Foo3 {
     int: 0;
     int: 32;
 };
+
+struct Foo4 {
+  int    a:3;
+  int    b:2;
+  int     :0; // Force alignment to next boundary.
+  int    c:4;
+  int    d:3;
+};
+
+struct Foo5 {
+  int    a:3;
+  int    b:2;
+  int    c:4;
+  int    d:3;
+};

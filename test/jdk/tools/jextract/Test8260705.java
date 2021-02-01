@@ -21,11 +21,13 @@
  * questions.
  */
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /*
  * @test
@@ -60,8 +62,25 @@ public class Test8260705 extends JextractToolRunner {
             checkMethod(Foo2Class, "w$set", void.class, MemorySegment.class, long.class, int.class);
 
             assertNotNull(loader.loadClass("test8260705_h$Foo3"));
+
+            Class<?> Foo4Class = loader.loadClass("test8260705_h$Foo4");
+            assertTrue(sizeof(Foo4Class) == 8L);
+
+            Class<?> Foo5Class = loader.loadClass("test8260705_h$Foo5");
+            assertTrue(sizeof(Foo5Class) == 4L);
+
         } finally {
             deleteDir(outputPath);
         }
     }
+
+    private long sizeof(Class<?> cls) {
+        Method m = findMethod(cls, "sizeof");
+        try {
+            return (long)m.invoke(null);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }
+
