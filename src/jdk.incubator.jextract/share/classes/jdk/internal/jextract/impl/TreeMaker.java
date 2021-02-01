@@ -187,6 +187,13 @@ class TreeMaker {
 
     public Declaration.Scoped createScoped(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
         List<Declaration> decls = filterNestedDeclarations(c.children()
+                .filter(fc -> {
+                    if (fc.isBitField()) {
+                        // only non-empty and named bit fields are generated
+                        return fc.getBitFieldWidth() != 0 && !fc.spelling().isEmpty();
+                    }
+                    return true;
+                })
                 .map(this::createTree).collect(Collectors.toList()));
         if (c.isDefinition()) {
             //just a declaration AND definition, we have a layout
