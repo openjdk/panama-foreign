@@ -59,6 +59,11 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     }
 
     @Override
+    void startBitfield() {
+        // do nothing
+    }
+
+    @Override
     MemoryLayout fieldLayout(Cursor c) {
         if (c.isBitField()) {
             MemoryLayout layout = LayoutUtils.getLayout(c.type());

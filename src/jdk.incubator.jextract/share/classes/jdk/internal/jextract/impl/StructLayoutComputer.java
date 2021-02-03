@@ -59,6 +59,18 @@ final class StructLayoutComputer extends RecordLayoutComputer {
     }
 
     @Override
+    void startBitfield() {
+        /*
+         * In a struct, a bitfield field is seen after a non-bitfield.
+         * Initialize bitfieldLayouts list to collect this and subsequent
+         * bitfield layouts.
+         */
+        if (bitfieldLayouts == null) {
+            bitfieldLayouts = new ArrayList<>();
+        }
+    }
+
+    @Override
     void processField(Cursor c) {
         boolean isBitfield = c.isBitField();
         long expectedOffset = offsetOf(parent, c);
@@ -69,14 +81,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         }
 
         if (isBitfield) {
-            /*
-             * In a struct, a bitfield field is seen after a non-bitfield.
-             * Initialize bitfieldLayouts list to collect this and subsequent
-             * bitfield layouts.
-             */
-             if (bitfieldLayouts == null) {
-                 bitfieldLayouts = new ArrayList<>();
-             }
+            startBitfield();
         } else { // !isBitfield
             /*
              * We may be crossing from bit fields to non-bitfield field.
@@ -88,7 +93,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
              *     int m;
              * }
              */
-             handleBitfields();
+            handleBitfields();
         }
 
         addFieldLayout(offset, parent, c);
@@ -137,6 +142,13 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         List<MemoryLayout> newFields = new ArrayList<>();
         List<MemoryLayout> pendingFields = new ArrayList<>();
         for (MemoryLayout l : layouts) {
+            MemoryLayout padding = null;
+            if (l.isPadding() && (offset + l.bitSize() > storageSize)) {
+                // split padding
+                long delta = storageSize - offset;
+                padding = MemoryLayout.ofPaddingBits(l.bitSize() - delta);
+                l = MemoryLayout.ofPaddingBits(delta);
+            }
             offset += l.bitSize();
             pendingFields.add(l);
             if (!pendingFields.isEmpty() && offset == storageSize) {
@@ -149,6 +161,10 @@ final class StructLayoutComputer extends RecordLayoutComputer {
                 offset = 0L;
             } else if (offset > storageSize) {
                 throw new IllegalStateException("Crossing storage unit boundaries");
+            }
+            if (padding != null) {
+                newFields.add(padding);
+                offset += padding.bitSize();
             }
         }
         if (!pendingFields.isEmpty()) {
