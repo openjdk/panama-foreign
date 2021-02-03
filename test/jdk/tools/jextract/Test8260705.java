@@ -40,7 +40,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class Test8260705 extends JextractToolRunner {
     @Test
-    public void testPointerFields() {
+    public void test() {
         Path outputPath = getOutputFilePath("output");
         Path headerFile = getInputFilePath("test8260705.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();

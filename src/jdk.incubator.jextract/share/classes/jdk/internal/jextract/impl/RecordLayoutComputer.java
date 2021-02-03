@@ -33,6 +33,7 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
+import jdk.internal.clang.libclang.Index_h;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -88,6 +89,7 @@ abstract class RecordLayoutComputer {
              * (padding is computed automatically)
              */
             if (fc.isBitField() && (fc.getBitFieldWidth() == 0 || fc.spelling().isEmpty())) {
+                startBitfield();
                 continue;
             }
 
@@ -97,6 +99,7 @@ abstract class RecordLayoutComputer {
         return finishLayout();
     }
 
+    abstract void startBitfield();
     abstract void processField(Cursor c);
     abstract MemoryLayout finishLayout();
 
