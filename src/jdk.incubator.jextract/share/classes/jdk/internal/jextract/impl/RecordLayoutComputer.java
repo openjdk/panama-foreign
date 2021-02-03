@@ -33,7 +33,6 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-import jdk.internal.clang.libclang.Index_h;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
