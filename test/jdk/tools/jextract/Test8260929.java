@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @modules jdk.incubator.jextract
  * @build JextractToolRunner
  * @bug 8260929
- * @summary jextract crashes with libdnet's rabdef.h 
+ * @summary jextract crashes with libdnet's rabdef.h
  * @run testng/othervm -Dforeign.restricted=permit Test8260929
  */
 public class Test8260929 extends JextractToolRunner {
@@ -50,7 +50,7 @@ public class Test8260929 extends JextractToolRunner {
             checkMethod(rab2Class, "y$get", int.class, MemorySegment.class, long.class);
             checkMethod(rab2Class, "y$set", void.class, MemorySegment.class, int.class);
             checkMethod(rab2Class, "y$set", void.class, MemorySegment.class, long.class, int.class);
-            
+
             checkMethod(rab2Class, "x$get", short.class, MemorySegment.class);
             checkMethod(rab2Class, "x$get", short.class, MemorySegment.class, long.class);
             checkMethod(rab2Class, "x$set", void.class, MemorySegment.class, short.class);

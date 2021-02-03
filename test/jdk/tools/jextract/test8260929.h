@@ -30,7 +30,7 @@ struct {
 
 struct {
    int y;
-   short x; 
+   short x;
    int r1 : 23;
    int r2 : 5;
-} rab2; 
+} rab2;
