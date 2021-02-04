@@ -57,12 +57,11 @@ public class TypedefBuilder extends NestedClassBuilder {
     }
 
     void emitAllocatePointerMethods() {
-        String anno = annotationWriter.getCAnnotation(Type.pointer(type));
         // allocatePointer
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(anno + " MemorySegment allocatePointer() {\n");
+        builder.append(" MemorySegment allocatePointer() {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return MemorySegment.allocateNative(C_POINTER);\n");
@@ -75,7 +74,7 @@ public class TypedefBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(anno + " MemorySegment allocatePointer(NativeScope scope) {\n");
+        builder.append(" MemorySegment allocatePointer(NativeScope scope) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return scope.allocate(C_POINTER);\n");

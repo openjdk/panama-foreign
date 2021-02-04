@@ -31,8 +31,6 @@ import jdk.incubator.jextract.Type;
 import java.lang.invoke.MethodType;
 
 public class FunctionalInterfaceBuilder extends NestedClassBuilder {
-
-    private final String fiAnno;
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
@@ -41,7 +39,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         super(enclosing, Kind.INTERFACE, className);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
-        this.fiAnno = annotationWriter.getCAnnotation(funcType);
     }
 
     @Override
@@ -67,7 +64,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     private void emitFunctionalFactories() {
         builder.incrAlign();
         builder.indent();
-        builder.append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi) {\n");
+        builder.append(PUB_MODS + " MemorySegment allocate(" + className + " fi) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
@@ -76,7 +73,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         builder.indent();
         builder.append("}\n");
         builder.indent();
-        builder.append(PUB_MODS + " " + fiAnno + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
+        builder.append(PUB_MODS + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return allocate(fi).handoff(scope);\n");
