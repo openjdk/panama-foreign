@@ -28,6 +28,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -40,6 +41,7 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
@@ -72,7 +74,10 @@ public class CallOverhead {
     );
 
     static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
+    static final ByteBuffer pointBuf = ByteBuffer.allocateDirect((int)POINT_LAYOUT.byteSize());
+    static final ByteBuffer outBuf = ByteBuffer.allocateDirect((int)POINT_LAYOUT.byteSize());
     static final SegmentAllocator recyclingAllocator = SegmentAllocator.recycling(MemorySegment.allocateNative(POINT_LAYOUT));
+    static final SegmentAllocator malloc = SegmentAllocator.malloc(ResourceScope::ofConfined);
 
     static {
         System.loadLibrary("CallOverheadJNI");
@@ -113,6 +118,9 @@ public class CallOverhead {
 
     static native void blank();
     static native int identity(int x);
+    static native ByteBuffer identityStruct(ByteBuffer buf);
+    static native ByteBuffer identityStructAlloc(ByteBuffer in, ByteBuffer out);
+    static native void freeStruct(ByteBuffer buf);
 
     @Benchmark
     public void jni_blank() throws Throwable {
@@ -134,6 +142,30 @@ public class CallOverhead {
         return identity(10);
     }
 
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public int jni_identity_struct() throws Throwable {
+        int res = 0;
+        for (int i = 0 ; i < 1000 ; i++) {
+            ByteBuffer outBuf = identityStruct(pointBuf);
+            res += outBuf.hashCode();
+            freeStruct(outBuf);
+        }
+        return res;
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public int jni_identity_struct_alloc() throws Throwable {
+        int res = 0;
+        for (int i = 0 ; i < 1000 ; i++) {
+            ByteBuffer buf = identityStructAlloc(pointBuf, outBuf);
+            res += buf.hashCode();
+        }
+        return res;
+    }
+
     @Benchmark
     public int panama_identity() throws Throwable {
         return (int) identity.invokeExact(10);
@@ -145,13 +177,26 @@ public class CallOverhead {
     }
 
     @Benchmark
-    public MemorySegment panama_identity_struct() throws Throwable {
-        return (MemorySegment) identity_struct.invokeExact(point);
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public int panama_identity_struct() throws Throwable {
+        int res = 0;
+        for (int i = 0 ; i < 1000 ; i++) {
+            MemorySegment segment = (MemorySegment) identity_struct_alloc.invokeExact(malloc, point);
+            res += segment.hashCode();
+            segment.scope().close();
+        }
+        return res;
     }
 
     @Benchmark
-    public MemorySegment panama_identity_struct_alloc() throws Throwable {
-        return (MemorySegment) identity_struct_alloc.invokeExact(recyclingAllocator, point);
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public int panama_identity_struct_alloc() throws Throwable {
+        int res = 0;
+        for (int i = 0 ; i < 1000 ; i++) {
+            MemorySegment segment = (MemorySegment) identity_struct_alloc.invokeExact(recyclingAllocator, point);
+            res += segment.hashCode();
+        }
+        return res;
     }
 
     @Benchmark
