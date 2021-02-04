@@ -61,7 +61,7 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     private final String baseClassName;
 
     private SourceConstantHelper(String packageName, String[] libraryNames, String className, String baseClassName, ClassDesc CD_constantsHelper) {
-        super(new StringSourceBuilder(), Kind.CLASS, className, packageName, null, null);
+        super(new StringSourceBuilder(), Kind.CLASS, className, packageName, null);
         this.CD_constantsHelper = CD_constantsHelper;
         this.libraryNames = libraryNames;
         this.baseClassName = baseClassName;

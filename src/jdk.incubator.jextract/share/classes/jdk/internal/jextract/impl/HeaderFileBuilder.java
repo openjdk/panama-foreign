@@ -43,8 +43,8 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     private String superclass;
 
-    HeaderFileBuilder(String clsName, String pkgName, String superclass, ConstantHelper constantHelper, AnnotationWriter annotationWriter) {
-        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper, annotationWriter);
+    HeaderFileBuilder(String clsName, String pkgName, String superclass, ConstantHelper constantHelper) {
+        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper);
         this.superclass = superclass;
     }
 
@@ -59,14 +59,10 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
-                                  boolean varargs, List<String> paramNames, List<String> annos, String returnAnno) {
+                                  boolean varargs, List<String> paramNames) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        if (mtype.returnType() != void.class) {
-            builder.append(returnAnno);
-            builder.append(' ');
-        }
         builder.append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
@@ -85,7 +81,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            builder.append(delim + annos.get(i) + " " + pType.getSimpleName() + " " + pName);
+            builder.append(delim + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
@@ -127,13 +123,13 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.decrAlign();
     }
 
-    void emitPrimitiveTypedef(Type.Primitive primType, String name, String anno) {
+    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             builder.incrAlign();
             builder.indent();
             builder.append(PUB_MODS);
-            builder.append(anno + " ValueLayout ");
+            builder.append(" ValueLayout ");
             builder.append(uniqueNestedClassName(name));
             builder.append(" = ");
             builder.append(TypeTranslator.typeToLayoutName(kind));

@@ -41,18 +41,12 @@ import java.util.List;
 class StructBuilder extends NestedClassBuilder {
 
     private final GroupLayout structLayout;
-    private final String structAnno;
-    private final String structArrayAnno;
-    private final String structPtrAnno;
     private final Type structType;
     private final Deque<String> prefixElementNames;
 
     StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
         this.structLayout = structLayout;
-        this.structAnno = annotationWriter.getCAnnotation(structType);
-        this.structArrayAnno = annotationWriter.getCAnnotation(Type.array(structType));
-        this.structPtrAnno = annotationWriter.getCAnnotation(Type.pointer(structType));
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
     }
@@ -122,10 +116,10 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     @Override
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
+    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
-        builder.append(PUB_MODS + " " + anno + " " + type.getSimpleName() + " " + javaName + "$get(" + this.structAnno + " MemorySegment seg) {\n");
+        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return (" + type.getName() + ")"
@@ -135,15 +129,15 @@ class StructBuilder extends NestedClassBuilder {
         builder.append("}\n");
         builder.decrAlign();
 
-        addIndexGetter(javaName, nativeName, layout, type, anno);
+        addIndexGetter(javaName, nativeName, layout, type);
     }
 
     @Override
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
+    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
-        builder.append(PUB_MODS + "void " + javaName + "$set(" + this.structAnno + " " + param + ", " + anno + " " + type.getSimpleName() + " x) {\n");
+        builder.append(PUB_MODS + "void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) + ".set(seg, x);\n");
@@ -152,7 +146,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.append("}\n");
         builder.decrAlign();
 
-        addIndexSetter(javaName, nativeName, layout, type, anno);
+        addIndexSetter(javaName, nativeName, layout, type);
     }
 
     private MemoryLayout.PathElement[] elementPaths(String nativeFieldName) {
@@ -197,7 +191,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structAnno + " MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
+        builder.append(" MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
         builder.decrAlign();
     }
 
@@ -205,7 +199,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structAnno + " MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        builder.append(" MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         builder.decrAlign();
     }
 
@@ -213,7 +207,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structArrayAnno + " MemorySegment allocateArray(int len) {\n");
+        builder.append(" MemorySegment allocateArray(int len) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
@@ -227,7 +221,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structArrayAnno + " MemorySegment allocateArray(int len, NativeScope scope) {\n");
+        builder.append(" MemorySegment allocateArray(int len, NativeScope scope) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
@@ -241,7 +235,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structPtrAnno + " MemorySegment allocatePointer() {\n");
+        builder.append(" MemorySegment allocatePointer() {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return MemorySegment.allocateNative(C_POINTER);\n");
@@ -255,7 +249,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structPtrAnno + " MemorySegment allocatePointer(NativeScope scope) {\n");
+        builder.append(" MemorySegment allocatePointer(NativeScope scope) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return scope.allocate(C_POINTER);\n");
@@ -269,15 +263,15 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
-        builder.append(structAnno + " MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
+        builder.append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
         builder.decrAlign();
     }
 
-    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
+    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
-        String params = this.structAnno + " " + MemorySegment.class.getSimpleName() + " seg, long index";
-        builder.append(PUB_MODS + " " + anno + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
+        String params = MemorySegment.class.getSimpleName() + " seg, long index";
+        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return (" + type.getName() + ")"
@@ -289,10 +283,10 @@ class StructBuilder extends NestedClassBuilder {
         builder.decrAlign();
     }
 
-    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type, String anno) {
+    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
-        String params = this.structAnno + " " + MemorySegment.class.getSimpleName() + " seg, long index, " + anno + " " + type.getSimpleName() + " x";
+        String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
         builder.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         builder.incrAlign();
         builder.indent();

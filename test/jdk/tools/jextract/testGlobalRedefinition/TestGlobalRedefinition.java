@@ -47,11 +47,9 @@ public class TestGlobalRedefinition {
     @Test
     public void test() throws Throwable {
         Method mGet = redef_h.class.getMethod("x$get");
-        C c1 = mGet.getAnnotatedReturnType().getAnnotation(C.class);
-        assertEquals(c1.value(), "int");
+        assertEquals(mGet.getReturnType(), int.class);
 
         Method mSet = redef_h.class.getMethod("x$set", int.class);
-        C c2 = mSet.getAnnotatedParameterTypes()[0].getAnnotation(C.class);
-        assertEquals(c2.value(), "int");
+        assertEquals(mSet.getParameterTypes()[0], int.class);
     }
 }

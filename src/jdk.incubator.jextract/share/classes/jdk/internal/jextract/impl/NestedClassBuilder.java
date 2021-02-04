@@ -30,7 +30,7 @@ public abstract class NestedClassBuilder extends JavaSourceBuilder {
     protected final JavaSourceBuilder enclosing;
 
     public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper, enclosing.annotationWriter);
+        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper);
         this.enclosing = enclosing;
     }
 
