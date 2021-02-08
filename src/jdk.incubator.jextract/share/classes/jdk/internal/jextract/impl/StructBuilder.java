@@ -49,6 +49,7 @@ class StructBuilder extends NestedClassBuilder {
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
+        classBegin();
     }
 
     public void pushPrefixElement(String prefixElementName) {
@@ -66,6 +67,12 @@ class StructBuilder extends NestedClassBuilder {
     @Override
     Type type() {
         return structType;
+    }
+
+    @Override
+    void classBegin() {
+        super.classBegin();
+        addLayoutGetter(layoutField(), ((Type.Declared)structType).tree().layout().get());
     }
 
     @Override
@@ -320,7 +327,18 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     @Override
-    StructBuilder newStructBuilder(String name, GroupLayout structLayout, Type type) {
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        if (type.equals(MemorySegment.class)) {
+            addSegmentGetter(javaName, nativeName, layout);
+        } else {
+            addVarHandleGetter(javaName, nativeName, layout, type);
+            addGetter(javaName, nativeName, layout, type);
+            addSetter(javaName, nativeName, layout, type);
+        }
+    }
+
+    @Override
+    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
         return new StructBuilder(this, name, structLayout, type);
     }
 }

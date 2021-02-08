@@ -50,34 +50,86 @@ import java.util.Objects;
 import static java.lang.invoke.MethodType.methodType;
 
 // generates ConstantHelper as java source
-class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
+class SourceConstantHelper implements ConstantHelper {
     private static final String PKG_STATIC_FINAL_MODS = "static final ";
 
     // set of names generates already
     private static final Map<String, DirectMethodHandleDesc> namesGenerated = new HashMap<>();
 
     private final ClassDesc CD_constantsHelper;
-    private final String[] libraryNames;
-    private final String baseClassName;
+    
+    private final ConstantClassBuilder builder; 
+    
+    static class ConstantClassBuilder extends JavaSourceBuilder {
+        private final String baseClassName;
+        private final String[] libraryNames;
 
-    private SourceConstantHelper(String packageName, String[] libraryNames, String className, String baseClassName, ClassDesc CD_constantsHelper) {
-        super(new StringSourceBuilder(), Kind.CLASS, className, packageName, null);
-        this.CD_constantsHelper = CD_constantsHelper;
-        this.libraryNames = libraryNames;
-        this.baseClassName = baseClassName;
+        public ConstantClassBuilder(String className, String pkgName, String[] libraryNames, String baseClassName) {
+            super(new StringSourceBuilder(), Kind.CLASS, className, pkgName, null);
+            this.libraryNames = libraryNames;
+            this.baseClassName = baseClassName;
+        }
+
+        @Override
+        protected String getClassModifiers() {
+            return "";
+        }
+
+        protected void classBegin() {
+            super.classBegin();
+            if (superClass() == null) { // only for the first one
+                emitLibraries(libraryNames);
+            }
+        }
+
+        @Override
+        String superClass() {
+            return baseClassName;
+        }
+
+        private void emitLibraries(String[] libraryNames) {
+            builder.incrAlign();
+            builder.indent();
+            builder.append(PKG_STATIC_FINAL_MODS);
+            builder.append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+            builder.incrAlign();
+            for (String lib : libraryNames) {
+                builder.indent();
+                builder.append('\"');
+                builder.append(quoteLibraryName(lib));
+                builder.append("\",\n");
+            }
+            builder.decrAlign();
+            builder.indent();
+            builder.append("});\n\n");
+            builder.decrAlign();
+        }
+
+        private static String quoteLibraryName(String lib) {
+            return lib.replace("\\", "\\\\"); // double up slashes
+        }
+
+        JavaFileObject toJavaFileObject() {
+            String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
+            return InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + className + ".java"), builder.build());
+        }
     }
 
-    @Override
-    String superClass() {
-        return baseClassName;
+    private SourceConstantHelper(String packageName, String[] libraryNames, String className, String baseClassName, ClassDesc CD_constantsHelper) {
+        this.builder = new ConstantClassBuilder(className, packageName, libraryNames, baseClassName);
+        this.CD_constantsHelper = CD_constantsHelper;
     }
 
     public static ConstantHelper make(String packageName, String className, String[] libraryNames,
                                       String baseClassName) {
         ClassDesc CD_constantsHelper = ClassDesc.of(className);
         SourceConstantHelper helper = new SourceConstantHelper(packageName, libraryNames, className, baseClassName, CD_constantsHelper);
-        helper.classBegin();
+        helper.builder.classBegin();
         return helper;
+    }
+    
+    StringSourceBuilder builder() {
+        return builder.builder;
     }
 
     @Override
@@ -178,32 +230,17 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         }
     }
 
-    private JavaFileObject newJavaFileObject(String className, String src) {
-        String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
-        return InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + className + ".java"), src);
-    }
+
 
     @Override
     public List<JavaFileObject> build() {
         classEnd();
-        JavaFileObject result = newJavaFileObject(className, builder.build());
+        JavaFileObject result = builder.toJavaFileObject();
         return List.of(result);
     }
 
-    @Override
-    protected String getClassModifiers() {
-        return "";
-    }
-
-    protected void classBegin() {
-        super.classBegin();
-        if (superClass() == null) { // only for the first one
-            emitLibraries(libraryNames);
-        }
-    }
-
     protected JavaSourceBuilder classEnd() {
-        builder.append("}\n");
+        builder().append("}\n");
         return null;
     }
 
@@ -216,16 +253,16 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     }
 
     private DirectMethodHandleDesc emitGetter(String name, Class<?> type, String value) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append(type.getName());
-        builder.append(' ');
-        builder.append(name);
-        builder.append("() { return ");
-        builder.append(value);
-        builder.append("; }\n\n");
-        builder.decrAlign();
+        builder().incrAlign();
+        builder().indent();
+        builder().append(PKG_STATIC_FINAL_MODS);
+        builder().append(type.getName());
+        builder().append(' ');
+        builder().append(name);
+        builder().append("() { return ");
+        builder().append(value);
+        builder().append("; }\n\n");
+        builder().decrAlign();
         return getGetterDesc(name, type);
     }
 
@@ -236,27 +273,27 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     private String emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
                                          FunctionDescriptor desc, boolean varargs) {
         addFunctionDesc(javaName, desc);
-        builder.incrAlign();
+        builder().incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
-        builder.append(fieldName + " = RuntimeHelper.downcallHandle(\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("LIBRARIES, \"" + nativeName + "\"");
-        builder.append(",\n");
-        builder.indent();
-        builder.append("\"" + mtype.toMethodDescriptorString() + "\",\n");
-        builder.indent();
-        builder.append(getFunctionDescFieldName(javaName));
-        builder.append(", ");
+        builder().indent();
+        builder().append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
+        builder().append(fieldName + " = RuntimeHelper.downcallHandle(\n");
+        builder().incrAlign();
+        builder().indent();
+        builder().append("LIBRARIES, \"" + nativeName + "\"");
+        builder().append(",\n");
+        builder().indent();
+        builder().append("\"" + mtype.toMethodDescriptorString() + "\",\n");
+        builder().indent();
+        builder().append(getFunctionDescFieldName(javaName));
+        builder().append(", ");
         // isVariadic
-        builder.append(varargs);
-        builder.append("\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append(");\n");
-        builder.decrAlign();
+        builder().append(varargs);
+        builder().append("\n");
+        builder().decrAlign();
+        builder().indent();
+        builder().append(");\n");
+        builder().decrAlign();
         return fieldName;
     }
 
@@ -267,32 +304,32 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
                                       String rootLayoutName, List<String> prefixElementNames) {
         addLayout(javaName, layout);
-        builder.incrAlign();
+        builder().incrAlign();
         String typeName = type.getName();
         boolean isAddr = typeName.contains("MemoryAddress");
         if (isAddr) {
             typeName = "long";
         }
-        builder.indent();
+        builder().indent();
         String fieldName = getVarHandleFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
+        builder().append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
         if (isAddr) {
-            builder.append("MemoryHandles.asAddressVarHandle(");
+            builder().append("MemoryHandles.asAddressVarHandle(");
         }
-        builder.append(getLayoutFieldName(rootLayoutName != null ? rootLayoutName : javaName));
-        builder.append(".varHandle(" + typeName + ".class");
+        builder().append(getLayoutFieldName(rootLayoutName != null ? rootLayoutName : javaName));
+        builder().append(".varHandle(" + typeName + ".class");
         if (rootLayoutName != null) {
             for (String prefixElementName : prefixElementNames) {
-                builder.append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
+                builder().append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
             }
-            builder.append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
+            builder().append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
         }
-        builder.append(")");
+        builder().append(")");
         if (isAddr) {
-            builder.append(")");
+            builder().append(")");
         }
-        builder.append(";\n");
-        builder.decrAlign();
+        builder().append(";\n");
+        builder().decrAlign();
         return fieldName;
     }
 
@@ -302,49 +339,49 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
 
     private String emitLayoutField(String javaName, MemoryLayout layout) {
         String fieldName = getLayoutFieldName(javaName);
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
+        builder().incrAlign();
+        builder().indent();
+        builder().append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
-        builder.append(";\n");
-        builder.decrAlign();
+        builder().append(";\n");
+        builder().decrAlign();
         return fieldName;
     }
 
     private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout) {
-            builder.append(typeToLayoutName((ValueLayout) l));
+            builder().append(typeToLayoutName((ValueLayout) l));
         } else if (l instanceof SequenceLayout) {
-            builder.append("MemoryLayout.ofSequence(");
+            builder().append("MemoryLayout.ofSequence(");
             if (((SequenceLayout) l).elementCount().isPresent()) {
-                builder.append(((SequenceLayout) l).elementCount().getAsLong() + ", ");
+                builder().append(((SequenceLayout) l).elementCount().getAsLong() + ", ");
             }
             emitLayoutString(((SequenceLayout) l).elementLayout());
-            builder.append(")");
+            builder().append(")");
         } else if (l instanceof GroupLayout) {
             if (((GroupLayout) l).isStruct()) {
-                builder.append("MemoryLayout.ofStruct(\n");
+                builder().append("MemoryLayout.ofStruct(\n");
             } else {
-                builder.append("MemoryLayout.ofUnion(\n");
+                builder().append("MemoryLayout.ofUnion(\n");
             }
-            builder.incrAlign();
+            builder().incrAlign();
             String delim = "";
             for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
-                builder.append(delim);
-                builder.indent();
+                builder().append(delim);
+                builder().indent();
                 emitLayoutString(e);
                 delim = ",\n";
             }
-            builder.append("\n");
-            builder.decrAlign();
-            builder.indent();
-            builder.append(")");
+            builder().append("\n");
+            builder().decrAlign();
+            builder().indent();
+            builder().append(")");
         } else {
             // padding
-            builder.append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
+            builder().append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
         }
         if (l.name().isPresent()) {
-            builder.append(".withName(\"" +  l.name().get() + "\")");
+            builder().append(".withName(\"" +  l.name().get() + "\")");
         }
     }
 
@@ -353,39 +390,39 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
     }
 
     private String emitFunctionDescField(String javaName, FunctionDescriptor desc) {
-        builder.incrAlign();
-        builder.indent();
+        builder().incrAlign();
+        builder().indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("FunctionDescriptor ");
-        builder.append(fieldName);
-        builder.append(" = ");
+        builder().append(PKG_STATIC_FINAL_MODS);
+        builder().append("FunctionDescriptor ");
+        builder().append(fieldName);
+        builder().append(" = ");
         if (desc.returnLayout().isPresent()) {
-            builder.append("FunctionDescriptor.of(");
+            builder().append("FunctionDescriptor.of(");
             emitLayoutString(desc.returnLayout().get());
             if (!noArgs) {
-                builder.append(",");
+                builder().append(",");
             }
         } else {
-            builder.append("FunctionDescriptor.ofVoid(");
+            builder().append("FunctionDescriptor.ofVoid(");
         }
         if (!noArgs) {
-            builder.append("\n");
-            builder.incrAlign();
+            builder().append("\n");
+            builder().incrAlign();
             String delim = "";
             for (MemoryLayout e : desc.argumentLayouts()) {
-                builder.append(delim);
-                builder.indent();
+                builder().append(delim);
+                builder().indent();
                 emitLayoutString(e);
                 delim = ",\n";
             }
-            builder.append("\n");
-            builder.decrAlign();
-            builder.indent();
+            builder().append("\n");
+            builder().decrAlign();
+            builder().indent();
         }
-        builder.append(");\n");
-        builder.decrAlign();
+        builder().append(");\n");
+        builder().decrAlign();
         return fieldName;
     }
 
@@ -393,16 +430,16 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return javaName + "$SEGMENT_CONSTANT_";
     }
     private String emitConstantSegment(String javaName, Object value) {
-        builder.incrAlign();
-        builder.indent();
+        builder().incrAlign();
+        builder().indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("MemorySegment ");
-        builder.append(fieldName);
-        builder.append(" = CLinker.toCString(\"");
-        builder.append(Utils.quote(Objects.toString(value)));
-        builder.append("\");\n");
-        builder.decrAlign();
+        builder().append(PKG_STATIC_FINAL_MODS);
+        builder().append("MemorySegment ");
+        builder().append(fieldName);
+        builder().append(" = CLinker.toCString(\"");
+        builder().append(Utils.quote(Objects.toString(value)));
+        builder().append("\");\n");
+        builder().decrAlign();
         return fieldName;
     }
 
@@ -410,16 +447,16 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
         return javaName + "$ADDR_CONSTANT_";
     }
     private String emitConstantAddress(String javaName, Object value) {
-        builder.incrAlign();
-        builder.indent();
+        builder().incrAlign();
+        builder().indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("MemoryAddress ");
-        builder.append(fieldName);
-        builder.append(" = MemoryAddress.ofLong(");
-        builder.append(((Number)value).longValue());
-        builder.append("L);\n");
-        builder.decrAlign();
+        builder().append(PKG_STATIC_FINAL_MODS);
+        builder().append("MemoryAddress ");
+        builder().append(fieldName);
+        builder().append(" = MemoryAddress.ofLong(");
+        builder().append(((Number)value).longValue());
+        builder().append("L);\n");
+        builder().decrAlign();
         return fieldName;
     }
 
@@ -480,42 +517,20 @@ class SourceConstantHelper extends JavaSourceBuilder implements ConstantHelper {
 
     private String emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
          addLayout(javaName, layout);
-         builder.incrAlign();
-         builder.indent();
+         builder().incrAlign();
+         builder().indent();
          String fieldName = getSegmentFieldName(javaName);
-         builder.append(PKG_STATIC_FINAL_MODS);
-         builder.append("MemorySegment ");
-         builder.append(fieldName);
-         builder.append(" = ");
-         builder.append("RuntimeHelper.lookupGlobalVariable(");
-         builder.append("LIBRARIES, \"");
-         builder.append(nativeName);
-         builder.append("\", ");
-         builder.append(getLayoutFieldName(javaName));
-         builder.append(");\n");
-         builder.decrAlign();
+         builder().append(PKG_STATIC_FINAL_MODS);
+         builder().append("MemorySegment ");
+         builder().append(fieldName);
+         builder().append(" = ");
+         builder().append("RuntimeHelper.lookupGlobalVariable(");
+         builder().append("LIBRARIES, \"");
+         builder().append(nativeName);
+         builder().append("\", ");
+         builder().append(getLayoutFieldName(javaName));
+         builder().append(");\n");
+         builder().decrAlign();
          return fieldName;
-    }
-
-    private void emitLibraries(String[] libraryNames) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
-        builder.incrAlign();
-        for (String lib : libraryNames) {
-            builder.indent();
-            builder.append('\"');
-            builder.append(quoteLibraryName(lib));
-            builder.append("\",\n");
-        }
-        builder.decrAlign();
-        builder.indent();
-        builder.append("});\n\n");
-        builder.decrAlign();
-    }
-
-    private static String quoteLibraryName(String lib) {
-        return lib.replace("\\", "\\\\"); // double up slashes
     }
 }

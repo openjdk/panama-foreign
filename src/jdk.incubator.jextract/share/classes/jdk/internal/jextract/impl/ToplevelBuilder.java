@@ -69,18 +69,6 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return files;
     }
 
-    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
-        builder.classBegin();
-        builder.classEnd();
-    }
-
-    void addTypeDef(String name, String superClass, Type type) {
-        TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
-        builder.classBegin();
-        builder.classEnd();
-    }
-
     private List<HeaderFileBuilder> headers = new ArrayList<>();
 
     Optional<HeaderFileBuilder> lastHeader() {

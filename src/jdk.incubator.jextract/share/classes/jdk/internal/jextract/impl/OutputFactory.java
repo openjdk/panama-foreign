@@ -63,7 +63,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<Declaration.Function> functions = new HashSet<>();
 
     protected final ToplevelBuilder toplevelBuilder;
-    protected JavaSourceBuilder currentBuilder;
+    protected OutputSourceBuilder currentBuilder;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
@@ -116,7 +116,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         // check if unresolved typedefs can be resolved now!
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
             Declaration.Scoped structDef = ((Type.Declared) td.type()).tree();
-            toplevelBuilder.addTypeDef(td.name(),
+            toplevelBuilder.addTypedef(td.name(),
                     structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
         }
         toplevelBuilder.classEnd();
@@ -174,7 +174,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        header().addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
+        header().addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
                 typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
@@ -196,10 +196,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 //only add explicit struct layout if the struct is not to be flattened inside another struct
                 String className = d.name().isEmpty() ? parent.name() : d.name();
                 GroupLayout parentLayout = (GroupLayout) layoutFor(d);
-                currentBuilder = currentBuilder.newStructBuilder(className, parentLayout, Type.declared(d));
-                addStructDefinition(d, currentBuilder.className);
-                currentBuilder.classBegin();
-                currentBuilder.addLayoutGetter(((StructBuilder) currentBuilder).layoutField(), d.layout().get());
+                currentBuilder = currentBuilder.addStruct(className, parentLayout, Type.declared(d));
+                addStructDefinition(d, ((StructBuilder)currentBuilder).className);
             } else {
                 // for anonymous nested structs, add a prefix for field layout lookups
                 // but don't generate a separate class
@@ -210,7 +208,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         if (isStructKind) {
             if (!isAnonNested) {
-                currentBuilder = currentBuilder.classEnd();
+                currentBuilder = ((StructBuilder)currentBuilder).classEnd();
             } else {
                 ((StructBuilder) currentBuilder).popPrefixElement();
             }
@@ -341,7 +339,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
-        header().addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
                                           .stream()
@@ -360,7 +357,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         }
 
-        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+        header().addFunction(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
                 Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
 
         return null;
@@ -410,7 +407,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                toplevelBuilder.addTypeDef(tree.name(), structDefinitionName(s), tree.type());
+                                toplevelBuilder.addTypedef(tree.name(), structDefinitionName(s), tree.type());
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.
@@ -426,7 +423,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 }
             }
         } else if (type instanceof Type.Primitive) {
-             header().emitPrimitiveTypedef((Type.Primitive)type, tree.name());
+             header().addTypedef(tree.name(), null, type);
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
@@ -490,32 +487,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             sizeAvailable = false;
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
-        if (parent != null) { //struct field
-            if (isSegment) {
-                if (sizeAvailable) {
-                    currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
-                } else {
-                    warn("Layout size not available for " + fieldName);
-                }
-            } else {
-                currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
-            }
+        if (sizeAvailable) {
+            currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
         } else {
-            if (sizeAvailable) {
-                if (isSegment) {
-                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
-                } else {
-                    header().addLayoutGetter(fieldName, layout);
-                    header().addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
-                    header().addGetter(fieldName, tree.name(), treeLayout, clazz);
-                    header().addSetter(fieldName, tree.name(), treeLayout, clazz);
-                }
-            } else {
-                warn("Layout size not available for " + fieldName);
-            }
+            warn("Layout size not available for " + fieldName);
         }
 
         return null;
@@ -550,7 +525,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         System.err.println("WARNING: " + msg);
     }
 
-    HeaderFileBuilder header() {
+    OutputSourceBuilder header() {
         return toplevelBuilder.nextHeader();
     }
 }

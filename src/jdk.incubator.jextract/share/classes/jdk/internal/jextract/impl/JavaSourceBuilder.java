@@ -33,12 +33,13 @@ import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Superclass for .java source generator classes.
  */
-abstract class JavaSourceBuilder {
+abstract class JavaSourceBuilder implements OutputSourceBuilder {
 
     enum Kind {
         CLASS("class"),
@@ -113,6 +114,36 @@ abstract class JavaSourceBuilder {
         builder.indent();
         builder.append("}\n\n");
         return this;
+    }
+
+    @Override
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addConstant(String javaName, Class<?> type, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addTypedef(String name, String superClass, Type type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
+        throw new UnsupportedOperationException();
     }
 
     void addLayoutGetter(String javaName, MemoryLayout layout) {
@@ -262,9 +293,5 @@ abstract class JavaSourceBuilder {
     String uniqueNestedClassName(String name) {
         name = Utils.javaSafeIdentifier(name);
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
-    }
-
-    StructBuilder newStructBuilder(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayout, type);
     }
 }

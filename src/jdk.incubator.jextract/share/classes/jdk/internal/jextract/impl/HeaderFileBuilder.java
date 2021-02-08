@@ -26,7 +26,10 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -149,5 +152,52 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         classEnd();
         String res = builder.build();
         return List.of(Utils.fileFromString(pkgName, className, res));
+    }
+
+    @Override
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        if (type.equals(MemorySegment.class)) {
+            addSegmentGetter(javaName, nativeName, layout);
+        } else {
+            addLayoutGetter(javaName, layout);
+            addVarHandleGetter(javaName, nativeName, layout, type);
+            addSegmentGetter(javaName, nativeName, layout);
+            addGetter(javaName, nativeName, layout, type);
+            addSetter(javaName, nativeName, layout, type);
+        }
+    }
+
+    @Override
+    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        addStaticFunctionWrapper(javaName, nativeName, mtype, desc, varargs, paramNames);
+    }
+
+    @Override
+    public void addConstant(String javaName, Class<?> type, Object value) {
+        addConstantGetter(javaName, type, value);
+    }
+
+    @Override
+    public void addTypedef(String name, String superClass, Type type) {
+        if (type instanceof Type.Primitive) {
+            // primitive
+            emitPrimitiveTypedef((Type.Primitive)type, name);
+        } else {
+            TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
+            builder.classBegin();
+            builder.classEnd();
+        }
+    }
+
+    @Override
+    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
+        return new StructBuilder(this, name, parentLayout, type);
+    }
+
+    @Override
+    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
+        builder.classBegin();
+        builder.classEnd();
     }
 }
