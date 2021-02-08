@@ -235,6 +235,10 @@ public final class JextractTool {
             err.println(format("cannot.read.header.file", header));
             return INPUT_ERROR;
         }
+        if (!(Files.isRegularFile(header))) {
+            err.println(format("not.a.file", header));
+            return INPUT_ERROR;
+        }
 
         List<JavaFileObject> files = null;
         try {

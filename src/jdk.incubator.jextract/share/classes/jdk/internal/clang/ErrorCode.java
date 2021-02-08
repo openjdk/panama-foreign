@@ -39,7 +39,7 @@ import static jdk.internal.clang.libclang.Index_h.CXError_Success;
 
 public enum ErrorCode {
     Success(CXError_Success()),
-    Failue(CXError_Failure()),
+    Failure(CXError_Failure()),
     Crashed(CXError_Crashed()),
     InvalidArguments(CXError_InvalidArguments()),
     ASTReadError(CXError_ASTReadError());
