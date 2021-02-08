@@ -44,16 +44,18 @@ interface ConstantHelper {
     DirectMethodHandleDesc addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs);
     DirectMethodHandleDesc addSegment(String javaName, String nativeName, MemoryLayout layout);
     DirectMethodHandleDesc addFunctionDesc(String javaName, FunctionDescriptor fDesc);
-    DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value);
+    DirectMethodHandleDesc addConstantDesc(String name, Class<?> type, Object value);
     List<JavaFileObject> build();
 
     static ConstantHelper make(boolean source, String packageName, String headerClassName, ClassDesc runtimeHelper,
                                ClassDesc cString, String[] libraryNames) {
-        return new MultiFileConstantHelper(headerClassName,
-            (simpleClassName, baseClassName, isFinal) -> source
-                ? SourceConstantHelper.make(packageName, simpleClassName, libraryNames, baseClassName)
-                : ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName),
-            source ? CONSTANTS_PER_CLASS_SOURCES : CONSTANTS_PER_CLASS_CLASSES);
+        if (!source) {
+            return new MultiFileConstantHelper(headerClassName,
+                    (simpleClassName, baseClassName, isFinal) -> ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName),
+                    CONSTANTS_PER_CLASS_CLASSES);
+        } else {
+            return new SourceConstantHelper(packageName, libraryNames, headerClassName + "_constant");
+        }
     }
 
     interface ConstantHelperFactory {

@@ -44,7 +44,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
     ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper) {
-        super(headerFileName, pkgName, null, constantHelper);
+        super(headerFileName, pkgName, null, constantHelper, true);
     }
 
     @Override
@@ -57,7 +57,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return PUB_CLS_MODS;
     }
 
-    List<JavaFileObject> build() {
+    public List<JavaFileObject> build() {
         String res = builder.build().replace("extends #{SUPER}",
                 lastHeader().map(h -> "extends " + h.className).orElse(""));
         List<JavaFileObject> files = new ArrayList<>();
@@ -81,7 +81,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         if (declCount > DECLS_PER_HEADER_CLASS) {
             HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "_" + headers.size(), pkgName,
                     lastHeader().map(h -> h.className).orElse(null),
-                    constantHelper);
+                    constantHelper, false);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
             declCount = 1;

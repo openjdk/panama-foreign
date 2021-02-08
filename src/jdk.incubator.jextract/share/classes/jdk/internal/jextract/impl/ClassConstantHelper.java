@@ -241,7 +241,7 @@ class ClassConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
+    public DirectMethodHandleDesc addConstantDesc(String name, Class<?> type, Object value) {
         if (type == MemoryAddress.class) {
             if (value instanceof Long) {
                 return emitCondyGetter(name, type, addressDesc((Long) value));

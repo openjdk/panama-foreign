@@ -62,7 +62,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<String> variables = new HashSet<>();
     private final Set<Declaration.Function> functions = new HashSet<>();
 
-    protected final ToplevelBuilder toplevelBuilder;
+    protected final SplittingBuilder toplevelBuilder;
     protected JavaSourceBuilder currentBuilder;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final String pkgName;
@@ -97,11 +97,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
                 ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
                 libraryNames.toArray(String[]::new));
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(clsName, pkgName, constantHelper);
+        SplittingBuilder toplevelBuilder = new SplittingBuilder(JavaSourceBuilder.Kind.CLASS, clsName, pkgName, constantHelper,
+                HeaderFileBuilder::new);
         return new OutputFactory(pkgName, toplevelBuilder).generate(decl);
     }
 
-    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder) {
+    private OutputFactory(String pkgName, SplittingBuilder toplevelBuilder) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
@@ -110,7 +111,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
 
     JavaFileObject[] generate(Declaration.Scoped decl) {
-        toplevelBuilder.classBegin();
         //generate all decls
         decl.members().forEach(this::generateDecl);
         // check if unresolved typedefs can be resolved now!
@@ -119,12 +119,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             toplevelBuilder.addTypedef(td.name(),
                     structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
         }
-        toplevelBuilder.classEnd();
         try {
             List<JavaFileObject> files = new ArrayList<>();
             files.addAll(toplevelBuilder.build());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
+            files.addAll(toplevelBuilder.constantHelper.build());
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -526,6 +526,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     JavaSourceBuilder header() {
-        return toplevelBuilder.nextHeader();
+        return toplevelBuilder.nextBuilder();
     }
 }

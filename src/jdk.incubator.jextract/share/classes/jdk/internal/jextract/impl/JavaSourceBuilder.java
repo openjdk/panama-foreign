@@ -29,12 +29,14 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Type;
 
+import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Superclass for .java source generator classes.
@@ -55,7 +57,7 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
     static final String PUB_CLS_MODS = "public final ";
     static final String PUB_MODS = "public static ";
     protected final StringSourceBuilder builder;
-    private final Kind kind;
+    final Kind kind;
     protected final String className;
     protected final String pkgName;
     protected final ConstantHelper constantHelper;
@@ -177,5 +179,17 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
 
     final String displayName(ClassDesc returnType) {
         return returnType.displayName(); // TODO shorten based on imports
+    }
+
+
+
+    public List<JavaFileObject> build() {
+        return build(Function.identity());
+    }
+
+    public List<JavaFileObject> build(Function<String, String> mapper) {
+        classEnd();
+        String res = mapper.apply(builder.build());
+        return List.of(Utils.fileFromString(pkgName, className, res));
     }
 }

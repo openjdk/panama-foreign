@@ -25,6 +25,9 @@
 
 package jdk.internal.jextract.impl;
 
+import javax.tools.JavaFileObject;
+import java.util.List;
+
 public abstract class NestedClassBuilder extends JavaSourceBuilder {
 
     protected final JavaSourceBuilder enclosing;
@@ -60,5 +63,10 @@ public abstract class NestedClassBuilder extends JavaSourceBuilder {
     @Override
     protected void addImportSection() {
         // nested class. containing class has necessary imports
+    }
+
+    @Override
+    public List<JavaFileObject> build() {
+        throw new UnsupportedOperationException();
     }
 }

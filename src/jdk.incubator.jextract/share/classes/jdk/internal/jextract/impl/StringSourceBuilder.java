@@ -25,6 +25,8 @@
 
 package jdk.internal.jextract.impl;
 
+import java.util.function.Function;
+
 public class StringSourceBuilder {
 
     // code buffer

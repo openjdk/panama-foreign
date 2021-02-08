@@ -47,10 +47,12 @@ import java.util.List;
 class HeaderFileBuilder extends JavaSourceBuilder {
 
     private String superclass;
+    private boolean isPublic;
 
-    HeaderFileBuilder(String clsName, String pkgName, String superclass, ConstantHelper constantHelper) {
+    HeaderFileBuilder(String pkgName, String clsName, String superclass, ConstantHelper constantHelper, boolean isPublic) {
         super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper);
         this.superclass = superclass;
+        this.isPublic = isPublic;
     }
 
     @Override
@@ -60,13 +62,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     @Override
     protected String getClassModifiers() {
-        return "";
-    }
-
-    List<JavaFileObject> build() {
-        classEnd();
-        String res = builder.build();
-        return List.of(Utils.fileFromString(pkgName, className, res));
+        return isPublic ? "public " : "";
     }
 
     @Override
@@ -222,7 +218,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     private void addConstantGetter(String javaName, Class<?> type, Object value) {
-        emitForwardGetter(constantHelper.addConstant(javaName, type, value));
+        emitForwardGetter(constantHelper.addConstantDesc(javaName, type, value));
     }
 
     private void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {

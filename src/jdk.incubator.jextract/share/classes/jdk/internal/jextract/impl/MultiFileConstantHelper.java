@@ -118,9 +118,9 @@ public class MultiFileConstantHelper implements ConstantHelper {
     }
 
     @Override
-    public DirectMethodHandleDesc addConstant(String name, Class<?> type, Object value) {
+    public DirectMethodHandleDesc addConstantDesc(String name, Class<?> type, Object value) {
         checkNewConstantsClass();
-        return delegate.addConstant(name, type, value);
+        return delegate.addConstantDesc(name, type, value);
     }
 
     @Override
