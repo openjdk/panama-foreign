@@ -25,22 +25,13 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.jextract.Type;
-
 public class TypedefBuilder extends NestedClassBuilder {
 
-    private final Type type;
     private final String superClass;
 
-    public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass, Type type) {
+    public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass) {
         super(prev, Kind.CLASS, className);
-        this.type = type;
         this.superClass = superClass;
-    }
-
-    @Override
-    Type type() {
-        return type;
     }
 
     @Override

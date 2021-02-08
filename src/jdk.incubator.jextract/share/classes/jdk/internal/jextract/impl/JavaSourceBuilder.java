@@ -75,10 +75,6 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
         return null;
     }
 
-    Type type() {
-        return null;
-    }
-
     protected String getClassModifiers() {
         return PUB_CLS_MODS;
     }
@@ -116,98 +112,29 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
         return this;
     }
 
-    @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void addTypedef(String name, String superClass, Type type) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
         throw new UnsupportedOperationException();
     }
-
-    void addLayoutGetter(String javaName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addLayout(javaName, layout));
-    }
-
-    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        emitForwardGetter(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
-    }
-
-    void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs),
-            true, "unresolved symbol: " + nativeName);
-    }
-
-    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout),
-            true, "unresolved symbol: " + nativeName);
-    }
-
-    void addConstantGetter(String javaName, Class<?> type, Object value) {
-        emitForwardGetter(constantHelper.addConstant(javaName, type, value));
-    }
-
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
-        builder.incrAlign();
-        builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append("return (" + type.getName() + ") ");
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".get(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
-        builder.incrAlign();
-        builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".set(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"), x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    // Utility
 
     protected void addPackagePrefix() {
         assert pkgName.indexOf('/') == -1 : "package name invalid: " + pkgName;
@@ -230,57 +157,6 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
         builder.append(".*;\n");
     }
 
-    protected void emitForwardGetter(DirectMethodHandleDesc desc) {
-        emitForwardGetter(desc, false, "");
-    }
-
-    protected void emitForwardGetter(DirectMethodHandleDesc desc, boolean nullCheck, String errMsg) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + displayName(desc.invocationType().returnType()) + " " + desc.methodName() + "() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return ");
-        if (nullCheck) {
-            builder.append("RuntimeHelper.requireNonNull(");
-        }
-        builder.append(getCallString(desc));
-        if (nullCheck) {
-            builder.append(",\"");
-            builder.append(errMsg);
-            builder.append("\")");
-        }
-        builder.append(";\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    protected String getCallString(DirectMethodHandleDesc desc) {
-        return desc.owner().displayName() + "." + desc.methodName() + "()";
-    }
-
-    protected String displayName(ClassDesc returnType) {
-        return returnType.displayName(); // TODO shorten based on imports
-    }
-
-    protected String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
-        return getCallString(constantHelper.addFunctionDesc(javaName, fDesc));
-    }
-
-    protected String methodHandleGetCallString(String javaName, String nativeName, MethodType mt, FunctionDescriptor fDesc, boolean varargs) {
-        return getCallString(constantHelper.addMethodHandle(javaName, nativeName, mt, fDesc, varargs));
-    }
-
-    private String globalVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
-    }
-
-    protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
-        return getCallString(constantHelper.addSegment(javaName, nativeName, layout));
-    }
-
     /*
      * We may have case-insensitive name collision! A C program may have
      * defined structs/unions/typedefs with the names FooS, fooS, FoOs, fOOs.
@@ -290,8 +166,16 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
      * Header$CFooS, Header$CfooS, Header$CFoOs and so on! We solve this by
      * generating unique case-insensitive names for nested classes.
      */
-    String uniqueNestedClassName(String name) {
+    final String uniqueNestedClassName(String name) {
         name = Utils.javaSafeIdentifier(name);
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
+    }
+
+    final String getCallString(DirectMethodHandleDesc desc) {
+        return desc.owner().displayName() + "." + desc.methodName() + "()";
+    }
+
+    final String displayName(ClassDesc returnType) {
+        return returnType.displayName(); // TODO shorten based on imports
     }
 }

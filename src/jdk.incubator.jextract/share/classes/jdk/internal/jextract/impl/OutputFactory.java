@@ -63,7 +63,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<Declaration.Function> functions = new HashSet<>();
 
     protected final ToplevelBuilder toplevelBuilder;
-    protected OutputSourceBuilder currentBuilder;
+    protected JavaSourceBuilder currentBuilder;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
@@ -525,7 +525,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         System.err.println("WARNING: " + msg);
     }
 
-    OutputSourceBuilder header() {
+    JavaSourceBuilder header() {
         return toplevelBuilder.nextHeader();
     }
 }

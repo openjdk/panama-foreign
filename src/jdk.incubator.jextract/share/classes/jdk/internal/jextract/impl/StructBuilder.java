@@ -65,11 +65,6 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     @Override
-    Type type() {
-        return structType;
-    }
-
-    @Override
     void classBegin() {
         super.classBegin();
         addLayoutGetter(layoutField(), ((Type.Declared)structType).tree().layout().get());
@@ -92,8 +87,7 @@ class StructBuilder extends NestedClassBuilder {
         return qualifiedName(this) + "$" + fieldName;
     }
 
-    @Override
-    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
@@ -107,8 +101,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.decrAlign();
     }
 
-    @Override
-    void addLayoutGetter(String javaName, MemoryLayout layout) {
+    private void addLayoutGetter(String javaName, MemoryLayout layout) {
         var desc = constantHelper.addLayout(javaName, layout);
         builder.incrAlign();
         builder.indent();
@@ -122,8 +115,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.decrAlign();
     }
 
-    @Override
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
@@ -139,8 +131,7 @@ class StructBuilder extends NestedClassBuilder {
         addIndexGetter(javaName, nativeName, layout, type);
     }
 
-    @Override
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
@@ -167,8 +158,7 @@ class StructBuilder extends NestedClassBuilder {
         return elems;
     }
 
-    @Override
-    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
+    private void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");

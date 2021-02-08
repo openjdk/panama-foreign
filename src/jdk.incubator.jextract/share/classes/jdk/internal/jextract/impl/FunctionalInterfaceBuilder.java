@@ -82,4 +82,8 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         builder.append("}\n");
         builder.decrAlign();
     }
+
+    private String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
+        return getCallString(constantHelper.addFunctionDesc(javaName, fDesc));
+    }
 }
