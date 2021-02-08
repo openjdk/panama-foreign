@@ -68,6 +68,13 @@ public class JextractToolProviderTest extends JextractToolRunner {
             .checkContainsOutput("file not found");
     }
 
+    @Test
+    public void testDirectoryAsHeader() {
+        run(getInputFilePath("directory.h").toString())
+            .checkFailure(INPUT_ERROR)
+            .checkContainsOutput("not a file");
+    }
+
     // error for header with parser errors
     @Test
     public void testHeaderWithDeclarationErrors() {
