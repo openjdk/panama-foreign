@@ -38,6 +38,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -70,45 +71,41 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         if (type.equals(MemorySegment.class)) {
-            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-            constantBuilder.classBegin();
-            String access = constantBuilder.addSegment(javaName, nativeName, layout);
-            constantBuilder.classEnd();
-            emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", access, false, null);
+            emitWithConstantClass(javaName, constantBuilder -> {
+                String access = constantBuilder.addSegment(javaName, nativeName, layout);
+                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", access, false, null);
+            });
         } else {
-            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-            constantBuilder.classBegin();
-            String layoutAccess = constantBuilder.addLayout(javaName, layout);
-            String vhAccess = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type);
-            String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
-            constantBuilder.classEnd();
-            emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess, false, null);
-            emitGetter(MEMBER_MODS, MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
-            emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
-            emitGlobalGetter(segmentAccess, vhAccess, javaName, nativeName, type);
-            emitGlobalSetter(segmentAccess, vhAccess, javaName, nativeName, type);
+            emitWithConstantClass(javaName, constantBuilder -> {
+                String layoutAccess = constantBuilder.addLayout(javaName, layout);
+                String vhAccess = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type);
+                String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
+                emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess, false, null);
+                emitGetter(MEMBER_MODS, MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
+                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
+                emitGlobalGetter(segmentAccess, vhAccess, javaName, nativeName, type);
+                emitGlobalSetter(segmentAccess, vhAccess, javaName, nativeName, type);
+            });
         }
     }
 
     @Override
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
-        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-        constantBuilder.classBegin();
-        String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
-        constantBuilder.classEnd();
-        emitGetter(MEMBER_MODS, MethodHandle.class, javaName + "$MH", access,
-                true, "unresolved symbol: " + nativeName);
-        emitFunctionWrapper(access, javaName, nativeName, mtype, varargs, paramNames);
+        emitWithConstantClass(javaName, constantBuilder -> {
+            String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
+            emitGetter(MEMBER_MODS, MethodHandle.class, javaName + "$MH", access,
+                    true, "unresolved symbol: " + nativeName);
+            emitFunctionWrapper(access, javaName, nativeName, mtype, varargs, paramNames);
+        });
     }
 
     @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
         if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
-            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-            constantBuilder.classBegin();
-            String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
-            constantBuilder.classEnd();
-            emitGetter(MEMBER_MODS, type, javaName, mhDesc, false, null);
+            emitWithConstantClass(javaName, constantBuilder -> {
+                String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
+                emitGetter(MEMBER_MODS, type, javaName, mhDesc, false, null);
+            });
         } else {
             emitGetter(MEMBER_MODS, type, javaName, getConstantString(type, value), false, null);
         }
@@ -282,5 +279,12 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         indent();
         append("}\n");
         decrAlign();
+    }
+
+    private void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+        constantBuilder.classBegin();
+        constantConsumer.accept(constantBuilder);
+        constantBuilder.classEnd();
     }
 }
