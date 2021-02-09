@@ -180,7 +180,7 @@ abstract class JavaSourceBuilder {
 
     // Utility
 
-    protected void emitForwardGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
+    protected void emitGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " +name + "() {\n");
@@ -203,7 +203,7 @@ abstract class JavaSourceBuilder {
         builder.decrAlign();
     }
 
-    protected void emitForwardGetter(Class<?> type, String name, String access) {
-        emitForwardGetter(type, name, access, false, null);
+    protected void emitGetter(Class<?> type, String name, String access) {
+        emitGetter(type, name, access, false, null);
     }
 }

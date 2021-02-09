@@ -71,7 +71,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             constantBuilder.classBegin();
             String access = constantBuilder.addSegment(javaName, nativeName, layout);
             constantBuilder.classEnd();
-            emitForwardGetter(MemorySegment.class, javaName + "$SEGMENT", access, false, null);
+            emitGetter(MemorySegment.class, javaName + "$SEGMENT", access, false, null);
         } else {
             ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
             constantBuilder.classBegin();
@@ -79,22 +79,36 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             String vhAccess = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type);
             String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
             constantBuilder.classEnd();
-            emitForwardGetter(VarHandle.class, javaName + "$VH", vhAccess, false, null);
-            emitForwardGetter(MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
-            emitForwardGetter(MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
-            addGetter(segmentAccess, vhAccess, javaName, nativeName, layout, type);
-            addSetter(segmentAccess, vhAccess, javaName, nativeName, layout, type);
+            emitGetter(VarHandle.class, javaName + "$VH", vhAccess, false, null);
+            emitGetter(MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
+            emitGetter(MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
+            emitGlobalGetter(segmentAccess, vhAccess, javaName, nativeName, type);
+            emitGlobalSetter(segmentAccess, vhAccess, javaName, nativeName, type);
         }
     }
 
     @Override
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
-        addStaticFunctionWrapper(javaName, nativeName, mtype, desc, varargs, paramNames);
+        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+        constantBuilder.classBegin();
+        String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
+        constantBuilder.classEnd();
+        emitGetter(MethodHandle.class, javaName + "$MH", access,
+                true, "unresolved symbol: " + nativeName);
+        emitFunctionWrapper(access, javaName, nativeName, mtype, varargs, paramNames);
     }
 
     @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
-        addConstantGetter(javaName, type, value);
+        if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
+            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+            String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
+            constantBuilder.classEnd();
+            emitGetter(type, javaName, mhDesc, false, null);
+        } else {
+            emitGetter(type, javaName, getConstantString(type, value), false, null);
+        }
     }
 
     @Override
@@ -121,13 +135,10 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.classEnd();
     }
 
-    private void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
+    // private generation
+
+    private void emitFunctionWrapper(String access, String javaName, String nativeName, MethodType mtype,
                                   boolean varargs, List<String> paramNames) {
-        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-        constantBuilder.classBegin();
-        String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
-        constantBuilder.classEnd();
-        addMethodHandleGetter(MethodHandle.class, javaName + "$MH", access, nativeName);
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
@@ -213,25 +224,6 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         };
     }
 
-    private void addMethodHandleGetter(Class<?> type, String javaName, String access, String nativeName) {
-        emitForwardGetter(type, javaName, access,
-                true, "unresolved symbol: " + nativeName);
-    }
-
-    private void addConstantGetter(String javaName, Class<?> type, Object value) {
-        if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
-            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-            constantBuilder.classBegin();
-            String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
-            constantBuilder.classEnd();
-            emitForwardGetter(type, javaName, mhDesc, false, null);
-        } else {
-            emitForwardGetter(type, javaName, getConstantString(type, value), false, null);
-        }
-    }
-
-
-
     private String getConstantString(Class<?> type, Object value) {
         StringBuilder buf = new StringBuilder();
         if (type == float.class) {
@@ -264,7 +256,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         return buf.toString();
     }
 
-    private void addGetter(String vhParam, String vhStr, String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void emitGlobalGetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
@@ -283,7 +275,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.decrAlign();
     }
 
-    private void addSetter(String vhParam, String vhStr, String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void emitGlobalSetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");

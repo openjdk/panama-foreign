@@ -48,7 +48,9 @@ public class FunctionalInterfaceBuilder extends ConstantBuilder {
         return super.classEnd();
     }
 
-    void emitFunctionalInterfaceMethod() {
+    // private generation
+
+    private void emitFunctionalInterfaceMethod() {
         builder.incrAlign();
         builder.indent();
         builder.append(fiType.returnType().getName() + " apply(");
