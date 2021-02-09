@@ -25,6 +25,7 @@
 package jdk.internal.jextract.impl;
 
 import javax.tools.JavaFileObject;
+import java.lang.constant.ClassDesc;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,8 +42,8 @@ class ToplevelBuilder extends HeaderFileBuilder {
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
-    ToplevelBuilder(String headerFileName, String pkgName, String[] libraryNames) {
-        super(pkgName, headerFileName, null, true);
+    ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
+        super(desc, null, true);
         this.libraryNames = libraryNames;
         classBegin();
     }
@@ -68,9 +69,9 @@ class ToplevelBuilder extends HeaderFileBuilder {
         emitLibraries(librariesBuilder, libraryNames);
         classEnd();
         String res = build().replace("extends #{SUPER}",
-                lastHeader().map(h -> "extends " + h.className).orElse(""));
+                lastHeader().map(h -> "extends " + h.className()).orElse(""));
         List<JavaFileObject> files = new ArrayList<>();
-        files.add(Utils.fileFromString(pkgName, className, res));
+        files.add(Utils.fileFromString(packageName(), className(), res));
         files.addAll(headers.stream()
                 .flatMap(hf -> hf.toFiles().stream())
                 .collect(Collectors.toList()));
@@ -81,7 +82,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         incrAlign();
         indent();
         append("/* package-private */ ");
-        append(className);
+        append(className());
         append("() {}");
         append('\n');
         decrAlign();
@@ -95,8 +96,8 @@ class ToplevelBuilder extends HeaderFileBuilder {
 
     HeaderFileBuilder nextHeader() {
         if (declCount > DECLS_PER_HEADER_CLASS) {
-            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(pkgName, className + "_" + headers.size(),
-                    lastHeader().map(h -> h.className).orElse(null), false);
+            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(ClassDesc.of(packageName(), className() + "_" + headers.size()),
+                    lastHeader().map(h -> h.className()).orElse(null), false);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
             declCount = 1;

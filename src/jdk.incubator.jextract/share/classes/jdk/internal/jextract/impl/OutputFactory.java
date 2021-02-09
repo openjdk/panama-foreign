@@ -32,6 +32,7 @@ import jdk.incubator.jextract.Type.Primitive;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.net.URI;
 import java.net.URL;
@@ -93,7 +94,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(clsName, pkgName, libraryNames.toArray(new String[0]));
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(ClassDesc.of(pkgName, clsName), libraryNames.toArray(new String[0]));
         return new OutputFactory(pkgName, toplevelBuilder).generate(decl);
     }
 
@@ -191,7 +192,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 String className = d.name().isEmpty() ? parent.name() : d.name();
                 GroupLayout parentLayout = (GroupLayout) layoutFor(d);
                 currentBuilder = currentBuilder.addStruct(className, parentLayout, Type.declared(d));
-                addStructDefinition(d, ((StructBuilder)currentBuilder).className);
+                addStructDefinition(d, currentBuilder.className());
             } else {
                 // for anonymous nested structs, add a prefix for field layout lookups
                 // but don't generate a separate class
@@ -202,7 +203,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         if (isStructKind) {
             if (!isAnonNested) {
-                currentBuilder = ((StructBuilder)currentBuilder).classEnd();
+                currentBuilder = currentBuilder.classEnd();
             } else {
                 ((StructBuilder) currentBuilder).popPrefixElement();
             }

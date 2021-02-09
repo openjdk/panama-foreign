@@ -64,19 +64,19 @@ public class FunctionalInterfaceBuilder extends ConstantBuilder {
     }
 
     private void emitFunctionalFactories() {
-        String callStr = functionGetCallString(className, fiDesc);
+        String callStr = functionGetCallString(className(), fiDesc);
         incrAlign();
         indent();
-        append(PUB_MODS + " MemorySegment allocate(" + className + " fi) {\n");
+        append(PUB_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
         incrAlign();
         indent();
-        append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + callStr + ", " +
+        append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + callStr + ", " +
                 "\"" + fiType.toMethodDescriptorString() + "\");\n");
         decrAlign();
         indent();
         append("}\n");
         indent();
-        append(PUB_MODS + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
+        append(PUB_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
         incrAlign();
         indent();
         append("return allocate(fi).handoff(scope);\n");

@@ -285,8 +285,8 @@ class StructBuilder extends ConstantBuilder {
             NestedClassBuilder nestedClassBuilder = (NestedClassBuilder)builder;
             String prefix = qualifiedName(nestedClassBuilder.enclosing);
             return prefix.isEmpty() ?
-                    nestedClassBuilder.className :
-                    prefix + "$" + nestedClassBuilder.className;
+                    nestedClassBuilder.className() :
+                    prefix + "$" + nestedClassBuilder.className();
         } else {
             return "";
         }

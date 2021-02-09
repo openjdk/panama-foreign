@@ -59,7 +59,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             return namesGenerated.get(layoutName);
         } else {
             String fieldName = emitLayoutField(javaName, layout);
-            String access = className + "." + fieldName;
+            String access = className() + "." + fieldName;
             namesGenerated.put(layoutName, access);
             return access;
         }
@@ -83,7 +83,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             return namesGenerated.get(varHandleName);
         } else {
             String fieldName = emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames);
-            String access = className + "." + fieldName;
+            String access = className() + "." + fieldName;
             namesGenerated.put(varHandleName, access);
             return access;
         }
@@ -95,7 +95,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             return namesGenerated.get(mhName);
         } else {
             String fieldName = emitMethodHandleField(javaName, nativeName, mtype, desc, varargs);
-            String access = className + "." + fieldName;
+            String access = className() + "." + fieldName;
             namesGenerated.put(mhName, access);
             return access;
         }
@@ -107,7 +107,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             return namesGenerated.get(segmentName);
         } else {
             String fieldName = emitSegmentFieldF(javaName, nativeName, layout);
-            String access = className + "." + fieldName;
+            String access = className() + "." + fieldName;
             namesGenerated.put(segmentName, access);
             return access;
         }
@@ -120,7 +120,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             return namesGenerated.get(funcDescName);
         } else {
             String fieldName = emitFunctionDescField(javaName, desc);
-            String access = className + "." + fieldName;
+            String access = className() + "." + fieldName;
             namesGenerated.put(funcDescName, access);
             return access;
         }
@@ -138,7 +138,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             } else {
                 throw new UnsupportedOperationException();
             }
-            String access = className + "." + str;
+            String access = className() + "." + str;
             namesGenerated.put(name, access);
             return access;
         }

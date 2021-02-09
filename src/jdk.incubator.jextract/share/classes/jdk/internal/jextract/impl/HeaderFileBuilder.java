@@ -32,6 +32,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
@@ -45,11 +46,11 @@ import java.util.List;
  */
 class HeaderFileBuilder extends JavaSourceBuilder {
 
-    private String superclass;
-    private boolean isPublic;
+    private final String superclass;
+    private final boolean isPublic;
 
-    HeaderFileBuilder(String pkgName, String clsName, String superclass, boolean isPublic) {
-        super(Kind.CLASS, clsName, pkgName);
+    HeaderFileBuilder(ClassDesc desc, String superclass, boolean isPublic) {
+        super(Kind.CLASS, desc);
         this.superclass = superclass;
         this.isPublic = isPublic;
     }
