@@ -27,6 +27,8 @@ package jdk.internal.jextract.impl;
 
 public class TypedefBuilder extends NestedClassBuilder {
 
+    private static String MEMBER_MODS = "public static ";
+
     private final String superClass;
 
     public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass) {
@@ -51,7 +53,7 @@ public class TypedefBuilder extends NestedClassBuilder {
         // allocatePointer
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocatePointer() {\n");
         incrAlign();
         indent();
@@ -64,7 +66,7 @@ public class TypedefBuilder extends NestedClassBuilder {
         // allocatePointer (scope version)
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocatePointer(NativeScope scope) {\n");
         incrAlign();
         indent();

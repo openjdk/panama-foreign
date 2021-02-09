@@ -42,8 +42,6 @@ import java.util.Objects;
 
 public class ConstantBuilder extends NestedClassBuilder {
 
-    private static final String PKG_STATIC_FINAL_MODS = "static final ";
-
     // set of names generates already
     private final Map<String, String> namesGenerated = new HashMap<>();
 
@@ -63,6 +61,11 @@ public class ConstantBuilder extends NestedClassBuilder {
             namesGenerated.put(layoutName, access);
             return access;
         }
+    }
+    
+    String memberMods() {
+        return kind == Kind.CLASS ?
+                "static final " : "";
     }
 
     public String addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
@@ -156,7 +159,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
         indent();
-        append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
+        append(memberMods() + "MethodHandle ");
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
@@ -192,7 +195,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         }
         indent();
         String fieldName = getVarHandleFieldName(javaName);
-        append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
+        append(memberMods() + "VarHandle " + fieldName + " = ");
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
         }
@@ -221,7 +224,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         String fieldName = getLayoutFieldName(javaName);
         incrAlign();
         indent();
-        append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
+        append(memberMods() + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
@@ -274,7 +277,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        append(PKG_STATIC_FINAL_MODS);
+        append(memberMods());
         append("FunctionDescriptor ");
         append(fieldName);
         append(" = ");
@@ -313,7 +316,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        append(PKG_STATIC_FINAL_MODS);
+        append(memberMods());
         append("MemorySegment ");
         append(fieldName);
         append(" = CLinker.toCString(\"");
@@ -330,7 +333,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        append(PKG_STATIC_FINAL_MODS);
+        append(memberMods());
         append("MemoryAddress ");
         append(fieldName);
         append(" = MemoryAddress.ofLong(");
@@ -368,7 +371,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         indent();
         String fieldName = getSegmentFieldName(javaName);
-        append(PKG_STATIC_FINAL_MODS);
+        append(memberMods());
         append("MemorySegment ");
         append(fieldName);
         append(" = ");

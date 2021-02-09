@@ -46,6 +46,8 @@ import java.util.List;
  */
 class HeaderFileBuilder extends JavaSourceBuilder {
 
+    private static String MEMBER_MODS = "public static";
+
     private final String superclass;
     private final boolean isPublic;
 
@@ -61,7 +63,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    protected String getClassModifiers() {
+    protected String mods() {
         return isPublic ? "public " : "";
     }
 
@@ -72,7 +74,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             constantBuilder.classBegin();
             String access = constantBuilder.addSegment(javaName, nativeName, layout);
             constantBuilder.classEnd();
-            emitGetter(MemorySegment.class, javaName + "$SEGMENT", access, false, null);
+            emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", access, false, null);
         } else {
             ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
             constantBuilder.classBegin();
@@ -80,9 +82,9 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             String vhAccess = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type);
             String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
             constantBuilder.classEnd();
-            emitGetter(VarHandle.class, javaName + "$VH", vhAccess, false, null);
-            emitGetter(MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
-            emitGetter(MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
+            emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess, false, null);
+            emitGetter(MEMBER_MODS, MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
+            emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
             emitGlobalGetter(segmentAccess, vhAccess, javaName, nativeName, type);
             emitGlobalSetter(segmentAccess, vhAccess, javaName, nativeName, type);
         }
@@ -94,7 +96,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         constantBuilder.classBegin();
         String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
         constantBuilder.classEnd();
-        emitGetter(MethodHandle.class, javaName + "$MH", access,
+        emitGetter(MEMBER_MODS, MethodHandle.class, javaName + "$MH", access,
                 true, "unresolved symbol: " + nativeName);
         emitFunctionWrapper(access, javaName, nativeName, mtype, varargs, paramNames);
     }
@@ -106,9 +108,9 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             constantBuilder.classBegin();
             String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
             constantBuilder.classEnd();
-            emitGetter(type, javaName, mhDesc, false, null);
+            emitGetter(MEMBER_MODS, type, javaName, mhDesc, false, null);
         } else {
-            emitGetter(type, javaName, getConstantString(type, value), false, null);
+            emitGetter(MEMBER_MODS, type, javaName, getConstantString(type, value), false, null);
         }
     }
 
@@ -130,7 +132,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
                                   boolean varargs, List<String> paramNames) {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS + " ");
         append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
@@ -196,7 +198,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();
             indent();
-            append(PUB_MODS);
+            append(MEMBER_MODS);
             append(" ValueLayout ");
             append(uniqueNestedClassName(name));
             append(" = ");
@@ -248,7 +250,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     private void emitGlobalGetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
         incrAlign();
         indent();
-        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
+        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ") ");
@@ -267,7 +269,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     private void emitGlobalSetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
         incrAlign();
         indent();
-        append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
+        append(MEMBER_MODS + " void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
         incrAlign();
         indent();
         append(vhStr);

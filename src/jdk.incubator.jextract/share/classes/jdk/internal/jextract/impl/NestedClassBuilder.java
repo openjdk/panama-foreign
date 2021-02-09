@@ -39,6 +39,12 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    protected String mods() {
+        return kind == Kind.INTERFACE ?
+                "public " : "public static ";
+    }
+
+    @Override
     void classBegin() {
         incrAlign();
         super.classBegin();
@@ -50,11 +56,6 @@ public class NestedClassBuilder extends JavaSourceBuilder {
         decrAlign();
         enclosing.append(build());
         return enclosing;
-    }
-
-    @Override
-    protected String getClassModifiers() {
-        return PUB_MODS;
     }
 
     @Override

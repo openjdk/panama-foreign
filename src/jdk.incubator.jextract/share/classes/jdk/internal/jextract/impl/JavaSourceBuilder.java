@@ -41,9 +41,6 @@ import java.util.Set;
  */
 abstract class JavaSourceBuilder {
 
-    static final String PUB_CLS_MODS = "public final ";
-    static final String PUB_MODS = "public static ";
-
     enum Kind {
         CLASS("class"),
         INTERFACE("interface");
@@ -88,8 +85,8 @@ abstract class JavaSourceBuilder {
         return null;
     }
 
-    protected String getClassModifiers() {
-        return PUB_CLS_MODS;
+    String mods() {
+        return "public ";
     }
 
     void classBegin() {
@@ -97,7 +94,7 @@ abstract class JavaSourceBuilder {
         emitImportSection();
 
         indent();
-        append(getClassModifiers());
+        append(mods());
         append(kind.kindName + " " + className());
         if (superClass() != null) {
             append(" extends ");
@@ -223,10 +220,10 @@ abstract class JavaSourceBuilder {
         append(".*;\n");
     }
 
-    protected void emitGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
+    protected void emitGetter(String mods, Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
         incrAlign();
         indent();
-        append(PUB_MODS + " " + type.getSimpleName() + " " +name + "() {\n");
+        append(mods + " " + type.getSimpleName() + " " +name + "() {\n");
         incrAlign();
         indent();
         append("return ");
@@ -246,7 +243,7 @@ abstract class JavaSourceBuilder {
         decrAlign();
     }
 
-    protected void emitGetter(Class<?> type, String name, String access) {
-        emitGetter(type, name, access, false, null);
+    protected void emitGetter(String mods, Class<?> type, String name, String access) {
+        emitGetter(mods, type, name, access, false, null);
     }
 }

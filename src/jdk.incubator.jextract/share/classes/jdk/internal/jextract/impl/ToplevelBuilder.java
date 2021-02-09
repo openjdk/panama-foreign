@@ -59,11 +59,6 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return "#{SUPER}";
     }
 
-    @Override
-    protected String getClassModifiers() {
-        return PUB_CLS_MODS;
-    }
-
     public List<JavaFileObject> toFiles() {
         JavaSourceBuilder librariesBuilder = headers.stream().findFirst().orElse(this);
         emitLibraries(librariesBuilder, libraryNames);

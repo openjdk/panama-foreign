@@ -31,6 +31,9 @@ import jdk.incubator.jextract.Type;
 import java.lang.invoke.MethodType;
 
 public class FunctionalInterfaceBuilder extends ConstantBuilder {
+
+    private static String MEMBER_MODS = "static";
+
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
@@ -67,7 +70,7 @@ public class FunctionalInterfaceBuilder extends ConstantBuilder {
         String callStr = functionGetCallString(className(), fiDesc);
         incrAlign();
         indent();
-        append(PUB_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
+        append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
         incrAlign();
         indent();
         append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + callStr + ", " +
@@ -76,7 +79,7 @@ public class FunctionalInterfaceBuilder extends ConstantBuilder {
         indent();
         append("}\n");
         indent();
-        append(PUB_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
+        append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
         incrAlign();
         indent();
         append("return allocate(fi).handoff(scope);\n");

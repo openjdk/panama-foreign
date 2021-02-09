@@ -40,6 +40,8 @@ import java.util.List;
  * This class generates static utilities class for C structs, unions.
  */
 class StructBuilder extends ConstantBuilder {
+    
+    private static String MEMBER_MODS = "public static";
 
     private final GroupLayout structLayout;
     private final Type structType;
@@ -69,7 +71,7 @@ class StructBuilder extends ConstantBuilder {
     void classBegin() {
         super.classBegin();
         var layoutAccess = addLayout(layoutField(), ((Type.Declared)structType).tree().layout().get());
-        emitGetter(MemoryLayout.class, "$LAYOUT", layoutAccess);
+        emitGetter(MEMBER_MODS, MemoryLayout.class, "$LAYOUT", layoutAccess);
     }
 
     @Override
@@ -91,7 +93,7 @@ class StructBuilder extends ConstantBuilder {
             emitSegmentGetter(javaName, nativeName, layout);
         } else {
             String vhAccess = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
-            emitGetter(VarHandle.class, javaName + "$VH", vhAccess);
+            emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess);
             emitFieldGetter(vhAccess, javaName, type);
             emitFieldSetter(vhAccess, javaName, type);
             emitIndexedFieldGetter(vhAccess, javaName, type);
@@ -108,7 +110,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitFieldGetter(String vhStr, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
+        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
@@ -123,7 +125,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
-        append(PUB_MODS + "void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
+        append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
         incrAlign();
         indent();
         append(vhStr + ".set(seg, x);\n");
@@ -147,7 +149,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         incrAlign();
         indent();
-        append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
+        append(MEMBER_MODS + " MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
@@ -164,15 +166,15 @@ class StructBuilder extends ConstantBuilder {
     private void emitSizeof() {
         incrAlign();
         indent();
-        append(PUB_MODS);
-        append("long sizeof() { return $LAYOUT().byteSize(); }\n");
+        append(MEMBER_MODS);
+        append(" long sizeof() { return $LAYOUT().byteSize(); }\n");
         decrAlign();
     }
 
     private void emitAllocate() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
         decrAlign();
     }
@@ -180,7 +182,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitScopeAllocate() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
         decrAlign();
     }
@@ -188,7 +190,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitAllocateArray() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocateArray(int len) {\n");
         incrAlign();
         indent();
@@ -202,7 +204,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitScopeAllocateArray() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocateArray(int len, NativeScope scope) {\n");
         incrAlign();
         indent();
@@ -216,7 +218,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitAllocatePoiner() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocatePointer() {\n");
         incrAlign();
         indent();
@@ -230,7 +232,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitScopeAllocatePointer() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment allocatePointer(NativeScope scope) {\n");
         incrAlign();
         indent();
@@ -244,7 +246,7 @@ class StructBuilder extends ConstantBuilder {
     private void emitAsRestricted() {
         incrAlign();
         indent();
-        append(PUB_MODS);
+        append(MEMBER_MODS);
         append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
         decrAlign();
     }
@@ -253,7 +255,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index";
-        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
+        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
@@ -269,7 +271,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
-        append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
+        append(MEMBER_MODS + " void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
         append(vhStr +
