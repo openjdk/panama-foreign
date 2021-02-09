@@ -41,7 +41,7 @@ import java.util.function.Function;
 /**
  * Superclass for .java source generator classes.
  */
-abstract class JavaSourceBuilder implements OutputSourceBuilder {
+abstract class JavaSourceBuilder {
 
     enum Kind {
         CLASS("class"),
@@ -60,17 +60,15 @@ abstract class JavaSourceBuilder implements OutputSourceBuilder {
     final Kind kind;
     protected final String className;
     protected final String pkgName;
-    protected final ConstantHelper constantHelper;
 
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
 
-    JavaSourceBuilder(StringSourceBuilder builder, Kind kind, String className, String pkgName, ConstantHelper constantHelper) {
+    JavaSourceBuilder(StringSourceBuilder builder, Kind kind, String className, String pkgName) {
         this.builder = builder;
         this.kind = kind;
         this.className = className;
         this.pkgName = pkgName;
-        this.constantHelper = constantHelper;
     }
 
     String superClass() {

@@ -29,6 +29,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
+import java.lang.invoke.VarHandle;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * This class generates static utilities class for C structs, unions.
  */
-class StructBuilder extends NestedClassBuilder {
+class StructBuilder extends ConstantBuilder {
 
     private final GroupLayout structLayout;
     private final Type structType;
@@ -88,13 +89,13 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        var desc = constantHelper.addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+        var desc = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
-        builder.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " " + javaName + "$VH() {\n");
+        builder.append(PUB_MODS + VarHandle.class.getSimpleName() + " " + javaName + "$VH() {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("return " + getCallString(desc) + ";\n");
+        builder.append("return " + desc + ";\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -102,13 +103,13 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addLayoutGetter(String javaName, MemoryLayout layout) {
-        var desc = constantHelper.addLayout(javaName, layout);
+        var desc = addLayout(javaName, layout);
         builder.incrAlign();
         builder.indent();
-        builder.append(PUB_MODS + displayName(desc.invocationType().returnType()) + " $LAYOUT() {\n");
+        builder.append(PUB_MODS + MemoryLayout.class.getSimpleName() + " $LAYOUT() {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("return " + getCallString(desc) + ";\n");
+        builder.append("return " + desc + ";\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -116,13 +117,14 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return (" + type.getName() + ")"
-                + fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) + ".get(seg);\n");
+                + vhStr + ".get(seg);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -132,13 +134,14 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
         builder.append(PUB_MODS + "void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) + ".set(seg, x);\n");
+        builder.append(vhStr + ".set(seg, x);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
@@ -265,6 +268,7 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index";
@@ -272,7 +276,7 @@ class StructBuilder extends NestedClassBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append("return (" + type.getName() + ")"
-                + fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) +
+                + vhStr +
                 ".get(seg.asSlice(index*sizeof()));\n");
         builder.decrAlign();
         builder.indent();
@@ -281,22 +285,19 @@ class StructBuilder extends NestedClassBuilder {
     }
 
     private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
         builder.incrAlign();
         builder.indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
         builder.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append(fieldVarHandleGetCallString(getQualifiedName(javaName), nativeName, layout, type) +
+        builder.append(vhStr +
                 ".set(seg.asSlice(index*sizeof()), x);\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
         builder.decrAlign();
-    }
-
-    private String fieldVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), structLayout, prefixNamesList()));
     }
 
     private String qualifiedName(JavaSourceBuilder builder) {

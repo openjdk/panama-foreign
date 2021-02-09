@@ -30,7 +30,7 @@ import jdk.incubator.jextract.Type;
 
 import java.lang.invoke.MethodType;
 
-public class FunctionalInterfaceBuilder extends NestedClassBuilder {
+public class FunctionalInterfaceBuilder extends ConstantBuilder {
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
@@ -62,12 +62,13 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     }
 
     private void emitFunctionalFactories() {
+        String callStr = functionGetCallString(className, fiDesc);
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " MemorySegment allocate(" + className + " fi) {\n");
         builder.incrAlign();
         builder.indent();
-        builder.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
+        builder.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + callStr + ", " +
                 "\"" + fiType.toMethodDescriptorString() + "\");\n");
         builder.decrAlign();
         builder.indent();
@@ -84,6 +85,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     }
 
     private String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
-        return getCallString(constantHelper.addFunctionDesc(javaName, fDesc));
+        return addFunctionDesc(javaName, fDesc);
     }
 }

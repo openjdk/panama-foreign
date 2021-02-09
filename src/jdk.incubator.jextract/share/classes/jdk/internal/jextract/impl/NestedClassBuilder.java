@@ -28,12 +28,12 @@ package jdk.internal.jextract.impl;
 import javax.tools.JavaFileObject;
 import java.util.List;
 
-public abstract class NestedClassBuilder extends JavaSourceBuilder {
+public class NestedClassBuilder extends JavaSourceBuilder {
 
     protected final JavaSourceBuilder enclosing;
 
     public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper);
+        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName);
         this.enclosing = enclosing;
     }
 

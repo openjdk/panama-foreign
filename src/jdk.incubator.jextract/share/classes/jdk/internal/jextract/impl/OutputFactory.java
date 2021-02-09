@@ -62,7 +62,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<String> variables = new HashSet<>();
     private final Set<Declaration.Function> functions = new HashSet<>();
 
-    protected final SplittingBuilder toplevelBuilder;
+    protected final ToplevelBuilder toplevelBuilder;
     protected JavaSourceBuilder currentBuilder;
     protected final TypeTranslator typeTranslator = new TypeTranslator();
     private final String pkgName;
@@ -94,15 +94,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
-                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
-                libraryNames.toArray(String[]::new));
-        SplittingBuilder toplevelBuilder = new SplittingBuilder(JavaSourceBuilder.Kind.CLASS, clsName, pkgName, constantHelper,
-                HeaderFileBuilder::new);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(clsName, pkgName, libraryNames.toArray(new String[0]));
         return new OutputFactory(pkgName, toplevelBuilder).generate(decl);
     }
 
-    private OutputFactory(String pkgName, SplittingBuilder toplevelBuilder) {
+    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
@@ -124,7 +120,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             files.addAll(toplevelBuilder.build());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
-            files.addAll(toplevelBuilder.constantHelper.build());
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -526,6 +521,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     JavaSourceBuilder header() {
-        return toplevelBuilder.nextBuilder();
+        return toplevelBuilder.nextHeader();
     }
 }

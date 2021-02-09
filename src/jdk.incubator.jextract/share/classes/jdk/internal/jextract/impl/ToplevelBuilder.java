@@ -40,11 +40,14 @@ import java.util.stream.Collectors;
 class ToplevelBuilder extends HeaderFileBuilder {
 
     private int declCount;
+    private String[] libraryNames;
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
-    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper) {
-        super(headerFileName, pkgName, null, constantHelper, true);
+    ToplevelBuilder(String headerFileName, String pkgName, String[] libraryNames) {
+        super(pkgName, headerFileName, null, true);
+        this.libraryNames = libraryNames;
+        classBegin();
     }
 
     @Override
@@ -58,11 +61,13 @@ class ToplevelBuilder extends HeaderFileBuilder {
     }
 
     public List<JavaFileObject> build() {
+        JavaSourceBuilder librariesBuilder = headers.stream().findFirst().orElse(this);
+        emitLibraries(librariesBuilder.builder, libraryNames);
+        classEnd();
         String res = builder.build().replace("extends #{SUPER}",
                 lastHeader().map(h -> "extends " + h.className).orElse(""));
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
-        files.addAll(constantHelper.build());
         files.addAll(headers.stream()
                 .flatMap(hf -> hf.build().stream())
                 .collect(Collectors.toList()));
@@ -79,9 +84,8 @@ class ToplevelBuilder extends HeaderFileBuilder {
 
     HeaderFileBuilder nextHeader() {
         if (declCount > DECLS_PER_HEADER_CLASS) {
-            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "_" + headers.size(), pkgName,
-                    lastHeader().map(h -> h.className).orElse(null),
-                    constantHelper, false);
+            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(pkgName, className + "_" + headers.size(),
+                    lastHeader().map(h -> h.className).orElse(null), false);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
             declCount = 1;
@@ -90,5 +94,27 @@ class ToplevelBuilder extends HeaderFileBuilder {
             declCount++;
             return lastHeader().orElse(this);
         }
+    }
+
+    private void emitLibraries(StringSourceBuilder builder, String[] libraryNames) {
+        builder.incrAlign();
+        builder.indent();
+        builder.append("static final ");
+        builder.append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+        builder.incrAlign();
+        for (String lib : libraryNames) {
+            builder.indent();
+            builder.append('\"');
+            builder.append(quoteLibraryName(lib));
+            builder.append("\",\n");
+        }
+        builder.decrAlign();
+        builder.indent();
+        builder.append("});\n\n");
+        builder.decrAlign();
+    }
+
+    private static String quoteLibraryName(String lib) {
+        return lib.replace("\\", "\\\\"); // double up slashes
     }
 }

@@ -32,10 +32,9 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
-import javax.tools.JavaFileObject;
-import java.lang.constant.ClassDesc;
-import java.lang.constant.DirectMethodHandleDesc;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,8 +48,8 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     private String superclass;
     private boolean isPublic;
 
-    HeaderFileBuilder(String pkgName, String clsName, String superclass, ConstantHelper constantHelper, boolean isPublic) {
-        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper);
+    HeaderFileBuilder(String pkgName, String clsName, String superclass, boolean isPublic) {
+        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName);
         this.superclass = superclass;
         this.isPublic = isPublic;
     }
@@ -68,13 +67,23 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         if (type.equals(MemorySegment.class)) {
-            addSegmentGetter(javaName, nativeName, layout);
+            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+            String access = constantBuilder.addSegment(javaName, nativeName, layout);
+            constantBuilder.classEnd();
+            emitForwardGetter(MemorySegment.class, javaName + "$SEGMENT", access, false, null);
         } else {
-            addLayoutGetter(javaName, layout);
-            addVarHandleGetter(javaName, nativeName, layout, type);
-            addSegmentGetter(javaName, nativeName, layout);
-            addGetter(javaName, nativeName, layout, type);
-            addSetter(javaName, nativeName, layout, type);
+            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+            String layoutAccess = constantBuilder.addLayout(javaName, layout);
+            String vhAccess = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type);
+            String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
+            constantBuilder.classEnd();
+            emitForwardGetter(VarHandle.class, javaName + "$VH", vhAccess, false, null);
+            emitForwardGetter(MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
+            emitForwardGetter(MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
+            addGetter(segmentAccess, vhAccess, javaName, nativeName, layout, type);
+            addSetter(segmentAccess, vhAccess, javaName, nativeName, layout, type);
         }
     }
 
@@ -114,7 +123,11 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     private void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
                                   boolean varargs, List<String> paramNames) {
-        addMethodHandleGetter(javaName, nativeName, mtype, desc, varargs);
+        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+        constantBuilder.classBegin();
+        String access = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs);
+        constantBuilder.classEnd();
+        addMethodHandleGetter(MethodHandle.class, javaName + "$MH", access, nativeName);
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
@@ -151,7 +164,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append("var mh$ = RuntimeHelper.requireNonNull(");
-        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs));
+        builder.append(access);
         builder.append(", \"unresolved symbol: ");
         builder.append(nativeName);
         builder.append("\");\n");
@@ -200,37 +213,74 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         };
     }
 
-    private void addLayoutGetter(String javaName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addLayout(javaName, layout));
-    }
-
-    private void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        emitForwardGetter(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
-    }
-
-    private void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs),
-                true, "unresolved symbol: " + nativeName);
-    }
-
-    private void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout),
+    private void addMethodHandleGetter(Class<?> type, String javaName, String access, String nativeName) {
+        emitForwardGetter(type, javaName, access,
                 true, "unresolved symbol: " + nativeName);
     }
 
     private void addConstantGetter(String javaName, Class<?> type, Object value) {
-        emitForwardGetter(constantHelper.addConstantDesc(javaName, type, value));
+        if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
+            ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+            String mhDesc = constantBuilder.addConstantDesc(javaName, type, value);
+            constantBuilder.classEnd();
+            emitForwardGetter(type, javaName, mhDesc, false, null);
+        } else {
+            builder.incrAlign();
+            builder.indent();
+            builder.append("public static final ");
+            builder.append(type.getName());
+            builder.append(' ');
+            builder.append(javaName);
+            builder.append("() { return ");
+            builder.append(getConstantString(type, value));
+            builder.append("; }\n\n");
+            builder.decrAlign();
+        }
     }
 
-    private void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+
+
+    private String getConstantString(Class<?> type, Object value) {
+        StringBuilder buf = new StringBuilder();
+        if (type == float.class) {
+            float f = ((Number)value).floatValue();
+            if (Float.isFinite(f)) {
+                buf.append(value);
+                buf.append("f");
+            } else {
+                buf.append("Float.valueOf(\"");
+                buf.append(value.toString());
+                buf.append("\")");
+            }
+        } else if (type == long.class) {
+            buf.append(value);
+            buf.append("L");
+        } else if (type == double.class) {
+            double d = ((Number)value).doubleValue();
+            if (Double.isFinite(d)) {
+                buf.append(value);
+                buf.append("d");
+            } else {
+                buf.append("Double.valueOf(\"");
+                buf.append(value.toString());
+                buf.append("\")");
+            }
+        } else {
+            buf.append("(" + type.getName() + ")");
+            buf.append(value + "L");
+        }
+        return buf.toString();
+    }
+
+    private void addGetter(String vhParam, String vhStr, String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
         builder.incrAlign();
         builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
         builder.append("return (" + type.getName() + ") ");
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
+        builder.append(vhStr);
         builder.append(".get(RuntimeHelper.requireNonNull(");
         builder.append(vhParam);
         builder.append(", \"unresolved symbol: ");
@@ -242,14 +292,13 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.decrAlign();
     }
 
-    private void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    private void addSetter(String vhParam, String vhStr, String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
         builder.incrAlign();
         builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
+        builder.append(vhStr);
         builder.append(".set(RuntimeHelper.requireNonNull(");
         builder.append(vhParam);
         builder.append(", \"unresolved symbol: ");
@@ -263,21 +312,17 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     // Utility
 
-    protected void emitForwardGetter(DirectMethodHandleDesc desc) {
-        emitForwardGetter(desc, false, "");
-    }
-
-    protected void emitForwardGetter(DirectMethodHandleDesc desc, boolean nullCheck, String errMsg) {
+    protected void emitForwardGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
         builder.incrAlign();
         builder.indent();
-        builder.append(PUB_MODS + " " + displayName(desc.invocationType().returnType()) + " " + desc.methodName() + "() {\n");
+        builder.append(PUB_MODS + " " + type.getSimpleName() + " " +name + "() {\n");
         builder.incrAlign();
         builder.indent();
         builder.append("return ");
         if (nullCheck) {
             builder.append("RuntimeHelper.requireNonNull(");
         }
-        builder.append(getCallString(desc));
+        builder.append(access);
         if (nullCheck) {
             builder.append(",\"");
             builder.append(errMsg);
@@ -288,17 +333,5 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.indent();
         builder.append("}\n");
         builder.decrAlign();
-    }
-
-    private String methodHandleGetCallString(String javaName, String nativeName, MethodType mt, FunctionDescriptor fDesc, boolean varargs) {
-        return getCallString(constantHelper.addMethodHandle(javaName, nativeName, mt, fDesc, varargs));
-    }
-
-    private String globalVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
-    }
-
-    private String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
-        return getCallString(constantHelper.addSegment(javaName, nativeName, layout));
     }
 }
