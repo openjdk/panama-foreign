@@ -49,13 +49,13 @@ interface ConstantHelper {
 
     static ConstantHelper make(boolean source, String packageName, String headerClassName, ClassDesc runtimeHelper,
                                ClassDesc cString, String[] libraryNames) {
-        if (!source) {
-            return new MultiFileConstantHelper(headerClassName,
-                    (simpleClassName, baseClassName, isFinal) -> ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName),
-                    CONSTANTS_PER_CLASS_CLASSES);
-        } else {
+//        if (!source) {
+//            return new MultiFileConstantHelper(headerClassName,
+//                    (simpleClassName, baseClassName, isFinal) -> ClassConstantHelper.make(packageName, simpleClassName, runtimeHelper, cString, libraryNames, baseClassName),
+//                    CONSTANTS_PER_CLASS_CLASSES);
+//        } else {
             return new SourceConstantHelper(packageName, libraryNames, headerClassName + "_constant");
-        }
+        //}
     }
 
     interface ConstantHelperFactory {

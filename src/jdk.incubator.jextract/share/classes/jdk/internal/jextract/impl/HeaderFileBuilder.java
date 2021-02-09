@@ -114,6 +114,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
 
     private void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
                                   boolean varargs, List<String> paramNames) {
+        addMethodHandleGetter(javaName, nativeName, mtype, desc, varargs);
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS);
