@@ -177,4 +177,33 @@ abstract class JavaSourceBuilder {
         String res = mapper.apply(builder.build());
         return List.of(Utils.fileFromString(pkgName, className, res));
     }
+
+    // Utility
+
+    protected void emitForwardGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
+        builder.incrAlign();
+        builder.indent();
+        builder.append(PUB_MODS + " " + type.getSimpleName() + " " +name + "() {\n");
+        builder.incrAlign();
+        builder.indent();
+        builder.append("return ");
+        if (nullCheck) {
+            builder.append("RuntimeHelper.requireNonNull(");
+        }
+        builder.append(access);
+        if (nullCheck) {
+            builder.append(",\"");
+            builder.append(errMsg);
+            builder.append("\")");
+        }
+        builder.append(";\n");
+        builder.decrAlign();
+        builder.indent();
+        builder.append("}\n");
+        builder.decrAlign();
+    }
+
+    protected void emitForwardGetter(Class<?> type, String name, String access) {
+        emitForwardGetter(type, name, access, false, null);
+    }
 }

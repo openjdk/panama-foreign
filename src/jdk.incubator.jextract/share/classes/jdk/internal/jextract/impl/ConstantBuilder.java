@@ -51,6 +51,8 @@ public class ConstantBuilder extends NestedClassBuilder {
         super(enclosing, kind, className);
     }
 
+    // public API
+
     public String addLayout(String javaName, MemoryLayout layout) {
         String layoutName = javaName + "$LAYOUT";
         if (namesGenerated.containsKey(layoutName)) {
@@ -141,6 +143,8 @@ public class ConstantBuilder extends NestedClassBuilder {
             return access;
         }
     }
+
+    // private generators
 
     private String getMethodHandleFieldName(String javaName) {
         return javaName + "$MH_";

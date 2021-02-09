@@ -68,7 +68,8 @@ class StructBuilder extends ConstantBuilder {
     @Override
     void classBegin() {
         super.classBegin();
-        addLayoutGetter(layoutField(), ((Type.Declared)structType).tree().layout().get());
+        var layoutAccess = addLayout(layoutField(), ((Type.Declared)structType).tree().layout().get());
+        emitForwardGetter(MemoryLayout.class, "$LAYOUT", layoutAccess);
     }
 
     @Override
@@ -88,36 +89,7 @@ class StructBuilder extends ConstantBuilder {
         return qualifiedName(this) + "$" + fieldName;
     }
 
-    private void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        var desc = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + VarHandle.class.getSimpleName() + " " + javaName + "$VH() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return " + desc + ";\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    private void addLayoutGetter(String javaName, MemoryLayout layout) {
-        var desc = addLayout(javaName, layout);
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + MemoryLayout.class.getSimpleName() + " $LAYOUT() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return " + desc + ";\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    private void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+    private void addGetter(String vhStr, String javaName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
@@ -130,11 +102,10 @@ class StructBuilder extends ConstantBuilder {
         builder.append("}\n");
         builder.decrAlign();
 
-        addIndexGetter(javaName, nativeName, layout, type);
+        addIndexGetter(vhStr, javaName, type);
     }
 
-    private void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+    private void addSetter(String vhStr, String javaName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
@@ -147,7 +118,7 @@ class StructBuilder extends ConstantBuilder {
         builder.append("}\n");
         builder.decrAlign();
 
-        addIndexSetter(javaName, nativeName, layout, type);
+        addIndexSetter(vhStr, javaName, type);
     }
 
     private MemoryLayout.PathElement[] elementPaths(String nativeFieldName) {
@@ -266,8 +237,7 @@ class StructBuilder extends ConstantBuilder {
         builder.decrAlign();
     }
 
-    private void addIndexGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+    private void addIndexGetter(String vhStr, String javaName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index";
@@ -283,8 +253,7 @@ class StructBuilder extends ConstantBuilder {
         builder.decrAlign();
     }
 
-    private void addIndexSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        String vhStr = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+    private void addIndexSetter(String vhStr, String javaName, Class<?> type) {
         builder.incrAlign();
         builder.indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
@@ -321,9 +290,10 @@ class StructBuilder extends ConstantBuilder {
         if (type.equals(MemorySegment.class)) {
             addSegmentGetter(javaName, nativeName, layout);
         } else {
-            addVarHandleGetter(javaName, nativeName, layout, type);
-            addGetter(javaName, nativeName, layout, type);
-            addSetter(javaName, nativeName, layout, type);
+            String vhAccess = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+            emitForwardGetter(VarHandle.class, javaName + "$VH", vhAccess);
+            addGetter(vhAccess, javaName, type);
+            addSetter(vhAccess, javaName, type);
         }
     }
 

@@ -226,16 +226,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             constantBuilder.classEnd();
             emitForwardGetter(type, javaName, mhDesc, false, null);
         } else {
-            builder.incrAlign();
-            builder.indent();
-            builder.append("public static final ");
-            builder.append(type.getName());
-            builder.append(' ');
-            builder.append(javaName);
-            builder.append("() { return ");
-            builder.append(getConstantString(type, value));
-            builder.append("; }\n\n");
-            builder.decrAlign();
+            emitForwardGetter(type, javaName, getConstantString(type, value), false, null);
         }
     }
 
@@ -304,31 +295,6 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         builder.append(", \"unresolved symbol: ");
         builder.append(nativeName);
         builder.append("\"), x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    // Utility
-
-    protected void emitForwardGetter(Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " +name + "() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return ");
-        if (nullCheck) {
-            builder.append("RuntimeHelper.requireNonNull(");
-        }
-        builder.append(access);
-        if (nullCheck) {
-            builder.append(",\"");
-            builder.append(errMsg);
-            builder.append("\")");
-        }
-        builder.append(";\n");
         builder.decrAlign();
         builder.indent();
         builder.append("}\n");
