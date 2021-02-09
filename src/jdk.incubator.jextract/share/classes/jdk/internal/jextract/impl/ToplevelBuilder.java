@@ -97,7 +97,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
     HeaderFileBuilder nextHeader() {
         if (declCount > DECLS_PER_HEADER_CLASS) {
             HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(ClassDesc.of(packageName(), className() + "_" + headers.size()),
-                    lastHeader().map(h -> h.className()).orElse(null), false);
+                    lastHeader().map(JavaSourceBuilder::className).orElse(null), false);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
             declCount = 1;
@@ -108,7 +108,7 @@ class ToplevelBuilder extends HeaderFileBuilder {
         }
     }
 
-    private void emitLibraries(StringSourceBuilder builder, String[] libraryNames) {
+    private void emitLibraries(JavaSourceBuilder builder, String[] libraryNames) {
         builder.incrAlign();
         builder.indent();
         builder.append("static final ");

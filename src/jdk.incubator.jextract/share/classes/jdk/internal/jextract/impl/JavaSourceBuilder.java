@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * Superclass for .java source generator classes.
  */
-abstract class JavaSourceBuilder extends StringSourceBuilder {
+abstract class JavaSourceBuilder {
 
     static final String PUB_CLS_MODS = "public final ";
     static final String PUB_MODS = "public static ";
@@ -61,8 +61,13 @@ abstract class JavaSourceBuilder extends StringSourceBuilder {
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
 
+    // code buffer
+    private StringBuilder sb = new StringBuilder();
+    // current line alignment (number of 4-spaces)
+    private int align;
+
     JavaSourceBuilder(int align, Kind kind, ClassDesc desc) {
-        super(align);
+        this.align = align;
         this.kind = kind;
         this.desc = desc;
     }
@@ -142,6 +147,46 @@ abstract class JavaSourceBuilder extends StringSourceBuilder {
     }
 
     // Internal generation helpers (used by other builders)
+
+    int align() {
+        return align;
+    }
+
+    void append(String s) {
+        sb.append(s);
+    }
+
+    void append(char c) {
+        sb.append(c);
+    }
+
+    void append(boolean b) {
+        sb.append(b);
+    }
+
+    void append(long l) {
+        sb.append(l);
+    }
+
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
+        }
+    }
+
+    void incrAlign() {
+        align++;
+    }
+
+    void decrAlign() {
+        align--;
+    }
+
+    String build() {
+        String s = sb.toString();
+        sb = null;
+        return s;
+    }
 
     /*
      * We may have case-insensitive name collision! A C program may have
