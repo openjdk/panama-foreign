@@ -168,12 +168,7 @@ class StructBuilder extends ConstantBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
-        try {
-            builder.append(structLayout.byteOffset(elementPaths(nativeName)));
-        } catch (Throwable ex) {
-            System.err.println("Cannot find layout " + nativeName + " in " + structLayout);
-            builder.append("0");
-        }
+        builder.append(structLayout.byteOffset(elementPaths(nativeName)));
         builder.append(", ");
         builder.append(layout.byteSize());
         builder.append("));\n");
@@ -181,7 +176,6 @@ class StructBuilder extends ConstantBuilder {
         builder.indent();
         builder.append("}\n");
         builder.decrAlign();
-
     }
 
     private void emitSizeof() {
@@ -335,6 +329,6 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, structLayout, type);
+        return new StructBuilder(this, name, parentLayout, type);
     }
 }
