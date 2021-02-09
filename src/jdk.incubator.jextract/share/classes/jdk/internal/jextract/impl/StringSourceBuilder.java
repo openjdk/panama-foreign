@@ -34,6 +34,18 @@ public class StringSourceBuilder {
     // current line alignment (number of 4-spaces)
     private int align;
 
+    public StringSourceBuilder(int align) {
+        this.align = align;
+    }
+
+    public StringSourceBuilder() {
+        this(0);
+    }
+
+    int align() {
+        return align;
+    }
+
     void append(String s) {
         sb.append(s);
     }

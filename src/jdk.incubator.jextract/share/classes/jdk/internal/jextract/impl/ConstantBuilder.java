@@ -153,27 +153,27 @@ public class ConstantBuilder extends NestedClassBuilder {
     private String emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
                                          FunctionDescriptor desc, boolean varargs) {
         addFunctionDesc(javaName, desc);
-        builder.incrAlign();
+        incrAlign();
         String fieldName = getMethodHandleFieldName(javaName);
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
-        builder.append(fieldName + " = RuntimeHelper.downcallHandle(\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("LIBRARIES, \"" + nativeName + "\"");
-        builder.append(",\n");
-        builder.indent();
-        builder.append("\"" + mtype.toMethodDescriptorString() + "\",\n");
-        builder.indent();
-        builder.append(getFunctionDescFieldName(javaName));
-        builder.append(", ");
+        indent();
+        append(PKG_STATIC_FINAL_MODS + "MethodHandle ");
+        append(fieldName + " = RuntimeHelper.downcallHandle(\n");
+        incrAlign();
+        indent();
+        append("LIBRARIES, \"" + nativeName + "\"");
+        append(",\n");
+        indent();
+        append("\"" + mtype.toMethodDescriptorString() + "\",\n");
+        indent();
+        append(getFunctionDescFieldName(javaName));
+        append(", ");
         // isVariadic
-        builder.append(varargs);
-        builder.append("\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append(");\n");
-        builder.decrAlign();
+        append(varargs);
+        append("\n");
+        decrAlign();
+        indent();
+        append(");\n");
+        decrAlign();
         return fieldName;
     }
 
@@ -184,32 +184,32 @@ public class ConstantBuilder extends NestedClassBuilder {
     private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
                                       String rootLayoutName, List<String> prefixElementNames) {
         addLayout(javaName, layout);
-        builder.incrAlign();
+        incrAlign();
         String typeName = type.getName();
         boolean isAddr = typeName.contains("MemoryAddress");
         if (isAddr) {
             typeName = "long";
         }
-        builder.indent();
+        indent();
         String fieldName = getVarHandleFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
+        append(PKG_STATIC_FINAL_MODS + "VarHandle " + fieldName + " = ");
         if (isAddr) {
-            builder.append("MemoryHandles.asAddressVarHandle(");
+            append("MemoryHandles.asAddressVarHandle(");
         }
-        builder.append(getLayoutFieldName(rootLayoutName != null ? rootLayoutName : javaName));
-        builder.append(".varHandle(" + typeName + ".class");
+        append(getLayoutFieldName(rootLayoutName != null ? rootLayoutName : javaName));
+        append(".varHandle(" + typeName + ".class");
         if (rootLayoutName != null) {
             for (String prefixElementName : prefixElementNames) {
-                builder.append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
+                append(", MemoryLayout.PathElement.groupElement(\"" + prefixElementName + "\")");
             }
-            builder.append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
+            append(", MemoryLayout.PathElement.groupElement(\"" + nativeName + "\")");
         }
-        builder.append(")");
+        append(")");
         if (isAddr) {
-            builder.append(")");
+            append(")");
         }
-        builder.append(";\n");
-        builder.decrAlign();
+        append(";\n");
+        decrAlign();
         return fieldName;
     }
 
@@ -219,49 +219,49 @@ public class ConstantBuilder extends NestedClassBuilder {
 
     private String emitLayoutField(String javaName, MemoryLayout layout) {
         String fieldName = getLayoutFieldName(javaName);
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
+        incrAlign();
+        indent();
+        append(PKG_STATIC_FINAL_MODS + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
-        builder.append(";\n");
-        builder.decrAlign();
+        append(";\n");
+        decrAlign();
         return fieldName;
     }
 
     private void emitLayoutString(MemoryLayout l) {
         if (l instanceof ValueLayout) {
-            builder.append(typeToLayoutName((ValueLayout) l));
+            append(typeToLayoutName((ValueLayout) l));
         } else if (l instanceof SequenceLayout) {
-            builder.append("MemoryLayout.ofSequence(");
+            append("MemoryLayout.ofSequence(");
             if (((SequenceLayout) l).elementCount().isPresent()) {
-                builder.append(((SequenceLayout) l).elementCount().getAsLong() + ", ");
+                append(((SequenceLayout) l).elementCount().getAsLong() + ", ");
             }
             emitLayoutString(((SequenceLayout) l).elementLayout());
-            builder.append(")");
+            append(")");
         } else if (l instanceof GroupLayout) {
             if (((GroupLayout) l).isStruct()) {
-                builder.append("MemoryLayout.ofStruct(\n");
+                append("MemoryLayout.ofStruct(\n");
             } else {
-                builder.append("MemoryLayout.ofUnion(\n");
+                append("MemoryLayout.ofUnion(\n");
             }
-            builder.incrAlign();
+            incrAlign();
             String delim = "";
             for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
-                builder.append(delim);
-                builder.indent();
+                append(delim);
+                indent();
                 emitLayoutString(e);
                 delim = ",\n";
             }
-            builder.append("\n");
-            builder.decrAlign();
-            builder.indent();
-            builder.append(")");
+            append("\n");
+            decrAlign();
+            indent();
+            append(")");
         } else {
             // padding
-            builder.append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
+            append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
         }
         if (l.name().isPresent()) {
-            builder.append(".withName(\"" +  l.name().get() + "\")");
+            append(".withName(\"" +  l.name().get() + "\")");
         }
     }
 
@@ -270,39 +270,39 @@ public class ConstantBuilder extends NestedClassBuilder {
     }
 
     private String emitFunctionDescField(String javaName, FunctionDescriptor desc) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String fieldName = getFunctionDescFieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("FunctionDescriptor ");
-        builder.append(fieldName);
-        builder.append(" = ");
+        append(PKG_STATIC_FINAL_MODS);
+        append("FunctionDescriptor ");
+        append(fieldName);
+        append(" = ");
         if (desc.returnLayout().isPresent()) {
-            builder.append("FunctionDescriptor.of(");
+            append("FunctionDescriptor.of(");
             emitLayoutString(desc.returnLayout().get());
             if (!noArgs) {
-                builder.append(",");
+                append(",");
             }
         } else {
-            builder.append("FunctionDescriptor.ofVoid(");
+            append("FunctionDescriptor.ofVoid(");
         }
         if (!noArgs) {
-            builder.append("\n");
-            builder.incrAlign();
+            append("\n");
+            incrAlign();
             String delim = "";
             for (MemoryLayout e : desc.argumentLayouts()) {
-                builder.append(delim);
-                builder.indent();
+                append(delim);
+                indent();
                 emitLayoutString(e);
                 delim = ",\n";
             }
-            builder.append("\n");
-            builder.decrAlign();
-            builder.indent();
+            append("\n");
+            decrAlign();
+            indent();
         }
-        builder.append(");\n");
-        builder.decrAlign();
+        append(");\n");
+        decrAlign();
         return fieldName;
     }
 
@@ -310,16 +310,16 @@ public class ConstantBuilder extends NestedClassBuilder {
         return javaName + "$SEGMENT_CONSTANT_";
     }
     private String emitConstantSegment(String javaName, Object value) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String fieldName = getConstantSegmentFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("MemorySegment ");
-        builder.append(fieldName);
-        builder.append(" = CLinker.toCString(\"");
-        builder.append(Utils.quote(Objects.toString(value)));
-        builder.append("\");\n");
-        builder.decrAlign();
+        append(PKG_STATIC_FINAL_MODS);
+        append("MemorySegment ");
+        append(fieldName);
+        append(" = CLinker.toCString(\"");
+        append(Utils.quote(Objects.toString(value)));
+        append("\");\n");
+        decrAlign();
         return fieldName;
     }
 
@@ -327,16 +327,16 @@ public class ConstantBuilder extends NestedClassBuilder {
         return javaName + "$ADDR_CONSTANT_";
     }
     private String emitConstantAddress(String javaName, Object value) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String fieldName = getConstantAddressFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("MemoryAddress ");
-        builder.append(fieldName);
-        builder.append(" = MemoryAddress.ofLong(");
-        builder.append(((Number)value).longValue());
-        builder.append("L);\n");
-        builder.decrAlign();
+        append(PKG_STATIC_FINAL_MODS);
+        append("MemoryAddress ");
+        append(fieldName);
+        append(" = MemoryAddress.ofLong(");
+        append(((Number)value).longValue());
+        append("L);\n");
+        decrAlign();
         return fieldName;
     }
 
@@ -365,20 +365,20 @@ public class ConstantBuilder extends NestedClassBuilder {
 
     private String emitSegmentFieldF(String javaName, String nativeName, MemoryLayout layout) {
         String fld = addLayout(javaName, layout);
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String fieldName = getSegmentFieldName(javaName);
-        builder.append(PKG_STATIC_FINAL_MODS);
-        builder.append("MemorySegment ");
-        builder.append(fieldName);
-        builder.append(" = ");
-        builder.append("RuntimeHelper.lookupGlobalVariable(");
-        builder.append("LIBRARIES, \"");
-        builder.append(nativeName);
-        builder.append("\", ");
-        builder.append(fld);
-        builder.append(");\n");
-        builder.decrAlign();
+        append(PKG_STATIC_FINAL_MODS);
+        append("MemorySegment ");
+        append(fieldName);
+        append(" = ");
+        append("RuntimeHelper.lookupGlobalVariable(");
+        append("LIBRARIES, \"");
+        append(nativeName);
+        append("\", ");
+        append(fld);
+        append(");\n");
+        decrAlign();
         return fieldName;
     }
 }

@@ -49,7 +49,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     private boolean isPublic;
 
     HeaderFileBuilder(String pkgName, String clsName, String superclass, boolean isPublic) {
-        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName);
+        super(Kind.CLASS, clsName, pkgName);
         this.superclass = superclass;
         this.isPublic = isPublic;
     }
@@ -123,26 +123,14 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         }
     }
 
-    @Override
-    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayout, type);
-    }
-
-    @Override
-    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
-        builder.classBegin();
-        builder.classEnd();
-    }
-
     // private generation
 
     private void emitFunctionWrapper(String access, String javaName, String nativeName, MethodType mtype,
                                   boolean varargs, List<String> paramNames) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -160,60 +148,60 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            builder.append(delim + " " + pType.getSimpleName() + " " + pName);
+            append(delim + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
             String lastArg = "x" + numParams;
             if (numParams > 0) {
-                builder.append(", ");
+                append(", ");
             }
-            builder.append("Object... " + lastArg);
+            append("Object... " + lastArg);
             pExprs.add(lastArg);
         }
-        builder.append(") {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("var mh$ = RuntimeHelper.requireNonNull(");
-        builder.append(access);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\");\n");
-        builder.indent();
-        builder.append("try {\n");
-        builder.incrAlign();
-        builder.indent();
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = RuntimeHelper.requireNonNull(");
+        append(access);
+        append(", \"unresolved symbol: ");
+        append(nativeName);
+        append("\");\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
         if (!mtype.returnType().equals(void.class)) {
-            builder.append("return (" + mtype.returnType().getName() + ")");
+            append("return (" + mtype.returnType().getName() + ")");
         }
-        builder.append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("} catch (Throwable ex$) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("throw new AssertionError(\"should not reach here\", ex$);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
-            builder.incrAlign();
-            builder.indent();
-            builder.append(PUB_MODS);
-            builder.append(" ValueLayout ");
-            builder.append(uniqueNestedClassName(name));
-            builder.append(" = ");
-            builder.append(TypeTranslator.typeToLayoutName(kind));
-            builder.append(";\n");
-            builder.decrAlign();
+            incrAlign();
+            indent();
+            append(PUB_MODS);
+            append(" ValueLayout ");
+            append(uniqueNestedClassName(name));
+            append(" = ");
+            append(TypeTranslator.typeToLayoutName(kind));
+            append(";\n");
+            decrAlign();
         }
     }
 
@@ -257,39 +245,39 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     private void emitGlobalGetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return (" + type.getName() + ") ");
-        builder.append(vhStr);
-        builder.append(".get(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
+        incrAlign();
+        indent();
+        append("return (" + type.getName() + ") ");
+        append(vhStr);
+        append(".get(RuntimeHelper.requireNonNull(");
+        append(vhParam);
+        append(", \"unresolved symbol: ");
+        append(nativeName);
+        append("\"));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitGlobalSetter(String vhParam, String vhStr, String javaName, String nativeName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append(vhStr);
-        builder.append(".set(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"), x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
+        incrAlign();
+        indent();
+        append(vhStr);
+        append(".set(RuntimeHelper.requireNonNull(");
+        append(vhParam);
+        append(", \"unresolved symbol: ");
+        append(nativeName);
+        append("\"), x);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 }

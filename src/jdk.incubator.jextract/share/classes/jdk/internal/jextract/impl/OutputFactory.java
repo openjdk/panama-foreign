@@ -32,7 +32,6 @@ import jdk.incubator.jextract.Type.Primitive;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.net.URI;
 import java.net.URL;
@@ -117,7 +116,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         try {
             List<JavaFileObject> files = new ArrayList<>();
-            files.addAll(toplevelBuilder.build());
+            files.addAll(toplevelBuilder.toFiles());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);
@@ -282,7 +281,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private boolean generateFunctionalInterface(Type.Function func, Type type, String name) {
+    private boolean generateFunctionalInterface(Type.Function func, String name) {
         name = Utils.javaSafeIdentifier(name);
         //generate functional interface
         if (func.varargs()) {
@@ -297,7 +296,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return false;
         }
 
-        toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, type);
+        currentBuilder.addFunctionalInterface(name, fitype, fpDesc);
         return true;
     }
 
@@ -345,7 +344,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             Type.Function f = getAsFunctionPointer(param.type());
             if (f != null) {
                 String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                if (! generateFunctionalInterface(f, param.type(), name)) {
+                if (! generateFunctionalInterface(f, name)) {
                     return null;
                 }
                 i++;
@@ -422,7 +421,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
-                generateFunctionalInterface(func, type, tree.name());
+                generateFunctionalInterface(func, tree.name());
             }
         }
         return null;
@@ -463,7 +462,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         Type.Function func = getAsFunctionPointer(type);
         if (func != null) {
-            generateFunctionalInterface(func, type, fieldName);
+            generateFunctionalInterface(func, fieldName);
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
@@ -473,7 +472,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        boolean isSegment = clazz == MemorySegment.class;
         boolean sizeAvailable;
         try {
             layout.byteSize();

@@ -99,11 +99,6 @@ class StructBuilder extends ConstantBuilder {
         }
     }
 
-    @Override
-    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayout, type);
-    }
-
     // private generation
 
     private String getQualifiedName(String fieldName) {
@@ -111,31 +106,31 @@ class StructBuilder extends ConstantBuilder {
     }
 
     private void emitFieldGetter(String vhStr, String javaName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return (" + type.getName() + ")"
+        incrAlign();
+        indent();
+        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
+        incrAlign();
+        indent();
+        append("return (" + type.getName() + ")"
                 + vhStr + ".get(seg);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitFieldSetter(String vhStr, String javaName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
-        builder.append(PUB_MODS + "void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append(vhStr + ".set(seg, x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        append(PUB_MODS + "void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
+        incrAlign();
+        indent();
+        append(vhStr + ".set(seg, x);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private MemoryLayout.PathElement[] elementPaths(String nativeFieldName) {
@@ -150,139 +145,139 @@ class StructBuilder extends ConstantBuilder {
     }
 
     private void emitSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
-        builder.append(structLayout.byteOffset(elementPaths(nativeName)));
-        builder.append(", ");
-        builder.append(layout.byteSize());
-        builder.append("));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS + "MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
+        incrAlign();
+        indent();
+        append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
+        append(structLayout.byteOffset(elementPaths(nativeName)));
+        append(", ");
+        append(layout.byteSize());
+        append("));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitSizeof() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append("long sizeof() { return $LAYOUT().byteSize(); }\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append("long sizeof() { return $LAYOUT().byteSize(); }\n");
+        decrAlign();
     }
 
     private void emitAllocate() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
+        decrAlign();
     }
 
     private void emitScopeAllocate() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        decrAlign();
     }
 
     private void emitAllocateArray() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocateArray(int len) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append('}');
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocateArray(int len) {\n");
+        incrAlign();
+        indent();
+        append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
+        decrAlign();
+        indent();
+        append('}');
+        decrAlign();
     }
 
     private void emitScopeAllocateArray() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocateArray(int len, NativeScope scope) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocateArray(int len, NativeScope scope) {\n");
+        incrAlign();
+        indent();
+        append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitAllocatePoiner() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocatePointer() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return MemorySegment.allocateNative(C_POINTER);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocatePointer() {\n");
+        incrAlign();
+        indent();
+        append("return MemorySegment.allocateNative(C_POINTER);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitScopeAllocatePointer() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocatePointer(NativeScope scope) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return scope.allocate(C_POINTER);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment allocatePointer(NativeScope scope) {\n");
+        incrAlign();
+        indent();
+        append("return scope.allocate(C_POINTER);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitAsRestricted() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(PUB_MODS);
+        append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
+        decrAlign();
     }
 
     private void emitIndexedFieldGetter(String vhStr, String javaName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index";
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return (" + type.getName() + ")"
+        append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
+        incrAlign();
+        indent();
+        append("return (" + type.getName() + ")"
                 + vhStr +
                 ".get(seg.asSlice(index*sizeof()));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitIndexedFieldSetter(String vhStr, String javaName, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
+        incrAlign();
+        indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
-        builder.append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append(vhStr +
+        append(PUB_MODS + "void " + javaName + "$set(" + params + ") {\n");
+        incrAlign();
+        indent();
+        append(vhStr +
                 ".set(seg.asSlice(index*sizeof()), x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private String qualifiedName(JavaSourceBuilder builder) {

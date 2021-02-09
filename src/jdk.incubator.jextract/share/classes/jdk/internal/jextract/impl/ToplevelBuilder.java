@@ -24,11 +24,7 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.jextract.Type;
-
 import javax.tools.JavaFileObject;
-import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,7 +36,8 @@ import java.util.stream.Collectors;
 class ToplevelBuilder extends HeaderFileBuilder {
 
     private int declCount;
-    private String[] libraryNames;
+    private final String[] libraryNames;
+    private final List<HeaderFileBuilder> headers = new ArrayList<>();
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
@@ -66,31 +63,29 @@ class ToplevelBuilder extends HeaderFileBuilder {
         return PUB_CLS_MODS;
     }
 
-    public List<JavaFileObject> build() {
+    public List<JavaFileObject> toFiles() {
         JavaSourceBuilder librariesBuilder = headers.stream().findFirst().orElse(this);
-        emitLibraries(librariesBuilder.builder, libraryNames);
+        emitLibraries(librariesBuilder, libraryNames);
         classEnd();
-        String res = builder.build().replace("extends #{SUPER}",
+        String res = build().replace("extends #{SUPER}",
                 lastHeader().map(h -> "extends " + h.className).orElse(""));
         List<JavaFileObject> files = new ArrayList<>();
         files.add(Utils.fileFromString(pkgName, className, res));
         files.addAll(headers.stream()
-                .flatMap(hf -> hf.build().stream())
+                .flatMap(hf -> hf.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
     }
 
     void emitConstructor() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append("/* package-private */ ");
-        builder.append(className);
-        builder.append("() {}");
-        builder.append('\n');
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append("/* package-private */ ");
+        append(className);
+        append("() {}");
+        append('\n');
+        decrAlign();
     }
-
-    private List<HeaderFileBuilder> headers = new ArrayList<>();
 
     Optional<HeaderFileBuilder> lastHeader() {
         return headers.size() == 0 ?

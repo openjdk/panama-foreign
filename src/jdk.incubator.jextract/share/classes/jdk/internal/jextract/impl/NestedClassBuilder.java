@@ -33,20 +33,21 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     protected final JavaSourceBuilder enclosing;
 
     public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName);
+        super(enclosing.align(), kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName);
         this.enclosing = enclosing;
     }
 
     @Override
     void classBegin() {
-        builder.incrAlign();
+        incrAlign();
         super.classBegin();
     }
 
     @Override
     JavaSourceBuilder classEnd() {
         super.classEnd();
-        builder.decrAlign();
+        decrAlign();
+        enclosing.append(build());
         return enclosing;
     }
 
@@ -56,17 +57,17 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    protected void addPackagePrefix() {
+    protected void emitPackagePrefix() {
         // nested class. containing class has necessary package declaration
     }
 
     @Override
-    protected void addImportSection() {
+    protected void emitImportSection() {
         // nested class. containing class has necessary imports
     }
 
     @Override
-    public List<JavaFileObject> build() {
+    public List<JavaFileObject> toFiles() {
         throw new UnsupportedOperationException();
     }
 }
