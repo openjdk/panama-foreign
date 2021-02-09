@@ -168,7 +168,12 @@ class StructBuilder extends ConstantBuilder {
         builder.incrAlign();
         builder.indent();
         builder.append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
-        builder.append(structLayout.byteOffset(elementPaths(nativeName)));
+        try {
+            builder.append(structLayout.byteOffset(elementPaths(nativeName)));
+        } catch (Throwable ex) {
+            System.err.println("Cannot find layout " + nativeName + " in " + structLayout);
+            builder.append("0");
+        }
         builder.append(", ");
         builder.append(layout.byteSize());
         builder.append("));\n");

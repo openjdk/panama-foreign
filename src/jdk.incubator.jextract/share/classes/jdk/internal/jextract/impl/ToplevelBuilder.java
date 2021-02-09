@@ -51,6 +51,12 @@ class ToplevelBuilder extends HeaderFileBuilder {
     }
 
     @Override
+    void classBegin() {
+        super.classBegin();
+        emitConstructor();
+    }
+
+    @Override
     String superClass() {
         return "#{SUPER}";
     }
@@ -72,6 +78,16 @@ class ToplevelBuilder extends HeaderFileBuilder {
                 .flatMap(hf -> hf.build().stream())
                 .collect(Collectors.toList()));
         return files;
+    }
+
+    void emitConstructor() {
+        builder.incrAlign();
+        builder.indent();
+        builder.append("/* package-private */ ");
+        builder.append(className);
+        builder.append("() {}");
+        builder.append('\n');
+        builder.decrAlign();
     }
 
     private List<HeaderFileBuilder> headers = new ArrayList<>();

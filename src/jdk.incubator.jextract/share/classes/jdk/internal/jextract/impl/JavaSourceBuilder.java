@@ -91,19 +91,6 @@ abstract class JavaSourceBuilder {
             builder.append(superClass());
         }
         builder.append(" {\n\n");
-        if (kind != Kind.INTERFACE) {
-            emitConstructor();
-        }
-    }
-
-    void emitConstructor() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append("/* package-private */ ");
-        builder.append(className);
-        builder.append("() {}");
-        builder.append('\n');
-        builder.decrAlign();
     }
 
     JavaSourceBuilder classEnd() {
