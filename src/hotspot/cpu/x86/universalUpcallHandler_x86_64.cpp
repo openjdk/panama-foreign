@@ -25,6 +25,7 @@
 #include "asm/macroAssembler.hpp"
 #include "code/codeBlob.hpp"
 #include "code/vmreg.inline.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/universalUpcallHandler.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -297,6 +298,34 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
   return arg_order_vmreg;
 }
 
+#ifdef ASSERT
+static void print_arg_moves(GrowableArray<ArgMove>* arg_moves, int shuffle_area_size, Method* entry) {
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    ls.print_cr("Argument shuffle for %s {", entry->name_and_sig_as_C_string());
+    for (int i = 0; i < arg_moves->length(); i++) {
+      ArgMove arg_mv = arg_moves->at(i);
+      BasicType arg_bt     = arg_mv.bt;
+      VMRegPair from_vmreg = arg_mv.from;
+      VMRegPair to_vmreg   = arg_mv.to;
+
+      ls.print("Move a %s from (", type2name(arg_bt));
+      from_vmreg.first()->print_on(&ls);
+      ls.print(",");
+      from_vmreg.second()->print_on(&ls);
+      ls.print(") to ");
+      to_vmreg.first()->print_on(&ls);
+      ls.print(",");
+      to_vmreg.second()->print_on(&ls);
+      ls.print_cr(")");
+    }
+    ls.print_cr("}");
+  }
+}
+#endif
+
 void save_java_frame_anchor(MacroAssembler* _masm, ByteSize store_offset, Register thread) {
   __ block_comment("{ save_java_frame_anchor ");
   // upcall->jfa._last_Java_fp = _thread->_anchor._last_Java_fp;
@@ -546,20 +575,16 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   int shuffle_area_size = -1;
   GrowableArray<ArgMove>* arg_moves = compute_argument_shuffle(entry, shuffle_area_size, conv);
   assert(shuffle_area_size != -1, "Should have been set");
-
-  // FIXME:
-  // For some reason, if we don't do this the callee's locals
-  // will overlap with our register save area during a deopt
-  // and the first saved registers ends up being clobbered (rbx on SysV)
-  // I'm guessing this space corresponds to the receiver, and compute_argument_shuffle
-  // does not account for it
-  shuffle_area_size += BytesPerWord;
+  DEBUG_ONLY(print_arg_moves(arg_moves, shuffle_area_size, entry);)
 
   int reg_save_area_size = compute_reg_save_area_size(abi);
-  int frame_size = shuffle_area_size + reg_save_area_size + sizeof(AuxiliarySaves);
+  // To spill locals during deopt...
+  int padding_size = 1 * BytesPerWord;
+  int frame_size = shuffle_area_size + padding_size + reg_save_area_size + sizeof(AuxiliarySaves);
 
-  int auxiliary_saves_offset = shuffle_area_size + reg_save_area_size;
-  int reg_save_are_offset = shuffle_area_size;
+  int auxiliary_saves_offset = shuffle_area_size + padding_size + reg_save_area_size;
+  int reg_save_are_offset = shuffle_area_size + padding_size;
+  int padding_offset = shuffle_area_size;
   int shuffle_area_offset = 0;
   ByteSize jfa_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, jfa);
   ByteSize thread_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, thread);
@@ -573,10 +598,13 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   //      |---------------------|
   //      |                     |
   //      | AuxiliarySaves      |
-  //      |---------------------| = auxiliary_saves_offset = shuffle_area_size + reg_save_area_size
+  //      |---------------------| = auxiliary_saves_offset = shuffle_area_size + padding_size + reg_save_area_size
   //      |                     |
   //      | reg_save_area       |
-  //      |---------------------| = reg_save_are_offset = shuffle_area_size
+  //      |---------------------| = reg_save_are_offset = shuffle_area_size + padding_size
+  //      |                     |
+  //      | padding             |
+  //      |---------------------| = padding_offset = shuffle_area_size
   //      |                     |
   // SP-> | shuffle_area        |   needs to be at end for shadow space
   //

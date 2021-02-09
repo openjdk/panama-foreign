@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.filterReturnValue;
@@ -112,11 +113,15 @@ public class ProgrammableUpcallHandler {
             doBindings = insertArguments(MH_invokeInterpBindings, 1, target, argIndices, retIndices, callingSequence,
                     bufferCopySize);
             doBindings = doBindings.asCollector(Object[].class, llType.parameterCount());
-            doBindings.asType(llType);
+            doBindings = doBindings.asType(llType);
         }
 
         long entryPoint;
-        if (USE_INTRINSICS) {
+        boolean usesStackArgs = argMoveBindingsStream(callingSequence)
+                .map(Binding.VMLoad::storage)
+                .anyMatch(s -> abi.arch.isStackType(s.type()));
+        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
+            checkPrimitive(doBindings.type());
             JLI.ensureCustomized(doBindings); // FIXME: consider more flexible scheme to customize upcall entry points
             VMStorage[] conv = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
             entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv);
@@ -130,10 +135,20 @@ public class ProgrammableUpcallHandler {
         return () -> entryPoint;
     }
 
-    private static Binding.VMLoad[] argMoveBindings(CallingSequence callingSequence) {
+    private static void checkPrimitive(MethodType type) {
+        if (!type.returnType().isPrimitive()
+                || type.parameterList().stream().anyMatch(p -> !p.isPrimitive()))
+            throw new IllegalArgumentException("MethodHandle type must be primitive: " + type);
+    }
+
+    private static Stream<Binding.VMLoad> argMoveBindingsStream(CallingSequence callingSequence) {
         return callingSequence.argumentBindings()
                 .filter(Binding.VMLoad.class::isInstance)
-                .map(Binding.VMLoad.class::cast)
+                .map(Binding.VMLoad.class::cast);
+    }
+
+    private static Binding.VMLoad[] argMoveBindings(CallingSequence callingSequence) {
+        return argMoveBindingsStream(callingSequence)
                 .toArray(Binding.VMLoad[]::new);
     }
 
