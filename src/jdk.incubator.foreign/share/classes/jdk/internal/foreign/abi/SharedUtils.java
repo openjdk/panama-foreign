@@ -238,18 +238,26 @@ public class SharedUtils {
         cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
     }
 
-    public static Class<?> primitiveCarrierForSize(long size) {
-        if (size == 1) {
-            return byte.class;
-        } else if(size == 2) {
-            return short.class;
-        } else if (size <= 4) {
-            return int.class;
-        } else if (size <= 8) {
-            return long.class;
+    public static Class<?> primitiveCarrierForSize(long size, boolean isFloat) {
+        if (isFloat) {
+            if (size == 4) {
+                return float.class;
+            } else if (size == 8) {
+                return double.class;
+            }
+        } else {
+            if (size == 1) {
+                return byte.class;
+            } else if (size == 2) {
+                return short.class;
+            } else if (size <= 4) {
+                return int.class;
+            } else if (size <= 8) {
+                return long.class;
+            }
         }
 
-        throw new IllegalArgumentException("Size too large: " + size);
+        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + isFloat);
     }
 
     public static CLinker getSystemLinker() {
@@ -408,7 +416,7 @@ public class SharedUtils {
 
     public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
         return carrier == MemoryAddress.class
-            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
             : layout.varHandle(carrier);
     }
 
@@ -524,7 +532,7 @@ public class SharedUtils {
 
         public VarHandle varHandle() {
             return carrier == MemoryAddress.class
-                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
                 : layout.varHandle(carrier);
         }
     }

@@ -25,13 +25,11 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -270,7 +268,7 @@ public class CallArranger {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                         if (offset + copy < layout.byteSize()) {
                             bindings.dup();
                         }
@@ -324,7 +322,8 @@ public class CallArranger {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
                         bindings.dup();
-                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                        boolean isFloat = storage.type() == StorageClasses.VECTOR;
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, isFloat);
                         bindings.vmLoad(storage, type)
                                 .bufferStore(offset, type);
                         offset += copy;
