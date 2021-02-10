@@ -35,6 +35,7 @@ import java.lang.invoke.MethodType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Superclass for .java source generator classes.
@@ -104,6 +105,9 @@ abstract class JavaSourceBuilder {
     }
 
     JavaSourceBuilder classEnd() {
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
         indent();
         append("}\n\n");
         return this;
@@ -245,5 +249,23 @@ abstract class JavaSourceBuilder {
 
     protected void emitGetter(String mods, Class<?> type, String name, String access) {
         emitGetter(mods, type, name, access, false, null);
+    }
+
+    int constant_counter = 0;
+
+    static final int CONSTANT_MAX = 5;
+    ConstantBuilder constantBuilder;
+
+    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        if (constant_counter > CONSTANT_MAX || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+        }
+        constantConsumer.accept(constantBuilder);
+        constant_counter++;
     }
 }

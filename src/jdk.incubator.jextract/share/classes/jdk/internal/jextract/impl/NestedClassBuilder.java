@@ -28,6 +28,7 @@ package jdk.internal.jextract.impl;
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class NestedClassBuilder extends JavaSourceBuilder {
 
@@ -71,5 +72,10 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     @Override
     public List<JavaFileObject> toFiles() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        enclosing.emitWithConstantClass(javaName, constantConsumer);
     }
 }

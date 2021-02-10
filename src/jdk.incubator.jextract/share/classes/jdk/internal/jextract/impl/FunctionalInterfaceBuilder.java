@@ -30,7 +30,7 @@ import jdk.incubator.jextract.Type;
 
 import java.lang.invoke.MethodType;
 
-public class FunctionalInterfaceBuilder extends ConstantBuilder {
+public class FunctionalInterfaceBuilder extends NestedClassBuilder {
 
     private static String MEMBER_MODS = "static";
 
@@ -67,29 +67,27 @@ public class FunctionalInterfaceBuilder extends ConstantBuilder {
     }
 
     private void emitFunctionalFactories() {
-        String callStr = functionGetCallString(className(), fiDesc);
-        incrAlign();
-        indent();
-        append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
-        incrAlign();
-        indent();
-        append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + callStr + ", " +
-                "\"" + fiType.toMethodDescriptorString() + "\");\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        indent();
-        append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return allocate(fi).handoff(scope);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-    }
-
-    private String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
-        return addFunctionDesc(javaName, fDesc);
+        emitWithConstantClass(className(), constantBuilder -> {
+            String access = constantBuilder.addFunctionDesc(className(), fiDesc);
+            incrAlign();
+            indent();
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
+            incrAlign();
+            indent();
+            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + access + ", " +
+                    "\"" + fiType.toMethodDescriptorString() + "\");\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            indent();
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
+            incrAlign();
+            indent();
+            append("return allocate(fi).handoff(scope);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+        });
     }
 }
