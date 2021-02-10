@@ -42,13 +42,11 @@ public class TestSplit extends JextractToolRunner {
         run("-d", splitOutput.toString(), splitH.toString()).checkSuccess();
         try(Loader loader = classLoader(splitOutput)) {
             checkPresent(loader, "split_h");
-            checkPresent(loader, "split_h_0");
             checkPresent(loader, "split_h_1");
             checkPresent(loader, "split_h_2");
             checkPresent(loader, "split_h_3");
-            checkMissing(loader, "split_h_4");
-            checkPresent(loader, "split_h_constants_0");
-            checkMissing(loader, "split_h_constants_1");
+            checkPresent(loader, "split_h_4");
+            checkMissing(loader, "split_h_5");
         } finally {
             deleteDir(splitOutput);
         }

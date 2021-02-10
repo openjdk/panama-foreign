@@ -169,7 +169,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        header().addConstant(Utils.javaSafeIdentifier(constant.name()),
+        toplevelBuilder.addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
                 typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
@@ -352,7 +352,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         }
 
-        header().addFunction(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
+        toplevelBuilder.addFunction(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
                 Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
 
         return null;
@@ -418,7 +418,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 }
             }
         } else if (type instanceof Type.Primitive) {
-             header().addTypedef(tree.name(), null, type);
+             toplevelBuilder.addTypedef(tree.name(), null, type);
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
@@ -517,9 +517,5 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private void warn(String msg) {
         System.err.println("WARNING: " + msg);
-    }
-
-    JavaSourceBuilder header() {
-        return toplevelBuilder.nextHeader();
     }
 }

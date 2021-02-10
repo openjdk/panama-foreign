@@ -45,17 +45,15 @@ import java.util.function.Consumer;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-class HeaderFileBuilder extends JavaSourceBuilder {
+abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     private static String MEMBER_MODS = "public static";
 
     private final String superclass;
-    private final boolean isPublic;
 
-    HeaderFileBuilder(ClassDesc desc, String superclass, boolean isPublic) {
+    HeaderFileBuilder(ClassDesc desc, String superclass) {
         super(Kind.CLASS, desc);
         this.superclass = superclass;
-        this.isPublic = isPublic;
     }
 
     @Override
@@ -64,16 +62,11 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    protected String mods() {
-        return isPublic ? "public " : "";
-    }
-
-    @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         if (type.equals(MemorySegment.class)) {
             emitWithConstantClass(javaName, constantBuilder -> {
                 String access = constantBuilder.addSegment(javaName, nativeName, layout);
-                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", access, false, null);
+                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", access, true, "unresolved symbol: " + nativeName);
             });
         } else {
             emitWithConstantClass(javaName, constantBuilder -> {
@@ -82,7 +75,7 @@ class HeaderFileBuilder extends JavaSourceBuilder {
                 String segmentAccess = constantBuilder.addSegment(javaName, nativeName, layout);
                 emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess, false, null);
                 emitGetter(MEMBER_MODS, MemoryLayout.class, javaName + "$LAYOUT", layoutAccess, false, null);
-                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", segmentAccess, false, null);
+                emitGetter(MEMBER_MODS, MemorySegment.class, javaName + "$SEGMENT", segmentAccess, true, "unresolved symbol: " + nativeName);
                 emitGlobalGetter(segmentAccess, vhAccess, javaName, nativeName, type);
                 emitGlobalSetter(segmentAccess, vhAccess, javaName, nativeName, type);
             });
