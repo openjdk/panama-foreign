@@ -200,12 +200,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 ((StructBuilder) currentBuilder).pushPrefixElement(anonymousStructName);
             }
         }
-        d.members().forEach(fieldTree -> fieldTree.accept(this, d));
-        if (isStructKind) {
-            if (!isAnonNested) {
-                currentBuilder = currentBuilder.classEnd();
-            } else {
-                ((StructBuilder) currentBuilder).popPrefixElement();
+        try {
+            d.members().forEach(fieldTree -> fieldTree.accept(this, d));
+        } finally {
+            if (isStructKind) {
+                if (!isAnonNested) {
+                    currentBuilder = currentBuilder.classEnd();
+                } else {
+                    ((StructBuilder) currentBuilder).popPrefixElement();
+                }
             }
         }
         return null;
