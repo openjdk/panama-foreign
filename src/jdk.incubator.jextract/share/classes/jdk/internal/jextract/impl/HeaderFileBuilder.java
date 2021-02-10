@@ -281,10 +281,29 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
+    @Override
+    JavaSourceBuilder classEnd() {
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
+        return super.classEnd();
+    }
+
+    int constant_counter = 0;
+
+    static final int CONSTANT_MAX = 1;
+    ConstantBuilder constantBuilder;
+
     private void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        ConstantBuilder constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
-        constantBuilder.classBegin();
+        if (constant_counter > CONSTANT_MAX || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder.classBegin();
+        }
         constantConsumer.accept(constantBuilder);
-        constantBuilder.classEnd();
+        constant_counter++;
     }
 }
