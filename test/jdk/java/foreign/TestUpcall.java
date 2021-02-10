@@ -66,8 +66,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
@@ -76,6 +78,11 @@ import static org.testng.Assert.assertEquals;
 
 
 public class TestUpcall extends CallGeneratorHelper {
+
+    static final Set<String> FUNC_SELECT = ((Supplier<Set<String>>) () -> {
+        String prop = System.getProperty("java.foreign.test.TestUpcall.FUNC_SELECT", "");
+        return !prop.isBlank() ? Set.of(prop.split(",")) : Set.of();
+    }).get();
 
     static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
     static CLinker abi = CLinker.getInstance();
@@ -107,6 +114,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        if (!FUNC_SELECT.isEmpty() && !FUNC_SELECT.contains(fName)) return; // skip
         List<MemorySegment> segments = new ArrayList<>();
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
