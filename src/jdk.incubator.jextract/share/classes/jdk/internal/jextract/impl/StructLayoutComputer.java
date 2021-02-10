@@ -136,6 +136,11 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         }
     }
 
+    private String structName() {
+        String name = type.spelling();
+        return name.isEmpty()? "struct <anonymous>" : name;
+    }
+
     private List<MemoryLayout> convertBitfields(List<MemoryLayout> layouts) {
         long storageSize = storageSize(layouts);
         long offset = 0L;
@@ -160,7 +165,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
                 pendingFields.clear();
                 offset = 0L;
             } else if (offset > storageSize) {
-                throw new IllegalStateException("Crossing storage unit boundaries");
+                throw new IllegalStateException("Crossing storage unit boundaries: " + structName());
             }
             if (padding != null) {
                 newFields.add(padding);
@@ -168,7 +173,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
             }
         }
         if (!pendingFields.isEmpty()) {
-            throw new IllegalStateException("Partially used storage unit");
+            throw new IllegalStateException("Partially used storage unit: " + structName());
         }
         return newFields;
     }
@@ -181,6 +186,6 @@ final class StructLayoutComputer extends RecordLayoutComputer {
                 return s;
             }
         }
-        throw new IllegalStateException("Cannot infer storage size");
+        throw new IllegalStateException("Cannot infer storage size:" + structName());
     }
 }
