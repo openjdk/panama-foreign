@@ -192,7 +192,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 String className = d.name().isEmpty() ? parent.name() : d.name();
                 GroupLayout parentLayout = (GroupLayout) layoutFor(d);
                 currentBuilder = currentBuilder.addStruct(className, parentLayout, Type.declared(d));
-                addStructDefinition(d, currentBuilder.className());
+                addStructDefinition(d, currentBuilder.fullName());
             } else {
                 // for anonymous nested structs, add a prefix for field layout lookups
                 // but don't generate a separate class

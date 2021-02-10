@@ -46,6 +46,11 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    String fullName() {
+        return enclosing.className() + "." + className();
+    }
+
+    @Override
     void classBegin() {
         incrAlign();
         super.classBegin();

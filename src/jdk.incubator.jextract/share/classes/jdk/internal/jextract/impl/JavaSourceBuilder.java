@@ -74,8 +74,12 @@ abstract class JavaSourceBuilder {
         this(0, kind, desc);
     }
 
-    final String className() {
+    String className() {
         return desc.displayName();
+    }
+
+    String fullName() {
+        return className();
     }
 
     final String packageName() {
