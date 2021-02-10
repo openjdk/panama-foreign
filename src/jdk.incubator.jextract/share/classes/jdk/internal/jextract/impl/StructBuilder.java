@@ -64,7 +64,9 @@ class StructBuilder extends ConstantBuilder {
     }
 
     private List<String> prefixNamesList() {
-        return Collections.unmodifiableList(new ArrayList<>(prefixElementNames));
+        List<String> prefixes = new ArrayList<>(prefixElementNames);
+        Collections.reverse(prefixes);
+        return Collections.unmodifiableList(prefixes);
     }
 
     @Override
