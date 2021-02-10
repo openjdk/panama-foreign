@@ -298,6 +298,10 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
   return arg_order_vmreg;
 }
 
+static const char* null_safe_string(const char* str) {
+  return str == nullptr ? "NULL" : str;
+}
+
 #ifdef ASSERT
 static void print_arg_moves(GrowableArray<ArgMove>* arg_moves, int shuffle_area_size, Method* entry) {
   LogTarget(Trace, panama) lt;
@@ -311,7 +315,7 @@ static void print_arg_moves(GrowableArray<ArgMove>* arg_moves, int shuffle_area_
       VMRegPair from_vmreg = arg_mv.from;
       VMRegPair to_vmreg   = arg_mv.to;
 
-      ls.print("Move a %s from (", type2name(arg_bt));
+      ls.print("Move a %s from (", null_safe_string(type2name(arg_bt)));
       from_vmreg.first()->print_on(&ls);
       ls.print(",");
       from_vmreg.second()->print_on(&ls);
@@ -516,10 +520,6 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
   __ block_comment("} restore_callee_saved_regs ");
 
   // TODO mxcsr
-}
-
-static const char* null_safe_string(const char* str) {
-  return str == nullptr ? "NULL" : str;
 }
 
 static void shuffle_arguments(MacroAssembler* _masm, GrowableArray<ArgMove>* arg_moves) {
