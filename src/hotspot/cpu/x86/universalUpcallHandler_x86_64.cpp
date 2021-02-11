@@ -152,6 +152,10 @@ struct ArgMove {
   BasicType bt;
   VMRegPair from;
   VMRegPair to;
+
+  bool is_identity() const {
+      return from.first() == to.first() && from.second() == to.second();
+  }
 };
 
 static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& frame_size, const CallRegs& conv) {
@@ -247,11 +251,17 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
     move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
     move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
 
+    if(move.is_identity()) {
+      continue; // useless move
+    }
+
 #ifdef ASSERT
-    if (in_regs[in_arg].first()->is_Register()) {
-      assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
-    } else if (in_regs[in_arg].first()->is_XMMRegister()) {
-      assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
+    if (in_arg != -1) {
+      if (in_regs[in_arg].first()->is_Register()) {
+        assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
+      } else if (in_regs[in_arg].first()->is_XMMRegister()) {
+        assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
+      }
     }
     if (out_arg != -1) {
       if (out_regs[out_arg].first()->is_Register()) {
