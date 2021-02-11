@@ -137,9 +137,13 @@ abstract class RecordLayoutComputer {
         return c.isBitField() ? c.getBitFieldWidth() : c.type().size() * 8;
     }
 
-    //Todo: fixme
-    ValueLayout bitfield(ValueLayout v, List<MemoryLayout> sublayouts) {
-        return Utils.addContents(v, MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
+    ValueLayout bitfield(ValueLayout container, List<MemoryLayout> sublayouts) {
+        return Utils.addContents(container, MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
+    }
+
+    ValueLayout bitfield(long containerSize, List<MemoryLayout> sublayouts) {
+        return bitfield((ValueLayout)LayoutUtils.valueLayoutForSize(containerSize)
+                        .layout().orElseThrow(() -> new IllegalStateException("Unsupported size: " + containerSize)), sublayouts);
     }
 
     long offsetOf(Type parent, Cursor c) {
