@@ -64,7 +64,7 @@ public class ProgrammableUpcallHandler {
     private static final boolean USE_SPEC = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC", "true"));
     private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
-        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS", "false"));
+        GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS", "true"));
 
     private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
