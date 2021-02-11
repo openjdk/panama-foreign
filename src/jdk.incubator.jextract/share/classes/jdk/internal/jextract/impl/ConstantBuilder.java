@@ -109,7 +109,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         if (namesGenerated.containsKey(segmentName)) {
             return namesGenerated.get(segmentName);
         } else {
-            String fieldName = emitSegmentFieldF(javaName, nativeName, layout);
+            String fieldName = emitSegmentField(javaName, nativeName, layout);
             String access = className() + "." + fieldName;
             namesGenerated.put(segmentName, access);
             return access;
@@ -366,7 +366,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         return javaName + "$SEGMENT_";
     }
 
-    private String emitSegmentFieldF(String javaName, String nativeName, MemoryLayout layout) {
+    private String emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
         String fld = addLayout(javaName, layout);
         incrAlign();
         indent();

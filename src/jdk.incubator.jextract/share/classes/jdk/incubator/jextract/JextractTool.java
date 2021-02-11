@@ -117,8 +117,8 @@ public final class JextractTool {
     }
 
     public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName,
-                boolean source, String targetPkg, List<String> libNames) {
-        return List.of(OutputFactory.generateWrapped(decl, headerName, source, targetPkg, libNames));
+                                                String targetPkg, List<String> libNames) {
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
     }
 
     /**
@@ -250,7 +250,7 @@ public final class JextractTool {
             }
 
             files = generate(
-                toplevel, header.getFileName().toString(), options.source,
+                toplevel, header.getFileName().toString(),
                 options.targetPackage, options.libraryNames);
         } catch (ClangException ce) {
             err.println(ce.getMessage());

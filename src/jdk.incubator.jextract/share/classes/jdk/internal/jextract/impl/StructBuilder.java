@@ -27,6 +27,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import java.lang.invoke.VarHandle;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+
+import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
 
 /**
  * This class generates static utilities class for C structs, unions.
@@ -55,12 +58,12 @@ class StructBuilder extends ConstantBuilder {
         classBegin();
     }
 
-    public void pushPrefixElement(String prefixElementName) {
-        this.prefixElementNames.push(prefixElementName);
+    void pushPrefixElement(String prefixElementName) {
+        prefixElementNames.push(prefixElementName);
     }
 
-    public void popPrefixElement() {
-        this.prefixElementNames.pop();
+    void popPrefixElement() {
+        prefixElementNames.pop();
     }
 
     private List<String> prefixNamesList() {
@@ -78,15 +81,49 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     JavaSourceBuilder classEnd() {
-        emitSizeof();
-        emitAllocate();
-        emitScopeAllocate();
-        emitAllocateArray();
-        emitScopeAllocateArray();
-        emitAllocatePoiner();
-        emitScopeAllocatePointer();
-        emitAsRestricted();
-        return super.classEnd();
+        if (prefixElementNames.isEmpty()) {
+            emitSizeof();
+            emitAllocate();
+            emitScopeAllocate();
+            emitAllocateArray();
+            emitScopeAllocateArray();
+            emitAllocatePoiner();
+            emitScopeAllocatePointer();
+            emitAsRestricted();
+            return super.classEnd();
+        } else {
+            // we're in an anonymous struct which got merged into this one, return this very builder and keep it open
+            popPrefixElement();
+            return this;
+        }
+    }
+
+    @Override
+    public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
+        if (name.isEmpty() && (parent instanceof Declaration.Scoped)) {
+            //nested anon struct - merge into this builder!
+            GroupLayout parentLayout = (GroupLayout)((Declaration.Scoped)parent).layout().get();
+            String anonName = findAnonymousStructName(parentLayout, layout);
+            pushPrefixElement(anonName);
+            return this;
+        } else {
+            return super.addStruct(name, parent, layout, type);
+        }
+    }
+
+    private String findAnonymousStructName(GroupLayout parentLayout, GroupLayout layout) {
+        // nested anonymous struct or union
+        for (MemoryLayout ml : parentLayout.memberLayouts()) {
+            // look for anonymous structs
+            if (ml.attribute(JEXTRACT_ANONYMOUS).isPresent()) {
+                // it's enough to just compare the member layouts, since the member names
+                // have to be unique within the parent layout (in C)
+                if (((GroupLayout) ml).memberLayouts().equals(layout.memberLayouts())) {
+                    return ml.name().orElseThrow();
+                }
+            }
+        }
+        throw new IllegalStateException("Could not find layout in parent");
     }
 
     @Override

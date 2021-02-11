@@ -27,6 +27,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -98,8 +99,8 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
-        return nextHeader().addStruct(name, parentLayout, type);
+    public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
+        return nextHeader().addStruct(name, parent, layout, type);
     }
 
     @Override

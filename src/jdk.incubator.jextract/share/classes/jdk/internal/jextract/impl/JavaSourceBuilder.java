@@ -27,6 +27,7 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -135,8 +136,8 @@ abstract class JavaSourceBuilder {
         throw new UnsupportedOperationException();
     }
 
-    public StructBuilder addStruct(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayout, type);
+    public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
+        return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
     }
 
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {

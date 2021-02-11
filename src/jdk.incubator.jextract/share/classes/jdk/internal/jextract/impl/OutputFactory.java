@@ -27,7 +27,6 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.*;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.jextract.Type.Primitive;
 
 import javax.tools.JavaFileObject;
 import java.io.IOException;
@@ -46,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
 
 /*
  * Scan a header file and generate Java source items for entities defined in that header
@@ -69,8 +66,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
 
-    private String addStructDefinition(Declaration decl, String name) {
-        return structClassNames.put(decl, name);
+    private void addStructDefinition(Declaration decl, String name) {
+        structClassNames.put(decl, name);
     }
 
     private boolean structDefinitionSeen(Declaration decl) {
@@ -91,7 +88,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return !functions.add(tree);
     }
 
-    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
+    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
         ToplevelBuilder toplevelBuilder = new ToplevelBuilder(ClassDesc.of(pkgName, clsName), libraryNames.toArray(new String[0]));
@@ -116,8 +113,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                     structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
         }
         try {
-            List<JavaFileObject> files = new ArrayList<>();
-            files.addAll(toplevelBuilder.toFiles());
+            List<JavaFileObject> files = new ArrayList<>(toplevelBuilder.toFiles());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
             files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);
@@ -149,14 +145,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
     }
 
-    private static Class<?> classForType(Primitive.Kind type, MemoryLayout layout) {
-        boolean isFloat = switch(type) {
-            case Float, Double -> true;
-            default-> false;
-        };
-        return TypeTranslator.layoutToClass(isFloat, layout);
-    }
-
     private JavaFileObject jfoFromString(String pkgName, String clsName, String contents) {
         String pkgPrefix = pkgName.isEmpty() ? "" : pkgName.replaceAll("\\.", "/") + "/";
         return InMemoryJavaCompiler.jfoFromString(URI.create(pkgPrefix + clsName + ".java"), contents);
@@ -185,54 +173,25 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             case STRUCT, UNION -> true;
             default -> false;
         };
-        boolean isAnonNested = d.name().isEmpty() && isRecord(parent);
         if (isStructKind) {
-            if (!isAnonNested) {
-                //only add explicit struct layout if the struct is not to be flattened inside another struct
-                String className = d.name().isEmpty() ? parent.name() : d.name();
-                GroupLayout parentLayout = (GroupLayout) layoutFor(d);
-                currentBuilder = currentBuilder.addStruct(className, parentLayout, Type.declared(d));
+            String className = d.name();
+            GroupLayout layout = (GroupLayout) layoutFor(d);
+            currentBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
+            if (!className.isEmpty()) {
                 addStructDefinition(d, currentBuilder.fullName());
-            } else {
-                // for anonymous nested structs, add a prefix for field layout lookups
-                // but don't generate a separate class
-                String anonymousStructName = findAnonymousStructName(d, (Declaration.Scoped) parent);
-                ((StructBuilder) currentBuilder).pushPrefixElement(anonymousStructName);
             }
         }
         try {
             d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         } finally {
             if (isStructKind) {
-                if (!isAnonNested) {
-                    currentBuilder = currentBuilder.classEnd();
-                } else {
-                    ((StructBuilder) currentBuilder).popPrefixElement();
-                }
+                currentBuilder = currentBuilder.classEnd();
             }
         }
         return null;
     }
 
-    private String findAnonymousStructName(Declaration.Scoped d, Declaration.Scoped parent) {
-        // nested anonymous struct or union
-        GroupLayout layout = (GroupLayout) layoutFor(d);
-        // look up layout in parent, which will have the right context-dependent name
-        GroupLayout parentLayout = (GroupLayout) parent.layout().orElseThrow();
-        for (MemoryLayout ml : parentLayout.memberLayouts()) {
-            // look for anonymous structs
-            if (ml.attribute(JEXTRACT_ANONYMOUS).isPresent()) {
-                // it's enough to just compare the member layouts, since the member names
-                // have to be unique within the parent layout (in C)
-                if (((GroupLayout) ml).memberLayouts().equals(layout.memberLayouts())) {
-                    return ml.name().orElseThrow();
-                }
-            }
-        }
-        throw new IllegalStateException("Could not find layout in parent");
-    }
-
-    private static final boolean isVaList(FunctionDescriptor desc) {
+    private static boolean isVaList(FunctionDescriptor desc) {
         List<MemoryLayout> argLayouts = desc.argumentLayouts();
         int size = argLayouts.size();
         if (size > 0) {
@@ -250,7 +209,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private static MemoryLayout isUnsupported(MemoryLayout layout) {
         if (layout instanceof ValueLayout) {
-            if (UnsupportedLayouts.isUnsupported((ValueLayout)layout)) {
+            if (UnsupportedLayouts.isUnsupported(layout)) {
                 return layout;
             }
         } else if (layout instanceof GroupLayout) {
@@ -355,8 +314,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         }
 
-        toplevelBuilder.addFunction(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
-                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
+        toplevelBuilder.addFunction(mhName, funcTree.name(), mtype,
+                descriptor, funcTree.type().varargs(), paramNames);
 
         return null;
     }
@@ -364,10 +323,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     Type.Function getAsFunctionPointer(Type type) {
         if (type instanceof Type.Delegated) {
             Type.Delegated delegated = (Type.Delegated)type;
-            return switch (delegated.kind()) {
-                case POINTER -> getAsFunctionPointer(delegated.type());
-                default -> null;
-            };
+            return delegated.kind() == Type.Delegated.Kind.POINTER ?
+                getAsFunctionPointer(delegated.type()) : null;
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -388,8 +345,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             Declaration.Scoped s = ((Type.Declared) type).tree();
             if (!s.name().equals(tree.name())) {
                 switch (s.kind()) {
-                    case STRUCT:
-                    case UNION: {
+                    case STRUCT, UNION -> {
                         if (s.name().isEmpty()) {
                             visitScoped(s, tree);
                         } else {
@@ -415,9 +371,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                             }
                         }
                     }
-                    break;
-                    default:
-                        visitScoped(s, tree);
+                    default -> visitScoped(s, tree);
                 }
             }
         } else if (type instanceof Type.Primitive) {
@@ -491,19 +445,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         return null;
-    }
-
-    private boolean isRecord(Declaration declaration) {
-        if (declaration == null) {
-            return false;
-        } else if (!(declaration instanceof Declaration.Scoped)) {
-            return false;
-        } else {
-            Declaration.Scoped scope = (Declaration.Scoped)declaration;
-            return scope.kind() == Declaration.Scoped.Kind.CLASS ||
-                    scope.kind() == Declaration.Scoped.Kind.STRUCT ||
-                    scope.kind() == Declaration.Scoped.Kind.UNION;
-        }
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {
