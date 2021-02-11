@@ -329,7 +329,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
             {
                 dup(),
                 bufferLoad(0, long.class), vmStore(rdx, long.class),
-                bufferLoad(8, long.class), vmStore(xmm0, long.class)
+                bufferLoad(8, double.class), vmStore(xmm0, double.class)
             },
             { vmStore(rcx, int.class) },
             { vmStore(r8, int.class) },

@@ -268,10 +268,11 @@ public class CallArranger {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                         if (offset + copy < layout.byteSize()) {
                             bindings.dup();
                         }
+                        boolean isFloat = storage.type() == StorageClasses.VECTOR;
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, isFloat);
                         bindings.bufferLoad(offset, type)
                                 .vmStore(storage, type);
                         offset += copy;
