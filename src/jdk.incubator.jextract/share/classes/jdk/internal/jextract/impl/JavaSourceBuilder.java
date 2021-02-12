@@ -258,11 +258,11 @@ abstract class JavaSourceBuilder {
 
     int constant_counter = 0;
 
-    static final int CONSTANT_MAX = 5;
+    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
     ConstantBuilder constantBuilder;
 
     protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        if (constant_counter > CONSTANT_MAX || constantBuilder == null) {
+        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
             if (constantBuilder != null) {
                 constantBuilder.classEnd();
             }
