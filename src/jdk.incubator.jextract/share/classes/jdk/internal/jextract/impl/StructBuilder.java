@@ -30,7 +30,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import java.lang.invoke.VarHandle;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,8 +42,8 @@ import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
  * This class generates static utilities class for C structs, unions.
  */
 class StructBuilder extends ConstantBuilder {
-    
-    private static String MEMBER_MODS = "public static";
+
+    private static final String MEMBER_MODS = "public static";
 
     private final GroupLayout structLayout;
     private final Type structType;
@@ -75,8 +74,8 @@ class StructBuilder extends ConstantBuilder {
     @Override
     void classBegin() {
         super.classBegin();
-        var layoutAccess = addLayout(layoutField(), ((Type.Declared)structType).tree().layout().get());
-        emitGetter(MEMBER_MODS, MemoryLayout.class, "$LAYOUT", layoutAccess);
+        addLayout(layoutField(), ((Type.Declared)structType).tree().layout().get())
+                .emitGetter(this, MEMBER_MODS, Constant.SUFFIX_ONLY);
     }
 
     @Override
@@ -131,43 +130,37 @@ class StructBuilder extends ConstantBuilder {
         if (type.equals(MemorySegment.class)) {
             emitSegmentGetter(javaName, nativeName, layout);
         } else {
-            String vhAccess = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), prefixNamesList());
-            emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess);
-            emitFieldGetter(vhAccess, javaName, type);
-            emitFieldSetter(vhAccess, javaName, type);
-            emitIndexedFieldGetter(vhAccess, javaName, type);
-            emitIndexedFieldSetter(vhAccess, javaName, type);
+            Constant vhConstant = addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), prefixNamesList())
+                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
+            emitFieldGetter(vhConstant, javaName, type);
+            emitFieldSetter(vhConstant, javaName, type);
+            emitIndexedFieldGetter(vhConstant, javaName, type);
+            emitIndexedFieldSetter(vhConstant, javaName, type);
         }
     }
 
-    // private generation
-
-    private String getQualifiedName(String fieldName) {
-        return qualifiedName(this) + "$" + fieldName;
-    }
-
-    private void emitFieldGetter(String vhStr, String javaName, Class<?> type) {
+    private void emitFieldGetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
         append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + vhStr + ".get(seg);\n");
+                + vhConstant.accessExpression() + ".get(seg);\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
     }
 
-    private void emitFieldSetter(String vhStr, String javaName, Class<?> type) {
+    private void emitFieldSetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
         append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
         incrAlign();
         indent();
-        append(vhStr + ".set(seg, x);\n");
+        append(vhConstant.accessExpression() + ".set(seg, x);\n");
         decrAlign();
         indent();
         append("}\n");
@@ -290,7 +283,7 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private void emitIndexedFieldGetter(String vhStr, String javaName, Class<?> type) {
+    private void emitIndexedFieldGetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index";
@@ -298,7 +291,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + vhStr +
+                + vhConstant.accessExpression() +
                 ".get(seg.asSlice(index*sizeof()));\n");
         decrAlign();
         indent();
@@ -306,14 +299,14 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private void emitIndexedFieldSetter(String vhStr, String javaName, Class<?> type) {
+    private void emitIndexedFieldSetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
         String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
         append(MEMBER_MODS + " void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        append(vhStr +
+        append(vhConstant.accessExpression() +
                 ".set(seg.asSlice(index*sizeof()), x);\n");
         decrAlign();
         indent();

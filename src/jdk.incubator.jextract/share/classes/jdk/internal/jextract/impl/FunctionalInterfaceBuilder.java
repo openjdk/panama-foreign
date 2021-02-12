@@ -26,13 +26,14 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.jextract.Type;
+
+import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
 
 public class FunctionalInterfaceBuilder extends NestedClassBuilder {
 
-    private static String MEMBER_MODS = "static";
+    private static final String MEMBER_MODS = "static";
 
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
@@ -68,13 +69,13 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
 
     private void emitFunctionalFactories() {
         emitWithConstantClass(className(), constantBuilder -> {
-            String access = constantBuilder.addFunctionDesc(className(), fiDesc);
+            Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();
             append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
             incrAlign();
             indent();
-            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + access + ", " +
+            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
                     "\"" + fiType.toMethodDescriptorString() + "\");\n");
             decrAlign();
             indent();

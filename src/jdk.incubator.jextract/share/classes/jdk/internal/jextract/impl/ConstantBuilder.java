@@ -34,107 +34,158 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class ConstantBuilder extends NestedClassBuilder {
 
     // set of names generates already
-    private final Map<String, String> namesGenerated = new HashMap<>();
+    private final Map<String, Constant> namesGenerated = new HashMap<>();
 
-    public ConstantBuilder(JavaSourceBuilder enclosing, JavaSourceBuilder.Kind kind, String className) {
+    public ConstantBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
         super(enclosing, kind, className);
     }
 
     String memberMods() {
-        return kind == Kind.CLASS ?
+        return kind == JavaSourceBuilder.Kind.CLASS ?
                 "static final " : "";
     }
 
     // public API
 
-    public String addLayout(String javaName, MemoryLayout layout) {
-        return emitIfAbsent(javaName, ConstantKind.LAYOUT,
+    public Constant addLayout(String javaName, MemoryLayout layout) {
+        return emitIfAbsent(javaName, Constant.Kind.LAYOUT,
                 () -> emitLayoutField(javaName, layout));
     }
 
-    public String addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
+    public Constant addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
                                     Class<?> type, String rootJavaName, List<String> prefixElementNames) {
         return addVarHandle(javaName, nativeName, layout, type, rootJavaName, prefixElementNames);
     }
 
-    public String addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    public Constant addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         return addVarHandle(javaName, nativeName, layout, type, null, List.of());
     }
 
-    private String addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+    private Constant addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
                                 String rootLayoutName, List<String> prefixElementNames) {
-        return emitIfAbsent(javaName, ConstantKind.VAR_HANDLE,
+        return emitIfAbsent(javaName, Constant.Kind.VAR_HANDLE,
                 () -> emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames));
     }
 
-    public String addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        return emitIfAbsent(javaName, ConstantKind.METHOD_HANDLE,
+    public Constant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
+        return emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
                 () -> emitMethodHandleField(javaName, nativeName, mtype, desc, varargs));
     }
 
-    public String addSegment(String javaName, String nativeName, MemoryLayout layout) {
-        return emitIfAbsent(javaName, ConstantKind.SEGMENT,
+    public Constant addSegment(String javaName, String nativeName, MemoryLayout layout) {
+        return emitIfAbsent(javaName, Constant.Kind.SEGMENT,
                 () -> emitSegmentField(javaName, nativeName, layout));
     }
 
-    public String addFunctionDesc(String javaName, FunctionDescriptor desc) {
-        return emitIfAbsent(javaName, ConstantKind.FUNCTION_DESCRIPTOR,
+    public Constant addFunctionDesc(String javaName, FunctionDescriptor desc) {
+        return emitIfAbsent(javaName, Constant.Kind.FUNCTION_DESCRIPTOR,
                 () -> emitFunctionDescField(javaName, desc));
     }
 
-    public String addConstantDesc(String javaName, Class<?> type, Object value) {
-        return emitIfAbsent(javaName, ConstantKind.CONSTANT,
-                () -> emitConstant(javaName, type, value));
+    public Constant addConstantDesc(String javaName, Class<?> type, Object value) {
+        if (type == MemorySegment.class) {
+            return emitIfAbsent(javaName, Constant.Kind.SEGMENT,
+                    () -> emitConstantSegment(javaName, value));
+        } else if (type == MemoryAddress.class) {
+            return emitIfAbsent(javaName, Constant.Kind.ADDRESS,
+                    () -> emitConstantAddress(javaName, value));
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    static class Constant {
+
+        enum Kind {
+            LAYOUT(MemoryLayout.class, "$LAYOUT"),
+            METHOD_HANDLE(MethodHandle.class, "$MH"),
+            VAR_HANDLE(VarHandle.class, "$VH"),
+            FUNCTION_DESCRIPTOR(FunctionDescriptor.class, "$FUNC"),
+            ADDRESS(MemoryAddress.class, "$ADDR"),
+            SEGMENT(MemorySegment.class, "$SEGMENT");
+
+            final Class<?> type;
+            final String nameSuffix;
+
+            Kind(Class<?> type, String nameSuffix) {
+                this.type = type;
+                this.nameSuffix = nameSuffix;
+            }
+
+            String fieldName(String javaName) {
+                return javaName + nameSuffix;
+            }
+        }
+
+        private final String className;
+        private final String javaName;
+        private final Kind kind;
+
+        Constant(String className, String javaName, Kind kind) {
+            this.className = className;
+            this.javaName = javaName;
+            this.kind = kind;
+        }
+
+        private List<String> getterNameParts() {
+            return List.of(className, javaName, kind.nameSuffix);
+        }
+
+        String accessExpression() {
+            return className + "." + kind.fieldName(javaName);
+        }
+
+        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
+            builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression());
+            return this;
+        }
+
+        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String msgIfNull) {
+            builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, msgIfNull);
+            return this;
+        }
+
+        static final Function<List<String>, String> QUALIFIED_NAME =
+                l -> l.stream().skip(1).collect(Collectors.joining());
+
+        static final Function<List<String>, String> JAVA_NAME =
+                l -> l.get(1);
+
+        static final Function<List<String>, String> SUFFIX_ONLY =
+                l -> l.get(2);
     }
 
     // private generators
 
-    enum ConstantKind {
-        LAYOUT("LAYOUT_"),
-        METHOD_HANDLE("MH_"),
-        VAR_HANDLE("VH_"),
-        FUNCTION_DESCRIPTOR("FUNC_"),
-        ADDRESS("ADDR_"),
-        SEGMENT("SEGMENT_"),
-        CONSTANT("");
-
-        final String nameSuffix;
-
-        ConstantKind(String nameSuffix) {
-            this.nameSuffix = nameSuffix;
-        }
-
-        String fieldName(String javaName) {
-            return javaName + "$" + nameSuffix;
-        }
-    }
-
-    public String emitIfAbsent(String name, ConstantKind kind, Supplier<String> constantFactory) {
+    public Constant emitIfAbsent(String name, Constant.Kind kind, Supplier<Constant> constantFactory) {
         String lookupName = kind.fieldName(name);
-        String access = namesGenerated.get(lookupName);
-        if (access == null) {
-            String fieldName = constantFactory.get();
-            access = className() + "." + fieldName;
-            namesGenerated.put(fieldName, access);
+        Constant constant = namesGenerated.get(lookupName);
+        if (constant == null) {
+            constant = constantFactory.get();
+            namesGenerated.put(lookupName, constant);
         }
-        return access;
+        return constant;
     }
 
-    private String emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
+    private Constant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
                                          FunctionDescriptor desc, boolean varargs) {
-        String functionDescAccess = addFunctionDesc(javaName, desc);
+        Constant functionDesc = addFunctionDesc(javaName, desc);
         incrAlign();
-        String fieldName = ConstantKind.METHOD_HANDLE.fieldName(javaName);
+        String fieldName = Constant.Kind.METHOD_HANDLE.fieldName(javaName);
         indent();
         append(memberMods() + "MethodHandle ");
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
@@ -145,7 +196,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         indent();
         append("\"" + mtype.toMethodDescriptorString() + "\",\n");
         indent();
-        append(functionDescAccess);
+        append(functionDesc.accessExpression());
         append(", ");
         // isVariadic
         append(varargs);
@@ -154,14 +205,14 @@ public class ConstantBuilder extends NestedClassBuilder {
         indent();
         append(");\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
     }
 
-    private String emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
+    private Constant emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
                                       String rootLayoutName, List<String> prefixElementNames) {
         String layoutAccess = rootLayoutName != null ?
-                ConstantKind.LAYOUT.fieldName(rootLayoutName) :
-                addLayout(javaName, layout);
+                Constant.Kind.LAYOUT.fieldName(rootLayoutName) :
+                addLayout(javaName, layout).accessExpression();
         incrAlign();
         String typeName = type.getName();
         boolean isAddr = typeName.contains("MemoryAddress");
@@ -169,7 +220,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             typeName = "long";
         }
         indent();
-        String fieldName = ConstantKind.VAR_HANDLE.fieldName(javaName);
+        String fieldName = Constant.Kind.VAR_HANDLE.fieldName(javaName);
         append(memberMods() + "VarHandle " + fieldName + " = ");
         if (isAddr) {
             append("MemoryHandles.asAddressVarHandle(");
@@ -188,18 +239,18 @@ public class ConstantBuilder extends NestedClassBuilder {
         }
         append(";\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.VAR_HANDLE);
     }
 
-    private String emitLayoutField(String javaName, MemoryLayout layout) {
-        String fieldName = ConstantKind.LAYOUT.fieldName(javaName);
+    private Constant emitLayoutField(String javaName, MemoryLayout layout) {
+        String fieldName = Constant.Kind.LAYOUT.fieldName(javaName);
         incrAlign();
         indent();
         append(memberMods() + "MemoryLayout " + fieldName + " = ");
         emitLayoutString(layout);
         append(";\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
     private void emitLayoutString(MemoryLayout l) {
@@ -239,10 +290,10 @@ public class ConstantBuilder extends NestedClassBuilder {
         }
     }
 
-    private String emitFunctionDescField(String javaName, FunctionDescriptor desc) {
+    private Constant emitFunctionDescField(String javaName, FunctionDescriptor desc) {
         incrAlign();
         indent();
-        String fieldName = ConstantKind.FUNCTION_DESCRIPTOR.fieldName(javaName);
+        String fieldName = Constant.Kind.FUNCTION_DESCRIPTOR.fieldName(javaName);
         final boolean noArgs = desc.argumentLayouts().isEmpty();
         append(memberMods());
         append("FunctionDescriptor ");
@@ -273,13 +324,13 @@ public class ConstantBuilder extends NestedClassBuilder {
         }
         append(");\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.FUNCTION_DESCRIPTOR);
     }
 
-    private String emitConstantSegment(String javaName, Object value) {
+    private Constant emitConstantSegment(String javaName, Object value) {
         incrAlign();
         indent();
-        String fieldName = ConstantKind.CONSTANT.fieldName(javaName);
+        String fieldName = Constant.Kind.SEGMENT.fieldName(javaName);
         append(memberMods());
         append("MemorySegment ");
         append(fieldName);
@@ -287,25 +338,13 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(Utils.quote(Objects.toString(value)));
         append("\");\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
 
-    private String emitConstant(String javaName, Class<?> type, Object value) {
-        String str;
-        if (type == MemorySegment.class) {
-            str = emitConstantSegment(javaName, value);
-        } else if (type == MemoryAddress.class) {
-            str = emitConstantAddress(javaName, value);
-        } else {
-            throw new UnsupportedOperationException();
-        }
-        return str;
-    }
-
-    private String emitConstantAddress(String javaName, Object value) {
+    private Constant emitConstantAddress(String javaName, Object value) {
         incrAlign();
         indent();
-        String fieldName = ConstantKind.ADDRESS.fieldName(javaName);
+        String fieldName = Constant.Kind.ADDRESS.fieldName(javaName);
         append(memberMods());
         append("MemoryAddress ");
         append(fieldName);
@@ -313,7 +352,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(((Number)value).longValue());
         append("L);\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.ADDRESS);
     }
 
     private static String typeToLayoutName(ValueLayout vl) {
@@ -335,11 +374,11 @@ public class ConstantBuilder extends NestedClassBuilder {
         };
     }
 
-    private String emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
-        String fld = addLayout(javaName, layout);
+    private Constant emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
+        Constant layoutConstant = addLayout(javaName, layout);
         incrAlign();
         indent();
-        String fieldName = ConstantKind.SEGMENT.fieldName(javaName);
+        String fieldName = Constant.Kind.SEGMENT.fieldName(javaName);
         append(memberMods());
         append("MemorySegment ");
         append(fieldName);
@@ -348,9 +387,9 @@ public class ConstantBuilder extends NestedClassBuilder {
         append("LIBRARIES, \"");
         append(nativeName);
         append("\", ");
-        append(fld);
+        append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();
-        return fieldName;
+        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
 }
