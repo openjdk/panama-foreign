@@ -131,7 +131,7 @@ class StructBuilder extends ConstantBuilder {
         if (type.equals(MemorySegment.class)) {
             emitSegmentGetter(javaName, nativeName, layout);
         } else {
-            String vhAccess = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), structLayout, prefixNamesList());
+            String vhAccess = addFieldVarHandle(getQualifiedName(javaName), nativeName, layout, type, layoutField(), prefixNamesList());
             emitGetter(MEMBER_MODS, VarHandle.class, javaName + "$VH", vhAccess);
             emitFieldGetter(vhAccess, javaName, type);
             emitFieldSetter(vhAccess, javaName, type);
