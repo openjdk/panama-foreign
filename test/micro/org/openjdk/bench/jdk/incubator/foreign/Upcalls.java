@@ -40,7 +40,9 @@ import java.lang.invoke.MethodType;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
 import static jdk.incubator.foreign.CLinker.C_POINTER;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -54,9 +56,13 @@ public class Upcalls {
     static final CLinker abi = CLinker.getInstance();
     static final MethodHandle blank;
     static final MethodHandle identity;
+    static final MethodHandle args5;
+    static final MethodHandle args10;
 
     static final MemoryAddress cb_blank;
     static final MemoryAddress cb_identity;
+    static final MemoryAddress cb_args5;
+    static final MemoryAddress cb_args10;
 
     static final long cb_blank_jni;
     static final long cb_identity_jni;
@@ -71,30 +77,61 @@ public class Upcalls {
         try {
             LibraryLookup ll = LibraryLookup.ofLibrary("Upcalls");
             {
-                LibraryLookup.Symbol addr = ll.lookup("blank").get();
-                MethodType mt = MethodType.methodType(void.class, MemoryAddress.class);
-                FunctionDescriptor fd = FunctionDescriptor.ofVoid(C_POINTER);
-                blank = abi.downcallHandle(addr, mt, fd);
+                String name = "blank";
+                MethodType mt = MethodType.methodType(void.class);
+                FunctionDescriptor fd = FunctionDescriptor.ofVoid();
 
-                cb_blank = abi.upcallStub(
-                    lookup().findStatic(Upcalls.class, "blank", MethodType.methodType(void.class)),
-                    FunctionDescriptor.ofVoid()
-                ).address();
+                blank = linkFunc(ll, name, mt, fd);
+                cb_blank = makeCB(name, mt, fd);
             }
             {
-                LibraryLookup.Symbol addr = ll.lookup("identity").get();
-                MethodType mt = MethodType.methodType(int.class, int.class, MemoryAddress.class);
-                FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, C_POINTER);
-                identity = abi.downcallHandle(addr, mt, fd);
+                String name = "identity";
+                MethodType mt = MethodType.methodType(int.class, int.class);
+                FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
 
-                cb_identity = abi.upcallStub(
-                    lookup().findStatic(Upcalls.class, "identity", MethodType.methodType(int.class, int.class)),
-                    FunctionDescriptor.of(C_INT, C_INT)
-                ).address();
+                identity = linkFunc(ll, name, mt, fd);
+                cb_identity = makeCB(name, mt, fd);
+            }
+            {
+                String name = "args5";
+                MethodType mt = MethodType.methodType(void.class,
+                        long.class, double.class, long.class, double.class, long.class);
+                FunctionDescriptor fd = FunctionDescriptor.ofVoid(
+                        C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG);
+
+                args5 = linkFunc(ll, name, mt, fd);
+                cb_args5 = makeCB(name, mt, fd);
+            }
+            {
+                String name = "args10";
+                MethodType mt = MethodType.methodType(void.class,
+                        long.class, double.class, long.class, double.class, long.class,
+                        double.class, long.class, double.class, long.class, double.class);
+                FunctionDescriptor fd = FunctionDescriptor.ofVoid(
+                        C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG,
+                        C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE);
+
+                args10 = linkFunc(ll, name, mt, fd);
+                cb_args10 = makeCB(name, mt, fd);
             }
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
+    }
+
+    static MethodHandle linkFunc(LibraryLookup ll, String name, MethodType baseType, FunctionDescriptor baseDesc) {
+        return abi.downcallHandle(
+            ll.lookup(name).orElseThrow(),
+            baseType.insertParameterTypes(baseType.parameterCount(), MemoryAddress.class),
+            baseDesc.withAppendedArgumentLayouts(C_POINTER)
+        );
+    }
+
+    static MemoryAddress makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
+        return abi.upcallStub(
+            lookup().findStatic(Upcalls.class, name, mt),
+            fd
+        ).address();
     }
 
     static native void blank(long cb);
@@ -121,6 +158,19 @@ public class Upcalls {
         return (int) identity.invokeExact(10, cb_identity);
     }
 
+    @Benchmark
+    public void panama_args5() throws Throwable {
+        args5.invokeExact(1L, 2D, 3L, 4D, 5L, cb_args5);
+    }
+
+    @Benchmark
+    public void panama_args10() throws Throwable {
+        args10.invokeExact(1L, 2D, 3L, 4D, 5L, 6D, 7L, 8D, 9L, 10D, cb_args10);
+    }
+
     static void blank() {}
     static int identity(int x) { return x; }
+    static void args5(long a0, double a1, long a2, double a3, long a4) { }
+    static void args10(long a0, double a1, long a2, double a3, long a4,
+                       double a5, long a6, double a7, long a8, double a9) { }
 }
