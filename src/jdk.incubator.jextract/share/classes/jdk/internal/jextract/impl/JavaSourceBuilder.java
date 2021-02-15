@@ -229,7 +229,7 @@ abstract class JavaSourceBuilder {
         append(".*;\n");
     }
 
-    protected void emitGetter(String mods, Class<?> type, String name, String access, boolean nullCheck, String errMsg) {
+    protected void emitGetter(String mods, Class<?> type, String name, String access, boolean nullCheck, String symbolName) {
         incrAlign();
         indent();
         append(mods + " " + type.getSimpleName() + " " +name + "() {\n");
@@ -242,7 +242,7 @@ abstract class JavaSourceBuilder {
         append(access);
         if (nullCheck) {
             append(",\"");
-            append(errMsg);
+            append(symbolName);
             append("\")");
         }
         append(";\n");
@@ -257,6 +257,7 @@ abstract class JavaSourceBuilder {
     }
 
     int constant_counter = 0;
+    int constant_class_index = 0;
 
     static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
     ConstantBuilder constantBuilder;
@@ -267,7 +268,7 @@ abstract class JavaSourceBuilder {
                 constantBuilder.classEnd();
             }
             constant_counter = 0;
-            constantBuilder = new ConstantBuilder(this, Kind.CLASS, javaName + "_constants");
+            constantBuilder = new ConstantBuilder(this, Kind.CLASS, "constants$" + constant_class_index++);
             constantBuilder.classBegin();
         }
         constantConsumer.accept(constantBuilder);

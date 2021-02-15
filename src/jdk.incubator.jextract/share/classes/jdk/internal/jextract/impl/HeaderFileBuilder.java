@@ -64,7 +64,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         if (type.equals(MemorySegment.class)) {
             emitWithConstantClass(javaName, constantBuilder -> {
                 constantBuilder.addSegment(javaName, nativeName, layout)
-                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, "unresolved symbol: " + nativeName);
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             });
         } else {
             emitWithConstantClass(javaName, constantBuilder -> {
@@ -73,7 +73,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
                 Constant vhConstant = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type)
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
                 Constant segmentConstant = constantBuilder.addSegment(javaName, nativeName, layout)
-                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, "unresolved symbol: " + nativeName);
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
                 emitGlobalGetter(segmentConstant, vhConstant, javaName, nativeName, type);
                 emitGlobalSetter(segmentConstant, vhConstant, javaName, nativeName, type);
             });
@@ -84,7 +84,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         emitWithConstantClass(javaName, constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs)
-                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, "unresolved symbol: " + nativeName);
+                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, mtype, varargs, paramNames);
         });
     }
@@ -154,7 +154,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         indent();
         append("var mh$ = RuntimeHelper.requireNonNull(");
         append(mhConstant.accessExpression());
-        append(", \"unresolved symbol: ");
+        append(", \"");
         append(nativeName);
         append("\");\n");
         indent();
@@ -244,7 +244,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         append(vhConstant.accessExpression());
         append(".get(RuntimeHelper.requireNonNull(");
         append(segmentConstant.accessExpression());
-        append(", \"unresolved symbol: ");
+        append(", \"");
         append(nativeName);
         append("\"));\n");
         decrAlign();
@@ -262,7 +262,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         append(vhConstant.accessExpression());
         append(".set(RuntimeHelper.requireNonNull(");
         append(segmentConstant.accessExpression());
-        append(", \"unresolved symbol: ");
+        append(", \"");
         append(nativeName);
         append("\"), x);\n");
         decrAlign();

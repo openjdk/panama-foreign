@@ -154,8 +154,8 @@ public class ConstantBuilder extends NestedClassBuilder {
             return this;
         }
 
-        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String msgIfNull) {
-            builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, msgIfNull);
+        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
+            builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, symbolName);
             return this;
         }
 
@@ -176,6 +176,10 @@ public class ConstantBuilder extends NestedClassBuilder {
         Constant constant = namesGenerated.get(lookupName);
         if (constant == null) {
             constant = constantFactory.get();
+            if (constant.kind != kind) {
+                throw new AssertionError("Factory return wrong kind of constant; expected: "
+                        + kind + "; found: " + constant.kind);
+            }
             namesGenerated.put(lookupName, constant);
         }
         return constant;
@@ -263,15 +267,15 @@ public class ConstantBuilder extends NestedClassBuilder {
             }
             emitLayoutString(((SequenceLayout) l).elementLayout());
             append(")");
-        } else if (l instanceof GroupLayout) {
-            if (((GroupLayout) l).isStruct()) {
+        } else if (l instanceof GroupLayout group) {
+            if (group.isStruct()) {
                 append("MemoryLayout.ofStruct(\n");
             } else {
                 append("MemoryLayout.ofUnion(\n");
             }
             incrAlign();
             String delim = "";
-            for (MemoryLayout e : ((GroupLayout) l).memberLayouts()) {
+            for (MemoryLayout e : group.memberLayouts()) {
                 append(delim);
                 indent();
                 emitLayoutString(e);
