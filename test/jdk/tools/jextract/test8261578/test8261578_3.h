@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,13 @@
  * questions.
  */
 
-import static java.lang.ProcessBuilder.Redirect.*;
-
-class InheritIO {
-
-    public static class TestInheritIO {
-        public static void main(String args[]) throws Throwable {
-            int err = new ProcessBuilder(args).inheritIO().start().waitFor();
-            System.err.print("exit value: " + err);
-            System.exit(err);
-        }
-    }
-
-    public static class TestRedirectInherit {
-        public static void main(String args[]) throws Throwable {
-            int err = new ProcessBuilder(args)
-                    .redirectInput(INHERIT)
-                    .redirectOutput(INHERIT)
-                    .redirectError(INHERIT)
-                    .start().waitFor();
-            System.err.print("exit value: " + err);
-            System.exit(err);
-        }
-    }
-}
+struct PluginCodec_H323AudioG7231AnnexC {
+  unsigned char maxAl_sduAudioFrames;
+  int silenceSuppression:1;
+  int highRateMode0:6; // INTEGER (27..78), -- units octets
+  int highRateMode1:6; // INTEGER (27..78), -- units octets
+  int lowRateMode0:6; // INTEGER (23..66), -- units octets
+  int lowRateMode1:6; // INTEGER (23..66), -- units octets
+  int sidMode0:4; // INTEGER (6..17), -- units octets
+  int sidMode1:4; // INTEGER (6..17), -- units octets
+};
