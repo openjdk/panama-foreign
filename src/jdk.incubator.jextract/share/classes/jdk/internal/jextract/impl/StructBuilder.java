@@ -54,7 +54,6 @@ class StructBuilder extends ConstantBuilder {
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
-        classBegin();
     }
 
     void pushPrefixElement(String prefixElementName) {
@@ -73,14 +72,16 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     void classBegin() {
-        super.classBegin();
-        addLayout(layoutField(), ((Type.Declared)structType).tree().layout().get())
-                .emitGetter(this, MEMBER_MODS, Constant.SUFFIX_ONLY);
+        if (!inAnonymousNested()) {
+            super.classBegin();
+            addLayout(layoutField(), ((Type.Declared) structType).tree().layout().get())
+                    .emitGetter(this, MEMBER_MODS, Constant.SUFFIX_ONLY);
+        }
     }
 
     @Override
     JavaSourceBuilder classEnd() {
-        if (prefixElementNames.isEmpty()) {
+        if (!inAnonymousNested()) {
             emitSizeof();
             emitAllocate();
             emitScopeAllocate();
@@ -95,6 +96,10 @@ class StructBuilder extends ConstantBuilder {
             popPrefixElement();
             return this;
         }
+    }
+
+    boolean inAnonymousNested() {
+        return !prefixElementNames.isEmpty();
     }
 
     @Override

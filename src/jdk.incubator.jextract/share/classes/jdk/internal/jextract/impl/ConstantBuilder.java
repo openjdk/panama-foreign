@@ -258,14 +258,14 @@ public class ConstantBuilder extends NestedClassBuilder {
     }
 
     private void emitLayoutString(MemoryLayout l) {
-        if (l instanceof ValueLayout) {
-            append(typeToLayoutName((ValueLayout) l));
-        } else if (l instanceof SequenceLayout) {
+        if (l instanceof ValueLayout val) {
+            append(typeToLayoutName(val));
+        } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.ofSequence(");
-            if (((SequenceLayout) l).elementCount().isPresent()) {
-                append(((SequenceLayout) l).elementCount().getAsLong() + ", ");
+            if (seq.elementCount().isPresent()) {
+                append(seq.elementCount().getAsLong() + ", ");
             }
-            emitLayoutString(((SequenceLayout) l).elementLayout());
+            emitLayoutString(seq.elementLayout());
             append(")");
         } else if (l instanceof GroupLayout group) {
             if (group.isStruct()) {

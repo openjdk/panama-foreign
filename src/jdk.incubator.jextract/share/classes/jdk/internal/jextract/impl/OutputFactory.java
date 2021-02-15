@@ -170,6 +170,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             String className = d.name();
             GroupLayout layout = (GroupLayout) layoutFor(d);
             currentBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
+            currentBuilder.classBegin();
             if (!className.isEmpty()) {
                 addStructDefinition(d, currentBuilder.fullName());
             }
