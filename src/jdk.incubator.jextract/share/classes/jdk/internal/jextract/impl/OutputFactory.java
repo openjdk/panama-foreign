@@ -115,7 +115,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         try {
             List<JavaFileObject> files = new ArrayList<>(toplevelBuilder.toFiles());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
-            files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -129,12 +128,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                         String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
                                 .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
-    }
-
-    private String getCAnnotationSource() throws URISyntaxException, IOException {
-        URL cAnnotation = OutputFactory.class.getResource("resources/C.java.template");
-        return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
-                String.join("\n", Files.readAllLines(Paths.get(cAnnotation.toURI())));
     }
 
     private void generateDecl(Declaration tree) {

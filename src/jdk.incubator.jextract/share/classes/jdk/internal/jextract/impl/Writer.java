@@ -52,7 +52,6 @@ public final class Writer {
             return InMemoryJavaCompiler.compile(sources,
                 "--add-modules", "jdk.incubator.foreign",
                 "--release", "16",
-                "-parameters", "-g:lines",
                 "-d", dest.toAbsolutePath().toString(),
                 "-cp", dest.toAbsolutePath().toString());
         }
