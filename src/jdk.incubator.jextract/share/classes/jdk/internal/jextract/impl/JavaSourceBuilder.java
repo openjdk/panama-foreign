@@ -27,13 +27,16 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
-import java.lang.constant.DirectMethodHandleDesc;
 import java.lang.invoke.MethodType;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Superclass for .java source generator classes.
@@ -51,203 +54,144 @@ abstract class JavaSourceBuilder {
         }
     }
 
-    static final String PUB_CLS_MODS = "public final ";
-    static final String PUB_MODS = "public static ";
-    protected final StringSourceBuilder builder;
-    private final Kind kind;
-    protected final String className;
-    protected final String pkgName;
-    protected final ConstantHelper constantHelper;
+    final Kind kind;
+    final ClassDesc desc;
 
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
 
-    JavaSourceBuilder(StringSourceBuilder builder, Kind kind, String className, String pkgName, ConstantHelper constantHelper) {
-        this.builder = builder;
+    // code buffer
+    private StringBuilder sb = new StringBuilder();
+    // current line alignment (number of 4-spaces)
+    private int align;
+
+    JavaSourceBuilder(int align, Kind kind, ClassDesc desc) {
+        this.align = align;
         this.kind = kind;
-        this.className = className;
-        this.pkgName = pkgName;
-        this.constantHelper = constantHelper;
+        this.desc = desc;
+    }
+
+    JavaSourceBuilder(Kind kind, ClassDesc desc) {
+        this(0, kind, desc);
+    }
+
+    String className() {
+        return desc.displayName();
+    }
+
+    String fullName() {
+        return className();
+    }
+
+    final String packageName() {
+        return desc.packageName();
     }
 
     String superClass() {
         return null;
     }
 
-    Type type() {
-        return null;
-    }
-
-    protected String getClassModifiers() {
-        return PUB_CLS_MODS;
+    String mods() {
+        return "public ";
     }
 
     void classBegin() {
-        addPackagePrefix();
-        addImportSection();
+        emitPackagePrefix();
+        emitImportSection();
 
-        builder.indent();
-        builder.append(getClassModifiers());
-        builder.append(kind.kindName + " " + className);
+        indent();
+        append(mods());
+        append(kind.kindName + " " + className());
         if (superClass() != null) {
-            builder.append(" extends ");
-            builder.append(superClass());
+            append(" extends ");
+            append(superClass());
         }
-        builder.append(" {\n\n");
-        if (kind != Kind.INTERFACE) {
-            emitConstructor();
-        }
-    }
-
-    void emitConstructor() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append("/* package-private */ ");
-        builder.append(className);
-        builder.append("() {}");
-        builder.append('\n');
-        builder.decrAlign();
+        append(" {\n\n");
     }
 
     JavaSourceBuilder classEnd() {
-        builder.indent();
-        builder.append("}\n\n");
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
+        indent();
+        append("}\n\n");
         return this;
     }
 
-    void addLayoutGetter(String javaName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addLayout(javaName, layout));
+    // public API (used by OutputFactory)
+
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        throw new UnsupportedOperationException();
     }
 
-    void addVarHandleGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        emitForwardGetter(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
+    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        throw new UnsupportedOperationException();
     }
 
-    void addMethodHandleGetter(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        emitForwardGetter(constantHelper.addMethodHandle(javaName, nativeName, mtype, desc, varargs),
-            true, "unresolved symbol: " + nativeName);
+    public void addConstant(String javaName, Class<?> type, Object value) {
+        throw new UnsupportedOperationException();
     }
 
-    void addSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
-        emitForwardGetter(constantHelper.addSegment(javaName, nativeName, layout),
-            true, "unresolved symbol: " + nativeName);
+    public void addTypedef(String name, String superClass, Type type) {
+        throw new UnsupportedOperationException();
     }
 
-    void addConstantGetter(String javaName, Class<?> type, Object value) {
-        emitForwardGetter(constantHelper.addConstant(javaName, type, value));
+    public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
+        return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
     }
 
-    void addGetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
-        builder.incrAlign();
-        builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append("return (" + type.getName() + ") ");
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".get(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"));\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
+        builder.classBegin();
+        builder.classEnd();
     }
 
-    void addSetter(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + "void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
-        builder.incrAlign();
-        builder.indent();
-        String vhParam = addressGetCallString(javaName, nativeName, layout);
-        builder.append(globalVarHandleGetCallString(javaName, nativeName, layout, type));
-        builder.append(".set(RuntimeHelper.requireNonNull(");
-        builder.append(vhParam);
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\"), x);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+    public List<JavaFileObject> toFiles() {
+        classEnd();
+        String res = build();
+        return List.of(Utils.fileFromString(packageName(), className(), res));
     }
 
-    // Utility
+    // Internal generation helpers (used by other builders)
 
-    protected void addPackagePrefix() {
-        assert pkgName.indexOf('/') == -1 : "package name invalid: " + pkgName;
-        builder.append("// Generated by jextract\n\n");
-        if (!pkgName.isEmpty()) {
-            builder.append("package ");
-            builder.append(pkgName);
-            builder.append(";\n\n");
+    int align() {
+        return align;
+    }
+
+    void append(String s) {
+        sb.append(s);
+    }
+
+    void append(char c) {
+        sb.append(c);
+    }
+
+    void append(boolean b) {
+        sb.append(b);
+    }
+
+    void append(long l) {
+        sb.append(l);
+    }
+
+    void indent() {
+        for (int i = 0; i < align; i++) {
+            append("    ");
         }
     }
 
-    protected void addImportSection() {
-        builder.append("import java.lang.invoke.MethodHandle;\n");
-        builder.append("import java.lang.invoke.VarHandle;\n");
-        builder.append("import java.util.Objects;\n");
-        builder.append("import jdk.incubator.foreign.*;\n");
-        builder.append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
-        builder.append("import static ");
-        builder.append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
-        builder.append(".*;\n");
+    void incrAlign() {
+        align++;
     }
 
-    protected void emitForwardGetter(DirectMethodHandleDesc desc) {
-        emitForwardGetter(desc, false, "");
+    void decrAlign() {
+        align--;
     }
 
-    protected void emitForwardGetter(DirectMethodHandleDesc desc, boolean nullCheck, String errMsg) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " " + displayName(desc.invocationType().returnType()) + " " + desc.methodName() + "() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return ");
-        if (nullCheck) {
-            builder.append("RuntimeHelper.requireNonNull(");
-        }
-        builder.append(getCallString(desc));
-        if (nullCheck) {
-            builder.append(",\"");
-            builder.append(errMsg);
-            builder.append("\")");
-        }
-        builder.append(";\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-    }
-
-    protected String getCallString(DirectMethodHandleDesc desc) {
-        return desc.owner().displayName() + "." + desc.methodName() + "()";
-    }
-
-    protected String displayName(ClassDesc returnType) {
-        return returnType.displayName(); // TODO shorten based on imports
-    }
-
-    protected String functionGetCallString(String javaName, FunctionDescriptor fDesc) {
-        return getCallString(constantHelper.addFunctionDesc(javaName, fDesc));
-    }
-
-    protected String methodHandleGetCallString(String javaName, String nativeName, MethodType mt, FunctionDescriptor fDesc, boolean varargs) {
-        return getCallString(constantHelper.addMethodHandle(javaName, nativeName, mt, fDesc, varargs));
-    }
-
-    private String globalVarHandleGetCallString(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return getCallString(constantHelper.addGlobalVarHandle(javaName, nativeName, layout, type));
-    }
-
-    protected String addressGetCallString(String javaName, String nativeName, MemoryLayout layout) {
-        return getCallString(constantHelper.addSegment(javaName, nativeName, layout));
+    String build() {
+        String s = sb.toString();
+        sb = null;
+        return s;
     }
 
     /*
@@ -259,12 +203,75 @@ abstract class JavaSourceBuilder {
      * Header$CFooS, Header$CfooS, Header$CFoOs and so on! We solve this by
      * generating unique case-insensitive names for nested classes.
      */
-    String uniqueNestedClassName(String name) {
+    final String uniqueNestedClassName(String name) {
         name = Utils.javaSafeIdentifier(name);
         return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
     }
 
-    StructBuilder newStructBuilder(String name, GroupLayout parentLayout, Type type) {
-        return new StructBuilder(this, name, parentLayout, type);
+    protected void emitPackagePrefix() {
+        assert packageName().indexOf('/') == -1 : "package name invalid: " + packageName();
+        append("// Generated by jextract\n\n");
+        if (!packageName().isEmpty()) {
+            append("package ");
+            append(packageName());
+            append(";\n\n");
+        }
+    }
+
+    protected void emitImportSection() {
+        append("import java.lang.invoke.MethodHandle;\n");
+        append("import java.lang.invoke.VarHandle;\n");
+        append("import java.util.Objects;\n");
+        append("import jdk.incubator.foreign.*;\n");
+        append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
+        append("import static ");
+        append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
+        append(".*;\n");
+    }
+
+    protected void emitGetter(String mods, Class<?> type, String name, String access, boolean nullCheck, String symbolName) {
+        incrAlign();
+        indent();
+        append(mods + " " + type.getSimpleName() + " " +name + "() {\n");
+        incrAlign();
+        indent();
+        append("return ");
+        if (nullCheck) {
+            append("RuntimeHelper.requireNonNull(");
+        }
+        append(access);
+        if (nullCheck) {
+            append(",\"");
+            append(symbolName);
+            append("\")");
+        }
+        append(";\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    protected void emitGetter(String mods, Class<?> type, String name, String access) {
+        emitGetter(mods, type, name, access, false, null);
+    }
+
+    int constant_counter = 0;
+    int constant_class_index = 0;
+
+    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
+    ConstantBuilder constantBuilder;
+
+    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, Kind.CLASS, "constants$" + constant_class_index++);
+            constantBuilder.classBegin();
+        }
+        constantConsumer.accept(constantBuilder);
+        constant_counter++;
     }
 }

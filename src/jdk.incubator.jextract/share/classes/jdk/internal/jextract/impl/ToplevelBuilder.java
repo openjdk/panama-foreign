@@ -25,11 +25,16 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -37,70 +42,156 @@ import java.util.stream.Collectors;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-class ToplevelBuilder extends HeaderFileBuilder {
+class ToplevelBuilder extends JavaSourceBuilder {
 
     private int declCount;
+    private final String[] libraryNames;
+    private final List<SplitHeader> headers = new ArrayList<>();
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
-    ToplevelBuilder(String headerFileName, String pkgName, ConstantHelper constantHelper) {
-        super(headerFileName, pkgName, null, constantHelper);
+    ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
+        super(Kind.CLASS, desc);
+        this.libraryNames = libraryNames;
+        SplitHeader first = new FirstHeader(ClassDesc.of(packageName(), className()));
+        first.classBegin();
+        headers.add(first);
     }
 
     @Override
-    String superClass() {
-        return "#{SUPER}";
+    void classBegin() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    protected String getClassModifiers() {
-        return PUB_CLS_MODS;
+    JavaSourceBuilder classEnd() {
+        throw new UnsupportedOperationException();
     }
 
-    List<JavaFileObject> build() {
-        String res = builder.build().replace("extends #{SUPER}",
-                lastHeader().map(h -> "extends " + h.className).orElse(""));
+    public List<JavaFileObject> toFiles() {
+        headers.stream().skip(1).findFirst()
+                .orElse(lastHeader()).emitLibraries(libraryNames);
         List<JavaFileObject> files = new ArrayList<>();
-        files.add(Utils.fileFromString(pkgName, className, res));
-        files.addAll(constantHelper.build());
         files.addAll(headers.stream()
-                .flatMap(hf -> hf.build().stream())
+                .flatMap(hf -> hf.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
     }
 
-    void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc, Type type) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc, type);
-        builder.classBegin();
-        builder.classEnd();
+    @Override
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        nextHeader().addVar(javaName, nativeName, layout, type);
     }
 
-    void addTypeDef(String name, String superClass, Type type) {
-        TypedefBuilder builder = new TypedefBuilder(this, name, superClass, type);
-        builder.classBegin();
-        builder.classEnd();
+    @Override
+    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        nextHeader().addFunction(javaName, nativeName, mtype, desc, varargs, paramNames);
     }
 
-    private List<HeaderFileBuilder> headers = new ArrayList<>();
-
-    Optional<HeaderFileBuilder> lastHeader() {
-        return headers.size() == 0 ?
-                Optional.empty() :
-                Optional.of(headers.get(headers.size() - 1));
+    @Override
+    public void addConstant(String javaName, Class<?> type, Object value) {
+        nextHeader().addConstant(javaName, type, value);
     }
 
-    HeaderFileBuilder nextHeader() {
-        if (declCount > DECLS_PER_HEADER_CLASS) {
-            HeaderFileBuilder headerFileBuilder = new HeaderFileBuilder(className + "_" + headers.size(), pkgName,
-                    lastHeader().map(h -> h.className).orElse(null),
-                    constantHelper);
+    @Override
+    public void addTypedef(String name, String superClass, Type type) {
+        nextHeader().addTypedef(name, superClass, type);
+    }
+
+    @Override
+    public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
+        return nextHeader().addStruct(name, parent, layout, type);
+    }
+
+    @Override
+    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
+        nextHeader().addFunctionalInterface(name, mtype, desc);
+    }
+
+    private SplitHeader lastHeader() {
+        return headers.get(headers.size() - 1);
+    }
+
+    private SplitHeader nextHeader() {
+        if (declCount == DECLS_PER_HEADER_CLASS) {
+            boolean hasSuper = !(lastHeader() instanceof FirstHeader);
+            SplitHeader headerFileBuilder = new SplitHeader(ClassDesc.of(packageName(), className() + "_" + headers.size()),
+                    hasSuper ? lastHeader().className() : null);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
             declCount = 1;
             return headerFileBuilder;
         } else {
             declCount++;
-            return lastHeader().orElse(this);
+            return lastHeader();
+        }
+    }
+
+    static class SplitHeader extends HeaderFileBuilder {
+        SplitHeader(ClassDesc desc, String superclass) {
+            super(desc, superclass);
+        }
+
+        @Override
+        String mods() {
+            return " ";
+        }
+
+        private void emitLibraries(String[] libraryNames) {
+            incrAlign();
+            indent();
+            append("static final ");
+            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+            incrAlign();
+            for (String lib : libraryNames) {
+                indent();
+                append('\"');
+                append(quoteLibraryName(lib));
+                append("\",\n");
+            }
+            decrAlign();
+            indent();
+            append("});\n\n");
+            decrAlign();
+        }
+
+        private static String quoteLibraryName(String lib) {
+            return lib.replace("\\", "\\\\"); // double up slashes
+        }
+    }
+
+    class FirstHeader extends SplitHeader {
+
+        FirstHeader(ClassDesc desc) {
+            super(desc, "#{SUPER}");
+        }
+
+        @Override
+        String mods() {
+            return "public ";
+        }
+
+        @Override
+        void classBegin() {
+            super.classBegin();
+            emitConstructor();
+        }
+
+        void emitConstructor() {
+            incrAlign();
+            indent();
+            append("/* package-private */ ");
+            append(className());
+            append("() {}");
+            append('\n');
+            decrAlign();
+        }
+
+        @Override
+        String build() {
+            HeaderFileBuilder last = lastHeader();
+            return super.build().replace("extends #{SUPER}",
+                    last != this ? "extends " + last.className() : "");
         }
     }
 }

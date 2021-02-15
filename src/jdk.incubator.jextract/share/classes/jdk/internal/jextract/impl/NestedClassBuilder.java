@@ -25,40 +25,62 @@
 
 package jdk.internal.jextract.impl;
 
-public abstract class NestedClassBuilder extends JavaSourceBuilder {
+import javax.tools.JavaFileObject;
+import java.lang.constant.ClassDesc;
+import java.util.List;
+import java.util.function.Consumer;
+
+public class NestedClassBuilder extends JavaSourceBuilder {
 
     protected final JavaSourceBuilder enclosing;
 
     public NestedClassBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing.builder, kind, enclosing.uniqueNestedClassName(className), enclosing.pkgName, enclosing.constantHelper);
+        super(enclosing.align(), kind, ClassDesc.of(enclosing.packageName(), enclosing.uniqueNestedClassName(className)));
         this.enclosing = enclosing;
     }
 
     @Override
+    protected String mods() {
+        return kind == Kind.INTERFACE ?
+                "public " : "public static ";
+    }
+
+    @Override
+    String fullName() {
+        return enclosing.className() + "." + className();
+    }
+
+    @Override
     void classBegin() {
-        builder.incrAlign();
+        incrAlign();
         super.classBegin();
     }
 
     @Override
     JavaSourceBuilder classEnd() {
         super.classEnd();
-        builder.decrAlign();
+        decrAlign();
+        enclosing.append(build());
         return enclosing;
     }
 
     @Override
-    protected String getClassModifiers() {
-        return PUB_MODS;
-    }
-
-    @Override
-    protected void addPackagePrefix() {
+    protected void emitPackagePrefix() {
         // nested class. containing class has necessary package declaration
     }
 
     @Override
-    protected void addImportSection() {
+    protected void emitImportSection() {
         // nested class. containing class has necessary imports
+    }
+
+    @Override
+    public List<JavaFileObject> toFiles() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        enclosing.emitWithConstantClass(javaName, constantConsumer);
     }
 }

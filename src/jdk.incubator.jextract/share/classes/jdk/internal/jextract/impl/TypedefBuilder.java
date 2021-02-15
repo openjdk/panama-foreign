@@ -25,22 +25,15 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.jextract.Type;
-
 public class TypedefBuilder extends NestedClassBuilder {
 
-    private final Type type;
+    private static String MEMBER_MODS = "public static ";
+
     private final String superClass;
 
-    public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass, Type type) {
+    public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass) {
         super(prev, Kind.CLASS, className);
-        this.type = type;
         this.superClass = superClass;
-    }
-
-    @Override
-    Type type() {
-        return type;
     }
 
     @Override
@@ -58,29 +51,29 @@ public class TypedefBuilder extends NestedClassBuilder {
 
     void emitAllocatePointerMethods() {
         // allocatePointer
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocatePointer() {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return MemorySegment.allocateNative(C_POINTER);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment allocatePointer() {\n");
+        incrAlign();
+        indent();
+        append("return MemorySegment.allocateNative(C_POINTER);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
 
         // allocatePointer (scope version)
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(" MemorySegment allocatePointer(NativeScope scope) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return scope.allocate(C_POINTER);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment allocatePointer(NativeScope scope) {\n");
+        incrAlign();
+        indent();
+        append("return scope.allocate(C_POINTER);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 }

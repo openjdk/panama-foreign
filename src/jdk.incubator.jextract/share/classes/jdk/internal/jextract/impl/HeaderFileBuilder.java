@@ -27,9 +27,13 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
-import javax.tools.JavaFileObject;
+import jdk.internal.jextract.impl.ConstantBuilder.Constant;
+
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +43,14 @@ import java.util.List;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-class HeaderFileBuilder extends JavaSourceBuilder {
+abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
-    private String superclass;
+    private static final String MEMBER_MODS = "public static";
 
-    HeaderFileBuilder(String clsName, String pkgName, String superclass, ConstantHelper constantHelper) {
-        super(new StringSourceBuilder(), Kind.CLASS, clsName, pkgName, constantHelper);
+    private final String superclass;
+
+    HeaderFileBuilder(ClassDesc desc, String superclass) {
+        super(Kind.CLASS, desc);
         this.superclass = superclass;
     }
 
@@ -54,16 +60,67 @@ class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    protected String getClassModifiers() {
-        return "";
+    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        if (type.equals(MemorySegment.class)) {
+            emitWithConstantClass(javaName, constantBuilder -> {
+                constantBuilder.addSegment(javaName, nativeName, layout)
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+            });
+        } else {
+            emitWithConstantClass(javaName, constantBuilder -> {
+                constantBuilder.addLayout(javaName, layout)
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
+                Constant vhConstant = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type)
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
+                Constant segmentConstant = constantBuilder.addSegment(javaName, nativeName, layout)
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+                emitGlobalGetter(segmentConstant, vhConstant, javaName, nativeName, type);
+                emitGlobalSetter(segmentConstant, vhConstant, javaName, nativeName, type);
+            });
+        }
     }
 
-    void addStaticFunctionWrapper(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc,
+    @Override
+    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        emitWithConstantClass(javaName, constantBuilder -> {
+            Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs)
+                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+            emitFunctionWrapper(mhConstant, javaName, nativeName, mtype, varargs, paramNames);
+        });
+    }
+
+    @Override
+    public void addConstant(String javaName, Class<?> type, Object value) {
+        if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
+            emitWithConstantClass(javaName, constantBuilder -> {
+                constantBuilder.addConstantDesc(javaName, type, value)
+                        .emitGetter(this, MEMBER_MODS, Constant.JAVA_NAME);
+            });
+        } else {
+            emitGetter(MEMBER_MODS, type, javaName, getConstantString(type, value));
+        }
+    }
+
+    @Override
+    public void addTypedef(String name, String superClass, Type type) {
+        if (type instanceof Type.Primitive) {
+            // primitive
+            emitPrimitiveTypedef((Type.Primitive)type, name);
+        } else {
+            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
+            builder.classBegin();
+            builder.classEnd();
+        }
+    }
+
+    // private generation
+
+    private void emitFunctionWrapper(Constant mhConstant, String javaName, String nativeName, MethodType mtype,
                                   boolean varargs, List<String> paramNames) {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS);
-        builder.append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
         List<String> pExprs = new ArrayList<>();
         final int numParams = paramNames.size();
@@ -81,60 +138,60 @@ class HeaderFileBuilder extends JavaSourceBuilder {
             if (pType.equals(MemoryAddress.class)) {
                 pType = Addressable.class;
             }
-            builder.append(delim + " " + pType.getSimpleName() + " " + pName);
+            append(delim + " " + pType.getSimpleName() + " " + pName);
             delim = ", ";
         }
         if (varargs) {
             String lastArg = "x" + numParams;
             if (numParams > 0) {
-                builder.append(", ");
+                append(", ");
             }
-            builder.append("Object... " + lastArg);
+            append("Object... " + lastArg);
             pExprs.add(lastArg);
         }
-        builder.append(") {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("var mh$ = RuntimeHelper.requireNonNull(");
-        builder.append(methodHandleGetCallString(javaName, nativeName, mtype, desc, varargs));
-        builder.append(", \"unresolved symbol: ");
-        builder.append(nativeName);
-        builder.append("\");\n");
-        builder.indent();
-        builder.append("try {\n");
-        builder.incrAlign();
-        builder.indent();
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = RuntimeHelper.requireNonNull(");
+        append(mhConstant.accessExpression());
+        append(", \"");
+        append(nativeName);
+        append("\");\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
         if (!mtype.returnType().equals(void.class)) {
-            builder.append("return (" + mtype.returnType().getName() + ")");
+            append("return (" + mtype.returnType().getName() + ")");
         }
-        builder.append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("} catch (Throwable ex$) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("throw new AssertionError(\"should not reach here\", ex$);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
-    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    private void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
-            builder.incrAlign();
-            builder.indent();
-            builder.append(PUB_MODS);
-            builder.append(" ValueLayout ");
-            builder.append(uniqueNestedClassName(name));
-            builder.append(" = ");
-            builder.append(TypeTranslator.typeToLayoutName(kind));
-            builder.append(";\n");
-            builder.decrAlign();
+            incrAlign();
+            indent();
+            append(MEMBER_MODS);
+            append(" ValueLayout ");
+            append(uniqueNestedClassName(name));
+            append(" = ");
+            append(TypeTranslator.typeToLayoutName(kind));
+            append(";\n");
+            decrAlign();
         }
     }
 
@@ -145,9 +202,72 @@ class HeaderFileBuilder extends JavaSourceBuilder {
         };
     }
 
-    List<JavaFileObject> build() {
-        classEnd();
-        String res = builder.build();
-        return List.of(Utils.fileFromString(pkgName, className, res));
+    private String getConstantString(Class<?> type, Object value) {
+        StringBuilder buf = new StringBuilder();
+        if (type == float.class) {
+            float f = ((Number)value).floatValue();
+            if (Float.isFinite(f)) {
+                buf.append(value);
+                buf.append("f");
+            } else {
+                buf.append("Float.valueOf(\"");
+                buf.append(value.toString());
+                buf.append("\")");
+            }
+        } else if (type == long.class) {
+            buf.append(value);
+            buf.append("L");
+        } else if (type == double.class) {
+            double d = ((Number)value).doubleValue();
+            if (Double.isFinite(d)) {
+                buf.append(value);
+                buf.append("d");
+            } else {
+                buf.append("Double.valueOf(\"");
+                buf.append(value.toString());
+                buf.append("\")");
+            }
+        } else {
+            buf.append("(" + type.getName() + ")");
+            buf.append(value + "L");
+        }
+        return buf.toString();
+    }
+
+    private void emitGlobalGetter(Constant segmentConstant, Constant vhConstant, String javaName, String nativeName, Class<?> type) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get() {\n");
+        incrAlign();
+        indent();
+        append("return (" + type.getName() + ") ");
+        append(vhConstant.accessExpression());
+        append(".get(RuntimeHelper.requireNonNull(");
+        append(segmentConstant.accessExpression());
+        append(", \"");
+        append(nativeName);
+        append("\"));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitGlobalSetter(Constant segmentConstant, Constant vhConstant, String javaName, String nativeName, Class<?> type) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " void " + javaName + "$set(" + " " + type.getSimpleName() + " x) {\n");
+        incrAlign();
+        indent();
+        append(vhConstant.accessExpression());
+        append(".set(RuntimeHelper.requireNonNull(");
+        append(segmentConstant.accessExpression());
+        append(", \"");
+        append(nativeName);
+        append("\"), x);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 }

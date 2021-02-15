@@ -27,7 +27,6 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.*;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
-import jdk.incubator.jextract.Type.Primitive;
 
 import javax.tools.JavaFileObject;
 import java.io.IOException;
@@ -46,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
 
 /*
  * Scan a header file and generate Java source items for entities defined in that header
@@ -69,8 +66,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
 
-    private String addStructDefinition(Declaration decl, String name) {
-        return structClassNames.put(decl, name);
+    private void addStructDefinition(Declaration decl, String name) {
+        structClassNames.put(decl, name);
     }
 
     private boolean structDefinitionSeen(Declaration decl) {
@@ -91,13 +88,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return !functions.add(tree);
     }
 
-    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName, boolean source,
+    public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
                 String pkgName, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ConstantHelper constantHelper = ConstantHelper.make(source, pkgName, clsName,
-                ClassDesc.of(pkgName, "RuntimeHelper"), ClassDesc.of("jdk.incubator.foreign", "CLinker"),
-                libraryNames.toArray(String[]::new));
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(clsName, pkgName, constantHelper);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(ClassDesc.of(pkgName, clsName), libraryNames.toArray(new String[0]));
         return new OutputFactory(pkgName, toplevelBuilder).generate(decl);
     }
 
@@ -110,21 +104,17 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
 
     JavaFileObject[] generate(Declaration.Scoped decl) {
-        toplevelBuilder.classBegin();
         //generate all decls
         decl.members().forEach(this::generateDecl);
         // check if unresolved typedefs can be resolved now!
         for (Declaration.Typedef td : unresolvedStructTypedefs) {
             Declaration.Scoped structDef = ((Type.Declared) td.type()).tree();
-            toplevelBuilder.addTypeDef(td.name(),
+            toplevelBuilder.addTypedef(td.name(),
                     structDefinitionSeen(structDef) ? structDefinitionName(structDef) : null, td.type());
         }
-        toplevelBuilder.classEnd();
         try {
-            List<JavaFileObject> files = new ArrayList<>();
-            files.addAll(toplevelBuilder.build());
+            List<JavaFileObject> files = new ArrayList<>(toplevelBuilder.toFiles());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
-            files.add(jfoFromString(pkgName,"C", getCAnnotationSource()));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -140,26 +130,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                                 .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
     }
 
-    private String getCAnnotationSource() throws URISyntaxException, IOException {
-        URL cAnnotation = OutputFactory.class.getResource("resources/C.java.template");
-        return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
-                String.join("\n", Files.readAllLines(Paths.get(cAnnotation.toURI())));
-    }
-
     private void generateDecl(Declaration tree) {
         try {
             tree.accept(this, null);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    private static Class<?> classForType(Primitive.Kind type, MemoryLayout layout) {
-        boolean isFloat = switch(type) {
-            case Float, Double -> true;
-            default-> false;
-        };
-        return TypeTranslator.layoutToClass(isFloat, layout);
     }
 
     private JavaFileObject jfoFromString(String pkgName, String clsName, String contents) {
@@ -174,7 +150,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        header().addConstantGetter(Utils.javaSafeIdentifier(constant.name()),
+        toplevelBuilder.addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
                 typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
@@ -190,53 +166,26 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             case STRUCT, UNION -> true;
             default -> false;
         };
-        boolean isAnonNested = d.name().isEmpty() && isRecord(parent);
         if (isStructKind) {
-            if (!isAnonNested) {
-                //only add explicit struct layout if the struct is not to be flattened inside another struct
-                String className = d.name().isEmpty() ? parent.name() : d.name();
-                GroupLayout parentLayout = (GroupLayout) layoutFor(d);
-                currentBuilder = currentBuilder.newStructBuilder(className, parentLayout, Type.declared(d));
-                addStructDefinition(d, currentBuilder.className);
-                currentBuilder.classBegin();
-                currentBuilder.addLayoutGetter(((StructBuilder) currentBuilder).layoutField(), d.layout().get());
-            } else {
-                // for anonymous nested structs, add a prefix for field layout lookups
-                // but don't generate a separate class
-                String anonymousStructName = findAnonymousStructName(d, (Declaration.Scoped) parent);
-                ((StructBuilder) currentBuilder).pushPrefixElement(anonymousStructName);
+            String className = d.name();
+            GroupLayout layout = (GroupLayout) layoutFor(d);
+            currentBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
+            currentBuilder.classBegin();
+            if (!className.isEmpty()) {
+                addStructDefinition(d, currentBuilder.fullName());
             }
         }
-        d.members().forEach(fieldTree -> fieldTree.accept(this, d));
-        if (isStructKind) {
-            if (!isAnonNested) {
+        try {
+            d.members().forEach(fieldTree -> fieldTree.accept(this, d));
+        } finally {
+            if (isStructKind) {
                 currentBuilder = currentBuilder.classEnd();
-            } else {
-                ((StructBuilder) currentBuilder).popPrefixElement();
             }
         }
         return null;
     }
 
-    private String findAnonymousStructName(Declaration.Scoped d, Declaration.Scoped parent) {
-        // nested anonymous struct or union
-        GroupLayout layout = (GroupLayout) layoutFor(d);
-        // look up layout in parent, which will have the right context-dependent name
-        GroupLayout parentLayout = (GroupLayout) parent.layout().orElseThrow();
-        for (MemoryLayout ml : parentLayout.memberLayouts()) {
-            // look for anonymous structs
-            if (ml.attribute(JEXTRACT_ANONYMOUS).isPresent()) {
-                // it's enough to just compare the member layouts, since the member names
-                // have to be unique within the parent layout (in C)
-                if (((GroupLayout) ml).memberLayouts().equals(layout.memberLayouts())) {
-                    return ml.name().orElseThrow();
-                }
-            }
-        }
-        throw new IllegalStateException("Could not find layout in parent");
-    }
-
-    private static final boolean isVaList(FunctionDescriptor desc) {
+    private static boolean isVaList(FunctionDescriptor desc) {
         List<MemoryLayout> argLayouts = desc.argumentLayouts();
         int size = argLayouts.size();
         if (size > 0) {
@@ -254,7 +203,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private static MemoryLayout isUnsupported(MemoryLayout layout) {
         if (layout instanceof ValueLayout) {
-            if (UnsupportedLayouts.isUnsupported((ValueLayout)layout)) {
+            if (UnsupportedLayouts.isUnsupported(layout)) {
                 return layout;
             }
         } else if (layout instanceof GroupLayout) {
@@ -289,7 +238,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private boolean generateFunctionalInterface(Type.Function func, Type type, String name) {
+    private boolean generateFunctionalInterface(Type.Function func, String name) {
         name = Utils.javaSafeIdentifier(name);
         //generate functional interface
         if (func.varargs()) {
@@ -304,7 +253,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return false;
         }
 
-        toplevelBuilder.addFunctionalInterface(name, fitype, fpDesc, type);
+        currentBuilder.addFunctionalInterface(name, fitype, fpDesc);
         return true;
     }
 
@@ -341,7 +290,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
-        header().addMethodHandleGetter(mhName, funcTree.name(), mtype, descriptor, funcTree.type().varargs());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
                                           .stream()
@@ -353,15 +301,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             Type.Function f = getAsFunctionPointer(param.type());
             if (f != null) {
                 String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                if (! generateFunctionalInterface(f, param.type(), name)) {
+                if (! generateFunctionalInterface(f, name)) {
                     return null;
                 }
                 i++;
             }
         }
 
-        header().addStaticFunctionWrapper(Utils.javaSafeIdentifier(funcTree.name()), funcTree.name(), mtype,
-                Type.descriptorFor(funcTree.type()).orElseThrow(), funcTree.type().varargs(), paramNames);
+        toplevelBuilder.addFunction(mhName, funcTree.name(), mtype,
+                descriptor, funcTree.type().varargs(), paramNames);
 
         return null;
     }
@@ -369,10 +317,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     Type.Function getAsFunctionPointer(Type type) {
         if (type instanceof Type.Delegated) {
             Type.Delegated delegated = (Type.Delegated)type;
-            return switch (delegated.kind()) {
-                case POINTER -> getAsFunctionPointer(delegated.type());
-                default -> null;
-            };
+            return delegated.kind() == Type.Delegated.Kind.POINTER ?
+                getAsFunctionPointer(delegated.type()) : null;
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -393,8 +339,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             Declaration.Scoped s = ((Type.Declared) type).tree();
             if (!s.name().equals(tree.name())) {
                 switch (s.kind()) {
-                    case STRUCT:
-                    case UNION: {
+                    case STRUCT, UNION -> {
                         if (s.name().isEmpty()) {
                             visitScoped(s, tree);
                         } else {
@@ -410,7 +355,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                              * };
                              */
                             if (structDefinitionSeen(s)) {
-                                toplevelBuilder.addTypeDef(tree.name(), structDefinitionName(s), tree.type());
+                                toplevelBuilder.addTypedef(tree.name(), structDefinitionName(s), tree.type());
                             } else {
                                 /*
                                  * Definition of typedef'ed struct/union not seen yet. May be the definition comes later.
@@ -420,17 +365,15 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                             }
                         }
                     }
-                    break;
-                    default:
-                        visitScoped(s, tree);
+                    default -> visitScoped(s, tree);
                 }
             }
         } else if (type instanceof Type.Primitive) {
-             header().emitPrimitiveTypedef((Type.Primitive)type, tree.name());
+             toplevelBuilder.addTypedef(tree.name(), null, type);
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
-                generateFunctionalInterface(func, type, tree.name());
+                generateFunctionalInterface(func, tree.name());
             }
         }
         return null;
@@ -471,7 +414,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         Type.Function func = getAsFunctionPointer(type);
         if (func != null) {
-            generateFunctionalInterface(func, type, fieldName);
+            generateFunctionalInterface(func, fieldName);
         }
 
         Class<?> clazz = typeTranslator.getJavaType(type);
@@ -481,7 +424,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        boolean isSegment = clazz == MemorySegment.class;
         boolean sizeAvailable;
         try {
             layout.byteSize();
@@ -490,48 +432,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             sizeAvailable = false;
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
-        if (parent != null) { //struct field
-            if (isSegment) {
-                if (sizeAvailable) {
-                    currentBuilder.addSegmentGetter(fieldName, tree.name(), treeLayout);
-                } else {
-                    warn("Layout size not available for " + fieldName);
-                }
-            } else {
-                currentBuilder.addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addGetter(fieldName, tree.name(), treeLayout, clazz);
-                currentBuilder.addSetter(fieldName, tree.name(), treeLayout, clazz);
-            }
+        if (sizeAvailable) {
+            currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
         } else {
-            if (sizeAvailable) {
-                if (isSegment) {
-                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
-                } else {
-                    header().addLayoutGetter(fieldName, layout);
-                    header().addVarHandleGetter(fieldName, tree.name(), treeLayout, clazz);
-                    header().addSegmentGetter(fieldName, tree.name(), treeLayout);
-                    header().addGetter(fieldName, tree.name(), treeLayout, clazz);
-                    header().addSetter(fieldName, tree.name(), treeLayout, clazz);
-                }
-            } else {
-                warn("Layout size not available for " + fieldName);
-            }
+            warn("Layout size not available for " + fieldName);
         }
 
         return null;
-    }
-
-    private boolean isRecord(Declaration declaration) {
-        if (declaration == null) {
-            return false;
-        } else if (!(declaration instanceof Declaration.Scoped)) {
-            return false;
-        } else {
-            Declaration.Scoped scope = (Declaration.Scoped)declaration;
-            return scope.kind() == Declaration.Scoped.Kind.CLASS ||
-                    scope.kind() == Declaration.Scoped.Kind.STRUCT ||
-                    scope.kind() == Declaration.Scoped.Kind.UNION;
-        }
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {
@@ -548,9 +455,5 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private void warn(String msg) {
         System.err.println("WARNING: " + msg);
-    }
-
-    HeaderFileBuilder header() {
-        return toplevelBuilder.nextHeader();
     }
 }

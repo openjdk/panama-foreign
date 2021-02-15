@@ -26,16 +26,20 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.*;
-import jdk.incubator.jextract.Type;
+
+import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
 
 public class FunctionalInterfaceBuilder extends NestedClassBuilder {
+
+    private static final String MEMBER_MODS = "static";
+
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
     FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className, MethodType fiType,
-                               FunctionDescriptor fiDesc, Type funcType) {
+                               FunctionDescriptor fiDesc) {
         super(enclosing, Kind.INTERFACE, className);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
@@ -48,38 +52,43 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         return super.classEnd();
     }
 
-    void emitFunctionalInterfaceMethod() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(fiType.returnType().getName() + " apply(");
+    // private generation
+
+    private void emitFunctionalInterfaceMethod() {
+        incrAlign();
+        indent();
+        append(fiType.returnType().getName() + " apply(");
         String delim = "";
         for (int i = 0 ; i < fiType.parameterCount(); i++) {
-            builder.append(delim + fiType.parameterType(i).getName() + " x" + i);
+            append(delim + fiType.parameterType(i).getName() + " x" + i);
             delim = ", ";
         }
-        builder.append(");\n");
-        builder.decrAlign();
+        append(");\n");
+        decrAlign();
     }
 
     private void emitFunctionalFactories() {
-        builder.incrAlign();
-        builder.indent();
-        builder.append(PUB_MODS + " MemorySegment allocate(" + className + " fi) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return RuntimeHelper.upcallStub(" + className + ".class, fi, " + functionGetCallString(className, fiDesc) + ", " +
-                "\"" + fiType.toMethodDescriptorString() + "\");\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.indent();
-        builder.append(PUB_MODS + " MemorySegment allocate(" + className + " fi, NativeScope scope) {\n");
-        builder.incrAlign();
-        builder.indent();
-        builder.append("return allocate(fi).handoff(scope);\n");
-        builder.decrAlign();
-        builder.indent();
-        builder.append("}\n");
-        builder.decrAlign();
+        emitWithConstantClass(className(), constantBuilder -> {
+            Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
+            incrAlign();
+            indent();
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
+            incrAlign();
+            indent();
+            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
+                    "\"" + fiType.toMethodDescriptorString() + "\");\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            indent();
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
+            incrAlign();
+            indent();
+            append("return allocate(fi).handoff(scope);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+        });
     }
 }
