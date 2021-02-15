@@ -136,56 +136,60 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         }
     }
 
-    private String structName() {
-        String name = type.spelling();
-        return name.isEmpty()? "struct <anonymous>" : name;
-    }
-
     private List<MemoryLayout> convertBitfields(List<MemoryLayout> layouts) {
-        long storageSize = storageSize(layouts);
         long offset = 0L;
         List<MemoryLayout> newFields = new ArrayList<>();
         List<MemoryLayout> pendingFields = new ArrayList<>();
         for (MemoryLayout l : layouts) {
-            MemoryLayout padding = null;
-            if (l.isPadding() && (offset + l.bitSize() > storageSize)) {
-                // split padding
-                long delta = storageSize - offset;
-                padding = MemoryLayout.ofPaddingBits(l.bitSize() - delta);
-                l = MemoryLayout.ofPaddingBits(delta);
-            }
             offset += l.bitSize();
+            if (offset > MAX_STORAGE_SIZE) {
+                throw new IllegalStateException("Crossing storage unit boundaries");
+            }
             pendingFields.add(l);
-            if (!pendingFields.isEmpty() && offset == storageSize) {
+            long storageSize = storageSize(offset);
+            if (!pendingFields.isEmpty() && storageSize != -1) {
                 //emit new
-                newFields.add(bitfield(
-                        (ValueLayout)LayoutUtils.valueLayoutForSize(storageSize)
-                                .layout().orElseThrow(() -> new IllegalStateException("Unsupported size: " + storageSize)),
-                        pendingFields));
+                newFields.add(bitfield(storageSize, pendingFields));
                 pendingFields.clear();
                 offset = 0L;
-            } else if (offset > storageSize) {
-                throw new IllegalStateException("Crossing storage unit boundaries: " + structName());
-            }
-            if (padding != null) {
-                newFields.add(padding);
-                offset += padding.bitSize();
             }
         }
         if (!pendingFields.isEmpty()) {
-            throw new IllegalStateException("Partially used storage unit: " + structName());
+            long storageSize = nextStorageSize(offset);
+            //emit new
+            newFields.add(bitfield(storageSize, pendingFields));
+            pendingFields.clear();
         }
         return newFields;
     }
 
-    private long storageSize(List<MemoryLayout> layouts) {
-        long size = layouts.stream().mapToLong(MemoryLayout::bitSize).sum();
-        int[] sizes = { 64, 32, 16, 8 };
-        for (int s : sizes) {
-            if (size % s == 0) {
+    static int[] STORAGE_SIZES = { 64, 32, 16, 8 };
+    static int[] ALIGN_SIZES = { 8, 16, 32, 64 };
+    static int MAX_STORAGE_SIZE = 64;
+
+    private long storageSize(long size) {
+        // offset should be < MAX_STORAGE_SIZE
+        for (int s : STORAGE_SIZES) {
+            if (size == s) {
                 return s;
             }
         }
-        throw new IllegalStateException("Cannot infer storage size:" + structName());
+        return -1;
+    }
+
+    private long nextStorageSize(long size) {
+        // offset should be < MAX_STORAGE_SIZE
+        for (int s : ALIGN_SIZES) {
+            long alignedSize = alignUp(size, s);
+            long storageSize = storageSize(alignedSize);
+            if (storageSize != -1) {
+                return storageSize;
+            }
+        }
+        return -1;
+    }
+
+    private static long alignUp(long n, long alignment) {
+        return (n + alignment - 1) & -alignment;
     }
 }
