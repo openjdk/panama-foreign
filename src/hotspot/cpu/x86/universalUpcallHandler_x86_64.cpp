@@ -795,18 +795,22 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
 #ifndef PRODUCT
   stringStream ss;
-  ss.print("upcall_stub_linkToNative_J%s", entry->signature()->as_C_string());
+  ss.print("panama_upcall_stub_%s", entry->signature()->as_C_string());
   const char* name = _masm->code_string(ss.as_string());
 #else // PRODUCT
-  const char* name = "upcall_stub_linkToNative";
+  const char* name = "panama_upcall_stub";
 #endif // PRODUCT
 
   EntryBlob* blob = EntryBlob::create(name, &buffer, exception_handler_offset, receiver, jfa_offset);
 
-  if (UseNewCode) {
+  if (TracePanamaUpcallStubs) {
     blob->print_on(tty);
     Disassembler::decode(blob, tty);
   }
 
    return blob->code_begin();
+}
+
+bool ProgrammableUpcallHandler::supports_optimized_upcalls() {
+  return true;
 }

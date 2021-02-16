@@ -724,7 +724,7 @@ EntryBlob* EntryBlob::create(const char* name, CodeBuffer* cb, intptr_t exceptio
                              jobject receiver, ByteSize jfa_sp_offset) {
   ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
 
-  EntryBlob* blob = NULL;
+  EntryBlob* blob = nullptr;
   unsigned int size = CodeBlob::allocation_size(cb, sizeof(EntryBlob));
   {
     MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);

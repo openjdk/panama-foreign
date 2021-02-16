@@ -48,6 +48,7 @@ private:
 public:
   static address generate_optimized_upcall_stub(jobject mh, Method* entry, jobject jabi, jobject jconv);
   static address generate_upcall_stub(jobject rec, jobject abi, jobject buffer_layout);
+  static bool supports_optimized_upcalls();
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALUPCALLHANDLER_HPP

@@ -112,12 +112,17 @@ JVM_ENTRY(jlong, PUH_AllocateOptimzedUpcallStub(JNIEnv *env, jclass unused, jobj
   return (jlong) ProgrammableUpcallHandler::generate_optimized_upcall_stub(mh_j, entry, abi, conv);
 JVM_END
 
+JVM_ENTRY(jboolean, PUH_SupportsOptimzedUpcalls(JNIEnv *env, jclass unused))
+  return (jboolean) ProgrammableUpcallHandler::supports_optimized_upcalls();
+JVM_END
+
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod PUH_methods[] = {
   {CC "allocateUpcallStub", CC "(" "L" FOREIGN_ABI "ProgrammableUpcallHandler$InterpretedHandler;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
   {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" ")J", FN_PTR(PUH_AllocateOptimzedUpcallStub)},
+  {CC "supportsOptimizedUpcalls", CC "()Z", FN_PTR(PUH_SupportsOptimzedUpcalls)},
 };
 
 /**

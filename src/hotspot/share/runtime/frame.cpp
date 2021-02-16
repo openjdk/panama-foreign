@@ -1069,7 +1069,7 @@ void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, const RegisterM
     oops_interpreted_do(f, map, use_interpreter_oop_map_cache);
   } else if (is_entry_frame()) {
     oops_entry_do(f, map);
-  } else if (is_upcall_frame()) {
+  } else if (is_panama_entry_frame()) {
    // Nothing to do
    // receiver is a global ref
    // handle block is for JNI

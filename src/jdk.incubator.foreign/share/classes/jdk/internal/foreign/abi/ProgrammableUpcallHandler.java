@@ -120,7 +120,7 @@ public class ProgrammableUpcallHandler {
         boolean usesStackArgs = argMoveBindingsStream(callingSequence)
                 .map(Binding.VMLoad::storage)
                 .anyMatch(s -> abi.arch.isStackType(s.type()));
-        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
+        if (USE_INTRINSICS && isSimple && !usesStackArgs && supportsOptimizedUpcalls()) {
             checkPrimitive(doBindings.type());
             JLI.ensureCustomized(doBindings); // FIXME: consider more flexible scheme to customize upcall entry points
             VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
@@ -312,6 +312,7 @@ public class ProgrammableUpcallHandler {
 
     public static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv);
     public static native long allocateUpcallStub(InterpretedHandler handler, ABIDescriptor abi, BufferLayout layout);
+    public static native boolean supportsOptimizedUpcalls();
 
     private static native void registerNatives();
     static {

@@ -735,6 +735,7 @@ class SafepointBlob: public SingletonBlob {
 
 //----------------------------------------------------------------------------------------------------
 
+// For Panama upcall stubs
 class EntryBlob: public BufferBlob {
  private:
   intptr_t _exception_handler_offset;

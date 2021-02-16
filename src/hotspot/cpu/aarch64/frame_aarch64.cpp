@@ -362,6 +362,14 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   return fr;
 }
 
+JavaFrameAnchor* EntryBlob::jfa_for_frame(const frame& frame) const {
+  ShouldNotCallThis();
+}
+
+frame frame::sender_for_panama_entry_frame(RegisterMap* map) const {
+  ShouldNotCallThis();
+}
+
 //------------------------------------------------------------------------------
 // frame::verify_deopt_original_pc
 //

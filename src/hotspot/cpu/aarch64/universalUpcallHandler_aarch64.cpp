@@ -99,3 +99,7 @@ address ProgrammableUpcallHandler::generate_upcall_stub(jobject rec, jobject jab
 
   return blob->code_begin();
 }
+
+bool ProgrammableUpcallHandler::supports_optimized_upcalls() {
+  return false;
+}

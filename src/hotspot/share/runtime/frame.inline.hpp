@@ -52,7 +52,7 @@ inline bool frame::is_first_frame() const {
   return is_entry_frame() && entry_frame_is_first();
 }
 
-inline bool frame::is_upcall_frame() const {
+inline bool frame::is_panama_entry_frame() const {
   return _cb != NULL && _cb->is_entry_blob();
 }
 
