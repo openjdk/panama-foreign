@@ -69,11 +69,11 @@ ForeignGlobals::ForeignGlobals() {
 
   // ABIDescriptor
   InstanceKlass* k_ABI = find_InstanceKlass(FOREIGN_ABI "ABIDescriptor", current_thread);
-  const char* strVMSArray = "[[L" FOREIGN_ABI "VMStorage;";
-  Symbol* symVMSArray = SymbolTable::new_symbol(strVMSArray, (int)strlen(strVMSArray));
-  ABI.inputStorage_offset = field_offset(k_ABI, "inputStorage", symVMSArray);
-  ABI.outputStorage_offset = field_offset(k_ABI, "outputStorage", symVMSArray);
-  ABI.volatileStorage_offset = field_offset(k_ABI, "volatileStorage", symVMSArray);
+  const char* strVMSArrayArray = "[[L" FOREIGN_ABI "VMStorage;";
+  Symbol* symVMSArrayArray = SymbolTable::new_symbol(strVMSArrayArray);
+  ABI.inputStorage_offset = field_offset(k_ABI, "inputStorage", symVMSArrayArray);
+  ABI.outputStorage_offset = field_offset(k_ABI, "outputStorage", symVMSArrayArray);
+  ABI.volatileStorage_offset = field_offset(k_ABI, "volatileStorage", symVMSArrayArray);
   ABI.stackAlignment_offset = field_offset(k_ABI, "stackAlignment", vmSymbols::int_signature());
   ABI.shadowSpace_offset = field_offset(k_ABI, "shadowSpace", vmSymbols::int_signature());
 
@@ -90,6 +90,13 @@ ForeignGlobals::ForeignGlobals() {
   BL.stack_args_offset = field_offset(k_BL, "stack_args", vmSymbols::long_signature());
   BL.input_type_offsets_offset = field_offset(k_BL, "input_type_offsets", vmSymbols::long_array_signature());
   BL.output_type_offsets_offset = field_offset(k_BL, "output_type_offsets", vmSymbols::long_array_signature());
+
+  // CallRegs
+  const char* strVMSArray = "[L" FOREIGN_ABI "VMStorage;";
+  Symbol* symVMSArray = SymbolTable::new_symbol(strVMSArray);
+  InstanceKlass* k_CC = find_InstanceKlass(FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs", current_thread);
+  CallConvOffsets.arg_regs_offset = field_offset(k_CC, "argRegs", symVMSArray);
+  CallConvOffsets.ret_regs_offset = field_offset(k_CC, "retRegs", symVMSArray);
 }
 
 void CallRegs::calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const {
@@ -102,14 +109,14 @@ void CallRegs::calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint 
       case T_SHORT:
       case T_INT:
       case T_FLOAT:
-        assert(src_pos < _length, "oob");
-        parm_regs[i].set1(_regs[src_pos++]);
+        assert(src_pos < _args_length, "oob");
+        parm_regs[i].set1(_arg_regs[src_pos++]);
         break;
       case T_LONG:
       case T_DOUBLE:
         assert((i + 1) < argcnt && sig_bt[i + 1] == T_VOID, "expecting half");
-        assert(src_pos < _length, "oob");
-        parm_regs[i].set2(_regs[src_pos++]);
+        assert(src_pos < _args_length, "oob");
+        parm_regs[i].set2(_arg_regs[src_pos++]);
         break;
       case T_VOID: // Halves of longs and doubles
         assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");

@@ -158,7 +158,7 @@ struct ArgMove {
   }
 };
 
-static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& frame_size, const CallRegs& conv) {
+static GrowableArray<ArgMove> compute_argument_shuffle(Method* entry, int& frame_size, const CallRegs& conv, BasicType& ret_type) {
   assert(entry->is_static(), "");
 
   // Fill in the signature array, for the calling-convention call.
@@ -177,7 +177,7 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
         out_sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
     }
     assert(i == total_out_args, "");
-    BasicType ret_type = ss.type();
+    ret_type = ss.type();
   }
 
   int out_arg_slots = SharedRuntime::java_calling_convention(out_sig_bt, out_regs, total_out_args);
@@ -205,7 +205,7 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
                                     arg_order,
                                     tmp_vmreg);
 
-  GrowableArray<ArgMove>* arg_order_vmreg = new GrowableArray<ArgMove>(total_in_args); // conservative
+  GrowableArray<ArgMove> arg_order_vmreg(total_in_args); // conservative
 
 #ifdef ASSERT
   bool reg_destroyed[RegisterImpl::number_of_registers];
@@ -272,7 +272,7 @@ static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& fram
     }
 #endif /* ASSERT */
 
-    arg_order_vmreg->push(move);
+    arg_order_vmreg.push(move);
   }
 
   // Calculate the total number of stack slots we will need.
@@ -313,14 +313,14 @@ static const char* null_safe_string(const char* str) {
 }
 
 #ifdef ASSERT
-static void print_arg_moves(GrowableArray<ArgMove>* arg_moves, int shuffle_area_size, Method* entry) {
+static void print_arg_moves(const GrowableArray<ArgMove>& arg_moves, int shuffle_area_size, Method* entry) {
   LogTarget(Trace, panama) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
     ls.print_cr("Argument shuffle for %s {", entry->name_and_sig_as_C_string());
-    for (int i = 0; i < arg_moves->length(); i++) {
-      ArgMove arg_mv = arg_moves->at(i);
+    for (int i = 0; i < arg_moves.length(); i++) {
+      ArgMove arg_mv = arg_moves.at(i);
       BasicType arg_bt     = arg_mv.bt;
       VMRegPair from_vmreg = arg_mv.from;
       VMRegPair to_vmreg   = arg_mv.to;
@@ -532,12 +532,17 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
   // TODO mxcsr
 }
 
-static void shuffle_arguments(MacroAssembler* _masm, GrowableArray<ArgMove>* arg_moves) {
-  for (int i = 0; i < arg_moves->length(); i++) {
-    ArgMove arg_mv = arg_moves->at(i);
+static void shuffle_arguments(MacroAssembler* _masm, const GrowableArray<ArgMove>& arg_moves) {
+  for (int i = 0; i < arg_moves.length(); i++) {
+    ArgMove arg_mv = arg_moves.at(i);
     BasicType arg_bt     = arg_mv.bt;
     VMRegPair from_vmreg = arg_mv.from;
-    VMRegPair   to_vmreg = arg_mv.to;
+    VMRegPair to_vmreg   = arg_mv.to;
+
+    assert(
+      !((from_vmreg.first()->is_Register() && to_vmreg.first()->is_XMMRegister())
+      || (from_vmreg.first()->is_XMMRegister() && to_vmreg.first()->is_Register())),
+       "move between gp and fp reg not supported");
 
     __ block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
     switch (arg_bt) {
@@ -576,14 +581,16 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   ResourceMark rm;
   const ABIDescriptor abi = ForeignGlobals::parse_abi_descriptor(jabi);
   const CallRegs conv = ForeignGlobals::parse_call_regs(jconv);
+  assert(conv._rets_length <= 1, "no multi reg returns");
   CodeBuffer buffer("upcall_stub_linkToNative", 1024, 1024);
 
-  int stack_alignment_C = 16; // bytes. FIXME assuming C
+  int stack_alignment_bytes = abi._stack_alignment_bytes;
   int register_size = sizeof(uintptr_t);
   int buffer_alignment = xmm_reg_size;
 
   int shuffle_area_size = -1;
-  GrowableArray<ArgMove>* arg_moves = compute_argument_shuffle(entry, shuffle_area_size, conv);
+  BasicType ret_type;
+  GrowableArray<ArgMove> arg_moves = compute_argument_shuffle(entry, shuffle_area_size, conv, ret_type);
   assert(shuffle_area_size != -1, "Should have been set");
   DEBUG_ONLY(print_arg_moves(arg_moves, shuffle_area_size, entry);)
 
@@ -599,7 +606,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   ByteSize jfa_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, jfa);
   ByteSize thread_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, thread);
 
-  frame_size = align_up(frame_size, stack_alignment_C);
+  frame_size = align_up(frame_size, stack_alignment_bytes);
 
   // Ok The space we have allocated will look like:
   //
@@ -694,7 +701,29 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ call(Address(rbx, Method::from_compiled_offset()));
 
-  // FIXME: return value post-processing? -> Yes, native result regs might not be the same as Java's
+  if (conv._rets_length == 1) { // 0 or 1
+    VMReg j_expected_result_reg;
+    switch (ret_type) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+      case T_LONG:
+       j_expected_result_reg = rax->as_VMReg();
+       break;
+      case T_FLOAT:
+      case T_DOUBLE:
+        j_expected_result_reg = xmm0->as_VMReg();
+        break;
+      default:
+        fatal("unexpected return type: %s", type2name(ret_type));
+    }
+    // No need to move for now, since CallArranger can pick a return type
+    // that goes in the same reg for both CCs. But, at least assert they are the same
+    assert(conv._ret_regs[0] == j_expected_result_reg,
+     "unexpected result register: %s != %s", conv._ret_regs[0]->name(), j_expected_result_reg->name());
+  }
 
   __ bind(call_return);
 

@@ -1764,6 +1764,7 @@ abstract class MethodHandleImpl {
             public void ensureCustomized(MethodHandle mh) {
                 mh.customize();
             }
+
             @Override
             public VarHandle memoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentMaskCheck, long alignmentMask,
                                                    ByteOrder order) {

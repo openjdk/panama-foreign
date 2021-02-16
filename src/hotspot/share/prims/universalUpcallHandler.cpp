@@ -117,7 +117,7 @@ JVM_END
 
 static JNINativeMethod PUH_methods[] = {
   {CC "allocateUpcallStub", CC "(" "L" FOREIGN_ABI "ProgrammableUpcallHandler$InterpretedHandler;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "BufferLayout;" ")J", FN_PTR(PUH_AllocateUpcallStub)},
-  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "[L" FOREIGN_ABI "VMStorage;" ")J", FN_PTR(PUH_AllocateOptimzedUpcallStub)},
+  {CC "allocateOptimizedUpcallStub", CC "(" "Ljava/lang/invoke/MethodHandle;" "L" FOREIGN_ABI "ABIDescriptor;" "L" FOREIGN_ABI "ProgrammableUpcallHandler$CallRegs;" ")J", FN_PTR(PUH_AllocateOptimzedUpcallStub)},
 };
 
 /**

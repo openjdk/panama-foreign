@@ -31,8 +31,11 @@
 #include CPU_HEADER(foreign_globals)
 
 struct CallRegs {
-  VMReg* _regs;
-  int _length;
+  VMReg* _arg_regs;
+  int _args_length;
+
+  VMReg* _ret_regs;
+  int _rets_length;
 
   void calling_convention(BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt) const;
 };
@@ -60,6 +63,11 @@ private:
     int input_type_offsets_offset;
     int output_type_offsets_offset;
   } BL;
+
+  struct {
+    int arg_regs_offset;
+    int ret_regs_offset;
+  } CallConvOffsets;
 
   ForeignGlobals();
 

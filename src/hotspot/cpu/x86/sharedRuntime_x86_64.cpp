@@ -1394,7 +1394,7 @@ static void restore_args(MacroAssembler *masm, int arg_count, int first_arg, VMR
 
 // Unpack an array argument into a pointer to the body and the length
 // if the array is non-null, otherwise pass 0 for both.
-void SharedRuntime::unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg) {
+static void unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg) {
   Register tmp_reg = rax;
   assert(!body_arg.first()->is_Register() || body_arg.first()->as_Register() != tmp_reg,
          "possible collision");
@@ -1419,13 +1419,13 @@ void SharedRuntime::unpack_array_argument(MacroAssembler* masm, VMRegPair reg, B
   // load the length relative to the body.
   __ movl(tmp_reg, Address(tmp_reg, arrayOopDesc::length_offset_in_bytes() -
                            arrayOopDesc::base_offset_in_bytes(in_elem_type)));
-  move32_64(masm, tmp, length_arg);
+  SharedRuntime::move32_64(masm, tmp, length_arg);
   __ jmpb(done);
   __ bind(is_null);
   // Pass zeros
   __ xorptr(tmp_reg, tmp_reg);
   move_ptr(masm, tmp, body_arg);
-  move32_64(masm, tmp, length_arg);
+  SharedRuntime::move32_64(masm, tmp, length_arg);
   __ bind(done);
 
   __ block_comment("} unpack_array_argument");

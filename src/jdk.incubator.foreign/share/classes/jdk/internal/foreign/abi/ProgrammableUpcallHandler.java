@@ -123,7 +123,9 @@ public class ProgrammableUpcallHandler {
         if (USE_INTRINSICS && isSimple && !usesStackArgs) {
             checkPrimitive(doBindings.type());
             JLI.ensureCustomized(doBindings); // FIXME: consider more flexible scheme to customize upcall entry points
-            VMStorage[] conv = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+            VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+            VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
+            CallRegs conv = new CallRegs(args, rets);
             entryPoint = allocateOptimizedUpcallStub(doBindings, abi, conv);
         } else {
             BufferLayout layout = BufferLayout.of(abi);
@@ -243,8 +245,7 @@ public class ProgrammableUpcallHandler {
 
         if (o == null) {
             // nop
-        } else if (o instanceof Object[]) {
-            Object[] returns = (Object[]) o;
+        } else if (o instanceof Object[] returns) {
             for (int i = 0; i < returnBindings.length; i++) {
                 Binding.VMStore binding = returnBindings[i];
                 VMStorage storage = binding.storage();
@@ -306,7 +307,10 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, VMStorage[] conv);
+    // used for transporting data into native code
+    private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
+
+    public static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv);
     public static native long allocateUpcallStub(InterpretedHandler handler, ABIDescriptor abi, BufferLayout layout);
 
     private static native void registerNatives();

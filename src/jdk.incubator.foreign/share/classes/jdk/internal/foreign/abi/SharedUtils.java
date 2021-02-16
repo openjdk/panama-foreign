@@ -58,6 +58,7 @@ import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
+import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.filterReturnValue;
@@ -199,7 +200,7 @@ public class SharedUtils {
         target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemoryAddress, ...) MemoryAddress
 
         if (dropReturn) { // no handling for return value, need to drop it
-            target = filterReturnValue(target, empty(methodType(void.class, MemoryAddress.class)));
+            target = dropReturn(target);
         }
 
         return target;
@@ -238,8 +239,8 @@ public class SharedUtils {
         cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
     }
 
-    public static Class<?> primitiveCarrierForSize(long size, boolean isFloat) {
-        if (isFloat) {
+    public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
+        if (useFloat) {
             if (size == 4) {
                 return float.class;
             } else if (size == 8) {
@@ -257,7 +258,7 @@ public class SharedUtils {
             }
         }
 
-        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + isFloat);
+        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
     }
 
     public static CLinker getSystemLinker() {

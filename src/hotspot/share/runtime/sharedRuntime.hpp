@@ -473,8 +473,6 @@ class SharedRuntime: AllStatic {
   static void    save_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
   static void restore_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
 
-  static void unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg);
-
   static void   move32_64(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
   static void   long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
   static void  float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
@@ -602,6 +600,7 @@ class SharedRuntime: AllStatic {
   static void print_call_statistics(int comp_total);
   static void print_statistics();
   static void print_ic_miss_histogram();
+
 #endif // PRODUCT
 };
 
