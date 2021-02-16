@@ -364,10 +364,12 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
 
 JavaFrameAnchor* EntryBlob::jfa_for_frame(const frame& frame) const {
   ShouldNotCallThis();
+  return nullptr;
 }
 
 frame frame::sender_for_panama_entry_frame(RegisterMap* map) const {
   ShouldNotCallThis();
+  return {};
 }
 
 //------------------------------------------------------------------------------
