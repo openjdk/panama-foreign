@@ -342,26 +342,6 @@ public class SharedUtils {
             : Allocator.empty();
     }
 
-//    static MethodHandle wrapWithAllocatorForDowncall(MethodHandle specializedHandle,
-//                                                     int allocatorPos, long bufferCopySize) {
-//        // insert try-finally to close the NativeScope used for Binding.Copy
-//        boolean isVoid = specializedHandle.type().returnType() == void.class;
-//        MethodHandle closer;
-//        if (isVoid) {
-//            closer = empty(methodType(void.class, Throwable.class, Addressable.class)); // (Throwable, Addressable) -> void
-//            closer = collectArguments(closer, 2, MH_CLOSE_ALLOCATOR); // (Throwable, Addressable, NativeScope) -> void
-//        } else {
-//            closer = identity(specializedHandle.type().returnType()); // (V) -> V
-//            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
-//
-//            closer = collectArguments(closer, 3, MH_CLOSE_ALLOCATOR); // (Throwable, V, Addressable, NativeScope) -> V
-//        }
-//        specializedHandle = tryFinally(specializedHandle, closer);
-//        MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
-//        specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);
-//        return specializedHandle;
-//    }
-
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
