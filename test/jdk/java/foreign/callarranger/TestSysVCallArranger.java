@@ -484,4 +484,28 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
         assertEquals(bindings.nVectorArgs, 0);
     }
 
+    @Test
+    public void testFloatStructsUpcall() {
+        MemoryLayout struct = MemoryLayout.ofStruct(C_FLOAT); // should be passed in float regs
+
+        MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class);
+        FunctionDescriptor fd = FunctionDescriptor.of(struct, struct);
+        CallArranger.Bindings bindings = CallArranger.getBindings(mt, fd, true);
+
+        assertFalse(bindings.isInMemoryReturn);
+        CallingSequence callingSequence = bindings.callingSequence;
+        assertEquals(callingSequence.methodType(), mt);
+        assertEquals(callingSequence.functionDesc(), fd);
+
+        checkArgumentBindings(callingSequence, new Binding[][]{
+            { allocate(struct), dup(), vmLoad(xmm0, float.class), bufferStore(0, float.class) },
+        });
+
+        checkReturnBindings(callingSequence, new Binding[] {
+            bufferLoad(0, float.class), vmStore(xmm0, float.class)
+        });
+
+        assertEquals(bindings.nVectorArgs, 1);
+    }
+
 }

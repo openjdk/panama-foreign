@@ -640,11 +640,14 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   // FIXME: mxcsr (see stubGenerator_x86_64.cpp 'generate_call_stub')
 
   __ block_comment("{ get_thread");
+  // FIXME: this crashes the VM on a detached thread
   __ get_thread(r15_thread);
   __ movptr(Address(rsp, thread_offset), r15_thread);
   __ block_comment("} get_thread");
 
   // FIXME: is it needed?
+  // There might be an active handle block if we do a call from JNI -> Panama
+  // apparently the entry frame allocates a new block in case we need to do another native call
 //  JNIHandleBlock* new_handles = JNIHandleBlock::allocate_block(thread);
 //  _handles      = _thread->active_handles();    // save previous handle block & Java frame linkage
 //  _thread->set_active_handles(new_handles);     // install new handle block and reset Java frame linkage
@@ -785,7 +788,9 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ movptr(Address(r15_thread, Thread::exception_file_offset()), rscratch1);
   __ movl(Address(r15_thread, Thread::exception_line_offset()), (int)  __LINE__);
 
-  // TODO: return value?
+  // FIXME: native code has no idea how to handle these
+  // should just crash here.
+  // later we can add a 'global exception handler' API.
 
   __ jmp(call_return);
   __ block_comment("} exception handler");
