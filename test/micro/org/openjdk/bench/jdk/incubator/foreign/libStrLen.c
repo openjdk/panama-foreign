@@ -29,7 +29,7 @@
 
 JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_StrLenTest_strlen(JNIEnv *const env, const jclass cls, const jstring text) {
     const char *str = (*env)->GetStringUTFChars(env, text, NULL);
-	int len = strlen(str);
-	(*env)->ReleaseStringUTFChars(env, text, str);
-	return len;
+    int len = strlen(str);
+    (*env)->ReleaseStringUTFChars(env, text, str);
+    return len;
 }
