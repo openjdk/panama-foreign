@@ -273,12 +273,18 @@ public final class JextractTool {
         try {
             Path output = Path.of(options.outputDir);
             write(output, !options.source, files);
+        } catch (UncheckedIOException uioe) {
+            err.println(uioe.getMessage());
+            if (JextractTool.DEBUG) {
+                uioe.printStackTrace(err);
+            }
+            return OUTPUT_ERROR;
         } catch (RuntimeException re) {
             err.println(re.getMessage());
             if (JextractTool.DEBUG) {
                 re.printStackTrace(err);
             }
-            return OUTPUT_ERROR;
+            return RUNTIME_ERROR;
         }
 
         return SUCCESS;

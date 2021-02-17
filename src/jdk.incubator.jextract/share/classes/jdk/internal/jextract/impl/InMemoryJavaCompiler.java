@@ -50,7 +50,7 @@ final class InMemoryJavaCompiler {
         Writer writer = new StringWriter();
         Boolean exitCode = compiler.getTask(writer, fileManager, null, Arrays.asList(options), null, files).call();
         if (!exitCode) {
-            throw new RuntimeException("In memory compilation failed: " + writer.toString());
+            throw new CompilationFailedException("In memory compilation failed: " + writer.toString());
         }
         return fileManager.getCompiledFiles();
     }
