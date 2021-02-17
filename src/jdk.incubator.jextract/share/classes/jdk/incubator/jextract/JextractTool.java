@@ -26,6 +26,7 @@
 package jdk.incubator.jextract;
 
 import jdk.internal.jextract.impl.ClangException;
+import jdk.internal.jextract.impl.CompilationFailedException;
 import jdk.internal.jextract.impl.Filter;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
@@ -273,10 +274,16 @@ public final class JextractTool {
         try {
             Path output = Path.of(options.outputDir);
             write(output, !options.source, files);
-        } catch (RuntimeException re) {
-            err.println(re.getMessage());
+        } catch (CompilationFailedException cfe) {
+            err.println(cfe.getMessage());
             if (JextractTool.DEBUG) {
-                re.printStackTrace(err);
+                cfe.printStackTrace(err);
+            }
+            return RUNTIME_ERROR;
+        } catch (UncheckedIOException uioe) {
+            err.println(uioe.getMessage());
+            if (JextractTool.DEBUG) {
+                uioe.printStackTrace(err);
             }
             return OUTPUT_ERROR;
         }
