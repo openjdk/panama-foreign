@@ -342,35 +342,49 @@ public class SharedUtils {
             : Allocator.empty();
     }
 
-    static MethodHandle wrapWithAllocatorForDowncall(MethodHandle specializedHandle,
-                                                     int allocatorPos, long bufferCopySize) {
-        // insert try-finally to close the NativeScope used for Binding.Copy
-        MethodHandle closer = specializedHandle.type().returnType() == void.class
-              // (Throwable, Addressable, NativeScope) -> void
-            ? collectArguments(empty(methodType(void.class, Throwable.class, Addressable.class)), 2, MH_CLOSE_ALLOCATOR)
-              // (Throwable, V, Addressable, NativeScope) -> V
-            : collectArguments( // (Throwable, V, Addressable, NativeScope) -> V
-                dropArguments( // (Throwable, V, Addressable) -> V
-                    dropArguments( // (Throwable, V) -> V
-                        identity(specializedHandle.type().returnType()), // (V) -> V
-                        0, Throwable.class),
-                    2, Addressable.class),
-                               3, MH_CLOSE_ALLOCATOR);
-        specializedHandle = tryFinally(specializedHandle, closer);
-        MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
-        specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);
-        return specializedHandle;
-    }
+//    static MethodHandle wrapWithAllocatorForDowncall(MethodHandle specializedHandle,
+//                                                     int allocatorPos, long bufferCopySize) {
+//        // insert try-finally to close the NativeScope used for Binding.Copy
+//        boolean isVoid = specializedHandle.type().returnType() == void.class;
+//        MethodHandle closer;
+//        if (isVoid) {
+//            closer = empty(methodType(void.class, Throwable.class, Addressable.class)); // (Throwable, Addressable) -> void
+//            closer = collectArguments(closer, 2, MH_CLOSE_ALLOCATOR); // (Throwable, Addressable, NativeScope) -> void
+//        } else {
+//            closer = identity(specializedHandle.type().returnType()); // (V) -> V
+//            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+//
+//            closer = collectArguments(closer, 3, MH_CLOSE_ALLOCATOR); // (Throwable, V, Addressable, NativeScope) -> V
+//        }
+//        specializedHandle = tryFinally(specializedHandle, closer);
+//        MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
+//        specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);
+//        return specializedHandle;
+//    }
 
-    static MethodHandle wrapWithAllocatorForUpcall(MethodHandle specializedHandle,
-                                                   int allocatorPos, long bufferCopySize) {
+    static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
+                                          int allocatorPos, long bufferCopySize,
+                                          boolean upcall) {
         // insert try-finally to close the NativeScope used for Binding.Copy
-        MethodHandle closer = specializedHandle.type().returnType() == void.class
-              // (Throwable, NativeScope) -> void
-            ? collectArguments(empty(methodType(void.class, Throwable.class)), 1, MH_CLOSE_ALLOCATOR)
-              // (Throwable, V, NativeScope) -> V
-            : collectArguments(dropArguments(identity(specializedHandle.type().returnType()), 0, Throwable.class),
-                               2, MH_CLOSE_ALLOCATOR);
+        MethodHandle closer;
+        int insertPos;
+        if (specializedHandle.type().returnType() == void.class) {
+            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            insertPos = 1;
+        } else {
+            closer = identity(specializedHandle.type().returnType()); // (V) -> V
+            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+            insertPos = 2;
+        }
+
+        // downcalls get the leading Addressable param as well
+        if (!upcall) {
+            closer = dropArguments(closer, insertPos, Addressable.class); // (Throwable, V?, Addressable) -> V/void
+            insertPos++;
+        }
+
+        closer = collectArguments(closer, insertPos, MH_CLOSE_ALLOCATOR); // (Throwable, V?, Addressable?, NativeScope) -> V/void
+
         specializedHandle = tryFinally(specializedHandle, closer);
         MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
         specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);

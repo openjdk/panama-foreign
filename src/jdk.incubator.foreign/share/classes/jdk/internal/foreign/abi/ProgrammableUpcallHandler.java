@@ -198,7 +198,7 @@ public class ProgrammableUpcallHandler {
             specializedHandle = filterReturnValue(specializedHandle, filter);
         }
 
-        specializedHandle = SharedUtils.wrapWithAllocatorForUpcall(specializedHandle, argAllocatorPos, bufferCopySize);
+        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, bufferCopySize, true);
 
         return specializedHandle;
     }
