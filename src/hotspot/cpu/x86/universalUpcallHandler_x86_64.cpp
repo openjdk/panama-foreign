@@ -780,19 +780,16 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   intptr_t exception_handler_offset = __ pc() - start;
 
-  // set pending exception
+  // native caller has no idea how to handle exceptions
+  // we just crash here. Up to callee to catch exceptions.
   __ verify_oop(rax);
+  __ vzeroupper();
+  __ mov(c_rarg0, rax);
+  __ andptr(rsp, -16); // align stack as required by ABI
+  __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
+  __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, ProgrammableUpcallHandler::handle_uncaught_exception)));
+  __ should_not_reach_here();
 
-  __ movptr(Address(r15_thread, Thread::pending_exception_offset()), rax);
-  __ lea(rscratch1, ExternalAddress((address)__FILE__));
-  __ movptr(Address(r15_thread, Thread::exception_file_offset()), rscratch1);
-  __ movl(Address(r15_thread, Thread::exception_line_offset()), (int)  __LINE__);
-
-  // FIXME: native code has no idea how to handle these
-  // should just crash here.
-  // later we can add a 'global exception handler' API.
-
-  __ jmp(call_return);
   __ block_comment("} exception handler");
 
    _masm->flush();

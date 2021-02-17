@@ -91,6 +91,13 @@ ProgrammableUpcallHandler::ProgrammableUpcallHandler() {
     upcall_method.name->as_C_string(), upcall_method.sig->as_C_string());
 }
 
+void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
+  // Based on CATCH macro
+  tty->print_cr("Uncaught exception:");
+  exception->print();
+  ShouldNotReachHere();
+}
+
 JVM_ENTRY(jlong, PUH_AllocateUpcallStub(JNIEnv *env, jclass unused, jobject rec, jobject abi, jobject buffer_layout))
   Handle receiver(THREAD, JNIHandles::resolve(rec));
   jobject global_rec = JNIHandles::make_global(receiver);
