@@ -584,7 +584,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   assert(conv._rets_length <= 1, "no multi reg returns");
   CodeBuffer buffer("upcall_stub_linkToNative", 1024, 1024);
 
-  int stack_alignment_bytes = abi._stack_alignment_bytes;
+  int stack_alignment_bytes_Java = 16;
   int register_size = sizeof(uintptr_t);
   int buffer_alignment = xmm_reg_size;
 
@@ -606,7 +606,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   ByteSize jfa_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, jfa);
   ByteSize thread_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, thread);
 
-  frame_size = align_up(frame_size, stack_alignment_bytes);
+  frame_size = align_up(frame_size, stack_alignment_bytes_Java);
 
   // Ok The space we have allocated will look like:
   //
