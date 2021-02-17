@@ -101,8 +101,16 @@ class Utils {
             // C identifiers. But we may have a java keyword used as a C identifier.
             assert SourceVersion.isIdentifier(name);
 
-            return SourceVersion.isKeyword(name) ? (name + "_") : name;
+            return SourceVersion.isKeyword(name) || isRestrictedTypeName(name) ? (name + "_") : name;
         }
+    }
+
+    private static boolean isRestrictedTypeName(String name) {
+        return switch (name) {
+            case "var", "yield", "record",
+                "sealed", "permits" -> true;
+            default -> false;
+        };
     }
 
     static void validSimpleIdentifier(String name) {
