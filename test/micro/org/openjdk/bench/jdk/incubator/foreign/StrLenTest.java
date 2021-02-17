@@ -69,6 +69,9 @@ public class StrLenTest {
     }
 
     static final MethodHandle STRLEN;
+    static final MethodHandle STRLEN_TRIVIAL;
+    static final MethodHandle MALLOC_TRIVIAL;
+    static final MethodHandle FREE_TRIVIAL;
 
     static {
         LibraryLookup lookup = LibraryLookup.ofDefault();
@@ -76,6 +79,16 @@ public class StrLenTest {
         STRLEN = abi.downcallHandle(lookup.lookup("strlen").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER));
+        STRLEN_TRIVIAL = abi.downcallHandle(lookup.lookup("strlen").get(),
+                MethodType.methodType(int.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_INT, C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+        MALLOC_TRIVIAL = abi.downcallHandle(lookup.lookup("malloc").get(),
+                MethodType.methodType(MemoryAddress.class, long.class),
+                FunctionDescriptor.of(C_POINTER, C_LONG_LONG).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
+
+        FREE_TRIVIAL = abi.downcallHandle(lookup.lookup("free").get(),
+                MethodType.methodType(void.class, MemoryAddress.class),
+                FunctionDescriptor.ofVoid(C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
     }
 
     @Setup
@@ -113,10 +126,28 @@ public class StrLenTest {
         return res;
     }
 
+    @Benchmark
+    public int panama_strlen_unsafe_trivial() throws Throwable {
+        MemoryAddress address = makeStringUnsafeTrivial(str);
+        int res = (int) STRLEN_TRIVIAL.invokeExact(address);
+        FREE_TRIVIAL.invokeExact(address);
+        return res;
+    }
+
     static MemoryAddress makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = CLinker.allocateMemoryRestricted(len + 1);
+        MemorySegment str = address.asSegmentRestricted(len + 1);
+        str.copyFrom(MemorySegment.ofArray(bytes));
+        MemoryAccess.setByteAtOffset(str, len, (byte)0);
+        return address;
+    }
+
+    static MemoryAddress makeStringUnsafeTrivial(String s) throws Throwable {
+        byte[] bytes = s.getBytes();
+        int len = bytes.length;
+        MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
         MemorySegment str = address.asSegmentRestricted(len + 1);
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
