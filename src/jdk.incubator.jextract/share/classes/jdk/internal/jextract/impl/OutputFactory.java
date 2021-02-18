@@ -241,8 +241,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private boolean generateFunctionalInterface(Type.Function func, String name) {
         name = Utils.javaSafeIdentifier(name);
         //generate functional interface
-        if (func.varargs()) {
+        if (func.varargs() && !func.argumentTypes().isEmpty()) {
             warn("varargs in callbacks is not supported: " + name);
+            return false;
         }
         MethodType fitype = typeTranslator.getMethodType(func, false);
         FunctionDescriptor fpDesc = Type.descriptorFor(func).orElseThrow();
@@ -277,18 +278,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         MethodType mtype = typeTranslator.getMethodType(funcTree.type());
-
-        if (isVaList(descriptor)) {
-            MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
-            argLayouts[argLayouts.length - 1] = CLinker.C_VA_LIST;
-            descriptor = descriptor.returnLayout().isEmpty()?
-                    FunctionDescriptor.ofVoid(argLayouts) :
-                    FunctionDescriptor.of(descriptor.returnLayout().get(), argLayouts);
-            Class<?>[] argTypes = mtype.parameterArray();
-            argTypes[argLayouts.length - 1] = MemoryAddress.class;
-            mtype = MethodType.methodType(mtype.returnType(), argTypes);
-        }
-
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
         //generate static wrapper for function
         List<String> paramNames = funcTree.parameters()
@@ -315,10 +304,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     Type.Function getAsFunctionPointer(Type type) {
+        return getAsFunctionPointer(type, false);
+    }
+
+    Type.Function getAsFunctionPointer(Type type, boolean followTypedefs) {
         if (type instanceof Type.Delegated) {
             Type.Delegated delegated = (Type.Delegated)type;
-            return delegated.kind() == Type.Delegated.Kind.POINTER ?
-                getAsFunctionPointer(delegated.type()) : null;
+            return (followTypedefs || delegated.kind() == Type.Delegated.Kind.POINTER) ?
+                getAsFunctionPointer(delegated.type(), followTypedefs) : null;
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -434,11 +427,39 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
             currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
+            Type.Function funcPtr = getAsFunctionPointer(tree.type(), true);
+            if (funcPtr != null) {
+                addFunctionPointerInvoker(funcPtr, fieldName, tree.name());
+            }
         } else {
             warn("Layout size not available for " + fieldName);
         }
 
         return null;
+    }
+
+    void addFunctionPointerInvoker(Type.Function funcPtr, String javaName, String nativeName) {
+        FunctionDescriptor descriptor = Type.descriptorFor(funcPtr).orElse(null);
+        if (descriptor == null) {
+            //abort
+            return;
+        }
+
+        //generate functional interface
+        if (funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
+            warn("varargs in callbacks is not supported: " + funcPtr);
+            return;
+        }
+
+        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
+        if (unsupportedLayout != null) {
+            warn("skipping " + nativeName + " because of unsupported type usage: " +
+                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
+            return;
+        }
+
+        MethodType mtype = typeTranslator.getMethodType(funcPtr);
+        currentBuilder.addVirtualFunction(javaName, nativeName, mtype, descriptor);
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {

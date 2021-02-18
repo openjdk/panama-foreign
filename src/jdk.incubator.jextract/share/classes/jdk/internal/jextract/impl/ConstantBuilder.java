@@ -81,9 +81,9 @@ public class ConstantBuilder extends NestedClassBuilder {
                 () -> emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames));
     }
 
-    public Constant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
-        return emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
-                () -> emitMethodHandleField(javaName, nativeName, mtype, desc, varargs));
+    public MethodHandleConstant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean virtual, boolean varargs) {
+        return (MethodHandleConstant)emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
+                () -> emitMethodHandleField(javaName, nativeName, mtype, desc, virtual, varargs));
     }
 
     public Constant addSegment(String javaName, String nativeName, MemoryLayout layout) {
@@ -141,7 +141,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             this.kind = kind;
         }
 
-        private List<String> getterNameParts() {
+        List<String> getterNameParts() {
             return List.of(className, javaName, kind.nameSuffix);
         }
 
@@ -169,6 +169,45 @@ public class ConstantBuilder extends NestedClassBuilder {
                 l -> l.get(2);
     }
 
+    static class MethodHandleConstant extends Constant {
+
+        final MethodType mtype;
+        final boolean virtual;
+        final boolean varargs;
+
+
+        MethodHandleConstant(String className, String javaName, Kind kind, MethodType mtype, boolean virtual, boolean varargs) {
+            super(className, javaName, kind);
+            this.mtype = mtype;
+            this.virtual = virtual;
+            this.varargs = varargs;
+        }
+
+        @Override
+        MethodHandleConstant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
+            return (MethodHandleConstant)super.emitGetter(builder, mods, getterNameFunc);
+        }
+
+        @Override
+        MethodHandleConstant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
+            return (MethodHandleConstant)super.emitGetter(builder, mods, getterNameFunc, symbolName);
+        }
+
+        MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
+                                          boolean inStruct, List<String> paramNames) {
+            builder.emitFunctionWrapper(mods, accessExpression(), getterNameFunc.apply(getterNameParts()),
+                    mtype, varargs, virtual, inStruct, paramNames);
+            return this;
+        }
+
+        MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
+                                          boolean inStruct, List<String> paramNames, String symbolName) {
+            builder.emitFunctionWrapper(mods, accessExpression(), getterNameFunc.apply(getterNameParts()),
+                    mtype, varargs, virtual, inStruct, paramNames, true, symbolName);
+            return this;
+        }
+    }
+
     // private generators
 
     public Constant emitIfAbsent(String name, Constant.Kind kind, Supplier<Constant> constantFactory) {
@@ -185,8 +224,8 @@ public class ConstantBuilder extends NestedClassBuilder {
         return constant;
     }
 
-    private Constant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
-                                         FunctionDescriptor desc, boolean varargs) {
+    private MethodHandleConstant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
+                                                                FunctionDescriptor desc, boolean virtual, boolean varargs) {
         Constant functionDesc = addFunctionDesc(javaName, desc);
         incrAlign();
         String fieldName = Constant.Kind.METHOD_HANDLE.fieldName(javaName);
@@ -195,9 +234,11 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
-        append("LIBRARIES, \"" + nativeName + "\"");
-        append(",\n");
-        indent();
+        if (!virtual) {
+            append("LIBRARIES, \"" + nativeName + "\"");
+            append(",\n");
+            indent();
+        }
         append("\"" + mtype.toMethodDescriptorString() + "\",\n");
         indent();
         append(functionDesc.accessExpression());
@@ -209,7 +250,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         indent();
         append(");\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
+        return new MethodHandleConstant(className(), javaName, Constant.Kind.METHOD_HANDLE, mtype, virtual, varargs);
     }
 
     private Constant emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,

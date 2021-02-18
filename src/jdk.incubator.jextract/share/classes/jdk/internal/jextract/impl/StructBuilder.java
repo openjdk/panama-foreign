@@ -24,12 +24,14 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,6 +144,13 @@ class StructBuilder extends ConstantBuilder {
             emitIndexedFieldGetter(vhConstant, javaName, type);
             emitIndexedFieldSetter(vhConstant, javaName, type);
         }
+    }
+
+    @Override
+    public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
+        addMethodHandle(javaName, nativeName, mtype, desc, true, false)
+                .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME)
+                .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, true, null);
     }
 
     private void emitFieldGetter(Constant vhConstant, String javaName, Class<?> type) {

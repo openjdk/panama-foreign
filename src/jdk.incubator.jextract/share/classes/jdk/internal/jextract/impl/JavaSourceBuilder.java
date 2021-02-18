@@ -24,8 +24,10 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
@@ -33,6 +35,7 @@ import jdk.incubator.jextract.Type;
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,6 +128,10 @@ abstract class JavaSourceBuilder {
     }
 
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
         throw new UnsupportedOperationException();
     }
 
@@ -254,6 +261,101 @@ abstract class JavaSourceBuilder {
 
     protected void emitGetter(String mods, Class<?> type, String name, String access) {
         emitGetter(mods, type, name, access, false, null);
+    }
+
+    protected void emitFunctionWrapper(String mods, String access, String javaName, MethodType mtype,
+                                       boolean varargs, boolean virtual, boolean inStruct, List<String> paramNames) {
+        emitFunctionWrapper(mods, access, javaName, mtype, varargs, virtual, inStruct, paramNames, false, null);
+    }
+
+    protected void emitFunctionWrapper(String mods, String access, String javaName, MethodType mtype,
+                                     boolean varargs, boolean virtual, boolean inStruct, List<String> paramNames, boolean nullCheck, String symbolName) {
+        incrAlign();
+        indent();
+        append(mods + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        String delim = "";
+        if (inStruct) {
+            append("MemorySegment segment");
+            delim = ", ";
+        }
+        List<String> pExprs = new ArrayList<>();
+        int numParams = mtype.parameterCount();
+        if (varargs) {
+            numParams--;
+        }
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = "x" + i;
+            if (paramNames != null) {
+                String explicitName = paramNames.get(i);
+                if (!explicitName.isEmpty()) {
+                    pName = explicitName;
+                }
+            }
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(delim + " " + pType.getSimpleName() + " " + pName);
+            delim = ", ";
+        }
+        if (varargs) {
+            String lastArg = "x" + numParams;
+            if (numParams > 0) {
+                append(", ");
+            }
+            append("Object... " + lastArg);
+            pExprs.add(lastArg);
+        }
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = ");
+        if (nullCheck) {
+            append("RuntimeHelper.requireNonNull(");
+        }
+        append(access);
+        if (nullCheck) {
+            append(",\"");
+            append(symbolName);
+            append("\")");
+        }
+        append(";\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
+        if (!mtype.returnType().equals(void.class)) {
+            append("return (" + mtype.returnType().getName() + ")");
+        }
+        append("mh$.invokeExact(");
+        if (virtual) {
+            append("(Addressable)");
+            append(javaName + "$get(");
+            if (inStruct) {
+                append("segment");
+            }
+            append("), ");
+        }
+        append(String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     int constant_counter = 0;

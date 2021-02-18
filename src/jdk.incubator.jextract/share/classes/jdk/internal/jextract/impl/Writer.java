@@ -51,7 +51,7 @@ public final class Writer {
         } else {
             return InMemoryJavaCompiler.compile(sources,
                 "--add-modules", "jdk.incubator.foreign",
-                "--release", "16",
+                "--release", "17",
                 "-d", dest.toAbsolutePath().toString(),
                 "-cp", dest.toAbsolutePath().toString());
         }
