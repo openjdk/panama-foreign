@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8261893
  * @summary jextract generates class names that are restricted type names
- * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8240181
+ * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8261893
  */
 public class Test8261893 extends JextractToolRunner {
     @Test
@@ -41,11 +41,11 @@ public class Test8261893 extends JextractToolRunner {
         Path test8261893H = getInputFilePath("test8261893.h");
         run("-d", test8261893Output.toString(), test8261893H.toString()).checkSuccess();
         try(Loader loader = classLoader(test8261893Output)) {
-            assertNotNull(loader.loadClass("test8261893_h$permits_");
-            assertNotNull(loader.loadClass("test8261893_h$record_");
-            assertNotNull(loader.loadClass("test8261893_h$sealed_");
-            assertNotNull(loader.loadClass("test8261893_h$var_");
-            assertNotNull(loader.loadClass("test8261893_h$yield_");
+            assertNotNull(loader.loadClass("test8261893_h$permits_"));
+            assertNotNull(loader.loadClass("test8261893_h$record_"));
+            assertNotNull(loader.loadClass("test8261893_h$sealed_"));
+            assertNotNull(loader.loadClass("test8261893_h$var_"));
+            assertNotNull(loader.loadClass("test8261893_h$yield_"));
         } finally {
             deleteDir(test8261893Output);
         }

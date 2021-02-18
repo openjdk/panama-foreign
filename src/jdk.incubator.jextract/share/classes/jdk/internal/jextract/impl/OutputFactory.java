@@ -26,6 +26,7 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.jextract.Declaration;
+import jdk.incubator.jextract.JextractTool;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
@@ -150,9 +151,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
+        Class<?> clazz = getJavaType(constant.type());
+        if (clazz == null) {
+            warn("skipping " + constant.name() + " because of unsupported type usage");
+            return null;
+        }
         toplevelBuilder.addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
-                typeTranslator.getJavaType(constant.type()), constant.value());
+                clazz, constant.value());
         return null;
     }
 
@@ -244,7 +250,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         if (func.varargs()) {
             warn("varargs in callbacks is not supported: " + name);
         }
-        MethodType fitype = typeTranslator.getMethodType(func, false);
+        MethodType fitype = getMethodType(func, false);
+        if (fitype == null) {
+            warn("skipping " + name + " because of unsupported type usage");
+            return false;
+        }
+
         FunctionDescriptor fpDesc = Type.descriptorFor(func).orElseThrow();
         MemoryLayout unsupportedLayout = isUnsupported(fpDesc);
         if (unsupportedLayout != null) {
@@ -276,7 +287,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        MethodType mtype = typeTranslator.getMethodType(funcTree.type());
+        MethodType mtype = getMethodType(funcTree.type());
+        if (mtype == null) {
+            warn("skipping " + funcTree.name() + " because of unsupported type usage");
+            return null;
+        }
 
         if (isVaList(descriptor)) {
             MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
@@ -417,7 +432,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             generateFunctionalInterface(func, fieldName);
         }
 
-        Class<?> clazz = typeTranslator.getJavaType(type);
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
                 (layout instanceof ValueLayout && layout.byteSize() > 8)) {
             //skip
@@ -433,6 +447,13 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
+            Class<?> clazz = getJavaType(type);
+            if (clazz == null) {
+                String name = parent != null? parent.name() + "." : "";
+                name += fieldName;
+                warn("skipping " + name + " because of unsupported type usage");
+                return null;
+            }
             currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
         } else {
             warn("Layout size not available for " + fieldName);
@@ -455,5 +476,41 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private void warn(String msg) {
         System.err.println("WARNING: " + msg);
+    }
+
+    private Class<?> getJavaType(Type type) {
+        try {
+            return typeTranslator.getJavaType(type);
+        } catch (UnsupportedOperationException uoe) {
+            warn(uoe.toString());
+            if (JextractTool.DEBUG) {
+                uoe.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private MethodType getMethodType(Type.Function type) {
+        try {
+            return typeTranslator.getMethodType(type);
+        } catch (UnsupportedOperationException uoe) {
+            warn(uoe.toString());
+            if (JextractTool.DEBUG) {
+                uoe.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private MethodType getMethodType(Type.Function type, boolean varargsCheck) {
+        try {
+            return typeTranslator.getMethodType(type, varargsCheck);
+        } catch (UnsupportedOperationException uoe) {
+            warn(uoe.toString());
+            if (JextractTool.DEBUG) {
+                uoe.printStackTrace();
+            }
+            return null;
+        }
     }
 }
