@@ -50,23 +50,34 @@ void ProgrammableUpcallHandler::upcall_helper(JavaThread* thread, jobject rec, a
   JavaCalls::call_static(&result, upcall_method.klass, upcall_method.name, upcall_method.sig, &args, CATCH);
 }
 
-void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address buff) {
+Thread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_detach) {
   Thread* thread = Thread::current_or_null();
-  bool should_detach = false;
   if (thread == nullptr) {
     JavaVM_ *vm = (JavaVM *)(&main_vm);
     JNIEnv* p_env = nullptr; // unused
     jint result = vm->functions->AttachCurrentThread(vm, (void**) &p_env, nullptr);
     guarantee(result == JNI_OK, "Could not attach thread for upcall. JNI error code: %d", result);
-    should_detach = true;
+    *should_detach = true;
     thread = Thread::current();
+  } else {
+    *should_detach = false;
   }
+  return thread;
+}
+
+void ProgrammableUpcallHandler::detach_thread(Thread* thread) {
+  JavaVM_ *vm = (JavaVM *)(&main_vm);
+  vm->functions->DetachCurrentThread(vm);
+}
+
+void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address buff) {
+  bool should_detach = false;
+  Thread* thread = maybe_attach_and_get_thread(&should_detach);
 
   upcall_helper(thread->as_Java_thread(), rec, buff);
 
   if (should_detach) {
-    JavaVM_ *vm = (JavaVM *)(&main_vm);
-    vm->functions->DetachCurrentThread(vm);
+    detach_thread(thread);
   }
 }
 
