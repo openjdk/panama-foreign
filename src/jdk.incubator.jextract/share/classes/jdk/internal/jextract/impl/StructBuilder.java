@@ -24,8 +24,10 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
@@ -150,7 +152,68 @@ class StructBuilder extends ConstantBuilder {
     public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
         addMethodHandle(javaName, nativeName, mtype, desc, true, false)
                 .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME)
-                .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, true, null);
+                .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, null);
+    }
+
+    protected void emitVirtualFunctionWrapper(String mods, MethodType mtype, String javaName, String access,
+                                              boolean nullCheck, String symbolName) {
+        incrAlign();
+        indent();
+        append(mods + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (MemorySegment segment");
+        List<String> pExprs = new ArrayList<>();
+        int numParams = mtype.parameterCount();
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = "x" + i;
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(", " + pType.getSimpleName() + " " + pName);
+        }
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = ");
+        if (nullCheck) {
+            append("RuntimeHelper.requireNonNull(");
+        }
+        append(access);
+        if (nullCheck) {
+            append(",\"");
+            append(symbolName);
+            append("\")");
+        }
+        append(";\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
+        if (!mtype.returnType().equals(void.class)) {
+            append("return (" + mtype.returnType().getName() + ")");
+        }
+        append("mh$.invokeExact(");
+        append("(Addressable)");
+        append(javaName + "$get(segment), ");
+        append(String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitFieldGetter(Constant vhConstant, String javaName, Class<?> type) {

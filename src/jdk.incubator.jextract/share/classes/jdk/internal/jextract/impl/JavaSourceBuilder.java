@@ -263,34 +263,19 @@ abstract class JavaSourceBuilder {
         emitGetter(mods, type, name, access, false, null);
     }
 
-    protected void emitFunctionWrapper(String mods, String access, String javaName, MethodType mtype,
-                                       boolean varargs, boolean virtual, boolean inStruct, List<String> paramNames) {
-        emitFunctionWrapper(mods, access, javaName, mtype, varargs, virtual, inStruct, paramNames, false, null);
-    }
-
-    protected void emitFunctionWrapper(String mods, String access, String javaName, MethodType mtype,
-                                     boolean varargs, boolean virtual, boolean inStruct, List<String> paramNames, boolean nullCheck, String symbolName) {
+    protected void emitFunctionWrapper(String mods, MethodType mtype, String javaName, String access,
+                                     boolean varargs, List<String> paramNames, boolean nullCheck, String symbolName) {
         incrAlign();
         indent();
         append(mods + " ");
         append(mtype.returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
-        if (inStruct) {
-            append("MemorySegment segment");
-            delim = ", ";
-        }
         List<String> pExprs = new ArrayList<>();
-        int numParams = mtype.parameterCount();
-        if (varargs) {
-            numParams--;
-        }
+        final int numParams = paramNames.size();
         for (int i = 0 ; i < numParams; i++) {
-            String pName = "x" + i;
-            if (paramNames != null) {
-                String explicitName = paramNames.get(i);
-                if (!explicitName.isEmpty()) {
-                    pName = explicitName;
-                }
+            String pName = paramNames.get(i);
+            if (pName.isEmpty()) {
+                pName = "x" + i;
             }
             if (mtype.parameterType(i).equals(MemoryAddress.class)) {
                 pExprs.add(pName + ".address()");
@@ -315,6 +300,69 @@ abstract class JavaSourceBuilder {
         append(") {\n");
         incrAlign();
         indent();
+        if (nullCheck) {
+            append("var mh$ = RuntimeHelper.requireNonNull(");
+            append(access);
+            append(", \"");
+            append(symbolName);
+            append("\");\n");
+        } else {
+            append("var mh$ = " + access + ";");
+        }
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
+        if (!mtype.returnType().equals(void.class)) {
+            append("return (" + mtype.returnType().getName() + ")");
+        }
+        append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    protected void emitFunctionWrapper(String mods, MethodType mtype, String javaName, String access,
+                                       boolean varargs, List<String> paramNames) {
+        emitFunctionWrapper(mods, mtype, javaName, access, varargs, paramNames, false, null);
+    }
+
+    protected void emitVirtualFunctionWrapper(String mods, MethodType mtype, String javaName, String access,
+                                     boolean nullCheck, String symbolName) {
+        incrAlign();
+        indent();
+        append(mods + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        String delim = "";
+        List<String> pExprs = new ArrayList<>();
+        int numParams = mtype.parameterCount();
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = "x" + i;
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(delim + " " + pType.getSimpleName() + " " + pName);
+            delim = ", ";
+        }
+        append(") {\n");
+        incrAlign();
+        indent();
         append("var mh$ = ");
         if (nullCheck) {
             append("RuntimeHelper.requireNonNull(");
@@ -334,14 +382,8 @@ abstract class JavaSourceBuilder {
             append("return (" + mtype.returnType().getName() + ")");
         }
         append("mh$.invokeExact(");
-        if (virtual) {
-            append("(Addressable)");
-            append(javaName + "$get(");
-            if (inStruct) {
-                append("segment");
-            }
-            append("), ");
-        }
+        append("(Addressable)");
+        append(javaName + "$get(), ");
         append(String.join(", ", pExprs) + ");\n");
         decrAlign();
         indent();
@@ -356,6 +398,10 @@ abstract class JavaSourceBuilder {
         indent();
         append("}\n");
         decrAlign();
+    }
+
+    protected void emitVirtualFunctionWrapper(String mods, MethodType mtype, String javaName, String access) {
+        emitVirtualFunctionWrapper(mods, mtype, javaName, access, false, null);
     }
 
     int constant_counter = 0;

@@ -83,7 +83,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         emitWithConstantClass(javaName, constantBuilder -> {
             constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, false, varargs)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName)
-                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, false, paramNames, nativeName);
+                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, paramNames, nativeName);
         });
     }
 
@@ -92,7 +92,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         emitWithConstantClass(javaName, constantBuilder -> {
             constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, true, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME)
-                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, false, null);
+                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, null);
         });
     }
 

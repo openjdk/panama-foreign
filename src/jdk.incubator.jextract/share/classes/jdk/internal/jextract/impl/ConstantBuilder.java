@@ -194,16 +194,25 @@ public class ConstantBuilder extends NestedClassBuilder {
         }
 
         MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
-                                          boolean inStruct, List<String> paramNames) {
-            builder.emitFunctionWrapper(mods, accessExpression(), getterNameFunc.apply(getterNameParts()),
-                    mtype, varargs, virtual, inStruct, paramNames);
+                                          List<String> paramNames) {
+            if (virtual) {
+                builder.emitVirtualFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression());
+            } else {
+                builder.emitFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
+                        varargs, paramNames);
+            }
             return this;
         }
 
         MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
-                                          boolean inStruct, List<String> paramNames, String symbolName) {
-            builder.emitFunctionWrapper(mods, accessExpression(), getterNameFunc.apply(getterNameParts()),
-                    mtype, varargs, virtual, inStruct, paramNames, true, symbolName);
+                                          List<String> paramNames, String symbolName) {
+            if (virtual) {
+                builder.emitVirtualFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
+                        true, symbolName);
+            } else {
+                builder.emitFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
+                        varargs, paramNames, true, symbolName);
+            }
             return this;
         }
     }
