@@ -210,10 +210,6 @@ public class ProgrammableUpcallHandler {
             this.mh = mh;
         }
 
-        // Note that 'mh' is not constant -> to fix we need to clone this static invoke method,
-        // gen a wrapper class that implements some (long)void protocol, and invoke that in native code
-        // instead. The call from native is still reflective, but from there up everything should be
-        // inlined/specialized.
         public static void invoke(InterpretedHandler handler, long address) throws Throwable {
             handler.mh.invokeExact(MemoryAddress.ofLong(address));
         }

@@ -24,14 +24,6 @@
 #include <stdlib.h>
 #include "jlong.h"
 
-//void blank(void (*cb)(void)) {
-//    cb();
-//}
-//
-//int identity(int x, int (*cb)(int)) {
-//    return cb(x);
-//}
-
 typedef struct {
     jclass holder;
     jmethodID mid;

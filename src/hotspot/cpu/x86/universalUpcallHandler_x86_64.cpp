@@ -169,7 +169,7 @@ static GrowableArray<ArgMove> compute_argument_shuffle(Method* entry, int& out_a
   VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, total_out_args);
 
   {
-    int i = 0; // skip receiver
+    int i = 0;
     SignatureStream ss(entry->signature());
     for (; !ss.at_return_type(); ss.next()) {
       out_sig_bt[i++] = ss.type();  // Collect remaining bits of signature
@@ -187,7 +187,7 @@ static GrowableArray<ArgMove> compute_argument_shuffle(Method* entry, int& out_a
   VMRegPair* in_regs    = NEW_RESOURCE_ARRAY(VMRegPair, total_in_args);
 
   for (int i = 0; i < total_in_args ; i++ ) {
-    in_sig_bt[i] = out_sig_bt[i+1];
+    in_sig_bt[i] = out_sig_bt[i+1]; // skip receiver
   }
 
   // Now figure out where the args must be stored and how much stack space they require.
@@ -275,34 +275,7 @@ static GrowableArray<ArgMove> compute_argument_shuffle(Method* entry, int& out_a
     arg_order_vmreg.push(move);
   }
 
-  // Calculate the total number of stack slots we will need.
-
-  // First count the abi requirement plus all of the outgoing args
   int stack_slots = SharedRuntime::out_preserve_stack_slots() + out_arg_slots;
-
-  // Now a place (+2) to save return values or temp during shuffling
-  // + 4 for return address (which we own) and saved rbp
-//  stack_slots += 6;
-
-  // Ok The space we have allocated will look like:
-  //
-  //
-  // FP-> |                     |
-  //      |---------------------|
-  //      | 2 slots for moves   |
-  //      |---------------------|
-  //      | outbound memory     |
-  //      | based arguments     |
-  //      |                     |
-  //      |---------------------|
-  //      |                     |
-  // SP-> | out_preserved_slots |
-  //
-  //
-
-  // Now compute actual number of stack words we need rounding to make
-  // stack properly aligned.
-
   out_arg_size_bytes = align_up(stack_slots * VMRegImpl::stack_slot_size, StackAlignmentInBytes);
 
   return arg_order_vmreg;
@@ -593,7 +566,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   assert(conv._rets_length <= 1, "no multi reg returns");
   CodeBuffer buffer("upcall_stub_linkToNative", /* code_size = */ 1024, /* locs_size = */ 1024);
 
-  int stack_alignment_bytes = 16; // for Java and C++ (runtime) calls
   int register_size = sizeof(uintptr_t);
   int buffer_alignment = xmm_reg_size;
 
@@ -626,7 +598,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   ByteSize should_detach_offset = in_ByteSize(auxiliary_saves_offset) + byte_offset_of(AuxiliarySaves, should_detach);
 
   int frame_size = frame_bottom_offset;
-  frame_size = align_up(frame_size, stack_alignment_bytes);
+  frame_size = align_up(frame_size, StackAlignmentInBytes);
 
   // Ok The space we have allocated will look like:
   //
@@ -658,7 +630,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ enter(); // set up frame
   if ((abi._stack_alignment_bytes % 16) != 0) {
     // stack alignment of caller is not a multiple of 16
-    __ andptr(rsp, -stack_alignment_bytes); // align stack
+    __ andptr(rsp, -StackAlignmentInBytes); // align stack
   }
   // allocate frame (frame_size is also aligned, so stack is still aligned)
   __ subptr(rsp, frame_size);
@@ -827,7 +799,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ verify_oop(rax);
   __ vzeroupper();
   __ mov(c_rarg0, rax);
-  __ andptr(rsp, -stack_alignment_bytes); // align stack as required by ABI
+  __ andptr(rsp, -StackAlignmentInBytes); // align stack as required by ABI
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows (not really needed)
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, ProgrammableUpcallHandler::handle_uncaught_exception)));
   __ should_not_reach_here();
