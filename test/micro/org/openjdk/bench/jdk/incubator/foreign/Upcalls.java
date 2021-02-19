@@ -66,6 +66,8 @@ public class Upcalls {
 
     static final long cb_blank_jni;
     static final long cb_identity_jni;
+    static final long cb_args5_jni;
+    static final long cb_args10_jni;
 
     static {
         System.loadLibrary("UpcallsJNI");
@@ -73,6 +75,8 @@ public class Upcalls {
         String className = "org/openjdk/bench/jdk/incubator/foreign/Upcalls";
         cb_blank_jni = makeCB(className, "blank", "()V");
         cb_identity_jni = makeCB(className, "identity", "(I)I");
+        cb_args5_jni = makeCB(className, "args5", "(JDJDJ)V");
+        cb_args10_jni = makeCB(className, "args10", "(JDJDJDJDJD)V");
 
         try {
             LibraryLookup ll = LibraryLookup.ofLibrary("Upcalls");
@@ -136,6 +140,9 @@ public class Upcalls {
 
     static native void blank(long cb);
     static native int identity(int x, long cb);
+    static native void args5(long a0, double a1, long a2, double a3, long a4, long cb);
+    static native void args10(long a0, double a1, long a2, double a3, long a4,
+                              double a5, long a6, double a7, long a8, double a9, long cb);
     static native long makeCB(String holder, String name, String signature);
 
     @Benchmark
@@ -151,6 +158,16 @@ public class Upcalls {
     @Benchmark
     public int jni_identity() throws Throwable {
         return identity(10, cb_identity_jni);
+    }
+
+    @Benchmark
+    public void jni_args5() throws Throwable {
+        args5(1L, 2D, 3L, 4D, 5L, cb_args5_jni);
+    }
+
+    @Benchmark
+    public void jni_args10() throws Throwable {
+        args10(1L, 2D, 3L, 4D, 5L, 6D, 7L, 8D, 9L, 10D, cb_args10_jni);
     }
 
     @Benchmark
