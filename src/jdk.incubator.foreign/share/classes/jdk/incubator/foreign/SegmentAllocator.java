@@ -47,9 +47,20 @@ import java.util.stream.Stream;
  * <blockquote><pre>{@code
 SegmentAllocator defaultAllocator = MemorySegment::allocateNative;
  * }</pre></blockquote>
- * This interface also defines factories for commonly used allocators; for instance, {@link #malloc(Supplier)} returns a
+ * This interface provides a factory, namely {@link SegmentAllocator#of(ResourceScope)} which can be used to obtain
+ * a <em>scoped</em> allocator, that is, an allocator which creates segment bound by a given scope. This can be useful
+ * when working inside a <em>try-with-resources</em> construct:
+ *
+ * <blockquote><pre>{@code
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+   SegmentAllocator allocator = SegmentAllocator.of(scope);
+   ...
+}
+ * }</pre></blockquote>
+ *
+ * In addition, this interface also defines factories for commonly used allocators; for instance, {@link #malloc(Supplier)} returns a
  * native allocator which returns segments backed by separate resources scopes, while {@link #arenaUnbounded(ResourceScope)}
- * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #recycling(MemorySegment)}
+ * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #of(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  */
 @FunctionalInterface
@@ -191,11 +202,11 @@ public interface SegmentAllocator {
         if (MemoryLayouts.ADDRESS.byteSize() != layout.byteSize()) {
             throw new IllegalArgumentException("Layout size mismatch - " + layout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
         }
-        switch ((int)layout.byteSize()) {
-            case 4: return allocate(layout, (int)value.address().toRawLongValue());
-            case 8: return allocate(layout, value.address().toRawLongValue());
-            default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
-        }
+        return switch ((int)layout.byteSize()) {
+            case 4 -> allocate(layout, (int)value.address().toRawLongValue());
+            case 8 -> allocate(layout, value.address().toRawLongValue());
+            default -> throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
+        };
     }
 
     /**
@@ -306,15 +317,15 @@ public interface SegmentAllocator {
         if (MemoryLayouts.ADDRESS.byteSize() != elementLayout.byteSize()) {
             throw new IllegalArgumentException("Layout size mismatch - " + elementLayout.byteSize() + " != " + MemoryLayouts.ADDRESS.byteSize());
         }
-        switch ((int)elementLayout.byteSize()) {
-            case 4: return copyArrayWithSwapIfNeeded(Stream.of(array)
+        return switch ((int)elementLayout.byteSize()) {
+            case 4 -> copyArrayWithSwapIfNeeded(Stream.of(array)
                             .mapToInt(a -> (int)a.address().toRawLongValue()).toArray(),
                     elementLayout, MemorySegment::ofArray);
-            case 8: return copyArrayWithSwapIfNeeded(Stream.of(array)
+            case 8 -> copyArrayWithSwapIfNeeded(Stream.of(array)
                             .mapToLong(a -> a.address().toRawLongValue()).toArray(),
                     elementLayout, MemorySegment::ofArray);
-            default: throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
-        }
+            default -> throw new UnsupportedOperationException("Unsupported pointer size"); // should not get here
+        };
     }
 
     private <Z> MemorySegment copyArrayWithSwapIfNeeded(Z array, ValueLayout elementLayout,
