@@ -28,7 +28,6 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -96,12 +95,12 @@ public class ProgrammableInvoker {
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
                     methodType(Object.class, Addressable.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
-            MH_MAKE_SCOPE = lookup.findStatic(NativeScope.class, "boundedScope",
-                    methodType(NativeScope.class, long.class));
-            MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
+            MH_MAKE_SCOPE = lookup.findStatic(ResourceScope.class, "ofConfined",
+                    methodType(ResourceScope.class));
+            MH_CLOSE_SCOPE = lookup.findVirtual(ResourceScope.class, "close",
                     methodType(void.class));
-            MH_WRAP_SCOPE = lookup.findStatic(Binding.Context.class, "ofNativeScope",
-                    methodType(Binding.Context.class, NativeScope.class));
+            MH_WRAP_SCOPE = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
+                    methodType(Binding.Context.class, ResourceScope.class, long.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
                     methodType(Binding.Context.class, SegmentAllocator.class));
 	    MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
@@ -185,12 +184,6 @@ public class ProgrammableInvoker {
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
             handle = collectArguments(handle, 2, collectorInterp);
             handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
-
-/*
-handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argIndexMap, retIndexMap);
-            handle = handle.asCollector(Object[].class, callingSequence.methodType().parameterCount())
-                                             .asType(callingSequence.methodType().insertParameterTypes(0, SegmentAllocator.class));
-*/
          }
 
         return handle;
@@ -361,7 +354,7 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
         Binding.Context unboxContext = bufferCopySize != 0
-                ? Binding.Context.ofNativeScope(NativeScope.boundedScope(bufferCopySize))
+                ? Binding.Context.ofBoundedAllocator(ResourceScope.ofConfined(), bufferCopySize)
                 : Binding.Context.DUMMY;
         try (unboxContext) {
             // do argument processing, get Object[] as result

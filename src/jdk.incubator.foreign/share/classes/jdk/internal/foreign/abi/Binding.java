@@ -28,7 +28,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -261,8 +260,8 @@ public abstract class Binding {
         /**
          * Create a binding context from given native scope.
          */
-        public static Context ofNativeScope(NativeScope scope) {
-            return new Context(scope, scope);
+        public static Context ofBoundedAllocator(ResourceScope scope, long size) {
+            return new Context(SegmentAllocator.arenaBounded(size, scope), scope);
         }
 
         /**
