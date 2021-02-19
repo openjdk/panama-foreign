@@ -129,11 +129,10 @@ public interface CLinker {
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address.
-     * The provided method type can specify a prefix carrier type (of type {@link SegmentAllocator}); this doesn't affect
-     * the linking process, and the checks associated with it (which are performed as if such prefix type was not there).
-     * In such cases, the resulting method handle will accept an additional prefix argument (of type {@link SegmentAllocator}),
-     * which is used by the linker runtime to allocate structs returned by-value.
+     * which can be used to call a target foreign function at the given address. If the provided method
+     * type's return type is {@code MemorySegment}, then the resulting method handle features an additional
+     * prefix parameter, of type {@link SegmentAllocator}), which will be used by the linker runtime
+     * to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -153,11 +152,11 @@ public interface CLinker {
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address.
-     * The provided method type can specify a prefix carrier type (of type {@link SegmentAllocator}); this doesn't affect
-     * the linking process, and the checks associated with it (which are performed as if such prefix type was not there).
-     * In such cases, the resulting method handle will accept an additional prefix argument (of type {@link SegmentAllocator}),
-     * which is used by the linker runtime to allocate structs returned by-value.
+     * which can be used to call a target foreign function at the given address, which is passed as
+     * the first dynamic parameter to the resulting method handle. If the provided method
+     * type's return type is {@code MemorySegment}, then the resulting method handle features an additional
+     * prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
+     * which will be used by the linker runtime to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
