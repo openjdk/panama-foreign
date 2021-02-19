@@ -461,8 +461,21 @@ public interface SegmentAllocator {
      * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
-    static SegmentAllocator recycling(MemorySegment segment) {
+    static SegmentAllocator of(MemorySegment segment) {
         Objects.requireNonNull(segment);
         return (size, align) -> segment.asSlice(0, size);
+    }
+
+    /**
+     * Returns a native allocator which responds to allocation requests by allocating new segments
+     * bound by the given resource scope, using the {@link MemorySegment#allocateNative(long, long, ResourceScope)}
+     * factory.
+     *
+     * @param scope the resource scope associated to the segments created by the returned allocator.
+     * @return an allocator which allocates new memory segment bound by the provided resource scope.
+     */
+    static SegmentAllocator of(ResourceScope scope) {
+        Objects.requireNonNull(scope);
+        return (size, align) -> MemorySegment.allocateNative(size, align, scope);
     }
 }

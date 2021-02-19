@@ -218,10 +218,11 @@ public class TestScopedOperations {
             MALLOC(scope -> SegmentAllocator.malloc(() -> scope)),
             ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
             ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded),
-            RECYCLING(scope -> {
+            FROM_SEGMENT(scope -> {
                 MemorySegment segment = MemorySegment.allocateNative(10, scope);
-                return SegmentAllocator.recycling(segment);
-            });
+                return SegmentAllocator.of(segment);
+            }),
+            FROM_SCOPED(SegmentAllocator::of);
 
             final Function<ResourceScope, SegmentAllocator> allocatorFactory;
 

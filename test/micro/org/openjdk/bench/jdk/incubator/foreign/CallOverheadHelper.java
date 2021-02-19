@@ -85,7 +85,7 @@ public class CallOverheadHelper {
 
     static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
 
-    static final SegmentAllocator recycling_allocator = SegmentAllocator.recycling(MemorySegment.allocateNative(POINT_LAYOUT));
+    static final SegmentAllocator recycling_allocator = SegmentAllocator.of(MemorySegment.allocateNative(POINT_LAYOUT));
 
     static {
         System.loadLibrary("CallOverheadJNI");

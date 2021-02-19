@@ -98,7 +98,7 @@ public class StrLenTest {
     @Setup
     public void setup() {
         str = makeString(size);
-        segmentAllocator = SegmentAllocator.recycling(MemorySegment.allocateNative(size + 1));
+        segmentAllocator = SegmentAllocator.of(MemorySegment.allocateNative(size + 1));
     }
 
     @TearDown
@@ -114,8 +114,7 @@ public class StrLenTest {
     @Benchmark
     public int panama_strlen() throws Throwable {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
-            MemorySegment segment = CLinker.toCString(str,
-                    (size, align) -> MemorySegment.allocateNative(size, align, scope));
+            MemorySegment segment = CLinker.toCString(str, SegmentAllocator.of(scope));
             return (int)STRLEN.invokeExact(segment.address());
         }
     }
