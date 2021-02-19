@@ -724,7 +724,7 @@ public interface CLinker {
      * A C type kind. Each kind corresponds to a particular C language builtin type, and can be attached to
      * {@link ValueLayout} instances using the {@link MemoryLayout#withAttribute(String, Constable)} in order
      * to obtain a layout which can be classified accordingly by {@link CLinker#downcallHandle(Addressable, MethodType, FunctionDescriptor)}
-     * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor)}.
+     * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}.
      */
     enum TypeKind {
         /**
