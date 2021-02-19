@@ -94,16 +94,18 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
+    static ResourceScope testScope;
     static MemorySegment dummyStub;
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.globalScope());
+        testScope = ResourceScope.ofConfined();
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), testScope);
     }
 
     @AfterClass
     void teardown() {
-        dummyStub.scope().close();
+        testScope.close();
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
@@ -189,7 +191,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemorySegment stub = abi.upcallStub(mh, func, ResourceScope.ofConfined(Cleaner.create()));
+        MemorySegment stub = abi.upcallStub(mh, func, testScope);
         return stub.address();
     }
 
