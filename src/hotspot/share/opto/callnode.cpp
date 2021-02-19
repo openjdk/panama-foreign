@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -632,6 +632,12 @@ void JVMState::set_map_deep(SafePointNode* map) {
   }
 }
 
+// unlike set_map(), this is two-way setting.
+void JVMState::bind_map(SafePointNode* map) {
+  set_map(map);
+  _map->set_jvms(this);
+}
+
 // Adapt offsets in in-array after adding or removing an edge.
 // Prerequisite is that the JVMState is used by only one node.
 void JVMState::adapt_position(int delta) {
@@ -1057,6 +1063,12 @@ Node* CallStaticJavaNode::Ideal(PhaseGVN* phase, bool can_reshape) {
     vmIntrinsics::ID iid = callee->intrinsic_id();
     if (iid == vmIntrinsics::_invokeBasic) {
       if (in(TypeFunc::Parms)->Opcode() == Op_ConP) {
+        phase->C->prepend_late_inline(cg);
+        set_generator(NULL);
+      }
+    } else if(iid == vmIntrinsics::_linkToNative) {
+      if (in(TypeFunc::Parms + callee->arg_size() - 1)->Opcode() == Op_ConP /* NEP */
+          && in(TypeFunc::Parms + 1)->Opcode() == Op_ConL /* address */) {
         phase->C->prepend_late_inline(cg);
         set_generator(NULL);
       }

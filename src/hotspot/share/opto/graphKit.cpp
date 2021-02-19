@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -823,8 +823,7 @@ bool GraphKit::dead_locals_are_killed() {
 
 #endif //ASSERT
 
-// Helper function for enforcing certain bytecodes to reexecute if
-// deoptimization happens
+// Helper function for enforcing certain bytecodes to reexecute if deoptimization happens.
 static bool should_reexecute_implied_by_bytecode(JVMState *jvms, bool is_anewarray) {
   ciMethod* cur_method = jvms->method();
   int       cur_bci   = jvms->bci();
@@ -839,8 +838,9 @@ static bool should_reexecute_implied_by_bytecode(JVMState *jvms, bool is_anewarr
     // is limited by dimensions and guarded by flag so in some cases
     // multianewarray() runtime calls will be generated and
     // the bytecode should not be reexecutes (stack will not be reset).
-  } else
+  } else {
     return false;
+  }
 }
 
 // Helper function for adding JVMState and debug information to node
@@ -894,6 +894,12 @@ void GraphKit::add_safepoint_edges(SafePointNode* call, bool must_throw) {
   // deoptimization happens. We set the reexecute state for them here
   if (out_jvms->is_reexecute_undefined() && //don't change if already specified
       should_reexecute_implied_by_bytecode(out_jvms, call->is_AllocateArray())) {
+#ifdef ASSERT
+    int inputs = 0, not_used; // initialized by GraphKit::compute_stack_effects()
+    assert(method() == youngest_jvms->method(), "sanity");
+    assert(compute_stack_effects(inputs, not_used), "unknown bytecode: %s", Bytecodes::name(java_bc()));
+    assert(out_jvms->sp() >= (uint)inputs, "not enough operands for reexecution");
+#endif // ASSERT
     out_jvms->set_should_reexecute(true); //NOTE: youngest_jvms not changed
   }
 
@@ -2577,8 +2583,13 @@ Node* GraphKit::sign_extend_short(Node* in) {
 }
 
 //-----------------------------make_native_call-------------------------------
-Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNativeEntryPoint* nep) {
-  uint n_filtered_args = nargs - 2; // -fallback, -nep;
+Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, uint nargs, ciNativeEntryPoint* nep) {
+  // Select just the actual call args to pass on
+  // [MethodHandle fallback, long addr, HALF addr, ... args , NativeEntryPoint nep]
+  //                                             |          |
+  //                                             V          V
+  //                                             [ ... args ]
+  uint n_filtered_args = nargs - 4; // -fallback, -addr (2), -nep;
   ResourceMark rm;
   Node** argument_nodes = NEW_RESOURCE_ARRAY(Node*, n_filtered_args);
   const Type** arg_types = TypeTuple::fields(n_filtered_args);
@@ -2588,7 +2599,7 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
   {
     for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
         vm_arg_pos < n_filtered_args; vm_arg_pos++) {
-      uint vm_unfiltered_arg_pos = vm_arg_pos + 1; // +1 to skip fallback handle argument
+      uint vm_unfiltered_arg_pos = vm_arg_pos + 3; // +3 to skip fallback handle argument and addr (2 since long)
       Node* node = argument(vm_unfiltered_arg_pos);
       const Type* type = call_type->domain()->field_at(TypeFunc::Parms + vm_unfiltered_arg_pos);
       VMReg reg = type == Type::HALF
@@ -2624,7 +2635,6 @@ Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, ciNative
     TypeTuple::make(TypeFunc::Parms + n_returns, ret_types)
   );
 
-  address call_addr = nep->entry_point();
   if (nep->need_transition()) {
     BufferBlob* invoker = SharedRuntime::make_native_invoker(call_addr,
                                                              nep->shadow_space(),

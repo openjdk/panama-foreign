@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -124,10 +124,10 @@ public class CallArranger {
         return new Bindings(csb.build(), returnInMemory, argCalc.storageCalculator.nVectorReg);
     }
 
-    public static MethodHandle arrangeDowncall(Addressable addr, MethodType mt, FunctionDescriptor cDesc) {
+    public static MethodHandle arrangeDowncall(MethodType mt, FunctionDescriptor cDesc) {
         Bindings bindings = getBindings(mt, cDesc, false);
 
-        MethodHandle handle = new ProgrammableInvoker(CSysV, addr, bindings.callingSequence).getBoundMethodHandle();
+        MethodHandle handle = new ProgrammableInvoker(CSysV, bindings.callingSequence).getBoundMethodHandle();
         handle = MethodHandles.insertArguments(handle, handle.type().parameterCount() - 1, bindings.nVectorArgs);
 
         if (bindings.isInMemoryReturn) {

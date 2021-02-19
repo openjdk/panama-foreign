@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -48,7 +47,6 @@ import java.nio.ByteOrder;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodType.methodType;
 
 /**
@@ -338,27 +336,6 @@ public abstract class Binding {
                                    BindingInterpreter.LoadFunc loadFunc, Context context);
 
     public abstract MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos);
-
-    private static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
-        MethodType oldType = mh.type();
-        Class<?> sourceType = oldType.parameterType(sourceIndex);
-        Class<?> destType = oldType.parameterType(destIndex);
-        if (sourceType != destType) {
-            // TODO meet?
-            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
-        }
-        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
-        int[] reorder = new int[oldType.parameterCount()];
-        assert destIndex > sourceIndex;
-        for (int i = 0, index = 0; i < reorder.length; i++) {
-            if (i != destIndex) {
-                reorder[i] = index++;
-            } else {
-                reorder[i] = sourceIndex;
-            }
-        }
-        return permuteArguments(mh, newType, reorder);
-    }
 
     private static void checkType(Class<?> type) {
         if (!type.isPrimitive() || type == void.class || type == boolean.class)
@@ -795,7 +772,7 @@ public abstract class Binding {
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle filter = insertArguments(MH_COPY_BUFFER, 1, size, alignment);
             specializedHandle = collectArguments(specializedHandle, insertPos, filter);
-            return mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
         @Override
@@ -864,7 +841,7 @@ public abstract class Binding {
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle allocateBuffer = insertArguments(MH_ALLOCATE_BUFFER, 0, size, alignment);
             specializedHandle = collectArguments(specializedHandle, insertPos, allocateBuffer);
-            return mergeArguments(specializedHandle, allocatorPos, insertPos);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos);
         }
 
         @Override
@@ -1025,7 +1002,7 @@ public abstract class Binding {
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle toSegmentHandle = insertArguments(MH_TO_SEGMENT, 1, size);
             specializedHandle = filterArguments(specializedHandle, insertPos, toSegmentHandle);
-            return Binding.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
         @Override
@@ -1092,7 +1069,7 @@ public abstract class Binding {
          */
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
-            return mergeArguments(specializedHandle, insertPos, insertPos + 1);
+            return SharedUtils.mergeArguments(specializedHandle, insertPos, insertPos + 1);
         }
 
         @Override

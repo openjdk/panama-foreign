@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,13 +91,12 @@ public class SysVx64Linker implements CLinker {
     }
 
     @Override
-    public MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(symbol);
+    public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         return SharedUtils.adaptDowncall(type, function, MH_unboxVaList, sigType -> {
-            MethodType llMt = SharedUtils.convertVaListCarriers(sigType, SysVVaList.CARRIER);
-            return CallArranger.arrangeDowncall(symbol, llMt, function);
+            MethodType llMt = SharedUtils.converVaListCarriers(sigType, SysVVaList.CARRIER);
+            return CallArranger.arrangeDowncall(llMt, function);
         });
     }
 

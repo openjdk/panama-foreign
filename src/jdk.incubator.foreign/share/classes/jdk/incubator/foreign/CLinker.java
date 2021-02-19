@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.ref.CleanerFactory;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
@@ -37,6 +36,7 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
 
@@ -126,8 +126,8 @@ public interface CLinker {
     }
 
     /**
-     * Obtain a foreign method handle, with given type, which can be used to call a
-     * target foreign function at a given address and featuring a given function descriptor.
+     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * which can be used to call a target foreign function at the given address.
      * The provided method type can specify a prefix carrier type (of type {@link SegmentAllocator}); this doesn't affect
      * the linking process, and the checks associated with it (which are performed as if such prefix type was not there).
      * In such cases, the resulting method handle will accept an additional prefix argument (of type {@link SegmentAllocator}),
@@ -143,24 +143,30 @@ public interface CLinker {
      * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
      * in {@code function} is not a {@link GroupLayout}.
      */
-    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
+    default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
+        Objects.requireNonNull(symbol);
+        return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
+    }
+
 
     /**
-     * Allocates a native segment whose base address (see {@link MemorySegment#address}) which can be
-     * passed to other foreign functions (as a function pointer); calling such a function pointer
-     * from native code will result in the execution of the provided method handle.
+     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * which can be used to call a target foreign function at the given address.
+     * The provided method type can specify a prefix carrier type (of type {@link SegmentAllocator}); this doesn't affect
+     * the linking process, and the checks associated with it (which are performed as if such prefix type was not there).
+     * In such cases, the resulting method handle will accept an additional prefix argument (of type {@link SegmentAllocator}),
+     * which is used by the linker runtime to allocate structs returned by-value.
      *
-     * <p>The returned segment is associated with a shared, closeable resource scope. When such scope is closed,
-     * the corresponding native stub will be deallocated.</p>
+     * @see LibraryLookup#lookup(String)
      *
-     * @param target   the target method handle.
+     * @param type     the method type.
      * @param function the function descriptor.
-     * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @return the downcall method handle.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch,
+     * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
+     * in {@code function} is not a {@link GroupLayout}.
      */
-    default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        return upcallStub(target, function, ResourceScope.ofShared());
-    }
+    MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
      * Allocates a native segment whose base address (see {@link MemorySegment#address}) and scope which can be
