@@ -56,6 +56,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -113,13 +114,23 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         LibraryLookup.Symbol addr = lib.lookup(fName).get();
-        MethodHandle mh = abi.downcallHandle(addr, methodType(ret, paramTypes, fields), function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
-        mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
-        Object res = mh.invoke(args);
-        argChecks.forEach(c -> c.accept(args));
-        if (ret == Ret.NON_VOID) {
-            returnChecks.forEach(c -> c.accept(res));
+        MethodType mtype = methodType(ret, paramTypes, fields);
+        MethodHandle mh = abi.downcallHandle(addr, mtype, function(ret, paramTypes, fields));
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] callArgs = args;
+            boolean needsScope = mtype.returnType().equals(MemorySegment.class);
+            if (needsScope) {
+                callArgs = new Object[args.length + 1];
+                System.arraycopy(args, 0, callArgs, 1, args.length);
+                callArgs[0] = scope;
+            }
+            mh = mh.asSpreader(Object[].class, paramTypes.size() + 1 + (needsScope ? 1 : 0));
+            Object res = mh.invoke(callArgs);
+            argChecks.forEach(c -> c.accept(args));
+            if (ret == Ret.NON_VOID) {
+                returnChecks.forEach(c -> c.accept(res));
+            }
         }
     }
 

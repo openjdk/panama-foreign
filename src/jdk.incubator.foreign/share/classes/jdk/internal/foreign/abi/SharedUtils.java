@@ -38,6 +38,7 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.NativeScopeImpl;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -213,9 +214,6 @@ public class SharedUtils {
     }
 
     public static void checkFunctionTypes(MethodType mt, FunctionDescriptor cDesc, long addressSize) {
-        if (mt.parameterCount() > 0 && mt.parameterType(0).equals(SegmentAllocator.class)) {
-            mt = mt.dropParameterTypes(0, 1);
-        }
         if (mt.returnType() == void.class != cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return type mismatch: " + mt + " != " + cDesc);
         List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
@@ -226,8 +224,7 @@ public class SharedUtils {
         for (int i = 0; i < paramCount; i++) {
             checkCompatibleType(mt.parameterType(i), argLayouts.get(i), addressSize);
         }
-        Class<?> ret = mt.returnType();
-        cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(ret, rl, addressSize));
+        cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
     }
 
     public static Class<?> primitiveCarrierForSize(long size) {
@@ -406,20 +403,11 @@ public class SharedUtils {
             sigMethodType = type.dropParameterTypes(0, 1);
         }
         MethodHandle handle = downcallFactory.apply(sigMethodType);
-        if (sigMethodType == type) {
-            handle = prependAllocatorIfNeeded(sigMethodType, handle);
-        }
-        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
-        return handle;
-    }
-
-    static MethodHandle prependAllocatorIfNeeded(MethodType type, MethodHandle handle) {
-        boolean allocatorProvided = type.parameterCount() != 0 &&
-                type.parameterType(0).equals(SegmentAllocator.class);
-        if (!allocatorProvided) {
+        if (!sigMethodType.returnType().equals(MemorySegment.class)) {
+            // not returning segment, just insert default allocator
             handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
         }
-
+        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
 

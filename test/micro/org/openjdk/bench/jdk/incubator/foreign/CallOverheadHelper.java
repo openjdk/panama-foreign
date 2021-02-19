@@ -29,6 +29,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SegmentAllocator;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -83,6 +84,8 @@ public class CallOverheadHelper {
     );
 
     static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
+
+    static final SegmentAllocator recycling_allocator = SegmentAllocator.recycling(MemorySegment.allocateNative(POINT_LAYOUT));
 
     static {
         System.loadLibrary("CallOverheadJNI");
