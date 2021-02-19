@@ -62,6 +62,8 @@ public class StrLenTest {
 
     NativeScope scope = NativeScope.unboundedScope();
 
+    SegmentAllocator segmentAllocator;
+
     @Param({"5", "20", "100"})
     public int size;
     public String str;
@@ -96,6 +98,7 @@ public class StrLenTest {
     @Setup
     public void setup() {
         str = makeString(size);
+        segmentAllocator = SegmentAllocator.recycling(MemorySegment.allocateNative(size + 1));
     }
 
     @TearDown
@@ -123,6 +126,11 @@ public class StrLenTest {
     }
 
     @Benchmark
+    public int panama_strlen_recycle() throws Throwable {
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
+    }
+
+    @Benchmark
     public int panama_strlen_unsafe() throws Throwable {
         MemoryAddress address = makeStringUnsafe(str);
         int res = (int) STRLEN.invokeExact(address);
@@ -142,7 +150,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = CLinker.allocateMemoryRestricted(len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
@@ -152,7 +160,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
