@@ -32,6 +32,8 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -108,7 +110,9 @@ public class StrLenTest {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (MemorySegment segment = CLinker.toCString(str)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = CLinker.toCString(str,
+                    (size, align) -> MemorySegment.allocateNative(size, align, scope));
             return (int)STRLEN.invokeExact(segment.address());
         }
     }

@@ -642,7 +642,7 @@ public class TestByteBuffer {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
         try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10);
+            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.ofConfined());
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
@@ -657,7 +657,7 @@ public class TestByteBuffer {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
         try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10);
+            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.ofConfined());
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
@@ -666,9 +666,10 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(dataProvider="segments")
-    public void buffersAndArraysFromSlices(Supplier<MemorySegment> segmentSupplier) {
-        try (MemorySegment segment = segmentSupplier.get()) {
+    @Test
+    public void buffersAndArraysFromSlices() {
+        try (ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(16, scope);
             int newSize = 8;
             var slice = segment.asSlice(4, newSize);
 
@@ -683,9 +684,10 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(dataProvider="segments")
-    public void viewsFromSharedSegment(Supplier<MemorySegment> segmentSupplier) {
-        try (MemorySegment segment = segmentSupplier.get().share()) {
+    @Test
+    public void viewsFromSharedSegment() {
+        try (ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(16, scope);
             var byteBuffer = segment.asByteBuffer();
             byteBuffer.asReadOnlyBuffer();
             byteBuffer.slice(0, 8);

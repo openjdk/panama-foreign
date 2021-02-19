@@ -98,7 +98,7 @@ public class TestDowncall extends CallGeneratorHelper {
                 // check that return struct has indeed been allocated in the native scope
                 assertEquals(
                         Utils.alignUp(descriptor.returnLayout().get().byteSize(),
-                        descriptor.returnLayout().get().byteAlignment()), scope.allocatedBytes());
+                                descriptor.returnLayout().get().byteAlignment()), scope.allocatedBytes());
             }
         }
     }

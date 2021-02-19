@@ -181,9 +181,9 @@ public class ProgrammableInvoker {
             Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
 
-            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argIndexMap, retIndexMap);
+            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, handle, argIndexMap, retIndexMap);
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
-            handle = collectArguments(handle, 1, collectorInterp);
+            handle = collectArguments(handle, 2, collectorInterp);
             handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
 
 /*
@@ -229,13 +229,15 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
 
         MethodHandle specializedHandle = leafHandle; // initial
 
-        int argInsertPos = 0; // +1 for addr
-        int argAllocatorPos = -1;
+        int argInsertPos = 0;
+        int argContextPos = -1;
+
         if (bufferCopySize > 0) {
-            argAllocatorPos = 1;
-            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Allocator.class);
+            argContextPos = 1;
+            specializedHandle = dropArguments(specializedHandle, argContextPos, Binding.Context.class);
             argInsertPos++;
         }
+
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
             argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
@@ -245,7 +247,7 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
                 if (binding.tag() == Binding.Tag.VM_STORE) {
                     argInsertPos--;
                 } else {
-                    specializedHandle = binding.specialize(specializedHandle, argInsertPos, argAllocatorPos);
+                    specializedHandle = binding.specialize(specializedHandle, argInsertPos, argContextPos);
                 }
             }
         }
@@ -260,8 +262,11 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
                 Binding binding = bindings.get(j);
                 returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
             }
-            returnFilter = insertArguments(returnFilter, retAllocatorPos, DEFAULT_ALLOCATOR);
-            specializedHandle = MethodHandles.filterReturnValue(specializedHandle, returnFilter);
+            returnFilter = MethodHandles.filterArguments(returnFilter, 0, MH_WRAP_ALLOCATOR);
+            specializedHandle = MethodHandles.collectArguments(returnFilter, retInsertPos, specializedHandle);
+            specializedHandle = SharedUtils.swapArguments(specializedHandle, 0, 1);
+        } else {
+            specializedHandle = MethodHandles.dropArguments(specializedHandle, 1, SegmentAllocator.class);
         }
 
         if (bufferCopySize > 0) {
@@ -278,10 +283,10 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
                         2, Addressable.class),
                                    3, MH_CLOSE_SCOPE);
             // Handle takes a SharedUtils.Allocator, so need to wrap our NativeScope
-            specializedHandle = filterArguments(specializedHandle, argAllocatorPos, MH_WRAP_SCOPE);
+            specializedHandle = filterArguments(specializedHandle, argContextPos, MH_WRAP_SCOPE);
             specializedHandle = tryFinally(specializedHandle, closer);
             MethodHandle makeScopeHandle = insertArguments(MH_MAKE_SCOPE, 0, bufferCopySize);
-            specializedHandle = collectArguments(specializedHandle, argAllocatorPos, makeScopeHandle);
+            specializedHandle = collectArguments(specializedHandle, argContextPos, makeScopeHandle);
         }
         return specializedHandle;
     }
@@ -371,7 +376,7 @@ handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argI
             }
 
             // call leaf
-            Object o = leaf.invokeWithArguments(moves);
+            Object o = leaf.invokeWithArguments(leafArgs);
 
             // return value processing
             if (o == null) {

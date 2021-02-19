@@ -73,8 +73,6 @@ public class SharedUtils {
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
 
-    static final Allocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
-
     static {
         try {
             var lookup = MethodHandles.lookup();
@@ -163,33 +161,18 @@ public class SharedUtils {
     public static MethodHandle adaptDowncallForIMR(MethodHandle handle, FunctionDescriptor cDesc) {
         if (handle.type().returnType() != void.class)
             throw new IllegalArgumentException("return expected to be void for in memory returns: " + handle.type());
-        if (handle.type().parameterType(1) != MemoryAddress.class)
-            throw new IllegalArgumentException("MemoryAddress expected as second param: " + handle.type());
+        if (handle.type().parameterType(2) != MemoryAddress.class)
+            throw new IllegalArgumentException("MemoryAddress expected as third param: " + handle.type());
         if (cDesc.returnLayout().isEmpty())
             throw new IllegalArgumentException("Return layout needed: " + cDesc);
 
         MethodHandle ret = identity(MemorySegment.class); // (MemorySegment) MemorySegment
         handle = collectArguments(ret, 1, handle); // (MemorySegment, Addressable, MemoryAddress, ...) MemorySegment
-        handle = collectArguments(handle, 2, MH_BASEADDRESS); // (MemorySegment, Addressable, MemorySegment, ...) MemorySegment
-        handle = mergeArguments(handle, 0, 2);  // (MemorySegment, Addressable, ...) MemorySegment
-        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 0, cDesc.returnLayout().get())); // (Addressable, ...) MemoryAddress
-
-/*
-handle = collectArguments(ret, 1, handle); // (MemorySegment, SegmentAllocator, MemoryAddress ...) MemorySegment
-        handle = collectArguments(handle, 2, MH_BASEADDRESS); // (MemorySegment, SegmentAllocator, MemorySegment ...) MemorySegment
-        MethodType oldType = handle.type(); // (MemorySegment, SegmentAllocator, MemorySegment, ...) MemorySegment
-        MethodType newType = oldType.dropParameterTypes(0, 1); // (MemorySegment, SegmentAllocator, MemorySegment, ...) MemorySegment
-        int[] reorder = IntStream.range(-1, newType.parameterCount()).toArray();
-        reorder[0] = 1; // [1, 0, 1, 2, 3, ...]
-        handle = permuteArguments(handle, newType, reorder); // (SegmentAllocator, MemorySegment, ...) MemorySegment
-        handle = collectArguments(handle, 1, insertArguments(MH_ALLOC_BUFFER, 1, cDesc.returnLayout().get())); // (SegmentAllocator, SegmentAllocator, ...) MemorySegment
-        oldType = handle.type(); // (SegmentAllocator, SegmentAllocator, ...) MemorySegment
-        newType = oldType.dropParameterTypes(0, 1); // (SegmentAllocator, ...) MemorySegment
-        reorder = IntStream.range(-1, newType.parameterCount()).toArray();
-        reorder[0] = 0; // [0, 0, 1, 2, 3, ...]
-        handle = permuteArguments(handle, newType, reorder); // (SegmentAllocator, ...) MemorySegment
-*/
-
+        handle = collectArguments(handle, 3, MH_BASEADDRESS); // (MemorySegment, Addressable, MemorySegment, ...) MemorySegment
+        handle = mergeArguments(handle, 0, 3);  // (MemorySegment, Addressable, ...) MemorySegment
+        handle = collectArguments(handle, 0, insertArguments(MH_ALLOC_BUFFER, 1, cDesc.returnLayout().get())); // (Addressable, ...) MemoryAddress
+        handle = mergeArguments(handle, 0, 2);
+        handle = swapArguments(handle, 0, 1);
         return handle;
     }
 
@@ -330,6 +313,20 @@ handle = collectArguments(ret, 1, handle); // (MemorySegment, SegmentAllocator, 
         return permuteArguments(mh, newType, reorder);
     }
 
+    static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
+        MethodType mtype = mh.type();
+        int[] perms = new int[mtype.parameterCount()];
+        MethodType swappedType = MethodType.methodType(mtype.returnType());
+        for (int i = 0 ; i < perms.length ; i++) {
+            int dst = i;
+            if (i == firstArg) dst = secondArg;
+            if (i == secondArg) dst = firstArg;
+            perms[i] = dst;
+            swappedType = swappedType.appendParameterTypes(mtype.parameterType(dst));
+        }
+        return permuteArguments(mh, swappedType, perms);
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
@@ -420,7 +417,7 @@ handle = collectArguments(ret, 1, handle); // (MemorySegment, SegmentAllocator, 
         boolean allocatorProvided = type.parameterCount() != 0 &&
                 type.parameterType(0).equals(SegmentAllocator.class);
         if (!allocatorProvided) {
-            handle = MethodHandles.insertArguments(handle, 0, Binding.Context.DEFAULT.allocator());
+            handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
         }
 
         return handle;

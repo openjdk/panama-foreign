@@ -26,6 +26,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -78,7 +79,7 @@ public class Upcalls {
 
                 cb_blank = abi.upcallStub(
                     lookup().findStatic(Upcalls.class, "blank", MethodType.methodType(void.class)),
-                    FunctionDescriptor.ofVoid()
+                    FunctionDescriptor.ofVoid(), ResourceScope.globalScope()
                 ).address();
             }
             {
@@ -89,7 +90,7 @@ public class Upcalls {
 
                 cb_identity = abi.upcallStub(
                     lookup().findStatic(Upcalls.class, "identity", MethodType.methodType(int.class, int.class)),
-                    FunctionDescriptor.of(C_INT, C_INT)
+                    FunctionDescriptor.of(C_INT, C_INT), ResourceScope.globalScope()
                 ).address();
             }
         } catch (ReflectiveOperationException e) {

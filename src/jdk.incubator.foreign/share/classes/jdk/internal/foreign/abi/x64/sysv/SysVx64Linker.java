@@ -95,7 +95,7 @@ public class SysVx64Linker implements CLinker {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         return SharedUtils.adaptDowncall(type, function, MH_unboxVaList, sigType -> {
-            MethodType llMt = SharedUtils.converVaListCarriers(sigType, SysVVaList.CARRIER);
+            MethodType llMt = SharedUtils.convertVaListCarriers(sigType, SysVVaList.CARRIER);
             return CallArranger.arrangeDowncall(llMt, function);
         });
     }

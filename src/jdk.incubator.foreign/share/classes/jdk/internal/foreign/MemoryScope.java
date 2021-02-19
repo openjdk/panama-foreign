@@ -389,6 +389,12 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     public static MemoryScope GLOBAL = new MemoryScope( null, null, false, null) {
+
+        @Override
+        public void addOnClose(Runnable runnable) {
+            // do nothing
+        }
+
         @Override
         public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
             // do nothing
