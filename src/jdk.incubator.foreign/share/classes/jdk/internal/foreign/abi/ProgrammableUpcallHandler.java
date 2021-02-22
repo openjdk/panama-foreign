@@ -122,7 +122,7 @@ public class ProgrammableUpcallHandler {
                 .anyMatch(s -> abi.arch.isStackType(s.type()));
         if (USE_INTRINSICS && isSimple && !usesStackArgs && supportsOptimizedUpcalls()) {
             checkPrimitive(doBindings.type());
-            JLI.ensureCustomized(doBindings); // FIXME: consider more flexible scheme to customize upcall entry points
+            JLI.ensureCustomized(doBindings);
             VMStorage[] args = Arrays.stream(argMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
             VMStorage[] rets = Arrays.stream(retMoves).map(Binding.Move::storage).toArray(VMStorage[]::new);
             CallRegs conv = new CallRegs(args, rets);

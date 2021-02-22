@@ -24,13 +24,13 @@
 #include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include "code/codeBlob.hpp"
+#include "code/codeBlob.hpp"
 #include "code/vmreg.inline.hpp"
+#include "compiler/disassembler.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/universalUpcallHandler.hpp"
 #include "runtime/sharedRuntime.hpp"
-#include "code/codeBlob.hpp"
-#include "compiler/disassembler.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 #define __ _masm->
@@ -641,8 +641,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   preserve_callee_saved_registers(_masm, abi, reg_save_area_offset);
 
-  // FIXME: save/restore mxcsr? (see stubGenerator_x86_64.cpp 'generate_call_stub')
-
   __ block_comment("{ get_thread");
   __ vzeroupper();
   __ lea(c_rarg0, Address(rsp, should_detach_offset));
@@ -653,14 +651,13 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ movptr(Address(rsp, thread_offset), r15_thread);
   __ block_comment("} get_thread");
 
-  // FIXME: is it needed?
-  // There might be an active handle block if we do a call from JNI -> Panama
-  // apparently the entry frame allocates a new block in case we need to do another native call
-//  JNIHandleBlock* new_handles = JNIHandleBlock::allocate_block(thread);
-//  _handles      = _thread->active_handles();    // save previous handle block & Java frame linkage
-//  _thread->set_active_handles(new_handles);     // install new handle block and reset Java frame linkage
+  // TODO:
+  // We expect not to be coming from JNI code, but we might be.
+  // We should figure out what our stance is on supporting that and then maybe add
+  // some more handling here for:
+  //   - handle blocks
+  //   - check for active exceptions (and emit an error)
 
-  // FIXME: pending exceptions?
   __ block_comment("{ safepoint poll");
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
 
@@ -713,6 +710,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   __ call(Address(rbx, Method::from_compiled_offset()));
 
+#ifdef ASSERT
   if (conv._rets_length == 1) { // 0 or 1
     VMReg j_expected_result_reg;
     switch (ret_type) {
@@ -736,6 +734,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
     assert(conv._ret_regs[0] == j_expected_result_reg,
      "unexpected result register: %s != %s", conv._ret_regs[0]->name(), j_expected_result_reg->name());
   }
+#endif
 
   __ bind(call_return);
 
@@ -771,7 +770,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
   __ reinit_heapbase();
   __ jmp(L_after_safepoint_poll);
-
   __ block_comment("} L_safepoint_poll_slow_path");
 
   //////////////////////////////////////////////////////////////////////////////
@@ -783,7 +781,6 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages)));
   __ reinit_heapbase();
   __ jmp(L_after_reguard);
-
   __ block_comment("} L_reguard");
 
   //////////////////////////////////////////////////////////////////////////////
@@ -792,7 +789,7 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
   intptr_t exception_handler_offset = __ pc() - start;
 
-  // FIXME: this is always the same, can we bypass and call handle_uncaught_exception directly?
+  // TODO: this is always the same, can we bypass and call handle_uncaught_exception directly?
 
   // native caller has no idea how to handle exceptions
   // we just crash here. Up to callee to catch exceptions.

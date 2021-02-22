@@ -102,7 +102,7 @@ bool frame::safe_for_sender(JavaThread *thread) {
       // an entry frame must have a valid fp.
       return fp_safe && is_entry_frame_valid(thread);
     } else if (is_panama_entry_frame()) {
-      return fp_safe; // && is_entry_frame_valid(thread);
+      return fp_safe;
     }
 
     intptr_t* sender_sp = NULL;
@@ -201,7 +201,7 @@ bool frame::safe_for_sender(JavaThread *thread) {
 
       return thread->is_in_stack_range_excl(jcw, (address)sender.fp());
     } else if (sender_blob->is_entry_blob()) {
-      return false; // FIXME
+      return false;
     }
 
     CompiledMethod* nm = sender_blob->as_compiled_method_or_null();
