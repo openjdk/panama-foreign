@@ -215,9 +215,9 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static void invokeMoves(MemoryAddress buffer, MethodHandle leaf,
-                                   Binding.VMLoad[] argBindings, Binding.VMStore[] returnBindings,
-                                   ABIDescriptor abi, BufferLayout layout) throws Throwable {
+    private static void invokeMoves(MemoryAddress buffer, MethodHandle leaf,
+                                    Binding.VMLoad[] argBindings, Binding.VMStore[] returnBindings,
+                                    ABIDescriptor abi, BufferLayout layout) throws Throwable {
         MemorySegment bufferBase = MemoryAddressImpl.ofLongUnchecked(buffer.toRawLongValue(), layout.size);
 
         if (DEBUG) {
@@ -261,11 +261,11 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static Object invokeInterpBindings(Object[] moves, MethodHandle leaf,
-                                              Map<VMStorage, Integer> argIndexMap,
-                                              Map<VMStorage, Integer> retIndexMap,
-                                              CallingSequence callingSequence,
-                                              long bufferCopySize) throws Throwable {
+    private static Object invokeInterpBindings(Object[] moves, MethodHandle leaf,
+                                               Map<VMStorage, Integer> argIndexMap,
+                                               Map<VMStorage, Integer> retIndexMap,
+                                               CallingSequence callingSequence,
+                                               long bufferCopySize) throws Throwable {
         try (Allocator allocator = SharedUtils.makeAllocator(bufferCopySize)) {
             /// Invoke interpreter, got array of high-level arguments back
             Object[] args = new Object[callingSequence.methodType().parameterCount()];
