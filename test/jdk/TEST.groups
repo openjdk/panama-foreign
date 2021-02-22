@@ -338,7 +338,7 @@ jdk_svc = \
 
 jdk_foreign = \
     java/foreign \
-	-java/foreign/TestMatrix.java
+    -java/foreign/TestMatrix.java
 
 jdk_vector = \
     jdk/incubator/vector
