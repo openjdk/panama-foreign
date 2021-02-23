@@ -29,6 +29,9 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTool;
 import jdk.incubator.jextract.Type;
 
+import jdk.internal.jextract.impl.JavaSourceBuilder.VarInfo;
+import jdk.internal.jextract.impl.JavaSourceBuilder.FunctionInfo;
+
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -265,7 +268,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return false;
         }
 
-        currentBuilder.addFunctionalInterface(name, fitype, fpDesc);
+        currentBuilder.addFunctionalInterface(name, FunctionInfo.ofFunctionPointer(fitype, fpDesc));
         return true;
     }
 
@@ -313,8 +316,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         }
 
-        toplevelBuilder.addFunction(mhName, funcTree.name(), mtype,
-                descriptor, funcTree.type().varargs(), paramNames);
+        toplevelBuilder.addFunction(mhName, funcTree.name(),
+                FunctionInfo.ofFunction(mtype, descriptor, funcTree.type().varargs(), paramNames));
 
         return null;
     }
@@ -448,7 +451,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
-            currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
+            currentBuilder.addVar(fieldName, tree.name(), VarInfo.ofVar(clazz, treeLayout));
             Type.Function funcPtr = getAsFunctionPointer(tree.type(), true);
             if (funcPtr != null) {
                 addFunctionPointerInvoker(funcPtr, fieldName, tree.name());
@@ -481,7 +484,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
 
         MethodType mtype = typeTranslator.getMethodType(funcPtr);
-        currentBuilder.addVirtualFunction(javaName, nativeName, mtype, descriptor);
+        currentBuilder.addVirtualFunction(javaName, nativeName,
+                FunctionInfo.ofFunctionPointer(mtype, descriptor));
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {

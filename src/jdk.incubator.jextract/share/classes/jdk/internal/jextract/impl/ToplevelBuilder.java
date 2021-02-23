@@ -79,13 +79,13 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        nextHeader().addVar(javaName, nativeName, layout, type);
+    public void addVar(String javaName, String nativeName, VarInfo varInfo) {
+        nextHeader().addVar(javaName, nativeName, varInfo);
     }
 
     @Override
-    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
-        nextHeader().addFunction(javaName, nativeName, mtype, desc, varargs, paramNames);
+    public void addFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
+        nextHeader().addFunction(javaName, nativeName, functionInfo);
     }
 
     @Override
@@ -104,8 +104,8 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        nextHeader().addFunctionalInterface(name, mtype, desc);
+    public void addFunctionalInterface(String name, FunctionInfo functionInfo) {
+        nextHeader().addFunctionalInterface(name, functionInfo);
     }
 
     private SplitHeader lastHeader() {

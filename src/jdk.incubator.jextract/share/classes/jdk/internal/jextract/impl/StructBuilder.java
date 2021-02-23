@@ -135,24 +135,24 @@ class StructBuilder extends ConstantBuilder {
     }
 
     @Override
-    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        if (type.equals(MemorySegment.class)) {
-            emitSegmentGetter(javaName, nativeName, layout);
+    public void addVar(String javaName, String nativeName, VarInfo varInfo) {
+        if (varInfo.carrier().equals(MemorySegment.class)) {
+            emitSegmentGetter(javaName, nativeName, varInfo.layout());
         } else {
-            Constant vhConstant = addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), prefixNamesList())
+            Constant vhConstant = addFieldVarHandle(javaName, nativeName, varInfo, layoutField(), prefixNamesList())
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
-            emitFieldGetter(vhConstant, javaName, type);
-            emitFieldSetter(vhConstant, javaName, type);
-            emitIndexedFieldGetter(vhConstant, javaName, type);
-            emitIndexedFieldSetter(vhConstant, javaName, type);
+            emitFieldGetter(vhConstant, javaName, varInfo.carrier());
+            emitFieldSetter(vhConstant, javaName, varInfo.carrier());
+            emitIndexedFieldGetter(vhConstant, javaName, varInfo.carrier());
+            emitIndexedFieldSetter(vhConstant, javaName, varInfo.carrier());
         }
     }
 
     @Override
-    public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
-        Constant mhConst = addMethodHandle(javaName, nativeName, mtype, desc, true, false)
+    public void addVirtualFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
+        Constant mhConst = addMethodHandle(javaName, nativeName, functionInfo, true)
                 .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
-        emitVirtualFunctionWrapper(mhConst, javaName, mtype);
+        emitVirtualFunctionWrapper(mhConst, javaName, functionInfo.methodType());
     }
 
     private void emitVirtualFunctionWrapper(Constant mhConstant, String javaName, MethodType mtype) {
