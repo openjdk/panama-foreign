@@ -46,6 +46,11 @@ public class NestedClassBuilder extends JavaSourceBuilder {
     }
 
     @Override
+    boolean isEnclosedBySameName(String name) {
+        return className().equals(name) || enclosing.isEnclosedBySameName(name);
+    }
+
+    @Override
     String fullName() {
         return enclosing.className() + "." + className();
     }
