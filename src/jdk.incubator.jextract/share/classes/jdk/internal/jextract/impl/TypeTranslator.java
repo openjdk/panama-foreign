@@ -78,7 +78,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
             case 64:
             case 128: return !fp ? long.class : double.class;
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("size: " + (int)layout.bitSize());
         }
     }
 
@@ -103,14 +103,14 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
             case ENUM:
                 return layoutToClass(false, t.tree().layout().orElseThrow(UnsupportedOperationException::new));
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("declaration kind: " + t.tree().kind());
         }
     }
 
     @Override
     public Class<?> visitArray(Type.Array t, Void aVoid) {
         if (t.kind() == Type.Array.Kind.VECTOR) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("vector");
         } else {
             return MemorySegment.class;
         }
@@ -118,7 +118,7 @@ public class TypeTranslator implements Type.Visitor<Class<?>, Void> {
 
     @Override
     public Class<?> visitType(Type t, Void aVoid) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(t.getClass().toString());
     }
 
     Class<?> getJavaType(Type t) {
