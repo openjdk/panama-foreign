@@ -47,7 +47,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /*
@@ -194,22 +196,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private static boolean isVaList(FunctionDescriptor desc) {
-        List<MemoryLayout> argLayouts = desc.argumentLayouts();
-        int size = argLayouts.size();
-        if (size > 0) {
-            MemoryLayout lastLayout = argLayouts.get(size - 1);
-            if (lastLayout instanceof SequenceLayout) {
-                SequenceLayout seq = (SequenceLayout)lastLayout;
-                MemoryLayout elem = seq.elementLayout();
-                // FIXME: hack for now to use internal symbol used by clang for va_list
-                return elem.name().orElse("").equals(VA_LIST_TAG);
-            }
-        }
-
-        return false;
-    }
-
     private static MemoryLayout isUnsupported(MemoryLayout layout) {
         if (layout instanceof ValueLayout) {
             if (UnsupportedLayouts.isUnsupported(layout)) {
@@ -248,52 +234,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     private boolean generateFunctionalInterface(Type.Function func, String name) {
-        name = Utils.javaSafeIdentifier(name);
-        //generate functional interface
-        if (func.varargs() && !func.argumentTypes().isEmpty()) {
-            warn("varargs in callbacks is not supported: " + name);
-            return false;
-        }
-        MethodType fitype = getMethodType(func, false);
-        if (fitype == null) {
-            warn("skipping " + name + " because of unsupported type usage");
-            return false;
-        }
-
-        FunctionDescriptor fpDesc = Type.descriptorFor(func).orElseThrow();
-        MemoryLayout unsupportedLayout = isUnsupported(fpDesc);
-        if (unsupportedLayout != null) {
-            warn("skipping " + name + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
-            return false;
-        }
-
-        currentBuilder.addFunctionalInterface(name, FunctionInfo.ofFunctionPointer(fitype, fpDesc));
-        return true;
+        return functionInfo(func, name, false, FunctionInfo::ofFunctionPointer)
+                .map(fInfo -> { currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo); return true; })
+                .orElse(false);
     }
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
-            return null;
-        }
-
-        FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
-        if (descriptor == null) {
-            //abort
-            return null;
-        }
-
-        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
-        if (unsupportedLayout != null) {
-            warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
-            return null;
-        }
-
-        MethodType mtype = getMethodType(funcTree.type());
-        if (mtype == null) {
-            warn("skipping " + funcTree.name() + " because of unsupported type usage");
             return null;
         }
 
@@ -304,20 +252,25 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                                           .map(Declaration.Variable::name)
                                           .map(p -> !p.isEmpty() ? Utils.javaSafeIdentifier(p) : p)
                                           .collect(Collectors.toList());
-        int i = 0;
-        for (Declaration.Variable param : funcTree.parameters()) {
-            Type.Function f = getAsFunctionPointer(param.type());
-            if (f != null) {
-                String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                if (! generateFunctionalInterface(f, name)) {
-                    return null;
-                }
-                i++;
-            }
-        }
 
-        toplevelBuilder.addFunction(mhName, funcTree.name(),
-                FunctionInfo.ofFunction(mtype, descriptor, funcTree.type().varargs(), paramNames));
+        Optional<FunctionInfo> functionInfo = functionInfo(funcTree.type(), funcTree.name(), true,
+                (mtype, desc) -> FunctionInfo.ofFunction(mtype, desc, funcTree.type().varargs(), paramNames));
+
+        if (functionInfo.isPresent()) {
+            int i = 0;
+            for (Declaration.Variable param : funcTree.parameters()) {
+                Type.Function f = getAsFunctionPointer(param.type());
+                if (f != null) {
+                    String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
+                    if (!generateFunctionalInterface(f, name)) {
+                        return null;
+                    }
+                    i++;
+                }
+            }
+
+            toplevelBuilder.addFunction(mhName, funcTree.name(), functionInfo.get());
+        }
 
         return null;
     }
@@ -451,11 +404,14 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
-            currentBuilder.addVar(fieldName, tree.name(), VarInfo.ofVar(clazz, treeLayout));
+            VarInfo varInfo = VarInfo.ofVar(clazz, treeLayout);
             Type.Function funcPtr = getAsFunctionPointer(tree.type(), true);
             if (funcPtr != null) {
-                addFunctionPointerInvoker(funcPtr, fieldName, tree.name());
+                varInfo = functionInfo(funcPtr, tree.name(), false, FunctionInfo::ofFunctionPointer)
+                        .map(fInfo -> VarInfo.ofFunctionPointerVar(clazz, treeLayout, fInfo))
+                        .orElse(varInfo);
             }
+            currentBuilder.addVar(fieldName, tree.name(), varInfo);
         } else {
             warn("Layout size not available for " + fieldName);
         }
@@ -463,29 +419,31 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    void addFunctionPointerInvoker(Type.Function funcPtr, String javaName, String nativeName) {
+    private Optional<FunctionInfo> functionInfo(Type.Function funcPtr, String nativeName, boolean allowVarargs,
+                                                BiFunction<MethodType, FunctionDescriptor, FunctionInfo> functionInfoFactory) {
         FunctionDescriptor descriptor = Type.descriptorFor(funcPtr).orElse(null);
         if (descriptor == null) {
             //abort
-            return;
+            return Optional.empty();
         }
 
         //generate functional interface
-        if (funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
+        if (!allowVarargs && funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
             warn("varargs in callbacks is not supported: " + funcPtr);
-            return;
+            return Optional.empty();
         }
 
         MemoryLayout unsupportedLayout = isUnsupported(descriptor);
         if (unsupportedLayout != null) {
             warn("skipping " + nativeName + " because of unsupported type usage: " +
                     UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
-            return;
+            return Optional.empty();
         }
 
-        MethodType mtype = typeTranslator.getMethodType(funcPtr);
-        currentBuilder.addVirtualFunction(javaName, nativeName,
-                FunctionInfo.ofFunctionPointer(mtype, descriptor));
+        MethodType mtype = getMethodType(funcPtr, allowVarargs);
+        return mtype != null ?
+                Optional.of(functionInfoFactory.apply(mtype, descriptor)) :
+                Optional.empty();
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {

@@ -145,14 +145,13 @@ class StructBuilder extends ConstantBuilder {
             emitFieldSetter(vhConstant, javaName, varInfo.carrier());
             emitIndexedFieldGetter(vhConstant, javaName, varInfo.carrier());
             emitIndexedFieldSetter(vhConstant, javaName, varInfo.carrier());
+            if (varInfo.functionInfo().isPresent()) {
+                FunctionInfo functionInfo = varInfo.functionInfo().get();
+                Constant mhConstant = addMethodHandle(javaName, nativeName, functionInfo, true)
+                        .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+                emitVirtualFunctionWrapper(mhConstant, javaName, functionInfo.methodType());
+            }
         }
-    }
-
-    @Override
-    public void addVirtualFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
-        Constant mhConst = addMethodHandle(javaName, nativeName, functionInfo, true)
-                .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
-        emitVirtualFunctionWrapper(mhConst, javaName, functionInfo.methodType());
     }
 
     private void emitVirtualFunctionWrapper(Constant mhConstant, String javaName, MethodType mtype) {

@@ -158,10 +158,6 @@ abstract class JavaSourceBuilder {
         throw new UnsupportedOperationException();
     }
 
-    public void addVirtualFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
-        throw new UnsupportedOperationException();
-    }
-
     public void addConstant(String javaName, Class<?> type, Object value) {
         throw new UnsupportedOperationException();
     }

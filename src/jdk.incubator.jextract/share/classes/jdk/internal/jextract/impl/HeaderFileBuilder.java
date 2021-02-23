@@ -76,6 +76,12 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
                 emitGlobalGetter(segmentConstant, vhConstant, javaName, nativeName, varInfo.carrier());
                 emitGlobalSetter(segmentConstant, vhConstant, javaName, nativeName, varInfo.carrier());
+                if (varInfo.functionInfo().isPresent()) {
+                    FunctionInfo functionInfo = varInfo.functionInfo().get();
+                    Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, true)
+                            .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+                    emitVirtualFunctionWrapper(mhConstant, javaName, functionInfo.methodType());
+                }
             });
         }
     }
@@ -86,15 +92,6 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
-        });
-    }
-
-    @Override
-    public void addVirtualFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
-        emitWithConstantClass(javaName, constantBuilder -> {
-            Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, true)
-                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
-            emitVirtualFunctionWrapper(mhConstant, javaName, functionInfo.methodType());
         });
     }
 
