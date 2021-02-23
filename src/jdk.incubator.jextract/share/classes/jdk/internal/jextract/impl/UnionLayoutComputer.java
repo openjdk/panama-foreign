@@ -33,6 +33,7 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,8 +67,7 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     @Override
     MemoryLayout fieldLayout(Cursor c) {
         if (c.isBitField()) {
-            MemoryLayout layout = LayoutUtils.getLayout(c.type());
-            return bitfield((ValueLayout) layout, List.of(super.fieldLayout(c)));
+            return bitfield(List.of(super.fieldLayout(c)));
         } else {
             return super.fieldLayout(c);
         }
@@ -77,15 +77,19 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
     long fieldSize(Cursor c) {
         if (c.type().kind() == TypeKind.IncompleteArray) {
             return 0;
+        } else if (c.isBitField()) {
+            return c.getBitFieldWidth();
+        } else {
+            return c.type().size() * 8;
         }
-        return c.type().size() * 8;
     }
 
     @Override
     MemoryLayout finishLayout() {
-        // size mismatch indicates anonymous bitfield used for padding
+        // size mismatch indicates use of bitfields in union
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
+            // emit an extra padding of expected size to make sure union layout size is computed correctly
             addFieldLayout(MemoryLayout.ofPaddingBits(expectedSize));
         }
 

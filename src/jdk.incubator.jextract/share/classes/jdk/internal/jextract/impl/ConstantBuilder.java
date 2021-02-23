@@ -251,21 +251,21 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         indent();
         append(memberMods() + "MemoryLayout " + fieldName + " = ");
-        emitLayoutString(layout);
+        emitLayoutString(layout, false);
         append(";\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
-    private void emitLayoutString(MemoryLayout l) {
+    private void emitLayoutString(MemoryLayout l, boolean inBitfield) {
         if (l instanceof ValueLayout val) {
-            append(typeToLayoutName(val));
+            append(typeToLayoutName(val, inBitfield));
         } else if (l instanceof SequenceLayout seq) {
             append("MemoryLayout.ofSequence(");
             if (seq.elementCount().isPresent()) {
                 append(seq.elementCount().getAsLong() + ", ");
             }
-            emitLayoutString(seq.elementLayout());
+            emitLayoutString(seq.elementLayout(), false);
             append(")");
         } else if (l instanceof GroupLayout group) {
             if (group.isStruct()) {
@@ -275,10 +275,11 @@ public class ConstantBuilder extends NestedClassBuilder {
             }
             incrAlign();
             String delim = "";
+            boolean isBitfield = group.attribute("BITFIELDS").isPresent();
             for (MemoryLayout e : group.memberLayouts()) {
                 append(delim);
                 indent();
-                emitLayoutString(e);
+                emitLayoutString(e, isBitfield);
                 delim = ",\n";
             }
             append("\n");
@@ -305,7 +306,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(" = ");
         if (desc.returnLayout().isPresent()) {
             append("FunctionDescriptor.of(");
-            emitLayoutString(desc.returnLayout().get());
+            emitLayoutString(desc.returnLayout().get(), false);
             if (!noArgs) {
                 append(",");
             }
@@ -319,7 +320,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             for (MemoryLayout e : desc.argumentLayouts()) {
                 append(delim);
                 indent();
-                emitLayoutString(e);
+                emitLayoutString(e, false);
                 delim = ",\n";
             }
             append("\n");
@@ -359,23 +360,25 @@ public class ConstantBuilder extends NestedClassBuilder {
         return new Constant(className(), javaName, Constant.Kind.ADDRESS);
     }
 
-    private static String typeToLayoutName(ValueLayout vl) {
+    private static String typeToLayoutName(ValueLayout vl, boolean inBitfields) {
         if (UnsupportedLayouts.isUnsupported(vl)) {
             return "MemoryLayout.ofPaddingBits(" + vl.bitSize() + ")";
+        } else if (inBitfields) {
+            return "MemoryLayout.ofValueBits(" + vl.bitSize() + ", ByteOrder.nativeOrder())";
+        } else {
+            CLinker.TypeKind kind = (CLinker.TypeKind) vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
+                    () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
+            return switch (kind) {
+                case CHAR -> "C_CHAR";
+                case SHORT -> "C_SHORT";
+                case INT -> "C_INT";
+                case LONG -> "C_LONG";
+                case LONG_LONG -> "C_LONG_LONG";
+                case FLOAT -> "C_FLOAT";
+                case DOUBLE -> "C_DOUBLE";
+                case POINTER -> "C_POINTER";
+            };
         }
-
-        CLinker.TypeKind kind = (CLinker.TypeKind)vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
-                () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-        return switch (kind) {
-            case CHAR -> "C_CHAR";
-            case SHORT -> "C_SHORT";
-            case INT -> "C_INT";
-            case LONG -> "C_LONG";
-            case LONG_LONG -> "C_LONG_LONG";
-            case FLOAT -> "C_FLOAT";
-            case DOUBLE -> "C_DOUBLE";
-            case POINTER -> "C_POINTER";
-        };
     }
 
     private Constant emitSegmentField(String javaName, String nativeName, MemoryLayout layout) {
