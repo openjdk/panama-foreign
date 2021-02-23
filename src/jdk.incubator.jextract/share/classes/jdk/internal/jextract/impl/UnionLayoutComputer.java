@@ -91,6 +91,8 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
         if (actualSize < expectedSize) {
             // emit an extra padding of expected size to make sure union layout size is computed correctly
             addFieldLayout(MemoryLayout.ofPaddingBits(expectedSize));
+        } else if (actualSize > expectedSize) {
+            throw new AssertionError("Invalid union size - expected: " + expectedSize + "; found: " + actualSize);
         }
 
         MemoryLayout[] fields = fieldLayouts.toArray(new MemoryLayout[0]);
