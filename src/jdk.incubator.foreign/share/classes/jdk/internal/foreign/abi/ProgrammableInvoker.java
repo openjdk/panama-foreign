@@ -200,7 +200,6 @@ public class ProgrammableInvoker {
 
     private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
-        MethodType leafType = leafHandle.type();
 
         MethodHandle specializedHandle = leafHandle; // initial
 

@@ -31,6 +31,8 @@
 #include "memory/resourceArea.hpp"
 #include "prims/universalUpcallHandler.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/signature.hpp"
+#include "utilities/formatBuffer.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 #define __ _masm->

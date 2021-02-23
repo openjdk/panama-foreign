@@ -131,8 +131,7 @@ public class ProgrammableUpcallHandler {
             BufferLayout layout = BufferLayout.of(abi);
             MethodHandle doBindingsErased = doBindings.asSpreader(Object[].class, doBindings.type().parameterCount());
             MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindingsErased, argMoves, retMoves, abi, layout);
-            InterpretedHandler handler = new InterpretedHandler(invokeMoves);
-            entryPoint = allocateUpcallStub(handler, abi, layout);
+            entryPoint = allocateUpcallStub(invokeMoves, abi, layout);
         }
         return () -> entryPoint;
     }
@@ -203,16 +202,8 @@ public class ProgrammableUpcallHandler {
         return specializedHandle;
     }
 
-    private static class InterpretedHandler {
-        private final MethodHandle mh;
-
-        InterpretedHandler(MethodHandle mh) {
-            this.mh = mh;
-        }
-
-        public static void invoke(InterpretedHandler handler, long address) throws Throwable {
-            handler.mh.invokeExact(MemoryAddress.ofLong(address));
-        }
+    public static void invoke(MethodHandle mh, long address) throws Throwable {
+        mh.invokeExact(MemoryAddress.ofLong(address));
     }
 
     private static void invokeMoves(MemoryAddress buffer, MethodHandle leaf,
@@ -307,7 +298,7 @@ public class ProgrammableUpcallHandler {
     private static record CallRegs(VMStorage[] argRegs, VMStorage[] retRegs) {}
 
     public static native long allocateOptimizedUpcallStub(MethodHandle mh, ABIDescriptor abi, CallRegs conv);
-    public static native long allocateUpcallStub(InterpretedHandler handler, ABIDescriptor abi, BufferLayout layout);
+    public static native long allocateUpcallStub(MethodHandle mh, ABIDescriptor abi, BufferLayout layout);
     public static native boolean supportsOptimizedUpcalls();
 
     private static native void registerNatives();

@@ -24,6 +24,7 @@
 #ifndef SHARE_PRIMS_FOREIGN_GLOBALS
 #define SHARE_PRIMS_FOREIGN_GLOBALS
 
+#include "code/vmreg.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"

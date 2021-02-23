@@ -289,7 +289,8 @@ public class CallArranger {
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                             if (offset + copy < layout.byteSize()) {
                                 bindings.dup();
                             }
@@ -322,7 +323,8 @@ public class CallArranger {
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
                             VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, false);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
                             if (i + 1 < group.memberLayouts().size()) {
                                 bindings.dup();
                             }
@@ -391,7 +393,8 @@ public class CallArranger {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
                             bindings.dup();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                             bindings.vmLoad(storage, type)
                                     .bufferStore(offset, type);
                             offset += copy;
@@ -421,7 +424,8 @@ public class CallArranger {
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
                             VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, false);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
                             bindings.dup()
                                     .vmLoad(storage, type)
                                     .bufferStore(offset, type);
