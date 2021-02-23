@@ -26,28 +26,22 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -321,14 +315,5 @@ class Utils {
      */
     private static boolean isPrintableAscii(char ch) {
         return ch >= ' ' && ch <= '~';
-    }
-
-    static Optional<GroupLayout> getContents(MemoryLayout layout) {
-        return layout.attribute("contents").map(GroupLayout.class::cast);
-    }
-
-    @SuppressWarnings("unchecked")
-    static <Z extends MemoryLayout> Z addContents(Z layout, GroupLayout contents) {
-        return (Z) layout.withAttribute("contents", contents);
     }
 }

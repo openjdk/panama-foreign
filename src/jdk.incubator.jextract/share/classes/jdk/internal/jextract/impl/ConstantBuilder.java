@@ -275,7 +275,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             }
             incrAlign();
             String delim = "";
-            boolean isBitfield = group.attribute("BITFIELDS").isPresent();
+            boolean isBitfield = LayoutUtils.isBitfields(group);
             for (MemoryLayout e : group.memberLayouts()) {
                 append(delim);
                 indent();

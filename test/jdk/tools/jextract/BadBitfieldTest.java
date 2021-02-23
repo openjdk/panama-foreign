@@ -61,6 +61,6 @@ public class BadBitfieldTest extends JextractToolRunner {
     @Test
     public void testBadBitfield() {
         run("-d", getOutputFilePath("badBitfieldsGen").toString(),
-                getInputFilePath("badBitfields.h").toString());
+                getInputFilePath("badBitfields.h").toString()).checkSuccess();
     }
 }

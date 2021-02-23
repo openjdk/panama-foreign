@@ -26,9 +26,7 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
@@ -138,7 +136,7 @@ abstract class RecordLayoutComputer {
     }
 
     MemoryLayout bitfield(List<MemoryLayout> sublayouts) {
-        return MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])).withAttribute("BITFIELDS", true);
+        return LayoutUtils.setBitfields(MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
     }
 
     long offsetOf(Type parent, Cursor c) {
