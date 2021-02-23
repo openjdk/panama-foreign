@@ -212,7 +212,7 @@ abstract class JavaSourceBuilder {
 
     // is the name enclosed enclosed by a class of the same name?
     boolean isEnclosedBySameName(String name) {
-        return false;
+        return className().equals(name);
     }
 
     protected void emitPackagePrefix() {
