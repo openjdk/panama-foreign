@@ -81,8 +81,8 @@ public class ConstantBuilder extends NestedClassBuilder {
                 () -> emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames));
     }
 
-    public MethodHandleConstant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean virtual, boolean varargs) {
-        return (MethodHandleConstant)emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
+    public Constant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean virtual, boolean varargs) {
+        return emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
                 () -> emitMethodHandleField(javaName, nativeName, mtype, desc, virtual, varargs));
     }
 
@@ -169,54 +169,6 @@ public class ConstantBuilder extends NestedClassBuilder {
                 l -> l.get(2);
     }
 
-    static class MethodHandleConstant extends Constant {
-
-        final MethodType mtype;
-        final boolean virtual;
-        final boolean varargs;
-
-
-        MethodHandleConstant(String className, String javaName, Kind kind, MethodType mtype, boolean virtual, boolean varargs) {
-            super(className, javaName, kind);
-            this.mtype = mtype;
-            this.virtual = virtual;
-            this.varargs = varargs;
-        }
-
-        @Override
-        MethodHandleConstant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
-            return (MethodHandleConstant)super.emitGetter(builder, mods, getterNameFunc);
-        }
-
-        @Override
-        MethodHandleConstant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
-            return (MethodHandleConstant)super.emitGetter(builder, mods, getterNameFunc, symbolName);
-        }
-
-        MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
-                                          List<String> paramNames) {
-            if (virtual) {
-                builder.emitVirtualFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression());
-            } else {
-                builder.emitFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
-                        varargs, paramNames);
-            }
-            return this;
-        }
-
-        MethodHandleConstant emitFunction(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc,
-                                          List<String> paramNames, String symbolName) {
-            if (virtual) {
-                builder.emitVirtualFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
-                        true, symbolName);
-            } else {
-                builder.emitFunctionWrapper(mods, mtype, getterNameFunc.apply(getterNameParts()), accessExpression(),
-                        varargs, paramNames, true, symbolName);
-            }
-            return this;
-        }
-    }
-
     // private generators
 
     public Constant emitIfAbsent(String name, Constant.Kind kind, Supplier<Constant> constantFactory) {
@@ -233,7 +185,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         return constant;
     }
 
-    private MethodHandleConstant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
+    private Constant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
                                                                 FunctionDescriptor desc, boolean virtual, boolean varargs) {
         Constant functionDesc = addFunctionDesc(javaName, desc);
         incrAlign();
@@ -259,7 +211,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         indent();
         append(");\n");
         decrAlign();
-        return new MethodHandleConstant(className(), javaName, Constant.Kind.METHOD_HANDLE, mtype, virtual, varargs);
+        return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
     }
 
     private Constant emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,

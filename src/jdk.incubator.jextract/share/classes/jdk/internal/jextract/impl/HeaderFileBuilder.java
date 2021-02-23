@@ -24,6 +24,7 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -34,6 +35,7 @@ import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -81,18 +83,18 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
         emitWithConstantClass(javaName, constantBuilder -> {
-            constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, false, varargs)
-                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName)
-                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, paramNames, nativeName);
+            Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, false, varargs)
+                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+            emitFunctionWrapper(mhConstant, javaName, nativeName, mtype, varargs, paramNames);
         });
     }
 
     @Override
     public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
         emitWithConstantClass(javaName, constantBuilder -> {
-            constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, true, false)
-                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME)
-                    .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, null);
+            Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, true, false)
+                    .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
+            emitVirtualFunctionWrapper(mhConstant, javaName, mtype);
         });
     }
 
@@ -121,6 +123,125 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     }
 
     // private generation
+
+    private void emitFunctionWrapper(Constant mhConstant, String javaName, String nativeName, MethodType mtype,
+                                     boolean varargs, List<String> paramNames) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        String delim = "";
+        List<String> pExprs = new ArrayList<>();
+        final int numParams = paramNames.size();
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = paramNames.get(i);
+            if (pName.isEmpty()) {
+                pName = "x" + i;
+            }
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(delim + " " + pType.getSimpleName() + " " + pName);
+            delim = ", ";
+        }
+        if (varargs) {
+            String lastArg = "x" + numParams;
+            if (numParams > 0) {
+                append(", ");
+            }
+            append("Object... " + lastArg);
+            pExprs.add(lastArg);
+        }
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = RuntimeHelper.requireNonNull(");
+        append(mhConstant.accessExpression());
+        append(", \"");
+        append(nativeName);
+        append("\");\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
+        if (!mtype.returnType().equals(void.class)) {
+            append("return (" + mtype.returnType().getName() + ")");
+        }
+        append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
+    private void emitVirtualFunctionWrapper(Constant mhConstant, String javaName, MethodType mtype) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
+        String delim = "";
+        List<String> pExprs = new ArrayList<>();
+        int numParams = mtype.parameterCount();
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = "x" + i;
+            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = mtype.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(delim + " " + pType.getSimpleName() + " " + pName);
+            delim = ", ";
+        }
+        append(") {\n");
+        incrAlign();
+        indent();
+        append("var mh$ = ");
+        append(mhConstant.accessExpression());
+        append(";\n");
+        indent();
+        append("try {\n");
+        incrAlign();
+        indent();
+        if (!mtype.returnType().equals(void.class)) {
+            append("return (" + mtype.returnType().getName() + ")");
+        }
+        append("mh$.invokeExact(");
+        append("(Addressable)");
+        append(javaName + "$get(), ");
+        append(String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("} catch (Throwable ex$) {\n");
+        incrAlign();
+        indent();
+        append("throw new AssertionError(\"should not reach here\", ex$);\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
 
     private void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();

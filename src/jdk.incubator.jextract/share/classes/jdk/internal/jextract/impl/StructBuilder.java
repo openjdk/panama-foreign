@@ -150,16 +150,15 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     public void addVirtualFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc) {
-        addMethodHandle(javaName, nativeName, mtype, desc, true, false)
-                .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME)
-                .emitFunction(this, MEMBER_MODS, Constant.JAVA_NAME, null);
+        Constant mhConst = addMethodHandle(javaName, nativeName, mtype, desc, true, false)
+                .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
+        emitVirtualFunctionWrapper(mhConst, javaName, mtype);
     }
 
-    protected void emitVirtualFunctionWrapper(String mods, MethodType mtype, String javaName, String access,
-                                              boolean nullCheck, String symbolName) {
+    private void emitVirtualFunctionWrapper(Constant mhConstant, String javaName, MethodType mtype) {
         incrAlign();
         indent();
-        append(mods + " ");
+        append(MEMBER_MODS + " ");
         append(mtype.returnType().getSimpleName() + " " + javaName + " (MemorySegment segment");
         List<String> pExprs = new ArrayList<>();
         int numParams = mtype.parameterCount();
@@ -180,15 +179,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append("var mh$ = ");
-        if (nullCheck) {
-            append("RuntimeHelper.requireNonNull(");
-        }
-        append(access);
-        if (nullCheck) {
-            append(",\"");
-            append(symbolName);
-            append("\")");
-        }
+        append(mhConstant.accessExpression());
         append(";\n");
         indent();
         append("try {\n");
