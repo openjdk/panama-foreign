@@ -23,8 +23,8 @@
 
 #pragma pack(1)
 struct Foo {
-    long  a         : 45;
-    long  b         : 24;
-    long  c         : 1;
-    long  d         : 58;
+    long long a: 45;
+    long long b: 24;
+    long long c: 1;
+    long long d: 58;
 };
