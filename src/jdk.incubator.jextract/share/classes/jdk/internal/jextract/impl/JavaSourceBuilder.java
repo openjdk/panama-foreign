@@ -228,6 +228,7 @@ abstract class JavaSourceBuilder {
     protected void emitImportSection() {
         append("import java.lang.invoke.MethodHandle;\n");
         append("import java.lang.invoke.VarHandle;\n");
+        append("import java.nio.ByteOrder;\n");
         append("import java.util.Objects;\n");
         append("import jdk.incubator.foreign.*;\n");
         append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");

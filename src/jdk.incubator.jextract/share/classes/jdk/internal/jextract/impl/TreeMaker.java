@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -299,10 +298,9 @@ class TreeMaker {
                                                                        .collect(Collectors.toSet());
         List<Declaration> newDecls = new ArrayList<>();
         for (MemoryLayout e : ((GroupLayout)layout).memberLayouts()) {
-            Optional<GroupLayout> contents = Utils.getContents(e);
-            if (contents.isPresent()) {
+            if (e instanceof GroupLayout contents && LayoutUtils.isBitfields(contents)) {
                 List<Declaration.Variable> bfDecls = new ArrayList<>();
-                outer: for (MemoryLayout bitfield : contents.get().memberLayouts()) {
+                outer: for (MemoryLayout bitfield : contents.memberLayouts()) {
                     if (bitfield.name().isPresent() && !nestedBitfieldNames.contains(bitfield.name().get())) {
                         Iterator<Declaration> declIt = declarations.iterator();
                         while (declIt.hasNext()) {
@@ -317,7 +315,7 @@ class TreeMaker {
                     }
                 }
                 if (!bfDecls.isEmpty()) {
-                    newDecls.add(Declaration.bitfields(bfDecls.get(0).pos(), "", contents.get(), bfDecls.toArray(new Declaration.Variable[0])));
+                    newDecls.add(Declaration.bitfields(bfDecls.get(0).pos(), "", contents, bfDecls.toArray(new Declaration.Variable[0])));
                 }
             }
         }

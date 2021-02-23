@@ -27,6 +27,7 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Type.Primitive;
 import jdk.internal.clang.Cursor;
@@ -43,6 +44,7 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 public final class LayoutUtils {
 
     public static final String JEXTRACT_ANONYMOUS = "jextract/anonymous";
+    public static final String JEXTRACT_BITFIELDS = "jextract/bitfields";
 
     private LayoutUtils() {}
 
@@ -215,5 +217,14 @@ public final class LayoutUtils {
             case 64 -> Primitive.Kind.LongLong;
             default -> throw new IllegalStateException("Cannot infer container layout");
         };
+    }
+
+    static boolean isBitfields(GroupLayout layout) {
+        return layout.attribute(JEXTRACT_BITFIELDS).isPresent();
+    }
+
+    @SuppressWarnings("unchecked")
+    static <Z extends MemoryLayout> Z setBitfields(Z layout) {
+        return (Z) layout.withAttribute(JEXTRACT_BITFIELDS, true);
     }
 }
