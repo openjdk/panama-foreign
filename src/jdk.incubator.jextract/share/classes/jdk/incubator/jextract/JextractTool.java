@@ -58,7 +58,7 @@ import java.util.stream.Stream;
  * on top of the underlying memory access var handles. For each struct, a static layout field is generated.
  */
 public final class JextractTool {
-    private static final String MESSAGES_RESOURCE = "jdk.internal.jextract.impl.resources.Messages";
+    private static final String MESSAGES_RESOURCE = "jdk.internal.jextract.resources.Messages";
 
     private static final ResourceBundle MESSAGES_BUNDLE;
     static {

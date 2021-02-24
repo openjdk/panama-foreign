@@ -48,19 +48,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class MacroParserImpl {
+class MacroParser {
 
     private final ClangReparser reparser;
     private final TreeMaker treeMaker;
     final MacroTable macroTable;
 
-    private MacroParserImpl(ClangReparser reparser, TreeMaker treeMaker) {
+    private MacroParser(ClangReparser reparser, TreeMaker treeMaker) {
         this.reparser = reparser;
         this.treeMaker = treeMaker;
         this.macroTable = new MacroTable();
     }
 
-    static MacroParserImpl make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
+    static MacroParser make(TreeMaker treeMaker, TranslationUnit tu, Collection<String> args) {
         ClangReparser reparser;
         try {
             reparser = new ClangReparser(tu, args);
@@ -68,7 +68,7 @@ class MacroParserImpl {
             throw new RuntimeException(ex);
         }
 
-        return new MacroParserImpl(reparser, treeMaker);
+        return new MacroParser(reparser, treeMaker);
     }
 
     /**

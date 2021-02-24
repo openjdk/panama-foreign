@@ -58,7 +58,7 @@ public class Parser {
             },
             true, args.toArray(new String[0]));
 
-        MacroParserImpl macroParser = MacroParserImpl.make(treeMaker, tu, args);
+        MacroParser macroParser = MacroParser.make(treeMaker, tu, args);
 
         List<Declaration> decls = new ArrayList<>();
         Cursor tuCursor = tu.getCursor();
