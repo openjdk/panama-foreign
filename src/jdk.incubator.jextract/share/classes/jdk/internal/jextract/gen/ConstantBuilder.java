@@ -34,7 +34,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.jextract.layout.Layouts;
-import jdk.internal.jextract.layout.UnsupportedLayouts;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;

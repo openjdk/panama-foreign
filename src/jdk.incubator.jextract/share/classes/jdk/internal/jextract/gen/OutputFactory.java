@@ -29,7 +29,6 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTool;
 import jdk.incubator.jextract.Type;
 import jdk.internal.jextract.layout.Layouts;
-import jdk.internal.jextract.layout.UnsupportedLayouts;
 
 import javax.tools.JavaFileObject;
 import java.io.IOException;
