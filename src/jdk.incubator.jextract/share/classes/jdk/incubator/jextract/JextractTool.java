@@ -25,12 +25,12 @@
 
 package jdk.incubator.jextract;
 
-import jdk.internal.jextract.impl.ClangException;
-import jdk.internal.jextract.impl.Filter;
-import jdk.internal.jextract.impl.OutputFactory;
-import jdk.internal.jextract.impl.Parser;
-import jdk.internal.jextract.impl.Options;
-import jdk.internal.jextract.impl.Writer;
+import jdk.internal.jextract.parser.ClangException;
+import jdk.internal.jextract.util.Filter;
+import jdk.internal.jextract.gen.OutputFactory;
+import jdk.internal.jextract.parser.Parser;
+import jdk.internal.jextract.util.Options;
+import jdk.internal.jextract.gen.Writer;
 import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
@@ -46,7 +46,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;

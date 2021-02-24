@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.jextract.impl.DeclarationImpl;
+import jdk.internal.jextract.parser.DeclarationImpl;
 
 /**
  * Instances of this class are used to model declaration elements in the foreign language.

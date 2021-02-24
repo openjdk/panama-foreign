@@ -1,4 +1,4 @@
-Files in jdk.internal.clang.libclang package are jextract generated and then modified.
+Files in jdk.internal.jextract.clang.libclang package are jextract generated and then modified.
 jextract was run using "sh extract.sh" on Mac OS.
 
 Manual modifications:

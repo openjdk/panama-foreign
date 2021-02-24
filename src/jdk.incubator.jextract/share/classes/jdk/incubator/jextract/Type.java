@@ -29,9 +29,9 @@ package jdk.incubator.jextract;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.internal.jextract.impl.LayoutUtils;
-import jdk.internal.jextract.impl.TypeImpl;
-import jdk.internal.jextract.impl.UnsupportedLayouts;
+import jdk.internal.jextract.layout.Layouts;
+import jdk.internal.jextract.parser.TypeImpl;
+import jdk.internal.jextract.layout.Layouts;
 
 import java.util.List;
 import java.util.Optional;
@@ -104,7 +104,7 @@ public interface Type {
             /**
              * {@code char16} type.
              */
-            Char16("char16", UnsupportedLayouts.CHAR16),
+            Char16("char16", Layouts.CHAR16),
             /**
              * {@code short} type.
              */
@@ -124,7 +124,7 @@ public interface Type {
             /**
              * {@code int128} type.
              */
-            Int128("__int128", UnsupportedLayouts.__INT128),
+            Int128("__int128", Layouts.__INT128),
             /**
              * {@code float} type.
              */
@@ -136,19 +136,19 @@ public interface Type {
             /**
               * {@code long double} type.
               */
-            LongDouble("long double", UnsupportedLayouts.LONG_DOUBLE),
+            LongDouble("long double", Layouts.LONG_DOUBLE),
             /**
              * {@code float128} type.
              */
-            Float128("float128", UnsupportedLayouts._FLOAT128),
+            Float128("float128", Layouts._FLOAT128),
             /**
              * {@code float16} type.
              */
-            HalfFloat("__fp16", UnsupportedLayouts.__FP16),
+            HalfFloat("__fp16", Layouts.__FP16),
             /**
              * {@code wchar} type.
              */
-            WChar("wchar_t", UnsupportedLayouts.WCHAR_T);
+            WChar("wchar_t", Layouts.WCHAR_T);
 
             private final String typeName;
             private final MemoryLayout layout;
@@ -380,7 +380,7 @@ public interface Type {
      * @return the layout for given type.
      */
     static Optional<MemoryLayout> layoutFor(Type t) {
-        return LayoutUtils.getLayout(t);
+        return Layouts.getLayout(t);
     }
 
     /**
@@ -389,7 +389,7 @@ public interface Type {
      * @return the function descriptor for given function type.
      */
     static Optional<FunctionDescriptor> descriptorFor(Function function) {
-        return LayoutUtils.getDescriptor(function);
+        return Layouts.getDescriptor(function);
     }
 
     /**
