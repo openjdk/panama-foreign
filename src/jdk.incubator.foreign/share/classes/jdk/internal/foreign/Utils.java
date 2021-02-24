@@ -150,12 +150,4 @@ public final class Utils {
         if (!layoutType.isInstance(layout))
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
-
-    public static MemoryScope asScope(ResourceScope scope) {
-        if (scope instanceof NativeScope) {
-            return ((NativeScopeImpl)scope).scope();
-        } else {
-            return (MemoryScope)scope;
-        }
-    }
 }

@@ -15,7 +15,6 @@ public class ArenaAllocator implements SegmentAllocator {
     private static final long MAX_ALLOC_SIZE = BLOCK_SIZE / 2;
 
     private long sp = 0L;
-    private long size = 0L;
 
     public ArenaAllocator(SegmentAllocator allocator) {
         this.allocator = allocator;
@@ -60,19 +59,8 @@ public class ArenaAllocator implements SegmentAllocator {
         } else {
             MemorySegment slice = segment.asSlice(start, bytesSize);
             sp = start + bytesSize;
-            size += Utils.alignUp(bytesSize, bytesAlignment);
             return slice;
         }
-    }
-
-    public synchronized long allocatedBytes() {
-        return size;
-    }
-
-    public OptionalLong byteSize() {
-        return (allocator instanceof OneOffBlockAllocator) ?
-                OptionalLong.of(((OneOffBlockAllocator) allocator).size) :
-                OptionalLong.empty();
     }
 
     public static class OneOffBlockAllocator implements SegmentAllocator {
@@ -86,7 +74,7 @@ public class ArenaAllocator implements SegmentAllocator {
         }
 
         @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        public MemorySegment allocate(long _ignoredSize, long bytesAlignment) {
             if (first) {
                 first = false;
                 return MemorySegment.allocateNative(size, scope);

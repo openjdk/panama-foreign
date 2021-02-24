@@ -56,7 +56,7 @@ import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 @Test
-public class StdLibTest {
+public class StdLibTest extends NativeTestHelper {
 
     final static CLinker abi = CLinker.getInstance();
 
@@ -208,7 +208,7 @@ public class StdLibTest {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment buf = scope.allocate(s1.length() + s2.length() + 1);
                 MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
@@ -221,7 +221,7 @@ public class StdLibTest {
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment ns1 = toCString(s1, scope);
                 MemorySegment ns2 = toCString(s2, scope);
                 return (int)strcmp.invokeExact(ns1.address(), ns2.address());
@@ -229,21 +229,21 @@ public class StdLibTest {
         }
 
         int puts(String msg) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)puts.invokeExact(s.address());
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)strlen.invokeExact(s.address());
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment time = scope.allocate(8);
                 setLong(time, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
@@ -293,12 +293,12 @@ public class StdLibTest {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
 
                 MemorySegment nativeArr = scope.allocateArray(C_INT, arr);
 
                 //call qsort
-                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope);
+                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope.scope());
 
                 qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.address());
 
@@ -317,7 +317,7 @@ public class StdLibTest {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment formatStr = toCString(format, scope);
                 return (int)specializedPrintf(args).invokeExact(formatStr.address(),
                         args.stream().map(a -> a.nativeValue(scope)).toArray());
@@ -325,9 +325,9 @@ public class StdLibTest {
         }
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 MemorySegment formatStr = toCString(format, scope);
-                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope.scope());
                 return (int)vprintf.invokeExact(formatStr.address(), vaList);
             }
         }

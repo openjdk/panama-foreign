@@ -31,9 +31,9 @@ import java.nio.ByteBuffer;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.ref.Cleaner;
 import jdk.internal.ref.CleanerFactory;
 
 import java.io.IOException;
@@ -696,7 +696,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }
 
-        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, Utils.asScope(scope));
+        return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope) scope);
     }
 
     /**
@@ -771,7 +771,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScope scope) throws IOException {
         Objects.requireNonNull(scope);
-        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, Utils.asScope(scope));
+        return MappedMemorySegmentImpl.makeMappedSegment(path, bytesOffset, bytesSize, mapMode, (MemoryScope) scope);
     }
 
     /**

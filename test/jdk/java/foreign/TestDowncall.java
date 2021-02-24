@@ -62,9 +62,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
-import jdk.incubator.foreign.SegmentAllocator;
-import jdk.internal.foreign.Utils;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -82,7 +79,7 @@ public class TestDowncall extends CallGeneratorHelper {
             MethodType mt = methodType(ret, paramTypes, fields);
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
             Object[] args = makeArgs(paramTypes, fields, checks);
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
                 boolean needsScope = mt.returnType().equals(MemorySegment.class);
                 if (needsScope) {
                     Object[] newArgs = new Object[args.length + 1];
@@ -96,9 +93,7 @@ public class TestDowncall extends CallGeneratorHelper {
                     checks.forEach(c -> c.accept(res));
                     if (needsScope) {
                         // check that return struct has indeed been allocated in the native scope
-                        assertEquals(
-                                Utils.alignUp(descriptor.returnLayout().get().byteSize(),
-                                        descriptor.returnLayout().get().byteAlignment()), scope.allocatedBytes());
+                        assertEquals(((MemorySegment)res).scope(), scope);
                     }
                 }
             }

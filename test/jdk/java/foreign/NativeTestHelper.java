@@ -24,6 +24,9 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 
 public class NativeTestHelper {
 
@@ -38,5 +41,32 @@ public class NativeTestHelper {
 
     public static boolean isPointer(MemoryLayout layout) {
         return kind(layout).isPointer();
+    }
+
+    public static class NativeScope implements SegmentAllocator, AutoCloseable {
+        final ResourceScope resourceScope;
+        final ResourceScope.Lock scopeLock;
+        final SegmentAllocator allocator;
+
+        public NativeScope() {
+            this.resourceScope = ResourceScope.ofConfined();
+            this.scopeLock = resourceScope.lock();
+            this.allocator = SegmentAllocator.arenaUnbounded(resourceScope);
+        }
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            return allocator.allocate(bytesSize, bytesAlignment);
+        }
+
+        public ResourceScope scope() {
+            return resourceScope;
+        }
+
+        @Override
+        public void close() {
+            scopeLock.close();
+            resourceScope.close();
+        }
     }
 }

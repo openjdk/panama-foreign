@@ -86,7 +86,6 @@ public class TestNulls {
             MappedMemorySegments.class,
             MemoryLayouts.class,
             MemoryHandles.class,
-            NativeScope.class,
             CLinker.class,
             CLinker.VaList.class,
             CLinker.VaList.Builder.class,
@@ -156,7 +155,6 @@ public class TestNulls {
         addDefaultMapping(GroupLayout.class, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT));
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
-        addDefaultMapping(NativeScope.class, NativeScope.boundedScope(10));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(CLinker.class, CLinker.getInstance());
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);

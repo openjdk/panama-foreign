@@ -56,7 +56,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -65,7 +64,6 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -116,7 +114,7 @@ public class TestUpcall extends CallGeneratorHelper {
         LibraryLookup.Symbol addr = lib.lookup(fName).get();
         MethodType mtype = methodType(ret, paramTypes, fields);
         MethodHandle mh = abi.downcallHandle(addr, mtype, function(ret, paramTypes, fields));
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (NativeScope scope = new NativeScope()) {
             Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             boolean needsScope = mtype.returnType().equals(MemorySegment.class);

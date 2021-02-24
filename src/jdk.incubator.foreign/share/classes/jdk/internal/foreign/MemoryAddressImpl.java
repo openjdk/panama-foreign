@@ -102,7 +102,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
                 cleanupAction,
-                Utils.asScope(scope));
+                (MemoryScope) scope);
     }
 
     public static MemorySegment ofLongUnchecked(long value) {

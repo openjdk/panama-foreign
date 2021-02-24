@@ -24,6 +24,7 @@
 
 /*
  * @test
+ * @library ../
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  *          jdk.incubator.foreign/jdk.internal.foreign.abi
@@ -64,7 +65,7 @@ import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 import static jdk.internal.foreign.PlatformLayouts.*;
 import static org.testng.Assert.*;
 
-public class VaListTest {
+public class VaListTest extends NativeTestHelper {
 
     private static final CLinker abi = CLinker.getInstance();
     private static final LibraryLookup lookup = LibraryLookup.ofLibrary("VaList");
@@ -115,13 +116,13 @@ public class VaListTest {
             = (builder) -> VaList.make(builder, ResourceScope.ofConfined());
 
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> winVaListScopedFactory
-            = Windowsx64Linker::newVaList;
+            = (builder, scope) -> Windowsx64Linker.newVaList(builder, scope.scope());
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> sysvVaListScopedFactory
-            = SysVx64Linker::newVaList;
+            = (builder, scope) -> SysVx64Linker.newVaList(builder, scope.scope());
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> aarch64VaListScopedFactory
-            = AArch64Linker::newVaList;
+            = (builder, scope) -> AArch64Linker.newVaList(builder, scope.scope());
     private static final BiFunction<Consumer<VaList.Builder>, NativeScope, VaList> platformVaListScopedFactory
-            = VaList::make;
+            = (builder, scope) -> VaList.make(builder, scope.scope());
 
     @DataProvider
     @SuppressWarnings("unchecked")
@@ -551,7 +552,7 @@ public class VaListTest {
                                  BiFunction<Integer, VaList, Integer> sumInts,
                                  ValueLayout intLayout) {
         VaList listLeaked;
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (NativeScope scope = new NativeScope()) {
             VaList list = vaListFactory.apply(b -> b.vargFromInt(intLayout, 4)
                             .vargFromInt(intLayout, 8),
                     scope);
@@ -567,7 +568,7 @@ public class VaListTest {
                                 Function<VaList, Integer> sumStruct, // ignored
                                 GroupLayout Point_LAYOUT, VarHandle VH_Point_x, VarHandle VH_Point_y) {
         MemorySegment pointOut;
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (NativeScope scope = new NativeScope()) {
             try (ResourceScope innerScope = ResourceScope.ofConfined()) {
                 MemorySegment pointIn = MemorySegment.allocateNative(Point_LAYOUT, innerScope);
                 VH_Point_x.set(pointIn, 3);

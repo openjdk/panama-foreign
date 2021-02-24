@@ -31,7 +31,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.Utils;
+import jdk.internal.foreign.MemoryScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -979,7 +979,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, Utils.asScope(context.scope));
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemoryScope) context.scope);
         }
 
         @Override

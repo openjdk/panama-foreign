@@ -31,7 +31,6 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -60,9 +59,10 @@ import static jdk.incubator.foreign.CLinker.*;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class StrLenTest {
 
-    NativeScope scope = NativeScope.unboundedScope();
+    ResourceScope scope = ResourceScope.ofConfined();
 
     SegmentAllocator segmentAllocator;
+    SegmentAllocator arenaAllocator = SegmentAllocator.arenaUnbounded(scope);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -121,7 +121,7 @@ public class StrLenTest {
 
     @Benchmark
     public int panama_strlen_scope() throws Throwable {
-        return (int)STRLEN.invokeExact(CLinker.toCString(str, scope).address());
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, arenaAllocator).address());
     }
 
     @Benchmark

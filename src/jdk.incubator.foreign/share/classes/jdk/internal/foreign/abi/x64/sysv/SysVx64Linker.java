@@ -24,18 +24,12 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryScope;
-import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -43,10 +37,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
-
-import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
@@ -106,7 +97,7 @@ public class SysVx64Linker implements CLinker {
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
-        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), Utils.asScope(scope));
+        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (MemoryScope) scope);
     }
 
     public static VaList newVaListOfAddress(MemoryAddress ma) {
