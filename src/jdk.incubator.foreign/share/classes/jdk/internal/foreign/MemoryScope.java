@@ -422,23 +422,25 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
         @Override
         public Lock lock() {
-            return new Lock() {
-                @Override
-                public ResourceScope scope() {
-                    return GLOBAL;
-                }
-
-                @Override
-                public void close() {
-                    // do nothing
-                }
-            };
+            return GLOBAL_LOCK;
         }
 
         @Override
         void release() {
             // do nothing
         }
+
+        final Lock GLOBAL_LOCK = new Lock() {
+            @Override
+            public ResourceScope scope() {
+                return GLOBAL;
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+        };
     };
 
 }

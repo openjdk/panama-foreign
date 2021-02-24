@@ -163,6 +163,7 @@ public interface ResourceScope extends AutoCloseable {
      * @throws IllegalStateException if one of the following condition is met:
      * <ul>
      *     <li>this resource scope is not <em>alive</em>
+     *     <li>this resource scope is not <em>closeable</em> (see {@link #isCloseable()})
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
      *     <li>one or more locks (see {@link #lock()}) associated with this resource scope have not been closed</li>
@@ -197,7 +198,9 @@ public interface ResourceScope extends AutoCloseable {
         ResourceScope scope();
 
         /**
-         * Release the lock on the resource scope associated with this instance.
+         * Release the lock on the resource scope associated with this instance. This method is idempotent,
+         * that is, closing an already closed lock has no effect. This enabled resource scope implementations
+         * to achieve greater efficiencies by e.g. reuse lock instances where possible (e.g. non-closeable scopes).
          */
         @Override
         void close();
