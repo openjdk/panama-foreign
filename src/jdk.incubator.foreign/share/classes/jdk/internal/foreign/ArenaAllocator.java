@@ -16,18 +16,18 @@ public class ArenaAllocator implements SegmentAllocator {
 
     private long sp = 0L;
 
-    public ArenaAllocator(SegmentAllocator allocator) {
-        this.allocator = allocator;
-        this.segment = newSegment(BLOCK_SIZE);
+    public ArenaAllocator(ResourceScope scope) {
+        this(BLOCK_SIZE, scope);
+    }
+
+    ArenaAllocator(long initialSize, ResourceScope scope) {
+        this.allocator = SegmentAllocator.malloc(() -> scope);
+        this.segment = allocator.allocate(initialSize, 1);
     }
 
     MemorySegment newSegment(long size, long align) {
         MemorySegment segment = allocator.allocate(size, align);
         return segment;
-    }
-
-    MemorySegment newSegment(long size) {
-        return newSegment(size, size);
     }
 
     @Override
@@ -63,24 +63,15 @@ public class ArenaAllocator implements SegmentAllocator {
         }
     }
 
-    public static class OneOffBlockAllocator implements SegmentAllocator {
-        boolean first = true;
-        final ResourceScope scope;
-        final long size;
+    public static class BoundedArenaAllocator extends ArenaAllocator {
 
-        public OneOffBlockAllocator(ResourceScope scope, long size) {
-            this.scope = scope;
-            this.size = size;
+        public BoundedArenaAllocator(ResourceScope scope, long size) {
+            super(size, scope);
         }
 
         @Override
-        public MemorySegment allocate(long _ignoredSize, long bytesAlignment) {
-            if (first) {
-                first = false;
-                return MemorySegment.allocateNative(size, scope);
-            } else {
-                throw new OutOfMemoryError("Not enough space left to allocate");
-            }
+        MemorySegment newSegment(long size, long align) {
+            throw new OutOfMemoryError("Not enough space left to allocate");
         }
     }
 }

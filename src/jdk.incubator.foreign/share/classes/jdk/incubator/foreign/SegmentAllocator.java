@@ -424,7 +424,7 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return arena(new ArenaAllocator.OneOffBlockAllocator(scope, size));
+        return new ArenaAllocator.BoundedArenaAllocator(scope, size);
     }
 
     /**
@@ -432,34 +432,17 @@ public interface SegmentAllocator {
      * and then responds to allocation request by returning different slices of the same segment (until no further allocation is possible,
      * in which case a new segment, of the same fixed size, is allocated). This can be useful when clients want to
      * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
-     * region upon each allocation request. This is equivalent to the following code:
-     *
-     * <blockquote><pre>{@code
-    arena(malloc(() -> scope))
-     * }</pre></blockquote>
+     * region upon each allocation request.
+     * <p>
+     * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
+     * the system capacity.
      *
      * @param scope the scope associated with the segments returned by this allocator.
      * @return a new unbounded arena-based allocator
      */
     static SegmentAllocator arenaUnbounded(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return arena(malloc(() -> scope));
-    }
-
-    /**
-     * Returns an arena-based allocator which allocates a memory segment of a certain fixed size (using a given
-     * block allocator) and then responds to allocation request by returning different slices of the same segment
-     * (until no further allocation is possible, in which case a new segment, of the same fixed size, is allocated, also
-     * using the given block allocator). This can be useful when clients want to
-     * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
-     * region upon each allocation request.
-     *
-     * @param blockAllocator the sub-allocator to be used by the returned arena allocator to allocate new memory blocks.
-     * @return a new arena-based allocator
-     */
-    static SegmentAllocator arena(SegmentAllocator blockAllocator) {
-        Objects.requireNonNull(blockAllocator);
-        return new ArenaAllocator(blockAllocator);
+        return new ArenaAllocator(scope);
     }
 
     /**
