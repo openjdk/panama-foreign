@@ -525,8 +525,8 @@ public class VaListTest extends NativeTestHelper {
         };
     }
 
-    @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = ".*Scope is not closeable.*",
+    @Test(expectedExceptions = UnsupportedOperationException.class,
+            expectedExceptionsMessageRegExp = ".*Scope cannot be closed.*",
             dataProvider = "emptyVaLists")
     public void testEmptyNotCloseable(VaList emptyList) {
         emptyList.scope().close();

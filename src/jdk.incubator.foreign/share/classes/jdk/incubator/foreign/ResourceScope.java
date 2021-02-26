@@ -41,8 +41,7 @@ import java.util.Spliterator;
  *
  * <h2>Explicit deallocation</h2>
  *
- * Certain resource scopes can be closed explicitly (see {@link ResourceScope#close()}). To check if a resource scope supports
- * explicit closure, the {@link #isCloseable()} predicate can be used. When a resource scope is closed, it is no longer
+ * Resource scopes can be closed explicitly (see {@link ResourceScope#close()}). When a resource scope is closed, it is no longer
  * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on resources derived from that scope (e.g. attempting to
  * access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
@@ -63,12 +62,10 @@ import java.util.Spliterator;
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
  * becomes <em>unreachable</em>.
  * <p>
- * Managed resource scopes can also be made closeable (see {@link #isCloseable()}), in which
- * case a scope will feature both explicit and implicit deallocation modes. This can be useful to allow for predictable,
- * deterministic resource deallocation, while still prevent accidental native memory leaks.
- * <p>
- * Even when both explicit and implicit deallocation is enabled, cleanup actions associated with a given scope
- * (see {@link #addOnClose(Runnable)}) must be called <em>exactly once</em>.
+ * Managed resource scopes can still be closed explicitly (see {@link #close()}); this can be useful to allow for predictable,
+ * deterministic resource deallocation, while still prevent accidental native memory leaks. In case a managed resource
+ * scope is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
+ * (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
@@ -138,13 +135,6 @@ public interface ResourceScope extends AutoCloseable {
     boolean isAlive();
 
     /**
-     * Is this resource scope closeable?
-     * @return true, if this resource scope is closeable.
-     * @see ResourceScope#close()
-     */
-    boolean isCloseable();
-
-    /**
      * The thread owning this resource scope.
      * @return the thread owning this resource scope, or {@code null} if this resource scope is shared.
      */
@@ -163,11 +153,13 @@ public interface ResourceScope extends AutoCloseable {
      * @throws IllegalStateException if one of the following condition is met:
      * <ul>
      *     <li>this resource scope is not <em>alive</em>
-     *     <li>this resource scope is not <em>closeable</em> (see {@link #isCloseable()})
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
      *     <li>one or more locks (see {@link #lock()}) associated with this resource scope have not been closed</li>
      * </ul>
+     * @throws UnsupportedOperationException if the {@code close} operation is not supported by this resource scope. This
+     * is the case for the resource scope returned by {@link #globalScope()}, or the resource scopes associated to
+     * memory segments created using certain factories (such as {@link MemorySegment#allocateNative(long)}).
      */
     void close();
 
@@ -192,12 +184,6 @@ public interface ResourceScope extends AutoCloseable {
     interface Lock extends AutoCloseable {
 
         /**
-         * The scope being locked by this instance.
-         * @return The scope being locked by this instance.
-         */
-        ResourceScope scope();
-
-        /**
          * Release the lock on the resource scope associated with this instance. This method is idempotent,
          * that is, closing an already closed lock has no effect. This enabled resource scope implementations
          * to achieve greater efficiencies by e.g. reuse lock instances where possible (e.g. non-closeable scopes).
@@ -211,31 +197,29 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new confined scope.
      */
     static ResourceScope ofConfined() {
-        return ofConfined(null, null, true);
+        return ofConfined(null, null);
     }
 
     /**
-     * Create a new confined scope. The resulting scope is not closeable, and is managed by a {@link Cleaner}.
+     * Create a new confined scope managed by a {@link Cleaner}.
      * @param cleaner the cleaner to be associated with the returned scope.
      * @return a new confined scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofConfined(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return ofConfined(null, cleaner, false);
+        return ofConfined(null, cleaner);
     }
 
     /**
-     * Create a new confined scope. The resulting scope might be managed by a {@link Cleaner} (where provided) and might be closeable,
-     * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
-     * scope.
+     * Create a new confined scope. The resulting scope might be managed by a {@link Cleaner} (where provided).
+     * An optional attachment can be associated with the resulting scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new confined scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
      */
-    static ResourceScope ofConfined(Object attachment, Cleaner cleaner, boolean closeable) {
-        return MemoryScope.createConfined(attachment, cleaner, closeable);
+    static ResourceScope ofConfined(Object attachment, Cleaner cleaner) {
+        return MemoryScope.createConfined(attachment, cleaner);
     }
 
     /**
@@ -243,31 +227,29 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new shared scope, managed by {@code cleaner}.
      */
     static ResourceScope ofShared() {
-        return ofShared(null, null, true);
+        return ofShared(null, null);
     }
 
     /**
-     * Create a new shared scope. The resulting scope is not closeable, and is managed by a {@link Cleaner}.
+     * Create a new shared scope managed by a {@link Cleaner}.
      * @param cleaner the cleaner to be associated with the returned scope.
      * @return a new shared scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
     static ResourceScope ofShared(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return ofShared(null, cleaner, false);
+        return ofShared(null, cleaner);
     }
 
     /**
-     * Create a new shared scope. The resulting scope might be managed by a {@link Cleaner} (where provided) and might be closeable,
-     * as specified by the {@code closeable} parameter. An optional attachment can be associated with the resulting
-     * scope.
+     * Create a new shared scope. The resulting scope might be managed by a {@link Cleaner} (where provided).
+     * An optional attachment can be associated with the resulting scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @param closeable whether the returned resource scope can be closed directly, with {@link #close()}).
      * @return a new shared scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
      */
-    static ResourceScope ofShared(Object attachment, Cleaner cleaner, boolean closeable) {
-        return MemoryScope.createShared(attachment, cleaner, closeable);
+    static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
+        return MemoryScope.createShared(attachment, cleaner);
     }
 
     /**
@@ -278,4 +260,3 @@ public interface ResourceScope extends AutoCloseable {
         return MemoryScope.GLOBAL;
     }
 }
-

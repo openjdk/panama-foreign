@@ -263,7 +263,7 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(dataProvider = "mappedOps", expectedExceptions = IllegalStateException.class)
+    @Test(dataProvider = "mappedOps", expectedExceptions = UnsupportedOperationException.class)
     public void testMappedSegmentOperations(MappedSegmentOp mappedBufferOp) throws Throwable {
         File f = new File("test3.out");
         f.createNewFile();
@@ -612,7 +612,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testDeadAccessOnClosedBufferSegment() {
-        MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT);
+        MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT, ResourceScope.ofConfined());
         MemorySegment s2 = MemorySegment.ofByteBuffer(s1.asByteBuffer());
 
         // memory freed

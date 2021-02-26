@@ -127,7 +127,7 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-            expectedExceptions = IllegalStateException.class)
+            expectedExceptions = UnsupportedOperationException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemorySegment segment = MemorySegment.allocateNative(layout);
         segment.scope().close();

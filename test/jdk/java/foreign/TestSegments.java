@@ -116,8 +116,10 @@ public class TestSegments {
     }
 
     static void tryClose(MemorySegment segment) {
-        if (segment.scope().isCloseable()) {
+        try {
             segment.scope().close();
+        } catch (UnsupportedOperationException ex) {
+            // whoops - scope is not closeable
         }
     }
 

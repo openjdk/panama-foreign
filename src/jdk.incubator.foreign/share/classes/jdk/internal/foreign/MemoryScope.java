@@ -80,7 +80,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    final void addInternal(ResourceList.ResourceCleanup resource) {
+    void addInternal(ResourceList.ResourceCleanup resource) {
         try {
             checkValidStateSlow();
             resourceList.add(resource);
@@ -98,8 +98,12 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner, boolean closeable) {
-        return new ConfinedScope(thread, ref, cleaner, closeable);
+    public static MemoryScope createDefault() {
+        return new SharedScope(null, CleanerFactory.cleaner(), false);
+    }
+
+    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
+        return new ConfinedScope(thread, ref, cleaner, true);
     }
 
     /**
@@ -108,8 +112,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a confined memory scope
      */
-    public static MemoryScope createConfined(Object ref, Cleaner cleaner, boolean closeable) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleaner, closeable);
+    public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
+        return new ConfinedScope(Thread.currentThread(), ref, cleaner, true);
     }
 
     /**
@@ -117,8 +121,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a shared memory scope
      */
-    public static MemoryScope createShared(Object ref, Cleaner cleaner, boolean closeable) {
-        return new SharedScope(ref, cleaner, closeable);
+    public static MemoryScope createShared(Object ref, Cleaner cleaner) {
+        return new SharedScope(ref, cleaner, true);
     }
 
     protected final Object ref;
@@ -130,7 +134,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      */
     public final void close() {
         if (!closeable) {
-            throw new IllegalStateException("Scope is not closeable");
+            throw new UnsupportedOperationException("Scope cannot be closed");
         }
         try {
             justClose();
@@ -138,11 +142,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         } finally {
             Reference.reachabilityFence(this);
         }
-    }
-
-    @Override
-    public boolean isCloseable() {
-        return closeable;
     }
 
     abstract void release();
@@ -197,8 +196,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     static class ConfinedScope extends MemoryScope {
 
         private boolean closed; // = false
-        int forkedCount = 0;
-        final Thread owner;
+        private int lockCount = 0;
+        private final Thread owner;
 
         public ConfinedScope(Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
             super(ref, cleaner, closeable, new ResourceList.ConfinedResourceList());
@@ -223,21 +222,22 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         @Override
         public Lock lock() {
             checkValidState();
-            forkedCount++;
-            return new ConfinedLock(this);
+            if (!closeable) return DUMMY_LOCK;
+            lockCount++;
+            return new ConfinedLock();
         }
 
         @Override
         void release() {
-            forkedCount--;
+            lockCount--;
         }
 
         void justClose() {
             this.checkValidState();
-            if (forkedCount == 0) {
+            if (lockCount == 0) {
                 closed = true;
             } else {
-                throw new IllegalStateException("Cannot close a scope which has active forks");
+                throw new IllegalStateException("Scope is acquired by " + lockCount + " locks");
             }
         }
 
@@ -246,20 +246,14 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return owner;
         }
 
-        static class ConfinedLock extends LockImpl {
+        class ConfinedLock implements Lock {
             boolean released = false;
-
-            ConfinedLock(MemoryScope scope) {
-                super(scope);
-            }
 
             @Override
             public void close() {
-                scope.checkValidState(); // thread check
+                checkValidState(); // thread check
                 if (!released) {
-                    scope.release();
-                } else {
-                    throw new IllegalStateException("Already released");
+                    release();
                 }
             }
         }
@@ -276,14 +270,14 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      */
     static class SharedScope extends MemoryScope {
 
-        static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
+        private static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-        final static int ALIVE = 0;
-        final static int CLOSING = -1;
-        final static int CLOSED = -2;
-        final static int MAX_FORKS = Integer.MAX_VALUE;
+        private final static int ALIVE = 0;
+        private final static int CLOSING = -1;
+        private final static int CLOSED = -2;
+        private final static int MAX_FORKS = Integer.MAX_VALUE;
 
-        int state = ALIVE;
+        private int state = ALIVE;
 
         private static final VarHandle STATE;
 
@@ -313,6 +307,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
         @Override
         public Lock lock() {
+            if (!closeable) return DUMMY_LOCK;
             int value;
             do {
                 value = (int)STATE.getVolatile(this);
@@ -324,7 +319,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                     throw new IllegalStateException("Segment acquire limit exceeded");
                 }
             } while (!STATE.compareAndSet(this, value, value + 1));
-            return new SharedLock(this);
+            return new SharedLock();
         }
 
         void release() {
@@ -343,7 +338,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             if (prevState < 0) {
                 throw new IllegalStateException("Already closed");
             } else if (prevState != ALIVE) {
-                throw new IllegalStateException("Cannot close a scope which has active forks");
+                throw new IllegalStateException("Scope is acquired by " + prevState + " locks");
             }
             boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
             STATE.setVolatile(this, success ? CLOSED : ALIVE);
@@ -357,90 +352,24 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return (int)STATE.getVolatile(this) != CLOSED;
         }
 
-        static class SharedLock extends LockImpl {
-            AtomicBoolean released = new AtomicBoolean(false);
-
-            SharedLock(MemoryScope scope) {
-                super(scope);
-            }
+        class SharedLock implements Lock {
+            final AtomicBoolean released = new AtomicBoolean(false);
 
             @Override
             public void close() {
                 if (released.compareAndSet(false, true)) {
-                    scope.release();
-                } else {
-                    throw new IllegalStateException("Already released");
+                    release();
                 }
             }
         }
     }
 
-    static abstract class LockImpl implements Lock {
-        final MemoryScope scope;
-
-        LockImpl(MemoryScope scope) {
-            this.scope = scope;
-        }
-
+    public static MemoryScope GLOBAL = new SharedScope( null, null, false) {
         @Override
-        public ResourceScope scope() {
-            return scope;
-        }
-    }
-
-    public static MemoryScope GLOBAL = new MemoryScope( null, null, false, null) {
-
-        @Override
-        public void addOnClose(Runnable runnable) {
+        void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing
         }
-
-        @Override
-        public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
-            // do nothing
-        }
-
-        @Override
-        void justClose() {
-            // do nothing
-        }
-
-        @Override
-        public Thread ownerThread() {
-            return null;
-        }
-
-        @Override
-        public boolean isAlive() {
-            return true;
-        }
-
-        @Override
-        public void checkValidState() {
-            // do nothing
-        }
-
-        @Override
-        public Lock lock() {
-            return GLOBAL_LOCK;
-        }
-
-        @Override
-        void release() {
-            // do nothing
-        }
-
-        final Lock GLOBAL_LOCK = new Lock() {
-            @Override
-            public ResourceScope scope() {
-                return GLOBAL;
-            }
-
-            @Override
-            public void close() {
-                // do nothing
-            }
-        };
     };
 
+    public final Lock DUMMY_LOCK = () -> { };
 }

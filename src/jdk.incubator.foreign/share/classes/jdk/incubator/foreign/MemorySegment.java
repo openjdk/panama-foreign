@@ -568,7 +568,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(layout.bytesSize(), layout.bytesAlignment(), ResourceScope.ofConfined(Cleaner.create()));
+    allocateNative(layout.bytesSize(), layout.bytesAlignment());
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -578,7 +578,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
      */
     static MemorySegment allocateNative(MemoryLayout layout) {
-        return allocateNative(layout, ResourceScope.ofShared(CleanerFactory.cleaner()));
+        return allocateNative(layout, MemoryScope.createDefault());
     }
 
     /**
@@ -612,7 +612,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
-    allocateNative(bytesSize, 1, ResourceScope.ofShared(Cleaner.create()));
+    allocateNative(bytesSize, 1);
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -651,11 +651,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared, resource scope,
      * which will be automatically closed when the segment (or any slices and views derived from it) is no longer in use.
      * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    allocateNative(bytesSize, alignmentBytes, ResourceScope.ofShared(Cleaner.create()));
-     * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
@@ -666,7 +661,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return allocateNative(bytesSize, alignmentBytes, ResourceScope.ofShared(CleanerFactory.cleaner()));
+        return allocateNative(bytesSize, alignmentBytes, MemoryScope.createDefault());
     }
 
     /**
@@ -729,7 +724,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * write access if the file is opened for writing.
      */
     static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofShared(CleanerFactory.cleaner()));
+        return mapFile(path, bytesOffset, bytesSize, mapMode, MemoryScope.createDefault());
     }
 
     /**

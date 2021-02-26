@@ -25,6 +25,7 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
@@ -227,7 +228,7 @@ public interface CLinker {
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
     default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        return upcallStub(target, function, ResourceScope.ofShared(null, CleanerFactory.cleaner(), false));
+        return upcallStub(target, function, MemoryScope.createDefault());
     }
 
     /**
@@ -665,7 +666,7 @@ public interface CLinker {
          */
         static VaList make(Consumer<Builder> actions) {
             Objects.requireNonNull(actions);
-            return SharedUtils.newVaList(actions, ResourceScope.ofShared(null, CleanerFactory.cleaner(), false));
+            return SharedUtils.newVaList(actions, MemoryScope.createDefault());
         }
 
         /**
