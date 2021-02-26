@@ -117,8 +117,18 @@ public class LoopOverNew {
         unsafe.invokeCleaner(byteBuffer);
     }
 
+    // hack to even out calls to System::gc, which allows us to compare how the implicit segment deallocation
+    // fares compared with ByteBuffer; if there's no call to System.gc() we end up comparing how well the two
+    // act under significant native memory pressure, and here the ByteBuffer API has more juice, since it features
+    // a complex exponential back off with multiple GC retries (see ByteBuffer::allocateDirect). Of course, we
+    // don't care about those cases with segments, as if clients need to allocate/free very frequently
+    // they should just use deterministic deallocation (with confined scope) instead, which delivers much
+    // better performances anyway.
+    static byte gcCount = 0;
+
     @Benchmark
     public void buffer_loop_implicit() {
+        if (gcCount++ == 0) System.gc(); // GC when we overflow
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         for (int i = 0; i < ELEM_SIZE; i++) {
             byteBuffer.putInt(i * CARRIER_SIZE , i);
@@ -127,6 +137,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_implicit() {
+        if (gcCount++ == 0) System.gc(); // GC when we overflow
         MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4);
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);

@@ -28,12 +28,16 @@ package jdk.internal.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
-public abstract class ResourceList {
+public abstract class ResourceList implements Runnable {
     ResourceCleanup fst;
 
     abstract void add(ResourceCleanup cleanup);
 
     abstract void cleanup();
+
+    public final void run() {
+        cleanup(); // cleaner interop
+    }
 
     final void cleanup(ResourceCleanup first) {
         ResourceCleanup current = first;

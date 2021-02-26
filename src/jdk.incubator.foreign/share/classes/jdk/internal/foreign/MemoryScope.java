@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.ref.CleanerFactory;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
@@ -93,8 +94,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         this.resourceList = resourceList;
         this.closeable = closeable;
         if (cleaner != null) {
-            Runnable r = resourceList::cleanup;
-            cleaner.register(this, r);
+            cleaner.register(this, resourceList);
         }
     }
 
