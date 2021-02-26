@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -81,14 +82,7 @@ public class TestDowncall extends CallGeneratorHelper {
             Object[] args = makeArgs(paramTypes, fields, checks);
             try (NativeScope scope = new NativeScope()) {
                 boolean needsScope = mt.returnType().equals(MemorySegment.class);
-                if (needsScope) {
-                    Object[] newArgs = new Object[args.length + 1];
-                    System.arraycopy(args, 0, newArgs, 1, args.length);
-                    newArgs[0] = scope;
-                    args = newArgs;
-                }
-                Object res = doCall(addr, mt, descriptor, args);
-
+                Object res = doCall(addr, scope, mt, descriptor, args);
                 if (ret == Ret.NON_VOID) {
                     checks.forEach(c -> c.accept(res));
                     if (needsScope) {
@@ -100,8 +94,8 @@ public class TestDowncall extends CallGeneratorHelper {
         }
     }
 
-    Object doCall(LibraryLookup.Symbol addr, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
-        MethodHandle mh = abi.downcallHandle(addr, type, descriptor);
+    Object doCall(LibraryLookup.Symbol addr, SegmentAllocator allocator, MethodType type, FunctionDescriptor descriptor, Object[] args) throws Throwable {
+        MethodHandle mh = abi.downcallHandle(addr, allocator, type, descriptor);
         mh = mh.asSpreader(Object[].class, args.length);
         Object res = mh.invoke(args);
         return res;

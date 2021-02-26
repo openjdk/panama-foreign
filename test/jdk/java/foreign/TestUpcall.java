@@ -93,41 +93,30 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static ResourceScope testScope;
     static MemorySegment dummyStub;
 
     @BeforeClass
     void setup() {
-        testScope = ResourceScope.ofConfined();
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), testScope);
-    }
-
-    @AfterClass
-    void teardown() {
-        testScope.close();
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid());
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        List<Consumer<Object>> returnChecks = new ArrayList<>();
-        List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        LibraryLookup.Symbol addr = lib.lookup(fName).get();
-        MethodType mtype = methodType(ret, paramTypes, fields);
-        MethodHandle mh = abi.downcallHandle(addr, mtype, function(ret, paramTypes, fields));
-        try (NativeScope scope = new NativeScope()) {
-            Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
-            Object[] callArgs = args;
-            boolean needsScope = mtype.returnType().equals(MemorySegment.class);
-            if (needsScope) {
-                callArgs = new Object[args.length + 1];
-                System.arraycopy(args, 0, callArgs, 1, args.length);
-                callArgs[0] = scope;
-            }
-            mh = mh.asSpreader(Object[].class, paramTypes.size() + 1 + (needsScope ? 1 : 0));
-            Object res = mh.invoke(callArgs);
-            argChecks.forEach(c -> c.accept(args));
-            if (ret == Ret.NON_VOID) {
-                returnChecks.forEach(c -> c.accept(res));
+        if (fName.equals("f20_S_SSS_DPP")) {
+            List<Consumer<Object>> returnChecks = new ArrayList<>();
+            List<Consumer<Object[]>> argChecks = new ArrayList<>();
+            LibraryLookup.Symbol addr = lib.lookup(fName).get();
+            MethodType mtype = methodType(ret, paramTypes, fields);
+            try (NativeScope scope = new NativeScope()) {
+                MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
+                Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
+                Object[] callArgs = args;
+                mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
+                Object res = mh.invoke(callArgs);
+                argChecks.forEach(c -> c.accept(args));
+                if (ret == Ret.NON_VOID) {
+                    returnChecks.forEach(c -> c.accept(res));
+                }
             }
         }
     }
@@ -200,7 +189,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemorySegment stub = abi.upcallStub(mh, func, testScope);
+        MemorySegment stub = abi.upcallStub(mh, func);
         return stub.address();
     }
 

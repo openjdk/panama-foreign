@@ -562,6 +562,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout.
+     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * the segment (or any slices and views derived from it) is no longer in use.
+     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -569,8 +572,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
@@ -582,7 +583,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout
-     * and resource scope.
+     * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -590,8 +592,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @param scope the segment scope.
@@ -606,7 +606,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes).
-     * The returned segment is associated with a fresh shared, non-closeable resource scope.
+     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * the segment (or any slices and views derived from it) is no longer in use.
+     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -614,8 +616,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
@@ -627,7 +627,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
-     * and resource scope.
+     * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
+     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -635,8 +636,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param scope the segment scope.
@@ -649,7 +648,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * and alignment constraints (in bytes). The returned segment is associated with a fresh shared, non-closeable resource scope.
+     * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared, resource scope,
+     * which will be automatically closed when the segment (or any slices and views derived from it) is no longer in use.
+     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -657,8 +658,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * }</pre></blockquote>
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
@@ -672,11 +671,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * (in bytes), alignment constraint (in bytes) and resource scope.
+     * (in bytes), alignment constraint (in bytes) and resource scope. A client is responsible make sure that the resource
+     * scope associated to the returned segment is closed when the segment is no longer in use.
+     * Failure to do so will result in off-heap memory leaks.
      *
      * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     * Moreover, a client is responsible make sure that the resource scope associated to the returned segment is closed
-     * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
@@ -701,6 +700,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
+     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * the segment (or any slices and views derived from it) is no longer in use. The scope associated with the returned
+     * segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
