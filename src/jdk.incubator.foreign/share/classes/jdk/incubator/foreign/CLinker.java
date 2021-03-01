@@ -631,7 +631,8 @@ public interface CLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
+         * backed by the global resource scope (see {@link ResourceScope#globalScope()}).
          * <p>
          * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -641,9 +642,26 @@ public interface CLinker {
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
         static VaList ofAddressRestricted(MemoryAddress address) {
+            return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
+        }
+
+        /**
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
+         * with given resource scope.
+         * <p>
+         * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+         * restricted methods, and use safe and supported functionalities, where possible.
+         *
+         * @param address a memory address pointing to an existing C {@code va_list}.
+         * @param scope the resource scope to be associated with the returned {@code VaList} instance.
+         * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
+         */
+        static VaList ofAddressRestricted(MemoryAddress address, ResourceScope scope) {
             Utils.checkRestrictedAccess("VaList.ofAddressRestricted");
             Objects.requireNonNull(address);
-            return SharedUtils.newVaListOfAddress(address);
+            Objects.requireNonNull(scope);
+            return SharedUtils.newVaListOfAddress(address, scope);
         }
 
         /**

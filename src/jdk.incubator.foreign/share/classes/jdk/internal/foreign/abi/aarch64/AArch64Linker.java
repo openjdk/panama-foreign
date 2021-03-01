@@ -57,8 +57,8 @@ public class AArch64Linker implements CLinker {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
-            MH_boxVaList = lookup.findStatic(AArch64Linker.class, "newVaListOfAddress",
-                MethodType.methodType(VaList.class, MemoryAddress.class));
+            MH_boxVaList = MethodHandles.insertArguments(lookup.findStatic(AArch64Linker.class, "newVaListOfAddress",
+                MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)), 1, ResourceScope.globalScope());
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -96,8 +96,8 @@ public class AArch64Linker implements CLinker {
         return builder.build();
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma) {
-        return AArch64VaList.ofAddress(ma);
+    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
+        return AArch64VaList.ofAddress(ma, scope);
     }
 
     public static VaList emptyVaList() {

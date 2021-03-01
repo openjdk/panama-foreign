@@ -441,11 +441,11 @@ public class SharedUtils {
             : layout.varHandle(carrier);
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma) {
+    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
         return switch (CABI.current()) {
-            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma);
-            case SysV -> SysVx64Linker.newVaListOfAddress(ma);
-            case AArch64 -> AArch64Linker.newVaListOfAddress(ma);
+            case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
+            case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
+            case AArch64 -> AArch64Linker.newVaListOfAddress(ma, scope);
         };
     }
 

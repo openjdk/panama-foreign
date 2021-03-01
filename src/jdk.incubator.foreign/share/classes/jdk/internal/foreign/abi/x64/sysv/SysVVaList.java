@@ -305,8 +305,8 @@ public class SysVVaList implements VaList {
         return new SysVVaList.Builder(scope);
     }
 
-    public static VaList ofAddress(MemoryAddress ma) {
-        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize()));
+    public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {
+        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize(), scope));
     }
 
     @Override

@@ -61,8 +61,8 @@ public class SysVx64Linker implements CLinker {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
-            MH_boxVaList = lookup.findStatic(SysVx64Linker.class, "newVaListOfAddress",
-                MethodType.methodType(VaList.class, MemoryAddress.class));
+            MH_boxVaList = MethodHandles.insertArguments(lookup.findStatic(SysVx64Linker.class, "newVaListOfAddress",
+                MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)), 1, ResourceScope.globalScope());
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -100,8 +100,8 @@ public class SysVx64Linker implements CLinker {
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (MemoryScope) scope);
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma) {
-        return SysVVaList.ofAddress(ma);
+    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
+        return SysVVaList.ofAddress(ma, scope);
     }
 
     public static VaList emptyVaList() {

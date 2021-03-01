@@ -147,9 +147,9 @@ class WinVaList implements VaList {
         segment = segment.asSlice(layouts.length * VA_SLOT_SIZE_BYTES);
     }
 
-    static WinVaList ofAddress(MemoryAddress addr) {
-        MemorySegment segment = addr.asSegmentRestricted(Long.MAX_VALUE);
-        return new WinVaList(segment, null);
+    static WinVaList ofAddress(MemoryAddress addr, ResourceScope scope) {
+        MemorySegment segment = addr.asSegmentRestricted(Long.MAX_VALUE, scope);
+        return new WinVaList(segment, scope);
     }
 
     static Builder builder(ResourceScope scope) {
