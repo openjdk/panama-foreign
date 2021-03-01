@@ -91,7 +91,7 @@ public class TestUpcall extends CallGeneratorHelper {
         MethodType mtype = methodType(ret, paramTypes, fields);
         try (NativeScope scope = new NativeScope()) {
             MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
             Object res = mh.invoke(callArgs);
@@ -121,17 +121,17 @@ public class TestUpcall extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[0], layouts);
     }
 
-    static Object[] makeArgs(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+    static Object[] makeArgs(NativeScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
         Object[] args = new Object[params.size() + 1];
         for (int i = 0 ; i < params.size() ; i++) {
             args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
         }
-        args[params.size()] = makeCallback(ret, params, fields, checks, argChecks);
+        args[params.size()] = makeCallback(scope, ret, params, fields, checks, argChecks);
         return args;
     }
 
     @SuppressWarnings("unchecked")
-    static MemoryAddress makeCallback(Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static MemoryAddress makeCallback(NativeScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
             return dummyStub.address();
         }
@@ -170,7 +170,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemorySegment stub = abi.upcallStub(mh, func);
+        MemorySegment stub = abi.upcallStub(mh, func, scope.scope());
         return stub.address();
     }
 
