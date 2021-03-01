@@ -27,6 +27,7 @@ package jdk.internal.foreign.abi.x64.windows;
 
 import jdk.incubator.foreign.*;
 import jdk.incubator.foreign.CLinker.VaList;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 
@@ -162,6 +163,7 @@ class WinVaList implements VaList {
 
     @Override
     public VaList copy() {
+        ((MemoryScope)scope).checkValidStateSlow();
         return new WinVaList(segment, scope);
     }
 
@@ -176,6 +178,7 @@ class WinVaList implements VaList {
         private final List<SimpleVaArg> args = new ArrayList<>();
 
         public Builder(ResourceScope scope) {
+            ((MemoryScope)scope).checkValidStateSlow();
             this.scope = scope;
         }
 
