@@ -473,6 +473,11 @@ class SharedRuntime: AllStatic {
   static void    save_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
   static void restore_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
 
+  static void   move32_64(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void   long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void  float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void double_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+
   // Generate a native wrapper for a given method.  The method takes arguments
   // in the Java compiled code convention, marshals them to the native
   // convention (handlizes oops, etc), transitions to native, makes the call,
@@ -521,6 +526,12 @@ class SharedRuntime: AllStatic {
                                          int shadow_space_bytes,
                                          const GrowableArray<VMReg>& input_registers,
                                          const GrowableArray<VMReg>& output_registers);
+
+  static void compute_move_order(const BasicType* in_sig_bt,
+                                 int total_in_args, const VMRegPair* in_regs,
+                                 int total_out_args, VMRegPair* out_regs,
+                                 GrowableArray<int>& arg_order,
+                                 VMRegPair tmp_vmreg);
 
 #ifndef PRODUCT
 
