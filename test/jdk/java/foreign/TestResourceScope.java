@@ -173,6 +173,8 @@ public class TestResourceScope {
             new Thread(() -> {
                 try (ResourceScope.Lock lock = scope.lock()) {
                     waitSomeTime();
+                } catch (IllegalStateException ex) {
+                    // might be already closed - do nothing
                 }
             }).start();
         }
