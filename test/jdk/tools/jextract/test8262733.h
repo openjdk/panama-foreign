@@ -32,3 +32,11 @@ struct Foo {
        float f;
    } x;
 };
+
+struct seg {
+  int x;
+};
+
+struct index {
+  int x;
+};
