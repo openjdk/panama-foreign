@@ -139,15 +139,14 @@ class SystemDictionary : AllStatic {
                                             TRAPS);
 
   // Lookup an already loaded class. If not found NULL is returned.
-  static Klass* find(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS);
+  static InstanceKlass* find_instance_klass(Symbol* class_name, Handle class_loader, Handle protection_domain);
 
   // Lookup an already loaded instance or array class.
   // Do not make any queries to class loaders; consult only the cache.
   // If not found NULL is returned.
   static Klass* find_instance_or_array_klass(Symbol* class_name,
                                              Handle class_loader,
-                                             Handle protection_domain,
-                                             TRAPS);
+                                             Handle protection_domain);
 
   // Lookup an instance or array class that has already been loaded
   // either into the given class loader, or else into another class
@@ -387,7 +386,7 @@ protected:
   static InstanceKlass* load_shared_boot_class(Symbol* class_name,
                                                PackageEntry* pkg_entry,
                                                TRAPS);
-  static Handle compute_loader_lock_object(Handle class_loader);
+  static Handle get_loader_lock_or_null(Handle class_loader);
   static InstanceKlass* find_or_define_instance_class(Symbol* class_name,
                                                       Handle class_loader,
                                                       InstanceKlass* k, TRAPS);

@@ -25,14 +25,12 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SegmentAllocator;
-import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
 import jdk.internal.foreign.abi.ABIDescriptor;
@@ -141,10 +139,10 @@ public class CallArranger {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
-            target = SharedUtils.adaptUpcallForIMR(target);
+            target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
         }
 
-        return new ProgrammableUpcallHandler(CSysV, target, bindings.callingSequence);
+        return ProgrammableUpcallHandler.make(CSysV, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -271,10 +269,11 @@ public class CallArranger {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
-                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
                         if (offset + copy < layout.byteSize()) {
                             bindings.dup();
                         }
+                        boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                         bindings.bufferLoad(offset, type)
                                 .vmStore(storage, type);
                         offset += copy;
@@ -325,7 +324,8 @@ public class CallArranger {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         VMStorage storage = regs[regIndex++];
                         bindings.dup();
-                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                        boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                        Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                         bindings.vmLoad(storage, type)
                                 .bufferStore(offset, type);
                         offset += copy;

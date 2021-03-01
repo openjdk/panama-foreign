@@ -44,8 +44,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
@@ -77,11 +75,7 @@ public class ProgrammableInvoker {
 
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
-
     private static final MethodHandle MH_ADDR_TO_LONG;
-    private static final MethodHandle MH_MAKE_SCOPE;
-    private static final MethodHandle MH_CLOSE_SCOPE;
-    private static final MethodHandle MH_WRAP_SCOPE;
     private static final MethodHandle MH_WRAP_ALLOCATOR;
 
     private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
@@ -95,15 +89,9 @@ public class ProgrammableInvoker {
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
                     methodType(Object.class, Addressable.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
-            MH_MAKE_SCOPE = lookup.findStatic(ResourceScope.class, "ofConfined",
-                    methodType(ResourceScope.class));
-            MH_CLOSE_SCOPE = lookup.findVirtual(ResourceScope.class, "close",
-                    methodType(void.class));
-            MH_WRAP_SCOPE = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
-                    methodType(Binding.Context.class, ResourceScope.class, long.class));
             MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
                     methodType(Binding.Context.class, SegmentAllocator.class));
-	    MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
+            MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
                     methodType(MemoryAddress.class));
             MethodHandle MH_MemoryAddress_toRawLongValue = lookup.findVirtual(MemoryAddress.class, "toRawLongValue",
                     methodType(long.class));
@@ -177,8 +165,8 @@ public class ProgrammableInvoker {
         if (USE_SPEC && isSimple) {
             handle = specialize(handle);
          } else {
-            Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
-            Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
+            Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
+            Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);
 
             handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, handle, argIndexMap, retIndexMap);
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
@@ -218,7 +206,6 @@ public class ProgrammableInvoker {
 
     private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
-        MethodType leafType = leafHandle.type();
 
         MethodHandle specializedHandle = leafHandle; // initial
 
@@ -230,7 +217,6 @@ public class ProgrammableInvoker {
             specializedHandle = dropArguments(specializedHandle, argContextPos, Binding.Context.class);
             argInsertPos++;
         }
-
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
             argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
@@ -263,31 +249,9 @@ public class ProgrammableInvoker {
         }
 
         if (bufferCopySize > 0) {
-            // insert try-finally to close the NativeScope used for Binding.Copy
-            MethodHandle closer = leafType.returnType() == void.class
-                  // (Throwable, Addressable, NativeScope) -> void
-                ? collectArguments(empty(methodType(void.class, Throwable.class, Addressable.class)), 2, MH_CLOSE_SCOPE)
-                  // (Throwable, V, Addressable, NativeScope) -> V
-                : collectArguments( // (Throwable, V, Addressable, NativeScope) -> V
-                    dropArguments( // (Throwable, V, Addressable) -> V
-                        dropArguments( // (Throwable, V) -> V
-                            identity(specializedHandle.type().returnType()), // (V) -> V
-                            0, Throwable.class),
-                        2, Addressable.class),
-                                   3, MH_CLOSE_SCOPE);
-            // Handle takes a SharedUtils.Allocator, so need to wrap our NativeScope
-            specializedHandle = filterArguments(specializedHandle, argContextPos, MH_WRAP_SCOPE);
-            specializedHandle = tryFinally(specializedHandle, closer);
-            MethodHandle makeScopeHandle = insertArguments(MH_MAKE_SCOPE, 0, bufferCopySize);
-            specializedHandle = collectArguments(specializedHandle, argContextPos, makeScopeHandle);
+            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);
         }
         return specializedHandle;
-    }
-
-    private static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
-        return IntStream.range(0, moves.length)
-                        .boxed()
-                        .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
     }
 
     /**

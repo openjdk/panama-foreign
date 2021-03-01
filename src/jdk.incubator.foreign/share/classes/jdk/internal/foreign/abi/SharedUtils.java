@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAccess;
@@ -32,14 +33,13 @@ import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.LibraryLookup;
-import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.aarch64.AArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
@@ -51,13 +51,21 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.dropArguments;
+import static java.lang.invoke.MethodHandles.dropReturn;
+import static java.lang.invoke.MethodHandles.empty;
+import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
 
@@ -66,6 +74,10 @@ public class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
+    private static final MethodHandle MH_MAKE_SCOPE;
+    private static final MethodHandle MH_CLOSE_SCOPE;
+    private static final MethodHandle MH_ALLOCATOR_TO_BINDING_CONTEXT;
+    private static final MethodHandle MH_SCOPE_TO_BINDING_CONTEXT;
 
     static {
         try {
@@ -76,6 +88,14 @@ public class SharedUtils {
                     methodType(MemoryAddress.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));
+            MH_MAKE_SCOPE = lookup.findStatic(ResourceScope.class, "ofConfined",
+                    methodType(ResourceScope.class));
+            MH_CLOSE_SCOPE = lookup.findVirtual(ResourceScope.class, "close",
+                    methodType(void.class));
+            MH_ALLOCATOR_TO_BINDING_CONTEXT = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
+                    methodType(Binding.Context.class, ResourceScope.class, long.class));
+            MH_SCOPE_TO_BINDING_CONTEXT = lookup.findStatic(Binding.Context.class, "ofScope",
+                    methodType(Binding.Context.class, ResourceScope.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -178,11 +198,15 @@ public class SharedUtils {
      * @param target the target handle to adapt
      * @return the adapted handle
      */
-    public static MethodHandle adaptUpcallForIMR(MethodHandle target) {
+    public static MethodHandle adaptUpcallForIMR(MethodHandle target, boolean dropReturn) {
         if (target.type().returnType() != MemorySegment.class)
             throw new IllegalArgumentException("Must return MemorySegment for IMR");
 
         target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemoryAddress, ...) MemoryAddress
+
+        if (dropReturn) { // no handling for return value, need to drop it
+            target = dropReturn(target);
+        }
 
         return target;
     }
@@ -220,15 +244,23 @@ public class SharedUtils {
         cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
     }
 
-    public static Class<?> primitiveCarrierForSize(long size) {
-        if (size == 1) {
-            return byte.class;
-        } else if(size == 2) {
-            return short.class;
-        } else if (size <= 4) {
-            return int.class;
-        } else if (size <= 8) {
-            return long.class;
+    public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
+        if (useFloat) {
+            if (size == 4) {
+                return float.class;
+            } else if (size == 8) {
+                return double.class;
+            }
+        } else {
+            if (size == 1) {
+                return byte.class;
+            } else if (size == 2) {
+                return short.class;
+            } else if (size <= 4) {
+                return int.class;
+            } else if (size <= 8) {
+                return long.class;
+            }
         }
 
         throw new IllegalArgumentException("Size too large: " + size);
@@ -282,6 +314,12 @@ public class SharedUtils {
         return size;
     }
 
+    static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
+        return IntStream.range(0, moves.length)
+                        .boxed()
+                        .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
+    }
+
     static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
         MethodType oldType = mh.type();
         Class<?> sourceType = oldType.parameterType(sourceIndex);
@@ -303,6 +341,7 @@ public class SharedUtils {
         return permuteArguments(mh, newType, reorder);
     }
 
+
     static MethodHandle swapArguments(MethodHandle mh, int firstArg, int secondArg) {
         MethodType mtype = mh.type();
         int[] perms = new int[mtype.parameterCount()];
@@ -315,6 +354,47 @@ public class SharedUtils {
             swappedType = swappedType.appendParameterTypes(mtype.parameterType(dst));
         }
         return permuteArguments(mh, swappedType, perms);
+    }
+
+    static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
+                                          int allocatorPos, long bufferCopySize,
+                                          boolean upcall) {
+        // insert try-finally to close the NativeScope used for Binding.Copy
+        MethodHandle closer;
+        int insertPos;
+        if (specializedHandle.type().returnType() == void.class) {
+            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            insertPos = 1;
+        } else {
+            closer = identity(specializedHandle.type().returnType()); // (V) -> V
+            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+            insertPos = 2;
+        }
+
+        // downcalls get the leading Addressable/SegmentAllocator param as well
+        if (!upcall) {
+            closer = dropArguments(closer, insertPos, Addressable.class, SegmentAllocator.class); // (Throwable, V?, Addressable, SegmentAllocator) -> V/void
+            insertPos+=2;
+        }
+
+        closer = collectArguments(closer, insertPos, MH_CLOSE_SCOPE); // (Throwable, V?, Addressable?, ResourceScope) -> V/void
+
+        MethodHandle scopeFilter;
+
+        if (bufferCopySize > 0) {
+            scopeFilter = MethodHandles.insertArguments(MH_ALLOCATOR_TO_BINDING_CONTEXT, 1, bufferCopySize);
+        } else if (upcall) {
+            scopeFilter = MH_SCOPE_TO_BINDING_CONTEXT;
+        } else {
+            // this path is probably never used now, since ProgrammableInvoker never calls this routine with bufferCopySize == 0
+            scopeFilter = insertArguments(identity(Binding.Context.class), 0, Binding.Context.DUMMY);
+            scopeFilter = dropArguments(scopeFilter, 0, ResourceScope.class);
+        }
+
+        specializedHandle = filterArguments(specializedHandle, 0, scopeFilter);
+        specializedHandle = tryFinally(specializedHandle, closer);
+        specializedHandle = collectArguments(specializedHandle, allocatorPos, MH_MAKE_SCOPE);
+        return specializedHandle;
     }
 
     // lazy init MH_ALLOC and MH_FREE handles
@@ -357,7 +437,7 @@ public class SharedUtils {
 
     public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
         return carrier == MemoryAddress.class
-            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
             : layout.varHandle(carrier);
     }
 
@@ -407,7 +487,7 @@ public class SharedUtils {
     public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i + 1, unboxer); // +1 for leading address
+               handle = filterArguments(handle, i + 1, unboxer); // +1 for leading address
             }
         }
         return handle;
@@ -417,7 +497,7 @@ public class SharedUtils {
         MethodType type = handle.type();
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i, boxer);
+               handle = filterArguments(handle, i, boxer);
             }
         }
         return handle;
@@ -449,7 +529,7 @@ public class SharedUtils {
 
         public VarHandle varHandle() {
             return carrier == MemoryAddress.class
-                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
                 : layout.varHandle(carrier);
         }
     }
@@ -503,7 +583,7 @@ public class SharedUtils {
 
         @Override
         public ResourceScope scope() {
-            return MemoryScope.GLOBAL;
+            return ResourceScope.globalScope();
         }
 
         @Override

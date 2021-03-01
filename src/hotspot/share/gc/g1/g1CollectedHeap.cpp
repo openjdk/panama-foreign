@@ -93,6 +93,7 @@
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
 #include "memory/heapInspection.hpp"
+#include "memory/metaspaceUtils.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
@@ -1497,8 +1498,8 @@ G1RegionToSpaceMapper* G1CollectedHeap::create_aux_memory_mapper(const char* des
 
   os::trace_page_sizes_for_requested_size(description,
                                           size,
-                                          preferred_page_size,
                                           page_size,
+                                          preferred_page_size,
                                           rs.base(),
                                           rs.size());
 

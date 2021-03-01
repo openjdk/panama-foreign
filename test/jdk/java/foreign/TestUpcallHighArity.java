@@ -30,23 +30,6 @@
  *
  * @run testng/othervm/native
  *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   TestUpcallHighArity
- * @run testng/othervm/native
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   TestUpcallHighArity
- * @run testng/othervm/native
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   TestUpcallHighArity
- * @run testng/othervm/native
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   TestUpcallHighArity
  */
 

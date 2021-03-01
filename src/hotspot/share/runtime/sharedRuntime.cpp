@@ -45,9 +45,9 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "logging/log.hpp"
-#include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
+#include "oops/compiledICHolder.inline.hpp"
 #include "oops/klass.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -511,6 +511,9 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
     // The deferred StackWatermarkSet::after_unwind check will be performed in
     // JavaCallWrapper::~JavaCallWrapper
     return StubRoutines::catch_exception_entry();
+  }
+  if (blob != NULL && blob->is_entry_blob()) {
+    return ((EntryBlob*)blob)->exception_handler();
   }
   // Interpreted code
   if (Interpreter::contains(return_address)) {
@@ -1444,7 +1447,7 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::handle_wrong_method_ic_miss(JavaThread* 
   frame stub_frame = thread->last_frame();
   assert(stub_frame.is_runtime_frame(), "sanity check");
   frame caller_frame = stub_frame.sender(&reg_map);
-  assert(!caller_frame.is_interpreted_frame() && !caller_frame.is_entry_frame(), "unexpected frame");
+  assert(!caller_frame.is_interpreted_frame() && !caller_frame.is_entry_frame() && !caller_frame.is_panama_entry_frame(), "unexpected frame");
 #endif /* ASSERT */
 
   methodHandle callee_method;
@@ -1476,7 +1479,8 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::handle_wrong_method(JavaThread* thread))
   frame caller_frame = stub_frame.sender(&reg_map);
 
   if (caller_frame.is_interpreted_frame() ||
-      caller_frame.is_entry_frame()) {
+      caller_frame.is_entry_frame() ||
+      caller_frame.is_panama_entry_frame()) {
     Method* callee = thread->callee_target();
     guarantee(callee != NULL && callee->is_method(), "bad handshake");
     thread->set_vm_result_2(callee);
