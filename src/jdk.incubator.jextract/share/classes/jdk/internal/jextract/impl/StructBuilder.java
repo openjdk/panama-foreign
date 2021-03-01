@@ -48,12 +48,14 @@ class StructBuilder extends ConstantBuilder {
     private final GroupLayout structLayout;
     private final Type structType;
     private final Deque<String> prefixElementNames;
+    private final String safeParameterName;
 
     StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
+        safeParameterName = isEnclosedBySameName("x")? "x$" : "x";
     }
 
     void pushPrefixElement(String prefixElementName) {
@@ -162,10 +164,10 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         String param = MemorySegment.class.getSimpleName() + " seg";
-        append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
+        append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " " + safeParameterName + ") {\n");
         incrAlign();
         indent();
-        append(vhConstant.accessExpression() + ".set(seg, x);\n");
+        append(vhConstant.accessExpression() + ".set(seg, " + safeParameterName + ");\n");
         decrAlign();
         indent();
         append("}\n");
@@ -307,12 +309,12 @@ class StructBuilder extends ConstantBuilder {
     private void emitIndexedFieldSetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
+        String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " " + safeParameterName;
         append(MEMBER_MODS + " void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
         append(vhConstant.accessExpression() +
-                ".set(seg.asSlice(index*sizeof()), x);\n");
+                ".set(seg.asSlice(index*sizeof()), " + safeParameterName + ");\n");
         decrAlign();
         indent();
         append("}\n");
