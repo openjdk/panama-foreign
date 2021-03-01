@@ -25,13 +25,11 @@
  */
 package jdk.internal.foreign.abi.aarch64;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
@@ -142,10 +140,10 @@ public class CallArranger {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
-            target = SharedUtils.adaptUpcallForIMR(target);
+            target = SharedUtils.adaptUpcallForIMR(target, true /* drop return, since we don't have bindings for it */);
         }
 
-        return new ProgrammableUpcallHandler(C, target, bindings.callingSequence);
+        return ProgrammableUpcallHandler.make(C, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -232,7 +230,7 @@ public class CallArranger {
                 if (offset + STACK_SLOT_SIZE < layout.byteSize()) {
                     bindings.dup();
                 }
-                Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.bufferLoad(offset, type)
                         .vmStore(storage, type);
                 offset += STACK_SLOT_SIZE;
@@ -250,7 +248,7 @@ public class CallArranger {
                 long copy = Math.min(layout.byteSize() - offset, STACK_SLOT_SIZE);
                 VMStorage storage =
                     storageCalculator.stackAlloc(copy, STACK_SLOT_SIZE);
-                Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                Class<?> type = SharedUtils.primitiveCarrierForSize(copy, false);
                 bindings.dup()
                         .vmLoad(storage, type)
                         .bufferStore(offset, type);
@@ -291,7 +289,8 @@ public class CallArranger {
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                             if (offset + copy < layout.byteSize()) {
                                 bindings.dup();
                             }
@@ -324,7 +323,8 @@ public class CallArranger {
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
                             VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(size);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
                             if (i + 1 < group.memberLayouts().size()) {
                                 bindings.dup();
                             }
@@ -393,7 +393,8 @@ public class CallArranger {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             VMStorage storage = regs[regIndex++];
                             bindings.dup();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(copy, useFloat);
                             bindings.vmLoad(storage, type)
                                     .bufferStore(offset, type);
                             offset += copy;
@@ -423,7 +424,8 @@ public class CallArranger {
                         for (int i = 0; i < group.memberLayouts().size(); i++) {
                             VMStorage storage = regs[i];
                             final long size = group.memberLayouts().get(i).byteSize();
-                            Class<?> type = SharedUtils.primitiveCarrierForSize(size);
+                            boolean useFloat = storage.type() == StorageClasses.VECTOR;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
                             bindings.dup()
                                     .vmLoad(storage, type)
                                     .bufferStore(offset, type);

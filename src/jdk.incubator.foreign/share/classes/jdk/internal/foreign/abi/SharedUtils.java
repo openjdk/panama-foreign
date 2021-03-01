@@ -24,6 +24,7 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAccess;
@@ -50,13 +51,21 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.dropArguments;
+import static java.lang.invoke.MethodHandles.dropReturn;
+import static java.lang.invoke.MethodHandles.empty;
+import static java.lang.invoke.MethodHandles.filterArguments;
+import static java.lang.invoke.MethodHandles.filterReturnValue;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
 
@@ -65,6 +74,8 @@ public class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
+    private static final MethodHandle MH_MAKE_ALLOCATOR;
+    private static final MethodHandle MH_CLOSE_ALLOCATOR;
 
     static final Allocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
 
@@ -77,6 +88,10 @@ public class SharedUtils {
                     methodType(MemoryAddress.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));
+            MH_MAKE_ALLOCATOR = lookup.findStatic(SharedUtils.class, "makeAllocator",
+                    methodType(Allocator.class, long.class));
+            MH_CLOSE_ALLOCATOR = lookup.findVirtual(Allocator.class, "close",
+                    methodType(void.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -178,11 +193,15 @@ public class SharedUtils {
      * @param target the target handle to adapt
      * @return the adapted handle
      */
-    public static MethodHandle adaptUpcallForIMR(MethodHandle target) {
+    public static MethodHandle adaptUpcallForIMR(MethodHandle target, boolean dropReturn) {
         if (target.type().returnType() != MemorySegment.class)
             throw new IllegalArgumentException("Must return MemorySegment for IMR");
 
         target = collectArguments(MH_BUFFER_COPY, 1, target); // (MemoryAddress, ...) MemoryAddress
+
+        if (dropReturn) { // no handling for return value, need to drop it
+            target = dropReturn(target);
+        }
 
         return target;
     }
@@ -220,18 +239,26 @@ public class SharedUtils {
         cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
     }
 
-    public static Class<?> primitiveCarrierForSize(long size) {
-        if (size == 1) {
-            return byte.class;
-        } else if(size == 2) {
-            return short.class;
-        } else if (size <= 4) {
-            return int.class;
-        } else if (size <= 8) {
-            return long.class;
+    public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
+        if (useFloat) {
+            if (size == 4) {
+                return float.class;
+            } else if (size == 8) {
+                return double.class;
+            }
+        } else {
+            if (size == 1) {
+                return byte.class;
+            } else if (size == 2) {
+                return short.class;
+            } else if (size <= 4) {
+                return int.class;
+            } else if (size <= 8) {
+                return long.class;
+            }
         }
 
-        throw new IllegalArgumentException("Size too large: " + size);
+        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
     }
 
     public static CLinker getSystemLinker() {
@@ -282,6 +309,12 @@ public class SharedUtils {
         return size;
     }
 
+    static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
+        return IntStream.range(0, moves.length)
+                        .boxed()
+                        .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
+    }
+
     static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
         MethodType oldType = mh.type();
         Class<?> sourceType = oldType.parameterType(sourceIndex);
@@ -301,6 +334,41 @@ public class SharedUtils {
             }
         }
         return permuteArguments(mh, newType, reorder);
+    }
+
+    static Allocator makeAllocator(long size) {
+        return  size != 0
+            ? Allocator.ofScope(NativeScope.boundedScope(size))
+            : Allocator.empty();
+    }
+
+    static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
+                                          int allocatorPos, long bufferCopySize,
+                                          boolean upcall) {
+        // insert try-finally to close the NativeScope used for Binding.Copy
+        MethodHandle closer;
+        int insertPos;
+        if (specializedHandle.type().returnType() == void.class) {
+            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            insertPos = 1;
+        } else {
+            closer = identity(specializedHandle.type().returnType()); // (V) -> V
+            closer = dropArguments(closer, 0, Throwable.class); // (Throwable, V) -> V
+            insertPos = 2;
+        }
+
+        // downcalls get the leading Addressable param as well
+        if (!upcall) {
+            closer = dropArguments(closer, insertPos, Addressable.class); // (Throwable, V?, Addressable) -> V/void
+            insertPos++;
+        }
+
+        closer = collectArguments(closer, insertPos, MH_CLOSE_ALLOCATOR); // (Throwable, V?, Addressable?, NativeScope) -> V/void
+
+        specializedHandle = tryFinally(specializedHandle, closer);
+        MethodHandle makeScopeHandle = insertArguments(MH_MAKE_ALLOCATOR, 0, bufferCopySize);
+        specializedHandle = collectArguments(specializedHandle, allocatorPos, makeScopeHandle);
+        return specializedHandle;
     }
 
     // lazy init MH_ALLOC and MH_FREE handles
@@ -343,7 +411,7 @@ public class SharedUtils {
 
     public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
         return carrier == MemoryAddress.class
-            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
             : layout.varHandle(carrier);
     }
 
@@ -375,7 +443,7 @@ public class SharedUtils {
     public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i + 1, unboxer); // +1 for leading address
+               handle = filterArguments(handle, i + 1, unboxer); // +1 for leading address
             }
         }
         return handle;
@@ -385,7 +453,7 @@ public class SharedUtils {
         MethodType type = handle.type();
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {
-               handle = MethodHandles.filterArguments(handle, i, boxer);
+               handle = filterArguments(handle, i, boxer);
             }
         }
         return handle;
@@ -405,8 +473,6 @@ public class SharedUtils {
     }
 
     public interface Allocator extends AutoCloseable {
-        Allocator THROWING_ALLOCATOR = (size, align) -> { throw new UnsupportedOperationException("Null allocator"); };
-
         static Allocator empty() {
             return Allocator.ofScope(AbstractNativeScope.emptyScope());
         }
@@ -461,7 +527,7 @@ public class SharedUtils {
 
         public VarHandle varHandle() {
             return carrier == MemoryAddress.class
-                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize())))
+                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
                 : layout.varHandle(carrier);
         }
     }

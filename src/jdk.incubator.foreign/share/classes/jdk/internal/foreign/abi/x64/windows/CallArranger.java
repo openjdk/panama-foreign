@@ -24,13 +24,11 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.CallingSequenceBuilder;
 import jdk.internal.foreign.abi.UpcallHandler;
@@ -140,10 +138,10 @@ public class CallArranger {
         Bindings bindings = getBindings(mt, cDesc, true);
 
         if (bindings.isInMemoryReturn) {
-            target = SharedUtils.adaptUpcallForIMR(target);
+            target = SharedUtils.adaptUpcallForIMR(target, false /* need the return value as well */);
         }
 
-        return new ProgrammableUpcallHandler(CWindows, target, bindings.callingSequence);
+        return ProgrammableUpcallHandler.make(CWindows, target, bindings.callingSequence);
     }
 
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
@@ -205,7 +203,7 @@ public class CallArranger {
                 case STRUCT_REGISTER: {
                     assert carrier == MemorySegment.class;
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
-                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize());
+                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize(), false);
                     bindings.bufferLoad(0, type)
                             .vmStore(storage, type);
                     break;
@@ -270,7 +268,7 @@ public class CallArranger {
                     bindings.allocate(layout)
                             .dup();
                     VMStorage storage = storageCalculator.nextStorage(StorageClasses.INTEGER, layout);
-                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize());
+                    Class<?> type = SharedUtils.primitiveCarrierForSize(layout.byteSize(), false);
                     bindings.vmLoad(storage, type)
                             .bufferStore(0, type);
                     break;
