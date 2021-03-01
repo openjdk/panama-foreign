@@ -241,12 +241,15 @@ public class ProgrammableInvoker {
                 Binding binding = bindings.get(j);
                 returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
             }
-            returnFilter = MethodHandles.filterArguments(returnFilter, 0, MH_WRAP_ALLOCATOR);
+            returnFilter = MethodHandles.filterArguments(returnFilter, retAllocatorPos, MH_WRAP_ALLOCATOR);
+            // (SegmentAllocator, Addressable, Context, ...) -> ...
             specializedHandle = MethodHandles.collectArguments(returnFilter, retInsertPos, specializedHandle);
-            specializedHandle = SharedUtils.swapArguments(specializedHandle, 0, 1);
+            // (Addressable, SegmentAllocator, Context, ...) -> ...
+            specializedHandle = SharedUtils.swapArguments(specializedHandle, 0, 1); // normalize parameter order
         } else {
             specializedHandle = MethodHandles.dropArguments(specializedHandle, 1, SegmentAllocator.class);
         }
+        argContextPos++; // skip SegmentAllocator
 
         if (bufferCopySize > 0) {
             specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);

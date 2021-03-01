@@ -81,7 +81,7 @@ public class SharedUtils {
 
     static {
         try {
-            var lookup = MethodHandles.lookup();
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_ALLOC_BUFFER = lookup.findVirtual(SegmentAllocator.class, "allocate",
                     methodType(MemorySegment.class, MemoryLayout.class));
             MH_BASEADDRESS = lookup.findVirtual(MemorySegment.class, "address",
@@ -391,7 +391,7 @@ public class SharedUtils {
             scopeFilter = dropArguments(scopeFilter, 0, ResourceScope.class);
         }
 
-        specializedHandle = filterArguments(specializedHandle, 0, scopeFilter);
+        specializedHandle = filterArguments(specializedHandle, allocatorPos, scopeFilter);
         specializedHandle = tryFinally(specializedHandle, closer);
         specializedHandle = collectArguments(specializedHandle, allocatorPos, MH_MAKE_SCOPE);
         return specializedHandle;
