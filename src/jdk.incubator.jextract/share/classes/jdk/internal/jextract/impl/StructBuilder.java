@@ -56,6 +56,10 @@ class StructBuilder extends ConstantBuilder {
         prefixElementNames = new ArrayDeque<>();
     }
 
+    private String safeParameterName(String paramName) {
+        return isEnclosedBySameName(paramName)? paramName + "$" : paramName;
+    }
+
     void pushPrefixElement(String prefixElementName) {
         prefixElementNames.push(prefixElementName);
     }
@@ -147,11 +151,12 @@ class StructBuilder extends ConstantBuilder {
     private void emitFieldGetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment seg) {\n");
+        String seg = safeParameterName("seg");
+        append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(MemorySegment " + seg + ") {\n");
         incrAlign();
         indent();
         append("return (" + type.getName() + ")"
-                + vhConstant.accessExpression() + ".get(seg);\n");
+                + vhConstant.accessExpression() + ".get(" + seg + ");\n");
         decrAlign();
         indent();
         append("}\n");
@@ -161,11 +166,13 @@ class StructBuilder extends ConstantBuilder {
     private void emitFieldSetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        String param = MemorySegment.class.getSimpleName() + " seg";
-        append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " x) {\n");
+        String seg = safeParameterName("seg");
+        String x = safeParameterName("x");
+        String param = MemorySegment.class.getSimpleName() + " " + seg;
+        append(MEMBER_MODS + " void " + javaName + "$set( " + param + ", " + type.getSimpleName() + " " + x + ") {\n");
         incrAlign();
         indent();
-        append(vhConstant.accessExpression() + ".set(seg, x);\n");
+        append(vhConstant.accessExpression() + ".set(" + seg + ", " + x + ");\n");
         decrAlign();
         indent();
         append("}\n");
@@ -186,10 +193,13 @@ class StructBuilder extends ConstantBuilder {
     private void emitSegmentGetter(String javaName, String nativeName, MemoryLayout layout) {
         incrAlign();
         indent();
-        append(MEMBER_MODS + " MemorySegment " + javaName + "$slice(MemorySegment seg) {\n");
+        String seg = safeParameterName("seg");
+        append(MEMBER_MODS + " MemorySegment " + javaName + "$slice(MemorySegment " + seg + ") {\n");
         incrAlign();
         indent();
-        append("return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(");
+        append("return RuntimeHelper.nonCloseableNonTransferableSegment(");
+        append(seg);
+        append(".asSlice(");
         append(structLayout.byteOffset(elementPaths(nativeName)));
         append(", ");
         append(layout.byteSize());
@@ -291,13 +301,19 @@ class StructBuilder extends ConstantBuilder {
     private void emitIndexedFieldGetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        String params = MemorySegment.class.getSimpleName() + " seg, long index";
+        String index = safeParameterName("index");
+        String seg = safeParameterName("seg");
+        String params = MemorySegment.class.getSimpleName() + " " + seg + ", long " + index;
         append(MEMBER_MODS + " " + type.getSimpleName() + " " + javaName + "$get(" + params + ") {\n");
         incrAlign();
         indent();
-        append("return (" + type.getName() + ")"
-                + vhConstant.accessExpression() +
-                ".get(seg.asSlice(index*sizeof()));\n");
+        append("return (" + type.getName() + ")");
+        append(vhConstant.accessExpression());
+        append(".get(");
+        append(seg);
+        append(".asSlice(");
+        append(index);
+        append("*sizeof()));\n");
         decrAlign();
         indent();
         append("}\n");
@@ -307,12 +323,22 @@ class StructBuilder extends ConstantBuilder {
     private void emitIndexedFieldSetter(Constant vhConstant, String javaName, Class<?> type) {
         incrAlign();
         indent();
-        String params = MemorySegment.class.getSimpleName() + " seg, long index, " + type.getSimpleName() + " x";
+        String index = safeParameterName("index");
+        String seg = safeParameterName("seg");
+        String x = safeParameterName("x");
+        String params = MemorySegment.class.getSimpleName() + " " + seg +
+            ", long " + index + ", " + type.getSimpleName() + " " + x;
         append(MEMBER_MODS + " void " + javaName + "$set(" + params + ") {\n");
         incrAlign();
         indent();
-        append(vhConstant.accessExpression() +
-                ".set(seg.asSlice(index*sizeof()), x);\n");
+        append(vhConstant.accessExpression());
+        append(".set(");
+        append(seg);
+        append(".asSlice(");
+        append(index);
+        append("*sizeof()), ");
+        append(x);
+        append(");\n");
         decrAlign();
         indent();
         append("}\n");
