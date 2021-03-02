@@ -75,6 +75,9 @@ public class TestDowncall extends CallGeneratorHelper {
                     // if here, there should be no allocation through the scope!
                     assertEquals(scope.allocatedBytes(), 0L);
                 }
+            } else {
+                // if here, there should be no allocation through the scope!
+                assertEquals(scope.allocatedBytes(), 0L);
             }
         }
     }
