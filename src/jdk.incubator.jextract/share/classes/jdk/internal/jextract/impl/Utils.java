@@ -95,7 +95,7 @@ class Utils {
             // C identifiers. But we may have a java keyword used as a C identifier.
             assert SourceVersion.isIdentifier(name);
 
-            return SourceVersion.isKeyword(name) || isRestrictedTypeName(name) ? (name + "_") : name;
+            return SourceVersion.isKeyword(name) || isRestrictedTypeName(name) || isJavaTypeName(name)? (name + "_") : name;
         }
     }
 
@@ -103,6 +103,19 @@ class Utils {
         return switch (name) {
             case "var", "yield", "record",
                 "sealed", "permits" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean isJavaTypeName(String name) {
+        // Java types that are used unqualified in the generated code
+        return switch (name) {
+            case "String", "MethodHandle",
+                "VarHandle", "ByteOrder",
+                "FunctionDescriptor", "LibraryLookup",
+                "MemoryAddress", "MemoryLayout",
+                "MemorySegment", "ValueLayout",
+                "RuntimeHelper" -> true;
             default -> false;
         };
     }
