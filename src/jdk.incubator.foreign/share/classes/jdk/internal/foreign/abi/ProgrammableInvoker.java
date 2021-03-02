@@ -207,16 +207,11 @@ public class ProgrammableInvoker {
     private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
 
-        MethodHandle specializedHandle = leafHandle; // initial
+        int argInsertPos = 1;
+        int argContextPos = 1;
 
-        int argInsertPos = 0;
-        int argContextPos = -1;
+        MethodHandle specializedHandle = dropArguments(leafHandle, argContextPos, Binding.Context.class);
 
-        if (bufferCopySize > 0) {
-            argContextPos = 1;
-            specializedHandle = dropArguments(specializedHandle, argContextPos, Binding.Context.class);
-            argInsertPos++;
-        }
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
             argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
@@ -233,15 +228,15 @@ public class ProgrammableInvoker {
 
         if (highLevelType.returnType() != void.class) {
             MethodHandle returnFilter = identity(highLevelType.returnType());
-            int retAllocatorPos = 0;
+            int retContextPos = 0;
             int retInsertPos = 1;
-            returnFilter = dropArguments(returnFilter, retAllocatorPos, Binding.Context.class);
+            returnFilter = dropArguments(returnFilter, retContextPos, Binding.Context.class);
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
-                returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
+                returnFilter = binding.specialize(returnFilter, retInsertPos, retContextPos);
             }
-            returnFilter = MethodHandles.filterArguments(returnFilter, retAllocatorPos, MH_WRAP_ALLOCATOR);
+            returnFilter = MethodHandles.filterArguments(returnFilter, retContextPos, MH_WRAP_ALLOCATOR);
             // (SegmentAllocator, Addressable, Context, ...) -> ...
             specializedHandle = MethodHandles.collectArguments(returnFilter, retInsertPos, specializedHandle);
             // (Addressable, SegmentAllocator, Context, ...) -> ...
@@ -249,10 +244,14 @@ public class ProgrammableInvoker {
         } else {
             specializedHandle = MethodHandles.dropArguments(specializedHandle, 1, SegmentAllocator.class);
         }
-        argContextPos++; // skip SegmentAllocator
 
+        // now bind the internal context parameter
+
+        argContextPos++; // skip over the return SegmentAllocator (inserted by the above code)
         if (bufferCopySize > 0) {
             specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);
+        } else {
+            specializedHandle = insertArguments(specializedHandle, argContextPos, Binding.Context.DUMMY);
         }
         return specializedHandle;
     }
