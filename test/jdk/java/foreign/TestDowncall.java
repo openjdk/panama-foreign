@@ -57,21 +57,23 @@ public class TestDowncall extends CallGeneratorHelper {
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncall(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
-        if (fName.equals("f0_V_S_IF")) {
-            List<Consumer<Object>> checks = new ArrayList<>();
-            LibraryLookup.Symbol addr = lib.lookup(fName).get();
-            MethodType mt = methodType(ret, paramTypes, fields);
-            FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            Object[] args = makeArgs(paramTypes, fields, checks);
-            try (NativeScope scope = new NativeScope()) {
-                boolean needsScope = mt.returnType().equals(MemorySegment.class);
-                Object res = doCall(addr, scope, mt, descriptor, args);
-                if (ret == Ret.NON_VOID) {
-                    checks.forEach(c -> c.accept(res));
-                    if (needsScope) {
-                        // check that return struct has indeed been allocated in the native scope
-                        assertEquals(((MemorySegment)res).scope(), scope);
-                    }
+        List<Consumer<Object>> checks = new ArrayList<>();
+        LibraryLookup.Symbol addr = lib.lookup(fName).get();
+        MethodType mt = methodType(ret, paramTypes, fields);
+        FunctionDescriptor descriptor = function(ret, paramTypes, fields);
+        Object[] args = makeArgs(paramTypes, fields, checks);
+        try (NativeScope scope = new NativeScope()) {
+            boolean needsScope = mt.returnType().equals(MemorySegment.class);
+            Object res = doCall(addr, scope, mt, descriptor, args);
+            if (ret == Ret.NON_VOID) {
+                checks.forEach(c -> c.accept(res));
+                if (needsScope) {
+                    // check that return struct has indeed been allocated in the native scope
+                    assertEquals(((MemorySegment) res).scope(), scope.scope());
+                    assertEquals(scope.allocatedBytes(), descriptor.returnLayout().get().byteSize());
+                } else {
+                    // if here, there should be no allocation through the scope!
+                    assertEquals(scope.allocatedBytes(), 0L);
                 }
             }
         }

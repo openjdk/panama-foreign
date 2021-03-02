@@ -48,6 +48,8 @@ public class NativeTestHelper {
         final ResourceScope.Lock scopeLock;
         final SegmentAllocator allocator;
 
+        long allocatedBytes = 0;
+
         public NativeScope() {
             this.resourceScope = ResourceScope.ofConfined();
             this.scopeLock = resourceScope.lock();
@@ -56,11 +58,16 @@ public class NativeTestHelper {
 
         @Override
         public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            allocatedBytes += bytesSize;
             return allocator.allocate(bytesSize, bytesAlignment);
         }
 
         public ResourceScope scope() {
             return resourceScope;
+        }
+
+        public long allocatedBytes() {
+            return allocatedBytes;
         }
 
         @Override

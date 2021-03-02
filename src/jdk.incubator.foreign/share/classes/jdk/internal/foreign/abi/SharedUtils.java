@@ -469,12 +469,6 @@ public class SharedUtils {
     public static MethodHandle adaptDowncall(MethodType type, FunctionDescriptor descriptor,
                                              MethodHandle MH_unboxVaList, Function<MethodType, MethodHandle> downcallFactory) {
         MethodType sigMethodType = type;
-        if (type.parameterCount() > 0 && type.parameterType(0).equals(SegmentAllocator.class)) {
-            if (descriptor.returnLayout().isEmpty() || !(descriptor.returnLayout().get() instanceof GroupLayout)) {
-                throw new IllegalArgumentException("Unexpected allocator prefix argument: " + type.descriptorString());
-            }
-            sigMethodType = type.dropParameterTypes(0, 1);
-        }
         MethodHandle handle = downcallFactory.apply(sigMethodType);
         if (!sigMethodType.returnType().equals(MemorySegment.class)) {
             // not returning segment, just insert default allocator
