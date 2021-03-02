@@ -474,7 +474,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         // case like `typedef struct { ... } Foo`
     }
 
-    private void warn(String msg) {
+    static void warn(String msg) {
         System.err.println("WARNING: " + msg);
     }
 

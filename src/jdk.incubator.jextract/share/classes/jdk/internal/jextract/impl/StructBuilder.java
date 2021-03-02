@@ -136,6 +136,14 @@ class StructBuilder extends ConstantBuilder {
 
     @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+        try {
+            structLayout.byteOffset(elementPaths(nativeName));
+        } catch (UnsupportedOperationException uoe) {
+            // bad layout - do nothing
+            OutputFactory.warn("skipping '" + className() + "." + nativeName + "' : " + uoe.toString());
+            return;
+        }
+
         if (type.equals(MemorySegment.class)) {
             emitSegmentGetter(javaName, nativeName, layout);
         } else {
