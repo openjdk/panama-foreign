@@ -57,11 +57,32 @@ public class TestFuncPointerInvokers {
     }
 
     @Test
+    public void testStructFieldFI() {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            AtomicInteger val = new AtomicInteger(-1);
+            MemorySegment bar = Bar.allocate(scope);
+            Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
+            Foo.ofAddressRestricted(Bar.foo$get(bar)).apply(42);
+            assertEquals(val.get(), 42);
+        }
+    }
+
+    @Test
     public void testGlobal() {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             AtomicInteger val = new AtomicInteger(-1);
             f$set(Foo.allocate((i) -> val.set(i), scope).address());
             f(42);
+            assertEquals(val.get(), 42);
+        }
+    }
+
+    @Test
+    public void testGlobalFI() {
+        try (NativeScope scope = NativeScope.unboundedScope()) {
+            AtomicInteger val = new AtomicInteger(-1);
+            f$set(Foo.allocate((i) -> val.set(i), scope).address());
+            Foo.ofAddressRestricted(f$get()).apply(42);
             assertEquals(val.get(), 42);
         }
     }

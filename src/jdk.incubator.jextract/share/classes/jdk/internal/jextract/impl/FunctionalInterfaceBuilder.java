@@ -30,6 +30,8 @@ import jdk.incubator.foreign.*;
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class FunctionalInterfaceBuilder extends NestedClassBuilder {
 
@@ -49,6 +51,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     JavaSourceBuilder classEnd() {
         emitFunctionalInterfaceMethod();
         emitFunctionalFactories();
+        emitFunctionaRestrictedFactory();
         return super.classEnd();
     }
 
@@ -85,6 +88,62 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             incrAlign();
             indent();
             append("return allocate(fi).handoff(scope);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+        });
+    }
+
+    private void emitFunctionaRestrictedFactory() {
+        emitWithConstantClass(className(), constantBuilder -> {
+            Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
+            incrAlign();
+            indent();
+            append(MEMBER_MODS + " " + className() + " ofAddressRestricted(MemoryAddress addr) {\n");
+            incrAlign();
+            indent();
+            append("return new " + className() + "() {\n");
+            incrAlign();
+            indent();
+            append("public " + fiType.returnType().getName() + " apply(");
+            String delim = "";
+            for (int i = 0 ; i < fiType.parameterCount(); i++) {
+                append(delim + fiType.parameterType(i).getName() + " x" + i);
+                delim = ", ";
+            }
+            append(") {\n");
+            incrAlign();
+            indent();
+            append("try {\n");
+            incrAlign();
+            indent();
+            if (!fiType.returnType().equals(void.class)) {
+                append("return (" + fiType.returnType().getName() + ")");
+            }
+            append(mhConstant.accessExpression() + ".invokeExact((Addressable)addr");
+            if (fiType.parameterCount() > 0) {
+                String params = IntStream.range(0, fiType.parameterCount())
+                        .mapToObj(i -> "x" + i)
+                        .collect(Collectors.joining(", "));
+                append(", " + params);
+            }
+            append(");\n");
+            decrAlign();
+            indent();
+            append("} catch (Throwable ex$) {\n");
+            incrAlign();
+            indent();
+            append("throw new AssertionError(\"should not reach here\", ex$);\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+            indent();
+            append("}\n");
+            decrAlign();
+            indent();
+            append("};\n");
             decrAlign();
             indent();
             append("}\n");
