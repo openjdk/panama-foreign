@@ -41,9 +41,9 @@ import java.util.Spliterator;
  *
  * <h2>Explicit deallocation</h2>
  *
- * Resource scopes can be closed explicitly (see {@link ResourceScope#close()}). When a resource scope is closed, it is no longer
- * <em>alive</em> (see {@link #isAlive()}, and subsequent operation on resources derived from that scope (e.g. attempting to
- * access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
+ * Resource scopes created using one of the factories in this class can be closed explicitly (see {@link ResourceScope#close()}).
+ * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operation on
+ * resources derived from that scope (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
  * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addOnClose(Runnable)}) to be called.
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:

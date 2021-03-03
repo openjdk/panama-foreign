@@ -562,7 +562,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout.
-     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * The returned segment is associated with a fresh, shared, resource scope which will be automatically closed when
      * the segment (or any slices and views derived from it) is no longer in use.
      * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
@@ -606,7 +606,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes).
-     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * The returned segment is associated with a fresh, shared resource scope, which will be automatically closed when
      * the segment (or any slices and views derived from it) is no longer in use.
      * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
@@ -648,7 +648,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared, resource scope,
+     * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared resource scope,
      * which will be automatically closed when the segment (or any slices and views derived from it) is no longer in use.
      * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      *
@@ -695,7 +695,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
-     * The returned segment is associated with a fresh, shared, resource scope, which will be automatically closed when
+     * The returned segment is associated with a fresh, shared resource scope, which will be automatically closed when
      * the segment (or any slices and views derived from it) is no longer in use. The scope associated with the returned
      * segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      * <p>
@@ -778,8 +778,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
     MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
-                 .withOwnerThread(null)
-                 .withAccessModes(READ | WRITE);
      * }</pre>
      * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
