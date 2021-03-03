@@ -139,14 +139,14 @@ abstract class JavaSourceBuilder {
     public static record VarInfo(
             Class<?> carrier,
             MemoryLayout layout,
-            Optional<FunctionInfo> functionInfo) {
+            Optional<String> fiName) {
 
         static VarInfo ofVar(Class<?> carrier, MemoryLayout layout) {
             return new VarInfo(carrier, layout, Optional.empty());
         }
 
-        static VarInfo ofFunctionPointerVar(Class<?> carrier, MemoryLayout layout, FunctionInfo functionInfo) {
-            return new VarInfo(carrier, layout, Optional.of(functionInfo));
+        static VarInfo ofFunctionalPointerVar(Class<?> carrier, MemoryLayout layout, String fiName) {
+            return new VarInfo(carrier, layout, Optional.ofNullable(fiName));
         }
     }
 
@@ -170,11 +170,12 @@ abstract class JavaSourceBuilder {
         return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
     }
 
-    public void addFunctionalInterface(String name, FunctionInfo functionInfo) {
+    public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
         FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name,
                 functionInfo.methodType(), functionInfo.descriptor());
         builder.classBegin();
         builder.classEnd();
+        return builder.fullName();
     }
 
     public List<JavaFileObject> toFiles() {

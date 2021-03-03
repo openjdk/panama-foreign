@@ -76,11 +76,8 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
                 emitGlobalGetter(segmentConstant, vhConstant, javaName, nativeName, varInfo.carrier());
                 emitGlobalSetter(segmentConstant, vhConstant, javaName, nativeName, varInfo.carrier());
-                if (varInfo.functionInfo().isPresent()) {
-                    FunctionInfo functionInfo = varInfo.functionInfo().get();
-                    Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, true)
-                            .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
-                    emitVirtualFunctionWrapper(mhConstant, javaName, functionInfo.methodType());
+                if (varInfo.fiName().isPresent()) {
+                    emitFunctionalInterfaceGetter(varInfo.fiName().get(), javaName);
                 }
             });
         }
@@ -186,54 +183,14 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void emitVirtualFunctionWrapper(Constant mhConstant, String javaName, MethodType mtype) {
+    private void emitFunctionalInterfaceGetter(String fiName, String javaName) {
         incrAlign();
         indent();
         append(MEMBER_MODS + " ");
-        append(mtype.returnType().getSimpleName() + " " + javaName + " (");
-        String delim = "";
-        List<String> pExprs = new ArrayList<>();
-        int numParams = mtype.parameterCount();
-        for (int i = 0 ; i < numParams; i++) {
-            String pName = "x" + i;
-            if (mtype.parameterType(i).equals(MemoryAddress.class)) {
-                pExprs.add(pName + ".address()");
-            } else {
-                pExprs.add(pName);
-            }
-            Class<?> pType = mtype.parameterType(i);
-            if (pType.equals(MemoryAddress.class)) {
-                pType = Addressable.class;
-            }
-            append(delim + " " + pType.getSimpleName() + " " + pName);
-            delim = ", ";
-        }
-        append(") {\n");
+        append(fiName + " " + javaName + " () {\n");
         incrAlign();
         indent();
-        append("var mh$ = ");
-        append(mhConstant.accessExpression());
-        append(";\n");
-        indent();
-        append("try {\n");
-        incrAlign();
-        indent();
-        if (!mtype.returnType().equals(void.class)) {
-            append("return (" + mtype.returnType().getName() + ")");
-        }
-        append("mh$.invokeExact(");
-        append("(Addressable)");
-        append(javaName + "$get(), ");
-        append(String.join(", ", pExprs) + ");\n");
-        decrAlign();
-        indent();
-        append("} catch (Throwable ex$) {\n");
-        incrAlign();
-        indent();
-        append("throw new AssertionError(\"should not reach here\", ex$);\n");
-        decrAlign();
-        indent();
-        append("}\n");
+        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get());\n");
         decrAlign();
         indent();
         append("}\n");

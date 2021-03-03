@@ -233,10 +233,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private boolean generateFunctionalInterface(Type.Function func, String name) {
+    private String generateFunctionalInterface(Type.Function func, String name) {
         return functionInfo(func, name, false, FunctionInfo::ofFunctionPointer)
-                .map(fInfo -> { currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo); return true; })
-                .orElse(false);
+                .map(fInfo -> currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo))
+                .orElse(null);
     }
 
     @Override
@@ -262,7 +262,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 Type.Function f = getAsFunctionPointer(param.type());
                 if (f != null) {
                     String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                    if (!generateFunctionalInterface(f, name)) {
+                    if (generateFunctionalInterface(f, name) == null) {
                         return null;
                     }
                     i++;
@@ -275,15 +275,21 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    Type.Function getAsFunctionPointer(Type type) {
-        return getAsFunctionPointer(type, false);
+    Optional<String> getAsFunctionPointerTypedef(Type type) {
+        if (type instanceof Type.Delegated delegated &&
+                delegated.kind() == Type.Delegated.Kind.TYPEDEF &&
+                getAsFunctionPointer(delegated.type()) != null) {
+            return delegated.name();
+        } else {
+            return Optional.empty();
+        }
     }
 
-    Type.Function getAsFunctionPointer(Type type, boolean followTypedefs) {
+    Type.Function getAsFunctionPointer(Type type) {
         if (type instanceof Type.Delegated) {
-            Type.Delegated delegated = (Type.Delegated)type;
-            return (followTypedefs || delegated.kind() == Type.Delegated.Kind.POINTER) ?
-                getAsFunctionPointer(delegated.type(), followTypedefs) : null;
+            Type.Delegated delegated = (Type.Delegated) type;
+            return (delegated.kind() == Type.Delegated.Kind.POINTER) ?
+                    getAsFunctionPointer(delegated.type()) : null;
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -291,7 +297,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
              * typedef void CB(int);
              * void func(CB cb);
              */
-            return (Type.Function)type;
+            return (Type.Function) type;
         } else {
             return null;
         }
@@ -377,11 +383,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        Type.Function func = getAsFunctionPointer(type);
-        if (func != null) {
-            generateFunctionalInterface(func, fieldName);
-        }
-
         Class<?> clazz = getJavaType(type);
         if (clazz == null) {
             String name = parent != null? parent.name() + "." : "";
@@ -389,6 +390,23 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             warn("skipping " + name + " because of unsupported type usage");
             return null;
         }
+
+
+        VarInfo varInfo = VarInfo.ofVar(clazz, layout);
+        Type.Function func = getAsFunctionPointer(type);
+        String fiName;
+        if (func != null) {
+            fiName = generateFunctionalInterface(func, fieldName);
+            if (fiName != null) {
+                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, fiName);
+            }
+        } else {
+            Optional<String> funcTypedef = getAsFunctionPointerTypedef(type);
+            if (funcTypedef.isPresent()) {
+                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, funcTypedef.get());
+            }
+        }
+
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
                 (layout instanceof ValueLayout && layout.byteSize() > 8)) {
             //skip
@@ -402,15 +420,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } catch (Exception ignored) {
             sizeAvailable = false;
         }
-        MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
-            VarInfo varInfo = VarInfo.ofVar(clazz, treeLayout);
-            Type.Function funcPtr = getAsFunctionPointer(tree.type(), true);
-            if (funcPtr != null) {
-                varInfo = functionInfo(funcPtr, tree.name(), false, FunctionInfo::ofFunctionPointer)
-                        .map(fInfo -> VarInfo.ofFunctionPointerVar(clazz, treeLayout, fInfo))
-                        .orElse(varInfo);
-            }
             currentBuilder.addVar(fieldName, tree.name(), varInfo);
         } else {
             warn("Layout size not available for " + fieldName);

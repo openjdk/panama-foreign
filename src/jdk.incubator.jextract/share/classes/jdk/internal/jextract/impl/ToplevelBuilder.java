@@ -104,8 +104,8 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     @Override
-    public void addFunctionalInterface(String name, FunctionInfo functionInfo) {
-        nextHeader().addFunctionalInterface(name, functionInfo);
+    public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
+        return nextHeader().addFunctionalInterface(name, functionInfo);
     }
 
     private SplitHeader lastHeader() {

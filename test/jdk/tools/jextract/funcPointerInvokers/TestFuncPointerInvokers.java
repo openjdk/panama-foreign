@@ -51,7 +51,7 @@ public class TestFuncPointerInvokers {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment bar = Bar.allocate(scope);
             Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
-            Bar.foo(bar, 42);
+            Bar.foo(bar).apply(42);
             assertEquals(val.get(), 42);
         }
     }
@@ -72,7 +72,7 @@ public class TestFuncPointerInvokers {
         try (NativeScope scope = NativeScope.unboundedScope()) {
             AtomicInteger val = new AtomicInteger(-1);
             f$set(Foo.allocate((i) -> val.set(i), scope).address());
-            f(42);
+            f().apply(42);
             assertEquals(val.get(), 42);
         }
     }
