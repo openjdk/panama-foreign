@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -30,2664 +30,3951 @@ package jdk.internal.clang.libclang;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
-import jdk.incubator.foreign.MemoryLayout.PathElement;
 import static jdk.incubator.foreign.CLinker.*;
-public final class Index_h {
+public class Index_h extends Index_h_1 {
 
-    private Index_h() {}
-    public static @C("int") int CINDEX_VERSION_MAJOR() {
-        return Index_h$constants_0.CINDEX_VERSION_MAJOR();
+    /* package-private */ Index_h() {}
+    public static int CINDEX_VERSION_MAJOR() {
+        return (int)0L;
     }
-    public static @C("int") int CINDEX_VERSION_MINOR() {
-        return Index_h$constants_0.CINDEX_VERSION_MINOR();
+    public static int CINDEX_VERSION_MINOR() {
+        return (int)59L;
     }
-    public static @C("int") int CXError_Success() {
-        return Index_h$constants_0.CXError_Success();
+    public static int CXError_Success() {
+        return (int)0L;
     }
-    public static @C("int") int CXError_Failure() {
-        return Index_h$constants_0.CXError_Failure();
+    public static int CXError_Failure() {
+        return (int)1L;
     }
-    public static @C("int") int CXError_Crashed() {
-        return Index_h$constants_0.CXError_Crashed();
+    public static int CXError_Crashed() {
+        return (int)2L;
     }
-    public static @C("int") int CXError_InvalidArguments() {
-        return Index_h$constants_0.CXError_InvalidArguments();
+    public static int CXError_InvalidArguments() {
+        return (int)3L;
     }
-    public static @C("int") int CXError_ASTReadError() {
-        return Index_h$constants_0.CXError_ASTReadError();
+    public static int CXError_ASTReadError() {
+        return (int)4L;
     }
     public static class CXString {
 
-        private CXString() {}
+        static final MemoryLayout CXString$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXString$struct$LAYOUT();
+            return CXString.CXString$struct$LAYOUT;
         }
+        static final VarHandle data$VH = MemoryHandles.asAddressVarHandle(CXString$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("data")));
         public static VarHandle data$VH() {
-            return Index_h$constants_0.CXString$data$VH();
+            return CXString.data$VH;
         }
-        public static  @C("void*") MemoryAddress data$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXString$data$VH().get(seg);
+        public static MemoryAddress data$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXString.data$VH.get(seg);
         }
-        public static  @C("void*") MemoryAddress data$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXString$data$VH().get(seg.asSlice(index*sizeof()));
+        public static void data$set( MemorySegment seg, MemoryAddress x) {
+            CXString.data$VH.set(seg, x);
         }
-        public static void data$set(@C("struct ") MemorySegment seg, @C("void*") MemoryAddress x) {
-            Index_h$constants_0.CXString$data$VH().set(seg, x);
+        public static MemoryAddress data$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXString.data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void data$set(@C("struct ") MemorySegment seg, long index, @C("void*") MemoryAddress x) {
-            Index_h$constants_0.CXString$data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void data$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXString.data$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle private_flags$VH = CXString$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("private_flags"));
         public static VarHandle private_flags$VH() {
-            return Index_h$constants_0.CXString$private_flags$VH();
+            return CXString.private_flags$VH;
         }
-        public static  @C("unsigned int") int private_flags$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXString$private_flags$VH().get(seg);
+        public static int private_flags$get(MemorySegment seg) {
+            return (int)CXString.private_flags$VH.get(seg);
         }
-        public static  @C("unsigned int") int private_flags$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXString$private_flags$VH().get(seg.asSlice(index*sizeof()));
+        public static void private_flags$set( MemorySegment seg, int x) {
+            CXString.private_flags$VH.set(seg, x);
         }
-        public static void private_flags$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXString$private_flags$VH().set(seg, x);
+        public static int private_flags$get(MemorySegment seg, long index) {
+            return (int)CXString.private_flags$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void private_flags$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXString$private_flags$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void private_flags$set(MemorySegment seg, long index, int x) {
+            CXString.private_flags$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXStringSet {
 
-        private CXStringSet() {}
+        static final MemoryLayout CXStringSet$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("Strings"),
+            C_INT.withName("Count"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXStringSet$struct$LAYOUT();
+            return CXStringSet.CXStringSet$struct$LAYOUT;
         }
+        static final VarHandle Strings$VH = MemoryHandles.asAddressVarHandle(CXStringSet$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Strings")));
         public static VarHandle Strings$VH() {
-            return Index_h$constants_0.CXStringSet$Strings$VH();
+            return CXStringSet.Strings$VH;
         }
-        public static  @C("CXString*") MemoryAddress Strings$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXStringSet$Strings$VH().get(seg);
+        public static MemoryAddress Strings$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXStringSet.Strings$VH.get(seg);
         }
-        public static  @C("CXString*") MemoryAddress Strings$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXStringSet$Strings$VH().get(seg.asSlice(index*sizeof()));
+        public static void Strings$set( MemorySegment seg, MemoryAddress x) {
+            CXStringSet.Strings$VH.set(seg, x);
         }
-        public static void Strings$set(@C("struct ") MemorySegment seg, @C("CXString*") MemoryAddress x) {
-            Index_h$constants_0.CXStringSet$Strings$VH().set(seg, x);
+        public static MemoryAddress Strings$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXStringSet.Strings$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Strings$set(@C("struct ") MemorySegment seg, long index, @C("CXString*") MemoryAddress x) {
-            Index_h$constants_0.CXStringSet$Strings$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Strings$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXStringSet.Strings$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle Count$VH = CXStringSet$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("Count"));
         public static VarHandle Count$VH() {
-            return Index_h$constants_0.CXStringSet$Count$VH();
+            return CXStringSet.Count$VH;
         }
-        public static  @C("unsigned int") int Count$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXStringSet$Count$VH().get(seg);
+        public static int Count$get(MemorySegment seg) {
+            return (int)CXStringSet.Count$VH.get(seg);
         }
-        public static  @C("unsigned int") int Count$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXStringSet$Count$VH().get(seg.asSlice(index*sizeof()));
+        public static void Count$set( MemorySegment seg, int x) {
+            CXStringSet.Count$VH.set(seg, x);
         }
-        public static void Count$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXStringSet$Count$VH().set(seg, x);
+        public static int Count$get(MemorySegment seg, long index) {
+            return (int)CXStringSet.Count$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Count$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXStringSet$Count$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Count$set(MemorySegment seg, long index, int x) {
+            CXStringSet.Count$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getCString$MH() {
-        return Index_h$constants_0.clang_getCString$MH();
+    public static MethodHandle clang_getCString$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_getCString$MH,"clang_getCString");
     }
-    public static @C("char*") MemoryAddress clang_getCString (@C("CXString") MemorySegment string) {
+    public static MemoryAddress clang_getCString ( MemorySegment string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_getCString$MH, "clang_getCString");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getCString$MH().invokeExact(string);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(string);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeString$MH() {
-        return Index_h$constants_0.clang_disposeString$MH();
+    public static MethodHandle clang_disposeString$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_disposeString$MH,"clang_disposeString");
     }
-    public static void clang_disposeString (@C("CXString") MemorySegment string) {
+    public static void clang_disposeString ( MemorySegment string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_disposeString$MH, "clang_disposeString");
         try {
-            Index_h$constants_0.clang_disposeString$MH().invokeExact(string);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(string);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeStringSet$MH() {
-        return Index_h$constants_0.clang_disposeStringSet$MH();
+    public static MethodHandle clang_disposeStringSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_disposeStringSet$MH,"clang_disposeStringSet");
     }
-    public static void clang_disposeStringSet (@C("CXStringSet*") Addressable set) {
+    public static void clang_disposeStringSet ( Addressable set) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_disposeStringSet$MH, "clang_disposeStringSet");
         try {
-            Index_h$constants_0.clang_disposeStringSet$MH().invokeExact(set.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(set.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXUnsavedFile {
 
-        private CXUnsavedFile() {}
+        static final MemoryLayout CXUnsavedFile$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("Filename"),
+            C_POINTER.withName("Contents"),
+            C_LONG_LONG.withName("Length")
+        ).withName("CXUnsavedFile");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXUnsavedFile$struct$LAYOUT();
+            return CXUnsavedFile.CXUnsavedFile$struct$LAYOUT;
         }
+        static final VarHandle Filename$VH = MemoryHandles.asAddressVarHandle(CXUnsavedFile$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Filename")));
         public static VarHandle Filename$VH() {
-            return Index_h$constants_0.CXUnsavedFile$Filename$VH();
+            return CXUnsavedFile.Filename$VH;
         }
-        public static  @C("char*") MemoryAddress Filename$get(@C("struct CXUnsavedFile") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXUnsavedFile$Filename$VH().get(seg);
+        public static MemoryAddress Filename$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXUnsavedFile.Filename$VH.get(seg);
         }
-        public static  @C("char*") MemoryAddress Filename$get(@C("struct CXUnsavedFile") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXUnsavedFile$Filename$VH().get(seg.asSlice(index*sizeof()));
+        public static void Filename$set( MemorySegment seg, MemoryAddress x) {
+            CXUnsavedFile.Filename$VH.set(seg, x);
         }
-        public static void Filename$set(@C("struct CXUnsavedFile") MemorySegment seg, @C("char*") MemoryAddress x) {
-            Index_h$constants_0.CXUnsavedFile$Filename$VH().set(seg, x);
+        public static MemoryAddress Filename$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXUnsavedFile.Filename$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Filename$set(@C("struct CXUnsavedFile") MemorySegment seg, long index, @C("char*") MemoryAddress x) {
-            Index_h$constants_0.CXUnsavedFile$Filename$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Filename$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXUnsavedFile.Filename$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle Contents$VH = MemoryHandles.asAddressVarHandle(CXUnsavedFile$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Contents")));
         public static VarHandle Contents$VH() {
-            return Index_h$constants_0.CXUnsavedFile$Contents$VH();
+            return CXUnsavedFile.Contents$VH;
         }
-        public static  @C("char*") MemoryAddress Contents$get(@C("struct CXUnsavedFile") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXUnsavedFile$Contents$VH().get(seg);
+        public static MemoryAddress Contents$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXUnsavedFile.Contents$VH.get(seg);
         }
-        public static  @C("char*") MemoryAddress Contents$get(@C("struct CXUnsavedFile") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXUnsavedFile$Contents$VH().get(seg.asSlice(index*sizeof()));
+        public static void Contents$set( MemorySegment seg, MemoryAddress x) {
+            CXUnsavedFile.Contents$VH.set(seg, x);
         }
-        public static void Contents$set(@C("struct CXUnsavedFile") MemorySegment seg, @C("char*") MemoryAddress x) {
-            Index_h$constants_0.CXUnsavedFile$Contents$VH().set(seg, x);
+        public static MemoryAddress Contents$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXUnsavedFile.Contents$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Contents$set(@C("struct CXUnsavedFile") MemorySegment seg, long index, @C("char*") MemoryAddress x) {
-            Index_h$constants_0.CXUnsavedFile$Contents$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Contents$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXUnsavedFile.Contents$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle Length$VH = CXUnsavedFile$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Length"));
         public static VarHandle Length$VH() {
-            return Index_h$constants_0.CXUnsavedFile$Length$VH();
+            return CXUnsavedFile.Length$VH;
         }
-        public static  @C("unsigned long") long Length$get(@C("struct CXUnsavedFile") MemorySegment seg) {
-            return (long)Index_h$constants_0.CXUnsavedFile$Length$VH().get(seg);
+        public static long Length$get(MemorySegment seg) {
+            return (long)CXUnsavedFile.Length$VH.get(seg);
         }
-        public static  @C("unsigned long") long Length$get(@C("struct CXUnsavedFile") MemorySegment seg, long index) {
-            return (long)Index_h$constants_0.CXUnsavedFile$Length$VH().get(seg.asSlice(index*sizeof()));
+        public static void Length$set( MemorySegment seg, long x) {
+            CXUnsavedFile.Length$VH.set(seg, x);
         }
-        public static void Length$set(@C("struct CXUnsavedFile") MemorySegment seg, @C("unsigned long") long x) {
-            Index_h$constants_0.CXUnsavedFile$Length$VH().set(seg, x);
+        public static long Length$get(MemorySegment seg, long index) {
+            return (long)CXUnsavedFile.Length$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Length$set(@C("struct CXUnsavedFile") MemorySegment seg, long index, @C("unsigned long") long x) {
-            Index_h$constants_0.CXUnsavedFile$Length$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Length$set(MemorySegment seg, long index, long x) {
+            CXUnsavedFile.Length$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXUnsavedFile") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXUnsavedFile") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXUnsavedFile[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXUnsavedFile[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXUnsavedFile*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXUnsavedFile*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXUnsavedFile") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXAvailability_Available() {
-        return Index_h$constants_0.CXAvailability_Available();
+    public static int CXAvailability_Available() {
+        return (int)0L;
     }
-    public static @C("int") int CXAvailability_Deprecated() {
-        return Index_h$constants_0.CXAvailability_Deprecated();
+    public static int CXAvailability_Deprecated() {
+        return (int)1L;
     }
-    public static @C("int") int CXAvailability_NotAvailable() {
-        return Index_h$constants_0.CXAvailability_NotAvailable();
+    public static int CXAvailability_NotAvailable() {
+        return (int)2L;
     }
-    public static @C("int") int CXAvailability_NotAccessible() {
-        return Index_h$constants_0.CXAvailability_NotAccessible();
+    public static int CXAvailability_NotAccessible() {
+        return (int)3L;
     }
     public static class CXVersion {
 
-        private CXVersion() {}
+        static final MemoryLayout CXVersion$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("Major"),
+            C_INT.withName("Minor"),
+            C_INT.withName("Subminor")
+        ).withName("CXVersion");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXVersion$struct$LAYOUT();
+            return CXVersion.CXVersion$struct$LAYOUT;
         }
+        static final VarHandle Major$VH = CXVersion$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("Major"));
         public static VarHandle Major$VH() {
-            return Index_h$constants_0.CXVersion$Major$VH();
+            return CXVersion.Major$VH;
         }
-        public static  @C("int") int Major$get(@C("struct CXVersion") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXVersion$Major$VH().get(seg);
+        public static int Major$get(MemorySegment seg) {
+            return (int)CXVersion.Major$VH.get(seg);
         }
-        public static  @C("int") int Major$get(@C("struct CXVersion") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXVersion$Major$VH().get(seg.asSlice(index*sizeof()));
+        public static void Major$set( MemorySegment seg, int x) {
+            CXVersion.Major$VH.set(seg, x);
         }
-        public static void Major$set(@C("struct CXVersion") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Major$VH().set(seg, x);
+        public static int Major$get(MemorySegment seg, long index) {
+            return (int)CXVersion.Major$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Major$set(@C("struct CXVersion") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Major$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Major$set(MemorySegment seg, long index, int x) {
+            CXVersion.Major$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle Minor$VH = CXVersion$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("Minor"));
         public static VarHandle Minor$VH() {
-            return Index_h$constants_0.CXVersion$Minor$VH();
+            return CXVersion.Minor$VH;
         }
-        public static  @C("int") int Minor$get(@C("struct CXVersion") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXVersion$Minor$VH().get(seg);
+        public static int Minor$get(MemorySegment seg) {
+            return (int)CXVersion.Minor$VH.get(seg);
         }
-        public static  @C("int") int Minor$get(@C("struct CXVersion") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXVersion$Minor$VH().get(seg.asSlice(index*sizeof()));
+        public static void Minor$set( MemorySegment seg, int x) {
+            CXVersion.Minor$VH.set(seg, x);
         }
-        public static void Minor$set(@C("struct CXVersion") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Minor$VH().set(seg, x);
+        public static int Minor$get(MemorySegment seg, long index) {
+            return (int)CXVersion.Minor$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Minor$set(@C("struct CXVersion") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Minor$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Minor$set(MemorySegment seg, long index, int x) {
+            CXVersion.Minor$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle Subminor$VH = CXVersion$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("Subminor"));
         public static VarHandle Subminor$VH() {
-            return Index_h$constants_0.CXVersion$Subminor$VH();
+            return CXVersion.Subminor$VH;
         }
-        public static  @C("int") int Subminor$get(@C("struct CXVersion") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXVersion$Subminor$VH().get(seg);
+        public static int Subminor$get(MemorySegment seg) {
+            return (int)CXVersion.Subminor$VH.get(seg);
         }
-        public static  @C("int") int Subminor$get(@C("struct CXVersion") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXVersion$Subminor$VH().get(seg.asSlice(index*sizeof()));
+        public static void Subminor$set( MemorySegment seg, int x) {
+            CXVersion.Subminor$VH.set(seg, x);
         }
-        public static void Subminor$set(@C("struct CXVersion") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Subminor$VH().set(seg, x);
+        public static int Subminor$get(MemorySegment seg, long index) {
+            return (int)CXVersion.Subminor$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Subminor$set(@C("struct CXVersion") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_0.CXVersion$Subminor$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Subminor$set(MemorySegment seg, long index, int x) {
+            CXVersion.Subminor$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXVersion") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXVersion") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXVersion[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXVersion[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXVersion*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXVersion*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXVersion") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_None() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_None();
+    public static int CXCursor_ExceptionSpecificationKind_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_DynamicNone() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_DynamicNone();
+    public static int CXCursor_ExceptionSpecificationKind_DynamicNone() {
+        return (int)1L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_Dynamic() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_Dynamic();
+    public static int CXCursor_ExceptionSpecificationKind_Dynamic() {
+        return (int)2L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_MSAny() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_MSAny();
+    public static int CXCursor_ExceptionSpecificationKind_MSAny() {
+        return (int)3L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_BasicNoexcept() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_BasicNoexcept();
+    public static int CXCursor_ExceptionSpecificationKind_BasicNoexcept() {
+        return (int)4L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_ComputedNoexcept() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_ComputedNoexcept();
+    public static int CXCursor_ExceptionSpecificationKind_ComputedNoexcept() {
+        return (int)5L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_Unevaluated() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_Unevaluated();
+    public static int CXCursor_ExceptionSpecificationKind_Unevaluated() {
+        return (int)6L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_Uninstantiated() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_Uninstantiated();
+    public static int CXCursor_ExceptionSpecificationKind_Uninstantiated() {
+        return (int)7L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_Unparsed() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_Unparsed();
+    public static int CXCursor_ExceptionSpecificationKind_Unparsed() {
+        return (int)8L;
     }
-    public static @C("int") int CXCursor_ExceptionSpecificationKind_NoThrow() {
-        return Index_h$constants_0.CXCursor_ExceptionSpecificationKind_NoThrow();
+    public static int CXCursor_ExceptionSpecificationKind_NoThrow() {
+        return (int)9L;
     }
-    public static  MethodHandle clang_createIndex$MH() {
-        return Index_h$constants_0.clang_createIndex$MH();
+    public static MethodHandle clang_createIndex$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_createIndex$MH,"clang_createIndex");
     }
-    public static @C("CXIndex") MemoryAddress clang_createIndex (@C("int") int excludeDeclarationsFromPCH, @C("int") int displayDiagnostics) {
+    public static MemoryAddress clang_createIndex ( int excludeDeclarationsFromPCH,  int displayDiagnostics) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_createIndex$MH, "clang_createIndex");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_createIndex$MH().invokeExact(excludeDeclarationsFromPCH, displayDiagnostics);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(excludeDeclarationsFromPCH, displayDiagnostics);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeIndex$MH() {
-        return Index_h$constants_0.clang_disposeIndex$MH();
+    public static MethodHandle clang_disposeIndex$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_disposeIndex$MH,"clang_disposeIndex");
     }
-    public static void clang_disposeIndex (@C("CXIndex") Addressable index) {
+    public static void clang_disposeIndex ( Addressable index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_disposeIndex$MH, "clang_disposeIndex");
         try {
-            Index_h$constants_0.clang_disposeIndex$MH().invokeExact(index.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(index.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXGlobalOpt_None() {
-        return Index_h$constants_0.CXGlobalOpt_None();
+    public static int CXGlobalOpt_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXGlobalOpt_ThreadBackgroundPriorityForIndexing() {
-        return Index_h$constants_0.CXGlobalOpt_ThreadBackgroundPriorityForIndexing();
+    public static int CXGlobalOpt_ThreadBackgroundPriorityForIndexing() {
+        return (int)1L;
     }
-    public static @C("int") int CXGlobalOpt_ThreadBackgroundPriorityForEditing() {
-        return Index_h$constants_0.CXGlobalOpt_ThreadBackgroundPriorityForEditing();
+    public static int CXGlobalOpt_ThreadBackgroundPriorityForEditing() {
+        return (int)2L;
     }
-    public static @C("int") int CXGlobalOpt_ThreadBackgroundPriorityForAll() {
-        return Index_h$constants_0.CXGlobalOpt_ThreadBackgroundPriorityForAll();
+    public static int CXGlobalOpt_ThreadBackgroundPriorityForAll() {
+        return (int)3L;
     }
-    public static  MethodHandle clang_CXIndex_setGlobalOptions$MH() {
-        return Index_h$constants_0.clang_CXIndex_setGlobalOptions$MH();
+    public static MethodHandle clang_CXIndex_setGlobalOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$0.clang_CXIndex_setGlobalOptions$MH,"clang_CXIndex_setGlobalOptions");
     }
-    public static void clang_CXIndex_setGlobalOptions (@C("CXIndex") Addressable x0, @C("unsigned int") int options) {
+    public static void clang_CXIndex_setGlobalOptions ( Addressable x0,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$0.clang_CXIndex_setGlobalOptions$MH, "clang_CXIndex_setGlobalOptions");
         try {
-            Index_h$constants_0.clang_CXIndex_setGlobalOptions$MH().invokeExact(x0.address(), options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(x0.address(), options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXIndex_getGlobalOptions$MH() {
-        return Index_h$constants_0.clang_CXIndex_getGlobalOptions$MH();
+    public static class constants$0 {
+
+        static final FunctionDescriptor clang_getCString$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_getCString$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCString",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$0.clang_getCString$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeString$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_disposeString$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeString",
+            "(Ljdk/incubator/foreign/MemorySegment;)V",
+            constants$0.clang_disposeString$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeStringSet$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeStringSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeStringSet",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$0.clang_disposeStringSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_createIndex$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_createIndex$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_createIndex",
+            "(II)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$0.clang_createIndex$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeIndex$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeIndex$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeIndex",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$0.clang_disposeIndex$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXIndex_setGlobalOptions$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_CXIndex_setGlobalOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXIndex_setGlobalOptions",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)V",
+            constants$0.clang_CXIndex_setGlobalOptions$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_CXIndex_getGlobalOptions (@C("CXIndex") Addressable x0) {
+
+    public static MethodHandle clang_CXIndex_getGlobalOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_CXIndex_getGlobalOptions$MH,"clang_CXIndex_getGlobalOptions");
+    }
+    public static int clang_CXIndex_getGlobalOptions ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_CXIndex_getGlobalOptions$MH, "clang_CXIndex_getGlobalOptions");
         try {
-            return (int)Index_h$constants_0.clang_CXIndex_getGlobalOptions$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXIndex_setInvocationEmissionPathOption$MH() {
-        return Index_h$constants_0.clang_CXIndex_setInvocationEmissionPathOption$MH();
+    public static MethodHandle clang_CXIndex_setInvocationEmissionPathOption$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_CXIndex_setInvocationEmissionPathOption$MH,"clang_CXIndex_setInvocationEmissionPathOption");
     }
-    public static void clang_CXIndex_setInvocationEmissionPathOption (@C("CXIndex") Addressable x0, @C("char*") Addressable Path) {
+    public static void clang_CXIndex_setInvocationEmissionPathOption ( Addressable x0,  Addressable Path) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_CXIndex_setInvocationEmissionPathOption$MH, "clang_CXIndex_setInvocationEmissionPathOption");
         try {
-            Index_h$constants_0.clang_CXIndex_setInvocationEmissionPathOption$MH().invokeExact(x0.address(), Path.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(x0.address(), Path.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getFileName$MH() {
-        return Index_h$constants_0.clang_getFileName$MH();
+    public static MethodHandle clang_getFileName$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_getFileName$MH,"clang_getFileName");
     }
-    public static @C("CXString") MemorySegment clang_getFileName (@C("CXFile") Addressable SFile) {
+    public static MemorySegment clang_getFileName ( Addressable SFile) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_getFileName$MH, "clang_getFileName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getFileName$MH().invokeExact(SFile.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(SFile.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getFileTime$MH() {
-        return Index_h$constants_0.clang_getFileTime$MH();
+    public static MethodHandle clang_getFileTime$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_getFileTime$MH,"clang_getFileTime");
     }
-    public static @C("time_t") long clang_getFileTime (@C("CXFile") Addressable SFile) {
+    public static long clang_getFileTime ( Addressable SFile) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_getFileTime$MH, "clang_getFileTime");
         try {
-            return (long)Index_h$constants_0.clang_getFileTime$MH().invokeExact(SFile.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (long)mh$.invokeExact(SFile.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXFileUniqueID {
 
-        private CXFileUniqueID() {}
+        static final MemoryLayout CXFileUniqueID$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(3, C_LONG_LONG).withName("data")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXFileUniqueID$struct$LAYOUT();
+            return CXFileUniqueID.CXFileUniqueID$struct$LAYOUT;
         }
         public static MemorySegment data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getFileUniqueID$MH() {
-        return Index_h$constants_0.clang_getFileUniqueID$MH();
+    public static MethodHandle clang_getFileUniqueID$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_getFileUniqueID$MH,"clang_getFileUniqueID");
     }
-    public static @C("int") int clang_getFileUniqueID (@C("CXFile") Addressable file, @C("CXFileUniqueID*") Addressable outID) {
+    public static int clang_getFileUniqueID ( Addressable file,  Addressable outID) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_getFileUniqueID$MH, "clang_getFileUniqueID");
         try {
-            return (int)Index_h$constants_0.clang_getFileUniqueID$MH().invokeExact(file.address(), outID.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(file.address(), outID.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isFileMultipleIncludeGuarded$MH() {
-        return Index_h$constants_0.clang_isFileMultipleIncludeGuarded$MH();
+    public static MethodHandle clang_isFileMultipleIncludeGuarded$MH() {
+        return RuntimeHelper.requireNonNull(constants$1.clang_isFileMultipleIncludeGuarded$MH,"clang_isFileMultipleIncludeGuarded");
     }
-    public static @C("unsigned int") int clang_isFileMultipleIncludeGuarded (@C("CXTranslationUnit") Addressable tu, @C("CXFile") Addressable file) {
+    public static int clang_isFileMultipleIncludeGuarded ( Addressable tu,  Addressable file) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$1.clang_isFileMultipleIncludeGuarded$MH, "clang_isFileMultipleIncludeGuarded");
         try {
-            return (int)Index_h$constants_0.clang_isFileMultipleIncludeGuarded$MH().invokeExact(tu.address(), file.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(tu.address(), file.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getFile$MH() {
-        return Index_h$constants_0.clang_getFile$MH();
+    public static class constants$1 {
+
+        static final FunctionDescriptor clang_CXIndex_getGlobalOptions$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_CXIndex_getGlobalOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXIndex_getGlobalOptions",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$1.clang_CXIndex_getGlobalOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXIndex_setInvocationEmissionPathOption$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_CXIndex_setInvocationEmissionPathOption$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXIndex_setInvocationEmissionPathOption",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$1.clang_CXIndex_setInvocationEmissionPathOption$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFileName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getFileName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFileName",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$1.clang_getFileName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFileTime$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            C_POINTER
+        );
+        static final MethodHandle clang_getFileTime$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFileTime",
+            "(Ljdk/incubator/foreign/MemoryAddress;)J",
+            constants$1.clang_getFileTime$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFileUniqueID$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getFileUniqueID$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFileUniqueID",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$1.clang_getFileUniqueID$FUNC, false
+        );
+        static final FunctionDescriptor clang_isFileMultipleIncludeGuarded$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_isFileMultipleIncludeGuarded$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isFileMultipleIncludeGuarded",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$1.clang_isFileMultipleIncludeGuarded$FUNC, false
+        );
     }
-    public static @C("CXFile") MemoryAddress clang_getFile (@C("CXTranslationUnit") Addressable tu, @C("char*") Addressable file_name) {
+
+    public static MethodHandle clang_getFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_getFile$MH,"clang_getFile");
+    }
+    public static MemoryAddress clang_getFile ( Addressable tu,  Addressable file_name) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_getFile$MH, "clang_getFile");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getFile$MH().invokeExact(tu.address(), file_name.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(tu.address(), file_name.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getFileContents$MH() {
-        return Index_h$constants_0.clang_getFileContents$MH();
+    public static MethodHandle clang_getFileContents$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_getFileContents$MH,"clang_getFileContents");
     }
-    public static @C("char*") MemoryAddress clang_getFileContents (@C("CXTranslationUnit") Addressable tu, @C("CXFile") Addressable file, @C("size_t*") Addressable size) {
+    public static MemoryAddress clang_getFileContents ( Addressable tu,  Addressable file,  Addressable size) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_getFileContents$MH, "clang_getFileContents");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getFileContents$MH().invokeExact(tu.address(), file.address(), size.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(tu.address(), file.address(), size.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_File_isEqual$MH() {
-        return Index_h$constants_0.clang_File_isEqual$MH();
+    public static MethodHandle clang_File_isEqual$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_File_isEqual$MH,"clang_File_isEqual");
     }
-    public static @C("int") int clang_File_isEqual (@C("CXFile") Addressable file1, @C("CXFile") Addressable file2) {
+    public static int clang_File_isEqual ( Addressable file1,  Addressable file2) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_File_isEqual$MH, "clang_File_isEqual");
         try {
-            return (int)Index_h$constants_0.clang_File_isEqual$MH().invokeExact(file1.address(), file2.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(file1.address(), file2.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_File_tryGetRealPathName$MH() {
-        return Index_h$constants_0.clang_File_tryGetRealPathName$MH();
+    public static MethodHandle clang_File_tryGetRealPathName$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_File_tryGetRealPathName$MH,"clang_File_tryGetRealPathName");
     }
-    public static @C("CXString") MemorySegment clang_File_tryGetRealPathName (@C("CXFile") Addressable file) {
+    public static MemorySegment clang_File_tryGetRealPathName ( Addressable file) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_File_tryGetRealPathName$MH, "clang_File_tryGetRealPathName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_File_tryGetRealPathName$MH().invokeExact(file.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(file.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXSourceLocation {
 
-        private CXSourceLocation() {}
+        static final MemoryLayout CXSourceLocation$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXSourceLocation$struct$LAYOUT();
+            return CXSourceLocation.CXSourceLocation$struct$LAYOUT;
         }
         public static MemorySegment ptr_data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 16));
         }
+        static final VarHandle int_data$VH = CXSourceLocation$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("int_data"));
         public static VarHandle int_data$VH() {
-            return Index_h$constants_0.CXSourceLocation$int_data$VH();
+            return CXSourceLocation.int_data$VH;
         }
-        public static  @C("unsigned int") int int_data$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXSourceLocation$int_data$VH().get(seg);
+        public static int int_data$get(MemorySegment seg) {
+            return (int)CXSourceLocation.int_data$VH.get(seg);
         }
-        public static  @C("unsigned int") int int_data$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXSourceLocation$int_data$VH().get(seg.asSlice(index*sizeof()));
+        public static void int_data$set( MemorySegment seg, int x) {
+            CXSourceLocation.int_data$VH.set(seg, x);
         }
-        public static void int_data$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceLocation$int_data$VH().set(seg, x);
+        public static int int_data$get(MemorySegment seg, long index) {
+            return (int)CXSourceLocation.int_data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void int_data$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceLocation$int_data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void int_data$set(MemorySegment seg, long index, int x) {
+            CXSourceLocation.int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXSourceRange {
 
-        private CXSourceRange() {}
+        static final MemoryLayout CXSourceRange$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXSourceRange$struct$LAYOUT();
+            return CXSourceRange.CXSourceRange$struct$LAYOUT;
         }
         public static MemorySegment ptr_data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 16));
         }
+        static final VarHandle begin_int_data$VH = CXSourceRange$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("begin_int_data"));
         public static VarHandle begin_int_data$VH() {
-            return Index_h$constants_0.CXSourceRange$begin_int_data$VH();
+            return CXSourceRange.begin_int_data$VH;
         }
-        public static  @C("unsigned int") int begin_int_data$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXSourceRange$begin_int_data$VH().get(seg);
+        public static int begin_int_data$get(MemorySegment seg) {
+            return (int)CXSourceRange.begin_int_data$VH.get(seg);
         }
-        public static  @C("unsigned int") int begin_int_data$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXSourceRange$begin_int_data$VH().get(seg.asSlice(index*sizeof()));
+        public static void begin_int_data$set( MemorySegment seg, int x) {
+            CXSourceRange.begin_int_data$VH.set(seg, x);
         }
-        public static void begin_int_data$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRange$begin_int_data$VH().set(seg, x);
+        public static int begin_int_data$get(MemorySegment seg, long index) {
+            return (int)CXSourceRange.begin_int_data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void begin_int_data$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRange$begin_int_data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void begin_int_data$set(MemorySegment seg, long index, int x) {
+            CXSourceRange.begin_int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle end_int_data$VH = CXSourceRange$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("end_int_data"));
         public static VarHandle end_int_data$VH() {
-            return Index_h$constants_0.CXSourceRange$end_int_data$VH();
+            return CXSourceRange.end_int_data$VH;
         }
-        public static  @C("unsigned int") int end_int_data$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXSourceRange$end_int_data$VH().get(seg);
+        public static int end_int_data$get(MemorySegment seg) {
+            return (int)CXSourceRange.end_int_data$VH.get(seg);
         }
-        public static  @C("unsigned int") int end_int_data$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXSourceRange$end_int_data$VH().get(seg.asSlice(index*sizeof()));
+        public static void end_int_data$set( MemorySegment seg, int x) {
+            CXSourceRange.end_int_data$VH.set(seg, x);
         }
-        public static void end_int_data$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRange$end_int_data$VH().set(seg, x);
+        public static int end_int_data$get(MemorySegment seg, long index) {
+            return (int)CXSourceRange.end_int_data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void end_int_data$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRange$end_int_data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void end_int_data$set(MemorySegment seg, long index, int x) {
+            CXSourceRange.end_int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getNullLocation$MH() {
-        return Index_h$constants_0.clang_getNullLocation$MH();
+    public static MethodHandle clang_getNullLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_getNullLocation$MH,"clang_getNullLocation");
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getNullLocation () {
+    public static MemorySegment clang_getNullLocation () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_getNullLocation$MH, "clang_getNullLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getNullLocation$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_equalLocations$MH() {
-        return Index_h$constants_0.clang_equalLocations$MH();
+    public static MethodHandle clang_equalLocations$MH() {
+        return RuntimeHelper.requireNonNull(constants$2.clang_equalLocations$MH,"clang_equalLocations");
     }
-    public static @C("unsigned int") int clang_equalLocations (@C("CXSourceLocation") MemorySegment loc1, @C("CXSourceLocation") MemorySegment loc2) {
+    public static int clang_equalLocations ( MemorySegment loc1,  MemorySegment loc2) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$2.clang_equalLocations$MH, "clang_equalLocations");
         try {
-            return (int)Index_h$constants_0.clang_equalLocations$MH().invokeExact(loc1, loc2);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(loc1, loc2);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getLocation$MH() {
-        return Index_h$constants_0.clang_getLocation$MH();
+    public static class constants$2 {
+
+        static final FunctionDescriptor clang_getFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFile",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$2.clang_getFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFileContents$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getFileContents$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFileContents",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$2.clang_getFileContents$FUNC, false
+        );
+        static final FunctionDescriptor clang_File_isEqual$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_File_isEqual$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_File_isEqual",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$2.clang_File_isEqual$FUNC, false
+        );
+        static final FunctionDescriptor clang_File_tryGetRealPathName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_File_tryGetRealPathName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_File_tryGetRealPathName",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$2.clang_File_tryGetRealPathName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNullLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ));
+        static final MethodHandle clang_getNullLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNullLocation",
+            "()Ljdk/incubator/foreign/MemorySegment;",
+            constants$2.clang_getNullLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_equalLocations$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_equalLocations$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_equalLocations",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$2.clang_equalLocations$FUNC, false
+        );
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getLocation (@C("CXTranslationUnit") Addressable tu, @C("CXFile") Addressable file, @C("unsigned int") int line, @C("unsigned int") int column) {
+
+    public static MethodHandle clang_getLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_getLocation$MH,"clang_getLocation");
+    }
+    public static MemorySegment clang_getLocation ( Addressable tu,  Addressable file,  int line,  int column) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_getLocation$MH, "clang_getLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getLocation$MH().invokeExact(tu.address(), file.address(), line, column);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(tu.address(), file.address(), line, column);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getLocationForOffset$MH() {
-        return Index_h$constants_0.clang_getLocationForOffset$MH();
+    public static MethodHandle clang_getLocationForOffset$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_getLocationForOffset$MH,"clang_getLocationForOffset");
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getLocationForOffset (@C("CXTranslationUnit") Addressable tu, @C("CXFile") Addressable file, @C("unsigned int") int offset) {
+    public static MemorySegment clang_getLocationForOffset ( Addressable tu,  Addressable file,  int offset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_getLocationForOffset$MH, "clang_getLocationForOffset");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getLocationForOffset$MH().invokeExact(tu.address(), file.address(), offset);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(tu.address(), file.address(), offset);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Location_isInSystemHeader$MH() {
-        return Index_h$constants_0.clang_Location_isInSystemHeader$MH();
+    public static MethodHandle clang_Location_isInSystemHeader$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_Location_isInSystemHeader$MH,"clang_Location_isInSystemHeader");
     }
-    public static @C("int") int clang_Location_isInSystemHeader (@C("CXSourceLocation") MemorySegment location) {
+    public static int clang_Location_isInSystemHeader ( MemorySegment location) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_Location_isInSystemHeader$MH, "clang_Location_isInSystemHeader");
         try {
-            return (int)Index_h$constants_0.clang_Location_isInSystemHeader$MH().invokeExact(location);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(location);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Location_isFromMainFile$MH() {
-        return Index_h$constants_0.clang_Location_isFromMainFile$MH();
+    public static MethodHandle clang_Location_isFromMainFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_Location_isFromMainFile$MH,"clang_Location_isFromMainFile");
     }
-    public static @C("int") int clang_Location_isFromMainFile (@C("CXSourceLocation") MemorySegment location) {
+    public static int clang_Location_isFromMainFile ( MemorySegment location) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_Location_isFromMainFile$MH, "clang_Location_isFromMainFile");
         try {
-            return (int)Index_h$constants_0.clang_Location_isFromMainFile$MH().invokeExact(location);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(location);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getNullRange$MH() {
-        return Index_h$constants_0.clang_getNullRange$MH();
+    public static MethodHandle clang_getNullRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_getNullRange$MH,"clang_getNullRange");
     }
-    public static @C("CXSourceRange") MemorySegment clang_getNullRange () {
+    public static MemorySegment clang_getNullRange () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_getNullRange$MH, "clang_getNullRange");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getNullRange$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getRange$MH() {
-        return Index_h$constants_0.clang_getRange$MH();
+    public static MethodHandle clang_getRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$3.clang_getRange$MH,"clang_getRange");
     }
-    public static @C("CXSourceRange") MemorySegment clang_getRange (@C("CXSourceLocation") MemorySegment begin, @C("CXSourceLocation") MemorySegment end) {
+    public static MemorySegment clang_getRange ( MemorySegment begin,  MemorySegment end) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_getRange$MH, "clang_getRange");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getRange$MH().invokeExact(begin, end);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(begin, end);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_equalRanges$MH() {
-        return Index_h$constants_0.clang_equalRanges$MH();
+    public static class constants$3 {
+
+        static final FunctionDescriptor clang_getLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_getLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getLocation",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemorySegment;",
+            constants$3.clang_getLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getLocationForOffset$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getLocationForOffset$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getLocationForOffset",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$3.clang_getLocationForOffset$FUNC, false
+        );
+        static final FunctionDescriptor clang_Location_isInSystemHeader$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_Location_isInSystemHeader$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Location_isInSystemHeader",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$3.clang_Location_isInSystemHeader$FUNC, false
+        );
+        static final FunctionDescriptor clang_Location_isFromMainFile$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_Location_isFromMainFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Location_isFromMainFile",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$3.clang_Location_isFromMainFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNullRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ));
+        static final MethodHandle clang_getNullRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNullRange",
+            "()Ljdk/incubator/foreign/MemorySegment;",
+            constants$3.clang_getNullRange$FUNC, false
+        );
+        static final FunctionDescriptor clang_getRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_getRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getRange",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$3.clang_getRange$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_equalRanges (@C("CXSourceRange") MemorySegment range1, @C("CXSourceRange") MemorySegment range2) {
+
+    public static MethodHandle clang_equalRanges$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_equalRanges$MH,"clang_equalRanges");
+    }
+    public static int clang_equalRanges ( MemorySegment range1,  MemorySegment range2) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_equalRanges$MH, "clang_equalRanges");
         try {
-            return (int)Index_h$constants_0.clang_equalRanges$MH().invokeExact(range1, range2);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(range1, range2);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Range_isNull$MH() {
-        return Index_h$constants_0.clang_Range_isNull$MH();
+    public static MethodHandle clang_Range_isNull$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_Range_isNull$MH,"clang_Range_isNull");
     }
-    public static @C("int") int clang_Range_isNull (@C("CXSourceRange") MemorySegment range) {
+    public static int clang_Range_isNull ( MemorySegment range) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_Range_isNull$MH, "clang_Range_isNull");
         try {
-            return (int)Index_h$constants_0.clang_Range_isNull$MH().invokeExact(range);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(range);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getExpansionLocation$MH() {
-        return Index_h$constants_0.clang_getExpansionLocation$MH();
+    public static MethodHandle clang_getExpansionLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_getExpansionLocation$MH,"clang_getExpansionLocation");
     }
-    public static void clang_getExpansionLocation (@C("CXSourceLocation") MemorySegment location, @C("CXFile*") Addressable file, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column, @C("unsigned int*") Addressable offset) {
+    public static void clang_getExpansionLocation ( MemorySegment location,  Addressable file,  Addressable line,  Addressable column,  Addressable offset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_getExpansionLocation$MH, "clang_getExpansionLocation");
         try {
-            Index_h$constants_0.clang_getExpansionLocation$MH().invokeExact(location, file.address(), line.address(), column.address(), offset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(location, file.address(), line.address(), column.address(), offset.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getPresumedLocation$MH() {
-        return Index_h$constants_0.clang_getPresumedLocation$MH();
+    public static MethodHandle clang_getPresumedLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_getPresumedLocation$MH,"clang_getPresumedLocation");
     }
-    public static void clang_getPresumedLocation (@C("CXSourceLocation") MemorySegment location, @C("CXString*") Addressable filename, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column) {
+    public static void clang_getPresumedLocation ( MemorySegment location,  Addressable filename,  Addressable line,  Addressable column) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_getPresumedLocation$MH, "clang_getPresumedLocation");
         try {
-            Index_h$constants_0.clang_getPresumedLocation$MH().invokeExact(location, filename.address(), line.address(), column.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(location, filename.address(), line.address(), column.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getInstantiationLocation$MH() {
-        return Index_h$constants_0.clang_getInstantiationLocation$MH();
+    public static MethodHandle clang_getInstantiationLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_getInstantiationLocation$MH,"clang_getInstantiationLocation");
     }
-    public static void clang_getInstantiationLocation (@C("CXSourceLocation") MemorySegment location, @C("CXFile*") Addressable file, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column, @C("unsigned int*") Addressable offset) {
+    public static void clang_getInstantiationLocation ( MemorySegment location,  Addressable file,  Addressable line,  Addressable column,  Addressable offset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_getInstantiationLocation$MH, "clang_getInstantiationLocation");
         try {
-            Index_h$constants_0.clang_getInstantiationLocation$MH().invokeExact(location, file.address(), line.address(), column.address(), offset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(location, file.address(), line.address(), column.address(), offset.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getSpellingLocation$MH() {
-        return Index_h$constants_0.clang_getSpellingLocation$MH();
+    public static MethodHandle clang_getSpellingLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$4.clang_getSpellingLocation$MH,"clang_getSpellingLocation");
     }
-    public static void clang_getSpellingLocation (@C("CXSourceLocation") MemorySegment location, @C("CXFile*") Addressable file, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column, @C("unsigned int*") Addressable offset) {
+    public static void clang_getSpellingLocation ( MemorySegment location,  Addressable file,  Addressable line,  Addressable column,  Addressable offset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$4.clang_getSpellingLocation$MH, "clang_getSpellingLocation");
         try {
-            Index_h$constants_0.clang_getSpellingLocation$MH().invokeExact(location, file.address(), line.address(), column.address(), offset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(location, file.address(), line.address(), column.address(), offset.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getFileLocation$MH() {
-        return Index_h$constants_0.clang_getFileLocation$MH();
+    public static class constants$4 {
+
+        static final FunctionDescriptor clang_equalRanges$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
+        static final MethodHandle clang_equalRanges$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_equalRanges",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$4.clang_equalRanges$FUNC, false
+        );
+        static final FunctionDescriptor clang_Range_isNull$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
+        static final MethodHandle clang_Range_isNull$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Range_isNull",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$4.clang_Range_isNull$FUNC, false
+        );
+        static final FunctionDescriptor clang_getExpansionLocation$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getExpansionLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getExpansionLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$4.clang_getExpansionLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getPresumedLocation$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getPresumedLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getPresumedLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$4.clang_getPresumedLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getInstantiationLocation$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getInstantiationLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getInstantiationLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$4.clang_getInstantiationLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getSpellingLocation$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getSpellingLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getSpellingLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$4.clang_getSpellingLocation$FUNC, false
+        );
     }
-    public static void clang_getFileLocation (@C("CXSourceLocation") MemorySegment location, @C("CXFile*") Addressable file, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column, @C("unsigned int*") Addressable offset) {
+
+    public static MethodHandle clang_getFileLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_getFileLocation$MH,"clang_getFileLocation");
+    }
+    public static void clang_getFileLocation ( MemorySegment location,  Addressable file,  Addressable line,  Addressable column,  Addressable offset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_getFileLocation$MH, "clang_getFileLocation");
         try {
-            Index_h$constants_0.clang_getFileLocation$MH().invokeExact(location, file.address(), line.address(), column.address(), offset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(location, file.address(), line.address(), column.address(), offset.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getRangeStart$MH() {
-        return Index_h$constants_0.clang_getRangeStart$MH();
+    public static MethodHandle clang_getRangeStart$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_getRangeStart$MH,"clang_getRangeStart");
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getRangeStart (@C("CXSourceRange") MemorySegment range) {
+    public static MemorySegment clang_getRangeStart ( MemorySegment range) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_getRangeStart$MH, "clang_getRangeStart");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getRangeStart$MH().invokeExact(range);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(range);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getRangeEnd$MH() {
-        return Index_h$constants_0.clang_getRangeEnd$MH();
+    public static MethodHandle clang_getRangeEnd$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_getRangeEnd$MH,"clang_getRangeEnd");
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getRangeEnd (@C("CXSourceRange") MemorySegment range) {
+    public static MemorySegment clang_getRangeEnd ( MemorySegment range) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_getRangeEnd$MH, "clang_getRangeEnd");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getRangeEnd$MH().invokeExact(range);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(range);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXSourceRangeList {
 
-        private CXSourceRangeList() {}
+        static final MemoryLayout CXSourceRangeList$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("count"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("ranges")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXSourceRangeList$struct$LAYOUT();
+            return CXSourceRangeList.CXSourceRangeList$struct$LAYOUT;
         }
+        static final VarHandle count$VH = CXSourceRangeList$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("count"));
         public static VarHandle count$VH() {
-            return Index_h$constants_0.CXSourceRangeList$count$VH();
+            return CXSourceRangeList.count$VH;
         }
-        public static  @C("unsigned int") int count$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXSourceRangeList$count$VH().get(seg);
+        public static int count$get(MemorySegment seg) {
+            return (int)CXSourceRangeList.count$VH.get(seg);
         }
-        public static  @C("unsigned int") int count$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXSourceRangeList$count$VH().get(seg.asSlice(index*sizeof()));
+        public static void count$set( MemorySegment seg, int x) {
+            CXSourceRangeList.count$VH.set(seg, x);
         }
-        public static void count$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRangeList$count$VH().set(seg, x);
+        public static int count$get(MemorySegment seg, long index) {
+            return (int)CXSourceRangeList.count$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void count$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXSourceRangeList$count$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void count$set(MemorySegment seg, long index, int x) {
+            CXSourceRangeList.count$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle ranges$VH = MemoryHandles.asAddressVarHandle(CXSourceRangeList$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("ranges")));
         public static VarHandle ranges$VH() {
-            return Index_h$constants_0.CXSourceRangeList$ranges$VH();
+            return CXSourceRangeList.ranges$VH;
         }
-        public static  @C("CXSourceRange*") MemoryAddress ranges$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXSourceRangeList$ranges$VH().get(seg);
+        public static MemoryAddress ranges$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXSourceRangeList.ranges$VH.get(seg);
         }
-        public static  @C("CXSourceRange*") MemoryAddress ranges$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXSourceRangeList$ranges$VH().get(seg.asSlice(index*sizeof()));
+        public static void ranges$set( MemorySegment seg, MemoryAddress x) {
+            CXSourceRangeList.ranges$VH.set(seg, x);
         }
-        public static void ranges$set(@C("struct ") MemorySegment seg, @C("CXSourceRange*") MemoryAddress x) {
-            Index_h$constants_0.CXSourceRangeList$ranges$VH().set(seg, x);
+        public static MemoryAddress ranges$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXSourceRangeList.ranges$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void ranges$set(@C("struct ") MemorySegment seg, long index, @C("CXSourceRange*") MemoryAddress x) {
-            Index_h$constants_0.CXSourceRangeList$ranges$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void ranges$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXSourceRangeList.ranges$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getSkippedRanges$MH() {
-        return Index_h$constants_0.clang_getSkippedRanges$MH();
+    public static MethodHandle clang_getSkippedRanges$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_getSkippedRanges$MH,"clang_getSkippedRanges");
     }
-    public static @C("CXSourceRangeList*") MemoryAddress clang_getSkippedRanges (@C("CXTranslationUnit") Addressable tu, @C("CXFile") Addressable file) {
+    public static MemoryAddress clang_getSkippedRanges ( Addressable tu,  Addressable file) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_getSkippedRanges$MH, "clang_getSkippedRanges");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getSkippedRanges$MH().invokeExact(tu.address(), file.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(tu.address(), file.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getAllSkippedRanges$MH() {
-        return Index_h$constants_0.clang_getAllSkippedRanges$MH();
+    public static MethodHandle clang_getAllSkippedRanges$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_getAllSkippedRanges$MH,"clang_getAllSkippedRanges");
     }
-    public static @C("CXSourceRangeList*") MemoryAddress clang_getAllSkippedRanges (@C("CXTranslationUnit") Addressable tu) {
+    public static MemoryAddress clang_getAllSkippedRanges ( Addressable tu) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_getAllSkippedRanges$MH, "clang_getAllSkippedRanges");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getAllSkippedRanges$MH().invokeExact(tu.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(tu.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeSourceRangeList$MH() {
-        return Index_h$constants_0.clang_disposeSourceRangeList$MH();
+    public static MethodHandle clang_disposeSourceRangeList$MH() {
+        return RuntimeHelper.requireNonNull(constants$5.clang_disposeSourceRangeList$MH,"clang_disposeSourceRangeList");
     }
-    public static void clang_disposeSourceRangeList (@C("CXSourceRangeList*") Addressable ranges) {
+    public static void clang_disposeSourceRangeList ( Addressable ranges) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$5.clang_disposeSourceRangeList$MH, "clang_disposeSourceRangeList");
         try {
-            Index_h$constants_0.clang_disposeSourceRangeList$MH().invokeExact(ranges.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(ranges.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXDiagnostic_Ignored() {
-        return Index_h$constants_0.CXDiagnostic_Ignored();
+    public static int CXDiagnostic_Ignored() {
+        return (int)0L;
     }
-    public static @C("int") int CXDiagnostic_Note() {
-        return Index_h$constants_0.CXDiagnostic_Note();
+    public static int CXDiagnostic_Note() {
+        return (int)1L;
     }
-    public static @C("int") int CXDiagnostic_Warning() {
-        return Index_h$constants_0.CXDiagnostic_Warning();
+    public static int CXDiagnostic_Warning() {
+        return (int)2L;
     }
-    public static @C("int") int CXDiagnostic_Error() {
-        return Index_h$constants_0.CXDiagnostic_Error();
+    public static int CXDiagnostic_Error() {
+        return (int)3L;
     }
-    public static @C("int") int CXDiagnostic_Fatal() {
-        return Index_h$constants_0.CXDiagnostic_Fatal();
+    public static int CXDiagnostic_Fatal() {
+        return (int)4L;
     }
-    public static  MethodHandle clang_getNumDiagnosticsInSet$MH() {
-        return Index_h$constants_0.clang_getNumDiagnosticsInSet$MH();
+    public static class constants$5 {
+
+        static final FunctionDescriptor clang_getFileLocation$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getFileLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFileLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$5.clang_getFileLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getRangeStart$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
+        static final MethodHandle clang_getRangeStart$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getRangeStart",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$5.clang_getRangeStart$FUNC, false
+        );
+        static final FunctionDescriptor clang_getRangeEnd$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
+        static final MethodHandle clang_getRangeEnd$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getRangeEnd",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$5.clang_getRangeEnd$FUNC, false
+        );
+        static final FunctionDescriptor clang_getSkippedRanges$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getSkippedRanges$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getSkippedRanges",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$5.clang_getSkippedRanges$FUNC, false
+        );
+        static final FunctionDescriptor clang_getAllSkippedRanges$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getAllSkippedRanges$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getAllSkippedRanges",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$5.clang_getAllSkippedRanges$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeSourceRangeList$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeSourceRangeList$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeSourceRangeList",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$5.clang_disposeSourceRangeList$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_getNumDiagnosticsInSet (@C("CXDiagnosticSet") Addressable Diags) {
+
+    public static MethodHandle clang_getNumDiagnosticsInSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_getNumDiagnosticsInSet$MH,"clang_getNumDiagnosticsInSet");
+    }
+    public static int clang_getNumDiagnosticsInSet ( Addressable Diags) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_getNumDiagnosticsInSet$MH, "clang_getNumDiagnosticsInSet");
         try {
-            return (int)Index_h$constants_0.clang_getNumDiagnosticsInSet$MH().invokeExact(Diags.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Diags.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticInSet$MH() {
-        return Index_h$constants_0.clang_getDiagnosticInSet$MH();
+    public static MethodHandle clang_getDiagnosticInSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_getDiagnosticInSet$MH,"clang_getDiagnosticInSet");
     }
-    public static @C("CXDiagnostic") MemoryAddress clang_getDiagnosticInSet (@C("CXDiagnosticSet") Addressable Diags, @C("unsigned int") int Index) {
+    public static MemoryAddress clang_getDiagnosticInSet ( Addressable Diags,  int Index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_getDiagnosticInSet$MH, "clang_getDiagnosticInSet");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getDiagnosticInSet$MH().invokeExact(Diags.address(), Index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Diags.address(), Index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXLoadDiag_None() {
-        return Index_h$constants_0.CXLoadDiag_None();
+    public static int CXLoadDiag_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXLoadDiag_Unknown() {
-        return Index_h$constants_0.CXLoadDiag_Unknown();
+    public static int CXLoadDiag_Unknown() {
+        return (int)1L;
     }
-    public static @C("int") int CXLoadDiag_CannotLoad() {
-        return Index_h$constants_0.CXLoadDiag_CannotLoad();
+    public static int CXLoadDiag_CannotLoad() {
+        return (int)2L;
     }
-    public static @C("int") int CXLoadDiag_InvalidFile() {
-        return Index_h$constants_0.CXLoadDiag_InvalidFile();
+    public static int CXLoadDiag_InvalidFile() {
+        return (int)3L;
     }
-    public static  MethodHandle clang_loadDiagnostics$MH() {
-        return Index_h$constants_0.clang_loadDiagnostics$MH();
+    public static MethodHandle clang_loadDiagnostics$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_loadDiagnostics$MH,"clang_loadDiagnostics");
     }
-    public static @C("CXDiagnosticSet") MemoryAddress clang_loadDiagnostics (@C("char*") Addressable file, @C("enum CXLoadDiag_Error*") Addressable error, @C("CXString*") Addressable errorString) {
+    public static MemoryAddress clang_loadDiagnostics ( Addressable file,  Addressable error,  Addressable errorString) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_loadDiagnostics$MH, "clang_loadDiagnostics");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_loadDiagnostics$MH().invokeExact(file.address(), error.address(), errorString.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(file.address(), error.address(), errorString.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeDiagnosticSet$MH() {
-        return Index_h$constants_0.clang_disposeDiagnosticSet$MH();
+    public static MethodHandle clang_disposeDiagnosticSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_disposeDiagnosticSet$MH,"clang_disposeDiagnosticSet");
     }
-    public static void clang_disposeDiagnosticSet (@C("CXDiagnosticSet") Addressable Diags) {
+    public static void clang_disposeDiagnosticSet ( Addressable Diags) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_disposeDiagnosticSet$MH, "clang_disposeDiagnosticSet");
         try {
-            Index_h$constants_0.clang_disposeDiagnosticSet$MH().invokeExact(Diags.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Diags.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getChildDiagnostics$MH() {
-        return Index_h$constants_0.clang_getChildDiagnostics$MH();
+    public static MethodHandle clang_getChildDiagnostics$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_getChildDiagnostics$MH,"clang_getChildDiagnostics");
     }
-    public static @C("CXDiagnosticSet") MemoryAddress clang_getChildDiagnostics (@C("CXDiagnostic") Addressable D) {
+    public static MemoryAddress clang_getChildDiagnostics ( Addressable D) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_getChildDiagnostics$MH, "clang_getChildDiagnostics");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getChildDiagnostics$MH().invokeExact(D.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(D.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getNumDiagnostics$MH() {
-        return Index_h$constants_0.clang_getNumDiagnostics$MH();
+    public static MethodHandle clang_getNumDiagnostics$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_getNumDiagnostics$MH,"clang_getNumDiagnostics");
     }
-    public static @C("unsigned int") int clang_getNumDiagnostics (@C("CXTranslationUnit") Addressable Unit) {
+    public static int clang_getNumDiagnostics ( Addressable Unit) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_getNumDiagnostics$MH, "clang_getNumDiagnostics");
         try {
-            return (int)Index_h$constants_0.clang_getNumDiagnostics$MH().invokeExact(Unit.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Unit.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnostic$MH() {
-        return Index_h$constants_0.clang_getDiagnostic$MH();
+    public static class constants$6 {
+
+        static final FunctionDescriptor clang_getNumDiagnosticsInSet$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getNumDiagnosticsInSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumDiagnosticsInSet",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$6.clang_getNumDiagnosticsInSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticInSet$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getDiagnosticInSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticInSet",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$6.clang_getDiagnosticInSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_loadDiagnostics$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_loadDiagnostics$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_loadDiagnostics",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$6.clang_loadDiagnostics$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeDiagnosticSet$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeDiagnosticSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeDiagnosticSet",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$6.clang_disposeDiagnosticSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_getChildDiagnostics$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getChildDiagnostics$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getChildDiagnostics",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$6.clang_getChildDiagnostics$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNumDiagnostics$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getNumDiagnostics$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumDiagnostics",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$6.clang_getNumDiagnostics$FUNC, false
+        );
     }
-    public static @C("CXDiagnostic") MemoryAddress clang_getDiagnostic (@C("CXTranslationUnit") Addressable Unit, @C("unsigned int") int Index) {
+
+    public static MethodHandle clang_getDiagnostic$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_getDiagnostic$MH,"clang_getDiagnostic");
+    }
+    public static MemoryAddress clang_getDiagnostic ( Addressable Unit,  int Index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_getDiagnostic$MH, "clang_getDiagnostic");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getDiagnostic$MH().invokeExact(Unit.address(), Index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Unit.address(), Index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticSetFromTU$MH() {
-        return Index_h$constants_0.clang_getDiagnosticSetFromTU$MH();
+    public static MethodHandle clang_getDiagnosticSetFromTU$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_getDiagnosticSetFromTU$MH,"clang_getDiagnosticSetFromTU");
     }
-    public static @C("CXDiagnosticSet") MemoryAddress clang_getDiagnosticSetFromTU (@C("CXTranslationUnit") Addressable Unit) {
+    public static MemoryAddress clang_getDiagnosticSetFromTU ( Addressable Unit) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_getDiagnosticSetFromTU$MH, "clang_getDiagnosticSetFromTU");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getDiagnosticSetFromTU$MH().invokeExact(Unit.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Unit.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeDiagnostic$MH() {
-        return Index_h$constants_0.clang_disposeDiagnostic$MH();
+    public static MethodHandle clang_disposeDiagnostic$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_disposeDiagnostic$MH,"clang_disposeDiagnostic");
     }
-    public static void clang_disposeDiagnostic (@C("CXDiagnostic") Addressable Diagnostic) {
+    public static void clang_disposeDiagnostic ( Addressable Diagnostic) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_disposeDiagnostic$MH, "clang_disposeDiagnostic");
         try {
-            Index_h$constants_0.clang_disposeDiagnostic$MH().invokeExact(Diagnostic.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Diagnostic.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXDiagnostic_DisplaySourceLocation() {
-        return Index_h$constants_0.CXDiagnostic_DisplaySourceLocation();
+    public static int CXDiagnostic_DisplaySourceLocation() {
+        return (int)1L;
     }
-    public static @C("int") int CXDiagnostic_DisplayColumn() {
-        return Index_h$constants_0.CXDiagnostic_DisplayColumn();
+    public static int CXDiagnostic_DisplayColumn() {
+        return (int)2L;
     }
-    public static @C("int") int CXDiagnostic_DisplaySourceRanges() {
-        return Index_h$constants_0.CXDiagnostic_DisplaySourceRanges();
+    public static int CXDiagnostic_DisplaySourceRanges() {
+        return (int)4L;
     }
-    public static @C("int") int CXDiagnostic_DisplayOption() {
-        return Index_h$constants_0.CXDiagnostic_DisplayOption();
+    public static int CXDiagnostic_DisplayOption() {
+        return (int)8L;
     }
-    public static @C("int") int CXDiagnostic_DisplayCategoryId() {
-        return Index_h$constants_0.CXDiagnostic_DisplayCategoryId();
+    public static int CXDiagnostic_DisplayCategoryId() {
+        return (int)16L;
     }
-    public static @C("int") int CXDiagnostic_DisplayCategoryName() {
-        return Index_h$constants_0.CXDiagnostic_DisplayCategoryName();
+    public static int CXDiagnostic_DisplayCategoryName() {
+        return (int)32L;
     }
-    public static  MethodHandle clang_formatDiagnostic$MH() {
-        return Index_h$constants_0.clang_formatDiagnostic$MH();
+    public static MethodHandle clang_formatDiagnostic$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_formatDiagnostic$MH,"clang_formatDiagnostic");
     }
-    public static @C("CXString") MemorySegment clang_formatDiagnostic (@C("CXDiagnostic") Addressable Diagnostic, @C("unsigned int") int Options) {
+    public static MemorySegment clang_formatDiagnostic ( Addressable Diagnostic,  int Options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_formatDiagnostic$MH, "clang_formatDiagnostic");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_formatDiagnostic$MH().invokeExact(Diagnostic.address(), Options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Diagnostic.address(), Options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_defaultDiagnosticDisplayOptions$MH() {
-        return Index_h$constants_0.clang_defaultDiagnosticDisplayOptions$MH();
+    public static MethodHandle clang_defaultDiagnosticDisplayOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_defaultDiagnosticDisplayOptions$MH,"clang_defaultDiagnosticDisplayOptions");
     }
-    public static @C("unsigned int") int clang_defaultDiagnosticDisplayOptions () {
+    public static int clang_defaultDiagnosticDisplayOptions () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_defaultDiagnosticDisplayOptions$MH, "clang_defaultDiagnosticDisplayOptions");
         try {
-            return (int)Index_h$constants_0.clang_defaultDiagnosticDisplayOptions$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticSeverity$MH() {
-        return Index_h$constants_0.clang_getDiagnosticSeverity$MH();
+    public static MethodHandle clang_getDiagnosticSeverity$MH() {
+        return RuntimeHelper.requireNonNull(constants$7.clang_getDiagnosticSeverity$MH,"clang_getDiagnosticSeverity");
     }
-    public static @C("enum CXDiagnosticSeverity") int clang_getDiagnosticSeverity (@C("CXDiagnostic") Addressable x0) {
+    public static int clang_getDiagnosticSeverity ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_getDiagnosticSeverity$MH, "clang_getDiagnosticSeverity");
         try {
-            return (int)Index_h$constants_0.clang_getDiagnosticSeverity$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticLocation$MH() {
-        return Index_h$constants_0.clang_getDiagnosticLocation$MH();
+    public static class constants$7 {
+
+        static final FunctionDescriptor clang_getDiagnostic$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getDiagnostic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnostic",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$7.clang_getDiagnostic$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticSetFromTU$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticSetFromTU$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticSetFromTU",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$7.clang_getDiagnosticSetFromTU$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeDiagnostic$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeDiagnostic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeDiagnostic",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$7.clang_disposeDiagnostic$FUNC, false
+        );
+        static final FunctionDescriptor clang_formatDiagnostic$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_formatDiagnostic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_formatDiagnostic",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$7.clang_formatDiagnostic$FUNC, false
+        );
+        static final FunctionDescriptor clang_defaultDiagnosticDisplayOptions$FUNC = FunctionDescriptor.of(C_INT);
+        static final MethodHandle clang_defaultDiagnosticDisplayOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_defaultDiagnosticDisplayOptions",
+            "()I",
+            constants$7.clang_defaultDiagnosticDisplayOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticSeverity$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticSeverity$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticSeverity",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$7.clang_getDiagnosticSeverity$FUNC, false
+        );
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getDiagnosticLocation (@C("CXDiagnostic") Addressable x0) {
+
+    public static MethodHandle clang_getDiagnosticLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticLocation$MH,"clang_getDiagnosticLocation");
+    }
+    public static MemorySegment clang_getDiagnosticLocation ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticLocation$MH, "clang_getDiagnosticLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticLocation$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticSpelling$MH() {
-        return Index_h$constants_0.clang_getDiagnosticSpelling$MH();
+    public static MethodHandle clang_getDiagnosticSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticSpelling$MH,"clang_getDiagnosticSpelling");
     }
-    public static @C("CXString") MemorySegment clang_getDiagnosticSpelling (@C("CXDiagnostic") Addressable x0) {
+    public static MemorySegment clang_getDiagnosticSpelling ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticSpelling$MH, "clang_getDiagnosticSpelling");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticSpelling$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticOption$MH() {
-        return Index_h$constants_0.clang_getDiagnosticOption$MH();
+    public static MethodHandle clang_getDiagnosticOption$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticOption$MH,"clang_getDiagnosticOption");
     }
-    public static @C("CXString") MemorySegment clang_getDiagnosticOption (@C("CXDiagnostic") Addressable Diag, @C("CXString*") Addressable Disable) {
+    public static MemorySegment clang_getDiagnosticOption ( Addressable Diag,  Addressable Disable) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticOption$MH, "clang_getDiagnosticOption");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticOption$MH().invokeExact(Diag.address(), Disable.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Diag.address(), Disable.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticCategory$MH() {
-        return Index_h$constants_0.clang_getDiagnosticCategory$MH();
+    public static MethodHandle clang_getDiagnosticCategory$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategory$MH,"clang_getDiagnosticCategory");
     }
-    public static @C("unsigned int") int clang_getDiagnosticCategory (@C("CXDiagnostic") Addressable x0) {
+    public static int clang_getDiagnosticCategory ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategory$MH, "clang_getDiagnosticCategory");
         try {
-            return (int)Index_h$constants_0.clang_getDiagnosticCategory$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticCategoryName$MH() {
-        return Index_h$constants_0.clang_getDiagnosticCategoryName$MH();
+    public static MethodHandle clang_getDiagnosticCategoryName$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategoryName$MH,"clang_getDiagnosticCategoryName");
     }
-    public static @C("CXString") MemorySegment clang_getDiagnosticCategoryName (@C("unsigned int") int Category) {
+    public static MemorySegment clang_getDiagnosticCategoryName ( int Category) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategoryName$MH, "clang_getDiagnosticCategoryName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticCategoryName$MH().invokeExact(Category);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Category);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticCategoryText$MH() {
-        return Index_h$constants_0.clang_getDiagnosticCategoryText$MH();
+    public static MethodHandle clang_getDiagnosticCategoryText$MH() {
+        return RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategoryText$MH,"clang_getDiagnosticCategoryText");
     }
-    public static @C("CXString") MemorySegment clang_getDiagnosticCategoryText (@C("CXDiagnostic") Addressable x0) {
+    public static MemorySegment clang_getDiagnosticCategoryText ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getDiagnosticCategoryText$MH, "clang_getDiagnosticCategoryText");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticCategoryText$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticNumRanges$MH() {
-        return Index_h$constants_0.clang_getDiagnosticNumRanges$MH();
+    public static class constants$8 {
+
+        static final FunctionDescriptor clang_getDiagnosticLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticLocation",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$8.clang_getDiagnosticLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticSpelling",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$8.clang_getDiagnosticSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticOption$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticOption$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticOption",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$8.clang_getDiagnosticOption$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticCategory$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticCategory$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticCategory",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$8.clang_getDiagnosticCategory$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticCategoryName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_INT
+        );
+        static final MethodHandle clang_getDiagnosticCategoryName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticCategoryName",
+            "(I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$8.clang_getDiagnosticCategoryName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticCategoryText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticCategoryText$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticCategoryText",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$8.clang_getDiagnosticCategoryText$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_getDiagnosticNumRanges (@C("CXDiagnostic") Addressable x0) {
+
+    public static MethodHandle clang_getDiagnosticNumRanges$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticNumRanges$MH,"clang_getDiagnosticNumRanges");
+    }
+    public static int clang_getDiagnosticNumRanges ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticNumRanges$MH, "clang_getDiagnosticNumRanges");
         try {
-            return (int)Index_h$constants_0.clang_getDiagnosticNumRanges$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticRange$MH() {
-        return Index_h$constants_0.clang_getDiagnosticRange$MH();
+    public static MethodHandle clang_getDiagnosticRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticRange$MH,"clang_getDiagnosticRange");
     }
-    public static @C("CXSourceRange") MemorySegment clang_getDiagnosticRange (@C("CXDiagnostic") Addressable Diagnostic, @C("unsigned int") int Range) {
+    public static MemorySegment clang_getDiagnosticRange ( Addressable Diagnostic,  int Range) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticRange$MH, "clang_getDiagnosticRange");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticRange$MH().invokeExact(Diagnostic.address(), Range);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Diagnostic.address(), Range);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticNumFixIts$MH() {
-        return Index_h$constants_0.clang_getDiagnosticNumFixIts$MH();
+    public static MethodHandle clang_getDiagnosticNumFixIts$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticNumFixIts$MH,"clang_getDiagnosticNumFixIts");
     }
-    public static @C("unsigned int") int clang_getDiagnosticNumFixIts (@C("CXDiagnostic") Addressable Diagnostic) {
+    public static int clang_getDiagnosticNumFixIts ( Addressable Diagnostic) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticNumFixIts$MH, "clang_getDiagnosticNumFixIts");
         try {
-            return (int)Index_h$constants_0.clang_getDiagnosticNumFixIts$MH().invokeExact(Diagnostic.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Diagnostic.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDiagnosticFixIt$MH() {
-        return Index_h$constants_0.clang_getDiagnosticFixIt$MH();
+    public static MethodHandle clang_getDiagnosticFixIt$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticFixIt$MH,"clang_getDiagnosticFixIt");
     }
-    public static @C("CXString") MemorySegment clang_getDiagnosticFixIt (@C("CXDiagnostic") Addressable Diagnostic, @C("unsigned int") int FixIt, @C("CXSourceRange*") Addressable ReplacementRange) {
+    public static MemorySegment clang_getDiagnosticFixIt ( Addressable Diagnostic,  int FixIt,  Addressable ReplacementRange) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getDiagnosticFixIt$MH, "clang_getDiagnosticFixIt");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDiagnosticFixIt$MH().invokeExact(Diagnostic.address(), FixIt, ReplacementRange.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Diagnostic.address(), FixIt, ReplacementRange.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTranslationUnitSpelling$MH() {
-        return Index_h$constants_0.clang_getTranslationUnitSpelling$MH();
+    public static MethodHandle clang_getTranslationUnitSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_getTranslationUnitSpelling$MH,"clang_getTranslationUnitSpelling");
     }
-    public static @C("CXString") MemorySegment clang_getTranslationUnitSpelling (@C("CXTranslationUnit") Addressable CTUnit) {
+    public static MemorySegment clang_getTranslationUnitSpelling ( Addressable CTUnit) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getTranslationUnitSpelling$MH, "clang_getTranslationUnitSpelling");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTranslationUnitSpelling$MH().invokeExact(CTUnit.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(CTUnit.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_createTranslationUnitFromSourceFile$MH() {
-        return Index_h$constants_0.clang_createTranslationUnitFromSourceFile$MH();
+    public static MethodHandle clang_createTranslationUnitFromSourceFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$9.clang_createTranslationUnitFromSourceFile$MH,"clang_createTranslationUnitFromSourceFile");
     }
-    public static @C("CXTranslationUnit") MemoryAddress clang_createTranslationUnitFromSourceFile (@C("CXIndex") Addressable CIdx, @C("char*") Addressable source_filename, @C("int") int num_clang_command_line_args, @C("char**") Addressable clang_command_line_args, @C("unsigned int") int num_unsaved_files, @C("struct CXUnsavedFile*") Addressable unsaved_files) {
+    public static MemoryAddress clang_createTranslationUnitFromSourceFile ( Addressable CIdx,  Addressable source_filename,  int num_clang_command_line_args,  Addressable clang_command_line_args,  int num_unsaved_files,  Addressable unsaved_files) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_createTranslationUnitFromSourceFile$MH, "clang_createTranslationUnitFromSourceFile");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_createTranslationUnitFromSourceFile$MH().invokeExact(CIdx.address(), source_filename.address(), num_clang_command_line_args, clang_command_line_args.address(), num_unsaved_files, unsaved_files.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(CIdx.address(), source_filename.address(), num_clang_command_line_args, clang_command_line_args.address(), num_unsaved_files, unsaved_files.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_createTranslationUnit$MH() {
-        return Index_h$constants_0.clang_createTranslationUnit$MH();
+    public static class constants$9 {
+
+        static final FunctionDescriptor clang_getDiagnosticNumRanges$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticNumRanges$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticNumRanges",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$9.clang_getDiagnosticNumRanges$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getDiagnosticRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticRange",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$9.clang_getDiagnosticRange$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticNumFixIts$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticNumFixIts$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticNumFixIts",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$9.clang_getDiagnosticNumFixIts$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDiagnosticFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDiagnosticFixIt$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDiagnosticFixIt",
+            "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$9.clang_getDiagnosticFixIt$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTranslationUnitSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getTranslationUnitSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTranslationUnitSpelling",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$9.clang_getTranslationUnitSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_createTranslationUnitFromSourceFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_createTranslationUnitFromSourceFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_createTranslationUnitFromSourceFile",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$9.clang_createTranslationUnitFromSourceFile$FUNC, false
+        );
     }
-    public static @C("CXTranslationUnit") MemoryAddress clang_createTranslationUnit (@C("CXIndex") Addressable CIdx, @C("char*") Addressable ast_filename) {
+
+    public static MethodHandle clang_createTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_createTranslationUnit$MH,"clang_createTranslationUnit");
+    }
+    public static MemoryAddress clang_createTranslationUnit ( Addressable CIdx,  Addressable ast_filename) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_createTranslationUnit$MH, "clang_createTranslationUnit");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_createTranslationUnit$MH().invokeExact(CIdx.address(), ast_filename.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(CIdx.address(), ast_filename.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_createTranslationUnit2$MH() {
-        return Index_h$constants_0.clang_createTranslationUnit2$MH();
+    public static MethodHandle clang_createTranslationUnit2$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_createTranslationUnit2$MH,"clang_createTranslationUnit2");
     }
-    public static @C("enum CXErrorCode") int clang_createTranslationUnit2 (@C("CXIndex") Addressable CIdx, @C("char*") Addressable ast_filename, @C("CXTranslationUnit*") Addressable out_TU) {
+    public static int clang_createTranslationUnit2 ( Addressable CIdx,  Addressable ast_filename,  Addressable out_TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_createTranslationUnit2$MH, "clang_createTranslationUnit2");
         try {
-            return (int)Index_h$constants_0.clang_createTranslationUnit2$MH().invokeExact(CIdx.address(), ast_filename.address(), out_TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(CIdx.address(), ast_filename.address(), out_TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXTranslationUnit_None() {
-        return Index_h$constants_0.CXTranslationUnit_None();
+    public static int CXTranslationUnit_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXTranslationUnit_DetailedPreprocessingRecord() {
-        return Index_h$constants_0.CXTranslationUnit_DetailedPreprocessingRecord();
+    public static int CXTranslationUnit_DetailedPreprocessingRecord() {
+        return (int)1L;
     }
-    public static @C("int") int CXTranslationUnit_Incomplete() {
-        return Index_h$constants_0.CXTranslationUnit_Incomplete();
+    public static int CXTranslationUnit_Incomplete() {
+        return (int)2L;
     }
-    public static @C("int") int CXTranslationUnit_PrecompiledPreamble() {
-        return Index_h$constants_0.CXTranslationUnit_PrecompiledPreamble();
+    public static int CXTranslationUnit_PrecompiledPreamble() {
+        return (int)4L;
     }
-    public static @C("int") int CXTranslationUnit_CacheCompletionResults() {
-        return Index_h$constants_0.CXTranslationUnit_CacheCompletionResults();
+    public static int CXTranslationUnit_CacheCompletionResults() {
+        return (int)8L;
     }
-    public static @C("int") int CXTranslationUnit_ForSerialization() {
-        return Index_h$constants_0.CXTranslationUnit_ForSerialization();
+    public static int CXTranslationUnit_ForSerialization() {
+        return (int)16L;
     }
-    public static @C("int") int CXTranslationUnit_CXXChainedPCH() {
-        return Index_h$constants_0.CXTranslationUnit_CXXChainedPCH();
+    public static int CXTranslationUnit_CXXChainedPCH() {
+        return (int)32L;
     }
-    public static @C("int") int CXTranslationUnit_SkipFunctionBodies() {
-        return Index_h$constants_0.CXTranslationUnit_SkipFunctionBodies();
+    public static int CXTranslationUnit_SkipFunctionBodies() {
+        return (int)64L;
     }
-    public static @C("int") int CXTranslationUnit_IncludeBriefCommentsInCodeCompletion() {
-        return Index_h$constants_0.CXTranslationUnit_IncludeBriefCommentsInCodeCompletion();
+    public static int CXTranslationUnit_IncludeBriefCommentsInCodeCompletion() {
+        return (int)128L;
     }
-    public static @C("int") int CXTranslationUnit_CreatePreambleOnFirstParse() {
-        return Index_h$constants_0.CXTranslationUnit_CreatePreambleOnFirstParse();
+    public static int CXTranslationUnit_CreatePreambleOnFirstParse() {
+        return (int)256L;
     }
-    public static @C("int") int CXTranslationUnit_KeepGoing() {
-        return Index_h$constants_0.CXTranslationUnit_KeepGoing();
+    public static int CXTranslationUnit_KeepGoing() {
+        return (int)512L;
     }
-    public static @C("int") int CXTranslationUnit_SingleFileParse() {
-        return Index_h$constants_0.CXTranslationUnit_SingleFileParse();
+    public static int CXTranslationUnit_SingleFileParse() {
+        return (int)1024L;
     }
-    public static @C("int") int CXTranslationUnit_LimitSkipFunctionBodiesToPreamble() {
-        return Index_h$constants_0.CXTranslationUnit_LimitSkipFunctionBodiesToPreamble();
+    public static int CXTranslationUnit_LimitSkipFunctionBodiesToPreamble() {
+        return (int)2048L;
     }
-    public static @C("int") int CXTranslationUnit_IncludeAttributedTypes() {
-        return Index_h$constants_0.CXTranslationUnit_IncludeAttributedTypes();
+    public static int CXTranslationUnit_IncludeAttributedTypes() {
+        return (int)4096L;
     }
-    public static @C("int") int CXTranslationUnit_VisitImplicitAttributes() {
-        return Index_h$constants_0.CXTranslationUnit_VisitImplicitAttributes();
+    public static int CXTranslationUnit_VisitImplicitAttributes() {
+        return (int)8192L;
     }
-    public static @C("int") int CXTranslationUnit_IgnoreNonErrorsFromIncludedFiles() {
-        return Index_h$constants_0.CXTranslationUnit_IgnoreNonErrorsFromIncludedFiles();
+    public static int CXTranslationUnit_IgnoreNonErrorsFromIncludedFiles() {
+        return (int)16384L;
     }
-    public static @C("int") int CXTranslationUnit_RetainExcludedConditionalBlocks() {
-        return Index_h$constants_0.CXTranslationUnit_RetainExcludedConditionalBlocks();
+    public static int CXTranslationUnit_RetainExcludedConditionalBlocks() {
+        return (int)32768L;
     }
-    public static  MethodHandle clang_defaultEditingTranslationUnitOptions$MH() {
-        return Index_h$constants_0.clang_defaultEditingTranslationUnitOptions$MH();
+    public static MethodHandle clang_defaultEditingTranslationUnitOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_defaultEditingTranslationUnitOptions$MH,"clang_defaultEditingTranslationUnitOptions");
     }
-    public static @C("unsigned int") int clang_defaultEditingTranslationUnitOptions () {
+    public static int clang_defaultEditingTranslationUnitOptions () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_defaultEditingTranslationUnitOptions$MH, "clang_defaultEditingTranslationUnitOptions");
         try {
-            return (int)Index_h$constants_0.clang_defaultEditingTranslationUnitOptions$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_parseTranslationUnit$MH() {
-        return Index_h$constants_0.clang_parseTranslationUnit$MH();
+    public static MethodHandle clang_parseTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit$MH,"clang_parseTranslationUnit");
     }
-    public static @C("CXTranslationUnit") MemoryAddress clang_parseTranslationUnit (@C("CXIndex") Addressable CIdx, @C("char*") Addressable source_filename, @C("char**") Addressable command_line_args, @C("int") int num_command_line_args, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("unsigned int") int options) {
+    public static MemoryAddress clang_parseTranslationUnit ( Addressable CIdx,  Addressable source_filename,  Addressable command_line_args,  int num_command_line_args,  Addressable unsaved_files,  int num_unsaved_files,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit$MH, "clang_parseTranslationUnit");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_parseTranslationUnit$MH().invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_parseTranslationUnit2$MH() {
-        return Index_h$constants_0.clang_parseTranslationUnit2$MH();
+    public static MethodHandle clang_parseTranslationUnit2$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit2$MH,"clang_parseTranslationUnit2");
     }
-    public static @C("enum CXErrorCode") int clang_parseTranslationUnit2 (@C("CXIndex") Addressable CIdx, @C("char*") Addressable source_filename, @C("char**") Addressable command_line_args, @C("int") int num_command_line_args, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("unsigned int") int options, @C("CXTranslationUnit*") Addressable out_TU) {
+    public static int clang_parseTranslationUnit2 ( Addressable CIdx,  Addressable source_filename,  Addressable command_line_args,  int num_command_line_args,  Addressable unsaved_files,  int num_unsaved_files,  int options,  Addressable out_TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit2$MH, "clang_parseTranslationUnit2");
         try {
-            return (int)Index_h$constants_0.clang_parseTranslationUnit2$MH().invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options, out_TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options, out_TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_parseTranslationUnit2FullArgv$MH() {
-        return Index_h$constants_0.clang_parseTranslationUnit2FullArgv$MH();
+    public static MethodHandle clang_parseTranslationUnit2FullArgv$MH() {
+        return RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit2FullArgv$MH,"clang_parseTranslationUnit2FullArgv");
     }
-    public static @C("enum CXErrorCode") int clang_parseTranslationUnit2FullArgv (@C("CXIndex") Addressable CIdx, @C("char*") Addressable source_filename, @C("char**") Addressable command_line_args, @C("int") int num_command_line_args, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("unsigned int") int options, @C("CXTranslationUnit*") Addressable out_TU) {
+    public static int clang_parseTranslationUnit2FullArgv ( Addressable CIdx,  Addressable source_filename,  Addressable command_line_args,  int num_command_line_args,  Addressable unsaved_files,  int num_unsaved_files,  int options,  Addressable out_TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_parseTranslationUnit2FullArgv$MH, "clang_parseTranslationUnit2FullArgv");
         try {
-            return (int)Index_h$constants_0.clang_parseTranslationUnit2FullArgv$MH().invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options, out_TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(CIdx.address(), source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, options, out_TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXSaveTranslationUnit_None() {
-        return Index_h$constants_0.CXSaveTranslationUnit_None();
+    public static int CXSaveTranslationUnit_None() {
+        return (int)0L;
     }
-    public static  MethodHandle clang_defaultSaveOptions$MH() {
-        return Index_h$constants_0.clang_defaultSaveOptions$MH();
+    public static class constants$10 {
+
+        static final FunctionDescriptor clang_createTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_createTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_createTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$10.clang_createTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_createTranslationUnit2$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_createTranslationUnit2$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_createTranslationUnit2",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$10.clang_createTranslationUnit2$FUNC, false
+        );
+        static final FunctionDescriptor clang_defaultEditingTranslationUnitOptions$FUNC = FunctionDescriptor.of(C_INT);
+        static final MethodHandle clang_defaultEditingTranslationUnitOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_defaultEditingTranslationUnitOptions",
+            "()I",
+            constants$10.clang_defaultEditingTranslationUnitOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_parseTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_parseTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_parseTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$10.clang_parseTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_parseTranslationUnit2$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_INT,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_parseTranslationUnit2$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_parseTranslationUnit2",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
+            constants$10.clang_parseTranslationUnit2$FUNC, false
+        );
+        static final FunctionDescriptor clang_parseTranslationUnit2FullArgv$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_INT,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_parseTranslationUnit2FullArgv$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_parseTranslationUnit2FullArgv",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
+            constants$10.clang_parseTranslationUnit2FullArgv$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_defaultSaveOptions (@C("CXTranslationUnit") Addressable TU) {
+
+    public static MethodHandle clang_defaultSaveOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_defaultSaveOptions$MH,"clang_defaultSaveOptions");
+    }
+    public static int clang_defaultSaveOptions ( Addressable TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_defaultSaveOptions$MH, "clang_defaultSaveOptions");
         try {
-            return (int)Index_h$constants_0.clang_defaultSaveOptions$MH().invokeExact(TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXSaveError_None() {
-        return Index_h$constants_0.CXSaveError_None();
+    public static int CXSaveError_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXSaveError_Unknown() {
-        return Index_h$constants_0.CXSaveError_Unknown();
+    public static int CXSaveError_Unknown() {
+        return (int)1L;
     }
-    public static @C("int") int CXSaveError_TranslationErrors() {
-        return Index_h$constants_0.CXSaveError_TranslationErrors();
+    public static int CXSaveError_TranslationErrors() {
+        return (int)2L;
     }
-    public static @C("int") int CXSaveError_InvalidTU() {
-        return Index_h$constants_0.CXSaveError_InvalidTU();
+    public static int CXSaveError_InvalidTU() {
+        return (int)3L;
     }
-    public static  MethodHandle clang_saveTranslationUnit$MH() {
-        return Index_h$constants_0.clang_saveTranslationUnit$MH();
+    public static MethodHandle clang_saveTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_saveTranslationUnit$MH,"clang_saveTranslationUnit");
     }
-    public static @C("int") int clang_saveTranslationUnit (@C("CXTranslationUnit") Addressable TU, @C("char*") Addressable FileName, @C("unsigned int") int options) {
+    public static int clang_saveTranslationUnit ( Addressable TU,  Addressable FileName,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_saveTranslationUnit$MH, "clang_saveTranslationUnit");
         try {
-            return (int)Index_h$constants_0.clang_saveTranslationUnit$MH().invokeExact(TU.address(), FileName.address(), options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(TU.address(), FileName.address(), options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_suspendTranslationUnit$MH() {
-        return Index_h$constants_0.clang_suspendTranslationUnit$MH();
+    public static MethodHandle clang_suspendTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_suspendTranslationUnit$MH,"clang_suspendTranslationUnit");
     }
-    public static @C("unsigned int") int clang_suspendTranslationUnit (@C("CXTranslationUnit") Addressable x0) {
+    public static int clang_suspendTranslationUnit ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_suspendTranslationUnit$MH, "clang_suspendTranslationUnit");
         try {
-            return (int)Index_h$constants_0.clang_suspendTranslationUnit$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeTranslationUnit$MH() {
-        return Index_h$constants_0.clang_disposeTranslationUnit$MH();
+    public static MethodHandle clang_disposeTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_disposeTranslationUnit$MH,"clang_disposeTranslationUnit");
     }
-    public static void clang_disposeTranslationUnit (@C("CXTranslationUnit") Addressable x0) {
+    public static void clang_disposeTranslationUnit ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_disposeTranslationUnit$MH, "clang_disposeTranslationUnit");
         try {
-            Index_h$constants_0.clang_disposeTranslationUnit$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXReparse_None() {
-        return Index_h$constants_0.CXReparse_None();
+    public static int CXReparse_None() {
+        return (int)0L;
     }
-    public static  MethodHandle clang_defaultReparseOptions$MH() {
-        return Index_h$constants_0.clang_defaultReparseOptions$MH();
+    public static MethodHandle clang_defaultReparseOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_defaultReparseOptions$MH,"clang_defaultReparseOptions");
     }
-    public static @C("unsigned int") int clang_defaultReparseOptions (@C("CXTranslationUnit") Addressable TU) {
+    public static int clang_defaultReparseOptions ( Addressable TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_defaultReparseOptions$MH, "clang_defaultReparseOptions");
         try {
-            return (int)Index_h$constants_0.clang_defaultReparseOptions$MH().invokeExact(TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_reparseTranslationUnit$MH() {
-        return Index_h$constants_0.clang_reparseTranslationUnit$MH();
+    public static MethodHandle clang_reparseTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$11.clang_reparseTranslationUnit$MH,"clang_reparseTranslationUnit");
     }
-    public static @C("int") int clang_reparseTranslationUnit (@C("CXTranslationUnit") Addressable TU, @C("unsigned int") int num_unsaved_files, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int options) {
+    public static int clang_reparseTranslationUnit ( Addressable TU,  int num_unsaved_files,  Addressable unsaved_files,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_reparseTranslationUnit$MH, "clang_reparseTranslationUnit");
         try {
-            return (int)Index_h$constants_0.clang_reparseTranslationUnit$MH().invokeExact(TU.address(), num_unsaved_files, unsaved_files.address(), options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(TU.address(), num_unsaved_files, unsaved_files.address(), options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXTUResourceUsage_AST() {
-        return Index_h$constants_0.CXTUResourceUsage_AST();
+    public static int CXTUResourceUsage_AST() {
+        return (int)1L;
     }
-    public static @C("int") int CXTUResourceUsage_Identifiers() {
-        return Index_h$constants_0.CXTUResourceUsage_Identifiers();
+    public static int CXTUResourceUsage_Identifiers() {
+        return (int)2L;
     }
-    public static @C("int") int CXTUResourceUsage_Selectors() {
-        return Index_h$constants_0.CXTUResourceUsage_Selectors();
+    public static int CXTUResourceUsage_Selectors() {
+        return (int)3L;
     }
-    public static @C("int") int CXTUResourceUsage_GlobalCompletionResults() {
-        return Index_h$constants_0.CXTUResourceUsage_GlobalCompletionResults();
+    public static int CXTUResourceUsage_GlobalCompletionResults() {
+        return (int)4L;
     }
-    public static @C("int") int CXTUResourceUsage_SourceManagerContentCache() {
-        return Index_h$constants_0.CXTUResourceUsage_SourceManagerContentCache();
+    public static int CXTUResourceUsage_SourceManagerContentCache() {
+        return (int)5L;
     }
-    public static @C("int") int CXTUResourceUsage_AST_SideTables() {
-        return Index_h$constants_0.CXTUResourceUsage_AST_SideTables();
+    public static int CXTUResourceUsage_AST_SideTables() {
+        return (int)6L;
     }
-    public static @C("int") int CXTUResourceUsage_SourceManager_Membuffer_Malloc() {
-        return Index_h$constants_0.CXTUResourceUsage_SourceManager_Membuffer_Malloc();
+    public static int CXTUResourceUsage_SourceManager_Membuffer_Malloc() {
+        return (int)7L;
     }
-    public static @C("int") int CXTUResourceUsage_SourceManager_Membuffer_MMap() {
-        return Index_h$constants_0.CXTUResourceUsage_SourceManager_Membuffer_MMap();
+    public static int CXTUResourceUsage_SourceManager_Membuffer_MMap() {
+        return (int)8L;
     }
-    public static @C("int") int CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc() {
-        return Index_h$constants_0.CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc();
+    public static int CXTUResourceUsage_ExternalASTSource_Membuffer_Malloc() {
+        return (int)9L;
     }
-    public static @C("int") int CXTUResourceUsage_ExternalASTSource_Membuffer_MMap() {
-        return Index_h$constants_0.CXTUResourceUsage_ExternalASTSource_Membuffer_MMap();
+    public static int CXTUResourceUsage_ExternalASTSource_Membuffer_MMap() {
+        return (int)10L;
     }
-    public static @C("int") int CXTUResourceUsage_Preprocessor() {
-        return Index_h$constants_0.CXTUResourceUsage_Preprocessor();
+    public static int CXTUResourceUsage_Preprocessor() {
+        return (int)11L;
     }
-    public static @C("int") int CXTUResourceUsage_PreprocessingRecord() {
-        return Index_h$constants_0.CXTUResourceUsage_PreprocessingRecord();
+    public static int CXTUResourceUsage_PreprocessingRecord() {
+        return (int)12L;
     }
-    public static @C("int") int CXTUResourceUsage_SourceManager_DataStructures() {
-        return Index_h$constants_0.CXTUResourceUsage_SourceManager_DataStructures();
+    public static int CXTUResourceUsage_SourceManager_DataStructures() {
+        return (int)13L;
     }
-    public static @C("int") int CXTUResourceUsage_Preprocessor_HeaderSearch() {
-        return Index_h$constants_0.CXTUResourceUsage_Preprocessor_HeaderSearch();
+    public static int CXTUResourceUsage_Preprocessor_HeaderSearch() {
+        return (int)14L;
     }
-    public static @C("int") int CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN() {
-        return Index_h$constants_0.CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN();
+    public static int CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN() {
+        return (int)1L;
     }
-    public static @C("int") int CXTUResourceUsage_MEMORY_IN_BYTES_END() {
-        return Index_h$constants_0.CXTUResourceUsage_MEMORY_IN_BYTES_END();
+    public static int CXTUResourceUsage_MEMORY_IN_BYTES_END() {
+        return (int)14L;
     }
-    public static @C("int") int CXTUResourceUsage_First() {
-        return Index_h$constants_0.CXTUResourceUsage_First();
+    public static int CXTUResourceUsage_First() {
+        return (int)1L;
     }
-    public static @C("int") int CXTUResourceUsage_Last() {
-        return Index_h$constants_0.CXTUResourceUsage_Last();
+    public static int CXTUResourceUsage_Last() {
+        return (int)14L;
     }
-    public static  MethodHandle clang_getTUResourceUsageName$MH() {
-        return Index_h$constants_0.clang_getTUResourceUsageName$MH();
+    public static class constants$11 {
+
+        static final FunctionDescriptor clang_defaultSaveOptions$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_defaultSaveOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_defaultSaveOptions",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$11.clang_defaultSaveOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_saveTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_saveTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_saveTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
+            constants$11.clang_saveTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_suspendTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_suspendTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_suspendTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$11.clang_suspendTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeTranslationUnit$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$11.clang_disposeTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_defaultReparseOptions$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_defaultReparseOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_defaultReparseOptions",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$11.clang_defaultReparseOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_reparseTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_reparseTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_reparseTranslationUnit",
+            "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
+            constants$11.clang_reparseTranslationUnit$FUNC, false
+        );
     }
-    public static @C("char*") MemoryAddress clang_getTUResourceUsageName (@C("enum CXTUResourceUsageKind") int kind) {
+
+    public static MethodHandle clang_getTUResourceUsageName$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_getTUResourceUsageName$MH,"clang_getTUResourceUsageName");
+    }
+    public static MemoryAddress clang_getTUResourceUsageName ( int kind) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_getTUResourceUsageName$MH, "clang_getTUResourceUsageName");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getTUResourceUsageName$MH().invokeExact(kind);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(kind);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXTUResourceUsageEntry {
 
-        private CXTUResourceUsageEntry() {}
+        static final MemoryLayout CXTUResourceUsageEntry$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            C_LONG_LONG.withName("amount")
+        ).withName("CXTUResourceUsageEntry");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXTUResourceUsageEntry$struct$LAYOUT();
+            return CXTUResourceUsageEntry.CXTUResourceUsageEntry$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXTUResourceUsageEntry$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_0.CXTUResourceUsageEntry$kind$VH();
+            return CXTUResourceUsageEntry.kind$VH;
         }
-        public static  @C("enum CXTUResourceUsageKind") int kind$get(@C("struct CXTUResourceUsageEntry") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXTUResourceUsageEntry$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXTUResourceUsageEntry.kind$VH.get(seg);
         }
-        public static  @C("enum CXTUResourceUsageKind") int kind$get(@C("struct CXTUResourceUsageEntry") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXTUResourceUsageEntry$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXTUResourceUsageEntry.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct CXTUResourceUsageEntry") MemorySegment seg, @C("enum CXTUResourceUsageKind") int x) {
-            Index_h$constants_0.CXTUResourceUsageEntry$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXTUResourceUsageEntry.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct CXTUResourceUsageEntry") MemorySegment seg, long index, @C("enum CXTUResourceUsageKind") int x) {
-            Index_h$constants_0.CXTUResourceUsageEntry$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXTUResourceUsageEntry.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle amount$VH = CXTUResourceUsageEntry$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("amount"));
         public static VarHandle amount$VH() {
-            return Index_h$constants_0.CXTUResourceUsageEntry$amount$VH();
+            return CXTUResourceUsageEntry.amount$VH;
         }
-        public static  @C("unsigned long") long amount$get(@C("struct CXTUResourceUsageEntry") MemorySegment seg) {
-            return (long)Index_h$constants_0.CXTUResourceUsageEntry$amount$VH().get(seg);
+        public static long amount$get(MemorySegment seg) {
+            return (long)CXTUResourceUsageEntry.amount$VH.get(seg);
         }
-        public static  @C("unsigned long") long amount$get(@C("struct CXTUResourceUsageEntry") MemorySegment seg, long index) {
-            return (long)Index_h$constants_0.CXTUResourceUsageEntry$amount$VH().get(seg.asSlice(index*sizeof()));
+        public static void amount$set( MemorySegment seg, long x) {
+            CXTUResourceUsageEntry.amount$VH.set(seg, x);
         }
-        public static void amount$set(@C("struct CXTUResourceUsageEntry") MemorySegment seg, @C("unsigned long") long x) {
-            Index_h$constants_0.CXTUResourceUsageEntry$amount$VH().set(seg, x);
+        public static long amount$get(MemorySegment seg, long index) {
+            return (long)CXTUResourceUsageEntry.amount$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void amount$set(@C("struct CXTUResourceUsageEntry") MemorySegment seg, long index, @C("unsigned long") long x) {
-            Index_h$constants_0.CXTUResourceUsageEntry$amount$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void amount$set(MemorySegment seg, long index, long x) {
+            CXTUResourceUsageEntry.amount$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXTUResourceUsageEntry") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXTUResourceUsageEntry") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXTUResourceUsageEntry[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXTUResourceUsageEntry[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXTUResourceUsageEntry*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXTUResourceUsageEntry*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXTUResourceUsageEntry") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXTUResourceUsage {
 
-        private CXTUResourceUsage() {}
+        static final MemoryLayout CXTUResourceUsage$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("numEntries"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("entries")
+        ).withName("CXTUResourceUsage");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXTUResourceUsage$struct$LAYOUT();
+            return CXTUResourceUsage.CXTUResourceUsage$struct$LAYOUT;
         }
+        static final VarHandle data$VH = MemoryHandles.asAddressVarHandle(CXTUResourceUsage$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("data")));
         public static VarHandle data$VH() {
-            return Index_h$constants_0.CXTUResourceUsage$data$VH();
+            return CXTUResourceUsage.data$VH;
         }
-        public static  @C("void*") MemoryAddress data$get(@C("struct CXTUResourceUsage") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXTUResourceUsage$data$VH().get(seg);
+        public static MemoryAddress data$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXTUResourceUsage.data$VH.get(seg);
         }
-        public static  @C("void*") MemoryAddress data$get(@C("struct CXTUResourceUsage") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXTUResourceUsage$data$VH().get(seg.asSlice(index*sizeof()));
+        public static void data$set( MemorySegment seg, MemoryAddress x) {
+            CXTUResourceUsage.data$VH.set(seg, x);
         }
-        public static void data$set(@C("struct CXTUResourceUsage") MemorySegment seg, @C("void*") MemoryAddress x) {
-            Index_h$constants_0.CXTUResourceUsage$data$VH().set(seg, x);
+        public static MemoryAddress data$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXTUResourceUsage.data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void data$set(@C("struct CXTUResourceUsage") MemorySegment seg, long index, @C("void*") MemoryAddress x) {
-            Index_h$constants_0.CXTUResourceUsage$data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void data$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXTUResourceUsage.data$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle numEntries$VH = CXTUResourceUsage$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("numEntries"));
         public static VarHandle numEntries$VH() {
-            return Index_h$constants_0.CXTUResourceUsage$numEntries$VH();
+            return CXTUResourceUsage.numEntries$VH;
         }
-        public static  @C("unsigned int") int numEntries$get(@C("struct CXTUResourceUsage") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXTUResourceUsage$numEntries$VH().get(seg);
+        public static int numEntries$get(MemorySegment seg) {
+            return (int)CXTUResourceUsage.numEntries$VH.get(seg);
         }
-        public static  @C("unsigned int") int numEntries$get(@C("struct CXTUResourceUsage") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXTUResourceUsage$numEntries$VH().get(seg.asSlice(index*sizeof()));
+        public static void numEntries$set( MemorySegment seg, int x) {
+            CXTUResourceUsage.numEntries$VH.set(seg, x);
         }
-        public static void numEntries$set(@C("struct CXTUResourceUsage") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_0.CXTUResourceUsage$numEntries$VH().set(seg, x);
+        public static int numEntries$get(MemorySegment seg, long index) {
+            return (int)CXTUResourceUsage.numEntries$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void numEntries$set(@C("struct CXTUResourceUsage") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_0.CXTUResourceUsage$numEntries$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void numEntries$set(MemorySegment seg, long index, int x) {
+            CXTUResourceUsage.numEntries$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle entries$VH = MemoryHandles.asAddressVarHandle(CXTUResourceUsage$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("entries")));
         public static VarHandle entries$VH() {
-            return Index_h$constants_0.CXTUResourceUsage$entries$VH();
+            return CXTUResourceUsage.entries$VH;
         }
-        public static  @C("CXTUResourceUsageEntry*") MemoryAddress entries$get(@C("struct CXTUResourceUsage") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXTUResourceUsage$entries$VH().get(seg);
+        public static MemoryAddress entries$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXTUResourceUsage.entries$VH.get(seg);
         }
-        public static  @C("CXTUResourceUsageEntry*") MemoryAddress entries$get(@C("struct CXTUResourceUsage") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.CXTUResourceUsage$entries$VH().get(seg.asSlice(index*sizeof()));
+        public static void entries$set( MemorySegment seg, MemoryAddress x) {
+            CXTUResourceUsage.entries$VH.set(seg, x);
         }
-        public static void entries$set(@C("struct CXTUResourceUsage") MemorySegment seg, @C("CXTUResourceUsageEntry*") MemoryAddress x) {
-            Index_h$constants_0.CXTUResourceUsage$entries$VH().set(seg, x);
+        public static MemoryAddress entries$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXTUResourceUsage.entries$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void entries$set(@C("struct CXTUResourceUsage") MemorySegment seg, long index, @C("CXTUResourceUsageEntry*") MemoryAddress x) {
-            Index_h$constants_0.CXTUResourceUsage$entries$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void entries$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXTUResourceUsage.entries$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXTUResourceUsage") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXTUResourceUsage") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXTUResourceUsage[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXTUResourceUsage[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXTUResourceUsage*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXTUResourceUsage*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXTUResourceUsage") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getCXTUResourceUsage$MH() {
-        return Index_h$constants_0.clang_getCXTUResourceUsage$MH();
+    public static MethodHandle clang_getCXTUResourceUsage$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_getCXTUResourceUsage$MH,"clang_getCXTUResourceUsage");
     }
-    public static @C("CXTUResourceUsage") MemorySegment clang_getCXTUResourceUsage (@C("CXTranslationUnit") Addressable TU) {
+    public static MemorySegment clang_getCXTUResourceUsage ( Addressable TU) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_getCXTUResourceUsage$MH, "clang_getCXTUResourceUsage");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCXTUResourceUsage$MH().invokeExact(TU.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(TU.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeCXTUResourceUsage$MH() {
-        return Index_h$constants_0.clang_disposeCXTUResourceUsage$MH();
+    public static MethodHandle clang_disposeCXTUResourceUsage$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_disposeCXTUResourceUsage$MH,"clang_disposeCXTUResourceUsage");
     }
-    public static void clang_disposeCXTUResourceUsage (@C("CXTUResourceUsage") MemorySegment usage) {
+    public static void clang_disposeCXTUResourceUsage ( MemorySegment usage) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_disposeCXTUResourceUsage$MH, "clang_disposeCXTUResourceUsage");
         try {
-            Index_h$constants_0.clang_disposeCXTUResourceUsage$MH().invokeExact(usage);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(usage);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTranslationUnitTargetInfo$MH() {
-        return Index_h$constants_0.clang_getTranslationUnitTargetInfo$MH();
+    public static MethodHandle clang_getTranslationUnitTargetInfo$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_getTranslationUnitTargetInfo$MH,"clang_getTranslationUnitTargetInfo");
     }
-    public static @C("CXTargetInfo") MemoryAddress clang_getTranslationUnitTargetInfo (@C("CXTranslationUnit") Addressable CTUnit) {
+    public static MemoryAddress clang_getTranslationUnitTargetInfo ( Addressable CTUnit) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_getTranslationUnitTargetInfo$MH, "clang_getTranslationUnitTargetInfo");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getTranslationUnitTargetInfo$MH().invokeExact(CTUnit.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(CTUnit.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_TargetInfo_dispose$MH() {
-        return Index_h$constants_0.clang_TargetInfo_dispose$MH();
+    public static MethodHandle clang_TargetInfo_dispose$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_TargetInfo_dispose$MH,"clang_TargetInfo_dispose");
     }
-    public static void clang_TargetInfo_dispose (@C("CXTargetInfo") Addressable Info) {
+    public static void clang_TargetInfo_dispose ( Addressable Info) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_TargetInfo_dispose$MH, "clang_TargetInfo_dispose");
         try {
-            Index_h$constants_0.clang_TargetInfo_dispose$MH().invokeExact(Info.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Info.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_TargetInfo_getTriple$MH() {
-        return Index_h$constants_0.clang_TargetInfo_getTriple$MH();
+    public static MethodHandle clang_TargetInfo_getTriple$MH() {
+        return RuntimeHelper.requireNonNull(constants$12.clang_TargetInfo_getTriple$MH,"clang_TargetInfo_getTriple");
     }
-    public static @C("CXString") MemorySegment clang_TargetInfo_getTriple (@C("CXTargetInfo") Addressable Info) {
+    public static MemorySegment clang_TargetInfo_getTriple ( Addressable Info) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_TargetInfo_getTriple$MH, "clang_TargetInfo_getTriple");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_TargetInfo_getTriple$MH().invokeExact(Info.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Info.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_TargetInfo_getPointerWidth$MH() {
-        return Index_h$constants_0.clang_TargetInfo_getPointerWidth$MH();
+    public static class constants$12 {
+
+        static final FunctionDescriptor clang_getTUResourceUsageName$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getTUResourceUsageName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTUResourceUsageName",
+            "(I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$12.clang_getTUResourceUsageName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCXTUResourceUsage$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("numEntries"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("entries")
+        ).withName("CXTUResourceUsage"),
+            C_POINTER
+        );
+        static final MethodHandle clang_getCXTUResourceUsage$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCXTUResourceUsage",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$12.clang_getCXTUResourceUsage$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeCXTUResourceUsage$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("numEntries"),
+                MemoryLayout.ofPaddingBits(32),
+                C_POINTER.withName("entries")
+            ).withName("CXTUResourceUsage")
+        );
+        static final MethodHandle clang_disposeCXTUResourceUsage$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeCXTUResourceUsage",
+            "(Ljdk/incubator/foreign/MemorySegment;)V",
+            constants$12.clang_disposeCXTUResourceUsage$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTranslationUnitTargetInfo$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getTranslationUnitTargetInfo$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTranslationUnitTargetInfo",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$12.clang_getTranslationUnitTargetInfo$FUNC, false
+        );
+        static final FunctionDescriptor clang_TargetInfo_dispose$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_TargetInfo_dispose$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_TargetInfo_dispose",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$12.clang_TargetInfo_dispose$FUNC, false
+        );
+        static final FunctionDescriptor clang_TargetInfo_getTriple$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_TargetInfo_getTriple$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_TargetInfo_getTriple",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$12.clang_TargetInfo_getTriple$FUNC, false
+        );
     }
-    public static @C("int") int clang_TargetInfo_getPointerWidth (@C("CXTargetInfo") Addressable Info) {
+
+    public static MethodHandle clang_TargetInfo_getPointerWidth$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_TargetInfo_getPointerWidth$MH,"clang_TargetInfo_getPointerWidth");
+    }
+    public static int clang_TargetInfo_getPointerWidth ( Addressable Info) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_TargetInfo_getPointerWidth$MH, "clang_TargetInfo_getPointerWidth");
         try {
-            return (int)Index_h$constants_0.clang_TargetInfo_getPointerWidth$MH().invokeExact(Info.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Info.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXCursor_UnexposedDecl() {
-        return Index_h$constants_0.CXCursor_UnexposedDecl();
+    public static int CXCursor_UnexposedDecl() {
+        return (int)1L;
     }
-    public static @C("int") int CXCursor_StructDecl() {
-        return Index_h$constants_0.CXCursor_StructDecl();
+    public static int CXCursor_StructDecl() {
+        return (int)2L;
     }
-    public static @C("int") int CXCursor_UnionDecl() {
-        return Index_h$constants_0.CXCursor_UnionDecl();
+    public static int CXCursor_UnionDecl() {
+        return (int)3L;
     }
-    public static @C("int") int CXCursor_ClassDecl() {
-        return Index_h$constants_0.CXCursor_ClassDecl();
+    public static int CXCursor_ClassDecl() {
+        return (int)4L;
     }
-    public static @C("int") int CXCursor_EnumDecl() {
-        return Index_h$constants_0.CXCursor_EnumDecl();
+    public static int CXCursor_EnumDecl() {
+        return (int)5L;
     }
-    public static @C("int") int CXCursor_FieldDecl() {
-        return Index_h$constants_0.CXCursor_FieldDecl();
+    public static int CXCursor_FieldDecl() {
+        return (int)6L;
     }
-    public static @C("int") int CXCursor_EnumConstantDecl() {
-        return Index_h$constants_0.CXCursor_EnumConstantDecl();
+    public static int CXCursor_EnumConstantDecl() {
+        return (int)7L;
     }
-    public static @C("int") int CXCursor_FunctionDecl() {
-        return Index_h$constants_0.CXCursor_FunctionDecl();
+    public static int CXCursor_FunctionDecl() {
+        return (int)8L;
     }
-    public static @C("int") int CXCursor_VarDecl() {
-        return Index_h$constants_0.CXCursor_VarDecl();
+    public static int CXCursor_VarDecl() {
+        return (int)9L;
     }
-    public static @C("int") int CXCursor_ParmDecl() {
-        return Index_h$constants_0.CXCursor_ParmDecl();
+    public static int CXCursor_ParmDecl() {
+        return (int)10L;
     }
-    public static @C("int") int CXCursor_ObjCInterfaceDecl() {
-        return Index_h$constants_0.CXCursor_ObjCInterfaceDecl();
+    public static int CXCursor_ObjCInterfaceDecl() {
+        return (int)11L;
     }
-    public static @C("int") int CXCursor_ObjCCategoryDecl() {
-        return Index_h$constants_0.CXCursor_ObjCCategoryDecl();
+    public static int CXCursor_ObjCCategoryDecl() {
+        return (int)12L;
     }
-    public static @C("int") int CXCursor_ObjCProtocolDecl() {
-        return Index_h$constants_0.CXCursor_ObjCProtocolDecl();
+    public static int CXCursor_ObjCProtocolDecl() {
+        return (int)13L;
     }
-    public static @C("int") int CXCursor_ObjCPropertyDecl() {
-        return Index_h$constants_0.CXCursor_ObjCPropertyDecl();
+    public static int CXCursor_ObjCPropertyDecl() {
+        return (int)14L;
     }
-    public static @C("int") int CXCursor_ObjCIvarDecl() {
-        return Index_h$constants_0.CXCursor_ObjCIvarDecl();
+    public static int CXCursor_ObjCIvarDecl() {
+        return (int)15L;
     }
-    public static @C("int") int CXCursor_ObjCInstanceMethodDecl() {
-        return Index_h$constants_0.CXCursor_ObjCInstanceMethodDecl();
+    public static int CXCursor_ObjCInstanceMethodDecl() {
+        return (int)16L;
     }
-    public static @C("int") int CXCursor_ObjCClassMethodDecl() {
-        return Index_h$constants_0.CXCursor_ObjCClassMethodDecl();
+    public static int CXCursor_ObjCClassMethodDecl() {
+        return (int)17L;
     }
-    public static @C("int") int CXCursor_ObjCImplementationDecl() {
-        return Index_h$constants_0.CXCursor_ObjCImplementationDecl();
+    public static int CXCursor_ObjCImplementationDecl() {
+        return (int)18L;
     }
-    public static @C("int") int CXCursor_ObjCCategoryImplDecl() {
-        return Index_h$constants_0.CXCursor_ObjCCategoryImplDecl();
+    public static int CXCursor_ObjCCategoryImplDecl() {
+        return (int)19L;
     }
-    public static @C("int") int CXCursor_TypedefDecl() {
-        return Index_h$constants_0.CXCursor_TypedefDecl();
+    public static int CXCursor_TypedefDecl() {
+        return (int)20L;
     }
-    public static @C("int") int CXCursor_CXXMethod() {
-        return Index_h$constants_0.CXCursor_CXXMethod();
+    public static int CXCursor_CXXMethod() {
+        return (int)21L;
     }
-    public static @C("int") int CXCursor_Namespace() {
-        return Index_h$constants_0.CXCursor_Namespace();
+    public static int CXCursor_Namespace() {
+        return (int)22L;
     }
-    public static @C("int") int CXCursor_LinkageSpec() {
-        return Index_h$constants_0.CXCursor_LinkageSpec();
+    public static int CXCursor_LinkageSpec() {
+        return (int)23L;
     }
-    public static @C("int") int CXCursor_Constructor() {
-        return Index_h$constants_0.CXCursor_Constructor();
+    public static int CXCursor_Constructor() {
+        return (int)24L;
     }
-    public static @C("int") int CXCursor_Destructor() {
-        return Index_h$constants_0.CXCursor_Destructor();
+    public static int CXCursor_Destructor() {
+        return (int)25L;
     }
-    public static @C("int") int CXCursor_ConversionFunction() {
-        return Index_h$constants_0.CXCursor_ConversionFunction();
+    public static int CXCursor_ConversionFunction() {
+        return (int)26L;
     }
-    public static @C("int") int CXCursor_TemplateTypeParameter() {
-        return Index_h$constants_0.CXCursor_TemplateTypeParameter();
+    public static int CXCursor_TemplateTypeParameter() {
+        return (int)27L;
     }
-    public static @C("int") int CXCursor_NonTypeTemplateParameter() {
-        return Index_h$constants_0.CXCursor_NonTypeTemplateParameter();
+    public static int CXCursor_NonTypeTemplateParameter() {
+        return (int)28L;
     }
-    public static @C("int") int CXCursor_TemplateTemplateParameter() {
-        return Index_h$constants_0.CXCursor_TemplateTemplateParameter();
+    public static int CXCursor_TemplateTemplateParameter() {
+        return (int)29L;
     }
-    public static @C("int") int CXCursor_FunctionTemplate() {
-        return Index_h$constants_0.CXCursor_FunctionTemplate();
+    public static int CXCursor_FunctionTemplate() {
+        return (int)30L;
     }
-    public static @C("int") int CXCursor_ClassTemplate() {
-        return Index_h$constants_0.CXCursor_ClassTemplate();
+    public static int CXCursor_ClassTemplate() {
+        return (int)31L;
     }
-    public static @C("int") int CXCursor_ClassTemplatePartialSpecialization() {
-        return Index_h$constants_0.CXCursor_ClassTemplatePartialSpecialization();
+    public static int CXCursor_ClassTemplatePartialSpecialization() {
+        return (int)32L;
     }
-    public static @C("int") int CXCursor_NamespaceAlias() {
-        return Index_h$constants_0.CXCursor_NamespaceAlias();
+    public static int CXCursor_NamespaceAlias() {
+        return (int)33L;
     }
-    public static @C("int") int CXCursor_UsingDirective() {
-        return Index_h$constants_0.CXCursor_UsingDirective();
+    public static int CXCursor_UsingDirective() {
+        return (int)34L;
     }
-    public static @C("int") int CXCursor_UsingDeclaration() {
-        return Index_h$constants_0.CXCursor_UsingDeclaration();
+    public static int CXCursor_UsingDeclaration() {
+        return (int)35L;
     }
-    public static @C("int") int CXCursor_TypeAliasDecl() {
-        return Index_h$constants_0.CXCursor_TypeAliasDecl();
+    public static int CXCursor_TypeAliasDecl() {
+        return (int)36L;
     }
-    public static @C("int") int CXCursor_ObjCSynthesizeDecl() {
-        return Index_h$constants_0.CXCursor_ObjCSynthesizeDecl();
+    public static int CXCursor_ObjCSynthesizeDecl() {
+        return (int)37L;
     }
-    public static @C("int") int CXCursor_ObjCDynamicDecl() {
-        return Index_h$constants_0.CXCursor_ObjCDynamicDecl();
+    public static int CXCursor_ObjCDynamicDecl() {
+        return (int)38L;
     }
-    public static @C("int") int CXCursor_CXXAccessSpecifier() {
-        return Index_h$constants_0.CXCursor_CXXAccessSpecifier();
+    public static int CXCursor_CXXAccessSpecifier() {
+        return (int)39L;
     }
-    public static @C("int") int CXCursor_FirstDecl() {
-        return Index_h$constants_0.CXCursor_FirstDecl();
+    public static int CXCursor_FirstDecl() {
+        return (int)1L;
     }
-    public static @C("int") int CXCursor_LastDecl() {
-        return Index_h$constants_0.CXCursor_LastDecl();
+    public static int CXCursor_LastDecl() {
+        return (int)39L;
     }
-    public static @C("int") int CXCursor_FirstRef() {
-        return Index_h$constants_0.CXCursor_FirstRef();
+    public static int CXCursor_FirstRef() {
+        return (int)40L;
     }
-    public static @C("int") int CXCursor_ObjCSuperClassRef() {
-        return Index_h$constants_0.CXCursor_ObjCSuperClassRef();
+    public static int CXCursor_ObjCSuperClassRef() {
+        return (int)40L;
     }
-    public static @C("int") int CXCursor_ObjCProtocolRef() {
-        return Index_h$constants_0.CXCursor_ObjCProtocolRef();
+    public static int CXCursor_ObjCProtocolRef() {
+        return (int)41L;
     }
-    public static @C("int") int CXCursor_ObjCClassRef() {
-        return Index_h$constants_0.CXCursor_ObjCClassRef();
+    public static int CXCursor_ObjCClassRef() {
+        return (int)42L;
     }
-    public static @C("int") int CXCursor_TypeRef() {
-        return Index_h$constants_0.CXCursor_TypeRef();
+    public static int CXCursor_TypeRef() {
+        return (int)43L;
     }
-    public static @C("int") int CXCursor_CXXBaseSpecifier() {
-        return Index_h$constants_0.CXCursor_CXXBaseSpecifier();
+    public static int CXCursor_CXXBaseSpecifier() {
+        return (int)44L;
     }
-    public static @C("int") int CXCursor_TemplateRef() {
-        return Index_h$constants_0.CXCursor_TemplateRef();
+    public static int CXCursor_TemplateRef() {
+        return (int)45L;
     }
-    public static @C("int") int CXCursor_NamespaceRef() {
-        return Index_h$constants_0.CXCursor_NamespaceRef();
+    public static int CXCursor_NamespaceRef() {
+        return (int)46L;
     }
-    public static @C("int") int CXCursor_MemberRef() {
-        return Index_h$constants_0.CXCursor_MemberRef();
+    public static int CXCursor_MemberRef() {
+        return (int)47L;
     }
-    public static @C("int") int CXCursor_LabelRef() {
-        return Index_h$constants_0.CXCursor_LabelRef();
+    public static int CXCursor_LabelRef() {
+        return (int)48L;
     }
-    public static @C("int") int CXCursor_OverloadedDeclRef() {
-        return Index_h$constants_0.CXCursor_OverloadedDeclRef();
+    public static int CXCursor_OverloadedDeclRef() {
+        return (int)49L;
     }
-    public static @C("int") int CXCursor_VariableRef() {
-        return Index_h$constants_0.CXCursor_VariableRef();
+    public static int CXCursor_VariableRef() {
+        return (int)50L;
     }
-    public static @C("int") int CXCursor_LastRef() {
-        return Index_h$constants_0.CXCursor_LastRef();
+    public static int CXCursor_LastRef() {
+        return (int)50L;
     }
-    public static @C("int") int CXCursor_FirstInvalid() {
-        return Index_h$constants_0.CXCursor_FirstInvalid();
+    public static int CXCursor_FirstInvalid() {
+        return (int)70L;
     }
-    public static @C("int") int CXCursor_InvalidFile() {
-        return Index_h$constants_0.CXCursor_InvalidFile();
+    public static int CXCursor_InvalidFile() {
+        return (int)70L;
     }
-    public static @C("int") int CXCursor_NoDeclFound() {
-        return Index_h$constants_0.CXCursor_NoDeclFound();
+    public static int CXCursor_NoDeclFound() {
+        return (int)71L;
     }
-    public static @C("int") int CXCursor_NotImplemented() {
-        return Index_h$constants_0.CXCursor_NotImplemented();
+    public static int CXCursor_NotImplemented() {
+        return (int)72L;
     }
-    public static @C("int") int CXCursor_InvalidCode() {
-        return Index_h$constants_0.CXCursor_InvalidCode();
+    public static int CXCursor_InvalidCode() {
+        return (int)73L;
     }
-    public static @C("int") int CXCursor_LastInvalid() {
-        return Index_h$constants_0.CXCursor_LastInvalid();
+    public static int CXCursor_LastInvalid() {
+        return (int)73L;
     }
-    public static @C("int") int CXCursor_FirstExpr() {
-        return Index_h$constants_0.CXCursor_FirstExpr();
+    public static int CXCursor_FirstExpr() {
+        return (int)100L;
     }
-    public static @C("int") int CXCursor_UnexposedExpr() {
-        return Index_h$constants_0.CXCursor_UnexposedExpr();
+    public static int CXCursor_UnexposedExpr() {
+        return (int)100L;
     }
-    public static @C("int") int CXCursor_DeclRefExpr() {
-        return Index_h$constants_0.CXCursor_DeclRefExpr();
+    public static int CXCursor_DeclRefExpr() {
+        return (int)101L;
     }
-    public static @C("int") int CXCursor_MemberRefExpr() {
-        return Index_h$constants_0.CXCursor_MemberRefExpr();
+    public static int CXCursor_MemberRefExpr() {
+        return (int)102L;
     }
-    public static @C("int") int CXCursor_CallExpr() {
-        return Index_h$constants_0.CXCursor_CallExpr();
+    public static int CXCursor_CallExpr() {
+        return (int)103L;
     }
-    public static @C("int") int CXCursor_ObjCMessageExpr() {
-        return Index_h$constants_0.CXCursor_ObjCMessageExpr();
+    public static int CXCursor_ObjCMessageExpr() {
+        return (int)104L;
     }
-    public static @C("int") int CXCursor_BlockExpr() {
-        return Index_h$constants_0.CXCursor_BlockExpr();
+    public static int CXCursor_BlockExpr() {
+        return (int)105L;
     }
-    public static @C("int") int CXCursor_IntegerLiteral() {
-        return Index_h$constants_0.CXCursor_IntegerLiteral();
+    public static int CXCursor_IntegerLiteral() {
+        return (int)106L;
     }
-    public static @C("int") int CXCursor_FloatingLiteral() {
-        return Index_h$constants_0.CXCursor_FloatingLiteral();
+    public static int CXCursor_FloatingLiteral() {
+        return (int)107L;
     }
-    public static @C("int") int CXCursor_ImaginaryLiteral() {
-        return Index_h$constants_0.CXCursor_ImaginaryLiteral();
+    public static int CXCursor_ImaginaryLiteral() {
+        return (int)108L;
     }
-    public static @C("int") int CXCursor_StringLiteral() {
-        return Index_h$constants_0.CXCursor_StringLiteral();
+    public static int CXCursor_StringLiteral() {
+        return (int)109L;
     }
-    public static @C("int") int CXCursor_CharacterLiteral() {
-        return Index_h$constants_0.CXCursor_CharacterLiteral();
+    public static int CXCursor_CharacterLiteral() {
+        return (int)110L;
     }
-    public static @C("int") int CXCursor_ParenExpr() {
-        return Index_h$constants_0.CXCursor_ParenExpr();
+    public static int CXCursor_ParenExpr() {
+        return (int)111L;
     }
-    public static @C("int") int CXCursor_UnaryOperator() {
-        return Index_h$constants_0.CXCursor_UnaryOperator();
+    public static int CXCursor_UnaryOperator() {
+        return (int)112L;
     }
-    public static @C("int") int CXCursor_ArraySubscriptExpr() {
-        return Index_h$constants_0.CXCursor_ArraySubscriptExpr();
+    public static int CXCursor_ArraySubscriptExpr() {
+        return (int)113L;
     }
-    public static @C("int") int CXCursor_BinaryOperator() {
-        return Index_h$constants_0.CXCursor_BinaryOperator();
+    public static int CXCursor_BinaryOperator() {
+        return (int)114L;
     }
-    public static @C("int") int CXCursor_CompoundAssignOperator() {
-        return Index_h$constants_0.CXCursor_CompoundAssignOperator();
+    public static int CXCursor_CompoundAssignOperator() {
+        return (int)115L;
     }
-    public static @C("int") int CXCursor_ConditionalOperator() {
-        return Index_h$constants_0.CXCursor_ConditionalOperator();
+    public static int CXCursor_ConditionalOperator() {
+        return (int)116L;
     }
-    public static @C("int") int CXCursor_CStyleCastExpr() {
-        return Index_h$constants_0.CXCursor_CStyleCastExpr();
+    public static int CXCursor_CStyleCastExpr() {
+        return (int)117L;
     }
-    public static @C("int") int CXCursor_CompoundLiteralExpr() {
-        return Index_h$constants_0.CXCursor_CompoundLiteralExpr();
+    public static int CXCursor_CompoundLiteralExpr() {
+        return (int)118L;
     }
-    public static @C("int") int CXCursor_InitListExpr() {
-        return Index_h$constants_0.CXCursor_InitListExpr();
+    public static int CXCursor_InitListExpr() {
+        return (int)119L;
     }
-    public static @C("int") int CXCursor_AddrLabelExpr() {
-        return Index_h$constants_0.CXCursor_AddrLabelExpr();
+    public static int CXCursor_AddrLabelExpr() {
+        return (int)120L;
     }
-    public static @C("int") int CXCursor_StmtExpr() {
-        return Index_h$constants_0.CXCursor_StmtExpr();
+    public static int CXCursor_StmtExpr() {
+        return (int)121L;
     }
-    public static @C("int") int CXCursor_GenericSelectionExpr() {
-        return Index_h$constants_0.CXCursor_GenericSelectionExpr();
+    public static int CXCursor_GenericSelectionExpr() {
+        return (int)122L;
     }
-    public static @C("int") int CXCursor_GNUNullExpr() {
-        return Index_h$constants_0.CXCursor_GNUNullExpr();
+    public static int CXCursor_GNUNullExpr() {
+        return (int)123L;
     }
-    public static @C("int") int CXCursor_CXXStaticCastExpr() {
-        return Index_h$constants_0.CXCursor_CXXStaticCastExpr();
+    public static int CXCursor_CXXStaticCastExpr() {
+        return (int)124L;
     }
-    public static @C("int") int CXCursor_CXXDynamicCastExpr() {
-        return Index_h$constants_0.CXCursor_CXXDynamicCastExpr();
+    public static int CXCursor_CXXDynamicCastExpr() {
+        return (int)125L;
     }
-    public static @C("int") int CXCursor_CXXReinterpretCastExpr() {
-        return Index_h$constants_0.CXCursor_CXXReinterpretCastExpr();
+    public static int CXCursor_CXXReinterpretCastExpr() {
+        return (int)126L;
     }
-    public static @C("int") int CXCursor_CXXConstCastExpr() {
-        return Index_h$constants_0.CXCursor_CXXConstCastExpr();
+    public static int CXCursor_CXXConstCastExpr() {
+        return (int)127L;
     }
-    public static @C("int") int CXCursor_CXXFunctionalCastExpr() {
-        return Index_h$constants_0.CXCursor_CXXFunctionalCastExpr();
+    public static int CXCursor_CXXFunctionalCastExpr() {
+        return (int)128L;
     }
-    public static @C("int") int CXCursor_CXXTypeidExpr() {
-        return Index_h$constants_0.CXCursor_CXXTypeidExpr();
+    public static int CXCursor_CXXTypeidExpr() {
+        return (int)129L;
     }
-    public static @C("int") int CXCursor_CXXBoolLiteralExpr() {
-        return Index_h$constants_0.CXCursor_CXXBoolLiteralExpr();
+    public static int CXCursor_CXXBoolLiteralExpr() {
+        return (int)130L;
     }
-    public static @C("int") int CXCursor_CXXNullPtrLiteralExpr() {
-        return Index_h$constants_0.CXCursor_CXXNullPtrLiteralExpr();
+    public static int CXCursor_CXXNullPtrLiteralExpr() {
+        return (int)131L;
     }
-    public static @C("int") int CXCursor_CXXThisExpr() {
-        return Index_h$constants_0.CXCursor_CXXThisExpr();
+    public static int CXCursor_CXXThisExpr() {
+        return (int)132L;
     }
-    public static @C("int") int CXCursor_CXXThrowExpr() {
-        return Index_h$constants_0.CXCursor_CXXThrowExpr();
+    public static int CXCursor_CXXThrowExpr() {
+        return (int)133L;
     }
-    public static @C("int") int CXCursor_CXXNewExpr() {
-        return Index_h$constants_0.CXCursor_CXXNewExpr();
+    public static int CXCursor_CXXNewExpr() {
+        return (int)134L;
     }
-    public static @C("int") int CXCursor_CXXDeleteExpr() {
-        return Index_h$constants_0.CXCursor_CXXDeleteExpr();
+    public static int CXCursor_CXXDeleteExpr() {
+        return (int)135L;
     }
-    public static @C("int") int CXCursor_UnaryExpr() {
-        return Index_h$constants_0.CXCursor_UnaryExpr();
+    public static int CXCursor_UnaryExpr() {
+        return (int)136L;
     }
-    public static @C("int") int CXCursor_ObjCStringLiteral() {
-        return Index_h$constants_0.CXCursor_ObjCStringLiteral();
+    public static int CXCursor_ObjCStringLiteral() {
+        return (int)137L;
     }
-    public static @C("int") int CXCursor_ObjCEncodeExpr() {
-        return Index_h$constants_0.CXCursor_ObjCEncodeExpr();
+    public static int CXCursor_ObjCEncodeExpr() {
+        return (int)138L;
     }
-    public static @C("int") int CXCursor_ObjCSelectorExpr() {
-        return Index_h$constants_0.CXCursor_ObjCSelectorExpr();
+    public static int CXCursor_ObjCSelectorExpr() {
+        return (int)139L;
     }
-    public static @C("int") int CXCursor_ObjCProtocolExpr() {
-        return Index_h$constants_0.CXCursor_ObjCProtocolExpr();
+    public static int CXCursor_ObjCProtocolExpr() {
+        return (int)140L;
     }
-    public static @C("int") int CXCursor_ObjCBridgedCastExpr() {
-        return Index_h$constants_0.CXCursor_ObjCBridgedCastExpr();
+    public static int CXCursor_ObjCBridgedCastExpr() {
+        return (int)141L;
     }
-    public static @C("int") int CXCursor_PackExpansionExpr() {
-        return Index_h$constants_0.CXCursor_PackExpansionExpr();
+    public static int CXCursor_PackExpansionExpr() {
+        return (int)142L;
     }
-    public static @C("int") int CXCursor_SizeOfPackExpr() {
-        return Index_h$constants_0.CXCursor_SizeOfPackExpr();
+    public static int CXCursor_SizeOfPackExpr() {
+        return (int)143L;
     }
-    public static @C("int") int CXCursor_LambdaExpr() {
-        return Index_h$constants_0.CXCursor_LambdaExpr();
+    public static int CXCursor_LambdaExpr() {
+        return (int)144L;
     }
-    public static @C("int") int CXCursor_ObjCBoolLiteralExpr() {
-        return Index_h$constants_0.CXCursor_ObjCBoolLiteralExpr();
+    public static int CXCursor_ObjCBoolLiteralExpr() {
+        return (int)145L;
     }
-    public static @C("int") int CXCursor_ObjCSelfExpr() {
-        return Index_h$constants_0.CXCursor_ObjCSelfExpr();
+    public static int CXCursor_ObjCSelfExpr() {
+        return (int)146L;
     }
-    public static @C("int") int CXCursor_OMPArraySectionExpr() {
-        return Index_h$constants_0.CXCursor_OMPArraySectionExpr();
+    public static int CXCursor_OMPArraySectionExpr() {
+        return (int)147L;
     }
-    public static @C("int") int CXCursor_ObjCAvailabilityCheckExpr() {
-        return Index_h$constants_0.CXCursor_ObjCAvailabilityCheckExpr();
+    public static int CXCursor_ObjCAvailabilityCheckExpr() {
+        return (int)148L;
     }
-    public static @C("int") int CXCursor_FixedPointLiteral() {
-        return Index_h$constants_0.CXCursor_FixedPointLiteral();
+    public static int CXCursor_FixedPointLiteral() {
+        return (int)149L;
     }
-    public static @C("int") int CXCursor_LastExpr() {
-        return Index_h$constants_0.CXCursor_LastExpr();
+    public static int CXCursor_LastExpr() {
+        return (int)149L;
     }
-    public static @C("int") int CXCursor_FirstStmt() {
-        return Index_h$constants_0.CXCursor_FirstStmt();
+    public static int CXCursor_FirstStmt() {
+        return (int)200L;
     }
-    public static @C("int") int CXCursor_UnexposedStmt() {
-        return Index_h$constants_0.CXCursor_UnexposedStmt();
+    public static int CXCursor_UnexposedStmt() {
+        return (int)200L;
     }
-    public static @C("int") int CXCursor_LabelStmt() {
-        return Index_h$constants_0.CXCursor_LabelStmt();
+    public static int CXCursor_LabelStmt() {
+        return (int)201L;
     }
-    public static @C("int") int CXCursor_CompoundStmt() {
-        return Index_h$constants_0.CXCursor_CompoundStmt();
+    public static int CXCursor_CompoundStmt() {
+        return (int)202L;
     }
-    public static @C("int") int CXCursor_CaseStmt() {
-        return Index_h$constants_0.CXCursor_CaseStmt();
+    public static int CXCursor_CaseStmt() {
+        return (int)203L;
     }
-    public static @C("int") int CXCursor_DefaultStmt() {
-        return Index_h$constants_0.CXCursor_DefaultStmt();
+    public static int CXCursor_DefaultStmt() {
+        return (int)204L;
     }
-    public static @C("int") int CXCursor_IfStmt() {
-        return Index_h$constants_0.CXCursor_IfStmt();
+    public static int CXCursor_IfStmt() {
+        return (int)205L;
     }
-    public static @C("int") int CXCursor_SwitchStmt() {
-        return Index_h$constants_0.CXCursor_SwitchStmt();
+    public static int CXCursor_SwitchStmt() {
+        return (int)206L;
     }
-    public static @C("int") int CXCursor_WhileStmt() {
-        return Index_h$constants_0.CXCursor_WhileStmt();
+    public static int CXCursor_WhileStmt() {
+        return (int)207L;
     }
-    public static @C("int") int CXCursor_DoStmt() {
-        return Index_h$constants_0.CXCursor_DoStmt();
+    public static int CXCursor_DoStmt() {
+        return (int)208L;
     }
-    public static @C("int") int CXCursor_ForStmt() {
-        return Index_h$constants_0.CXCursor_ForStmt();
+    public static int CXCursor_ForStmt() {
+        return (int)209L;
     }
-    public static @C("int") int CXCursor_GotoStmt() {
-        return Index_h$constants_0.CXCursor_GotoStmt();
+    public static int CXCursor_GotoStmt() {
+        return (int)210L;
     }
-    public static @C("int") int CXCursor_IndirectGotoStmt() {
-        return Index_h$constants_0.CXCursor_IndirectGotoStmt();
+    public static int CXCursor_IndirectGotoStmt() {
+        return (int)211L;
     }
-    public static @C("int") int CXCursor_ContinueStmt() {
-        return Index_h$constants_0.CXCursor_ContinueStmt();
+    public static int CXCursor_ContinueStmt() {
+        return (int)212L;
     }
-    public static @C("int") int CXCursor_BreakStmt() {
-        return Index_h$constants_0.CXCursor_BreakStmt();
+    public static int CXCursor_BreakStmt() {
+        return (int)213L;
     }
-    public static @C("int") int CXCursor_ReturnStmt() {
-        return Index_h$constants_0.CXCursor_ReturnStmt();
+    public static int CXCursor_ReturnStmt() {
+        return (int)214L;
     }
-    public static @C("int") int CXCursor_GCCAsmStmt() {
-        return Index_h$constants_0.CXCursor_GCCAsmStmt();
+    public static int CXCursor_GCCAsmStmt() {
+        return (int)215L;
     }
-    public static @C("int") int CXCursor_AsmStmt() {
-        return Index_h$constants_0.CXCursor_AsmStmt();
+    public static int CXCursor_AsmStmt() {
+        return (int)215L;
     }
-    public static @C("int") int CXCursor_ObjCAtTryStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAtTryStmt();
+    public static int CXCursor_ObjCAtTryStmt() {
+        return (int)216L;
     }
-    public static @C("int") int CXCursor_ObjCAtCatchStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAtCatchStmt();
+    public static int CXCursor_ObjCAtCatchStmt() {
+        return (int)217L;
     }
-    public static @C("int") int CXCursor_ObjCAtFinallyStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAtFinallyStmt();
+    public static int CXCursor_ObjCAtFinallyStmt() {
+        return (int)218L;
     }
-    public static @C("int") int CXCursor_ObjCAtThrowStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAtThrowStmt();
+    public static int CXCursor_ObjCAtThrowStmt() {
+        return (int)219L;
     }
-    public static @C("int") int CXCursor_ObjCAtSynchronizedStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAtSynchronizedStmt();
+    public static int CXCursor_ObjCAtSynchronizedStmt() {
+        return (int)220L;
     }
-    public static @C("int") int CXCursor_ObjCAutoreleasePoolStmt() {
-        return Index_h$constants_0.CXCursor_ObjCAutoreleasePoolStmt();
+    public static int CXCursor_ObjCAutoreleasePoolStmt() {
+        return (int)221L;
     }
-    public static @C("int") int CXCursor_ObjCForCollectionStmt() {
-        return Index_h$constants_0.CXCursor_ObjCForCollectionStmt();
+    public static int CXCursor_ObjCForCollectionStmt() {
+        return (int)222L;
     }
-    public static @C("int") int CXCursor_CXXCatchStmt() {
-        return Index_h$constants_0.CXCursor_CXXCatchStmt();
+    public static int CXCursor_CXXCatchStmt() {
+        return (int)223L;
     }
-    public static @C("int") int CXCursor_CXXTryStmt() {
-        return Index_h$constants_0.CXCursor_CXXTryStmt();
+    public static int CXCursor_CXXTryStmt() {
+        return (int)224L;
     }
-    public static @C("int") int CXCursor_CXXForRangeStmt() {
-        return Index_h$constants_0.CXCursor_CXXForRangeStmt();
+    public static int CXCursor_CXXForRangeStmt() {
+        return (int)225L;
     }
-    public static @C("int") int CXCursor_SEHTryStmt() {
-        return Index_h$constants_0.CXCursor_SEHTryStmt();
+    public static int CXCursor_SEHTryStmt() {
+        return (int)226L;
     }
-    public static @C("int") int CXCursor_SEHExceptStmt() {
-        return Index_h$constants_0.CXCursor_SEHExceptStmt();
+    public static int CXCursor_SEHExceptStmt() {
+        return (int)227L;
     }
-    public static @C("int") int CXCursor_SEHFinallyStmt() {
-        return Index_h$constants_0.CXCursor_SEHFinallyStmt();
+    public static int CXCursor_SEHFinallyStmt() {
+        return (int)228L;
     }
-    public static @C("int") int CXCursor_MSAsmStmt() {
-        return Index_h$constants_0.CXCursor_MSAsmStmt();
+    public static int CXCursor_MSAsmStmt() {
+        return (int)229L;
     }
-    public static @C("int") int CXCursor_NullStmt() {
-        return Index_h$constants_0.CXCursor_NullStmt();
+    public static int CXCursor_NullStmt() {
+        return (int)230L;
     }
-    public static @C("int") int CXCursor_DeclStmt() {
-        return Index_h$constants_0.CXCursor_DeclStmt();
+    public static int CXCursor_DeclStmt() {
+        return (int)231L;
     }
-    public static @C("int") int CXCursor_OMPParallelDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelDirective();
+    public static int CXCursor_OMPParallelDirective() {
+        return (int)232L;
     }
-    public static @C("int") int CXCursor_OMPSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPSimdDirective();
+    public static int CXCursor_OMPSimdDirective() {
+        return (int)233L;
     }
-    public static @C("int") int CXCursor_OMPForDirective() {
-        return Index_h$constants_0.CXCursor_OMPForDirective();
+    public static int CXCursor_OMPForDirective() {
+        return (int)234L;
     }
-    public static @C("int") int CXCursor_OMPSectionsDirective() {
-        return Index_h$constants_0.CXCursor_OMPSectionsDirective();
+    public static int CXCursor_OMPSectionsDirective() {
+        return (int)235L;
     }
-    public static @C("int") int CXCursor_OMPSectionDirective() {
-        return Index_h$constants_0.CXCursor_OMPSectionDirective();
+    public static int CXCursor_OMPSectionDirective() {
+        return (int)236L;
     }
-    public static @C("int") int CXCursor_OMPSingleDirective() {
-        return Index_h$constants_0.CXCursor_OMPSingleDirective();
+    public static int CXCursor_OMPSingleDirective() {
+        return (int)237L;
     }
-    public static @C("int") int CXCursor_OMPParallelForDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelForDirective();
+    public static int CXCursor_OMPParallelForDirective() {
+        return (int)238L;
     }
-    public static @C("int") int CXCursor_OMPParallelSectionsDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelSectionsDirective();
+    public static int CXCursor_OMPParallelSectionsDirective() {
+        return (int)239L;
     }
-    public static @C("int") int CXCursor_OMPTaskDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskDirective();
+    public static int CXCursor_OMPTaskDirective() {
+        return (int)240L;
     }
-    public static @C("int") int CXCursor_OMPMasterDirective() {
-        return Index_h$constants_0.CXCursor_OMPMasterDirective();
+    public static int CXCursor_OMPMasterDirective() {
+        return (int)241L;
     }
-    public static @C("int") int CXCursor_OMPCriticalDirective() {
-        return Index_h$constants_0.CXCursor_OMPCriticalDirective();
+    public static int CXCursor_OMPCriticalDirective() {
+        return (int)242L;
     }
-    public static @C("int") int CXCursor_OMPTaskyieldDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskyieldDirective();
+    public static int CXCursor_OMPTaskyieldDirective() {
+        return (int)243L;
     }
-    public static @C("int") int CXCursor_OMPBarrierDirective() {
-        return Index_h$constants_0.CXCursor_OMPBarrierDirective();
+    public static int CXCursor_OMPBarrierDirective() {
+        return (int)244L;
     }
-    public static @C("int") int CXCursor_OMPTaskwaitDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskwaitDirective();
+    public static int CXCursor_OMPTaskwaitDirective() {
+        return (int)245L;
     }
-    public static @C("int") int CXCursor_OMPFlushDirective() {
-        return Index_h$constants_0.CXCursor_OMPFlushDirective();
+    public static int CXCursor_OMPFlushDirective() {
+        return (int)246L;
     }
-    public static @C("int") int CXCursor_SEHLeaveStmt() {
-        return Index_h$constants_0.CXCursor_SEHLeaveStmt();
+    public static int CXCursor_SEHLeaveStmt() {
+        return (int)247L;
     }
-    public static @C("int") int CXCursor_OMPOrderedDirective() {
-        return Index_h$constants_0.CXCursor_OMPOrderedDirective();
+    public static int CXCursor_OMPOrderedDirective() {
+        return (int)248L;
     }
-    public static @C("int") int CXCursor_OMPAtomicDirective() {
-        return Index_h$constants_0.CXCursor_OMPAtomicDirective();
+    public static int CXCursor_OMPAtomicDirective() {
+        return (int)249L;
     }
-    public static @C("int") int CXCursor_OMPForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPForSimdDirective();
+    public static int CXCursor_OMPForSimdDirective() {
+        return (int)250L;
     }
-    public static @C("int") int CXCursor_OMPParallelForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelForSimdDirective();
+    public static int CXCursor_OMPParallelForSimdDirective() {
+        return (int)251L;
     }
-    public static @C("int") int CXCursor_OMPTargetDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetDirective();
+    public static int CXCursor_OMPTargetDirective() {
+        return (int)252L;
     }
-    public static @C("int") int CXCursor_OMPTeamsDirective() {
-        return Index_h$constants_0.CXCursor_OMPTeamsDirective();
+    public static int CXCursor_OMPTeamsDirective() {
+        return (int)253L;
     }
-    public static @C("int") int CXCursor_OMPTaskgroupDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskgroupDirective();
+    public static int CXCursor_OMPTaskgroupDirective() {
+        return (int)254L;
     }
-    public static @C("int") int CXCursor_OMPCancellationPointDirective() {
-        return Index_h$constants_0.CXCursor_OMPCancellationPointDirective();
+    public static int CXCursor_OMPCancellationPointDirective() {
+        return (int)255L;
     }
-    public static @C("int") int CXCursor_OMPCancelDirective() {
-        return Index_h$constants_0.CXCursor_OMPCancelDirective();
+    public static int CXCursor_OMPCancelDirective() {
+        return (int)256L;
     }
-    public static @C("int") int CXCursor_OMPTargetDataDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetDataDirective();
+    public static int CXCursor_OMPTargetDataDirective() {
+        return (int)257L;
     }
-    public static @C("int") int CXCursor_OMPTaskLoopDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskLoopDirective();
+    public static int CXCursor_OMPTaskLoopDirective() {
+        return (int)258L;
     }
-    public static @C("int") int CXCursor_OMPTaskLoopSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTaskLoopSimdDirective();
+    public static int CXCursor_OMPTaskLoopSimdDirective() {
+        return (int)259L;
     }
-    public static @C("int") int CXCursor_OMPDistributeDirective() {
-        return Index_h$constants_0.CXCursor_OMPDistributeDirective();
+    public static int CXCursor_OMPDistributeDirective() {
+        return (int)260L;
     }
-    public static @C("int") int CXCursor_OMPTargetEnterDataDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetEnterDataDirective();
+    public static int CXCursor_OMPTargetEnterDataDirective() {
+        return (int)261L;
     }
-    public static @C("int") int CXCursor_OMPTargetExitDataDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetExitDataDirective();
+    public static int CXCursor_OMPTargetExitDataDirective() {
+        return (int)262L;
     }
-    public static @C("int") int CXCursor_OMPTargetParallelDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetParallelDirective();
+    public static int CXCursor_OMPTargetParallelDirective() {
+        return (int)263L;
     }
-    public static @C("int") int CXCursor_OMPTargetParallelForDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetParallelForDirective();
+    public static int CXCursor_OMPTargetParallelForDirective() {
+        return (int)264L;
     }
-    public static @C("int") int CXCursor_OMPTargetUpdateDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetUpdateDirective();
+    public static int CXCursor_OMPTargetUpdateDirective() {
+        return (int)265L;
     }
-    public static @C("int") int CXCursor_OMPDistributeParallelForDirective() {
-        return Index_h$constants_0.CXCursor_OMPDistributeParallelForDirective();
+    public static int CXCursor_OMPDistributeParallelForDirective() {
+        return (int)266L;
     }
-    public static @C("int") int CXCursor_OMPDistributeParallelForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPDistributeParallelForSimdDirective();
+    public static int CXCursor_OMPDistributeParallelForSimdDirective() {
+        return (int)267L;
     }
-    public static @C("int") int CXCursor_OMPDistributeSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPDistributeSimdDirective();
+    public static int CXCursor_OMPDistributeSimdDirective() {
+        return (int)268L;
     }
-    public static @C("int") int CXCursor_OMPTargetParallelForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetParallelForSimdDirective();
+    public static int CXCursor_OMPTargetParallelForSimdDirective() {
+        return (int)269L;
     }
-    public static @C("int") int CXCursor_OMPTargetSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetSimdDirective();
+    public static int CXCursor_OMPTargetSimdDirective() {
+        return (int)270L;
     }
-    public static @C("int") int CXCursor_OMPTeamsDistributeDirective() {
-        return Index_h$constants_0.CXCursor_OMPTeamsDistributeDirective();
+    public static int CXCursor_OMPTeamsDistributeDirective() {
+        return (int)271L;
     }
-    public static @C("int") int CXCursor_OMPTeamsDistributeSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTeamsDistributeSimdDirective();
+    public static int CXCursor_OMPTeamsDistributeSimdDirective() {
+        return (int)272L;
     }
-    public static @C("int") int CXCursor_OMPTeamsDistributeParallelForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTeamsDistributeParallelForSimdDirective();
+    public static int CXCursor_OMPTeamsDistributeParallelForSimdDirective() {
+        return (int)273L;
     }
-    public static @C("int") int CXCursor_OMPTeamsDistributeParallelForDirective() {
-        return Index_h$constants_0.CXCursor_OMPTeamsDistributeParallelForDirective();
+    public static int CXCursor_OMPTeamsDistributeParallelForDirective() {
+        return (int)274L;
     }
-    public static @C("int") int CXCursor_OMPTargetTeamsDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetTeamsDirective();
+    public static int CXCursor_OMPTargetTeamsDirective() {
+        return (int)275L;
     }
-    public static @C("int") int CXCursor_OMPTargetTeamsDistributeDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetTeamsDistributeDirective();
+    public static int CXCursor_OMPTargetTeamsDistributeDirective() {
+        return (int)276L;
     }
-    public static @C("int") int CXCursor_OMPTargetTeamsDistributeParallelForDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetTeamsDistributeParallelForDirective();
+    public static int CXCursor_OMPTargetTeamsDistributeParallelForDirective() {
+        return (int)277L;
     }
-    public static @C("int") int CXCursor_OMPTargetTeamsDistributeParallelForSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetTeamsDistributeParallelForSimdDirective();
+    public static int CXCursor_OMPTargetTeamsDistributeParallelForSimdDirective() {
+        return (int)278L;
     }
-    public static @C("int") int CXCursor_OMPTargetTeamsDistributeSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPTargetTeamsDistributeSimdDirective();
+    public static int CXCursor_OMPTargetTeamsDistributeSimdDirective() {
+        return (int)279L;
     }
-    public static @C("int") int CXCursor_BuiltinBitCastExpr() {
-        return Index_h$constants_0.CXCursor_BuiltinBitCastExpr();
+    public static int CXCursor_BuiltinBitCastExpr() {
+        return (int)280L;
     }
-    public static @C("int") int CXCursor_OMPMasterTaskLoopDirective() {
-        return Index_h$constants_0.CXCursor_OMPMasterTaskLoopDirective();
+    public static int CXCursor_OMPMasterTaskLoopDirective() {
+        return (int)281L;
     }
-    public static @C("int") int CXCursor_OMPParallelMasterTaskLoopDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelMasterTaskLoopDirective();
+    public static int CXCursor_OMPParallelMasterTaskLoopDirective() {
+        return (int)282L;
     }
-    public static @C("int") int CXCursor_OMPMasterTaskLoopSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPMasterTaskLoopSimdDirective();
+    public static int CXCursor_OMPMasterTaskLoopSimdDirective() {
+        return (int)283L;
     }
-    public static @C("int") int CXCursor_OMPParallelMasterTaskLoopSimdDirective() {
-        return Index_h$constants_0.CXCursor_OMPParallelMasterTaskLoopSimdDirective();
+    public static int CXCursor_OMPParallelMasterTaskLoopSimdDirective() {
+        return (int)284L;
     }
-    public static @C("int") int CXCursor_LastStmt() {
-        return Index_h$constants_0.CXCursor_LastStmt();
+    public static int CXCursor_LastStmt() {
+        return (int)284L;
     }
-    public static @C("int") int CXCursor_TranslationUnit() {
-        return Index_h$constants_0.CXCursor_TranslationUnit();
+    public static int CXCursor_TranslationUnit() {
+        return (int)300L;
     }
-    public static @C("int") int CXCursor_FirstAttr() {
-        return Index_h$constants_0.CXCursor_FirstAttr();
+    public static int CXCursor_FirstAttr() {
+        return (int)400L;
     }
-    public static @C("int") int CXCursor_UnexposedAttr() {
-        return Index_h$constants_0.CXCursor_UnexposedAttr();
+    public static int CXCursor_UnexposedAttr() {
+        return (int)400L;
     }
-    public static @C("int") int CXCursor_IBActionAttr() {
-        return Index_h$constants_0.CXCursor_IBActionAttr();
+    public static int CXCursor_IBActionAttr() {
+        return (int)401L;
     }
-    public static @C("int") int CXCursor_IBOutletAttr() {
-        return Index_h$constants_0.CXCursor_IBOutletAttr();
+    public static int CXCursor_IBOutletAttr() {
+        return (int)402L;
     }
-    public static @C("int") int CXCursor_IBOutletCollectionAttr() {
-        return Index_h$constants_0.CXCursor_IBOutletCollectionAttr();
+    public static int CXCursor_IBOutletCollectionAttr() {
+        return (int)403L;
     }
-    public static @C("int") int CXCursor_CXXFinalAttr() {
-        return Index_h$constants_0.CXCursor_CXXFinalAttr();
+    public static int CXCursor_CXXFinalAttr() {
+        return (int)404L;
     }
-    public static @C("int") int CXCursor_CXXOverrideAttr() {
-        return Index_h$constants_0.CXCursor_CXXOverrideAttr();
+    public static int CXCursor_CXXOverrideAttr() {
+        return (int)405L;
     }
-    public static @C("int") int CXCursor_AnnotateAttr() {
-        return Index_h$constants_0.CXCursor_AnnotateAttr();
+    public static int CXCursor_AnnotateAttr() {
+        return (int)406L;
     }
-    public static @C("int") int CXCursor_AsmLabelAttr() {
-        return Index_h$constants_0.CXCursor_AsmLabelAttr();
+    public static int CXCursor_AsmLabelAttr() {
+        return (int)407L;
     }
-    public static @C("int") int CXCursor_PackedAttr() {
-        return Index_h$constants_0.CXCursor_PackedAttr();
+    public static int CXCursor_PackedAttr() {
+        return (int)408L;
     }
-    public static @C("int") int CXCursor_PureAttr() {
-        return Index_h$constants_0.CXCursor_PureAttr();
+    public static int CXCursor_PureAttr() {
+        return (int)409L;
     }
-    public static @C("int") int CXCursor_ConstAttr() {
-        return Index_h$constants_0.CXCursor_ConstAttr();
+    public static int CXCursor_ConstAttr() {
+        return (int)410L;
     }
-    public static @C("int") int CXCursor_NoDuplicateAttr() {
-        return Index_h$constants_0.CXCursor_NoDuplicateAttr();
+    public static int CXCursor_NoDuplicateAttr() {
+        return (int)411L;
     }
-    public static @C("int") int CXCursor_CUDAConstantAttr() {
-        return Index_h$constants_0.CXCursor_CUDAConstantAttr();
+    public static int CXCursor_CUDAConstantAttr() {
+        return (int)412L;
     }
-    public static @C("int") int CXCursor_CUDADeviceAttr() {
-        return Index_h$constants_0.CXCursor_CUDADeviceAttr();
+    public static int CXCursor_CUDADeviceAttr() {
+        return (int)413L;
     }
-    public static @C("int") int CXCursor_CUDAGlobalAttr() {
-        return Index_h$constants_0.CXCursor_CUDAGlobalAttr();
+    public static int CXCursor_CUDAGlobalAttr() {
+        return (int)414L;
     }
-    public static @C("int") int CXCursor_CUDAHostAttr() {
-        return Index_h$constants_0.CXCursor_CUDAHostAttr();
+    public static int CXCursor_CUDAHostAttr() {
+        return (int)415L;
     }
-    public static @C("int") int CXCursor_CUDASharedAttr() {
-        return Index_h$constants_0.CXCursor_CUDASharedAttr();
+    public static int CXCursor_CUDASharedAttr() {
+        return (int)416L;
     }
-    public static @C("int") int CXCursor_VisibilityAttr() {
-        return Index_h$constants_0.CXCursor_VisibilityAttr();
+    public static int CXCursor_VisibilityAttr() {
+        return (int)417L;
     }
-    public static @C("int") int CXCursor_DLLExport() {
-        return Index_h$constants_0.CXCursor_DLLExport();
+    public static int CXCursor_DLLExport() {
+        return (int)418L;
     }
-    public static @C("int") int CXCursor_DLLImport() {
-        return Index_h$constants_0.CXCursor_DLLImport();
+    public static int CXCursor_DLLImport() {
+        return (int)419L;
     }
-    public static @C("int") int CXCursor_NSReturnsRetained() {
-        return Index_h$constants_0.CXCursor_NSReturnsRetained();
+    public static int CXCursor_NSReturnsRetained() {
+        return (int)420L;
     }
-    public static @C("int") int CXCursor_NSReturnsNotRetained() {
-        return Index_h$constants_0.CXCursor_NSReturnsNotRetained();
+    public static int CXCursor_NSReturnsNotRetained() {
+        return (int)421L;
     }
-    public static @C("int") int CXCursor_NSReturnsAutoreleased() {
-        return Index_h$constants_0.CXCursor_NSReturnsAutoreleased();
+    public static int CXCursor_NSReturnsAutoreleased() {
+        return (int)422L;
     }
-    public static @C("int") int CXCursor_NSConsumesSelf() {
-        return Index_h$constants_0.CXCursor_NSConsumesSelf();
+    public static int CXCursor_NSConsumesSelf() {
+        return (int)423L;
     }
-    public static @C("int") int CXCursor_NSConsumed() {
-        return Index_h$constants_0.CXCursor_NSConsumed();
+    public static int CXCursor_NSConsumed() {
+        return (int)424L;
     }
-    public static @C("int") int CXCursor_ObjCException() {
-        return Index_h$constants_0.CXCursor_ObjCException();
+    public static int CXCursor_ObjCException() {
+        return (int)425L;
     }
-    public static @C("int") int CXCursor_ObjCNSObject() {
-        return Index_h$constants_0.CXCursor_ObjCNSObject();
+    public static int CXCursor_ObjCNSObject() {
+        return (int)426L;
     }
-    public static @C("int") int CXCursor_ObjCIndependentClass() {
-        return Index_h$constants_0.CXCursor_ObjCIndependentClass();
+    public static int CXCursor_ObjCIndependentClass() {
+        return (int)427L;
     }
-    public static @C("int") int CXCursor_ObjCPreciseLifetime() {
-        return Index_h$constants_0.CXCursor_ObjCPreciseLifetime();
+    public static int CXCursor_ObjCPreciseLifetime() {
+        return (int)428L;
     }
-    public static @C("int") int CXCursor_ObjCReturnsInnerPointer() {
-        return Index_h$constants_0.CXCursor_ObjCReturnsInnerPointer();
+    public static int CXCursor_ObjCReturnsInnerPointer() {
+        return (int)429L;
     }
-    public static @C("int") int CXCursor_ObjCRequiresSuper() {
-        return Index_h$constants_0.CXCursor_ObjCRequiresSuper();
+    public static int CXCursor_ObjCRequiresSuper() {
+        return (int)430L;
     }
-    public static @C("int") int CXCursor_ObjCRootClass() {
-        return Index_h$constants_0.CXCursor_ObjCRootClass();
+    public static int CXCursor_ObjCRootClass() {
+        return (int)431L;
     }
-    public static @C("int") int CXCursor_ObjCSubclassingRestricted() {
-        return Index_h$constants_0.CXCursor_ObjCSubclassingRestricted();
+    public static int CXCursor_ObjCSubclassingRestricted() {
+        return (int)432L;
     }
-    public static @C("int") int CXCursor_ObjCExplicitProtocolImpl() {
-        return Index_h$constants_0.CXCursor_ObjCExplicitProtocolImpl();
+    public static int CXCursor_ObjCExplicitProtocolImpl() {
+        return (int)433L;
     }
-    public static @C("int") int CXCursor_ObjCDesignatedInitializer() {
-        return Index_h$constants_0.CXCursor_ObjCDesignatedInitializer();
+    public static int CXCursor_ObjCDesignatedInitializer() {
+        return (int)434L;
     }
-    public static @C("int") int CXCursor_ObjCRuntimeVisible() {
-        return Index_h$constants_0.CXCursor_ObjCRuntimeVisible();
+    public static int CXCursor_ObjCRuntimeVisible() {
+        return (int)435L;
     }
-    public static @C("int") int CXCursor_ObjCBoxable() {
-        return Index_h$constants_0.CXCursor_ObjCBoxable();
+    public static int CXCursor_ObjCBoxable() {
+        return (int)436L;
     }
-    public static @C("int") int CXCursor_FlagEnum() {
-        return Index_h$constants_0.CXCursor_FlagEnum();
+    public static int CXCursor_FlagEnum() {
+        return (int)437L;
     }
-    public static @C("int") int CXCursor_ConvergentAttr() {
-        return Index_h$constants_0.CXCursor_ConvergentAttr();
+    public static int CXCursor_ConvergentAttr() {
+        return (int)438L;
     }
-    public static @C("int") int CXCursor_WarnUnusedAttr() {
-        return Index_h$constants_0.CXCursor_WarnUnusedAttr();
+    public static int CXCursor_WarnUnusedAttr() {
+        return (int)439L;
     }
-    public static @C("int") int CXCursor_WarnUnusedResultAttr() {
-        return Index_h$constants_0.CXCursor_WarnUnusedResultAttr();
+    public static int CXCursor_WarnUnusedResultAttr() {
+        return (int)440L;
     }
-    public static @C("int") int CXCursor_AlignedAttr() {
-        return Index_h$constants_0.CXCursor_AlignedAttr();
+    public static int CXCursor_AlignedAttr() {
+        return (int)441L;
     }
-    public static @C("int") int CXCursor_LastAttr() {
-        return Index_h$constants_0.CXCursor_LastAttr();
+    public static int CXCursor_LastAttr() {
+        return (int)441L;
     }
-    public static @C("int") int CXCursor_PreprocessingDirective() {
-        return Index_h$constants_0.CXCursor_PreprocessingDirective();
+    public static int CXCursor_PreprocessingDirective() {
+        return (int)500L;
     }
-    public static @C("int") int CXCursor_MacroDefinition() {
-        return Index_h$constants_0.CXCursor_MacroDefinition();
+    public static int CXCursor_MacroDefinition() {
+        return (int)501L;
     }
-    public static @C("int") int CXCursor_MacroExpansion() {
-        return Index_h$constants_0.CXCursor_MacroExpansion();
+    public static int CXCursor_MacroExpansion() {
+        return (int)502L;
     }
-    public static @C("int") int CXCursor_MacroInstantiation() {
-        return Index_h$constants_0.CXCursor_MacroInstantiation();
+    public static int CXCursor_MacroInstantiation() {
+        return (int)502L;
     }
-    public static @C("int") int CXCursor_InclusionDirective() {
-        return Index_h$constants_0.CXCursor_InclusionDirective();
+    public static int CXCursor_InclusionDirective() {
+        return (int)503L;
     }
-    public static @C("int") int CXCursor_FirstPreprocessing() {
-        return Index_h$constants_0.CXCursor_FirstPreprocessing();
+    public static int CXCursor_FirstPreprocessing() {
+        return (int)500L;
     }
-    public static @C("int") int CXCursor_LastPreprocessing() {
-        return Index_h$constants_0.CXCursor_LastPreprocessing();
+    public static int CXCursor_LastPreprocessing() {
+        return (int)503L;
     }
-    public static @C("int") int CXCursor_ModuleImportDecl() {
-        return Index_h$constants_0.CXCursor_ModuleImportDecl();
+    public static int CXCursor_ModuleImportDecl() {
+        return (int)600L;
     }
-    public static @C("int") int CXCursor_TypeAliasTemplateDecl() {
-        return Index_h$constants_0.CXCursor_TypeAliasTemplateDecl();
+    public static int CXCursor_TypeAliasTemplateDecl() {
+        return (int)601L;
     }
-    public static @C("int") int CXCursor_StaticAssert() {
-        return Index_h$constants_0.CXCursor_StaticAssert();
+    public static int CXCursor_StaticAssert() {
+        return (int)602L;
     }
-    public static @C("int") int CXCursor_FriendDecl() {
-        return Index_h$constants_0.CXCursor_FriendDecl();
+    public static int CXCursor_FriendDecl() {
+        return (int)603L;
     }
-    public static @C("int") int CXCursor_FirstExtraDecl() {
-        return Index_h$constants_0.CXCursor_FirstExtraDecl();
+    public static int CXCursor_FirstExtraDecl() {
+        return (int)600L;
     }
-    public static @C("int") int CXCursor_LastExtraDecl() {
-        return Index_h$constants_0.CXCursor_LastExtraDecl();
+    public static int CXCursor_LastExtraDecl() {
+        return (int)603L;
     }
-    public static @C("int") int CXCursor_OverloadCandidate() {
-        return Index_h$constants_0.CXCursor_OverloadCandidate();
+    public static int CXCursor_OverloadCandidate() {
+        return (int)700L;
     }
-    public static @C("int") int CXTSK_Undeclared() {
-        return Index_h$constants_0.CXTSK_Undeclared();
+    public static int CXTSK_Undeclared() {
+        return (int)0L;
     }
-    public static @C("int") int CXTSK_ImplicitInstantiation() {
-        return Index_h$constants_0.CXTSK_ImplicitInstantiation();
+    public static int CXTSK_ImplicitInstantiation() {
+        return (int)1L;
     }
-    public static @C("int") int CXTSK_ExplicitSpecialization() {
-        return Index_h$constants_0.CXTSK_ExplicitSpecialization();
+    public static int CXTSK_ExplicitSpecialization() {
+        return (int)2L;
     }
-    public static @C("int") int CXTSK_ExplicitInstantiationDeclaration() {
-        return Index_h$constants_0.CXTSK_ExplicitInstantiationDeclaration();
+    public static int CXTSK_ExplicitInstantiationDeclaration() {
+        return (int)3L;
     }
-    public static @C("int") int CXTSK_ExplicitInstantiationDefinition() {
-        return Index_h$constants_0.CXTSK_ExplicitInstantiationDefinition();
+    public static int CXTSK_ExplicitInstantiationDefinition() {
+        return (int)4L;
     }
     public static class CXCursor {
 
-        private CXCursor() {}
+        static final MemoryLayout CXCursor$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXCursor$struct$LAYOUT();
+            return CXCursor.CXCursor$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXCursor$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_0.CXCursor$kind$VH();
+            return CXCursor.kind$VH;
         }
-        public static  @C("enum CXCursorKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXCursor$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXCursor.kind$VH.get(seg);
         }
-        public static  @C("enum CXCursorKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXCursor$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXCursor.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("enum CXCursorKind") int x) {
-            Index_h$constants_0.CXCursor$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXCursor.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("enum CXCursorKind") int x) {
-            Index_h$constants_0.CXCursor$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXCursor.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle xdata$VH = CXCursor$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("xdata"));
         public static VarHandle xdata$VH() {
-            return Index_h$constants_0.CXCursor$xdata$VH();
+            return CXCursor.xdata$VH;
         }
-        public static  @C("int") int xdata$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXCursor$xdata$VH().get(seg);
+        public static int xdata$get(MemorySegment seg) {
+            return (int)CXCursor.xdata$VH.get(seg);
         }
-        public static  @C("int") int xdata$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXCursor$xdata$VH().get(seg.asSlice(index*sizeof()));
+        public static void xdata$set( MemorySegment seg, int x) {
+            CXCursor.xdata$VH.set(seg, x);
         }
-        public static void xdata$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_0.CXCursor$xdata$VH().set(seg, x);
+        public static int xdata$get(MemorySegment seg, long index) {
+            return (int)CXCursor.xdata$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void xdata$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_0.CXCursor$xdata$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void xdata$set(MemorySegment seg, long index, int x) {
+            CXCursor.xdata$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getNullCursor$MH() {
-        return Index_h$constants_0.clang_getNullCursor$MH();
+    public static MethodHandle clang_getNullCursor$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_getNullCursor$MH,"clang_getNullCursor");
     }
-    public static @C("CXCursor") MemorySegment clang_getNullCursor () {
+    public static MemorySegment clang_getNullCursor () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_getNullCursor$MH, "clang_getNullCursor");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getNullCursor$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTranslationUnitCursor$MH() {
-        return Index_h$constants_0.clang_getTranslationUnitCursor$MH();
+    public static MethodHandle clang_getTranslationUnitCursor$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_getTranslationUnitCursor$MH,"clang_getTranslationUnitCursor");
     }
-    public static @C("CXCursor") MemorySegment clang_getTranslationUnitCursor (@C("CXTranslationUnit") Addressable x0) {
+    public static MemorySegment clang_getTranslationUnitCursor ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_getTranslationUnitCursor$MH, "clang_getTranslationUnitCursor");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTranslationUnitCursor$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_equalCursors$MH() {
-        return Index_h$constants_0.clang_equalCursors$MH();
+    public static MethodHandle clang_equalCursors$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_equalCursors$MH,"clang_equalCursors");
     }
-    public static @C("unsigned int") int clang_equalCursors (@C("CXCursor") MemorySegment x0, @C("CXCursor") MemorySegment x1) {
+    public static int clang_equalCursors ( MemorySegment x0,  MemorySegment x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_equalCursors$MH, "clang_equalCursors");
         try {
-            return (int)Index_h$constants_0.clang_equalCursors$MH().invokeExact(x0, x1);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0, x1);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_isNull$MH() {
-        return Index_h$constants_0.clang_Cursor_isNull$MH();
+    public static MethodHandle clang_Cursor_isNull$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_Cursor_isNull$MH,"clang_Cursor_isNull");
     }
-    public static @C("int") int clang_Cursor_isNull (@C("CXCursor") MemorySegment cursor) {
+    public static int clang_Cursor_isNull ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_Cursor_isNull$MH, "clang_Cursor_isNull");
         try {
-            return (int)Index_h$constants_0.clang_Cursor_isNull$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_hashCursor$MH() {
-        return Index_h$constants_0.clang_hashCursor$MH();
+    public static MethodHandle clang_hashCursor$MH() {
+        return RuntimeHelper.requireNonNull(constants$13.clang_hashCursor$MH,"clang_hashCursor");
     }
-    public static @C("unsigned int") int clang_hashCursor (@C("CXCursor") MemorySegment x0) {
+    public static int clang_hashCursor ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_hashCursor$MH, "clang_hashCursor");
         try {
-            return (int)Index_h$constants_0.clang_hashCursor$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorKind$MH() {
-        return Index_h$constants_0.clang_getCursorKind$MH();
+    public static class constants$13 {
+
+        static final FunctionDescriptor clang_TargetInfo_getPointerWidth$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_TargetInfo_getPointerWidth$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_TargetInfo_getPointerWidth",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$13.clang_TargetInfo_getPointerWidth$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNullCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ));
+        static final MethodHandle clang_getNullCursor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNullCursor",
+            "()Ljdk/incubator/foreign/MemorySegment;",
+            constants$13.clang_getNullCursor$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTranslationUnitCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getTranslationUnitCursor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTranslationUnitCursor",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$13.clang_getTranslationUnitCursor$FUNC, false
+        );
+        static final FunctionDescriptor clang_equalCursors$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_equalCursors$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_equalCursors",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$13.clang_equalCursors$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isNull$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isNull$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isNull",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$13.clang_Cursor_isNull$FUNC, false
+        );
+        static final FunctionDescriptor clang_hashCursor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_hashCursor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_hashCursor",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$13.clang_hashCursor$FUNC, false
+        );
     }
-    public static @C("enum CXCursorKind") int clang_getCursorKind (@C("CXCursor") MemorySegment x0) {
+
+    public static MethodHandle clang_getCursorKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_getCursorKind$MH,"clang_getCursorKind");
+    }
+    public static int clang_getCursorKind ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_getCursorKind$MH, "clang_getCursorKind");
         try {
-            return (int)Index_h$constants_0.clang_getCursorKind$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isDeclaration$MH() {
-        return Index_h$constants_0.clang_isDeclaration$MH();
+    public static MethodHandle clang_isDeclaration$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_isDeclaration$MH,"clang_isDeclaration");
     }
-    public static @C("unsigned int") int clang_isDeclaration (@C("enum CXCursorKind") int x0) {
+    public static int clang_isDeclaration ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_isDeclaration$MH, "clang_isDeclaration");
         try {
-            return (int)Index_h$constants_0.clang_isDeclaration$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isInvalidDeclaration$MH() {
-        return Index_h$constants_0.clang_isInvalidDeclaration$MH();
+    public static MethodHandle clang_isInvalidDeclaration$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_isInvalidDeclaration$MH,"clang_isInvalidDeclaration");
     }
-    public static @C("unsigned int") int clang_isInvalidDeclaration (@C("CXCursor") MemorySegment x0) {
+    public static int clang_isInvalidDeclaration ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_isInvalidDeclaration$MH, "clang_isInvalidDeclaration");
         try {
-            return (int)Index_h$constants_0.clang_isInvalidDeclaration$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isReference$MH() {
-        return Index_h$constants_0.clang_isReference$MH();
+    public static MethodHandle clang_isReference$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_isReference$MH,"clang_isReference");
     }
-    public static @C("unsigned int") int clang_isReference (@C("enum CXCursorKind") int x0) {
+    public static int clang_isReference ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_isReference$MH, "clang_isReference");
         try {
-            return (int)Index_h$constants_0.clang_isReference$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isExpression$MH() {
-        return Index_h$constants_0.clang_isExpression$MH();
+    public static MethodHandle clang_isExpression$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_isExpression$MH,"clang_isExpression");
     }
-    public static @C("unsigned int") int clang_isExpression (@C("enum CXCursorKind") int x0) {
+    public static int clang_isExpression ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_isExpression$MH, "clang_isExpression");
         try {
-            return (int)Index_h$constants_0.clang_isExpression$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isStatement$MH() {
-        return Index_h$constants_0.clang_isStatement$MH();
+    public static MethodHandle clang_isStatement$MH() {
+        return RuntimeHelper.requireNonNull(constants$14.clang_isStatement$MH,"clang_isStatement");
     }
-    public static @C("unsigned int") int clang_isStatement (@C("enum CXCursorKind") int x0) {
+    public static int clang_isStatement ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_isStatement$MH, "clang_isStatement");
         try {
-            return (int)Index_h$constants_0.clang_isStatement$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isAttribute$MH() {
-        return Index_h$constants_0.clang_isAttribute$MH();
+    public static class constants$14 {
+
+        static final FunctionDescriptor clang_getCursorKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorKind",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$14.clang_getCursorKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_isDeclaration$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isDeclaration$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isDeclaration",
+            "(I)I",
+            constants$14.clang_isDeclaration$FUNC, false
+        );
+        static final FunctionDescriptor clang_isInvalidDeclaration$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isInvalidDeclaration$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isInvalidDeclaration",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$14.clang_isInvalidDeclaration$FUNC, false
+        );
+        static final FunctionDescriptor clang_isReference$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isReference$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isReference",
+            "(I)I",
+            constants$14.clang_isReference$FUNC, false
+        );
+        static final FunctionDescriptor clang_isExpression$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isExpression$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isExpression",
+            "(I)I",
+            constants$14.clang_isExpression$FUNC, false
+        );
+        static final FunctionDescriptor clang_isStatement$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isStatement$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isStatement",
+            "(I)I",
+            constants$14.clang_isStatement$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_isAttribute (@C("enum CXCursorKind") int x0) {
+
+    public static MethodHandle clang_isAttribute$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_isAttribute$MH,"clang_isAttribute");
+    }
+    public static int clang_isAttribute ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_isAttribute$MH, "clang_isAttribute");
         try {
-            return (int)Index_h$constants_0.clang_isAttribute$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_hasAttrs$MH() {
-        return Index_h$constants_0.clang_Cursor_hasAttrs$MH();
+    public static MethodHandle clang_Cursor_hasAttrs$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_Cursor_hasAttrs$MH,"clang_Cursor_hasAttrs");
     }
-    public static @C("unsigned int") int clang_Cursor_hasAttrs (@C("CXCursor") MemorySegment C) {
+    public static int clang_Cursor_hasAttrs ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_Cursor_hasAttrs$MH, "clang_Cursor_hasAttrs");
         try {
-            return (int)Index_h$constants_0.clang_Cursor_hasAttrs$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isInvalid$MH() {
-        return Index_h$constants_0.clang_isInvalid$MH();
+    public static MethodHandle clang_isInvalid$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_isInvalid$MH,"clang_isInvalid");
     }
-    public static @C("unsigned int") int clang_isInvalid (@C("enum CXCursorKind") int x0) {
+    public static int clang_isInvalid ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_isInvalid$MH, "clang_isInvalid");
         try {
-            return (int)Index_h$constants_0.clang_isInvalid$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isTranslationUnit$MH() {
-        return Index_h$constants_0.clang_isTranslationUnit$MH();
+    public static MethodHandle clang_isTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_isTranslationUnit$MH,"clang_isTranslationUnit");
     }
-    public static @C("unsigned int") int clang_isTranslationUnit (@C("enum CXCursorKind") int x0) {
+    public static int clang_isTranslationUnit ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_isTranslationUnit$MH, "clang_isTranslationUnit");
         try {
-            return (int)Index_h$constants_0.clang_isTranslationUnit$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isPreprocessing$MH() {
-        return Index_h$constants_0.clang_isPreprocessing$MH();
+    public static MethodHandle clang_isPreprocessing$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_isPreprocessing$MH,"clang_isPreprocessing");
     }
-    public static @C("unsigned int") int clang_isPreprocessing (@C("enum CXCursorKind") int x0) {
+    public static int clang_isPreprocessing ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_isPreprocessing$MH, "clang_isPreprocessing");
         try {
-            return (int)Index_h$constants_0.clang_isPreprocessing$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isUnexposed$MH() {
-        return Index_h$constants_0.clang_isUnexposed$MH();
+    public static MethodHandle clang_isUnexposed$MH() {
+        return RuntimeHelper.requireNonNull(constants$15.clang_isUnexposed$MH,"clang_isUnexposed");
     }
-    public static @C("unsigned int") int clang_isUnexposed (@C("enum CXCursorKind") int x0) {
+    public static int clang_isUnexposed ( int x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_isUnexposed$MH, "clang_isUnexposed");
         try {
-            return (int)Index_h$constants_0.clang_isUnexposed$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXLinkage_Invalid() {
-        return Index_h$constants_0.CXLinkage_Invalid();
+    public static int CXLinkage_Invalid() {
+        return (int)0L;
     }
-    public static @C("int") int CXLinkage_NoLinkage() {
-        return Index_h$constants_0.CXLinkage_NoLinkage();
+    public static int CXLinkage_NoLinkage() {
+        return (int)1L;
     }
-    public static @C("int") int CXLinkage_Internal() {
-        return Index_h$constants_0.CXLinkage_Internal();
+    public static int CXLinkage_Internal() {
+        return (int)2L;
     }
-    public static @C("int") int CXLinkage_UniqueExternal() {
-        return Index_h$constants_0.CXLinkage_UniqueExternal();
+    public static int CXLinkage_UniqueExternal() {
+        return (int)3L;
     }
-    public static @C("int") int CXLinkage_External() {
-        return Index_h$constants_0.CXLinkage_External();
+    public static int CXLinkage_External() {
+        return (int)4L;
     }
-    public static  MethodHandle clang_getCursorLinkage$MH() {
-        return Index_h$constants_0.clang_getCursorLinkage$MH();
+    public static class constants$15 {
+
+        static final FunctionDescriptor clang_isAttribute$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isAttribute$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isAttribute",
+            "(I)I",
+            constants$15.clang_isAttribute$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_hasAttrs$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_hasAttrs$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_hasAttrs",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$15.clang_Cursor_hasAttrs$FUNC, false
+        );
+        static final FunctionDescriptor clang_isInvalid$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isInvalid$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isInvalid",
+            "(I)I",
+            constants$15.clang_isInvalid$FUNC, false
+        );
+        static final FunctionDescriptor clang_isTranslationUnit$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isTranslationUnit",
+            "(I)I",
+            constants$15.clang_isTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_isPreprocessing$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isPreprocessing$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isPreprocessing",
+            "(I)I",
+            constants$15.clang_isPreprocessing$FUNC, false
+        );
+        static final FunctionDescriptor clang_isUnexposed$FUNC = FunctionDescriptor.of(C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_isUnexposed$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isUnexposed",
+            "(I)I",
+            constants$15.clang_isUnexposed$FUNC, false
+        );
     }
-    public static @C("enum CXLinkageKind") int clang_getCursorLinkage (@C("CXCursor") MemorySegment cursor) {
+
+    public static MethodHandle clang_getCursorLinkage$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_getCursorLinkage$MH,"clang_getCursorLinkage");
+    }
+    public static int clang_getCursorLinkage ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getCursorLinkage$MH, "clang_getCursorLinkage");
         try {
-            return (int)Index_h$constants_0.clang_getCursorLinkage$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXVisibility_Invalid() {
-        return Index_h$constants_0.CXVisibility_Invalid();
+    public static int CXVisibility_Invalid() {
+        return (int)0L;
     }
-    public static @C("int") int CXVisibility_Hidden() {
-        return Index_h$constants_0.CXVisibility_Hidden();
+    public static int CXVisibility_Hidden() {
+        return (int)1L;
     }
-    public static @C("int") int CXVisibility_Protected() {
-        return Index_h$constants_0.CXVisibility_Protected();
+    public static int CXVisibility_Protected() {
+        return (int)2L;
     }
-    public static @C("int") int CXVisibility_Default() {
-        return Index_h$constants_0.CXVisibility_Default();
+    public static int CXVisibility_Default() {
+        return (int)3L;
     }
-    public static  MethodHandle clang_getCursorVisibility$MH() {
-        return Index_h$constants_0.clang_getCursorVisibility$MH();
+    public static MethodHandle clang_getCursorVisibility$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_getCursorVisibility$MH,"clang_getCursorVisibility");
     }
-    public static @C("enum CXVisibilityKind") int clang_getCursorVisibility (@C("CXCursor") MemorySegment cursor) {
+    public static int clang_getCursorVisibility ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getCursorVisibility$MH, "clang_getCursorVisibility");
         try {
-            return (int)Index_h$constants_0.clang_getCursorVisibility$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorAvailability$MH() {
-        return Index_h$constants_0.clang_getCursorAvailability$MH();
+    public static MethodHandle clang_getCursorAvailability$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_getCursorAvailability$MH,"clang_getCursorAvailability");
     }
-    public static @C("enum CXAvailabilityKind") int clang_getCursorAvailability (@C("CXCursor") MemorySegment cursor) {
+    public static int clang_getCursorAvailability ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getCursorAvailability$MH, "clang_getCursorAvailability");
         try {
-            return (int)Index_h$constants_0.clang_getCursorAvailability$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXPlatformAvailability {
 
-        private CXPlatformAvailability() {}
+        static final MemoryLayout CXPlatformAvailability$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("Platform"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("Major"),
+                C_INT.withName("Minor"),
+                C_INT.withName("Subminor")
+            ).withName("Introduced"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("Major"),
+                C_INT.withName("Minor"),
+                C_INT.withName("Subminor")
+            ).withName("Deprecated"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("Major"),
+                C_INT.withName("Minor"),
+                C_INT.withName("Subminor")
+            ).withName("Obsoleted"),
+            C_INT.withName("Unavailable"),
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("Message")
+        ).withName("CXPlatformAvailability");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXPlatformAvailability$struct$LAYOUT();
+            return CXPlatformAvailability.CXPlatformAvailability$struct$LAYOUT;
         }
         public static MemorySegment Platform$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 16));
@@ -2701,3703 +3988,6820 @@ public final class Index_h {
         public static MemorySegment Obsoleted$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 12));
         }
+        static final VarHandle Unavailable$VH = CXPlatformAvailability$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("Unavailable"));
         public static VarHandle Unavailable$VH() {
-            return Index_h$constants_0.CXPlatformAvailability$Unavailable$VH();
+            return CXPlatformAvailability.Unavailable$VH;
         }
-        public static  @C("int") int Unavailable$get(@C("struct CXPlatformAvailability") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXPlatformAvailability$Unavailable$VH().get(seg);
+        public static int Unavailable$get(MemorySegment seg) {
+            return (int)CXPlatformAvailability.Unavailable$VH.get(seg);
         }
-        public static  @C("int") int Unavailable$get(@C("struct CXPlatformAvailability") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXPlatformAvailability$Unavailable$VH().get(seg.asSlice(index*sizeof()));
+        public static void Unavailable$set( MemorySegment seg, int x) {
+            CXPlatformAvailability.Unavailable$VH.set(seg, x);
         }
-        public static void Unavailable$set(@C("struct CXPlatformAvailability") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_0.CXPlatformAvailability$Unavailable$VH().set(seg, x);
+        public static int Unavailable$get(MemorySegment seg, long index) {
+            return (int)CXPlatformAvailability.Unavailable$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Unavailable$set(@C("struct CXPlatformAvailability") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_0.CXPlatformAvailability$Unavailable$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Unavailable$set(MemorySegment seg, long index, int x) {
+            CXPlatformAvailability.Unavailable$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment Message$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(56, 16));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXPlatformAvailability") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXPlatformAvailability") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXPlatformAvailability[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXPlatformAvailability[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXPlatformAvailability*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXPlatformAvailability*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXPlatformAvailability") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getCursorPlatformAvailability$MH() {
-        return Index_h$constants_0.clang_getCursorPlatformAvailability$MH();
+    public static MethodHandle clang_getCursorPlatformAvailability$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_getCursorPlatformAvailability$MH,"clang_getCursorPlatformAvailability");
     }
-    public static @C("int") int clang_getCursorPlatformAvailability (@C("CXCursor") MemorySegment cursor, @C("int*") Addressable always_deprecated, @C("CXString*") Addressable deprecated_message, @C("int*") Addressable always_unavailable, @C("CXString*") Addressable unavailable_message, @C("CXPlatformAvailability*") Addressable availability, @C("int") int availability_size) {
+    public static int clang_getCursorPlatformAvailability ( MemorySegment cursor,  Addressable always_deprecated,  Addressable deprecated_message,  Addressable always_unavailable,  Addressable unavailable_message,  Addressable availability,  int availability_size) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getCursorPlatformAvailability$MH, "clang_getCursorPlatformAvailability");
         try {
-            return (int)Index_h$constants_0.clang_getCursorPlatformAvailability$MH().invokeExact(cursor, always_deprecated.address(), deprecated_message.address(), always_unavailable.address(), unavailable_message.address(), availability.address(), availability_size);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor, always_deprecated.address(), deprecated_message.address(), always_unavailable.address(), unavailable_message.address(), availability.address(), availability_size);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeCXPlatformAvailability$MH() {
-        return Index_h$constants_0.clang_disposeCXPlatformAvailability$MH();
+    public static MethodHandle clang_disposeCXPlatformAvailability$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_disposeCXPlatformAvailability$MH,"clang_disposeCXPlatformAvailability");
     }
-    public static void clang_disposeCXPlatformAvailability (@C("CXPlatformAvailability*") Addressable availability) {
+    public static void clang_disposeCXPlatformAvailability ( Addressable availability) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_disposeCXPlatformAvailability$MH, "clang_disposeCXPlatformAvailability");
         try {
-            Index_h$constants_0.clang_disposeCXPlatformAvailability$MH().invokeExact(availability.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(availability.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXLanguage_Invalid() {
-        return Index_h$constants_0.CXLanguage_Invalid();
+    public static int CXLanguage_Invalid() {
+        return (int)0L;
     }
-    public static @C("int") int CXLanguage_C() {
-        return Index_h$constants_0.CXLanguage_C();
+    public static int CXLanguage_C() {
+        return (int)1L;
     }
-    public static @C("int") int CXLanguage_ObjC() {
-        return Index_h$constants_0.CXLanguage_ObjC();
+    public static int CXLanguage_ObjC() {
+        return (int)2L;
     }
-    public static @C("int") int CXLanguage_CPlusPlus() {
-        return Index_h$constants_0.CXLanguage_CPlusPlus();
+    public static int CXLanguage_CPlusPlus() {
+        return (int)3L;
     }
-    public static  MethodHandle clang_getCursorLanguage$MH() {
-        return Index_h$constants_0.clang_getCursorLanguage$MH();
+    public static MethodHandle clang_getCursorLanguage$MH() {
+        return RuntimeHelper.requireNonNull(constants$16.clang_getCursorLanguage$MH,"clang_getCursorLanguage");
     }
-    public static @C("enum CXLanguageKind") int clang_getCursorLanguage (@C("CXCursor") MemorySegment cursor) {
+    public static int clang_getCursorLanguage ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getCursorLanguage$MH, "clang_getCursorLanguage");
         try {
-            return (int)Index_h$constants_0.clang_getCursorLanguage$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXTLS_None() {
-        return Index_h$constants_0.CXTLS_None();
+    public static int CXTLS_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXTLS_Dynamic() {
-        return Index_h$constants_0.CXTLS_Dynamic();
+    public static int CXTLS_Dynamic() {
+        return (int)1L;
     }
-    public static @C("int") int CXTLS_Static() {
-        return Index_h$constants_0.CXTLS_Static();
+    public static int CXTLS_Static() {
+        return (int)2L;
     }
-    public static  MethodHandle clang_getCursorTLSKind$MH() {
-        return Index_h$constants_0.clang_getCursorTLSKind$MH();
+    public static class constants$16 {
+
+        static final FunctionDescriptor clang_getCursorLinkage$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorLinkage$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorLinkage",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$16.clang_getCursorLinkage$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorVisibility$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorVisibility$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorVisibility",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$16.clang_getCursorVisibility$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorAvailability$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorAvailability$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorAvailability",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$16.clang_getCursorAvailability$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorPlatformAvailability$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCursorPlatformAvailability$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorPlatformAvailability",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
+            constants$16.clang_getCursorPlatformAvailability$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeCXPlatformAvailability$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeCXPlatformAvailability$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeCXPlatformAvailability",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$16.clang_disposeCXPlatformAvailability$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorLanguage$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorLanguage$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorLanguage",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$16.clang_getCursorLanguage$FUNC, false
+        );
     }
-    public static @C("enum CXTLSKind") int clang_getCursorTLSKind (@C("CXCursor") MemorySegment cursor) {
+
+    public static MethodHandle clang_getCursorTLSKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_getCursorTLSKind$MH,"clang_getCursorTLSKind");
+    }
+    public static int clang_getCursorTLSKind ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_getCursorTLSKind$MH, "clang_getCursorTLSKind");
         try {
-            return (int)Index_h$constants_0.clang_getCursorTLSKind$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getTranslationUnit$MH() {
-        return Index_h$constants_0.clang_Cursor_getTranslationUnit$MH();
+    public static MethodHandle clang_Cursor_getTranslationUnit$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_Cursor_getTranslationUnit$MH,"clang_Cursor_getTranslationUnit");
     }
-    public static @C("CXTranslationUnit") MemoryAddress clang_Cursor_getTranslationUnit (@C("CXCursor") MemorySegment x0) {
+    public static MemoryAddress clang_Cursor_getTranslationUnit ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_Cursor_getTranslationUnit$MH, "clang_Cursor_getTranslationUnit");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_Cursor_getTranslationUnit$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_createCXCursorSet$MH() {
-        return Index_h$constants_0.clang_createCXCursorSet$MH();
+    public static MethodHandle clang_createCXCursorSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_createCXCursorSet$MH,"clang_createCXCursorSet");
     }
-    public static @C("CXCursorSet") MemoryAddress clang_createCXCursorSet () {
+    public static MemoryAddress clang_createCXCursorSet () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_createCXCursorSet$MH, "clang_createCXCursorSet");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_createCXCursorSet$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeCXCursorSet$MH() {
-        return Index_h$constants_0.clang_disposeCXCursorSet$MH();
+    public static MethodHandle clang_disposeCXCursorSet$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_disposeCXCursorSet$MH,"clang_disposeCXCursorSet");
     }
-    public static void clang_disposeCXCursorSet (@C("CXCursorSet") Addressable cset) {
+    public static void clang_disposeCXCursorSet ( Addressable cset) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_disposeCXCursorSet$MH, "clang_disposeCXCursorSet");
         try {
-            Index_h$constants_0.clang_disposeCXCursorSet$MH().invokeExact(cset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(cset.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXCursorSet_contains$MH() {
-        return Index_h$constants_0.clang_CXCursorSet_contains$MH();
+    public static MethodHandle clang_CXCursorSet_contains$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_CXCursorSet_contains$MH,"clang_CXCursorSet_contains");
     }
-    public static @C("unsigned int") int clang_CXCursorSet_contains (@C("CXCursorSet") Addressable cset, @C("CXCursor") MemorySegment cursor) {
+    public static int clang_CXCursorSet_contains ( Addressable cset,  MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_CXCursorSet_contains$MH, "clang_CXCursorSet_contains");
         try {
-            return (int)Index_h$constants_0.clang_CXCursorSet_contains$MH().invokeExact(cset.address(), cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cset.address(), cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXCursorSet_insert$MH() {
-        return Index_h$constants_0.clang_CXCursorSet_insert$MH();
+    public static MethodHandle clang_CXCursorSet_insert$MH() {
+        return RuntimeHelper.requireNonNull(constants$17.clang_CXCursorSet_insert$MH,"clang_CXCursorSet_insert");
     }
-    public static @C("unsigned int") int clang_CXCursorSet_insert (@C("CXCursorSet") Addressable cset, @C("CXCursor") MemorySegment cursor) {
+    public static int clang_CXCursorSet_insert ( Addressable cset,  MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_CXCursorSet_insert$MH, "clang_CXCursorSet_insert");
         try {
-            return (int)Index_h$constants_0.clang_CXCursorSet_insert$MH().invokeExact(cset.address(), cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cset.address(), cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorSemanticParent$MH() {
-        return Index_h$constants_0.clang_getCursorSemanticParent$MH();
+    public static class constants$17 {
+
+        static final FunctionDescriptor clang_getCursorTLSKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorTLSKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorTLSKind",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$17.clang_getCursorTLSKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getTranslationUnit$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getTranslationUnit",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$17.clang_Cursor_getTranslationUnit$FUNC, false
+        );
+        static final FunctionDescriptor clang_createCXCursorSet$FUNC = FunctionDescriptor.of(C_POINTER);
+        static final MethodHandle clang_createCXCursorSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_createCXCursorSet",
+            "()Ljdk/incubator/foreign/MemoryAddress;",
+            constants$17.clang_createCXCursorSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeCXCursorSet$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeCXCursorSet$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeCXCursorSet",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$17.clang_disposeCXCursorSet$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXCursorSet_contains$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXCursorSet_contains$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXCursorSet_contains",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$17.clang_CXCursorSet_contains$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXCursorSet_insert$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXCursorSet_insert$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXCursorSet_insert",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$17.clang_CXCursorSet_insert$FUNC, false
+        );
     }
-    public static @C("CXCursor") MemorySegment clang_getCursorSemanticParent (@C("CXCursor") MemorySegment cursor) {
+
+    public static MethodHandle clang_getCursorSemanticParent$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_getCursorSemanticParent$MH,"clang_getCursorSemanticParent");
+    }
+    public static MemorySegment clang_getCursorSemanticParent ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_getCursorSemanticParent$MH, "clang_getCursorSemanticParent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorSemanticParent$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorLexicalParent$MH() {
-        return Index_h$constants_0.clang_getCursorLexicalParent$MH();
+    public static MethodHandle clang_getCursorLexicalParent$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_getCursorLexicalParent$MH,"clang_getCursorLexicalParent");
     }
-    public static @C("CXCursor") MemorySegment clang_getCursorLexicalParent (@C("CXCursor") MemorySegment cursor) {
+    public static MemorySegment clang_getCursorLexicalParent ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_getCursorLexicalParent$MH, "clang_getCursorLexicalParent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorLexicalParent$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getOverriddenCursors$MH() {
-        return Index_h$constants_0.clang_getOverriddenCursors$MH();
+    public static MethodHandle clang_getOverriddenCursors$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_getOverriddenCursors$MH,"clang_getOverriddenCursors");
     }
-    public static void clang_getOverriddenCursors (@C("CXCursor") MemorySegment cursor, @C("CXCursor**") Addressable overridden, @C("unsigned int*") Addressable num_overridden) {
+    public static void clang_getOverriddenCursors ( MemorySegment cursor,  Addressable overridden,  Addressable num_overridden) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_getOverriddenCursors$MH, "clang_getOverriddenCursors");
         try {
-            Index_h$constants_0.clang_getOverriddenCursors$MH().invokeExact(cursor, overridden.address(), num_overridden.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(cursor, overridden.address(), num_overridden.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeOverriddenCursors$MH() {
-        return Index_h$constants_0.clang_disposeOverriddenCursors$MH();
+    public static MethodHandle clang_disposeOverriddenCursors$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_disposeOverriddenCursors$MH,"clang_disposeOverriddenCursors");
     }
-    public static void clang_disposeOverriddenCursors (@C("CXCursor*") Addressable overridden) {
+    public static void clang_disposeOverriddenCursors ( Addressable overridden) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_disposeOverriddenCursors$MH, "clang_disposeOverriddenCursors");
         try {
-            Index_h$constants_0.clang_disposeOverriddenCursors$MH().invokeExact(overridden.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(overridden.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getIncludedFile$MH() {
-        return Index_h$constants_0.clang_getIncludedFile$MH();
+    public static MethodHandle clang_getIncludedFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_getIncludedFile$MH,"clang_getIncludedFile");
     }
-    public static @C("CXFile") MemoryAddress clang_getIncludedFile (@C("CXCursor") MemorySegment cursor) {
+    public static MemoryAddress clang_getIncludedFile ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_getIncludedFile$MH, "clang_getIncludedFile");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_0.clang_getIncludedFile$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursor$MH() {
-        return Index_h$constants_0.clang_getCursor$MH();
+    public static MethodHandle clang_getCursor$MH() {
+        return RuntimeHelper.requireNonNull(constants$18.clang_getCursor$MH,"clang_getCursor");
     }
-    public static @C("CXCursor") MemorySegment clang_getCursor (@C("CXTranslationUnit") Addressable x0, @C("CXSourceLocation") MemorySegment x1) {
+    public static MemorySegment clang_getCursor ( Addressable x0,  MemorySegment x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_getCursor$MH, "clang_getCursor");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursor$MH().invokeExact(x0.address(), x1);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address(), x1);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorLocation$MH() {
-        return Index_h$constants_0.clang_getCursorLocation$MH();
+    public static class constants$18 {
+
+        static final FunctionDescriptor clang_getCursorSemanticParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorSemanticParent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorSemanticParent",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$18.clang_getCursorSemanticParent$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorLexicalParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorLexicalParent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorLexicalParent",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$18.clang_getCursorLexicalParent$FUNC, false
+        );
+        static final FunctionDescriptor clang_getOverriddenCursors$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getOverriddenCursors$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getOverriddenCursors",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$18.clang_getOverriddenCursors$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeOverriddenCursors$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeOverriddenCursors$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeOverriddenCursors",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$18.clang_disposeOverriddenCursors$FUNC, false
+        );
+        static final FunctionDescriptor clang_getIncludedFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getIncludedFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getIncludedFile",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$18.clang_getIncludedFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_getCursor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursor",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$18.clang_getCursor$FUNC, false
+        );
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getCursorLocation (@C("CXCursor") MemorySegment x0) {
+
+    public static MethodHandle clang_getCursorLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getCursorLocation$MH,"clang_getCursorLocation");
+    }
+    public static MemorySegment clang_getCursorLocation ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getCursorLocation$MH, "clang_getCursorLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorLocation$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorExtent$MH() {
-        return Index_h$constants_0.clang_getCursorExtent$MH();
+    public static MethodHandle clang_getCursorExtent$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getCursorExtent$MH,"clang_getCursorExtent");
     }
-    public static @C("CXSourceRange") MemorySegment clang_getCursorExtent (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_getCursorExtent ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getCursorExtent$MH, "clang_getCursorExtent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorExtent$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXType_Invalid() {
-        return Index_h$constants_0.CXType_Invalid();
+    public static int CXType_Invalid() {
+        return (int)0L;
     }
-    public static @C("int") int CXType_Unexposed() {
-        return Index_h$constants_0.CXType_Unexposed();
+    public static int CXType_Unexposed() {
+        return (int)1L;
     }
-    public static @C("int") int CXType_Void() {
-        return Index_h$constants_0.CXType_Void();
+    public static int CXType_Void() {
+        return (int)2L;
     }
-    public static @C("int") int CXType_Bool() {
-        return Index_h$constants_0.CXType_Bool();
+    public static int CXType_Bool() {
+        return (int)3L;
     }
-    public static @C("int") int CXType_Char_U() {
-        return Index_h$constants_0.CXType_Char_U();
+    public static int CXType_Char_U() {
+        return (int)4L;
     }
-    public static @C("int") int CXType_UChar() {
-        return Index_h$constants_0.CXType_UChar();
+    public static int CXType_UChar() {
+        return (int)5L;
     }
-    public static @C("int") int CXType_Char16() {
-        return Index_h$constants_0.CXType_Char16();
+    public static int CXType_Char16() {
+        return (int)6L;
     }
-    public static @C("int") int CXType_Char32() {
-        return Index_h$constants_0.CXType_Char32();
+    public static int CXType_Char32() {
+        return (int)7L;
     }
-    public static @C("int") int CXType_UShort() {
-        return Index_h$constants_0.CXType_UShort();
+    public static int CXType_UShort() {
+        return (int)8L;
     }
-    public static @C("int") int CXType_UInt() {
-        return Index_h$constants_0.CXType_UInt();
+    public static int CXType_UInt() {
+        return (int)9L;
     }
-    public static @C("int") int CXType_ULong() {
-        return Index_h$constants_0.CXType_ULong();
+    public static int CXType_ULong() {
+        return (int)10L;
     }
-    public static @C("int") int CXType_ULongLong() {
-        return Index_h$constants_0.CXType_ULongLong();
+    public static int CXType_ULongLong() {
+        return (int)11L;
     }
-    public static @C("int") int CXType_UInt128() {
-        return Index_h$constants_0.CXType_UInt128();
+    public static int CXType_UInt128() {
+        return (int)12L;
     }
-    public static @C("int") int CXType_Char_S() {
-        return Index_h$constants_0.CXType_Char_S();
+    public static int CXType_Char_S() {
+        return (int)13L;
     }
-    public static @C("int") int CXType_SChar() {
-        return Index_h$constants_0.CXType_SChar();
+    public static int CXType_SChar() {
+        return (int)14L;
     }
-    public static @C("int") int CXType_WChar() {
-        return Index_h$constants_0.CXType_WChar();
+    public static int CXType_WChar() {
+        return (int)15L;
     }
-    public static @C("int") int CXType_Short() {
-        return Index_h$constants_0.CXType_Short();
+    public static int CXType_Short() {
+        return (int)16L;
     }
-    public static @C("int") int CXType_Int() {
-        return Index_h$constants_0.CXType_Int();
+    public static int CXType_Int() {
+        return (int)17L;
     }
-    public static @C("int") int CXType_Long() {
-        return Index_h$constants_0.CXType_Long();
+    public static int CXType_Long() {
+        return (int)18L;
     }
-    public static @C("int") int CXType_LongLong() {
-        return Index_h$constants_0.CXType_LongLong();
+    public static int CXType_LongLong() {
+        return (int)19L;
     }
-    public static @C("int") int CXType_Int128() {
-        return Index_h$constants_0.CXType_Int128();
+    public static int CXType_Int128() {
+        return (int)20L;
     }
-    public static @C("int") int CXType_Float() {
-        return Index_h$constants_0.CXType_Float();
+    public static int CXType_Float() {
+        return (int)21L;
     }
-    public static @C("int") int CXType_Double() {
-        return Index_h$constants_0.CXType_Double();
+    public static int CXType_Double() {
+        return (int)22L;
     }
-    public static @C("int") int CXType_LongDouble() {
-        return Index_h$constants_0.CXType_LongDouble();
+    public static int CXType_LongDouble() {
+        return (int)23L;
     }
-    public static @C("int") int CXType_NullPtr() {
-        return Index_h$constants_0.CXType_NullPtr();
+    public static int CXType_NullPtr() {
+        return (int)24L;
     }
-    public static @C("int") int CXType_Overload() {
-        return Index_h$constants_0.CXType_Overload();
+    public static int CXType_Overload() {
+        return (int)25L;
     }
-    public static @C("int") int CXType_Dependent() {
-        return Index_h$constants_0.CXType_Dependent();
+    public static int CXType_Dependent() {
+        return (int)26L;
     }
-    public static @C("int") int CXType_ObjCId() {
-        return Index_h$constants_0.CXType_ObjCId();
+    public static int CXType_ObjCId() {
+        return (int)27L;
     }
-    public static @C("int") int CXType_ObjCClass() {
-        return Index_h$constants_0.CXType_ObjCClass();
+    public static int CXType_ObjCClass() {
+        return (int)28L;
     }
-    public static @C("int") int CXType_ObjCSel() {
-        return Index_h$constants_0.CXType_ObjCSel();
+    public static int CXType_ObjCSel() {
+        return (int)29L;
     }
-    public static @C("int") int CXType_Float128() {
-        return Index_h$constants_0.CXType_Float128();
+    public static int CXType_Float128() {
+        return (int)30L;
     }
-    public static @C("int") int CXType_Half() {
-        return Index_h$constants_0.CXType_Half();
+    public static int CXType_Half() {
+        return (int)31L;
     }
-    public static @C("int") int CXType_Float16() {
-        return Index_h$constants_0.CXType_Float16();
+    public static int CXType_Float16() {
+        return (int)32L;
     }
-    public static @C("int") int CXType_ShortAccum() {
-        return Index_h$constants_0.CXType_ShortAccum();
+    public static int CXType_ShortAccum() {
+        return (int)33L;
     }
-    public static @C("int") int CXType_Accum() {
-        return Index_h$constants_0.CXType_Accum();
+    public static int CXType_Accum() {
+        return (int)34L;
     }
-    public static @C("int") int CXType_LongAccum() {
-        return Index_h$constants_0.CXType_LongAccum();
+    public static int CXType_LongAccum() {
+        return (int)35L;
     }
-    public static @C("int") int CXType_UShortAccum() {
-        return Index_h$constants_0.CXType_UShortAccum();
+    public static int CXType_UShortAccum() {
+        return (int)36L;
     }
-    public static @C("int") int CXType_UAccum() {
-        return Index_h$constants_0.CXType_UAccum();
+    public static int CXType_UAccum() {
+        return (int)37L;
     }
-    public static @C("int") int CXType_ULongAccum() {
-        return Index_h$constants_0.CXType_ULongAccum();
+    public static int CXType_ULongAccum() {
+        return (int)38L;
     }
-    public static @C("int") int CXType_FirstBuiltin() {
-        return Index_h$constants_0.CXType_FirstBuiltin();
+    public static int CXType_FirstBuiltin() {
+        return (int)2L;
     }
-    public static @C("int") int CXType_LastBuiltin() {
-        return Index_h$constants_0.CXType_LastBuiltin();
+    public static int CXType_LastBuiltin() {
+        return (int)38L;
     }
-    public static @C("int") int CXType_Complex() {
-        return Index_h$constants_0.CXType_Complex();
+    public static int CXType_Complex() {
+        return (int)100L;
     }
-    public static @C("int") int CXType_Pointer() {
-        return Index_h$constants_0.CXType_Pointer();
+    public static int CXType_Pointer() {
+        return (int)101L;
     }
-    public static @C("int") int CXType_BlockPointer() {
-        return Index_h$constants_0.CXType_BlockPointer();
+    public static int CXType_BlockPointer() {
+        return (int)102L;
     }
-    public static @C("int") int CXType_LValueReference() {
-        return Index_h$constants_0.CXType_LValueReference();
+    public static int CXType_LValueReference() {
+        return (int)103L;
     }
-    public static @C("int") int CXType_RValueReference() {
-        return Index_h$constants_0.CXType_RValueReference();
+    public static int CXType_RValueReference() {
+        return (int)104L;
     }
-    public static @C("int") int CXType_Record() {
-        return Index_h$constants_0.CXType_Record();
+    public static int CXType_Record() {
+        return (int)105L;
     }
-    public static @C("int") int CXType_Enum() {
-        return Index_h$constants_0.CXType_Enum();
+    public static int CXType_Enum() {
+        return (int)106L;
     }
-    public static @C("int") int CXType_Typedef() {
-        return Index_h$constants_0.CXType_Typedef();
+    public static int CXType_Typedef() {
+        return (int)107L;
     }
-    public static @C("int") int CXType_ObjCInterface() {
-        return Index_h$constants_0.CXType_ObjCInterface();
+    public static int CXType_ObjCInterface() {
+        return (int)108L;
     }
-    public static @C("int") int CXType_ObjCObjectPointer() {
-        return Index_h$constants_0.CXType_ObjCObjectPointer();
+    public static int CXType_ObjCObjectPointer() {
+        return (int)109L;
     }
-    public static @C("int") int CXType_FunctionNoProto() {
-        return Index_h$constants_0.CXType_FunctionNoProto();
+    public static int CXType_FunctionNoProto() {
+        return (int)110L;
     }
-    public static @C("int") int CXType_FunctionProto() {
-        return Index_h$constants_0.CXType_FunctionProto();
+    public static int CXType_FunctionProto() {
+        return (int)111L;
     }
-    public static @C("int") int CXType_ConstantArray() {
-        return Index_h$constants_0.CXType_ConstantArray();
+    public static int CXType_ConstantArray() {
+        return (int)112L;
     }
-    public static @C("int") int CXType_Vector() {
-        return Index_h$constants_0.CXType_Vector();
+    public static int CXType_Vector() {
+        return (int)113L;
     }
-    public static @C("int") int CXType_IncompleteArray() {
-        return Index_h$constants_0.CXType_IncompleteArray();
+    public static int CXType_IncompleteArray() {
+        return (int)114L;
     }
-    public static @C("int") int CXType_VariableArray() {
-        return Index_h$constants_0.CXType_VariableArray();
+    public static int CXType_VariableArray() {
+        return (int)115L;
     }
-    public static @C("int") int CXType_DependentSizedArray() {
-        return Index_h$constants_0.CXType_DependentSizedArray();
+    public static int CXType_DependentSizedArray() {
+        return (int)116L;
     }
-    public static @C("int") int CXType_MemberPointer() {
-        return Index_h$constants_0.CXType_MemberPointer();
+    public static int CXType_MemberPointer() {
+        return (int)117L;
     }
-    public static @C("int") int CXType_Auto() {
-        return Index_h$constants_0.CXType_Auto();
+    public static int CXType_Auto() {
+        return (int)118L;
     }
-    public static @C("int") int CXType_Elaborated() {
-        return Index_h$constants_0.CXType_Elaborated();
+    public static int CXType_Elaborated() {
+        return (int)119L;
     }
-    public static @C("int") int CXType_Pipe() {
-        return Index_h$constants_0.CXType_Pipe();
+    public static int CXType_Pipe() {
+        return (int)120L;
     }
-    public static @C("int") int CXType_OCLImage1dRO() {
-        return Index_h$constants_0.CXType_OCLImage1dRO();
+    public static int CXType_OCLImage1dRO() {
+        return (int)121L;
     }
-    public static @C("int") int CXType_OCLImage1dArrayRO() {
-        return Index_h$constants_0.CXType_OCLImage1dArrayRO();
+    public static int CXType_OCLImage1dArrayRO() {
+        return (int)122L;
     }
-    public static @C("int") int CXType_OCLImage1dBufferRO() {
-        return Index_h$constants_0.CXType_OCLImage1dBufferRO();
+    public static int CXType_OCLImage1dBufferRO() {
+        return (int)123L;
     }
-    public static @C("int") int CXType_OCLImage2dRO() {
-        return Index_h$constants_0.CXType_OCLImage2dRO();
+    public static int CXType_OCLImage2dRO() {
+        return (int)124L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayRO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayRO();
+    public static int CXType_OCLImage2dArrayRO() {
+        return (int)125L;
     }
-    public static @C("int") int CXType_OCLImage2dDepthRO() {
-        return Index_h$constants_0.CXType_OCLImage2dDepthRO();
+    public static int CXType_OCLImage2dDepthRO() {
+        return (int)126L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayDepthRO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayDepthRO();
+    public static int CXType_OCLImage2dArrayDepthRO() {
+        return (int)127L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAARO() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAARO();
+    public static int CXType_OCLImage2dMSAARO() {
+        return (int)128L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAARO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAARO();
+    public static int CXType_OCLImage2dArrayMSAARO() {
+        return (int)129L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAADepthRO() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAADepthRO();
+    public static int CXType_OCLImage2dMSAADepthRO() {
+        return (int)130L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAADepthRO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAADepthRO();
+    public static int CXType_OCLImage2dArrayMSAADepthRO() {
+        return (int)131L;
     }
-    public static @C("int") int CXType_OCLImage3dRO() {
-        return Index_h$constants_0.CXType_OCLImage3dRO();
+    public static int CXType_OCLImage3dRO() {
+        return (int)132L;
     }
-    public static @C("int") int CXType_OCLImage1dWO() {
-        return Index_h$constants_0.CXType_OCLImage1dWO();
+    public static int CXType_OCLImage1dWO() {
+        return (int)133L;
     }
-    public static @C("int") int CXType_OCLImage1dArrayWO() {
-        return Index_h$constants_0.CXType_OCLImage1dArrayWO();
+    public static int CXType_OCLImage1dArrayWO() {
+        return (int)134L;
     }
-    public static @C("int") int CXType_OCLImage1dBufferWO() {
-        return Index_h$constants_0.CXType_OCLImage1dBufferWO();
+    public static int CXType_OCLImage1dBufferWO() {
+        return (int)135L;
     }
-    public static @C("int") int CXType_OCLImage2dWO() {
-        return Index_h$constants_0.CXType_OCLImage2dWO();
+    public static int CXType_OCLImage2dWO() {
+        return (int)136L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayWO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayWO();
+    public static int CXType_OCLImage2dArrayWO() {
+        return (int)137L;
     }
-    public static @C("int") int CXType_OCLImage2dDepthWO() {
-        return Index_h$constants_0.CXType_OCLImage2dDepthWO();
+    public static int CXType_OCLImage2dDepthWO() {
+        return (int)138L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayDepthWO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayDepthWO();
+    public static int CXType_OCLImage2dArrayDepthWO() {
+        return (int)139L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAAWO() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAAWO();
+    public static int CXType_OCLImage2dMSAAWO() {
+        return (int)140L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAAWO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAAWO();
+    public static int CXType_OCLImage2dArrayMSAAWO() {
+        return (int)141L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAADepthWO() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAADepthWO();
+    public static int CXType_OCLImage2dMSAADepthWO() {
+        return (int)142L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAADepthWO() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAADepthWO();
+    public static int CXType_OCLImage2dArrayMSAADepthWO() {
+        return (int)143L;
     }
-    public static @C("int") int CXType_OCLImage3dWO() {
-        return Index_h$constants_0.CXType_OCLImage3dWO();
+    public static int CXType_OCLImage3dWO() {
+        return (int)144L;
     }
-    public static @C("int") int CXType_OCLImage1dRW() {
-        return Index_h$constants_0.CXType_OCLImage1dRW();
+    public static int CXType_OCLImage1dRW() {
+        return (int)145L;
     }
-    public static @C("int") int CXType_OCLImage1dArrayRW() {
-        return Index_h$constants_0.CXType_OCLImage1dArrayRW();
+    public static int CXType_OCLImage1dArrayRW() {
+        return (int)146L;
     }
-    public static @C("int") int CXType_OCLImage1dBufferRW() {
-        return Index_h$constants_0.CXType_OCLImage1dBufferRW();
+    public static int CXType_OCLImage1dBufferRW() {
+        return (int)147L;
     }
-    public static @C("int") int CXType_OCLImage2dRW() {
-        return Index_h$constants_0.CXType_OCLImage2dRW();
+    public static int CXType_OCLImage2dRW() {
+        return (int)148L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayRW() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayRW();
+    public static int CXType_OCLImage2dArrayRW() {
+        return (int)149L;
     }
-    public static @C("int") int CXType_OCLImage2dDepthRW() {
-        return Index_h$constants_0.CXType_OCLImage2dDepthRW();
+    public static int CXType_OCLImage2dDepthRW() {
+        return (int)150L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayDepthRW() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayDepthRW();
+    public static int CXType_OCLImage2dArrayDepthRW() {
+        return (int)151L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAARW() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAARW();
+    public static int CXType_OCLImage2dMSAARW() {
+        return (int)152L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAARW() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAARW();
+    public static int CXType_OCLImage2dArrayMSAARW() {
+        return (int)153L;
     }
-    public static @C("int") int CXType_OCLImage2dMSAADepthRW() {
-        return Index_h$constants_0.CXType_OCLImage2dMSAADepthRW();
+    public static int CXType_OCLImage2dMSAADepthRW() {
+        return (int)154L;
     }
-    public static @C("int") int CXType_OCLImage2dArrayMSAADepthRW() {
-        return Index_h$constants_0.CXType_OCLImage2dArrayMSAADepthRW();
+    public static int CXType_OCLImage2dArrayMSAADepthRW() {
+        return (int)155L;
     }
-    public static @C("int") int CXType_OCLImage3dRW() {
-        return Index_h$constants_0.CXType_OCLImage3dRW();
+    public static int CXType_OCLImage3dRW() {
+        return (int)156L;
     }
-    public static @C("int") int CXType_OCLSampler() {
-        return Index_h$constants_0.CXType_OCLSampler();
+    public static int CXType_OCLSampler() {
+        return (int)157L;
     }
-    public static @C("int") int CXType_OCLEvent() {
-        return Index_h$constants_0.CXType_OCLEvent();
+    public static int CXType_OCLEvent() {
+        return (int)158L;
     }
-    public static @C("int") int CXType_OCLQueue() {
-        return Index_h$constants_0.CXType_OCLQueue();
+    public static int CXType_OCLQueue() {
+        return (int)159L;
     }
-    public static @C("int") int CXType_OCLReserveID() {
-        return Index_h$constants_0.CXType_OCLReserveID();
+    public static int CXType_OCLReserveID() {
+        return (int)160L;
     }
-    public static @C("int") int CXType_ObjCObject() {
-        return Index_h$constants_0.CXType_ObjCObject();
+    public static int CXType_ObjCObject() {
+        return (int)161L;
     }
-    public static @C("int") int CXType_ObjCTypeParam() {
-        return Index_h$constants_0.CXType_ObjCTypeParam();
+    public static int CXType_ObjCTypeParam() {
+        return (int)162L;
     }
-    public static @C("int") int CXType_Attributed() {
-        return Index_h$constants_0.CXType_Attributed();
+    public static int CXType_Attributed() {
+        return (int)163L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCMcePayload() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCMcePayload();
+    public static int CXType_OCLIntelSubgroupAVCMcePayload() {
+        return (int)164L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImePayload() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImePayload();
+    public static int CXType_OCLIntelSubgroupAVCImePayload() {
+        return (int)165L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCRefPayload() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCRefPayload();
+    public static int CXType_OCLIntelSubgroupAVCRefPayload() {
+        return (int)166L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCSicPayload() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCSicPayload();
+    public static int CXType_OCLIntelSubgroupAVCSicPayload() {
+        return (int)167L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCMceResult() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCMceResult();
+    public static int CXType_OCLIntelSubgroupAVCMceResult() {
+        return (int)168L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImeResult() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImeResult();
+    public static int CXType_OCLIntelSubgroupAVCImeResult() {
+        return (int)169L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCRefResult() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCRefResult();
+    public static int CXType_OCLIntelSubgroupAVCRefResult() {
+        return (int)170L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCSicResult() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCSicResult();
+    public static int CXType_OCLIntelSubgroupAVCSicResult() {
+        return (int)171L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout();
+    public static int CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout() {
+        return (int)172L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout();
+    public static int CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout() {
+        return (int)173L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImeSingleRefStreamin() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImeSingleRefStreamin();
+    public static int CXType_OCLIntelSubgroupAVCImeSingleRefStreamin() {
+        return (int)174L;
     }
-    public static @C("int") int CXType_OCLIntelSubgroupAVCImeDualRefStreamin() {
-        return Index_h$constants_0.CXType_OCLIntelSubgroupAVCImeDualRefStreamin();
+    public static int CXType_OCLIntelSubgroupAVCImeDualRefStreamin() {
+        return (int)175L;
     }
-    public static @C("int") int CXType_ExtVector() {
-        return Index_h$constants_0.CXType_ExtVector();
+    public static int CXType_ExtVector() {
+        return (int)176L;
     }
-    public static @C("int") int CXCallingConv_Default() {
-        return Index_h$constants_0.CXCallingConv_Default();
+    public static int CXCallingConv_Default() {
+        return (int)0L;
     }
-    public static @C("int") int CXCallingConv_C() {
-        return Index_h$constants_0.CXCallingConv_C();
+    public static int CXCallingConv_C() {
+        return (int)1L;
     }
-    public static @C("int") int CXCallingConv_X86StdCall() {
-        return Index_h$constants_0.CXCallingConv_X86StdCall();
+    public static int CXCallingConv_X86StdCall() {
+        return (int)2L;
     }
-    public static @C("int") int CXCallingConv_X86FastCall() {
-        return Index_h$constants_0.CXCallingConv_X86FastCall();
+    public static int CXCallingConv_X86FastCall() {
+        return (int)3L;
     }
-    public static @C("int") int CXCallingConv_X86ThisCall() {
-        return Index_h$constants_0.CXCallingConv_X86ThisCall();
+    public static int CXCallingConv_X86ThisCall() {
+        return (int)4L;
     }
-    public static @C("int") int CXCallingConv_X86Pascal() {
-        return Index_h$constants_0.CXCallingConv_X86Pascal();
+    public static int CXCallingConv_X86Pascal() {
+        return (int)5L;
     }
-    public static @C("int") int CXCallingConv_AAPCS() {
-        return Index_h$constants_0.CXCallingConv_AAPCS();
+    public static int CXCallingConv_AAPCS() {
+        return (int)6L;
     }
-    public static @C("int") int CXCallingConv_AAPCS_VFP() {
-        return Index_h$constants_0.CXCallingConv_AAPCS_VFP();
+    public static int CXCallingConv_AAPCS_VFP() {
+        return (int)7L;
     }
-    public static @C("int") int CXCallingConv_X86RegCall() {
-        return Index_h$constants_0.CXCallingConv_X86RegCall();
+    public static int CXCallingConv_X86RegCall() {
+        return (int)8L;
     }
-    public static @C("int") int CXCallingConv_IntelOclBicc() {
-        return Index_h$constants_0.CXCallingConv_IntelOclBicc();
+    public static int CXCallingConv_IntelOclBicc() {
+        return (int)9L;
     }
-    public static @C("int") int CXCallingConv_Win64() {
-        return Index_h$constants_0.CXCallingConv_Win64();
+    public static int CXCallingConv_Win64() {
+        return (int)10L;
     }
-    public static @C("int") int CXCallingConv_X86_64Win64() {
-        return Index_h$constants_0.CXCallingConv_X86_64Win64();
+    public static int CXCallingConv_X86_64Win64() {
+        return (int)10L;
     }
-    public static @C("int") int CXCallingConv_X86_64SysV() {
-        return Index_h$constants_0.CXCallingConv_X86_64SysV();
+    public static int CXCallingConv_X86_64SysV() {
+        return (int)11L;
     }
-    public static @C("int") int CXCallingConv_X86VectorCall() {
-        return Index_h$constants_0.CXCallingConv_X86VectorCall();
+    public static int CXCallingConv_X86VectorCall() {
+        return (int)12L;
     }
-    public static @C("int") int CXCallingConv_Swift() {
-        return Index_h$constants_0.CXCallingConv_Swift();
+    public static int CXCallingConv_Swift() {
+        return (int)13L;
     }
-    public static @C("int") int CXCallingConv_PreserveMost() {
-        return Index_h$constants_0.CXCallingConv_PreserveMost();
+    public static int CXCallingConv_PreserveMost() {
+        return (int)14L;
     }
-    public static @C("int") int CXCallingConv_PreserveAll() {
-        return Index_h$constants_0.CXCallingConv_PreserveAll();
+    public static int CXCallingConv_PreserveAll() {
+        return (int)15L;
     }
-    public static @C("int") int CXCallingConv_AArch64VectorCall() {
-        return Index_h$constants_0.CXCallingConv_AArch64VectorCall();
+    public static int CXCallingConv_AArch64VectorCall() {
+        return (int)16L;
     }
-    public static @C("int") int CXCallingConv_Invalid() {
-        return Index_h$constants_0.CXCallingConv_Invalid();
+    public static int CXCallingConv_Invalid() {
+        return (int)100L;
     }
-    public static @C("int") int CXCallingConv_Unexposed() {
-        return Index_h$constants_0.CXCallingConv_Unexposed();
+    public static int CXCallingConv_Unexposed() {
+        return (int)200L;
     }
     public static class CXType {
 
-        private CXType() {}
+        static final MemoryLayout CXType$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_0.CXType$struct$LAYOUT();
+            return CXType.CXType$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXType$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_0.CXType$kind$VH();
+            return CXType.kind$VH;
         }
-        public static  @C("enum CXTypeKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_0.CXType$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXType.kind$VH.get(seg);
         }
-        public static  @C("enum CXTypeKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_0.CXType$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXType.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("enum CXTypeKind") int x) {
-            Index_h$constants_0.CXType$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXType.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("enum CXTypeKind") int x) {
-            Index_h$constants_0.CXType$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXType.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 16));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getCursorType$MH() {
-        return Index_h$constants_0.clang_getCursorType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getCursorType (@C("CXCursor") MemorySegment C) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getTypeSpelling$MH() {
-        return Index_h$constants_0.clang_getTypeSpelling$MH();
-    }
-    public static @C("CXString") MemorySegment clang_getTypeSpelling (@C("CXType") MemorySegment CT) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTypeSpelling$MH().invokeExact(CT);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getTypedefDeclUnderlyingType$MH() {
-        return Index_h$constants_0.clang_getTypedefDeclUnderlyingType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getTypedefDeclUnderlyingType (@C("CXCursor") MemorySegment C) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTypedefDeclUnderlyingType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getEnumDeclIntegerType$MH() {
-        return Index_h$constants_0.clang_getEnumDeclIntegerType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getEnumDeclIntegerType (@C("CXCursor") MemorySegment C) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getEnumDeclIntegerType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getEnumConstantDeclValue$MH() {
-        return Index_h$constants_0.clang_getEnumConstantDeclValue$MH();
-    }
-    public static @C("long long") long clang_getEnumConstantDeclValue (@C("CXCursor") MemorySegment C) {
-        try {
-            return (long)Index_h$constants_0.clang_getEnumConstantDeclValue$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getEnumConstantDeclUnsignedValue$MH() {
-        return Index_h$constants_0.clang_getEnumConstantDeclUnsignedValue$MH();
-    }
-    public static @C("unsigned long long") long clang_getEnumConstantDeclUnsignedValue (@C("CXCursor") MemorySegment C) {
-        try {
-            return (long)Index_h$constants_0.clang_getEnumConstantDeclUnsignedValue$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getFieldDeclBitWidth$MH() {
-        return Index_h$constants_0.clang_getFieldDeclBitWidth$MH();
-    }
-    public static @C("int") int clang_getFieldDeclBitWidth (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_getFieldDeclBitWidth$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getNumArguments$MH() {
-        return Index_h$constants_0.clang_Cursor_getNumArguments$MH();
-    }
-    public static @C("int") int clang_Cursor_getNumArguments (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_getNumArguments$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getArgument$MH() {
-        return Index_h$constants_0.clang_Cursor_getArgument$MH();
-    }
-    public static @C("CXCursor") MemorySegment clang_Cursor_getArgument (@C("CXCursor") MemorySegment C, @C("unsigned int") int i) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Cursor_getArgument$MH().invokeExact(C, i);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXTemplateArgumentKind_Null() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Null();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Type() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Type();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Declaration() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Declaration();
-    }
-    public static @C("int") int CXTemplateArgumentKind_NullPtr() {
-        return Index_h$constants_0.CXTemplateArgumentKind_NullPtr();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Integral() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Integral();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Template() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Template();
-    }
-    public static @C("int") int CXTemplateArgumentKind_TemplateExpansion() {
-        return Index_h$constants_0.CXTemplateArgumentKind_TemplateExpansion();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Expression() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Expression();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Pack() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Pack();
-    }
-    public static @C("int") int CXTemplateArgumentKind_Invalid() {
-        return Index_h$constants_0.CXTemplateArgumentKind_Invalid();
-    }
-    public static  MethodHandle clang_Cursor_getNumTemplateArguments$MH() {
-        return Index_h$constants_0.clang_Cursor_getNumTemplateArguments$MH();
-    }
-    public static @C("int") int clang_Cursor_getNumTemplateArguments (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_getNumTemplateArguments$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getTemplateArgumentKind$MH() {
-        return Index_h$constants_0.clang_Cursor_getTemplateArgumentKind$MH();
-    }
-    public static @C("enum CXTemplateArgumentKind") int clang_Cursor_getTemplateArgumentKind (@C("CXCursor") MemorySegment C, @C("unsigned int") int I) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_getTemplateArgumentKind$MH().invokeExact(C, I);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getTemplateArgumentType$MH() {
-        return Index_h$constants_0.clang_Cursor_getTemplateArgumentType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Cursor_getTemplateArgumentType (@C("CXCursor") MemorySegment C, @C("unsigned int") int I) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Cursor_getTemplateArgumentType$MH().invokeExact(C, I);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getTemplateArgumentValue$MH() {
-        return Index_h$constants_0.clang_Cursor_getTemplateArgumentValue$MH();
-    }
-    public static @C("long long") long clang_Cursor_getTemplateArgumentValue (@C("CXCursor") MemorySegment C, @C("unsigned int") int I) {
-        try {
-            return (long)Index_h$constants_0.clang_Cursor_getTemplateArgumentValue$MH().invokeExact(C, I);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getTemplateArgumentUnsignedValue$MH() {
-        return Index_h$constants_0.clang_Cursor_getTemplateArgumentUnsignedValue$MH();
-    }
-    public static @C("unsigned long long") long clang_Cursor_getTemplateArgumentUnsignedValue (@C("CXCursor") MemorySegment C, @C("unsigned int") int I) {
-        try {
-            return (long)Index_h$constants_0.clang_Cursor_getTemplateArgumentUnsignedValue$MH().invokeExact(C, I);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_equalTypes$MH() {
-        return Index_h$constants_0.clang_equalTypes$MH();
-    }
-    public static @C("unsigned int") int clang_equalTypes (@C("CXType") MemorySegment A, @C("CXType") MemorySegment B) {
-        try {
-            return (int)Index_h$constants_0.clang_equalTypes$MH().invokeExact(A, B);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getCanonicalType$MH() {
-        return Index_h$constants_0.clang_getCanonicalType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getCanonicalType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCanonicalType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getLocalUnqualifiedType$MH() {
-        return Index_h$constants_0.clang_getLocalUnqualifiedType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getLocalUnqualifiedType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getLocalUnqualifiedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isConstQualifiedType$MH() {
-        return Index_h$constants_0.clang_isConstQualifiedType$MH();
-    }
-    public static @C("unsigned int") int clang_isConstQualifiedType (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_isConstQualifiedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isMacroFunctionLike$MH() {
-        return Index_h$constants_0.clang_Cursor_isMacroFunctionLike$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isMacroFunctionLike (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_isMacroFunctionLike$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isMacroBuiltin$MH() {
-        return Index_h$constants_0.clang_Cursor_isMacroBuiltin$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isMacroBuiltin (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_isMacroBuiltin$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isFunctionInlined$MH() {
-        return Index_h$constants_0.clang_Cursor_isFunctionInlined$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isFunctionInlined (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_isFunctionInlined$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isVolatileQualifiedType$MH() {
-        return Index_h$constants_0.clang_isVolatileQualifiedType$MH();
-    }
-    public static @C("unsigned int") int clang_isVolatileQualifiedType (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_isVolatileQualifiedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isRestrictQualifiedType$MH() {
-        return Index_h$constants_0.clang_isRestrictQualifiedType$MH();
-    }
-    public static @C("unsigned int") int clang_isRestrictQualifiedType (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_isRestrictQualifiedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getAddressSpace$MH() {
-        return Index_h$constants_0.clang_getAddressSpace$MH();
-    }
-    public static @C("unsigned int") int clang_getAddressSpace (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_getAddressSpace$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getTypedefName$MH() {
-        return Index_h$constants_0.clang_getTypedefName$MH();
-    }
-    public static @C("CXString") MemorySegment clang_getTypedefName (@C("CXType") MemorySegment CT) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTypedefName$MH().invokeExact(CT);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getPointeeType$MH() {
-        return Index_h$constants_0.clang_getPointeeType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getPointeeType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getPointeeType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getTypeDeclaration$MH() {
-        return Index_h$constants_0.clang_getTypeDeclaration$MH();
-    }
-    public static @C("CXCursor") MemorySegment clang_getTypeDeclaration (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTypeDeclaration$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getDeclObjCTypeEncoding$MH() {
-        return Index_h$constants_0.clang_getDeclObjCTypeEncoding$MH();
-    }
-    public static @C("CXString") MemorySegment clang_getDeclObjCTypeEncoding (@C("CXCursor") MemorySegment C) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getDeclObjCTypeEncoding$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getObjCEncoding$MH() {
-        return Index_h$constants_0.clang_Type_getObjCEncoding$MH();
-    }
-    public static @C("CXString") MemorySegment clang_Type_getObjCEncoding (@C("CXType") MemorySegment type) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getObjCEncoding$MH().invokeExact(type);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getTypeKindSpelling$MH() {
-        return Index_h$constants_0.clang_getTypeKindSpelling$MH();
-    }
-    public static @C("CXString") MemorySegment clang_getTypeKindSpelling (@C("enum CXTypeKind") int K) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getTypeKindSpelling$MH().invokeExact(K);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getFunctionTypeCallingConv$MH() {
-        return Index_h$constants_0.clang_getFunctionTypeCallingConv$MH();
-    }
-    public static @C("enum CXCallingConv") int clang_getFunctionTypeCallingConv (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_getFunctionTypeCallingConv$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getResultType$MH() {
-        return Index_h$constants_0.clang_getResultType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getResultType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getResultType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getExceptionSpecificationType$MH() {
-        return Index_h$constants_0.clang_getExceptionSpecificationType$MH();
-    }
-    public static @C("int") int clang_getExceptionSpecificationType (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_getExceptionSpecificationType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getNumArgTypes$MH() {
-        return Index_h$constants_0.clang_getNumArgTypes$MH();
-    }
-    public static @C("int") int clang_getNumArgTypes (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_getNumArgTypes$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getArgType$MH() {
-        return Index_h$constants_0.clang_getArgType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getArgType (@C("CXType") MemorySegment T, @C("unsigned int") int i) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getArgType$MH().invokeExact(T, i);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getObjCObjectBaseType$MH() {
-        return Index_h$constants_0.clang_Type_getObjCObjectBaseType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getObjCObjectBaseType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getObjCObjectBaseType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getNumObjCProtocolRefs$MH() {
-        return Index_h$constants_0.clang_Type_getNumObjCProtocolRefs$MH();
-    }
-    public static @C("unsigned int") int clang_Type_getNumObjCProtocolRefs (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_Type_getNumObjCProtocolRefs$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getObjCProtocolDecl$MH() {
-        return Index_h$constants_0.clang_Type_getObjCProtocolDecl$MH();
-    }
-    public static @C("CXCursor") MemorySegment clang_Type_getObjCProtocolDecl (@C("CXType") MemorySegment T, @C("unsigned int") int i) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getObjCProtocolDecl$MH().invokeExact(T, i);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getNumObjCTypeArgs$MH() {
-        return Index_h$constants_0.clang_Type_getNumObjCTypeArgs$MH();
-    }
-    public static @C("unsigned int") int clang_Type_getNumObjCTypeArgs (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_Type_getNumObjCTypeArgs$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getObjCTypeArg$MH() {
-        return Index_h$constants_0.clang_Type_getObjCTypeArg$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getObjCTypeArg (@C("CXType") MemorySegment T, @C("unsigned int") int i) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getObjCTypeArg$MH().invokeExact(T, i);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isFunctionTypeVariadic$MH() {
-        return Index_h$constants_0.clang_isFunctionTypeVariadic$MH();
-    }
-    public static @C("unsigned int") int clang_isFunctionTypeVariadic (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_isFunctionTypeVariadic$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getCursorResultType$MH() {
-        return Index_h$constants_0.clang_getCursorResultType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getCursorResultType (@C("CXCursor") MemorySegment C) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getCursorResultType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getCursorExceptionSpecificationType$MH() {
-        return Index_h$constants_0.clang_getCursorExceptionSpecificationType$MH();
-    }
-    public static @C("int") int clang_getCursorExceptionSpecificationType (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_getCursorExceptionSpecificationType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isPODType$MH() {
-        return Index_h$constants_0.clang_isPODType$MH();
-    }
-    public static @C("unsigned int") int clang_isPODType (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_isPODType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getElementType$MH() {
-        return Index_h$constants_0.clang_getElementType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getElementType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getElementType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getNumElements$MH() {
-        return Index_h$constants_0.clang_getNumElements$MH();
-    }
-    public static @C("long long") long clang_getNumElements (@C("CXType") MemorySegment T) {
-        try {
-            return (long)Index_h$constants_0.clang_getNumElements$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getArrayElementType$MH() {
-        return Index_h$constants_0.clang_getArrayElementType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getArrayElementType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_getArrayElementType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getArraySize$MH() {
-        return Index_h$constants_0.clang_getArraySize$MH();
-    }
-    public static @C("long long") long clang_getArraySize (@C("CXType") MemorySegment T) {
-        try {
-            return (long)Index_h$constants_0.clang_getArraySize$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getNamedType$MH() {
-        return Index_h$constants_0.clang_Type_getNamedType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getNamedType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getNamedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_isTransparentTagTypedef$MH() {
-        return Index_h$constants_0.clang_Type_isTransparentTagTypedef$MH();
-    }
-    public static @C("unsigned int") int clang_Type_isTransparentTagTypedef (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_Type_isTransparentTagTypedef$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXTypeNullability_NonNull() {
-        return Index_h$constants_0.CXTypeNullability_NonNull();
-    }
-    public static @C("int") int CXTypeNullability_Nullable() {
-        return Index_h$constants_0.CXTypeNullability_Nullable();
-    }
-    public static @C("int") int CXTypeNullability_Unspecified() {
-        return Index_h$constants_0.CXTypeNullability_Unspecified();
-    }
-    public static @C("int") int CXTypeNullability_Invalid() {
-        return Index_h$constants_0.CXTypeNullability_Invalid();
-    }
-    public static  MethodHandle clang_Type_getNullability$MH() {
-        return Index_h$constants_0.clang_Type_getNullability$MH();
-    }
-    public static @C("enum CXTypeNullabilityKind") int clang_Type_getNullability (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_0.clang_Type_getNullability$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXTypeLayoutError_Invalid() {
-        return Index_h$constants_0.CXTypeLayoutError_Invalid();
-    }
-    public static @C("int") int CXTypeLayoutError_Incomplete() {
-        return Index_h$constants_0.CXTypeLayoutError_Incomplete();
-    }
-    public static @C("int") int CXTypeLayoutError_Dependent() {
-        return Index_h$constants_0.CXTypeLayoutError_Dependent();
-    }
-    public static @C("int") int CXTypeLayoutError_NotConstantSize() {
-        return Index_h$constants_0.CXTypeLayoutError_NotConstantSize();
-    }
-    public static @C("int") int CXTypeLayoutError_InvalidFieldName() {
-        return Index_h$constants_0.CXTypeLayoutError_InvalidFieldName();
-    }
-    public static @C("int") int CXTypeLayoutError_Undeduced() {
-        return Index_h$constants_0.CXTypeLayoutError_Undeduced();
-    }
-    public static  MethodHandle clang_Type_getAlignOf$MH() {
-        return Index_h$constants_0.clang_Type_getAlignOf$MH();
-    }
-    public static @C("long long") long clang_Type_getAlignOf (@C("CXType") MemorySegment T) {
-        try {
-            return (long)Index_h$constants_0.clang_Type_getAlignOf$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getClassType$MH() {
-        return Index_h$constants_0.clang_Type_getClassType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getClassType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getClassType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getSizeOf$MH() {
-        return Index_h$constants_0.clang_Type_getSizeOf$MH();
-    }
-    public static @C("long long") long clang_Type_getSizeOf (@C("CXType") MemorySegment T) {
-        try {
-            return (long)Index_h$constants_0.clang_Type_getSizeOf$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getOffsetOf$MH() {
-        return Index_h$constants_0.clang_Type_getOffsetOf$MH();
-    }
-    public static @C("long long") long clang_Type_getOffsetOf (@C("CXType") MemorySegment T, @C("char*") Addressable S) {
-        try {
-            return (long)Index_h$constants_0.clang_Type_getOffsetOf$MH().invokeExact(T, S.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getModifiedType$MH() {
-        return Index_h$constants_0.clang_Type_getModifiedType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getModifiedType (@C("CXType") MemorySegment T) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_0.clang_Type_getModifiedType$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_getOffsetOfField$MH() {
-        return Index_h$constants_0.clang_Cursor_getOffsetOfField$MH();
-    }
-    public static @C("long long") long clang_Cursor_getOffsetOfField (@C("CXCursor") MemorySegment C) {
-        try {
-            return (long)Index_h$constants_0.clang_Cursor_getOffsetOfField$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isAnonymous$MH() {
-        return Index_h$constants_0.clang_Cursor_isAnonymous$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isAnonymous (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_isAnonymous$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isAnonymousRecordDecl$MH() {
-        return Index_h$constants_0.clang_Cursor_isAnonymousRecordDecl$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isAnonymousRecordDecl (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_0.clang_Cursor_isAnonymousRecordDecl$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isInlineNamespace$MH() {
-        return Index_h$constants_1.clang_Cursor_isInlineNamespace$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isInlineNamespace (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_1.clang_Cursor_isInlineNamespace$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXRefQualifier_None() {
-        return Index_h$constants_1.CXRefQualifier_None();
-    }
-    public static @C("int") int CXRefQualifier_LValue() {
-        return Index_h$constants_1.CXRefQualifier_LValue();
-    }
-    public static @C("int") int CXRefQualifier_RValue() {
-        return Index_h$constants_1.CXRefQualifier_RValue();
-    }
-    public static  MethodHandle clang_Type_getNumTemplateArguments$MH() {
-        return Index_h$constants_1.clang_Type_getNumTemplateArguments$MH();
-    }
-    public static @C("int") int clang_Type_getNumTemplateArguments (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_1.clang_Type_getNumTemplateArguments$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getTemplateArgumentAsType$MH() {
-        return Index_h$constants_1.clang_Type_getTemplateArgumentAsType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_Type_getTemplateArgumentAsType (@C("CXType") MemorySegment T, @C("unsigned int") int i) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Type_getTemplateArgumentAsType$MH().invokeExact(T, i);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_getCXXRefQualifier$MH() {
-        return Index_h$constants_1.clang_Type_getCXXRefQualifier$MH();
-    }
-    public static @C("enum CXRefQualifierKind") int clang_Type_getCXXRefQualifier (@C("CXType") MemorySegment T) {
-        try {
-            return (int)Index_h$constants_1.clang_Type_getCXXRefQualifier$MH().invokeExact(T);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Cursor_isBitField$MH() {
-        return Index_h$constants_1.clang_Cursor_isBitField$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_isBitField (@C("CXCursor") MemorySegment C) {
-        try {
-            return (int)Index_h$constants_1.clang_Cursor_isBitField$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_isVirtualBase$MH() {
-        return Index_h$constants_1.clang_isVirtualBase$MH();
-    }
-    public static @C("unsigned int") int clang_isVirtualBase (@C("CXCursor") MemorySegment x0) {
-        try {
-            return (int)Index_h$constants_1.clang_isVirtualBase$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CX_CXXInvalidAccessSpecifier() {
-        return Index_h$constants_1.CX_CXXInvalidAccessSpecifier();
-    }
-    public static @C("int") int CX_CXXPublic() {
-        return Index_h$constants_1.CX_CXXPublic();
-    }
-    public static @C("int") int CX_CXXProtected() {
-        return Index_h$constants_1.CX_CXXProtected();
-    }
-    public static @C("int") int CX_CXXPrivate() {
-        return Index_h$constants_1.CX_CXXPrivate();
-    }
-    public static  MethodHandle clang_getCXXAccessSpecifier$MH() {
-        return Index_h$constants_1.clang_getCXXAccessSpecifier$MH();
-    }
-    public static @C("enum CX_CXXAccessSpecifier") int clang_getCXXAccessSpecifier (@C("CXCursor") MemorySegment x0) {
-        try {
-            return (int)Index_h$constants_1.clang_getCXXAccessSpecifier$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CX_SC_Invalid() {
-        return Index_h$constants_1.CX_SC_Invalid();
-    }
-    public static @C("int") int CX_SC_None() {
-        return Index_h$constants_1.CX_SC_None();
-    }
-    public static @C("int") int CX_SC_Extern() {
-        return Index_h$constants_1.CX_SC_Extern();
-    }
-    public static @C("int") int CX_SC_Static() {
-        return Index_h$constants_1.CX_SC_Static();
-    }
-    public static @C("int") int CX_SC_PrivateExtern() {
-        return Index_h$constants_1.CX_SC_PrivateExtern();
-    }
-    public static @C("int") int CX_SC_OpenCLWorkGroupLocal() {
-        return Index_h$constants_1.CX_SC_OpenCLWorkGroupLocal();
-    }
-    public static @C("int") int CX_SC_Auto() {
-        return Index_h$constants_1.CX_SC_Auto();
-    }
-    public static @C("int") int CX_SC_Register() {
-        return Index_h$constants_1.CX_SC_Register();
-    }
-    public static  MethodHandle clang_Cursor_getStorageClass$MH() {
-        return Index_h$constants_1.clang_Cursor_getStorageClass$MH();
-    }
-    public static @C("enum CX_StorageClass") int clang_Cursor_getStorageClass (@C("CXCursor") MemorySegment x0) {
-        try {
-            return (int)Index_h$constants_1.clang_Cursor_getStorageClass$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getNumOverloadedDecls$MH() {
-        return Index_h$constants_1.clang_getNumOverloadedDecls$MH();
-    }
-    public static @C("unsigned int") int clang_getNumOverloadedDecls (@C("CXCursor") MemorySegment cursor) {
-        try {
-            return (int)Index_h$constants_1.clang_getNumOverloadedDecls$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getOverloadedDecl$MH() {
-        return Index_h$constants_1.clang_getOverloadedDecl$MH();
-    }
-    public static @C("CXCursor") MemorySegment clang_getOverloadedDecl (@C("CXCursor") MemorySegment cursor, @C("unsigned int") int index) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getOverloadedDecl$MH().invokeExact(cursor, index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_getIBOutletCollectionType$MH() {
-        return Index_h$constants_1.clang_getIBOutletCollectionType$MH();
-    }
-    public static @C("CXType") MemorySegment clang_getIBOutletCollectionType (@C("CXCursor") MemorySegment x0) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getIBOutletCollectionType$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXChildVisit_Break() {
-        return Index_h$constants_1.CXChildVisit_Break();
-    }
-    public static @C("int") int CXChildVisit_Continue() {
-        return Index_h$constants_1.CXChildVisit_Continue();
-    }
-    public static @C("int") int CXChildVisit_Recurse() {
-        return Index_h$constants_1.CXChildVisit_Recurse();
-    }
-    public static  MethodHandle clang_visitChildren$MH() {
-        return Index_h$constants_1.clang_visitChildren$MH();
-    }
-    public static @C("unsigned int") int clang_visitChildren (@C("CXCursor") MemorySegment parent, @C("CXCursorVisitor") Addressable visitor, @C("CXClientData") Addressable client_data) {
-        try {
-            return (int)Index_h$constants_1.clang_visitChildren$MH().invokeExact(parent, visitor.address(), client_data.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public interface clang_visitChildren$visitor {
+    public static MethodHandle clang_getCursorType$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getCursorType$MH,"clang_getCursorType");
+    }
+    public static MemorySegment clang_getCursorType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getCursorType$MH, "clang_getCursorType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getTypeSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getTypeSpelling$MH,"clang_getTypeSpelling");
+    }
+    public static MemorySegment clang_getTypeSpelling ( MemorySegment CT) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getTypeSpelling$MH, "clang_getTypeSpelling");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(CT);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getTypedefDeclUnderlyingType$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getTypedefDeclUnderlyingType$MH,"clang_getTypedefDeclUnderlyingType");
+    }
+    public static MemorySegment clang_getTypedefDeclUnderlyingType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getTypedefDeclUnderlyingType$MH, "clang_getTypedefDeclUnderlyingType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getEnumDeclIntegerType$MH() {
+        return RuntimeHelper.requireNonNull(constants$19.clang_getEnumDeclIntegerType$MH,"clang_getEnumDeclIntegerType");
+    }
+    public static MemorySegment clang_getEnumDeclIntegerType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$19.clang_getEnumDeclIntegerType$MH, "clang_getEnumDeclIntegerType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$19 {
+
+        static final FunctionDescriptor clang_getCursorLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorLocation",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getCursorLocation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorExtent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorExtent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorExtent",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getCursorExtent$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getCursorType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypeSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTypeSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypeSpelling",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getTypeSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypedefDeclUnderlyingType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTypedefDeclUnderlyingType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypedefDeclUnderlyingType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getTypedefDeclUnderlyingType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getEnumDeclIntegerType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$19.clang_getEnumDeclIntegerType$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_getEnumConstantDeclValue$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_getEnumConstantDeclValue$MH,"clang_getEnumConstantDeclValue");
+    }
+    public static long clang_getEnumConstantDeclValue ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_getEnumConstantDeclValue$MH, "clang_getEnumConstantDeclValue");
+        try {
+            return (long)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getEnumConstantDeclUnsignedValue$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_getEnumConstantDeclUnsignedValue$MH,"clang_getEnumConstantDeclUnsignedValue");
+    }
+    public static long clang_getEnumConstantDeclUnsignedValue ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_getEnumConstantDeclUnsignedValue$MH, "clang_getEnumConstantDeclUnsignedValue");
+        try {
+            return (long)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getFieldDeclBitWidth$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_getFieldDeclBitWidth$MH,"clang_getFieldDeclBitWidth");
+    }
+    public static int clang_getFieldDeclBitWidth ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_getFieldDeclBitWidth$MH, "clang_getFieldDeclBitWidth");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getNumArguments$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getNumArguments$MH,"clang_Cursor_getNumArguments");
+    }
+    public static int clang_Cursor_getNumArguments ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getNumArguments$MH, "clang_Cursor_getNumArguments");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getArgument$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getArgument$MH,"clang_Cursor_getArgument");
+    }
+    public static MemorySegment clang_Cursor_getArgument ( MemorySegment C,  int i) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getArgument$MH, "clang_Cursor_getArgument");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C, i);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXTemplateArgumentKind_Null() {
+        return (int)0L;
+    }
+    public static int CXTemplateArgumentKind_Type() {
+        return (int)1L;
+    }
+    public static int CXTemplateArgumentKind_Declaration() {
+        return (int)2L;
+    }
+    public static int CXTemplateArgumentKind_NullPtr() {
+        return (int)3L;
+    }
+    public static int CXTemplateArgumentKind_Integral() {
+        return (int)4L;
+    }
+    public static int CXTemplateArgumentKind_Template() {
+        return (int)5L;
+    }
+    public static int CXTemplateArgumentKind_TemplateExpansion() {
+        return (int)6L;
+    }
+    public static int CXTemplateArgumentKind_Expression() {
+        return (int)7L;
+    }
+    public static int CXTemplateArgumentKind_Pack() {
+        return (int)8L;
+    }
+    public static int CXTemplateArgumentKind_Invalid() {
+        return (int)9L;
+    }
+    public static MethodHandle clang_Cursor_getNumTemplateArguments$MH() {
+        return RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getNumTemplateArguments$MH,"clang_Cursor_getNumTemplateArguments");
+    }
+    public static int clang_Cursor_getNumTemplateArguments ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$20.clang_Cursor_getNumTemplateArguments$MH, "clang_Cursor_getNumTemplateArguments");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$20 {
+
+        static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getEnumConstantDeclValue$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getEnumConstantDeclValue",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$20.clang_getEnumConstantDeclValue$FUNC, false
+        );
+        static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getEnumConstantDeclUnsignedValue$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getEnumConstantDeclUnsignedValue",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$20.clang_getEnumConstantDeclUnsignedValue$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFieldDeclBitWidth$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getFieldDeclBitWidth$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFieldDeclBitWidth",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$20.clang_getFieldDeclBitWidth$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getNumArguments$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getNumArguments$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getNumArguments",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$20.clang_Cursor_getNumArguments$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getArgument$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getArgument$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getArgument",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$20.clang_Cursor_getArgument$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getNumTemplateArguments$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getNumTemplateArguments",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$20.clang_Cursor_getNumTemplateArguments$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Cursor_getTemplateArgumentKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentKind$MH,"clang_Cursor_getTemplateArgumentKind");
+    }
+    public static int clang_Cursor_getTemplateArgumentKind ( MemorySegment C,  int I) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentKind$MH, "clang_Cursor_getTemplateArgumentKind");
+        try {
+            return (int)mh$.invokeExact(C, I);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getTemplateArgumentType$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentType$MH,"clang_Cursor_getTemplateArgumentType");
+    }
+    public static MemorySegment clang_Cursor_getTemplateArgumentType ( MemorySegment C,  int I) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentType$MH, "clang_Cursor_getTemplateArgumentType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C, I);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getTemplateArgumentValue$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentValue$MH,"clang_Cursor_getTemplateArgumentValue");
+    }
+    public static long clang_Cursor_getTemplateArgumentValue ( MemorySegment C,  int I) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentValue$MH, "clang_Cursor_getTemplateArgumentValue");
+        try {
+            return (long)mh$.invokeExact(C, I);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getTemplateArgumentUnsignedValue$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentUnsignedValue$MH,"clang_Cursor_getTemplateArgumentUnsignedValue");
+    }
+    public static long clang_Cursor_getTemplateArgumentUnsignedValue ( MemorySegment C,  int I) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_Cursor_getTemplateArgumentUnsignedValue$MH, "clang_Cursor_getTemplateArgumentUnsignedValue");
+        try {
+            return (long)mh$.invokeExact(C, I);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_equalTypes$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_equalTypes$MH,"clang_equalTypes");
+    }
+    public static int clang_equalTypes ( MemorySegment A,  MemorySegment B) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_equalTypes$MH, "clang_equalTypes");
+        try {
+            return (int)mh$.invokeExact(A, B);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getCanonicalType$MH() {
+        return RuntimeHelper.requireNonNull(constants$21.clang_getCanonicalType$MH,"clang_getCanonicalType");
+    }
+    public static MemorySegment clang_getCanonicalType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$21.clang_getCanonicalType$MH, "clang_getCanonicalType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$21 {
+
+        static final FunctionDescriptor clang_Cursor_getTemplateArgumentKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getTemplateArgumentKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getTemplateArgumentKind",
+            "(Ljdk/incubator/foreign/MemorySegment;I)I",
+            constants$21.clang_Cursor_getTemplateArgumentKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getTemplateArgumentType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getTemplateArgumentType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getTemplateArgumentType",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$21.clang_Cursor_getTemplateArgumentType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getTemplateArgumentValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getTemplateArgumentValue$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getTemplateArgumentValue",
+            "(Ljdk/incubator/foreign/MemorySegment;I)J",
+            constants$21.clang_Cursor_getTemplateArgumentValue$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getTemplateArgumentUnsignedValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getTemplateArgumentUnsignedValue$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getTemplateArgumentUnsignedValue",
+            "(Ljdk/incubator/foreign/MemorySegment;I)J",
+            constants$21.clang_Cursor_getTemplateArgumentUnsignedValue$FUNC, false
+        );
+        static final FunctionDescriptor clang_equalTypes$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_equalTypes$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_equalTypes",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$21.clang_equalTypes$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCanonicalType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCanonicalType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCanonicalType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$21.clang_getCanonicalType$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_getLocalUnqualifiedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_getLocalUnqualifiedType$MH,"clang_getLocalUnqualifiedType");
+    }
+    public static MemorySegment clang_getLocalUnqualifiedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_getLocalUnqualifiedType$MH, "clang_getLocalUnqualifiedType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_isConstQualifiedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_isConstQualifiedType$MH,"clang_isConstQualifiedType");
+    }
+    public static int clang_isConstQualifiedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_isConstQualifiedType$MH, "clang_isConstQualifiedType");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isMacroFunctionLike$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isMacroFunctionLike$MH,"clang_Cursor_isMacroFunctionLike");
+    }
+    public static int clang_Cursor_isMacroFunctionLike ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isMacroFunctionLike$MH, "clang_Cursor_isMacroFunctionLike");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isMacroBuiltin$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isMacroBuiltin$MH,"clang_Cursor_isMacroBuiltin");
+    }
+    public static int clang_Cursor_isMacroBuiltin ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isMacroBuiltin$MH, "clang_Cursor_isMacroBuiltin");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isFunctionInlined$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isFunctionInlined$MH,"clang_Cursor_isFunctionInlined");
+    }
+    public static int clang_Cursor_isFunctionInlined ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_Cursor_isFunctionInlined$MH, "clang_Cursor_isFunctionInlined");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_isVolatileQualifiedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$22.clang_isVolatileQualifiedType$MH,"clang_isVolatileQualifiedType");
+    }
+    public static int clang_isVolatileQualifiedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$22.clang_isVolatileQualifiedType$MH, "clang_isVolatileQualifiedType");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$22 {
+
+        static final FunctionDescriptor clang_getLocalUnqualifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getLocalUnqualifiedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getLocalUnqualifiedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$22.clang_getLocalUnqualifiedType$FUNC, false
+        );
+        static final FunctionDescriptor clang_isConstQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isConstQualifiedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isConstQualifiedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$22.clang_isConstQualifiedType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isMacroFunctionLike$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isMacroFunctionLike$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isMacroFunctionLike",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$22.clang_Cursor_isMacroFunctionLike$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isMacroBuiltin$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isMacroBuiltin$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isMacroBuiltin",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$22.clang_Cursor_isMacroBuiltin$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isFunctionInlined$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isFunctionInlined$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isFunctionInlined",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$22.clang_Cursor_isFunctionInlined$FUNC, false
+        );
+        static final FunctionDescriptor clang_isVolatileQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isVolatileQualifiedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isVolatileQualifiedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$22.clang_isVolatileQualifiedType$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_isRestrictQualifiedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_isRestrictQualifiedType$MH,"clang_isRestrictQualifiedType");
+    }
+    public static int clang_isRestrictQualifiedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_isRestrictQualifiedType$MH, "clang_isRestrictQualifiedType");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getAddressSpace$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_getAddressSpace$MH,"clang_getAddressSpace");
+    }
+    public static int clang_getAddressSpace ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_getAddressSpace$MH, "clang_getAddressSpace");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getTypedefName$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_getTypedefName$MH,"clang_getTypedefName");
+    }
+    public static MemorySegment clang_getTypedefName ( MemorySegment CT) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_getTypedefName$MH, "clang_getTypedefName");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(CT);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getPointeeType$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_getPointeeType$MH,"clang_getPointeeType");
+    }
+    public static MemorySegment clang_getPointeeType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_getPointeeType$MH, "clang_getPointeeType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getTypeDeclaration$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_getTypeDeclaration$MH,"clang_getTypeDeclaration");
+    }
+    public static MemorySegment clang_getTypeDeclaration ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_getTypeDeclaration$MH, "clang_getTypeDeclaration");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getDeclObjCTypeEncoding$MH() {
+        return RuntimeHelper.requireNonNull(constants$23.clang_getDeclObjCTypeEncoding$MH,"clang_getDeclObjCTypeEncoding");
+    }
+    public static MemorySegment clang_getDeclObjCTypeEncoding ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$23.clang_getDeclObjCTypeEncoding$MH, "clang_getDeclObjCTypeEncoding");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$23 {
+
+        static final FunctionDescriptor clang_isRestrictQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isRestrictQualifiedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isRestrictQualifiedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$23.clang_isRestrictQualifiedType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getAddressSpace$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getAddressSpace$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getAddressSpace",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$23.clang_getAddressSpace$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypedefName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTypedefName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypedefName",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$23.clang_getTypedefName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getPointeeType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getPointeeType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getPointeeType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$23.clang_getPointeeType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypeDeclaration$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTypeDeclaration$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypeDeclaration",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$23.clang_getTypeDeclaration$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDeclObjCTypeEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getDeclObjCTypeEncoding$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDeclObjCTypeEncoding",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$23.clang_getDeclObjCTypeEncoding$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Type_getObjCEncoding$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_Type_getObjCEncoding$MH,"clang_Type_getObjCEncoding");
+    }
+    public static MemorySegment clang_Type_getObjCEncoding ( MemorySegment type) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_Type_getObjCEncoding$MH, "clang_Type_getObjCEncoding");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(type);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getTypeKindSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_getTypeKindSpelling$MH,"clang_getTypeKindSpelling");
+    }
+    public static MemorySegment clang_getTypeKindSpelling ( int K) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_getTypeKindSpelling$MH, "clang_getTypeKindSpelling");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(K);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getFunctionTypeCallingConv$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_getFunctionTypeCallingConv$MH,"clang_getFunctionTypeCallingConv");
+    }
+    public static int clang_getFunctionTypeCallingConv ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_getFunctionTypeCallingConv$MH, "clang_getFunctionTypeCallingConv");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getResultType$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_getResultType$MH,"clang_getResultType");
+    }
+    public static MemorySegment clang_getResultType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_getResultType$MH, "clang_getResultType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getExceptionSpecificationType$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_getExceptionSpecificationType$MH,"clang_getExceptionSpecificationType");
+    }
+    public static int clang_getExceptionSpecificationType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_getExceptionSpecificationType$MH, "clang_getExceptionSpecificationType");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getNumArgTypes$MH() {
+        return RuntimeHelper.requireNonNull(constants$24.clang_getNumArgTypes$MH,"clang_getNumArgTypes");
+    }
+    public static int clang_getNumArgTypes ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$24.clang_getNumArgTypes$MH, "clang_getNumArgTypes");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$24 {
+
+        static final FunctionDescriptor clang_Type_getObjCEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getObjCEncoding$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getObjCEncoding",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$24.clang_Type_getObjCEncoding$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypeKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_INT
+        );
+        static final MethodHandle clang_getTypeKindSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypeKindSpelling",
+            "(I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$24.clang_getTypeKindSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_getFunctionTypeCallingConv$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getFunctionTypeCallingConv$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getFunctionTypeCallingConv",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$24.clang_getFunctionTypeCallingConv$FUNC, false
+        );
+        static final FunctionDescriptor clang_getResultType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getResultType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getResultType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$24.clang_getResultType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getExceptionSpecificationType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getExceptionSpecificationType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$24.clang_getExceptionSpecificationType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNumArgTypes$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getNumArgTypes$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumArgTypes",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$24.clang_getNumArgTypes$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_getArgType$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_getArgType$MH,"clang_getArgType");
+    }
+    public static MemorySegment clang_getArgType ( MemorySegment T,  int i) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_getArgType$MH, "clang_getArgType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T, i);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getObjCObjectBaseType$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCObjectBaseType$MH,"clang_Type_getObjCObjectBaseType");
+    }
+    public static MemorySegment clang_Type_getObjCObjectBaseType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCObjectBaseType$MH, "clang_Type_getObjCObjectBaseType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getNumObjCProtocolRefs$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_Type_getNumObjCProtocolRefs$MH,"clang_Type_getNumObjCProtocolRefs");
+    }
+    public static int clang_Type_getNumObjCProtocolRefs ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_Type_getNumObjCProtocolRefs$MH, "clang_Type_getNumObjCProtocolRefs");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getObjCProtocolDecl$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCProtocolDecl$MH,"clang_Type_getObjCProtocolDecl");
+    }
+    public static MemorySegment clang_Type_getObjCProtocolDecl ( MemorySegment T,  int i) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCProtocolDecl$MH, "clang_Type_getObjCProtocolDecl");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T, i);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getNumObjCTypeArgs$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_Type_getNumObjCTypeArgs$MH,"clang_Type_getNumObjCTypeArgs");
+    }
+    public static int clang_Type_getNumObjCTypeArgs ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_Type_getNumObjCTypeArgs$MH, "clang_Type_getNumObjCTypeArgs");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getObjCTypeArg$MH() {
+        return RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCTypeArg$MH,"clang_Type_getObjCTypeArg");
+    }
+    public static MemorySegment clang_Type_getObjCTypeArg ( MemorySegment T,  int i) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$25.clang_Type_getObjCTypeArg$MH, "clang_Type_getObjCTypeArg");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T, i);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$25 {
+
+        static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_getArgType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getArgType",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$25.clang_getArgType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getObjCObjectBaseType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getObjCObjectBaseType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getObjCObjectBaseType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$25.clang_Type_getObjCObjectBaseType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getNumObjCProtocolRefs$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getNumObjCProtocolRefs$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getNumObjCProtocolRefs",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$25.clang_Type_getNumObjCProtocolRefs$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getObjCProtocolDecl$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Type_getObjCProtocolDecl$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getObjCProtocolDecl",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$25.clang_Type_getObjCProtocolDecl$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getNumObjCTypeArgs$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getNumObjCTypeArgs$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getNumObjCTypeArgs",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$25.clang_Type_getNumObjCTypeArgs$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getObjCTypeArg$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Type_getObjCTypeArg$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getObjCTypeArg",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$25.clang_Type_getObjCTypeArg$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_isFunctionTypeVariadic$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_isFunctionTypeVariadic$MH,"clang_isFunctionTypeVariadic");
+    }
+    public static int clang_isFunctionTypeVariadic ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_isFunctionTypeVariadic$MH, "clang_isFunctionTypeVariadic");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getCursorResultType$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_getCursorResultType$MH,"clang_getCursorResultType");
+    }
+    public static MemorySegment clang_getCursorResultType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_getCursorResultType$MH, "clang_getCursorResultType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getCursorExceptionSpecificationType$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_getCursorExceptionSpecificationType$MH,"clang_getCursorExceptionSpecificationType");
+    }
+    public static int clang_getCursorExceptionSpecificationType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_getCursorExceptionSpecificationType$MH, "clang_getCursorExceptionSpecificationType");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_isPODType$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_isPODType$MH,"clang_isPODType");
+    }
+    public static int clang_isPODType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_isPODType$MH, "clang_isPODType");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getElementType$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_getElementType$MH,"clang_getElementType");
+    }
+    public static MemorySegment clang_getElementType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_getElementType$MH, "clang_getElementType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getNumElements$MH() {
+        return RuntimeHelper.requireNonNull(constants$26.clang_getNumElements$MH,"clang_getNumElements");
+    }
+    public static long clang_getNumElements ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$26.clang_getNumElements$MH, "clang_getNumElements");
+        try {
+            return (long)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$26 {
+
+        static final FunctionDescriptor clang_isFunctionTypeVariadic$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isFunctionTypeVariadic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isFunctionTypeVariadic",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$26.clang_isFunctionTypeVariadic$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorResultType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorResultType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorResultType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$26.clang_getCursorResultType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorExceptionSpecificationType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorExceptionSpecificationType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$26.clang_getCursorExceptionSpecificationType$FUNC, false
+        );
+        static final FunctionDescriptor clang_isPODType$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isPODType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isPODType",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$26.clang_isPODType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getElementType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getElementType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getElementType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$26.clang_getElementType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNumElements$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getNumElements$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumElements",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$26.clang_getNumElements$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_getArrayElementType$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_getArrayElementType$MH,"clang_getArrayElementType");
+    }
+    public static MemorySegment clang_getArrayElementType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_getArrayElementType$MH, "clang_getArrayElementType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getArraySize$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_getArraySize$MH,"clang_getArraySize");
+    }
+    public static long clang_getArraySize ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_getArraySize$MH, "clang_getArraySize");
+        try {
+            return (long)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getNamedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_Type_getNamedType$MH,"clang_Type_getNamedType");
+    }
+    public static MemorySegment clang_Type_getNamedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_Type_getNamedType$MH, "clang_Type_getNamedType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_isTransparentTagTypedef$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_Type_isTransparentTagTypedef$MH,"clang_Type_isTransparentTagTypedef");
+    }
+    public static int clang_Type_isTransparentTagTypedef ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_Type_isTransparentTagTypedef$MH, "clang_Type_isTransparentTagTypedef");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXTypeNullability_NonNull() {
+        return (int)0L;
+    }
+    public static int CXTypeNullability_Nullable() {
+        return (int)1L;
+    }
+    public static int CXTypeNullability_Unspecified() {
+        return (int)2L;
+    }
+    public static int CXTypeNullability_Invalid() {
+        return (int)3L;
+    }
+    public static MethodHandle clang_Type_getNullability$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_Type_getNullability$MH,"clang_Type_getNullability");
+    }
+    public static int clang_Type_getNullability ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_Type_getNullability$MH, "clang_Type_getNullability");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXTypeLayoutError_Invalid() {
+        return (int)-1L;
+    }
+    public static int CXTypeLayoutError_Incomplete() {
+        return (int)-2L;
+    }
+    public static int CXTypeLayoutError_Dependent() {
+        return (int)-3L;
+    }
+    public static int CXTypeLayoutError_NotConstantSize() {
+        return (int)-4L;
+    }
+    public static int CXTypeLayoutError_InvalidFieldName() {
+        return (int)-5L;
+    }
+    public static int CXTypeLayoutError_Undeduced() {
+        return (int)-6L;
+    }
+    public static MethodHandle clang_Type_getAlignOf$MH() {
+        return RuntimeHelper.requireNonNull(constants$27.clang_Type_getAlignOf$MH,"clang_Type_getAlignOf");
+    }
+    public static long clang_Type_getAlignOf ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$27.clang_Type_getAlignOf$MH, "clang_Type_getAlignOf");
+        try {
+            return (long)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$27 {
+
+        static final FunctionDescriptor clang_getArrayElementType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getArrayElementType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getArrayElementType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$27.clang_getArrayElementType$FUNC, false
+        );
+        static final FunctionDescriptor clang_getArraySize$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getArraySize$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getArraySize",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$27.clang_getArraySize$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getNamedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getNamedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getNamedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$27.clang_Type_getNamedType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_isTransparentTagTypedef$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_isTransparentTagTypedef$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_isTransparentTagTypedef",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$27.clang_Type_isTransparentTagTypedef$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getNullability$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getNullability$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getNullability",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$27.clang_Type_getNullability$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getAlignOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getAlignOf$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getAlignOf",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$27.clang_Type_getAlignOf$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Type_getClassType$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Type_getClassType$MH,"clang_Type_getClassType");
+    }
+    public static MemorySegment clang_Type_getClassType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Type_getClassType$MH, "clang_Type_getClassType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getSizeOf$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Type_getSizeOf$MH,"clang_Type_getSizeOf");
+    }
+    public static long clang_Type_getSizeOf ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Type_getSizeOf$MH, "clang_Type_getSizeOf");
+        try {
+            return (long)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getOffsetOf$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Type_getOffsetOf$MH,"clang_Type_getOffsetOf");
+    }
+    public static long clang_Type_getOffsetOf ( MemorySegment T,  Addressable S) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Type_getOffsetOf$MH, "clang_Type_getOffsetOf");
+        try {
+            return (long)mh$.invokeExact(T, S.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getModifiedType$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Type_getModifiedType$MH,"clang_Type_getModifiedType");
+    }
+    public static MemorySegment clang_Type_getModifiedType ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Type_getModifiedType$MH, "clang_Type_getModifiedType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_getOffsetOfField$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Cursor_getOffsetOfField$MH,"clang_Cursor_getOffsetOfField");
+    }
+    public static long clang_Cursor_getOffsetOfField ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Cursor_getOffsetOfField$MH, "clang_Cursor_getOffsetOfField");
+        try {
+            return (long)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isAnonymous$MH() {
+        return RuntimeHelper.requireNonNull(constants$28.clang_Cursor_isAnonymous$MH,"clang_Cursor_isAnonymous");
+    }
+    public static int clang_Cursor_isAnonymous ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$28.clang_Cursor_isAnonymous$MH, "clang_Cursor_isAnonymous");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$28 {
+
+        static final FunctionDescriptor clang_Type_getClassType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getClassType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getClassType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$28.clang_Type_getClassType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getSizeOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getSizeOf$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getSizeOf",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$28.clang_Type_getSizeOf$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getOffsetOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
+        static final MethodHandle clang_Type_getOffsetOf$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getOffsetOf",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)J",
+            constants$28.clang_Type_getOffsetOf$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getModifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getModifiedType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getModifiedType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$28.clang_Type_getModifiedType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getOffsetOfField$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getOffsetOfField$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getOffsetOfField",
+            "(Ljdk/incubator/foreign/MemorySegment;)J",
+            constants$28.clang_Cursor_getOffsetOfField$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isAnonymous$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isAnonymous$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isAnonymous",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$28.clang_Cursor_isAnonymous$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Cursor_isAnonymousRecordDecl$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isAnonymousRecordDecl$MH,"clang_Cursor_isAnonymousRecordDecl");
+    }
+    public static int clang_Cursor_isAnonymousRecordDecl ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isAnonymousRecordDecl$MH, "clang_Cursor_isAnonymousRecordDecl");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isInlineNamespace$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isInlineNamespace$MH,"clang_Cursor_isInlineNamespace");
+    }
+    public static int clang_Cursor_isInlineNamespace ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isInlineNamespace$MH, "clang_Cursor_isInlineNamespace");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXRefQualifier_None() {
+        return (int)0L;
+    }
+    public static int CXRefQualifier_LValue() {
+        return (int)1L;
+    }
+    public static int CXRefQualifier_RValue() {
+        return (int)2L;
+    }
+    public static MethodHandle clang_Type_getNumTemplateArguments$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Type_getNumTemplateArguments$MH,"clang_Type_getNumTemplateArguments");
+    }
+    public static int clang_Type_getNumTemplateArguments ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Type_getNumTemplateArguments$MH, "clang_Type_getNumTemplateArguments");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getTemplateArgumentAsType$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Type_getTemplateArgumentAsType$MH,"clang_Type_getTemplateArgumentAsType");
+    }
+    public static MemorySegment clang_Type_getTemplateArgumentAsType ( MemorySegment T,  int i) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Type_getTemplateArgumentAsType$MH, "clang_Type_getTemplateArgumentAsType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(T, i);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Type_getCXXRefQualifier$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Type_getCXXRefQualifier$MH,"clang_Type_getCXXRefQualifier");
+    }
+    public static int clang_Type_getCXXRefQualifier ( MemorySegment T) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Type_getCXXRefQualifier$MH, "clang_Type_getCXXRefQualifier");
+        try {
+            return (int)mh$.invokeExact(T);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_Cursor_isBitField$MH() {
+        return RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isBitField$MH,"clang_Cursor_isBitField");
+    }
+    public static int clang_Cursor_isBitField ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$29.clang_Cursor_isBitField$MH, "clang_Cursor_isBitField");
+        try {
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static class constants$29 {
+
+        static final FunctionDescriptor clang_Cursor_isAnonymousRecordDecl$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isAnonymousRecordDecl$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isAnonymousRecordDecl",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$29.clang_Cursor_isAnonymousRecordDecl$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isInlineNamespace$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isInlineNamespace$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isInlineNamespace",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$29.clang_Cursor_isInlineNamespace$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getNumTemplateArguments$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getNumTemplateArguments",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$29.clang_Type_getNumTemplateArguments$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getTemplateArgumentAsType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Type_getTemplateArgumentAsType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getTemplateArgumentAsType",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$29.clang_Type_getTemplateArgumentAsType$FUNC, false
+        );
+        static final FunctionDescriptor clang_Type_getCXXRefQualifier$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Type_getCXXRefQualifier$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Type_getCXXRefQualifier",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$29.clang_Type_getCXXRefQualifier$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isBitField$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isBitField$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isBitField",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$29.clang_Cursor_isBitField$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_isVirtualBase$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_isVirtualBase$MH,"clang_isVirtualBase");
+    }
+    public static int clang_isVirtualBase ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_isVirtualBase$MH, "clang_isVirtualBase");
+        try {
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CX_CXXInvalidAccessSpecifier() {
+        return (int)0L;
+    }
+    public static int CX_CXXPublic() {
+        return (int)1L;
+    }
+    public static int CX_CXXProtected() {
+        return (int)2L;
+    }
+    public static int CX_CXXPrivate() {
+        return (int)3L;
+    }
+    public static MethodHandle clang_getCXXAccessSpecifier$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_getCXXAccessSpecifier$MH,"clang_getCXXAccessSpecifier");
+    }
+    public static int clang_getCXXAccessSpecifier ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_getCXXAccessSpecifier$MH, "clang_getCXXAccessSpecifier");
+        try {
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CX_SC_Invalid() {
+        return (int)0L;
+    }
+    public static int CX_SC_None() {
+        return (int)1L;
+    }
+    public static int CX_SC_Extern() {
+        return (int)2L;
+    }
+    public static int CX_SC_Static() {
+        return (int)3L;
+    }
+    public static int CX_SC_PrivateExtern() {
+        return (int)4L;
+    }
+    public static int CX_SC_OpenCLWorkGroupLocal() {
+        return (int)5L;
+    }
+    public static int CX_SC_Auto() {
+        return (int)6L;
+    }
+    public static int CX_SC_Register() {
+        return (int)7L;
+    }
+    public static MethodHandle clang_Cursor_getStorageClass$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_Cursor_getStorageClass$MH,"clang_Cursor_getStorageClass");
+    }
+    public static int clang_Cursor_getStorageClass ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_Cursor_getStorageClass$MH, "clang_Cursor_getStorageClass");
+        try {
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getNumOverloadedDecls$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_getNumOverloadedDecls$MH,"clang_getNumOverloadedDecls");
+    }
+    public static int clang_getNumOverloadedDecls ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_getNumOverloadedDecls$MH, "clang_getNumOverloadedDecls");
+        try {
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getOverloadedDecl$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_getOverloadedDecl$MH,"clang_getOverloadedDecl");
+    }
+    public static MemorySegment clang_getOverloadedDecl ( MemorySegment cursor,  int index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_getOverloadedDecl$MH, "clang_getOverloadedDecl");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(cursor, index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static MethodHandle clang_getIBOutletCollectionType$MH() {
+        return RuntimeHelper.requireNonNull(constants$30.clang_getIBOutletCollectionType$MH,"clang_getIBOutletCollectionType");
+    }
+    public static MemorySegment clang_getIBOutletCollectionType ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$30.clang_getIBOutletCollectionType$MH, "clang_getIBOutletCollectionType");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXChildVisit_Break() {
+        return (int)0L;
+    }
+    public static int CXChildVisit_Continue() {
+        return (int)1L;
+    }
+    public static int CXChildVisit_Recurse() {
+        return (int)2L;
+    }
+    public static class constants$30 {
+
+        static final FunctionDescriptor clang_isVirtualBase$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isVirtualBase$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isVirtualBase",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$30.clang_isVirtualBase$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCXXAccessSpecifier$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCXXAccessSpecifier$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCXXAccessSpecifier",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$30.clang_getCXXAccessSpecifier$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getStorageClass$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getStorageClass$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getStorageClass",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$30.clang_Cursor_getStorageClass$FUNC, false
+        );
+        static final FunctionDescriptor clang_getNumOverloadedDecls$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getNumOverloadedDecls$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumOverloadedDecls",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$30.clang_getNumOverloadedDecls$FUNC, false
+        );
+        static final FunctionDescriptor clang_getOverloadedDecl$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_getOverloadedDecl$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getOverloadedDecl",
+            "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$30.clang_getOverloadedDecl$FUNC, false
+        );
+        static final FunctionDescriptor clang_getIBOutletCollectionType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getIBOutletCollectionType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getIBOutletCollectionType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$30.clang_getIBOutletCollectionType$FUNC, false
+        );
+    }
+
+    public interface CXCursorVisitor {
+
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitChildren$visitor fi) {
-            return RuntimeHelper.upcallStub(clang_visitChildren$visitor.class, fi, Index_h$constants_1.clang_visitChildren$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
+        static MemorySegment allocate(CXCursorVisitor fi) {
+            return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$31.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitChildren$visitor fi, NativeScope scope) {
+        static MemorySegment allocate(CXCursorVisitor fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
         }
     }
-    public static  MethodHandle clang_visitTemplateSpecializations$MH() {
-        return Index_h$constants_1.clang_visitTemplateSpecializations$MH();
+
+    public static MethodHandle clang_visitChildren$MH() {
+        return RuntimeHelper.requireNonNull(constants$31.clang_visitChildren$MH,"clang_visitChildren");
     }
-    public static @C("unsigned int") int clang_visitTemplateSpecializations (@C("CXCursor") MemorySegment parent, @C("CXCursorVisitor") Addressable visitor, @C("CXClientData") Addressable client_data) {
+    public static int clang_visitChildren ( MemorySegment parent,  Addressable visitor,  Addressable client_data) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$31.clang_visitChildren$MH, "clang_visitChildren");
         try {
-            return (int)Index_h$constants_1.clang_visitTemplateSpecializations$MH().invokeExact(parent, visitor.address(), client_data.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(parent, visitor.address(), client_data.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public interface clang_visitTemplateSpecializations$visitor {
-        int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializations$visitor fi) {
-            return RuntimeHelper.upcallStub(clang_visitTemplateSpecializations$visitor.class, fi, Index_h$constants_1.clang_visitTemplateSpecializations$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
-        }
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializations$visitor fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
-        }
+    public static MethodHandle clang_visitTemplateSpecializations$MH() {
+        return RuntimeHelper.requireNonNull(constants$31.clang_visitTemplateSpecializations$MH,"clang_visitTemplateSpecializations");
     }
-    public static  MethodHandle clang_visitTemplateSpecializationChildren$MH() {
-        return Index_h$constants_1.clang_visitTemplateSpecializationChildren$MH();
-    }
-    public static @C("unsigned int") int clang_visitTemplateSpecializationChildren (@C("CXCursor") MemorySegment classTemplate, @C("CXCursorVisitor") Addressable visitor, @C("CXClientData") Addressable client_data) {
+    public static int clang_visitTemplateSpecializations ( MemorySegment parent,  Addressable visitor,  Addressable client_data) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$31.clang_visitTemplateSpecializations$MH, "clang_visitTemplateSpecializations");
         try {
-            return (int)Index_h$constants_1.clang_visitTemplateSpecializationChildren$MH().invokeExact(classTemplate, visitor.address(), client_data.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(parent, visitor.address(), client_data.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public interface clang_visitTemplateSpecializationChildren$visitor {
-        int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializationChildren$visitor fi) {
-            return RuntimeHelper.upcallStub(clang_visitTemplateSpecializationChildren$visitor.class, fi, Index_h$constants_1.clang_visitTemplateSpecializationChildren$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
-        }
-        public static  @C("CXCursorVisitor") MemorySegment allocate(clang_visitTemplateSpecializationChildren$visitor fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
-        }
+    public static MethodHandle clang_visitTemplateSpecializationChildren$MH() {
+        return RuntimeHelper.requireNonNull(constants$31.clang_visitTemplateSpecializationChildren$MH,"clang_visitTemplateSpecializationChildren");
     }
-    public static  MethodHandle clang_visitChildrenWithBlock$MH() {
-        return Index_h$constants_1.clang_visitChildrenWithBlock$MH();
-    }
-    public static @C("unsigned int") int clang_visitChildrenWithBlock (@C("CXCursor") MemorySegment parent, @C("CXCursorVisitorBlock") Addressable block) {
+    public static int clang_visitTemplateSpecializationChildren ( MemorySegment classTemplate,  Addressable visitor,  Addressable client_data) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$31.clang_visitTemplateSpecializationChildren$MH, "clang_visitTemplateSpecializationChildren");
         try {
-            return (int)Index_h$constants_1.clang_visitChildrenWithBlock$MH().invokeExact(parent, block.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(classTemplate, visitor.address(), client_data.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public interface clang_visitChildrenWithBlock$block {
+    public interface CXCursorVisitorBlock {
+
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1);
-        public static  @C("CXCursorVisitorBlock") MemorySegment allocate(clang_visitChildrenWithBlock$block fi) {
-            return RuntimeHelper.upcallStub(clang_visitChildrenWithBlock$block.class, fi, Index_h$constants_1.clang_visitChildrenWithBlock$block$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
+        static MemorySegment allocate(CXCursorVisitorBlock fi) {
+            return RuntimeHelper.upcallStub(CXCursorVisitorBlock.class, fi, constants$31.CXCursorVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
-        public static  @C("CXCursorVisitorBlock") MemorySegment allocate(clang_visitChildrenWithBlock$block fi, NativeScope scope) {
+        static MemorySegment allocate(CXCursorVisitorBlock fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
         }
     }
-    public static  MethodHandle clang_getCursorUSR$MH() {
-        return Index_h$constants_1.clang_getCursorUSR$MH();
+
+    public static MethodHandle clang_visitChildrenWithBlock$MH() {
+        return RuntimeHelper.requireNonNull(constants$31.clang_visitChildrenWithBlock$MH,"clang_visitChildrenWithBlock");
     }
-    public static @C("CXString") MemorySegment clang_getCursorUSR (@C("CXCursor") MemorySegment x0) {
+    public static int clang_visitChildrenWithBlock ( MemorySegment parent,  Addressable block) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$31.clang_visitChildrenWithBlock$MH, "clang_visitChildrenWithBlock");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorUSR$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(parent, block.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCClass$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCClass$MH();
+    public static class constants$31 {
+
+        static final FunctionDescriptor CXCursorVisitor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
+        static final FunctionDescriptor clang_visitChildren$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_visitChildren$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_visitChildren",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$31.clang_visitChildren$FUNC, false
+        );
+        static final FunctionDescriptor clang_visitTemplateSpecializations$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_visitTemplateSpecializations$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_visitTemplateSpecializations",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$31.clang_visitTemplateSpecializations$FUNC, false
+        );
+        static final FunctionDescriptor clang_visitTemplateSpecializationChildren$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_visitTemplateSpecializationChildren$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_visitTemplateSpecializationChildren",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$31.clang_visitTemplateSpecializationChildren$FUNC, false
+        );
+        static final FunctionDescriptor CXCursorVisitorBlock$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final FunctionDescriptor clang_visitChildrenWithBlock$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
+        static final MethodHandle clang_visitChildrenWithBlock$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_visitChildrenWithBlock",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$31.clang_visitChildrenWithBlock$FUNC, false
+        );
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCClass (@C("char*") Addressable class_name) {
+
+    public static MethodHandle clang_getCursorUSR$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_getCursorUSR$MH,"clang_getCursorUSR");
+    }
+    public static MemorySegment clang_getCursorUSR ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_getCursorUSR$MH, "clang_getCursorUSR");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCClass$MH().invokeExact(class_name.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCCategory$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCCategory$MH();
+    public static MethodHandle clang_constructUSR_ObjCClass$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCClass$MH,"clang_constructUSR_ObjCClass");
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCCategory (@C("char*") Addressable class_name, @C("char*") Addressable category_name) {
+    public static MemorySegment clang_constructUSR_ObjCClass ( Addressable class_name) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCClass$MH, "clang_constructUSR_ObjCClass");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCCategory$MH().invokeExact(class_name.address(), category_name.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(class_name.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCProtocol$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCProtocol$MH();
+    public static MethodHandle clang_constructUSR_ObjCCategory$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCCategory$MH,"clang_constructUSR_ObjCCategory");
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCProtocol (@C("char*") Addressable protocol_name) {
+    public static MemorySegment clang_constructUSR_ObjCCategory ( Addressable class_name,  Addressable category_name) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCCategory$MH, "clang_constructUSR_ObjCCategory");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCProtocol$MH().invokeExact(protocol_name.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(class_name.address(), category_name.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCIvar$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCIvar$MH();
+    public static MethodHandle clang_constructUSR_ObjCProtocol$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCProtocol$MH,"clang_constructUSR_ObjCProtocol");
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCIvar (@C("char*") Addressable name, @C("CXString") MemorySegment classUSR) {
+    public static MemorySegment clang_constructUSR_ObjCProtocol ( Addressable protocol_name) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCProtocol$MH, "clang_constructUSR_ObjCProtocol");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCIvar$MH().invokeExact(name.address(), classUSR);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(protocol_name.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCMethod$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCMethod$MH();
+    public static MethodHandle clang_constructUSR_ObjCIvar$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCIvar$MH,"clang_constructUSR_ObjCIvar");
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCMethod (@C("char*") Addressable name, @C("unsigned int") int isInstanceMethod, @C("CXString") MemorySegment classUSR) {
+    public static MemorySegment clang_constructUSR_ObjCIvar ( Addressable name,  MemorySegment classUSR) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCIvar$MH, "clang_constructUSR_ObjCIvar");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCMethod$MH().invokeExact(name.address(), isInstanceMethod, classUSR);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(name.address(), classUSR);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_constructUSR_ObjCProperty$MH() {
-        return Index_h$constants_1.clang_constructUSR_ObjCProperty$MH();
+    public static MethodHandle clang_constructUSR_ObjCMethod$MH() {
+        return RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCMethod$MH,"clang_constructUSR_ObjCMethod");
     }
-    public static @C("CXString") MemorySegment clang_constructUSR_ObjCProperty (@C("char*") Addressable property, @C("CXString") MemorySegment classUSR) {
+    public static MemorySegment clang_constructUSR_ObjCMethod ( Addressable name,  int isInstanceMethod,  MemorySegment classUSR) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$32.clang_constructUSR_ObjCMethod$MH, "clang_constructUSR_ObjCMethod");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_constructUSR_ObjCProperty$MH().invokeExact(property.address(), classUSR);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(name.address(), isInstanceMethod, classUSR);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorSpelling$MH() {
-        return Index_h$constants_1.clang_getCursorSpelling$MH();
+    public static class constants$32 {
+
+        static final FunctionDescriptor clang_getCursorUSR$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorUSR$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorUSR",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_getCursorUSR$FUNC, false
+        );
+        static final FunctionDescriptor clang_constructUSR_ObjCClass$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_constructUSR_ObjCClass$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCClass",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_constructUSR_ObjCClass$FUNC, false
+        );
+        static final FunctionDescriptor clang_constructUSR_ObjCCategory$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_constructUSR_ObjCCategory$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCCategory",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_constructUSR_ObjCCategory$FUNC, false
+        );
+        static final FunctionDescriptor clang_constructUSR_ObjCProtocol$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_constructUSR_ObjCProtocol$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCProtocol",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_constructUSR_ObjCProtocol$FUNC, false
+        );
+        static final FunctionDescriptor clang_constructUSR_ObjCIvar$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_constructUSR_ObjCIvar$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCIvar",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_constructUSR_ObjCIvar$FUNC, false
+        );
+        static final FunctionDescriptor clang_constructUSR_ObjCMethod$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_constructUSR_ObjCMethod$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCMethod",
+            "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$32.clang_constructUSR_ObjCMethod$FUNC, false
+        );
     }
-    public static @C("CXString") MemorySegment clang_getCursorSpelling (@C("CXCursor") MemorySegment x0) {
+
+    public static MethodHandle clang_constructUSR_ObjCProperty$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_constructUSR_ObjCProperty$MH,"clang_constructUSR_ObjCProperty");
+    }
+    public static MemorySegment clang_constructUSR_ObjCProperty ( Addressable property,  MemorySegment classUSR) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_constructUSR_ObjCProperty$MH, "clang_constructUSR_ObjCProperty");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorSpelling$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(property.address(), classUSR);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getSpellingNameRange$MH() {
-        return Index_h$constants_1.clang_Cursor_getSpellingNameRange$MH();
+    public static MethodHandle clang_getCursorSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_getCursorSpelling$MH,"clang_getCursorSpelling");
     }
-    public static @C("CXSourceRange") MemorySegment clang_Cursor_getSpellingNameRange (@C("CXCursor") MemorySegment x0, @C("unsigned int") int pieceIndex, @C("unsigned int") int options) {
+    public static MemorySegment clang_getCursorSpelling ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_getCursorSpelling$MH, "clang_getCursorSpelling");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getSpellingNameRange$MH().invokeExact(x0, pieceIndex, options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXPrintingPolicy_Indentation() {
-        return Index_h$constants_1.CXPrintingPolicy_Indentation();
+    public static MethodHandle clang_Cursor_getSpellingNameRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_Cursor_getSpellingNameRange$MH,"clang_Cursor_getSpellingNameRange");
     }
-    public static @C("int") int CXPrintingPolicy_SuppressSpecifiers() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressSpecifiers();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressTagKeyword() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressTagKeyword();
-    }
-    public static @C("int") int CXPrintingPolicy_IncludeTagDefinition() {
-        return Index_h$constants_1.CXPrintingPolicy_IncludeTagDefinition();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressScope() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressScope();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressUnwrittenScope() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressUnwrittenScope();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressInitializers() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressInitializers();
-    }
-    public static @C("int") int CXPrintingPolicy_ConstantArraySizeAsWritten() {
-        return Index_h$constants_1.CXPrintingPolicy_ConstantArraySizeAsWritten();
-    }
-    public static @C("int") int CXPrintingPolicy_AnonymousTagLocations() {
-        return Index_h$constants_1.CXPrintingPolicy_AnonymousTagLocations();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressStrongLifetime() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressStrongLifetime();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressLifetimeQualifiers() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressLifetimeQualifiers();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressTemplateArgsInCXXConstructors() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressTemplateArgsInCXXConstructors();
-    }
-    public static @C("int") int CXPrintingPolicy_Bool() {
-        return Index_h$constants_1.CXPrintingPolicy_Bool();
-    }
-    public static @C("int") int CXPrintingPolicy_Restrict() {
-        return Index_h$constants_1.CXPrintingPolicy_Restrict();
-    }
-    public static @C("int") int CXPrintingPolicy_Alignof() {
-        return Index_h$constants_1.CXPrintingPolicy_Alignof();
-    }
-    public static @C("int") int CXPrintingPolicy_UnderscoreAlignof() {
-        return Index_h$constants_1.CXPrintingPolicy_UnderscoreAlignof();
-    }
-    public static @C("int") int CXPrintingPolicy_UseVoidForZeroParams() {
-        return Index_h$constants_1.CXPrintingPolicy_UseVoidForZeroParams();
-    }
-    public static @C("int") int CXPrintingPolicy_TerseOutput() {
-        return Index_h$constants_1.CXPrintingPolicy_TerseOutput();
-    }
-    public static @C("int") int CXPrintingPolicy_PolishForDeclaration() {
-        return Index_h$constants_1.CXPrintingPolicy_PolishForDeclaration();
-    }
-    public static @C("int") int CXPrintingPolicy_Half() {
-        return Index_h$constants_1.CXPrintingPolicy_Half();
-    }
-    public static @C("int") int CXPrintingPolicy_MSWChar() {
-        return Index_h$constants_1.CXPrintingPolicy_MSWChar();
-    }
-    public static @C("int") int CXPrintingPolicy_IncludeNewlines() {
-        return Index_h$constants_1.CXPrintingPolicy_IncludeNewlines();
-    }
-    public static @C("int") int CXPrintingPolicy_MSVCFormatting() {
-        return Index_h$constants_1.CXPrintingPolicy_MSVCFormatting();
-    }
-    public static @C("int") int CXPrintingPolicy_ConstantsAsWritten() {
-        return Index_h$constants_1.CXPrintingPolicy_ConstantsAsWritten();
-    }
-    public static @C("int") int CXPrintingPolicy_SuppressImplicitBase() {
-        return Index_h$constants_1.CXPrintingPolicy_SuppressImplicitBase();
-    }
-    public static @C("int") int CXPrintingPolicy_FullyQualifiedName() {
-        return Index_h$constants_1.CXPrintingPolicy_FullyQualifiedName();
-    }
-    public static @C("int") int CXPrintingPolicy_LastProperty() {
-        return Index_h$constants_1.CXPrintingPolicy_LastProperty();
-    }
-    public static  MethodHandle clang_PrintingPolicy_getProperty$MH() {
-        return Index_h$constants_1.clang_PrintingPolicy_getProperty$MH();
-    }
-    public static @C("unsigned int") int clang_PrintingPolicy_getProperty (@C("CXPrintingPolicy") Addressable Policy, @C("enum CXPrintingPolicyProperty") int Property) {
+    public static MemorySegment clang_Cursor_getSpellingNameRange ( MemorySegment x0,  int pieceIndex,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_Cursor_getSpellingNameRange$MH, "clang_Cursor_getSpellingNameRange");
         try {
-            return (int)Index_h$constants_1.clang_PrintingPolicy_getProperty$MH().invokeExact(Policy.address(), Property);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0, pieceIndex, options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_PrintingPolicy_setProperty$MH() {
-        return Index_h$constants_1.clang_PrintingPolicy_setProperty$MH();
+    public static int CXPrintingPolicy_Indentation() {
+        return (int)0L;
     }
-    public static void clang_PrintingPolicy_setProperty (@C("CXPrintingPolicy") Addressable Policy, @C("enum CXPrintingPolicyProperty") int Property, @C("unsigned int") int Value) {
+    public static int CXPrintingPolicy_SuppressSpecifiers() {
+        return (int)1L;
+    }
+    public static int CXPrintingPolicy_SuppressTagKeyword() {
+        return (int)2L;
+    }
+    public static int CXPrintingPolicy_IncludeTagDefinition() {
+        return (int)3L;
+    }
+    public static int CXPrintingPolicy_SuppressScope() {
+        return (int)4L;
+    }
+    public static int CXPrintingPolicy_SuppressUnwrittenScope() {
+        return (int)5L;
+    }
+    public static int CXPrintingPolicy_SuppressInitializers() {
+        return (int)6L;
+    }
+    public static int CXPrintingPolicy_ConstantArraySizeAsWritten() {
+        return (int)7L;
+    }
+    public static int CXPrintingPolicy_AnonymousTagLocations() {
+        return (int)8L;
+    }
+    public static int CXPrintingPolicy_SuppressStrongLifetime() {
+        return (int)9L;
+    }
+    public static int CXPrintingPolicy_SuppressLifetimeQualifiers() {
+        return (int)10L;
+    }
+    public static int CXPrintingPolicy_SuppressTemplateArgsInCXXConstructors() {
+        return (int)11L;
+    }
+    public static int CXPrintingPolicy_Bool() {
+        return (int)12L;
+    }
+    public static int CXPrintingPolicy_Restrict() {
+        return (int)13L;
+    }
+    public static int CXPrintingPolicy_Alignof() {
+        return (int)14L;
+    }
+    public static int CXPrintingPolicy_UnderscoreAlignof() {
+        return (int)15L;
+    }
+    public static int CXPrintingPolicy_UseVoidForZeroParams() {
+        return (int)16L;
+    }
+    public static int CXPrintingPolicy_TerseOutput() {
+        return (int)17L;
+    }
+    public static int CXPrintingPolicy_PolishForDeclaration() {
+        return (int)18L;
+    }
+    public static int CXPrintingPolicy_Half() {
+        return (int)19L;
+    }
+    public static int CXPrintingPolicy_MSWChar() {
+        return (int)20L;
+    }
+    public static int CXPrintingPolicy_IncludeNewlines() {
+        return (int)21L;
+    }
+    public static int CXPrintingPolicy_MSVCFormatting() {
+        return (int)22L;
+    }
+    public static int CXPrintingPolicy_ConstantsAsWritten() {
+        return (int)23L;
+    }
+    public static int CXPrintingPolicy_SuppressImplicitBase() {
+        return (int)24L;
+    }
+    public static int CXPrintingPolicy_FullyQualifiedName() {
+        return (int)25L;
+    }
+    public static int CXPrintingPolicy_LastProperty() {
+        return (int)25L;
+    }
+    public static MethodHandle clang_PrintingPolicy_getProperty$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_PrintingPolicy_getProperty$MH,"clang_PrintingPolicy_getProperty");
+    }
+    public static int clang_PrintingPolicy_getProperty ( Addressable Policy,  int Property) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_PrintingPolicy_getProperty$MH, "clang_PrintingPolicy_getProperty");
         try {
-            Index_h$constants_1.clang_PrintingPolicy_setProperty$MH().invokeExact(Policy.address(), Property, Value);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Policy.address(), Property);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorPrintingPolicy$MH() {
-        return Index_h$constants_1.clang_getCursorPrintingPolicy$MH();
+    public static MethodHandle clang_PrintingPolicy_setProperty$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_PrintingPolicy_setProperty$MH,"clang_PrintingPolicy_setProperty");
     }
-    public static @C("CXPrintingPolicy") MemoryAddress clang_getCursorPrintingPolicy (@C("CXCursor") MemorySegment x0) {
+    public static void clang_PrintingPolicy_setProperty ( Addressable Policy,  int Property,  int Value) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_PrintingPolicy_setProperty$MH, "clang_PrintingPolicy_setProperty");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getCursorPrintingPolicy$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Policy.address(), Property, Value);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_PrintingPolicy_dispose$MH() {
-        return Index_h$constants_1.clang_PrintingPolicy_dispose$MH();
+    public static MethodHandle clang_getCursorPrintingPolicy$MH() {
+        return RuntimeHelper.requireNonNull(constants$33.clang_getCursorPrintingPolicy$MH,"clang_getCursorPrintingPolicy");
     }
-    public static void clang_PrintingPolicy_dispose (@C("CXPrintingPolicy") Addressable Policy) {
+    public static MemoryAddress clang_getCursorPrintingPolicy ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$33.clang_getCursorPrintingPolicy$MH, "clang_getCursorPrintingPolicy");
         try {
-            Index_h$constants_1.clang_PrintingPolicy_dispose$MH().invokeExact(Policy.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorPrettyPrinted$MH() {
-        return Index_h$constants_1.clang_getCursorPrettyPrinted$MH();
+    public static class constants$33 {
+
+        static final FunctionDescriptor clang_constructUSR_ObjCProperty$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("data"),
+                C_INT.withName("private_flags"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_constructUSR_ObjCProperty$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_constructUSR_ObjCProperty",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$33.clang_constructUSR_ObjCProperty$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorSpelling",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$33.clang_getCursorSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getSpellingNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getSpellingNameRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getSpellingNameRange",
+            "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
+            constants$33.clang_Cursor_getSpellingNameRange$FUNC, false
+        );
+        static final FunctionDescriptor clang_PrintingPolicy_getProperty$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_PrintingPolicy_getProperty$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_PrintingPolicy_getProperty",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)I",
+            constants$33.clang_PrintingPolicy_getProperty$FUNC, false
+        );
+        static final FunctionDescriptor clang_PrintingPolicy_setProperty$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_PrintingPolicy_setProperty$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_PrintingPolicy_setProperty",
+            "(Ljdk/incubator/foreign/MemoryAddress;II)V",
+            constants$33.clang_PrintingPolicy_setProperty$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorPrintingPolicy$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorPrintingPolicy$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorPrintingPolicy",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$33.clang_getCursorPrintingPolicy$FUNC, false
+        );
     }
-    public static @C("CXString") MemorySegment clang_getCursorPrettyPrinted (@C("CXCursor") MemorySegment Cursor, @C("CXPrintingPolicy") Addressable Policy) {
+
+    public static MethodHandle clang_PrintingPolicy_dispose$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_PrintingPolicy_dispose$MH,"clang_PrintingPolicy_dispose");
+    }
+    public static void clang_PrintingPolicy_dispose ( Addressable Policy) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_PrintingPolicy_dispose$MH, "clang_PrintingPolicy_dispose");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorPrettyPrinted$MH().invokeExact(Cursor, Policy.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Policy.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTypePrintingPolicy$MH() {
-        return Index_h$constants_1.clang_getTypePrintingPolicy$MH();
+    public static MethodHandle clang_getCursorPrettyPrinted$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_getCursorPrettyPrinted$MH,"clang_getCursorPrettyPrinted");
     }
-    public static @C("CXPrintingPolicy") MemoryAddress clang_getTypePrintingPolicy (@C("CXType") MemorySegment x0) {
+    public static MemorySegment clang_getCursorPrettyPrinted ( MemorySegment Cursor,  Addressable Policy) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_getCursorPrettyPrinted$MH, "clang_getCursorPrettyPrinted");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getTypePrintingPolicy$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Cursor, Policy.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTypePrettyPrinted$MH() {
-        return Index_h$constants_1.clang_getTypePrettyPrinted$MH();
+    public static MethodHandle clang_getTypePrintingPolicy$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_getTypePrintingPolicy$MH,"clang_getTypePrintingPolicy");
     }
-    public static @C("CXString") MemorySegment clang_getTypePrettyPrinted (@C("CXType") MemorySegment CT, @C("CXPrintingPolicy") Addressable Policy) {
+    public static MemoryAddress clang_getTypePrintingPolicy ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_getTypePrintingPolicy$MH, "clang_getTypePrintingPolicy");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getTypePrettyPrinted$MH().invokeExact(CT, Policy.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorDisplayName$MH() {
-        return Index_h$constants_1.clang_getCursorDisplayName$MH();
+    public static MethodHandle clang_getTypePrettyPrinted$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_getTypePrettyPrinted$MH,"clang_getTypePrettyPrinted");
     }
-    public static @C("CXString") MemorySegment clang_getCursorDisplayName (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_getTypePrettyPrinted ( MemorySegment CT,  Addressable Policy) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_getTypePrettyPrinted$MH, "clang_getTypePrettyPrinted");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorDisplayName$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(CT, Policy.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorReferenced$MH() {
-        return Index_h$constants_1.clang_getCursorReferenced$MH();
+    public static MethodHandle clang_getCursorDisplayName$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_getCursorDisplayName$MH,"clang_getCursorDisplayName");
     }
-    public static @C("CXCursor") MemorySegment clang_getCursorReferenced (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_getCursorDisplayName ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_getCursorDisplayName$MH, "clang_getCursorDisplayName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorReferenced$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorDefinition$MH() {
-        return Index_h$constants_1.clang_getCursorDefinition$MH();
+    public static MethodHandle clang_getCursorReferenced$MH() {
+        return RuntimeHelper.requireNonNull(constants$34.clang_getCursorReferenced$MH,"clang_getCursorReferenced");
     }
-    public static @C("CXCursor") MemorySegment clang_getCursorDefinition (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_getCursorReferenced ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$34.clang_getCursorReferenced$MH, "clang_getCursorReferenced");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorDefinition$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_isCursorDefinition$MH() {
-        return Index_h$constants_1.clang_isCursorDefinition$MH();
+    public static class constants$34 {
+
+        static final FunctionDescriptor clang_PrintingPolicy_dispose$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_PrintingPolicy_dispose$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_PrintingPolicy_dispose",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$34.clang_PrintingPolicy_dispose$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorPrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getCursorPrettyPrinted$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorPrettyPrinted",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$34.clang_getCursorPrettyPrinted$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypePrintingPolicy$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTypePrintingPolicy$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypePrintingPolicy",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$34.clang_getTypePrintingPolicy$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTypePrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getTypePrettyPrinted$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTypePrettyPrinted",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$34.clang_getTypePrettyPrinted$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorDisplayName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorDisplayName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorDisplayName",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$34.clang_getCursorDisplayName$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorReferenced$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorReferenced$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorReferenced",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$34.clang_getCursorReferenced$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_isCursorDefinition (@C("CXCursor") MemorySegment x0) {
+
+    public static MethodHandle clang_getCursorDefinition$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_getCursorDefinition$MH,"clang_getCursorDefinition");
+    }
+    public static MemorySegment clang_getCursorDefinition ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_getCursorDefinition$MH, "clang_getCursorDefinition");
         try {
-            return (int)Index_h$constants_1.clang_isCursorDefinition$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCanonicalCursor$MH() {
-        return Index_h$constants_1.clang_getCanonicalCursor$MH();
+    public static MethodHandle clang_isCursorDefinition$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_isCursorDefinition$MH,"clang_isCursorDefinition");
     }
-    public static @C("CXCursor") MemorySegment clang_getCanonicalCursor (@C("CXCursor") MemorySegment x0) {
+    public static int clang_isCursorDefinition ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_isCursorDefinition$MH, "clang_isCursorDefinition");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCanonicalCursor$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getObjCSelectorIndex$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCSelectorIndex$MH();
+    public static MethodHandle clang_getCanonicalCursor$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_getCanonicalCursor$MH,"clang_getCanonicalCursor");
     }
-    public static @C("int") int clang_Cursor_getObjCSelectorIndex (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_getCanonicalCursor ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_getCanonicalCursor$MH, "clang_getCanonicalCursor");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_getObjCSelectorIndex$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_isDynamicCall$MH() {
-        return Index_h$constants_1.clang_Cursor_isDynamicCall$MH();
+    public static MethodHandle clang_Cursor_getObjCSelectorIndex$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_Cursor_getObjCSelectorIndex$MH,"clang_Cursor_getObjCSelectorIndex");
     }
-    public static @C("int") int clang_Cursor_isDynamicCall (@C("CXCursor") MemorySegment C) {
+    public static int clang_Cursor_getObjCSelectorIndex ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_Cursor_getObjCSelectorIndex$MH, "clang_Cursor_getObjCSelectorIndex");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_isDynamicCall$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getReceiverType$MH() {
-        return Index_h$constants_1.clang_Cursor_getReceiverType$MH();
+    public static MethodHandle clang_Cursor_isDynamicCall$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_Cursor_isDynamicCall$MH,"clang_Cursor_isDynamicCall");
     }
-    public static @C("CXType") MemorySegment clang_Cursor_getReceiverType (@C("CXCursor") MemorySegment C) {
+    public static int clang_Cursor_isDynamicCall ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_Cursor_isDynamicCall$MH, "clang_Cursor_isDynamicCall");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getReceiverType$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXObjCPropertyAttr_noattr() {
-        return Index_h$constants_1.CXObjCPropertyAttr_noattr();
+    public static MethodHandle clang_Cursor_getReceiverType$MH() {
+        return RuntimeHelper.requireNonNull(constants$35.clang_Cursor_getReceiverType$MH,"clang_Cursor_getReceiverType");
     }
-    public static @C("int") int CXObjCPropertyAttr_readonly() {
-        return Index_h$constants_1.CXObjCPropertyAttr_readonly();
-    }
-    public static @C("int") int CXObjCPropertyAttr_getter() {
-        return Index_h$constants_1.CXObjCPropertyAttr_getter();
-    }
-    public static @C("int") int CXObjCPropertyAttr_assign() {
-        return Index_h$constants_1.CXObjCPropertyAttr_assign();
-    }
-    public static @C("int") int CXObjCPropertyAttr_readwrite() {
-        return Index_h$constants_1.CXObjCPropertyAttr_readwrite();
-    }
-    public static @C("int") int CXObjCPropertyAttr_retain() {
-        return Index_h$constants_1.CXObjCPropertyAttr_retain();
-    }
-    public static @C("int") int CXObjCPropertyAttr_copy() {
-        return Index_h$constants_1.CXObjCPropertyAttr_copy();
-    }
-    public static @C("int") int CXObjCPropertyAttr_nonatomic() {
-        return Index_h$constants_1.CXObjCPropertyAttr_nonatomic();
-    }
-    public static @C("int") int CXObjCPropertyAttr_setter() {
-        return Index_h$constants_1.CXObjCPropertyAttr_setter();
-    }
-    public static @C("int") int CXObjCPropertyAttr_atomic() {
-        return Index_h$constants_1.CXObjCPropertyAttr_atomic();
-    }
-    public static @C("int") int CXObjCPropertyAttr_weak() {
-        return Index_h$constants_1.CXObjCPropertyAttr_weak();
-    }
-    public static @C("int") int CXObjCPropertyAttr_strong() {
-        return Index_h$constants_1.CXObjCPropertyAttr_strong();
-    }
-    public static @C("int") int CXObjCPropertyAttr_unsafe_unretained() {
-        return Index_h$constants_1.CXObjCPropertyAttr_unsafe_unretained();
-    }
-    public static @C("int") int CXObjCPropertyAttr_class() {
-        return Index_h$constants_1.CXObjCPropertyAttr_class();
-    }
-    public static  MethodHandle clang_Cursor_getObjCPropertyAttributes$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCPropertyAttributes$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_getObjCPropertyAttributes (@C("CXCursor") MemorySegment C, @C("unsigned int") int reserved) {
+    public static MemorySegment clang_Cursor_getReceiverType ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$35.clang_Cursor_getReceiverType$MH, "clang_Cursor_getReceiverType");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_getObjCPropertyAttributes$MH().invokeExact(C, reserved);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getObjCPropertyGetterName$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCPropertyGetterName$MH();
+    public static int CXObjCPropertyAttr_noattr() {
+        return (int)0L;
     }
-    public static @C("CXString") MemorySegment clang_Cursor_getObjCPropertyGetterName (@C("CXCursor") MemorySegment C) {
+    public static int CXObjCPropertyAttr_readonly() {
+        return (int)1L;
+    }
+    public static int CXObjCPropertyAttr_getter() {
+        return (int)2L;
+    }
+    public static int CXObjCPropertyAttr_assign() {
+        return (int)4L;
+    }
+    public static int CXObjCPropertyAttr_readwrite() {
+        return (int)8L;
+    }
+    public static int CXObjCPropertyAttr_retain() {
+        return (int)16L;
+    }
+    public static int CXObjCPropertyAttr_copy() {
+        return (int)32L;
+    }
+    public static int CXObjCPropertyAttr_nonatomic() {
+        return (int)64L;
+    }
+    public static int CXObjCPropertyAttr_setter() {
+        return (int)128L;
+    }
+    public static int CXObjCPropertyAttr_atomic() {
+        return (int)256L;
+    }
+    public static int CXObjCPropertyAttr_weak() {
+        return (int)512L;
+    }
+    public static int CXObjCPropertyAttr_strong() {
+        return (int)1024L;
+    }
+    public static int CXObjCPropertyAttr_unsafe_unretained() {
+        return (int)2048L;
+    }
+    public static int CXObjCPropertyAttr_class() {
+        return (int)4096L;
+    }
+    public static class constants$35 {
+
+        static final FunctionDescriptor clang_getCursorDefinition$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorDefinition$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorDefinition",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$35.clang_getCursorDefinition$FUNC, false
+        );
+        static final FunctionDescriptor clang_isCursorDefinition$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_isCursorDefinition$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_isCursorDefinition",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$35.clang_isCursorDefinition$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCanonicalCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCanonicalCursor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCanonicalCursor",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$35.clang_getCanonicalCursor$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getObjCSelectorIndex$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getObjCSelectorIndex$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCSelectorIndex",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$35.clang_Cursor_getObjCSelectorIndex$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isDynamicCall$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isDynamicCall$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isDynamicCall",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$35.clang_Cursor_isDynamicCall$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getReceiverType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getReceiverType$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getReceiverType",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$35.clang_Cursor_getReceiverType$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Cursor_getObjCPropertyAttributes$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertyAttributes$MH,"clang_Cursor_getObjCPropertyAttributes");
+    }
+    public static int clang_Cursor_getObjCPropertyAttributes ( MemorySegment C,  int reserved) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertyAttributes$MH, "clang_Cursor_getObjCPropertyAttributes");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getObjCPropertyGetterName$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C, reserved);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getObjCPropertySetterName$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCPropertySetterName$MH();
+    public static MethodHandle clang_Cursor_getObjCPropertyGetterName$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertyGetterName$MH,"clang_Cursor_getObjCPropertyGetterName");
     }
-    public static @C("CXString") MemorySegment clang_Cursor_getObjCPropertySetterName (@C("CXCursor") MemorySegment C) {
+    public static MemorySegment clang_Cursor_getObjCPropertyGetterName ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertyGetterName$MH, "clang_Cursor_getObjCPropertyGetterName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getObjCPropertySetterName$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXObjCDeclQualifier_None() {
-        return Index_h$constants_1.CXObjCDeclQualifier_None();
+    public static MethodHandle clang_Cursor_getObjCPropertySetterName$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertySetterName$MH,"clang_Cursor_getObjCPropertySetterName");
     }
-    public static @C("int") int CXObjCDeclQualifier_In() {
-        return Index_h$constants_1.CXObjCDeclQualifier_In();
-    }
-    public static @C("int") int CXObjCDeclQualifier_Inout() {
-        return Index_h$constants_1.CXObjCDeclQualifier_Inout();
-    }
-    public static @C("int") int CXObjCDeclQualifier_Out() {
-        return Index_h$constants_1.CXObjCDeclQualifier_Out();
-    }
-    public static @C("int") int CXObjCDeclQualifier_Bycopy() {
-        return Index_h$constants_1.CXObjCDeclQualifier_Bycopy();
-    }
-    public static @C("int") int CXObjCDeclQualifier_Byref() {
-        return Index_h$constants_1.CXObjCDeclQualifier_Byref();
-    }
-    public static @C("int") int CXObjCDeclQualifier_Oneway() {
-        return Index_h$constants_1.CXObjCDeclQualifier_Oneway();
-    }
-    public static  MethodHandle clang_Cursor_getObjCDeclQualifiers$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCDeclQualifiers$MH();
-    }
-    public static @C("unsigned int") int clang_Cursor_getObjCDeclQualifiers (@C("CXCursor") MemorySegment C) {
+    public static MemorySegment clang_Cursor_getObjCPropertySetterName ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCPropertySetterName$MH, "clang_Cursor_getObjCPropertySetterName");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_getObjCDeclQualifiers$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_isObjCOptional$MH() {
-        return Index_h$constants_1.clang_Cursor_isObjCOptional$MH();
+    public static int CXObjCDeclQualifier_None() {
+        return (int)0L;
     }
-    public static @C("unsigned int") int clang_Cursor_isObjCOptional (@C("CXCursor") MemorySegment C) {
+    public static int CXObjCDeclQualifier_In() {
+        return (int)1L;
+    }
+    public static int CXObjCDeclQualifier_Inout() {
+        return (int)2L;
+    }
+    public static int CXObjCDeclQualifier_Out() {
+        return (int)4L;
+    }
+    public static int CXObjCDeclQualifier_Bycopy() {
+        return (int)8L;
+    }
+    public static int CXObjCDeclQualifier_Byref() {
+        return (int)16L;
+    }
+    public static int CXObjCDeclQualifier_Oneway() {
+        return (int)32L;
+    }
+    public static MethodHandle clang_Cursor_getObjCDeclQualifiers$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCDeclQualifiers$MH,"clang_Cursor_getObjCDeclQualifiers");
+    }
+    public static int clang_Cursor_getObjCDeclQualifiers ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_getObjCDeclQualifiers$MH, "clang_Cursor_getObjCDeclQualifiers");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_isObjCOptional$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_isVariadic$MH() {
-        return Index_h$constants_1.clang_Cursor_isVariadic$MH();
+    public static MethodHandle clang_Cursor_isObjCOptional$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_isObjCOptional$MH,"clang_Cursor_isObjCOptional");
     }
-    public static @C("unsigned int") int clang_Cursor_isVariadic (@C("CXCursor") MemorySegment C) {
+    public static int clang_Cursor_isObjCOptional ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_isObjCOptional$MH, "clang_Cursor_isObjCOptional");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_isVariadic$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_isExternalSymbol$MH() {
-        return Index_h$constants_1.clang_Cursor_isExternalSymbol$MH();
+    public static MethodHandle clang_Cursor_isVariadic$MH() {
+        return RuntimeHelper.requireNonNull(constants$36.clang_Cursor_isVariadic$MH,"clang_Cursor_isVariadic");
     }
-    public static @C("unsigned int") int clang_Cursor_isExternalSymbol (@C("CXCursor") MemorySegment C, @C("CXString*") Addressable language, @C("CXString*") Addressable definedIn, @C("unsigned int*") Addressable isGenerated) {
+    public static int clang_Cursor_isVariadic ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$36.clang_Cursor_isVariadic$MH, "clang_Cursor_isVariadic");
         try {
-            return (int)Index_h$constants_1.clang_Cursor_isExternalSymbol$MH().invokeExact(C, language.address(), definedIn.address(), isGenerated.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getCommentRange$MH() {
-        return Index_h$constants_1.clang_Cursor_getCommentRange$MH();
+    public static class constants$36 {
+
+        static final FunctionDescriptor clang_Cursor_getObjCPropertyAttributes$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT
+        );
+        static final MethodHandle clang_Cursor_getObjCPropertyAttributes$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCPropertyAttributes",
+            "(Ljdk/incubator/foreign/MemorySegment;I)I",
+            constants$36.clang_Cursor_getObjCPropertyAttributes$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getObjCPropertyGetterName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getObjCPropertyGetterName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCPropertyGetterName",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$36.clang_Cursor_getObjCPropertyGetterName$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getObjCPropertySetterName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getObjCPropertySetterName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCPropertySetterName",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$36.clang_Cursor_getObjCPropertySetterName$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getObjCDeclQualifiers$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getObjCDeclQualifiers$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCDeclQualifiers",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$36.clang_Cursor_getObjCDeclQualifiers$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isObjCOptional$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isObjCOptional$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isObjCOptional",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$36.clang_Cursor_isObjCOptional$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_isVariadic$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_isVariadic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isVariadic",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$36.clang_Cursor_isVariadic$FUNC, false
+        );
     }
-    public static @C("CXSourceRange") MemorySegment clang_Cursor_getCommentRange (@C("CXCursor") MemorySegment C) {
+
+    public static MethodHandle clang_Cursor_isExternalSymbol$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_isExternalSymbol$MH,"clang_Cursor_isExternalSymbol");
+    }
+    public static int clang_Cursor_isExternalSymbol ( MemorySegment C,  Addressable language,  Addressable definedIn,  Addressable isGenerated) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_isExternalSymbol$MH, "clang_Cursor_isExternalSymbol");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getCommentRange$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C, language.address(), definedIn.address(), isGenerated.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getRawCommentText$MH() {
-        return Index_h$constants_1.clang_Cursor_getRawCommentText$MH();
+    public static MethodHandle clang_Cursor_getCommentRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getCommentRange$MH,"clang_Cursor_getCommentRange");
     }
-    public static @C("CXString") MemorySegment clang_Cursor_getRawCommentText (@C("CXCursor") MemorySegment C) {
+    public static MemorySegment clang_Cursor_getCommentRange ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getCommentRange$MH, "clang_Cursor_getCommentRange");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getRawCommentText$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getBriefCommentText$MH() {
-        return Index_h$constants_1.clang_Cursor_getBriefCommentText$MH();
+    public static MethodHandle clang_Cursor_getRawCommentText$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getRawCommentText$MH,"clang_Cursor_getRawCommentText");
     }
-    public static @C("CXString") MemorySegment clang_Cursor_getBriefCommentText (@C("CXCursor") MemorySegment C) {
+    public static MemorySegment clang_Cursor_getRawCommentText ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getRawCommentText$MH, "clang_Cursor_getRawCommentText");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getBriefCommentText$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getMangling$MH() {
-        return Index_h$constants_1.clang_Cursor_getMangling$MH();
+    public static MethodHandle clang_Cursor_getBriefCommentText$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getBriefCommentText$MH,"clang_Cursor_getBriefCommentText");
     }
-    public static @C("CXString") MemorySegment clang_Cursor_getMangling (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_Cursor_getBriefCommentText ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getBriefCommentText$MH, "clang_Cursor_getBriefCommentText");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Cursor_getMangling$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getCXXManglings$MH() {
-        return Index_h$constants_1.clang_Cursor_getCXXManglings$MH();
+    public static MethodHandle clang_Cursor_getMangling$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getMangling$MH,"clang_Cursor_getMangling");
     }
-    public static @C("CXStringSet*") MemoryAddress clang_Cursor_getCXXManglings (@C("CXCursor") MemorySegment x0) {
+    public static MemorySegment clang_Cursor_getMangling ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getMangling$MH, "clang_Cursor_getMangling");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Cursor_getCXXManglings$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getObjCManglings$MH() {
-        return Index_h$constants_1.clang_Cursor_getObjCManglings$MH();
+    public static MethodHandle clang_Cursor_getCXXManglings$MH() {
+        return RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getCXXManglings$MH,"clang_Cursor_getCXXManglings");
     }
-    public static @C("CXStringSet*") MemoryAddress clang_Cursor_getObjCManglings (@C("CXCursor") MemorySegment x0) {
+    public static MemoryAddress clang_Cursor_getCXXManglings ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$37.clang_Cursor_getCXXManglings$MH, "clang_Cursor_getCXXManglings");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Cursor_getObjCManglings$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Cursor_getModule$MH() {
-        return Index_h$constants_1.clang_Cursor_getModule$MH();
+    public static class constants$37 {
+
+        static final FunctionDescriptor clang_Cursor_isExternalSymbol$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_Cursor_isExternalSymbol$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_isExternalSymbol",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$37.clang_Cursor_isExternalSymbol$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getCommentRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getCommentRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getCommentRange",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$37.clang_Cursor_getCommentRange$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getRawCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getRawCommentText$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getRawCommentText",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$37.clang_Cursor_getRawCommentText$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getBriefCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getBriefCommentText$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getBriefCommentText",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$37.clang_Cursor_getBriefCommentText$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getMangling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getMangling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getMangling",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$37.clang_Cursor_getMangling$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getCXXManglings$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getCXXManglings$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getCXXManglings",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$37.clang_Cursor_getCXXManglings$FUNC, false
+        );
     }
-    public static @C("CXModule") MemoryAddress clang_Cursor_getModule (@C("CXCursor") MemorySegment C) {
+
+    public static MethodHandle clang_Cursor_getObjCManglings$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_Cursor_getObjCManglings$MH,"clang_Cursor_getObjCManglings");
+    }
+    public static MemoryAddress clang_Cursor_getObjCManglings ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_Cursor_getObjCManglings$MH, "clang_Cursor_getObjCManglings");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Cursor_getModule$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getModuleForFile$MH() {
-        return Index_h$constants_1.clang_getModuleForFile$MH();
+    public static MethodHandle clang_Cursor_getModule$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_Cursor_getModule$MH,"clang_Cursor_getModule");
     }
-    public static @C("CXModule") MemoryAddress clang_getModuleForFile (@C("CXTranslationUnit") Addressable x0, @C("CXFile") Addressable x1) {
+    public static MemoryAddress clang_Cursor_getModule ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_Cursor_getModule$MH, "clang_Cursor_getModule");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getModuleForFile$MH().invokeExact(x0.address(), x1.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getASTFile$MH() {
-        return Index_h$constants_1.clang_Module_getASTFile$MH();
+    public static MethodHandle clang_getModuleForFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_getModuleForFile$MH,"clang_getModuleForFile");
     }
-    public static @C("CXFile") MemoryAddress clang_Module_getASTFile (@C("CXModule") Addressable Module) {
+    public static MemoryAddress clang_getModuleForFile ( Addressable x0,  Addressable x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_getModuleForFile$MH, "clang_getModuleForFile");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Module_getASTFile$MH().invokeExact(Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0.address(), x1.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getParent$MH() {
-        return Index_h$constants_1.clang_Module_getParent$MH();
+    public static MethodHandle clang_Module_getASTFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_Module_getASTFile$MH,"clang_Module_getASTFile");
     }
-    public static @C("CXModule") MemoryAddress clang_Module_getParent (@C("CXModule") Addressable Module) {
+    public static MemoryAddress clang_Module_getASTFile ( Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_Module_getASTFile$MH, "clang_Module_getASTFile");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Module_getParent$MH().invokeExact(Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getName$MH() {
-        return Index_h$constants_1.clang_Module_getName$MH();
+    public static MethodHandle clang_Module_getParent$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_Module_getParent$MH,"clang_Module_getParent");
     }
-    public static @C("CXString") MemorySegment clang_Module_getName (@C("CXModule") Addressable Module) {
+    public static MemoryAddress clang_Module_getParent ( Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_Module_getParent$MH, "clang_Module_getParent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Module_getName$MH().invokeExact(Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getFullName$MH() {
-        return Index_h$constants_1.clang_Module_getFullName$MH();
+    public static MethodHandle clang_Module_getName$MH() {
+        return RuntimeHelper.requireNonNull(constants$38.clang_Module_getName$MH,"clang_Module_getName");
     }
-    public static @C("CXString") MemorySegment clang_Module_getFullName (@C("CXModule") Addressable Module) {
+    public static MemorySegment clang_Module_getName ( Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$38.clang_Module_getName$MH, "clang_Module_getName");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_Module_getFullName$MH().invokeExact(Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_isSystem$MH() {
-        return Index_h$constants_1.clang_Module_isSystem$MH();
+    public static class constants$38 {
+
+        static final FunctionDescriptor clang_Cursor_getObjCManglings$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getObjCManglings$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getObjCManglings",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$38.clang_Cursor_getObjCManglings$FUNC, false
+        );
+        static final FunctionDescriptor clang_Cursor_getModule$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_getModule$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_getModule",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$38.clang_Cursor_getModule$FUNC, false
+        );
+        static final FunctionDescriptor clang_getModuleForFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getModuleForFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getModuleForFile",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$38.clang_getModuleForFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_getASTFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_getASTFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getASTFile",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$38.clang_Module_getASTFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_getParent$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_getParent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getParent",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$38.clang_Module_getParent$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_getName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_getName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getName",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$38.clang_Module_getName$FUNC, false
+        );
     }
-    public static @C("int") int clang_Module_isSystem (@C("CXModule") Addressable Module) {
+
+    public static MethodHandle clang_Module_getFullName$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_Module_getFullName$MH,"clang_Module_getFullName");
+    }
+    public static MemorySegment clang_Module_getFullName ( Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_Module_getFullName$MH, "clang_Module_getFullName");
         try {
-            return (int)Index_h$constants_1.clang_Module_isSystem$MH().invokeExact(Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getNumTopLevelHeaders$MH() {
-        return Index_h$constants_1.clang_Module_getNumTopLevelHeaders$MH();
+    public static MethodHandle clang_Module_isSystem$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_Module_isSystem$MH,"clang_Module_isSystem");
     }
-    public static @C("unsigned int") int clang_Module_getNumTopLevelHeaders (@C("CXTranslationUnit") Addressable x0, @C("CXModule") Addressable Module) {
+    public static int clang_Module_isSystem ( Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_Module_isSystem$MH, "clang_Module_isSystem");
         try {
-            return (int)Index_h$constants_1.clang_Module_getNumTopLevelHeaders$MH().invokeExact(x0.address(), Module.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_Module_getTopLevelHeader$MH() {
-        return Index_h$constants_1.clang_Module_getTopLevelHeader$MH();
+    public static MethodHandle clang_Module_getNumTopLevelHeaders$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_Module_getNumTopLevelHeaders$MH,"clang_Module_getNumTopLevelHeaders");
     }
-    public static @C("CXFile") MemoryAddress clang_Module_getTopLevelHeader (@C("CXTranslationUnit") Addressable x0, @C("CXModule") Addressable Module, @C("unsigned int") int Index) {
+    public static int clang_Module_getNumTopLevelHeaders ( Addressable x0,  Addressable Module) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_Module_getNumTopLevelHeaders$MH, "clang_Module_getNumTopLevelHeaders");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Module_getTopLevelHeader$MH().invokeExact(x0.address(), Module.address(), Index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address(), Module.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXConstructor_isConvertingConstructor$MH() {
-        return Index_h$constants_1.clang_CXXConstructor_isConvertingConstructor$MH();
+    public static MethodHandle clang_Module_getTopLevelHeader$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_Module_getTopLevelHeader$MH,"clang_Module_getTopLevelHeader");
     }
-    public static @C("unsigned int") int clang_CXXConstructor_isConvertingConstructor (@C("CXCursor") MemorySegment C) {
+    public static MemoryAddress clang_Module_getTopLevelHeader ( Addressable x0,  Addressable Module,  int Index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_Module_getTopLevelHeader$MH, "clang_Module_getTopLevelHeader");
         try {
-            return (int)Index_h$constants_1.clang_CXXConstructor_isConvertingConstructor$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0.address(), Module.address(), Index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXConstructor_isCopyConstructor$MH() {
-        return Index_h$constants_1.clang_CXXConstructor_isCopyConstructor$MH();
+    public static MethodHandle clang_CXXConstructor_isConvertingConstructor$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_CXXConstructor_isConvertingConstructor$MH,"clang_CXXConstructor_isConvertingConstructor");
     }
-    public static @C("unsigned int") int clang_CXXConstructor_isCopyConstructor (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXConstructor_isConvertingConstructor ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_CXXConstructor_isConvertingConstructor$MH, "clang_CXXConstructor_isConvertingConstructor");
         try {
-            return (int)Index_h$constants_1.clang_CXXConstructor_isCopyConstructor$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXConstructor_isDefaultConstructor$MH() {
-        return Index_h$constants_1.clang_CXXConstructor_isDefaultConstructor$MH();
+    public static MethodHandle clang_CXXConstructor_isCopyConstructor$MH() {
+        return RuntimeHelper.requireNonNull(constants$39.clang_CXXConstructor_isCopyConstructor$MH,"clang_CXXConstructor_isCopyConstructor");
     }
-    public static @C("unsigned int") int clang_CXXConstructor_isDefaultConstructor (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXConstructor_isCopyConstructor ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$39.clang_CXXConstructor_isCopyConstructor$MH, "clang_CXXConstructor_isCopyConstructor");
         try {
-            return (int)Index_h$constants_1.clang_CXXConstructor_isDefaultConstructor$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXConstructor_isMoveConstructor$MH() {
-        return Index_h$constants_1.clang_CXXConstructor_isMoveConstructor$MH();
+    public static class constants$39 {
+
+        static final FunctionDescriptor clang_Module_getFullName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_getFullName$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getFullName",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$39.clang_Module_getFullName$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_isSystem$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_isSystem$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_isSystem",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$39.clang_Module_isSystem$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_getNumTopLevelHeaders$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_Module_getNumTopLevelHeaders$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getNumTopLevelHeaders",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$39.clang_Module_getNumTopLevelHeaders$FUNC, false
+        );
+        static final FunctionDescriptor clang_Module_getTopLevelHeader$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_Module_getTopLevelHeader$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Module_getTopLevelHeader",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$39.clang_Module_getTopLevelHeader$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXConstructor_isConvertingConstructor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXConstructor_isConvertingConstructor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXConstructor_isConvertingConstructor",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$39.clang_CXXConstructor_isConvertingConstructor$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXConstructor_isCopyConstructor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXConstructor_isCopyConstructor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXConstructor_isCopyConstructor",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$39.clang_CXXConstructor_isCopyConstructor$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_CXXConstructor_isMoveConstructor (@C("CXCursor") MemorySegment C) {
+
+    public static MethodHandle clang_CXXConstructor_isDefaultConstructor$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXConstructor_isDefaultConstructor$MH,"clang_CXXConstructor_isDefaultConstructor");
+    }
+    public static int clang_CXXConstructor_isDefaultConstructor ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXConstructor_isDefaultConstructor$MH, "clang_CXXConstructor_isDefaultConstructor");
         try {
-            return (int)Index_h$constants_1.clang_CXXConstructor_isMoveConstructor$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXField_isMutable$MH() {
-        return Index_h$constants_1.clang_CXXField_isMutable$MH();
+    public static MethodHandle clang_CXXConstructor_isMoveConstructor$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXConstructor_isMoveConstructor$MH,"clang_CXXConstructor_isMoveConstructor");
     }
-    public static @C("unsigned int") int clang_CXXField_isMutable (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXConstructor_isMoveConstructor ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXConstructor_isMoveConstructor$MH, "clang_CXXConstructor_isMoveConstructor");
         try {
-            return (int)Index_h$constants_1.clang_CXXField_isMutable$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXMethod_isDefaulted$MH() {
-        return Index_h$constants_1.clang_CXXMethod_isDefaulted$MH();
+    public static MethodHandle clang_CXXField_isMutable$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXField_isMutable$MH,"clang_CXXField_isMutable");
     }
-    public static @C("unsigned int") int clang_CXXMethod_isDefaulted (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXField_isMutable ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXField_isMutable$MH, "clang_CXXField_isMutable");
         try {
-            return (int)Index_h$constants_1.clang_CXXMethod_isDefaulted$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXMethod_isPureVirtual$MH() {
-        return Index_h$constants_1.clang_CXXMethod_isPureVirtual$MH();
+    public static MethodHandle clang_CXXMethod_isDefaulted$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isDefaulted$MH,"clang_CXXMethod_isDefaulted");
     }
-    public static @C("unsigned int") int clang_CXXMethod_isPureVirtual (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXMethod_isDefaulted ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isDefaulted$MH, "clang_CXXMethod_isDefaulted");
         try {
-            return (int)Index_h$constants_1.clang_CXXMethod_isPureVirtual$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXMethod_isStatic$MH() {
-        return Index_h$constants_1.clang_CXXMethod_isStatic$MH();
+    public static MethodHandle clang_CXXMethod_isPureVirtual$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isPureVirtual$MH,"clang_CXXMethod_isPureVirtual");
     }
-    public static @C("unsigned int") int clang_CXXMethod_isStatic (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXMethod_isPureVirtual ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isPureVirtual$MH, "clang_CXXMethod_isPureVirtual");
         try {
-            return (int)Index_h$constants_1.clang_CXXMethod_isStatic$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXMethod_isVirtual$MH() {
-        return Index_h$constants_1.clang_CXXMethod_isVirtual$MH();
+    public static MethodHandle clang_CXXMethod_isStatic$MH() {
+        return RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isStatic$MH,"clang_CXXMethod_isStatic");
     }
-    public static @C("unsigned int") int clang_CXXMethod_isVirtual (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXMethod_isStatic ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$40.clang_CXXMethod_isStatic$MH, "clang_CXXMethod_isStatic");
         try {
-            return (int)Index_h$constants_1.clang_CXXMethod_isVirtual$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXRecord_isAbstract$MH() {
-        return Index_h$constants_1.clang_CXXRecord_isAbstract$MH();
+    public static class constants$40 {
+
+        static final FunctionDescriptor clang_CXXConstructor_isDefaultConstructor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXConstructor_isDefaultConstructor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXConstructor_isDefaultConstructor",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXConstructor_isDefaultConstructor$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXConstructor_isMoveConstructor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXConstructor_isMoveConstructor$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXConstructor_isMoveConstructor",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXConstructor_isMoveConstructor$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXField_isMutable$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXField_isMutable$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXField_isMutable",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXField_isMutable$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXMethod_isDefaulted$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXMethod_isDefaulted$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXMethod_isDefaulted",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXMethod_isDefaulted$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXMethod_isPureVirtual$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXMethod_isPureVirtual$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXMethod_isPureVirtual",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXMethod_isPureVirtual$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXMethod_isStatic$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXMethod_isStatic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXMethod_isStatic",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$40.clang_CXXMethod_isStatic$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_CXXRecord_isAbstract (@C("CXCursor") MemorySegment C) {
+
+    public static MethodHandle clang_CXXMethod_isVirtual$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_CXXMethod_isVirtual$MH,"clang_CXXMethod_isVirtual");
+    }
+    public static int clang_CXXMethod_isVirtual ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_CXXMethod_isVirtual$MH, "clang_CXXMethod_isVirtual");
         try {
-            return (int)Index_h$constants_1.clang_CXXRecord_isAbstract$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EnumDecl_isScoped$MH() {
-        return Index_h$constants_1.clang_EnumDecl_isScoped$MH();
+    public static MethodHandle clang_CXXRecord_isAbstract$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_CXXRecord_isAbstract$MH,"clang_CXXRecord_isAbstract");
     }
-    public static @C("unsigned int") int clang_EnumDecl_isScoped (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXRecord_isAbstract ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_CXXRecord_isAbstract$MH, "clang_CXXRecord_isAbstract");
         try {
-            return (int)Index_h$constants_1.clang_EnumDecl_isScoped$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_CXXMethod_isConst$MH() {
-        return Index_h$constants_1.clang_CXXMethod_isConst$MH();
+    public static MethodHandle clang_EnumDecl_isScoped$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_EnumDecl_isScoped$MH,"clang_EnumDecl_isScoped");
     }
-    public static @C("unsigned int") int clang_CXXMethod_isConst (@C("CXCursor") MemorySegment C) {
+    public static int clang_EnumDecl_isScoped ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_EnumDecl_isScoped$MH, "clang_EnumDecl_isScoped");
         try {
-            return (int)Index_h$constants_1.clang_CXXMethod_isConst$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTemplateCursorKind$MH() {
-        return Index_h$constants_1.clang_getTemplateCursorKind$MH();
+    public static MethodHandle clang_CXXMethod_isConst$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_CXXMethod_isConst$MH,"clang_CXXMethod_isConst");
     }
-    public static @C("enum CXCursorKind") int clang_getTemplateCursorKind (@C("CXCursor") MemorySegment C) {
+    public static int clang_CXXMethod_isConst ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_CXXMethod_isConst$MH, "clang_CXXMethod_isConst");
         try {
-            return (int)Index_h$constants_1.clang_getTemplateCursorKind$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTemplateSpecializationKind$MH() {
-        return Index_h$constants_1.clang_getTemplateSpecializationKind$MH();
+    public static MethodHandle clang_getTemplateCursorKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_getTemplateCursorKind$MH,"clang_getTemplateCursorKind");
     }
-    public static @C("enum CXTemplateSpecializationKind") int clang_getTemplateSpecializationKind (@C("CXCursor") MemorySegment C) {
+    public static int clang_getTemplateCursorKind ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_getTemplateCursorKind$MH, "clang_getTemplateCursorKind");
         try {
-            return (int)Index_h$constants_1.clang_getTemplateSpecializationKind$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getSpecializedCursorTemplate$MH() {
-        return Index_h$constants_1.clang_getSpecializedCursorTemplate$MH();
+    public static MethodHandle clang_getTemplateSpecializationKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$41.clang_getTemplateSpecializationKind$MH,"clang_getTemplateSpecializationKind");
     }
-    public static @C("CXCursor") MemorySegment clang_getSpecializedCursorTemplate (@C("CXCursor") MemorySegment C) {
+    public static int clang_getTemplateSpecializationKind ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$41.clang_getTemplateSpecializationKind$MH, "clang_getTemplateSpecializationKind");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getSpecializedCursorTemplate$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorReferenceNameRange$MH() {
-        return Index_h$constants_1.clang_getCursorReferenceNameRange$MH();
+    public static class constants$41 {
+
+        static final FunctionDescriptor clang_CXXMethod_isVirtual$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXMethod_isVirtual$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXMethod_isVirtual",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_CXXMethod_isVirtual$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXRecord_isAbstract$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXRecord_isAbstract$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXRecord_isAbstract",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_CXXRecord_isAbstract$FUNC, false
+        );
+        static final FunctionDescriptor clang_EnumDecl_isScoped$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_EnumDecl_isScoped$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EnumDecl_isScoped",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_EnumDecl_isScoped$FUNC, false
+        );
+        static final FunctionDescriptor clang_CXXMethod_isConst$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_CXXMethod_isConst$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_CXXMethod_isConst",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_CXXMethod_isConst$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTemplateCursorKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTemplateCursorKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTemplateCursorKind",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_getTemplateCursorKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTemplateSpecializationKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getTemplateSpecializationKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTemplateSpecializationKind",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$41.clang_getTemplateSpecializationKind$FUNC, false
+        );
     }
-    public static @C("CXSourceRange") MemorySegment clang_getCursorReferenceNameRange (@C("CXCursor") MemorySegment C, @C("unsigned int") int NameFlags, @C("unsigned int") int PieceIndex) {
+
+    public static MethodHandle clang_getSpecializedCursorTemplate$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getSpecializedCursorTemplate$MH,"clang_getSpecializedCursorTemplate");
+    }
+    public static MemorySegment clang_getSpecializedCursorTemplate ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getSpecializedCursorTemplate$MH, "clang_getSpecializedCursorTemplate");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorReferenceNameRange$MH().invokeExact(C, NameFlags, PieceIndex);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXNameRange_WantQualifier() {
-        return Index_h$constants_1.CXNameRange_WantQualifier();
+    public static MethodHandle clang_getCursorReferenceNameRange$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getCursorReferenceNameRange$MH,"clang_getCursorReferenceNameRange");
     }
-    public static @C("int") int CXNameRange_WantTemplateArgs() {
-        return Index_h$constants_1.CXNameRange_WantTemplateArgs();
+    public static MemorySegment clang_getCursorReferenceNameRange ( MemorySegment C,  int NameFlags,  int PieceIndex) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getCursorReferenceNameRange$MH, "clang_getCursorReferenceNameRange");
+        try {
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(C, NameFlags, PieceIndex);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
     }
-    public static @C("int") int CXNameRange_WantSinglePiece() {
-        return Index_h$constants_1.CXNameRange_WantSinglePiece();
+    public static int CXNameRange_WantQualifier() {
+        return (int)1L;
     }
-    public static @C("int") int CXToken_Punctuation() {
-        return Index_h$constants_1.CXToken_Punctuation();
+    public static int CXNameRange_WantTemplateArgs() {
+        return (int)2L;
     }
-    public static @C("int") int CXToken_Keyword() {
-        return Index_h$constants_1.CXToken_Keyword();
+    public static int CXNameRange_WantSinglePiece() {
+        return (int)4L;
     }
-    public static @C("int") int CXToken_Identifier() {
-        return Index_h$constants_1.CXToken_Identifier();
+    public static int CXToken_Punctuation() {
+        return (int)0L;
     }
-    public static @C("int") int CXToken_Literal() {
-        return Index_h$constants_1.CXToken_Literal();
+    public static int CXToken_Keyword() {
+        return (int)1L;
     }
-    public static @C("int") int CXToken_Comment() {
-        return Index_h$constants_1.CXToken_Comment();
+    public static int CXToken_Identifier() {
+        return (int)2L;
+    }
+    public static int CXToken_Literal() {
+        return (int)3L;
+    }
+    public static int CXToken_Comment() {
+        return (int)4L;
     }
     public static class CXToken {
 
-        private CXToken() {}
+        static final MemoryLayout CXToken$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+            C_POINTER.withName("ptr_data")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXToken$struct$LAYOUT();
+            return CXToken.CXToken$struct$LAYOUT;
         }
         public static MemorySegment int_data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 16));
         }
+        static final VarHandle ptr_data$VH = MemoryHandles.asAddressVarHandle(CXToken$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("ptr_data")));
         public static VarHandle ptr_data$VH() {
-            return Index_h$constants_1.CXToken$ptr_data$VH();
+            return CXToken.ptr_data$VH;
         }
-        public static  @C("void*") MemoryAddress ptr_data$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXToken$ptr_data$VH().get(seg);
+        public static MemoryAddress ptr_data$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXToken.ptr_data$VH.get(seg);
         }
-        public static  @C("void*") MemoryAddress ptr_data$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXToken$ptr_data$VH().get(seg.asSlice(index*sizeof()));
+        public static void ptr_data$set( MemorySegment seg, MemoryAddress x) {
+            CXToken.ptr_data$VH.set(seg, x);
         }
-        public static void ptr_data$set(@C("struct ") MemorySegment seg, @C("void*") MemoryAddress x) {
-            Index_h$constants_1.CXToken$ptr_data$VH().set(seg, x);
+        public static MemoryAddress ptr_data$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXToken.ptr_data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void ptr_data$set(@C("struct ") MemorySegment seg, long index, @C("void*") MemoryAddress x) {
-            Index_h$constants_1.CXToken$ptr_data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void ptr_data$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXToken.ptr_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getToken$MH() {
-        return Index_h$constants_1.clang_getToken$MH();
+    public static MethodHandle clang_getToken$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getToken$MH,"clang_getToken");
     }
-    public static @C("CXToken*") MemoryAddress clang_getToken (@C("CXTranslationUnit") Addressable TU, @C("CXSourceLocation") MemorySegment Location) {
+    public static MemoryAddress clang_getToken ( Addressable TU,  MemorySegment Location) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getToken$MH, "clang_getToken");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getToken$MH().invokeExact(TU.address(), Location);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(TU.address(), Location);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTokenKind$MH() {
-        return Index_h$constants_1.clang_getTokenKind$MH();
+    public static MethodHandle clang_getTokenKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getTokenKind$MH,"clang_getTokenKind");
     }
-    public static @C("CXTokenKind") int clang_getTokenKind (@C("CXToken") MemorySegment x0) {
+    public static int clang_getTokenKind ( MemorySegment x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getTokenKind$MH, "clang_getTokenKind");
         try {
-            return (int)Index_h$constants_1.clang_getTokenKind$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTokenSpelling$MH() {
-        return Index_h$constants_1.clang_getTokenSpelling$MH();
+    public static MethodHandle clang_getTokenSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getTokenSpelling$MH,"clang_getTokenSpelling");
     }
-    public static @C("CXString") MemorySegment clang_getTokenSpelling (@C("CXTranslationUnit") Addressable x0, @C("CXToken") MemorySegment x1) {
+    public static MemorySegment clang_getTokenSpelling ( Addressable x0,  MemorySegment x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getTokenSpelling$MH, "clang_getTokenSpelling");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getTokenSpelling$MH().invokeExact(x0.address(), x1);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address(), x1);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTokenLocation$MH() {
-        return Index_h$constants_1.clang_getTokenLocation$MH();
+    public static MethodHandle clang_getTokenLocation$MH() {
+        return RuntimeHelper.requireNonNull(constants$42.clang_getTokenLocation$MH,"clang_getTokenLocation");
     }
-    public static @C("CXSourceLocation") MemorySegment clang_getTokenLocation (@C("CXTranslationUnit") Addressable x0, @C("CXToken") MemorySegment x1) {
+    public static MemorySegment clang_getTokenLocation ( Addressable x0,  MemorySegment x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$42.clang_getTokenLocation$MH, "clang_getTokenLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getTokenLocation$MH().invokeExact(x0.address(), x1);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address(), x1);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getTokenExtent$MH() {
-        return Index_h$constants_1.clang_getTokenExtent$MH();
+    public static class constants$42 {
+
+        static final FunctionDescriptor clang_getSpecializedCursorTemplate$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getSpecializedCursorTemplate$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getSpecializedCursorTemplate",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$42.clang_getSpecializedCursorTemplate$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorReferenceNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_getCursorReferenceNameRange$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorReferenceNameRange",
+            "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
+            constants$42.clang_getCursorReferenceNameRange$FUNC, false
+        );
+        static final FunctionDescriptor clang_getToken$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            )
+        );
+        static final MethodHandle clang_getToken$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getToken",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$42.clang_getToken$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTokenKind$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+                C_POINTER.withName("ptr_data")
+            )
+        );
+        static final MethodHandle clang_getTokenKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTokenKind",
+            "(Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$42.clang_getTokenKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTokenSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+                C_POINTER.withName("ptr_data")
+            )
+        );
+        static final MethodHandle clang_getTokenSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTokenSpelling",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$42.clang_getTokenSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_getTokenLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+                C_POINTER.withName("ptr_data")
+            )
+        );
+        static final MethodHandle clang_getTokenLocation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTokenLocation",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$42.clang_getTokenLocation$FUNC, false
+        );
     }
-    public static @C("CXSourceRange") MemorySegment clang_getTokenExtent (@C("CXTranslationUnit") Addressable x0, @C("CXToken") MemorySegment x1) {
+
+    public static MethodHandle clang_getTokenExtent$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_getTokenExtent$MH,"clang_getTokenExtent");
+    }
+    public static MemorySegment clang_getTokenExtent ( Addressable x0,  MemorySegment x1) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_getTokenExtent$MH, "clang_getTokenExtent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getTokenExtent$MH().invokeExact(x0.address(), x1);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(x0.address(), x1);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_tokenize$MH() {
-        return Index_h$constants_1.clang_tokenize$MH();
+    public static MethodHandle clang_tokenize$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_tokenize$MH,"clang_tokenize");
     }
-    public static void clang_tokenize (@C("CXTranslationUnit") Addressable TU, @C("CXSourceRange") MemorySegment Range, @C("CXToken**") Addressable Tokens, @C("unsigned int*") Addressable NumTokens) {
+    public static void clang_tokenize ( Addressable TU,  MemorySegment Range,  Addressable Tokens,  Addressable NumTokens) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_tokenize$MH, "clang_tokenize");
         try {
-            Index_h$constants_1.clang_tokenize$MH().invokeExact(TU.address(), Range, Tokens.address(), NumTokens.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(TU.address(), Range, Tokens.address(), NumTokens.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_annotateTokens$MH() {
-        return Index_h$constants_1.clang_annotateTokens$MH();
+    public static MethodHandle clang_annotateTokens$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_annotateTokens$MH,"clang_annotateTokens");
     }
-    public static void clang_annotateTokens (@C("CXTranslationUnit") Addressable TU, @C("CXToken*") Addressable Tokens, @C("unsigned int") int NumTokens, @C("CXCursor*") Addressable Cursors) {
+    public static void clang_annotateTokens ( Addressable TU,  Addressable Tokens,  int NumTokens,  Addressable Cursors) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_annotateTokens$MH, "clang_annotateTokens");
         try {
-            Index_h$constants_1.clang_annotateTokens$MH().invokeExact(TU.address(), Tokens.address(), NumTokens, Cursors.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(TU.address(), Tokens.address(), NumTokens, Cursors.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeTokens$MH() {
-        return Index_h$constants_1.clang_disposeTokens$MH();
+    public static MethodHandle clang_disposeTokens$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_disposeTokens$MH,"clang_disposeTokens");
     }
-    public static void clang_disposeTokens (@C("CXTranslationUnit") Addressable TU, @C("CXToken*") Addressable Tokens, @C("unsigned int") int NumTokens) {
+    public static void clang_disposeTokens ( Addressable TU,  Addressable Tokens,  int NumTokens) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_disposeTokens$MH, "clang_disposeTokens");
         try {
-            Index_h$constants_1.clang_disposeTokens$MH().invokeExact(TU.address(), Tokens.address(), NumTokens);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(TU.address(), Tokens.address(), NumTokens);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorKindSpelling$MH() {
-        return Index_h$constants_1.clang_getCursorKindSpelling$MH();
+    public static MethodHandle clang_getCursorKindSpelling$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_getCursorKindSpelling$MH,"clang_getCursorKindSpelling");
     }
-    public static @C("CXString") MemorySegment clang_getCursorKindSpelling (@C("enum CXCursorKind") int Kind) {
+    public static MemorySegment clang_getCursorKindSpelling ( int Kind) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_getCursorKindSpelling$MH, "clang_getCursorKindSpelling");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCursorKindSpelling$MH().invokeExact(Kind);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Kind);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getDefinitionSpellingAndExtent$MH() {
-        return Index_h$constants_1.clang_getDefinitionSpellingAndExtent$MH();
+    public static MethodHandle clang_getDefinitionSpellingAndExtent$MH() {
+        return RuntimeHelper.requireNonNull(constants$43.clang_getDefinitionSpellingAndExtent$MH,"clang_getDefinitionSpellingAndExtent");
     }
-    public static void clang_getDefinitionSpellingAndExtent (@C("CXCursor") MemorySegment x0, @C("char**") Addressable startBuf, @C("char**") Addressable endBuf, @C("unsigned int*") Addressable startLine, @C("unsigned int*") Addressable startColumn, @C("unsigned int*") Addressable endLine, @C("unsigned int*") Addressable endColumn) {
+    public static void clang_getDefinitionSpellingAndExtent ( MemorySegment x0,  Addressable startBuf,  Addressable endBuf,  Addressable startLine,  Addressable startColumn,  Addressable endLine,  Addressable endColumn) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$43.clang_getDefinitionSpellingAndExtent$MH, "clang_getDefinitionSpellingAndExtent");
         try {
-            Index_h$constants_1.clang_getDefinitionSpellingAndExtent$MH().invokeExact(x0, startBuf.address(), endBuf.address(), startLine.address(), startColumn.address(), endLine.address(), endColumn.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(x0, startBuf.address(), endBuf.address(), startLine.address(), startColumn.address(), endLine.address(), endColumn.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_enableStackTraces$MH() {
-        return Index_h$constants_1.clang_enableStackTraces$MH();
+    public static class constants$43 {
+
+        static final FunctionDescriptor clang_getTokenExtent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("begin_int_data"),
+            C_INT.withName("end_int_data")
+        ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+                C_POINTER.withName("ptr_data")
+            )
+        );
+        static final MethodHandle clang_getTokenExtent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getTokenExtent",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$43.clang_getTokenExtent$FUNC, false
+        );
+        static final FunctionDescriptor clang_tokenize$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_tokenize$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_tokenize",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$43.clang_tokenize$FUNC, false
+        );
+        static final FunctionDescriptor clang_annotateTokens$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_annotateTokens$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_annotateTokens",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V",
+            constants$43.clang_annotateTokens$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeTokens$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_disposeTokens$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeTokens",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
+            constants$43.clang_disposeTokens$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_INT
+        );
+        static final MethodHandle clang_getCursorKindSpelling$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorKindSpelling",
+            "(I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$43.clang_getCursorKindSpelling$FUNC, false
+        );
+        static final FunctionDescriptor clang_getDefinitionSpellingAndExtent$FUNC = FunctionDescriptor.ofVoid(
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getDefinitionSpellingAndExtent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getDefinitionSpellingAndExtent",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$43.clang_getDefinitionSpellingAndExtent$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_enableStackTraces$MH() {
+        return RuntimeHelper.requireNonNull(constants$44.clang_enableStackTraces$MH,"clang_enableStackTraces");
     }
     public static void clang_enableStackTraces () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$44.clang_enableStackTraces$MH, "clang_enableStackTraces");
         try {
-            Index_h$constants_1.clang_enableStackTraces$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_executeOnThread$MH() {
-        return Index_h$constants_1.clang_executeOnThread$MH();
-    }
-    public static void clang_executeOnThread (@C("void(*)(void*)") Addressable fn, @C("void*") Addressable user_data, @C("unsigned int") int stack_size) {
-        try {
-            Index_h$constants_1.clang_executeOnThread$MH().invokeExact(fn.address(), user_data.address(), stack_size);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public interface clang_executeOnThread$fn {
+
         void apply(jdk.incubator.foreign.MemoryAddress x0);
-        public static  @C("void(*)(void*)") MemorySegment allocate(clang_executeOnThread$fn fi) {
-            return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, Index_h$constants_1.clang_executeOnThread$fn$FUNC(), "(Ljdk/incubator/foreign/MemoryAddress;)V");
+        static MemorySegment allocate(clang_executeOnThread$fn fi) {
+            return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, constants$44.clang_executeOnThread$fn$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;)V");
         }
-        public static  @C("void(*)(void*)") MemorySegment allocate(clang_executeOnThread$fn fi, NativeScope scope) {
+        static MemorySegment allocate(clang_executeOnThread$fn fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
+        }
+    }
+
+    public static MethodHandle clang_executeOnThread$MH() {
+        return RuntimeHelper.requireNonNull(constants$44.clang_executeOnThread$MH,"clang_executeOnThread");
+    }
+    public static void clang_executeOnThread ( Addressable fn,  Addressable user_data,  int stack_size) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$44.clang_executeOnThread$MH, "clang_executeOnThread");
+        try {
+            mh$.invokeExact(fn.address(), user_data.address(), stack_size);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXCompletionResult {
 
-        private CXCompletionResult() {}
+        static final MemoryLayout CXCompletionResult$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("CursorKind"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("CompletionString")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXCompletionResult$struct$LAYOUT();
+            return CXCompletionResult.CXCompletionResult$struct$LAYOUT;
         }
+        static final VarHandle CursorKind$VH = CXCompletionResult$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("CursorKind"));
         public static VarHandle CursorKind$VH() {
-            return Index_h$constants_1.CXCompletionResult$CursorKind$VH();
+            return CXCompletionResult.CursorKind$VH;
         }
-        public static  @C("enum CXCursorKind") int CursorKind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXCompletionResult$CursorKind$VH().get(seg);
+        public static int CursorKind$get(MemorySegment seg) {
+            return (int)CXCompletionResult.CursorKind$VH.get(seg);
         }
-        public static  @C("enum CXCursorKind") int CursorKind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXCompletionResult$CursorKind$VH().get(seg.asSlice(index*sizeof()));
+        public static void CursorKind$set( MemorySegment seg, int x) {
+            CXCompletionResult.CursorKind$VH.set(seg, x);
         }
-        public static void CursorKind$set(@C("struct ") MemorySegment seg, @C("enum CXCursorKind") int x) {
-            Index_h$constants_1.CXCompletionResult$CursorKind$VH().set(seg, x);
+        public static int CursorKind$get(MemorySegment seg, long index) {
+            return (int)CXCompletionResult.CursorKind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void CursorKind$set(@C("struct ") MemorySegment seg, long index, @C("enum CXCursorKind") int x) {
-            Index_h$constants_1.CXCompletionResult$CursorKind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void CursorKind$set(MemorySegment seg, long index, int x) {
+            CXCompletionResult.CursorKind$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle CompletionString$VH = MemoryHandles.asAddressVarHandle(CXCompletionResult$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("CompletionString")));
         public static VarHandle CompletionString$VH() {
-            return Index_h$constants_1.CXCompletionResult$CompletionString$VH();
+            return CXCompletionResult.CompletionString$VH;
         }
-        public static  @C("CXCompletionString") MemoryAddress CompletionString$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCompletionResult$CompletionString$VH().get(seg);
+        public static MemoryAddress CompletionString$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCompletionResult.CompletionString$VH.get(seg);
         }
-        public static  @C("CXCompletionString") MemoryAddress CompletionString$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCompletionResult$CompletionString$VH().get(seg.asSlice(index*sizeof()));
+        public static void CompletionString$set( MemorySegment seg, MemoryAddress x) {
+            CXCompletionResult.CompletionString$VH.set(seg, x);
         }
-        public static void CompletionString$set(@C("struct ") MemorySegment seg, @C("CXCompletionString") MemoryAddress x) {
-            Index_h$constants_1.CXCompletionResult$CompletionString$VH().set(seg, x);
+        public static MemoryAddress CompletionString$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCompletionResult.CompletionString$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void CompletionString$set(@C("struct ") MemorySegment seg, long index, @C("CXCompletionString") MemoryAddress x) {
-            Index_h$constants_1.CXCompletionResult$CompletionString$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void CompletionString$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXCompletionResult.CompletionString$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXCompletionChunk_Optional() {
-        return Index_h$constants_1.CXCompletionChunk_Optional();
+    public static int CXCompletionChunk_Optional() {
+        return (int)0L;
     }
-    public static @C("int") int CXCompletionChunk_TypedText() {
-        return Index_h$constants_1.CXCompletionChunk_TypedText();
+    public static int CXCompletionChunk_TypedText() {
+        return (int)1L;
     }
-    public static @C("int") int CXCompletionChunk_Text() {
-        return Index_h$constants_1.CXCompletionChunk_Text();
+    public static int CXCompletionChunk_Text() {
+        return (int)2L;
     }
-    public static @C("int") int CXCompletionChunk_Placeholder() {
-        return Index_h$constants_1.CXCompletionChunk_Placeholder();
+    public static int CXCompletionChunk_Placeholder() {
+        return (int)3L;
     }
-    public static @C("int") int CXCompletionChunk_Informative() {
-        return Index_h$constants_1.CXCompletionChunk_Informative();
+    public static int CXCompletionChunk_Informative() {
+        return (int)4L;
     }
-    public static @C("int") int CXCompletionChunk_CurrentParameter() {
-        return Index_h$constants_1.CXCompletionChunk_CurrentParameter();
+    public static int CXCompletionChunk_CurrentParameter() {
+        return (int)5L;
     }
-    public static @C("int") int CXCompletionChunk_LeftParen() {
-        return Index_h$constants_1.CXCompletionChunk_LeftParen();
+    public static int CXCompletionChunk_LeftParen() {
+        return (int)6L;
     }
-    public static @C("int") int CXCompletionChunk_RightParen() {
-        return Index_h$constants_1.CXCompletionChunk_RightParen();
+    public static int CXCompletionChunk_RightParen() {
+        return (int)7L;
     }
-    public static @C("int") int CXCompletionChunk_LeftBracket() {
-        return Index_h$constants_1.CXCompletionChunk_LeftBracket();
+    public static int CXCompletionChunk_LeftBracket() {
+        return (int)8L;
     }
-    public static @C("int") int CXCompletionChunk_RightBracket() {
-        return Index_h$constants_1.CXCompletionChunk_RightBracket();
+    public static int CXCompletionChunk_RightBracket() {
+        return (int)9L;
     }
-    public static @C("int") int CXCompletionChunk_LeftBrace() {
-        return Index_h$constants_1.CXCompletionChunk_LeftBrace();
+    public static int CXCompletionChunk_LeftBrace() {
+        return (int)10L;
     }
-    public static @C("int") int CXCompletionChunk_RightBrace() {
-        return Index_h$constants_1.CXCompletionChunk_RightBrace();
+    public static int CXCompletionChunk_RightBrace() {
+        return (int)11L;
     }
-    public static @C("int") int CXCompletionChunk_LeftAngle() {
-        return Index_h$constants_1.CXCompletionChunk_LeftAngle();
+    public static int CXCompletionChunk_LeftAngle() {
+        return (int)12L;
     }
-    public static @C("int") int CXCompletionChunk_RightAngle() {
-        return Index_h$constants_1.CXCompletionChunk_RightAngle();
+    public static int CXCompletionChunk_RightAngle() {
+        return (int)13L;
     }
-    public static @C("int") int CXCompletionChunk_Comma() {
-        return Index_h$constants_1.CXCompletionChunk_Comma();
+    public static int CXCompletionChunk_Comma() {
+        return (int)14L;
     }
-    public static @C("int") int CXCompletionChunk_ResultType() {
-        return Index_h$constants_1.CXCompletionChunk_ResultType();
+    public static int CXCompletionChunk_ResultType() {
+        return (int)15L;
     }
-    public static @C("int") int CXCompletionChunk_Colon() {
-        return Index_h$constants_1.CXCompletionChunk_Colon();
+    public static int CXCompletionChunk_Colon() {
+        return (int)16L;
     }
-    public static @C("int") int CXCompletionChunk_SemiColon() {
-        return Index_h$constants_1.CXCompletionChunk_SemiColon();
+    public static int CXCompletionChunk_SemiColon() {
+        return (int)17L;
     }
-    public static @C("int") int CXCompletionChunk_Equal() {
-        return Index_h$constants_1.CXCompletionChunk_Equal();
+    public static int CXCompletionChunk_Equal() {
+        return (int)18L;
     }
-    public static @C("int") int CXCompletionChunk_HorizontalSpace() {
-        return Index_h$constants_1.CXCompletionChunk_HorizontalSpace();
+    public static int CXCompletionChunk_HorizontalSpace() {
+        return (int)19L;
     }
-    public static @C("int") int CXCompletionChunk_VerticalSpace() {
-        return Index_h$constants_1.CXCompletionChunk_VerticalSpace();
+    public static int CXCompletionChunk_VerticalSpace() {
+        return (int)20L;
     }
-    public static  MethodHandle clang_getCompletionChunkKind$MH() {
-        return Index_h$constants_1.clang_getCompletionChunkKind$MH();
+    public static MethodHandle clang_getCompletionChunkKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkKind$MH,"clang_getCompletionChunkKind");
     }
-    public static @C("enum CXCompletionChunkKind") int clang_getCompletionChunkKind (@C("CXCompletionString") Addressable completion_string, @C("unsigned int") int chunk_number) {
+    public static int clang_getCompletionChunkKind ( Addressable completion_string,  int chunk_number) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkKind$MH, "clang_getCompletionChunkKind");
         try {
-            return (int)Index_h$constants_1.clang_getCompletionChunkKind$MH().invokeExact(completion_string.address(), chunk_number);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(completion_string.address(), chunk_number);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionChunkText$MH() {
-        return Index_h$constants_1.clang_getCompletionChunkText$MH();
+    public static MethodHandle clang_getCompletionChunkText$MH() {
+        return RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkText$MH,"clang_getCompletionChunkText");
     }
-    public static @C("CXString") MemorySegment clang_getCompletionChunkText (@C("CXCompletionString") Addressable completion_string, @C("unsigned int") int chunk_number) {
+    public static MemorySegment clang_getCompletionChunkText ( Addressable completion_string,  int chunk_number) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkText$MH, "clang_getCompletionChunkText");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCompletionChunkText$MH().invokeExact(completion_string.address(), chunk_number);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(completion_string.address(), chunk_number);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionChunkCompletionString$MH() {
-        return Index_h$constants_1.clang_getCompletionChunkCompletionString$MH();
+    public static MethodHandle clang_getCompletionChunkCompletionString$MH() {
+        return RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkCompletionString$MH,"clang_getCompletionChunkCompletionString");
     }
-    public static @C("CXCompletionString") MemoryAddress clang_getCompletionChunkCompletionString (@C("CXCompletionString") Addressable completion_string, @C("unsigned int") int chunk_number) {
+    public static MemoryAddress clang_getCompletionChunkCompletionString ( Addressable completion_string,  int chunk_number) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$44.clang_getCompletionChunkCompletionString$MH, "clang_getCompletionChunkCompletionString");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getCompletionChunkCompletionString$MH().invokeExact(completion_string.address(), chunk_number);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(completion_string.address(), chunk_number);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getNumCompletionChunks$MH() {
-        return Index_h$constants_1.clang_getNumCompletionChunks$MH();
+    public static class constants$44 {
+
+        static final FunctionDescriptor clang_enableStackTraces$FUNC = FunctionDescriptor.ofVoid();
+        static final MethodHandle clang_enableStackTraces$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_enableStackTraces",
+            "()V",
+            constants$44.clang_enableStackTraces$FUNC, false
+        );
+        static final FunctionDescriptor clang_executeOnThread$fn$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final FunctionDescriptor clang_executeOnThread$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_executeOnThread$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_executeOnThread",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
+            constants$44.clang_executeOnThread$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionChunkKind$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCompletionChunkKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionChunkKind",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)I",
+            constants$44.clang_getCompletionChunkKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionChunkText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCompletionChunkText$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionChunkText",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$44.clang_getCompletionChunkText$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionChunkCompletionString$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCompletionChunkCompletionString$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionChunkCompletionString",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$44.clang_getCompletionChunkCompletionString$FUNC, false
+        );
     }
-    public static @C("unsigned int") int clang_getNumCompletionChunks (@C("CXCompletionString") Addressable completion_string) {
+
+    public static MethodHandle clang_getNumCompletionChunks$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getNumCompletionChunks$MH,"clang_getNumCompletionChunks");
+    }
+    public static int clang_getNumCompletionChunks ( Addressable completion_string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getNumCompletionChunks$MH, "clang_getNumCompletionChunks");
         try {
-            return (int)Index_h$constants_1.clang_getNumCompletionChunks$MH().invokeExact(completion_string.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(completion_string.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionPriority$MH() {
-        return Index_h$constants_1.clang_getCompletionPriority$MH();
+    public static MethodHandle clang_getCompletionPriority$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getCompletionPriority$MH,"clang_getCompletionPriority");
     }
-    public static @C("unsigned int") int clang_getCompletionPriority (@C("CXCompletionString") Addressable completion_string) {
+    public static int clang_getCompletionPriority ( Addressable completion_string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getCompletionPriority$MH, "clang_getCompletionPriority");
         try {
-            return (int)Index_h$constants_1.clang_getCompletionPriority$MH().invokeExact(completion_string.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(completion_string.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionAvailability$MH() {
-        return Index_h$constants_1.clang_getCompletionAvailability$MH();
+    public static MethodHandle clang_getCompletionAvailability$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getCompletionAvailability$MH,"clang_getCompletionAvailability");
     }
-    public static @C("enum CXAvailabilityKind") int clang_getCompletionAvailability (@C("CXCompletionString") Addressable completion_string) {
+    public static int clang_getCompletionAvailability ( Addressable completion_string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getCompletionAvailability$MH, "clang_getCompletionAvailability");
         try {
-            return (int)Index_h$constants_1.clang_getCompletionAvailability$MH().invokeExact(completion_string.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(completion_string.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionNumAnnotations$MH() {
-        return Index_h$constants_1.clang_getCompletionNumAnnotations$MH();
+    public static MethodHandle clang_getCompletionNumAnnotations$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getCompletionNumAnnotations$MH,"clang_getCompletionNumAnnotations");
     }
-    public static @C("unsigned int") int clang_getCompletionNumAnnotations (@C("CXCompletionString") Addressable completion_string) {
+    public static int clang_getCompletionNumAnnotations ( Addressable completion_string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getCompletionNumAnnotations$MH, "clang_getCompletionNumAnnotations");
         try {
-            return (int)Index_h$constants_1.clang_getCompletionNumAnnotations$MH().invokeExact(completion_string.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(completion_string.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionAnnotation$MH() {
-        return Index_h$constants_1.clang_getCompletionAnnotation$MH();
+    public static MethodHandle clang_getCompletionAnnotation$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getCompletionAnnotation$MH,"clang_getCompletionAnnotation");
     }
-    public static @C("CXString") MemorySegment clang_getCompletionAnnotation (@C("CXCompletionString") Addressable completion_string, @C("unsigned int") int annotation_number) {
+    public static MemorySegment clang_getCompletionAnnotation ( Addressable completion_string,  int annotation_number) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getCompletionAnnotation$MH, "clang_getCompletionAnnotation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCompletionAnnotation$MH().invokeExact(completion_string.address(), annotation_number);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(completion_string.address(), annotation_number);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionParent$MH() {
-        return Index_h$constants_1.clang_getCompletionParent$MH();
+    public static MethodHandle clang_getCompletionParent$MH() {
+        return RuntimeHelper.requireNonNull(constants$45.clang_getCompletionParent$MH,"clang_getCompletionParent");
     }
-    public static @C("CXString") MemorySegment clang_getCompletionParent (@C("CXCompletionString") Addressable completion_string, @C("enum CXCursorKind*") Addressable kind) {
+    public static MemorySegment clang_getCompletionParent ( Addressable completion_string,  Addressable kind) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$45.clang_getCompletionParent$MH, "clang_getCompletionParent");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCompletionParent$MH().invokeExact(completion_string.address(), kind.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(completion_string.address(), kind.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionBriefComment$MH() {
-        return Index_h$constants_1.clang_getCompletionBriefComment$MH();
+    public static class constants$45 {
+
+        static final FunctionDescriptor clang_getNumCompletionChunks$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getNumCompletionChunks$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getNumCompletionChunks",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$45.clang_getNumCompletionChunks$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionPriority$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionPriority$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionPriority",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$45.clang_getCompletionPriority$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionAvailability$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionAvailability$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionAvailability",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$45.clang_getCompletionAvailability$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionNumAnnotations$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionNumAnnotations$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionNumAnnotations",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$45.clang_getCompletionNumAnnotations$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionAnnotation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCompletionAnnotation$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionAnnotation",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
+            constants$45.clang_getCompletionAnnotation$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionParent$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionParent",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$45.clang_getCompletionParent$FUNC, false
+        );
     }
-    public static @C("CXString") MemorySegment clang_getCompletionBriefComment (@C("CXCompletionString") Addressable completion_string) {
+
+    public static MethodHandle clang_getCompletionBriefComment$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_getCompletionBriefComment$MH,"clang_getCompletionBriefComment");
+    }
+    public static MemorySegment clang_getCompletionBriefComment ( Addressable completion_string) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_getCompletionBriefComment$MH, "clang_getCompletionBriefComment");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCompletionBriefComment$MH().invokeExact(completion_string.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(completion_string.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCursorCompletionString$MH() {
-        return Index_h$constants_1.clang_getCursorCompletionString$MH();
+    public static MethodHandle clang_getCursorCompletionString$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_getCursorCompletionString$MH,"clang_getCursorCompletionString");
     }
-    public static @C("CXCompletionString") MemoryAddress clang_getCursorCompletionString (@C("CXCursor") MemorySegment cursor) {
+    public static MemoryAddress clang_getCursorCompletionString ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_getCursorCompletionString$MH, "clang_getCursorCompletionString");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getCursorCompletionString$MH().invokeExact(cursor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXCodeCompleteResults {
 
-        private CXCodeCompleteResults() {}
+        static final MemoryLayout CXCodeCompleteResults$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("Results"),
+            C_INT.withName("NumResults"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXCodeCompleteResults$struct$LAYOUT();
+            return CXCodeCompleteResults.CXCodeCompleteResults$struct$LAYOUT;
         }
+        static final VarHandle Results$VH = MemoryHandles.asAddressVarHandle(CXCodeCompleteResults$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Results")));
         public static VarHandle Results$VH() {
-            return Index_h$constants_1.CXCodeCompleteResults$Results$VH();
+            return CXCodeCompleteResults.Results$VH;
         }
-        public static  @C("CXCompletionResult*") MemoryAddress Results$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCodeCompleteResults$Results$VH().get(seg);
+        public static MemoryAddress Results$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCodeCompleteResults.Results$VH.get(seg);
         }
-        public static  @C("CXCompletionResult*") MemoryAddress Results$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCodeCompleteResults$Results$VH().get(seg.asSlice(index*sizeof()));
+        public static void Results$set( MemorySegment seg, MemoryAddress x) {
+            CXCodeCompleteResults.Results$VH.set(seg, x);
         }
-        public static void Results$set(@C("struct ") MemorySegment seg, @C("CXCompletionResult*") MemoryAddress x) {
-            Index_h$constants_1.CXCodeCompleteResults$Results$VH().set(seg, x);
+        public static MemoryAddress Results$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCodeCompleteResults.Results$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void Results$set(@C("struct ") MemorySegment seg, long index, @C("CXCompletionResult*") MemoryAddress x) {
-            Index_h$constants_1.CXCodeCompleteResults$Results$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void Results$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXCodeCompleteResults.Results$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle NumResults$VH = CXCodeCompleteResults$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("NumResults"));
         public static VarHandle NumResults$VH() {
-            return Index_h$constants_1.CXCodeCompleteResults$NumResults$VH();
+            return CXCodeCompleteResults.NumResults$VH;
         }
-        public static  @C("unsigned int") int NumResults$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXCodeCompleteResults$NumResults$VH().get(seg);
+        public static int NumResults$get(MemorySegment seg) {
+            return (int)CXCodeCompleteResults.NumResults$VH.get(seg);
         }
-        public static  @C("unsigned int") int NumResults$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXCodeCompleteResults$NumResults$VH().get(seg.asSlice(index*sizeof()));
+        public static void NumResults$set( MemorySegment seg, int x) {
+            CXCodeCompleteResults.NumResults$VH.set(seg, x);
         }
-        public static void NumResults$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXCodeCompleteResults$NumResults$VH().set(seg, x);
+        public static int NumResults$get(MemorySegment seg, long index) {
+            return (int)CXCodeCompleteResults.NumResults$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void NumResults$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXCodeCompleteResults$NumResults$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void NumResults$set(MemorySegment seg, long index, int x) {
+            CXCodeCompleteResults.NumResults$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_getCompletionNumFixIts$MH() {
-        return Index_h$constants_1.clang_getCompletionNumFixIts$MH();
+    public static MethodHandle clang_getCompletionNumFixIts$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_getCompletionNumFixIts$MH,"clang_getCompletionNumFixIts");
     }
-    public static @C("unsigned int") int clang_getCompletionNumFixIts (@C("CXCodeCompleteResults*") Addressable results, @C("unsigned int") int completion_index) {
+    public static int clang_getCompletionNumFixIts ( Addressable results,  int completion_index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_getCompletionNumFixIts$MH, "clang_getCompletionNumFixIts");
         try {
-            return (int)Index_h$constants_1.clang_getCompletionNumFixIts$MH().invokeExact(results.address(), completion_index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(results.address(), completion_index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getCompletionFixIt$MH() {
-        return Index_h$constants_1.clang_getCompletionFixIt$MH();
+    public static MethodHandle clang_getCompletionFixIt$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_getCompletionFixIt$MH,"clang_getCompletionFixIt");
     }
-    public static @C("CXString") MemorySegment clang_getCompletionFixIt (@C("CXCodeCompleteResults*") Addressable results, @C("unsigned int") int completion_index, @C("unsigned int") int fixit_index, @C("CXSourceRange*") Addressable replacement_range) {
+    public static MemorySegment clang_getCompletionFixIt ( Addressable results,  int completion_index,  int fixit_index,  Addressable replacement_range) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_getCompletionFixIt$MH, "clang_getCompletionFixIt");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getCompletionFixIt$MH().invokeExact(results.address(), completion_index, fixit_index, replacement_range.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(results.address(), completion_index, fixit_index, replacement_range.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXCodeComplete_IncludeMacros() {
-        return Index_h$constants_1.CXCodeComplete_IncludeMacros();
+    public static int CXCodeComplete_IncludeMacros() {
+        return (int)1L;
     }
-    public static @C("int") int CXCodeComplete_IncludeCodePatterns() {
-        return Index_h$constants_1.CXCodeComplete_IncludeCodePatterns();
+    public static int CXCodeComplete_IncludeCodePatterns() {
+        return (int)2L;
     }
-    public static @C("int") int CXCodeComplete_IncludeBriefComments() {
-        return Index_h$constants_1.CXCodeComplete_IncludeBriefComments();
+    public static int CXCodeComplete_IncludeBriefComments() {
+        return (int)4L;
     }
-    public static @C("int") int CXCodeComplete_SkipPreamble() {
-        return Index_h$constants_1.CXCodeComplete_SkipPreamble();
+    public static int CXCodeComplete_SkipPreamble() {
+        return (int)8L;
     }
-    public static @C("int") int CXCodeComplete_IncludeCompletionsWithFixIts() {
-        return Index_h$constants_1.CXCodeComplete_IncludeCompletionsWithFixIts();
+    public static int CXCodeComplete_IncludeCompletionsWithFixIts() {
+        return (int)16L;
     }
-    public static @C("int") int CXCompletionContext_Unexposed() {
-        return Index_h$constants_1.CXCompletionContext_Unexposed();
+    public static int CXCompletionContext_Unexposed() {
+        return (int)0L;
     }
-    public static @C("int") int CXCompletionContext_AnyType() {
-        return Index_h$constants_1.CXCompletionContext_AnyType();
+    public static int CXCompletionContext_AnyType() {
+        return (int)1L;
     }
-    public static @C("int") int CXCompletionContext_AnyValue() {
-        return Index_h$constants_1.CXCompletionContext_AnyValue();
+    public static int CXCompletionContext_AnyValue() {
+        return (int)2L;
     }
-    public static @C("int") int CXCompletionContext_ObjCObjectValue() {
-        return Index_h$constants_1.CXCompletionContext_ObjCObjectValue();
+    public static int CXCompletionContext_ObjCObjectValue() {
+        return (int)4L;
     }
-    public static @C("int") int CXCompletionContext_ObjCSelectorValue() {
-        return Index_h$constants_1.CXCompletionContext_ObjCSelectorValue();
+    public static int CXCompletionContext_ObjCSelectorValue() {
+        return (int)8L;
     }
-    public static @C("int") int CXCompletionContext_CXXClassTypeValue() {
-        return Index_h$constants_1.CXCompletionContext_CXXClassTypeValue();
+    public static int CXCompletionContext_CXXClassTypeValue() {
+        return (int)16L;
     }
-    public static @C("int") int CXCompletionContext_DotMemberAccess() {
-        return Index_h$constants_1.CXCompletionContext_DotMemberAccess();
+    public static int CXCompletionContext_DotMemberAccess() {
+        return (int)32L;
     }
-    public static @C("int") int CXCompletionContext_ArrowMemberAccess() {
-        return Index_h$constants_1.CXCompletionContext_ArrowMemberAccess();
+    public static int CXCompletionContext_ArrowMemberAccess() {
+        return (int)64L;
     }
-    public static @C("int") int CXCompletionContext_ObjCPropertyAccess() {
-        return Index_h$constants_1.CXCompletionContext_ObjCPropertyAccess();
+    public static int CXCompletionContext_ObjCPropertyAccess() {
+        return (int)128L;
     }
-    public static @C("int") int CXCompletionContext_EnumTag() {
-        return Index_h$constants_1.CXCompletionContext_EnumTag();
+    public static int CXCompletionContext_EnumTag() {
+        return (int)256L;
     }
-    public static @C("int") int CXCompletionContext_UnionTag() {
-        return Index_h$constants_1.CXCompletionContext_UnionTag();
+    public static int CXCompletionContext_UnionTag() {
+        return (int)512L;
     }
-    public static @C("int") int CXCompletionContext_StructTag() {
-        return Index_h$constants_1.CXCompletionContext_StructTag();
+    public static int CXCompletionContext_StructTag() {
+        return (int)1024L;
     }
-    public static @C("int") int CXCompletionContext_ClassTag() {
-        return Index_h$constants_1.CXCompletionContext_ClassTag();
+    public static int CXCompletionContext_ClassTag() {
+        return (int)2048L;
     }
-    public static @C("int") int CXCompletionContext_Namespace() {
-        return Index_h$constants_1.CXCompletionContext_Namespace();
+    public static int CXCompletionContext_Namespace() {
+        return (int)4096L;
     }
-    public static @C("int") int CXCompletionContext_NestedNameSpecifier() {
-        return Index_h$constants_1.CXCompletionContext_NestedNameSpecifier();
+    public static int CXCompletionContext_NestedNameSpecifier() {
+        return (int)8192L;
     }
-    public static @C("int") int CXCompletionContext_ObjCInterface() {
-        return Index_h$constants_1.CXCompletionContext_ObjCInterface();
+    public static int CXCompletionContext_ObjCInterface() {
+        return (int)16384L;
     }
-    public static @C("int") int CXCompletionContext_ObjCProtocol() {
-        return Index_h$constants_1.CXCompletionContext_ObjCProtocol();
+    public static int CXCompletionContext_ObjCProtocol() {
+        return (int)32768L;
     }
-    public static @C("int") int CXCompletionContext_ObjCCategory() {
-        return Index_h$constants_1.CXCompletionContext_ObjCCategory();
+    public static int CXCompletionContext_ObjCCategory() {
+        return (int)65536L;
     }
-    public static @C("int") int CXCompletionContext_ObjCInstanceMessage() {
-        return Index_h$constants_1.CXCompletionContext_ObjCInstanceMessage();
+    public static int CXCompletionContext_ObjCInstanceMessage() {
+        return (int)131072L;
     }
-    public static @C("int") int CXCompletionContext_ObjCClassMessage() {
-        return Index_h$constants_1.CXCompletionContext_ObjCClassMessage();
+    public static int CXCompletionContext_ObjCClassMessage() {
+        return (int)262144L;
     }
-    public static @C("int") int CXCompletionContext_ObjCSelectorName() {
-        return Index_h$constants_1.CXCompletionContext_ObjCSelectorName();
+    public static int CXCompletionContext_ObjCSelectorName() {
+        return (int)524288L;
     }
-    public static @C("int") int CXCompletionContext_MacroName() {
-        return Index_h$constants_1.CXCompletionContext_MacroName();
+    public static int CXCompletionContext_MacroName() {
+        return (int)1048576L;
     }
-    public static @C("int") int CXCompletionContext_NaturalLanguage() {
-        return Index_h$constants_1.CXCompletionContext_NaturalLanguage();
+    public static int CXCompletionContext_NaturalLanguage() {
+        return (int)2097152L;
     }
-    public static @C("int") int CXCompletionContext_IncludedFile() {
-        return Index_h$constants_1.CXCompletionContext_IncludedFile();
+    public static int CXCompletionContext_IncludedFile() {
+        return (int)4194304L;
     }
-    public static @C("int") int CXCompletionContext_Unknown() {
-        return Index_h$constants_1.CXCompletionContext_Unknown();
+    public static int CXCompletionContext_Unknown() {
+        return (int)8388607L;
     }
-    public static  MethodHandle clang_defaultCodeCompleteOptions$MH() {
-        return Index_h$constants_1.clang_defaultCodeCompleteOptions$MH();
+    public static MethodHandle clang_defaultCodeCompleteOptions$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_defaultCodeCompleteOptions$MH,"clang_defaultCodeCompleteOptions");
     }
-    public static @C("unsigned int") int clang_defaultCodeCompleteOptions () {
+    public static int clang_defaultCodeCompleteOptions () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_defaultCodeCompleteOptions$MH, "clang_defaultCodeCompleteOptions");
         try {
-            return (int)Index_h$constants_1.clang_defaultCodeCompleteOptions$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteAt$MH() {
-        return Index_h$constants_1.clang_codeCompleteAt$MH();
+    public static MethodHandle clang_codeCompleteAt$MH() {
+        return RuntimeHelper.requireNonNull(constants$46.clang_codeCompleteAt$MH,"clang_codeCompleteAt");
     }
-    public static @C("CXCodeCompleteResults*") MemoryAddress clang_codeCompleteAt (@C("CXTranslationUnit") Addressable TU, @C("char*") Addressable complete_filename, @C("unsigned int") int complete_line, @C("unsigned int") int complete_column, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("unsigned int") int options) {
+    public static MemoryAddress clang_codeCompleteAt ( Addressable TU,  Addressable complete_filename,  int complete_line,  int complete_column,  Addressable unsaved_files,  int num_unsaved_files,  int options) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$46.clang_codeCompleteAt$MH, "clang_codeCompleteAt");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_codeCompleteAt$MH().invokeExact(TU.address(), complete_filename.address(), complete_line, complete_column, unsaved_files.address(), num_unsaved_files, options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(TU.address(), complete_filename.address(), complete_line, complete_column, unsaved_files.address(), num_unsaved_files, options);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_sortCodeCompletionResults$MH() {
-        return Index_h$constants_1.clang_sortCodeCompletionResults$MH();
+    public static class constants$46 {
+
+        static final FunctionDescriptor clang_getCompletionBriefComment$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionBriefComment$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionBriefComment",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$46.clang_getCompletionBriefComment$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCursorCompletionString$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_getCursorCompletionString$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCursorCompletionString",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$46.clang_getCursorCompletionString$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionNumFixIts$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getCompletionNumFixIts$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionNumFixIts",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)I",
+            constants$46.clang_getCompletionNumFixIts$FUNC, false
+        );
+        static final FunctionDescriptor clang_getCompletionFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER,
+            C_INT,
+            C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_getCompletionFixIt$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getCompletionFixIt",
+            "(Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$46.clang_getCompletionFixIt$FUNC, false
+        );
+        static final FunctionDescriptor clang_defaultCodeCompleteOptions$FUNC = FunctionDescriptor.of(C_INT);
+        static final MethodHandle clang_defaultCodeCompleteOptions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_defaultCodeCompleteOptions",
+            "()I",
+            constants$46.clang_defaultCodeCompleteOptions$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteAt$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_INT,
+            C_POINTER,
+            C_INT,
+            C_INT
+        );
+        static final MethodHandle clang_codeCompleteAt$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteAt",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$46.clang_codeCompleteAt$FUNC, false
+        );
     }
-    public static void clang_sortCodeCompletionResults (@C("CXCompletionResult*") Addressable Results, @C("unsigned int") int NumResults) {
+
+    public static MethodHandle clang_sortCodeCompletionResults$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_sortCodeCompletionResults$MH,"clang_sortCodeCompletionResults");
+    }
+    public static void clang_sortCodeCompletionResults ( Addressable Results,  int NumResults) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_sortCodeCompletionResults$MH, "clang_sortCodeCompletionResults");
         try {
-            Index_h$constants_1.clang_sortCodeCompletionResults$MH().invokeExact(Results.address(), NumResults);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Results.address(), NumResults);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_disposeCodeCompleteResults$MH() {
-        return Index_h$constants_1.clang_disposeCodeCompleteResults$MH();
+    public static MethodHandle clang_disposeCodeCompleteResults$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_disposeCodeCompleteResults$MH,"clang_disposeCodeCompleteResults");
     }
-    public static void clang_disposeCodeCompleteResults (@C("CXCodeCompleteResults*") Addressable Results) {
+    public static void clang_disposeCodeCompleteResults ( Addressable Results) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_disposeCodeCompleteResults$MH, "clang_disposeCodeCompleteResults");
         try {
-            Index_h$constants_1.clang_disposeCodeCompleteResults$MH().invokeExact(Results.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(Results.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetNumDiagnostics$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetNumDiagnostics$MH();
+    public static MethodHandle clang_codeCompleteGetNumDiagnostics$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetNumDiagnostics$MH,"clang_codeCompleteGetNumDiagnostics");
     }
-    public static @C("unsigned int") int clang_codeCompleteGetNumDiagnostics (@C("CXCodeCompleteResults*") Addressable Results) {
+    public static int clang_codeCompleteGetNumDiagnostics ( Addressable Results) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetNumDiagnostics$MH, "clang_codeCompleteGetNumDiagnostics");
         try {
-            return (int)Index_h$constants_1.clang_codeCompleteGetNumDiagnostics$MH().invokeExact(Results.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Results.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetDiagnostic$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetDiagnostic$MH();
+    public static MethodHandle clang_codeCompleteGetDiagnostic$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetDiagnostic$MH,"clang_codeCompleteGetDiagnostic");
     }
-    public static @C("CXDiagnostic") MemoryAddress clang_codeCompleteGetDiagnostic (@C("CXCodeCompleteResults*") Addressable Results, @C("unsigned int") int Index) {
+    public static MemoryAddress clang_codeCompleteGetDiagnostic ( Addressable Results,  int Index) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetDiagnostic$MH, "clang_codeCompleteGetDiagnostic");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_codeCompleteGetDiagnostic$MH().invokeExact(Results.address(), Index);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(Results.address(), Index);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetContexts$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetContexts$MH();
+    public static MethodHandle clang_codeCompleteGetContexts$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetContexts$MH,"clang_codeCompleteGetContexts");
     }
-    public static @C("unsigned long long") long clang_codeCompleteGetContexts (@C("CXCodeCompleteResults*") Addressable Results) {
+    public static long clang_codeCompleteGetContexts ( Addressable Results) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetContexts$MH, "clang_codeCompleteGetContexts");
         try {
-            return (long)Index_h$constants_1.clang_codeCompleteGetContexts$MH().invokeExact(Results.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (long)mh$.invokeExact(Results.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetContainerKind$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetContainerKind$MH();
+    public static MethodHandle clang_codeCompleteGetContainerKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetContainerKind$MH,"clang_codeCompleteGetContainerKind");
     }
-    public static @C("enum CXCursorKind") int clang_codeCompleteGetContainerKind (@C("CXCodeCompleteResults*") Addressable Results, @C("unsigned int*") Addressable IsIncomplete) {
+    public static int clang_codeCompleteGetContainerKind ( Addressable Results,  Addressable IsIncomplete) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$47.clang_codeCompleteGetContainerKind$MH, "clang_codeCompleteGetContainerKind");
         try {
-            return (int)Index_h$constants_1.clang_codeCompleteGetContainerKind$MH().invokeExact(Results.address(), IsIncomplete.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(Results.address(), IsIncomplete.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetContainerUSR$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetContainerUSR$MH();
+    public static class constants$47 {
+
+        static final FunctionDescriptor clang_sortCodeCompletionResults$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_sortCodeCompletionResults$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_sortCodeCompletionResults",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)V",
+            constants$47.clang_sortCodeCompletionResults$FUNC, false
+        );
+        static final FunctionDescriptor clang_disposeCodeCompleteResults$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_disposeCodeCompleteResults$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_disposeCodeCompleteResults",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$47.clang_disposeCodeCompleteResults$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteGetNumDiagnostics$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_codeCompleteGetNumDiagnostics$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetNumDiagnostics",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$47.clang_codeCompleteGetNumDiagnostics$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteGetDiagnostic$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_codeCompleteGetDiagnostic$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetDiagnostic",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$47.clang_codeCompleteGetDiagnostic$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteGetContexts$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            C_POINTER
+        );
+        static final MethodHandle clang_codeCompleteGetContexts$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetContexts",
+            "(Ljdk/incubator/foreign/MemoryAddress;)J",
+            constants$47.clang_codeCompleteGetContexts$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteGetContainerKind$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_codeCompleteGetContainerKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetContainerKind",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$47.clang_codeCompleteGetContainerKind$FUNC, false
+        );
     }
-    public static @C("CXString") MemorySegment clang_codeCompleteGetContainerUSR (@C("CXCodeCompleteResults*") Addressable Results) {
+
+    public static MethodHandle clang_codeCompleteGetContainerUSR$MH() {
+        return RuntimeHelper.requireNonNull(constants$48.clang_codeCompleteGetContainerUSR$MH,"clang_codeCompleteGetContainerUSR");
+    }
+    public static MemorySegment clang_codeCompleteGetContainerUSR ( Addressable Results) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$48.clang_codeCompleteGetContainerUSR$MH, "clang_codeCompleteGetContainerUSR");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_codeCompleteGetContainerUSR$MH().invokeExact(Results.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Results.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_codeCompleteGetObjCSelector$MH() {
-        return Index_h$constants_1.clang_codeCompleteGetObjCSelector$MH();
+    public static MethodHandle clang_codeCompleteGetObjCSelector$MH() {
+        return RuntimeHelper.requireNonNull(constants$48.clang_codeCompleteGetObjCSelector$MH,"clang_codeCompleteGetObjCSelector");
     }
-    public static @C("CXString") MemorySegment clang_codeCompleteGetObjCSelector (@C("CXCodeCompleteResults*") Addressable Results) {
+    public static MemorySegment clang_codeCompleteGetObjCSelector ( Addressable Results) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$48.clang_codeCompleteGetObjCSelector$MH, "clang_codeCompleteGetObjCSelector");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_codeCompleteGetObjCSelector$MH().invokeExact(Results.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(Results.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getClangVersion$MH() {
-        return Index_h$constants_1.clang_getClangVersion$MH();
+    public static MethodHandle clang_getClangVersion$MH() {
+        return RuntimeHelper.requireNonNull(constants$48.clang_getClangVersion$MH,"clang_getClangVersion");
     }
-    public static @C("CXString") MemorySegment clang_getClangVersion () {
+    public static MemorySegment clang_getClangVersion () {
+        var mh$ = RuntimeHelper.requireNonNull(constants$48.clang_getClangVersion$MH, "clang_getClangVersion");
         try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_getClangVersion$MH().invokeExact();
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact();
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_toggleCrashRecovery$MH() {
-        return Index_h$constants_1.clang_toggleCrashRecovery$MH();
+    public static MethodHandle clang_toggleCrashRecovery$MH() {
+        return RuntimeHelper.requireNonNull(constants$48.clang_toggleCrashRecovery$MH,"clang_toggleCrashRecovery");
     }
-    public static void clang_toggleCrashRecovery (@C("unsigned int") int isEnabled) {
+    public static void clang_toggleCrashRecovery ( int isEnabled) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$48.clang_toggleCrashRecovery$MH, "clang_toggleCrashRecovery");
         try {
-            Index_h$constants_1.clang_toggleCrashRecovery$MH().invokeExact(isEnabled);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(isEnabled);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getInclusions$MH() {
-        return Index_h$constants_1.clang_getInclusions$MH();
-    }
-    public static void clang_getInclusions (@C("CXTranslationUnit") Addressable tu, @C("CXInclusionVisitor") Addressable visitor, @C("CXClientData") Addressable client_data) {
-        try {
-            Index_h$constants_1.clang_getInclusions$MH().invokeExact(tu.address(), visitor.address(), client_data.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public interface clang_getInclusions$visitor {
+    public interface CXInclusionVisitor {
+
         void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, int x2, jdk.incubator.foreign.MemoryAddress x3);
-        public static  @C("CXInclusionVisitor") MemorySegment allocate(clang_getInclusions$visitor fi) {
-            return RuntimeHelper.upcallStub(clang_getInclusions$visitor.class, fi, Index_h$constants_1.clang_getInclusions$visitor$FUNC(), "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V");
+        static MemorySegment allocate(CXInclusionVisitor fi) {
+            return RuntimeHelper.upcallStub(CXInclusionVisitor.class, fi, constants$48.CXInclusionVisitor$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V");
         }
-        public static  @C("CXInclusionVisitor") MemorySegment allocate(clang_getInclusions$visitor fi, NativeScope scope) {
+        static MemorySegment allocate(CXInclusionVisitor fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
         }
     }
-    public static @C("int") int CXEval_Int() {
-        return Index_h$constants_1.CXEval_Int();
+
+    public static MethodHandle clang_getInclusions$MH() {
+        return RuntimeHelper.requireNonNull(constants$48.clang_getInclusions$MH,"clang_getInclusions");
     }
-    public static @C("int") int CXEval_Float() {
-        return Index_h$constants_1.CXEval_Float();
-    }
-    public static @C("int") int CXEval_ObjCStrLiteral() {
-        return Index_h$constants_1.CXEval_ObjCStrLiteral();
-    }
-    public static @C("int") int CXEval_StrLiteral() {
-        return Index_h$constants_1.CXEval_StrLiteral();
-    }
-    public static @C("int") int CXEval_CFStr() {
-        return Index_h$constants_1.CXEval_CFStr();
-    }
-    public static @C("int") int CXEval_Other() {
-        return Index_h$constants_1.CXEval_Other();
-    }
-    public static @C("int") int CXEval_UnExposed() {
-        return Index_h$constants_1.CXEval_UnExposed();
-    }
-    public static  MethodHandle clang_Cursor_Evaluate$MH() {
-        return Index_h$constants_1.clang_Cursor_Evaluate$MH();
-    }
-    public static @C("CXEvalResult") MemoryAddress clang_Cursor_Evaluate (@C("CXCursor") MemorySegment C) {
+    public static void clang_getInclusions ( Addressable tu,  Addressable visitor,  Addressable client_data) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$48.clang_getInclusions$MH, "clang_getInclusions");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_Cursor_Evaluate$MH().invokeExact(C);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(tu.address(), visitor.address(), client_data.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getKind$MH() {
-        return Index_h$constants_1.clang_EvalResult_getKind$MH();
+    public static int CXEval_Int() {
+        return (int)1L;
     }
-    public static @C("CXEvalResultKind") int clang_EvalResult_getKind (@C("CXEvalResult") Addressable E) {
+    public static int CXEval_Float() {
+        return (int)2L;
+    }
+    public static int CXEval_ObjCStrLiteral() {
+        return (int)3L;
+    }
+    public static int CXEval_StrLiteral() {
+        return (int)4L;
+    }
+    public static int CXEval_CFStr() {
+        return (int)5L;
+    }
+    public static int CXEval_Other() {
+        return (int)6L;
+    }
+    public static int CXEval_UnExposed() {
+        return (int)0L;
+    }
+    public static class constants$48 {
+
+        static final FunctionDescriptor clang_codeCompleteGetContainerUSR$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_codeCompleteGetContainerUSR$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetContainerUSR",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$48.clang_codeCompleteGetContainerUSR$FUNC, false
+        );
+        static final FunctionDescriptor clang_codeCompleteGetObjCSelector$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ),
+            C_POINTER
+        );
+        static final MethodHandle clang_codeCompleteGetObjCSelector$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_codeCompleteGetObjCSelector",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
+            constants$48.clang_codeCompleteGetObjCSelector$FUNC, false
+        );
+        static final FunctionDescriptor clang_getClangVersion$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+            C_POINTER.withName("data"),
+            C_INT.withName("private_flags"),
+            MemoryLayout.ofPaddingBits(32)
+        ));
+        static final MethodHandle clang_getClangVersion$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getClangVersion",
+            "()Ljdk/incubator/foreign/MemorySegment;",
+            constants$48.clang_getClangVersion$FUNC, false
+        );
+        static final FunctionDescriptor clang_toggleCrashRecovery$FUNC = FunctionDescriptor.ofVoid(
+            C_INT
+        );
+        static final MethodHandle clang_toggleCrashRecovery$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_toggleCrashRecovery",
+            "(I)V",
+            constants$48.clang_toggleCrashRecovery$FUNC, false
+        );
+        static final FunctionDescriptor CXInclusionVisitor$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_INT,
+            C_POINTER
+        );
+        static final FunctionDescriptor clang_getInclusions$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getInclusions$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getInclusions",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$48.clang_getInclusions$FUNC, false
+        );
+    }
+
+    public static MethodHandle clang_Cursor_Evaluate$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_Cursor_Evaluate$MH,"clang_Cursor_Evaluate");
+    }
+    public static MemoryAddress clang_Cursor_Evaluate ( MemorySegment C) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_Cursor_Evaluate$MH, "clang_Cursor_Evaluate");
         try {
-            return (int)Index_h$constants_1.clang_EvalResult_getKind$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(C);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getAsInt$MH() {
-        return Index_h$constants_1.clang_EvalResult_getAsInt$MH();
+    public static MethodHandle clang_EvalResult_getKind$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getKind$MH,"clang_EvalResult_getKind");
     }
-    public static @C("int") int clang_EvalResult_getAsInt (@C("CXEvalResult") Addressable E) {
+    public static int clang_EvalResult_getKind ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getKind$MH, "clang_EvalResult_getKind");
         try {
-            return (int)Index_h$constants_1.clang_EvalResult_getAsInt$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getAsLongLong$MH() {
-        return Index_h$constants_1.clang_EvalResult_getAsLongLong$MH();
+    public static MethodHandle clang_EvalResult_getAsInt$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsInt$MH,"clang_EvalResult_getAsInt");
     }
-    public static @C("long long") long clang_EvalResult_getAsLongLong (@C("CXEvalResult") Addressable E) {
+    public static int clang_EvalResult_getAsInt ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsInt$MH, "clang_EvalResult_getAsInt");
         try {
-            return (long)Index_h$constants_1.clang_EvalResult_getAsLongLong$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_isUnsignedInt$MH() {
-        return Index_h$constants_1.clang_EvalResult_isUnsignedInt$MH();
+    public static MethodHandle clang_EvalResult_getAsLongLong$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsLongLong$MH,"clang_EvalResult_getAsLongLong");
     }
-    public static @C("unsigned int") int clang_EvalResult_isUnsignedInt (@C("CXEvalResult") Addressable E) {
+    public static long clang_EvalResult_getAsLongLong ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsLongLong$MH, "clang_EvalResult_getAsLongLong");
         try {
-            return (int)Index_h$constants_1.clang_EvalResult_isUnsignedInt$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (long)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getAsUnsigned$MH() {
-        return Index_h$constants_1.clang_EvalResult_getAsUnsigned$MH();
+    public static MethodHandle clang_EvalResult_isUnsignedInt$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_isUnsignedInt$MH,"clang_EvalResult_isUnsignedInt");
     }
-    public static @C("unsigned long long") long clang_EvalResult_getAsUnsigned (@C("CXEvalResult") Addressable E) {
+    public static int clang_EvalResult_isUnsignedInt ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_isUnsignedInt$MH, "clang_EvalResult_isUnsignedInt");
         try {
-            return (long)Index_h$constants_1.clang_EvalResult_getAsUnsigned$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getAsDouble$MH() {
-        return Index_h$constants_1.clang_EvalResult_getAsDouble$MH();
+    public static MethodHandle clang_EvalResult_getAsUnsigned$MH() {
+        return RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsUnsigned$MH,"clang_EvalResult_getAsUnsigned");
     }
-    public static @C("double") double clang_EvalResult_getAsDouble (@C("CXEvalResult") Addressable E) {
+    public static long clang_EvalResult_getAsUnsigned ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$49.clang_EvalResult_getAsUnsigned$MH, "clang_EvalResult_getAsUnsigned");
         try {
-            return (double)Index_h$constants_1.clang_EvalResult_getAsDouble$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (long)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_getAsStr$MH() {
-        return Index_h$constants_1.clang_EvalResult_getAsStr$MH();
+    public static class constants$49 {
+
+        static final FunctionDescriptor clang_Cursor_Evaluate$FUNC = FunctionDescriptor.of(C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            )
+        );
+        static final MethodHandle clang_Cursor_Evaluate$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_Cursor_Evaluate",
+            "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$49.clang_Cursor_Evaluate$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_getKind$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getKind$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getKind",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$49.clang_EvalResult_getKind$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_getAsInt$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getAsInt$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getAsInt",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$49.clang_EvalResult_getAsInt$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_getAsLongLong$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getAsLongLong$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getAsLongLong",
+            "(Ljdk/incubator/foreign/MemoryAddress;)J",
+            constants$49.clang_EvalResult_getAsLongLong$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_isUnsignedInt$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_isUnsignedInt$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_isUnsignedInt",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$49.clang_EvalResult_isUnsignedInt$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getAsUnsigned$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getAsUnsigned",
+            "(Ljdk/incubator/foreign/MemoryAddress;)J",
+            constants$49.clang_EvalResult_getAsUnsigned$FUNC, false
+        );
     }
-    public static @C("char*") MemoryAddress clang_EvalResult_getAsStr (@C("CXEvalResult") Addressable E) {
+
+    public static MethodHandle clang_EvalResult_getAsDouble$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_getAsDouble$MH,"clang_EvalResult_getAsDouble");
+    }
+    public static double clang_EvalResult_getAsDouble ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_getAsDouble$MH, "clang_EvalResult_getAsDouble");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_EvalResult_getAsStr$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (double)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_EvalResult_dispose$MH() {
-        return Index_h$constants_1.clang_EvalResult_dispose$MH();
+    public static MethodHandle clang_EvalResult_getAsStr$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_getAsStr$MH,"clang_EvalResult_getAsStr");
     }
-    public static void clang_EvalResult_dispose (@C("CXEvalResult") Addressable E) {
+    public static MemoryAddress clang_EvalResult_getAsStr ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_getAsStr$MH, "clang_EvalResult_getAsStr");
         try {
-            Index_h$constants_1.clang_EvalResult_dispose$MH().invokeExact(E.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getRemappings$MH() {
-        return Index_h$constants_1.clang_getRemappings$MH();
+    public static MethodHandle clang_EvalResult_dispose$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_dispose$MH,"clang_EvalResult_dispose");
     }
-    public static @C("CXRemapping") MemoryAddress clang_getRemappings (@C("char*") Addressable path) {
+    public static void clang_EvalResult_dispose ( Addressable E) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_EvalResult_dispose$MH, "clang_EvalResult_dispose");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getRemappings$MH().invokeExact(path.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(E.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_getRemappingsFromFileList$MH() {
-        return Index_h$constants_1.clang_getRemappingsFromFileList$MH();
+    public static MethodHandle clang_getRemappings$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_getRemappings$MH,"clang_getRemappings");
     }
-    public static @C("CXRemapping") MemoryAddress clang_getRemappingsFromFileList (@C("char**") Addressable filePaths, @C("unsigned int") int numFiles) {
+    public static MemoryAddress clang_getRemappings ( Addressable path) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_getRemappings$MH, "clang_getRemappings");
         try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_getRemappingsFromFileList$MH().invokeExact(filePaths.address(), numFiles);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(path.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_remap_getNumFiles$MH() {
-        return Index_h$constants_1.clang_remap_getNumFiles$MH();
+    public static MethodHandle clang_getRemappingsFromFileList$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_getRemappingsFromFileList$MH,"clang_getRemappingsFromFileList");
     }
-    public static @C("unsigned int") int clang_remap_getNumFiles (@C("CXRemapping") Addressable x0) {
+    public static MemoryAddress clang_getRemappingsFromFileList ( Addressable filePaths,  int numFiles) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_getRemappingsFromFileList$MH, "clang_getRemappingsFromFileList");
         try {
-            return (int)Index_h$constants_1.clang_remap_getNumFiles$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(filePaths.address(), numFiles);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_remap_getFilenames$MH() {
-        return Index_h$constants_1.clang_remap_getFilenames$MH();
+    public static MethodHandle clang_remap_getNumFiles$MH() {
+        return RuntimeHelper.requireNonNull(constants$50.clang_remap_getNumFiles$MH,"clang_remap_getNumFiles");
     }
-    public static void clang_remap_getFilenames (@C("CXRemapping") Addressable x0, @C("unsigned int") int index, @C("CXString*") Addressable original, @C("CXString*") Addressable transformed) {
+    public static int clang_remap_getNumFiles ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$50.clang_remap_getNumFiles$MH, "clang_remap_getNumFiles");
         try {
-            Index_h$constants_1.clang_remap_getFilenames$MH().invokeExact(x0.address(), index, original.address(), transformed.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_remap_dispose$MH() {
-        return Index_h$constants_1.clang_remap_dispose$MH();
+    public static class constants$50 {
+
+        static final FunctionDescriptor clang_EvalResult_getAsDouble$FUNC = FunctionDescriptor.of(C_DOUBLE,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getAsDouble$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getAsDouble",
+            "(Ljdk/incubator/foreign/MemoryAddress;)D",
+            constants$50.clang_EvalResult_getAsDouble$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_getAsStr$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_getAsStr$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_getAsStr",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$50.clang_EvalResult_getAsStr$FUNC, false
+        );
+        static final FunctionDescriptor clang_EvalResult_dispose$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_EvalResult_dispose$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_EvalResult_dispose",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$50.clang_EvalResult_dispose$FUNC, false
+        );
+        static final FunctionDescriptor clang_getRemappings$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_getRemappings$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getRemappings",
+            "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$50.clang_getRemappings$FUNC, false
+        );
+        static final FunctionDescriptor clang_getRemappingsFromFileList$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_INT
+        );
+        static final MethodHandle clang_getRemappingsFromFileList$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_getRemappingsFromFileList",
+            "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
+            constants$50.clang_getRemappingsFromFileList$FUNC, false
+        );
+        static final FunctionDescriptor clang_remap_getNumFiles$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER
+        );
+        static final MethodHandle clang_remap_getNumFiles$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_remap_getNumFiles",
+            "(Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$50.clang_remap_getNumFiles$FUNC, false
+        );
     }
-    public static void clang_remap_dispose (@C("CXRemapping") Addressable x0) {
+
+    public static MethodHandle clang_remap_getFilenames$MH() {
+        return RuntimeHelper.requireNonNull(constants$51.clang_remap_getFilenames$MH,"clang_remap_getFilenames");
+    }
+    public static void clang_remap_getFilenames ( Addressable x0,  int index,  Addressable original,  Addressable transformed) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$51.clang_remap_getFilenames$MH, "clang_remap_getFilenames");
         try {
-            Index_h$constants_1.clang_remap_dispose$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            mh$.invokeExact(x0.address(), index, original.address(), transformed.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static @C("int") int CXVisit_Break() {
-        return Index_h$constants_1.CXVisit_Break();
+    public static MethodHandle clang_remap_dispose$MH() {
+        return RuntimeHelper.requireNonNull(constants$51.clang_remap_dispose$MH,"clang_remap_dispose");
     }
-    public static @C("int") int CXVisit_Continue() {
-        return Index_h$constants_1.CXVisit_Continue();
+    public static void clang_remap_dispose ( Addressable x0) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$51.clang_remap_dispose$MH, "clang_remap_dispose");
+        try {
+            mh$.invokeExact(x0.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
+    public static int CXVisit_Break() {
+        return (int)0L;
+    }
+    public static int CXVisit_Continue() {
+        return (int)1L;
     }
     public static class CXCursorAndRangeVisitor {
 
-        private CXCursorAndRangeVisitor() {}
+        static final MemoryLayout CXCursorAndRangeVisitor$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("context"),
+            C_POINTER.withName("visit")
+        ).withName("CXCursorAndRangeVisitor");
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXCursorAndRangeVisitor$struct$LAYOUT();
+            return CXCursorAndRangeVisitor.CXCursorAndRangeVisitor$struct$LAYOUT;
         }
+        static final VarHandle context$VH = MemoryHandles.asAddressVarHandle(CXCursorAndRangeVisitor$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("context")));
         public static VarHandle context$VH() {
-            return Index_h$constants_1.CXCursorAndRangeVisitor$context$VH();
+            return CXCursorAndRangeVisitor.context$VH;
         }
-        public static  @C("void*") MemoryAddress context$get(@C("struct CXCursorAndRangeVisitor") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCursorAndRangeVisitor$context$VH().get(seg);
+        public static MemoryAddress context$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCursorAndRangeVisitor.context$VH.get(seg);
         }
-        public static  @C("void*") MemoryAddress context$get(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCursorAndRangeVisitor$context$VH().get(seg.asSlice(index*sizeof()));
+        public static void context$set( MemorySegment seg, MemoryAddress x) {
+            CXCursorAndRangeVisitor.context$VH.set(seg, x);
         }
-        public static void context$set(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, @C("void*") MemoryAddress x) {
-            Index_h$constants_1.CXCursorAndRangeVisitor$context$VH().set(seg, x);
+        public static MemoryAddress context$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCursorAndRangeVisitor.context$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void context$set(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, long index, @C("void*") MemoryAddress x) {
-            Index_h$constants_1.CXCursorAndRangeVisitor$context$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void context$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXCursorAndRangeVisitor.context$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface visit {
+
+            int apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemorySegment x2);
+            static MemorySegment allocate(visit fi) {
+                return RuntimeHelper.upcallStub(visit.class, fi, constants$51.visit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
+            }
+            static MemorySegment allocate(visit fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle visit$VH = MemoryHandles.asAddressVarHandle(CXCursorAndRangeVisitor$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("visit")));
         public static VarHandle visit$VH() {
-            return Index_h$constants_1.CXCursorAndRangeVisitor$visit$VH();
+            return CXCursorAndRangeVisitor.visit$VH;
         }
-        public static  @C("enum CXVisitorResult(*)(void*,CXCursor,CXSourceRange)") MemoryAddress visit$get(@C("struct CXCursorAndRangeVisitor") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCursorAndRangeVisitor$visit$VH().get(seg);
+        public static MemoryAddress visit$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCursorAndRangeVisitor.visit$VH.get(seg);
         }
-        public static  @C("enum CXVisitorResult(*)(void*,CXCursor,CXSourceRange)") MemoryAddress visit$get(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXCursorAndRangeVisitor$visit$VH().get(seg.asSlice(index*sizeof()));
+        public static void visit$set( MemorySegment seg, MemoryAddress x) {
+            CXCursorAndRangeVisitor.visit$VH.set(seg, x);
         }
-        public static void visit$set(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, @C("enum CXVisitorResult(*)(void*,CXCursor,CXSourceRange)") MemoryAddress x) {
-            Index_h$constants_1.CXCursorAndRangeVisitor$visit$VH().set(seg, x);
+        public static MemoryAddress visit$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXCursorAndRangeVisitor.visit$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void visit$set(@C("struct CXCursorAndRangeVisitor") MemorySegment seg, long index, @C("enum CXVisitorResult(*)(void*,CXCursor,CXSourceRange)") MemoryAddress x) {
-            Index_h$constants_1.CXCursorAndRangeVisitor$visit$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void visit$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXCursorAndRangeVisitor.visit$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct CXCursorAndRangeVisitor") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct CXCursorAndRangeVisitor") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct CXCursorAndRangeVisitor[]") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct CXCursorAndRangeVisitor[]") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct CXCursorAndRangeVisitor*") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct CXCursorAndRangeVisitor*") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct CXCursorAndRangeVisitor") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXResult_Success() {
-        return Index_h$constants_1.CXResult_Success();
+    public static int CXResult_Success() {
+        return (int)0L;
     }
-    public static @C("int") int CXResult_Invalid() {
-        return Index_h$constants_1.CXResult_Invalid();
+    public static int CXResult_Invalid() {
+        return (int)1L;
     }
-    public static @C("int") int CXResult_VisitBreak() {
-        return Index_h$constants_1.CXResult_VisitBreak();
+    public static int CXResult_VisitBreak() {
+        return (int)2L;
     }
-    public static  MethodHandle clang_findReferencesInFile$MH() {
-        return Index_h$constants_1.clang_findReferencesInFile$MH();
+    public static MethodHandle clang_findReferencesInFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$51.clang_findReferencesInFile$MH,"clang_findReferencesInFile");
     }
-    public static @C("CXResult") int clang_findReferencesInFile (@C("CXCursor") MemorySegment cursor, @C("CXFile") Addressable file, @C("CXCursorAndRangeVisitor") MemorySegment visitor) {
+    public static int clang_findReferencesInFile ( MemorySegment cursor,  Addressable file,  MemorySegment visitor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$51.clang_findReferencesInFile$MH, "clang_findReferencesInFile");
         try {
-            return (int)Index_h$constants_1.clang_findReferencesInFile$MH().invokeExact(cursor, file.address(), visitor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(cursor, file.address(), visitor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_findIncludesInFile$MH() {
-        return Index_h$constants_1.clang_findIncludesInFile$MH();
+    public static MethodHandle clang_findIncludesInFile$MH() {
+        return RuntimeHelper.requireNonNull(constants$51.clang_findIncludesInFile$MH,"clang_findIncludesInFile");
     }
-    public static @C("CXResult") int clang_findIncludesInFile (@C("CXTranslationUnit") Addressable TU, @C("CXFile") Addressable file, @C("CXCursorAndRangeVisitor") MemorySegment visitor) {
+    public static int clang_findIncludesInFile ( Addressable TU,  Addressable file,  MemorySegment visitor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$51.clang_findIncludesInFile$MH, "clang_findIncludesInFile");
         try {
-            return (int)Index_h$constants_1.clang_findIncludesInFile$MH().invokeExact(TU.address(), file.address(), visitor);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(TU.address(), file.address(), visitor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public static  MethodHandle clang_findReferencesInFileWithBlock$MH() {
-        return Index_h$constants_1.clang_findReferencesInFileWithBlock$MH();
-    }
-    public static @C("CXResult") int clang_findReferencesInFileWithBlock (@C("CXCursor") MemorySegment x0, @C("CXFile") Addressable x1, @C("CXCursorAndRangeVisitorBlock") Addressable x2) {
-        try {
-            return (int)Index_h$constants_1.clang_findReferencesInFileWithBlock$MH().invokeExact(x0, x1.address(), x2.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public interface clang_findReferencesInFileWithBlock$x0 {
+    public interface CXCursorAndRangeVisitorBlock {
+
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1);
-        public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findReferencesInFileWithBlock$x0 fi) {
-            return RuntimeHelper.upcallStub(clang_findReferencesInFileWithBlock$x0.class, fi, Index_h$constants_1.clang_findReferencesInFileWithBlock$x0$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
+        static MemorySegment allocate(CXCursorAndRangeVisitorBlock fi) {
+            return RuntimeHelper.upcallStub(CXCursorAndRangeVisitorBlock.class, fi, constants$51.CXCursorAndRangeVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
-        public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findReferencesInFileWithBlock$x0 fi, NativeScope scope) {
+        static MemorySegment allocate(CXCursorAndRangeVisitorBlock fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
         }
     }
-    public static  MethodHandle clang_findIncludesInFileWithBlock$MH() {
-        return Index_h$constants_1.clang_findIncludesInFileWithBlock$MH();
+
+    public static class constants$51 {
+
+        static final FunctionDescriptor clang_remap_getFilenames$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_remap_getFilenames$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_remap_getFilenames",
+            "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$51.clang_remap_getFilenames$FUNC, false
+        );
+        static final FunctionDescriptor clang_remap_dispose$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER
+        );
+        static final MethodHandle clang_remap_dispose$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_remap_dispose",
+            "(Ljdk/incubator/foreign/MemoryAddress;)V",
+            constants$51.clang_remap_dispose$FUNC, false
+        );
+        static final FunctionDescriptor visit$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
+        static final FunctionDescriptor clang_findReferencesInFile$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("context"),
+                C_POINTER.withName("visit")
+            ).withName("CXCursorAndRangeVisitor")
+        );
+        static final MethodHandle clang_findReferencesInFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_findReferencesInFile",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$51.clang_findReferencesInFile$FUNC, false
+        );
+        static final FunctionDescriptor clang_findIncludesInFile$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            MemoryLayout.ofStruct(
+                C_POINTER.withName("context"),
+                C_POINTER.withName("visit")
+            ).withName("CXCursorAndRangeVisitor")
+        );
+        static final MethodHandle clang_findIncludesInFile$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_findIncludesInFile",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
+            constants$51.clang_findIncludesInFile$FUNC, false
+        );
+        static final FunctionDescriptor CXCursorAndRangeVisitorBlock$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("begin_int_data"),
+                C_INT.withName("end_int_data")
+            )
+        );
     }
-    public static @C("CXResult") int clang_findIncludesInFileWithBlock (@C("CXTranslationUnit") Addressable x0, @C("CXFile") Addressable x1, @C("CXCursorAndRangeVisitorBlock") Addressable x2) {
+
+    public static MethodHandle clang_findReferencesInFileWithBlock$MH() {
+        return RuntimeHelper.requireNonNull(constants$52.clang_findReferencesInFileWithBlock$MH,"clang_findReferencesInFileWithBlock");
+    }
+    public static int clang_findReferencesInFileWithBlock ( MemorySegment x0,  Addressable x1,  Addressable x2) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$52.clang_findReferencesInFileWithBlock$MH, "clang_findReferencesInFileWithBlock");
         try {
-            return (int)Index_h$constants_1.clang_findIncludesInFileWithBlock$MH().invokeExact(x0.address(), x1.address(), x2.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
+            return (int)mh$.invokeExact(x0, x1.address(), x2.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
-    public interface clang_findIncludesInFileWithBlock$x0 {
-        int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1);
-        public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findIncludesInFileWithBlock$x0 fi) {
-            return RuntimeHelper.upcallStub(clang_findIncludesInFileWithBlock$x0.class, fi, Index_h$constants_1.clang_findIncludesInFileWithBlock$x0$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
-        }
-        public static  @C("CXCursorAndRangeVisitorBlock") MemorySegment allocate(clang_findIncludesInFileWithBlock$x0 fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+    public static MethodHandle clang_findIncludesInFileWithBlock$MH() {
+        return RuntimeHelper.requireNonNull(constants$52.clang_findIncludesInFileWithBlock$MH,"clang_findIncludesInFileWithBlock");
+    }
+    public static int clang_findIncludesInFileWithBlock ( Addressable x0,  Addressable x1,  Addressable x2) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$52.clang_findIncludesInFileWithBlock$MH, "clang_findIncludesInFileWithBlock");
+        try {
+            return (int)mh$.invokeExact(x0.address(), x1.address(), x2.address());
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
         }
     }
     public static class CXIdxLoc {
 
-        private CXIdxLoc() {}
+        static final MemoryLayout CXIdxLoc$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            C_INT.withName("int_data"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxLoc$struct$LAYOUT();
+            return CXIdxLoc.CXIdxLoc$struct$LAYOUT;
         }
         public static MemorySegment ptr_data$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 16));
         }
+        static final VarHandle int_data$VH = CXIdxLoc$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("int_data"));
         public static VarHandle int_data$VH() {
-            return Index_h$constants_1.CXIdxLoc$int_data$VH();
+            return CXIdxLoc.int_data$VH;
         }
-        public static  @C("unsigned int") int int_data$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxLoc$int_data$VH().get(seg);
+        public static int int_data$get(MemorySegment seg) {
+            return (int)CXIdxLoc.int_data$VH.get(seg);
         }
-        public static  @C("unsigned int") int int_data$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxLoc$int_data$VH().get(seg.asSlice(index*sizeof()));
+        public static void int_data$set( MemorySegment seg, int x) {
+            CXIdxLoc.int_data$VH.set(seg, x);
         }
-        public static void int_data$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxLoc$int_data$VH().set(seg, x);
+        public static int int_data$get(MemorySegment seg, long index) {
+            return (int)CXIdxLoc.int_data$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void int_data$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxLoc$int_data$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void int_data$set(MemorySegment seg, long index, int x) {
+            CXIdxLoc.int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxIncludedFileInfo {
 
-        private CXIdxIncludedFileInfo() {}
+        static final MemoryLayout CXIdxIncludedFileInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("hashLoc"),
+            C_POINTER.withName("filename"),
+            C_POINTER.withName("file"),
+            C_INT.withName("isImport"),
+            C_INT.withName("isAngled"),
+            C_INT.withName("isModuleImport"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$struct$LAYOUT();
+            return CXIdxIncludedFileInfo.CXIdxIncludedFileInfo$struct$LAYOUT;
         }
         public static MemorySegment hashLoc$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 24));
         }
+        static final VarHandle filename$VH = MemoryHandles.asAddressVarHandle(CXIdxIncludedFileInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("filename")));
         public static VarHandle filename$VH() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$filename$VH();
+            return CXIdxIncludedFileInfo.filename$VH;
         }
-        public static  @C("char*") MemoryAddress filename$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIncludedFileInfo$filename$VH().get(seg);
+        public static MemoryAddress filename$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIncludedFileInfo.filename$VH.get(seg);
         }
-        public static  @C("char*") MemoryAddress filename$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIncludedFileInfo$filename$VH().get(seg.asSlice(index*sizeof()));
+        public static void filename$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxIncludedFileInfo.filename$VH.set(seg, x);
         }
-        public static void filename$set(@C("struct ") MemorySegment seg, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$filename$VH().set(seg, x);
+        public static MemoryAddress filename$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIncludedFileInfo.filename$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void filename$set(@C("struct ") MemorySegment seg, long index, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$filename$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void filename$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxIncludedFileInfo.filename$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle file$VH = MemoryHandles.asAddressVarHandle(CXIdxIncludedFileInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("file")));
         public static VarHandle file$VH() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$file$VH();
+            return CXIdxIncludedFileInfo.file$VH;
         }
-        public static  @C("CXFile") MemoryAddress file$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIncludedFileInfo$file$VH().get(seg);
+        public static MemoryAddress file$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIncludedFileInfo.file$VH.get(seg);
         }
-        public static  @C("CXFile") MemoryAddress file$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIncludedFileInfo$file$VH().get(seg.asSlice(index*sizeof()));
+        public static void file$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxIncludedFileInfo.file$VH.set(seg, x);
         }
-        public static void file$set(@C("struct ") MemorySegment seg, @C("CXFile") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$file$VH().set(seg, x);
+        public static MemoryAddress file$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIncludedFileInfo.file$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void file$set(@C("struct ") MemorySegment seg, long index, @C("CXFile") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$file$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void file$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxIncludedFileInfo.file$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isImport$VH = CXIdxIncludedFileInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isImport"));
         public static VarHandle isImport$VH() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$isImport$VH();
+            return CXIdxIncludedFileInfo.isImport$VH;
         }
-        public static  @C("int") int isImport$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isImport$VH().get(seg);
+        public static int isImport$get(MemorySegment seg) {
+            return (int)CXIdxIncludedFileInfo.isImport$VH.get(seg);
         }
-        public static  @C("int") int isImport$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isImport$VH().get(seg.asSlice(index*sizeof()));
+        public static void isImport$set( MemorySegment seg, int x) {
+            CXIdxIncludedFileInfo.isImport$VH.set(seg, x);
         }
-        public static void isImport$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isImport$VH().set(seg, x);
+        public static int isImport$get(MemorySegment seg, long index) {
+            return (int)CXIdxIncludedFileInfo.isImport$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isImport$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isImport$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isImport$set(MemorySegment seg, long index, int x) {
+            CXIdxIncludedFileInfo.isImport$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isAngled$VH = CXIdxIncludedFileInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isAngled"));
         public static VarHandle isAngled$VH() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$isAngled$VH();
+            return CXIdxIncludedFileInfo.isAngled$VH;
         }
-        public static  @C("int") int isAngled$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isAngled$VH().get(seg);
+        public static int isAngled$get(MemorySegment seg) {
+            return (int)CXIdxIncludedFileInfo.isAngled$VH.get(seg);
         }
-        public static  @C("int") int isAngled$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isAngled$VH().get(seg.asSlice(index*sizeof()));
+        public static void isAngled$set( MemorySegment seg, int x) {
+            CXIdxIncludedFileInfo.isAngled$VH.set(seg, x);
         }
-        public static void isAngled$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isAngled$VH().set(seg, x);
+        public static int isAngled$get(MemorySegment seg, long index) {
+            return (int)CXIdxIncludedFileInfo.isAngled$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isAngled$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isAngled$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isAngled$set(MemorySegment seg, long index, int x) {
+            CXIdxIncludedFileInfo.isAngled$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isModuleImport$VH = CXIdxIncludedFileInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isModuleImport"));
         public static VarHandle isModuleImport$VH() {
-            return Index_h$constants_1.CXIdxIncludedFileInfo$isModuleImport$VH();
+            return CXIdxIncludedFileInfo.isModuleImport$VH;
         }
-        public static  @C("int") int isModuleImport$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isModuleImport$VH().get(seg);
+        public static int isModuleImport$get(MemorySegment seg) {
+            return (int)CXIdxIncludedFileInfo.isModuleImport$VH.get(seg);
         }
-        public static  @C("int") int isModuleImport$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxIncludedFileInfo$isModuleImport$VH().get(seg.asSlice(index*sizeof()));
+        public static void isModuleImport$set( MemorySegment seg, int x) {
+            CXIdxIncludedFileInfo.isModuleImport$VH.set(seg, x);
         }
-        public static void isModuleImport$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isModuleImport$VH().set(seg, x);
+        public static int isModuleImport$get(MemorySegment seg, long index) {
+            return (int)CXIdxIncludedFileInfo.isModuleImport$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isModuleImport$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxIncludedFileInfo$isModuleImport$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isModuleImport$set(MemorySegment seg, long index, int x) {
+            CXIdxIncludedFileInfo.isModuleImport$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxImportedASTFileInfo {
 
-        private CXIdxImportedASTFileInfo() {}
+        static final MemoryLayout CXIdxImportedASTFileInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("file"),
+            C_POINTER.withName("module"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc"),
+            C_INT.withName("isImplicit"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxImportedASTFileInfo$struct$LAYOUT();
+            return CXIdxImportedASTFileInfo.CXIdxImportedASTFileInfo$struct$LAYOUT;
         }
+        static final VarHandle file$VH = MemoryHandles.asAddressVarHandle(CXIdxImportedASTFileInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("file")));
         public static VarHandle file$VH() {
-            return Index_h$constants_1.CXIdxImportedASTFileInfo$file$VH();
+            return CXIdxImportedASTFileInfo.file$VH;
         }
-        public static  @C("CXFile") MemoryAddress file$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxImportedASTFileInfo$file$VH().get(seg);
+        public static MemoryAddress file$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxImportedASTFileInfo.file$VH.get(seg);
         }
-        public static  @C("CXFile") MemoryAddress file$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxImportedASTFileInfo$file$VH().get(seg.asSlice(index*sizeof()));
+        public static void file$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxImportedASTFileInfo.file$VH.set(seg, x);
         }
-        public static void file$set(@C("struct ") MemorySegment seg, @C("CXFile") MemoryAddress x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$file$VH().set(seg, x);
+        public static MemoryAddress file$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxImportedASTFileInfo.file$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void file$set(@C("struct ") MemorySegment seg, long index, @C("CXFile") MemoryAddress x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$file$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void file$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxImportedASTFileInfo.file$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle module$VH = MemoryHandles.asAddressVarHandle(CXIdxImportedASTFileInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("module")));
         public static VarHandle module$VH() {
-            return Index_h$constants_1.CXIdxImportedASTFileInfo$module$VH();
+            return CXIdxImportedASTFileInfo.module$VH;
         }
-        public static  @C("CXModule") MemoryAddress module$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxImportedASTFileInfo$module$VH().get(seg);
+        public static MemoryAddress module$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxImportedASTFileInfo.module$VH.get(seg);
         }
-        public static  @C("CXModule") MemoryAddress module$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxImportedASTFileInfo$module$VH().get(seg.asSlice(index*sizeof()));
+        public static void module$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxImportedASTFileInfo.module$VH.set(seg, x);
         }
-        public static void module$set(@C("struct ") MemorySegment seg, @C("CXModule") MemoryAddress x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$module$VH().set(seg, x);
+        public static MemoryAddress module$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxImportedASTFileInfo.module$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void module$set(@C("struct ") MemorySegment seg, long index, @C("CXModule") MemoryAddress x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$module$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void module$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxImportedASTFileInfo.module$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment loc$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(16, 24));
         }
+        static final VarHandle isImplicit$VH = CXIdxImportedASTFileInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isImplicit"));
         public static VarHandle isImplicit$VH() {
-            return Index_h$constants_1.CXIdxImportedASTFileInfo$isImplicit$VH();
+            return CXIdxImportedASTFileInfo.isImplicit$VH;
         }
-        public static  @C("int") int isImplicit$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxImportedASTFileInfo$isImplicit$VH().get(seg);
+        public static int isImplicit$get(MemorySegment seg) {
+            return (int)CXIdxImportedASTFileInfo.isImplicit$VH.get(seg);
         }
-        public static  @C("int") int isImplicit$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxImportedASTFileInfo$isImplicit$VH().get(seg.asSlice(index*sizeof()));
+        public static void isImplicit$set( MemorySegment seg, int x) {
+            CXIdxImportedASTFileInfo.isImplicit$VH.set(seg, x);
         }
-        public static void isImplicit$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$isImplicit$VH().set(seg, x);
+        public static int isImplicit$get(MemorySegment seg, long index) {
+            return (int)CXIdxImportedASTFileInfo.isImplicit$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isImplicit$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxImportedASTFileInfo$isImplicit$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isImplicit$set(MemorySegment seg, long index, int x) {
+            CXIdxImportedASTFileInfo.isImplicit$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXIdxEntity_Unexposed() {
-        return Index_h$constants_1.CXIdxEntity_Unexposed();
+    public static int CXIdxEntity_Unexposed() {
+        return (int)0L;
     }
-    public static @C("int") int CXIdxEntity_Typedef() {
-        return Index_h$constants_1.CXIdxEntity_Typedef();
+    public static int CXIdxEntity_Typedef() {
+        return (int)1L;
     }
-    public static @C("int") int CXIdxEntity_Function() {
-        return Index_h$constants_1.CXIdxEntity_Function();
+    public static int CXIdxEntity_Function() {
+        return (int)2L;
     }
-    public static @C("int") int CXIdxEntity_Variable() {
-        return Index_h$constants_1.CXIdxEntity_Variable();
+    public static int CXIdxEntity_Variable() {
+        return (int)3L;
     }
-    public static @C("int") int CXIdxEntity_Field() {
-        return Index_h$constants_1.CXIdxEntity_Field();
+    public static int CXIdxEntity_Field() {
+        return (int)4L;
     }
-    public static @C("int") int CXIdxEntity_EnumConstant() {
-        return Index_h$constants_1.CXIdxEntity_EnumConstant();
+    public static int CXIdxEntity_EnumConstant() {
+        return (int)5L;
     }
-    public static @C("int") int CXIdxEntity_ObjCClass() {
-        return Index_h$constants_1.CXIdxEntity_ObjCClass();
+    public static int CXIdxEntity_ObjCClass() {
+        return (int)6L;
     }
-    public static @C("int") int CXIdxEntity_ObjCProtocol() {
-        return Index_h$constants_1.CXIdxEntity_ObjCProtocol();
+    public static int CXIdxEntity_ObjCProtocol() {
+        return (int)7L;
     }
-    public static @C("int") int CXIdxEntity_ObjCCategory() {
-        return Index_h$constants_1.CXIdxEntity_ObjCCategory();
+    public static int CXIdxEntity_ObjCCategory() {
+        return (int)8L;
     }
-    public static @C("int") int CXIdxEntity_ObjCInstanceMethod() {
-        return Index_h$constants_1.CXIdxEntity_ObjCInstanceMethod();
+    public static int CXIdxEntity_ObjCInstanceMethod() {
+        return (int)9L;
     }
-    public static @C("int") int CXIdxEntity_ObjCClassMethod() {
-        return Index_h$constants_1.CXIdxEntity_ObjCClassMethod();
+    public static int CXIdxEntity_ObjCClassMethod() {
+        return (int)10L;
     }
-    public static @C("int") int CXIdxEntity_ObjCProperty() {
-        return Index_h$constants_1.CXIdxEntity_ObjCProperty();
+    public static int CXIdxEntity_ObjCProperty() {
+        return (int)11L;
     }
-    public static @C("int") int CXIdxEntity_ObjCIvar() {
-        return Index_h$constants_1.CXIdxEntity_ObjCIvar();
+    public static int CXIdxEntity_ObjCIvar() {
+        return (int)12L;
     }
-    public static @C("int") int CXIdxEntity_Enum() {
-        return Index_h$constants_1.CXIdxEntity_Enum();
+    public static int CXIdxEntity_Enum() {
+        return (int)13L;
     }
-    public static @C("int") int CXIdxEntity_Struct() {
-        return Index_h$constants_1.CXIdxEntity_Struct();
+    public static int CXIdxEntity_Struct() {
+        return (int)14L;
     }
-    public static @C("int") int CXIdxEntity_Union() {
-        return Index_h$constants_1.CXIdxEntity_Union();
+    public static int CXIdxEntity_Union() {
+        return (int)15L;
     }
-    public static @C("int") int CXIdxEntity_CXXClass() {
-        return Index_h$constants_1.CXIdxEntity_CXXClass();
+    public static int CXIdxEntity_CXXClass() {
+        return (int)16L;
     }
-    public static @C("int") int CXIdxEntity_CXXNamespace() {
-        return Index_h$constants_1.CXIdxEntity_CXXNamespace();
+    public static int CXIdxEntity_CXXNamespace() {
+        return (int)17L;
     }
-    public static @C("int") int CXIdxEntity_CXXNamespaceAlias() {
-        return Index_h$constants_1.CXIdxEntity_CXXNamespaceAlias();
+    public static int CXIdxEntity_CXXNamespaceAlias() {
+        return (int)18L;
     }
-    public static @C("int") int CXIdxEntity_CXXStaticVariable() {
-        return Index_h$constants_1.CXIdxEntity_CXXStaticVariable();
+    public static int CXIdxEntity_CXXStaticVariable() {
+        return (int)19L;
     }
-    public static @C("int") int CXIdxEntity_CXXStaticMethod() {
-        return Index_h$constants_1.CXIdxEntity_CXXStaticMethod();
+    public static int CXIdxEntity_CXXStaticMethod() {
+        return (int)20L;
     }
-    public static @C("int") int CXIdxEntity_CXXInstanceMethod() {
-        return Index_h$constants_1.CXIdxEntity_CXXInstanceMethod();
+    public static int CXIdxEntity_CXXInstanceMethod() {
+        return (int)21L;
     }
-    public static @C("int") int CXIdxEntity_CXXConstructor() {
-        return Index_h$constants_1.CXIdxEntity_CXXConstructor();
+    public static int CXIdxEntity_CXXConstructor() {
+        return (int)22L;
     }
-    public static @C("int") int CXIdxEntity_CXXDestructor() {
-        return Index_h$constants_1.CXIdxEntity_CXXDestructor();
+    public static int CXIdxEntity_CXXDestructor() {
+        return (int)23L;
     }
-    public static @C("int") int CXIdxEntity_CXXConversionFunction() {
-        return Index_h$constants_1.CXIdxEntity_CXXConversionFunction();
+    public static int CXIdxEntity_CXXConversionFunction() {
+        return (int)24L;
     }
-    public static @C("int") int CXIdxEntity_CXXTypeAlias() {
-        return Index_h$constants_1.CXIdxEntity_CXXTypeAlias();
+    public static int CXIdxEntity_CXXTypeAlias() {
+        return (int)25L;
     }
-    public static @C("int") int CXIdxEntity_CXXInterface() {
-        return Index_h$constants_1.CXIdxEntity_CXXInterface();
+    public static int CXIdxEntity_CXXInterface() {
+        return (int)26L;
     }
-    public static @C("int") int CXIdxEntityLang_None() {
-        return Index_h$constants_1.CXIdxEntityLang_None();
+    public static int CXIdxEntityLang_None() {
+        return (int)0L;
     }
-    public static @C("int") int CXIdxEntityLang_C() {
-        return Index_h$constants_1.CXIdxEntityLang_C();
+    public static int CXIdxEntityLang_C() {
+        return (int)1L;
     }
-    public static @C("int") int CXIdxEntityLang_ObjC() {
-        return Index_h$constants_1.CXIdxEntityLang_ObjC();
+    public static int CXIdxEntityLang_ObjC() {
+        return (int)2L;
     }
-    public static @C("int") int CXIdxEntityLang_CXX() {
-        return Index_h$constants_1.CXIdxEntityLang_CXX();
+    public static int CXIdxEntityLang_CXX() {
+        return (int)3L;
     }
-    public static @C("int") int CXIdxEntityLang_Swift() {
-        return Index_h$constants_1.CXIdxEntityLang_Swift();
+    public static int CXIdxEntityLang_Swift() {
+        return (int)4L;
     }
-    public static @C("int") int CXIdxEntity_NonTemplate() {
-        return Index_h$constants_1.CXIdxEntity_NonTemplate();
+    public static int CXIdxEntity_NonTemplate() {
+        return (int)0L;
     }
-    public static @C("int") int CXIdxEntity_Template() {
-        return Index_h$constants_1.CXIdxEntity_Template();
+    public static int CXIdxEntity_Template() {
+        return (int)1L;
     }
-    public static @C("int") int CXIdxEntity_TemplatePartialSpecialization() {
-        return Index_h$constants_1.CXIdxEntity_TemplatePartialSpecialization();
-    }
-    public static @C("int") int CXIdxEntity_TemplateSpecialization() {
-        return Index_h$constants_1.CXIdxEntity_TemplateSpecialization();
-    }
-    public static @C("int") int CXIdxAttr_Unexposed() {
-        return Index_h$constants_1.CXIdxAttr_Unexposed();
-    }
-    public static @C("int") int CXIdxAttr_IBAction() {
-        return Index_h$constants_1.CXIdxAttr_IBAction();
-    }
-    public static @C("int") int CXIdxAttr_IBOutlet() {
-        return Index_h$constants_1.CXIdxAttr_IBOutlet();
-    }
-    public static @C("int") int CXIdxAttr_IBOutletCollection() {
-        return Index_h$constants_1.CXIdxAttr_IBOutletCollection();
+    public static int CXIdxEntity_TemplatePartialSpecialization() {
+        return (int)2L;
     }
     public static class CXIdxAttrInfo {
 
-        private CXIdxAttrInfo() {}
+        static final MemoryLayout CXIdxAttrInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxAttrInfo$struct$LAYOUT();
+            return CXIdxAttrInfo.CXIdxAttrInfo$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXIdxAttrInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_1.CXIdxAttrInfo$kind$VH();
+            return CXIdxAttrInfo.kind$VH;
         }
-        public static  @C("CXIdxAttrKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxAttrInfo$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXIdxAttrInfo.kind$VH.get(seg);
         }
-        public static  @C("CXIdxAttrKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxAttrInfo$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXIdxAttrInfo.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("CXIdxAttrKind") int x) {
-            Index_h$constants_1.CXIdxAttrInfo$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXIdxAttrInfo.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxAttrKind") int x) {
-            Index_h$constants_1.CXIdxAttrInfo$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXIdxAttrInfo.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 32));
@@ -6406,214 +10810,257 @@ public final class Index_h {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxEntityInfo {
 
-        private CXIdxEntityInfo() {}
+        static final MemoryLayout CXIdxEntityInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            C_INT.withName("templateKind"),
+            C_INT.withName("lang"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("name"),
+            C_POINTER.withName("USR"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            C_POINTER.withName("attributes"),
+            C_INT.withName("numAttributes"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxEntityInfo$struct$LAYOUT();
+            return CXIdxEntityInfo.CXIdxEntityInfo$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXIdxEntityInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$kind$VH();
+            return CXIdxEntityInfo.kind$VH;
         }
-        public static  @C("CXIdxEntityKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXIdxEntityInfo.kind$VH.get(seg);
         }
-        public static  @C("CXIdxEntityKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXIdxEntityInfo.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("CXIdxEntityKind") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityInfo.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxEntityKind") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityInfo.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle templateKind$VH = CXIdxEntityInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("templateKind"));
         public static VarHandle templateKind$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$templateKind$VH();
+            return CXIdxEntityInfo.templateKind$VH;
         }
-        public static  @C("CXIdxEntityCXXTemplateKind") int templateKind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$templateKind$VH().get(seg);
+        public static int templateKind$get(MemorySegment seg) {
+            return (int)CXIdxEntityInfo.templateKind$VH.get(seg);
         }
-        public static  @C("CXIdxEntityCXXTemplateKind") int templateKind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$templateKind$VH().get(seg.asSlice(index*sizeof()));
+        public static void templateKind$set( MemorySegment seg, int x) {
+            CXIdxEntityInfo.templateKind$VH.set(seg, x);
         }
-        public static void templateKind$set(@C("struct ") MemorySegment seg, @C("CXIdxEntityCXXTemplateKind") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$templateKind$VH().set(seg, x);
+        public static int templateKind$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityInfo.templateKind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void templateKind$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxEntityCXXTemplateKind") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$templateKind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void templateKind$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityInfo.templateKind$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle lang$VH = CXIdxEntityInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("lang"));
         public static VarHandle lang$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$lang$VH();
+            return CXIdxEntityInfo.lang$VH;
         }
-        public static  @C("CXIdxEntityLanguage") int lang$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$lang$VH().get(seg);
+        public static int lang$get(MemorySegment seg) {
+            return (int)CXIdxEntityInfo.lang$VH.get(seg);
         }
-        public static  @C("CXIdxEntityLanguage") int lang$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$lang$VH().get(seg.asSlice(index*sizeof()));
+        public static void lang$set( MemorySegment seg, int x) {
+            CXIdxEntityInfo.lang$VH.set(seg, x);
         }
-        public static void lang$set(@C("struct ") MemorySegment seg, @C("CXIdxEntityLanguage") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$lang$VH().set(seg, x);
+        public static int lang$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityInfo.lang$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void lang$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxEntityLanguage") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$lang$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void lang$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityInfo.lang$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle name$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("name")));
         public static VarHandle name$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$name$VH();
+            return CXIdxEntityInfo.name$VH;
         }
-        public static  @C("char*") MemoryAddress name$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$name$VH().get(seg);
+        public static MemoryAddress name$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.name$VH.get(seg);
         }
-        public static  @C("char*") MemoryAddress name$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$name$VH().get(seg.asSlice(index*sizeof()));
+        public static void name$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityInfo.name$VH.set(seg, x);
         }
-        public static void name$set(@C("struct ") MemorySegment seg, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$name$VH().set(seg, x);
+        public static MemoryAddress name$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.name$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void name$set(@C("struct ") MemorySegment seg, long index, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$name$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void name$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityInfo.name$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle USR$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("USR")));
         public static VarHandle USR$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$USR$VH();
+            return CXIdxEntityInfo.USR$VH;
         }
-        public static  @C("char*") MemoryAddress USR$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$USR$VH().get(seg);
+        public static MemoryAddress USR$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.USR$VH.get(seg);
         }
-        public static  @C("char*") MemoryAddress USR$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$USR$VH().get(seg.asSlice(index*sizeof()));
+        public static void USR$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityInfo.USR$VH.set(seg, x);
         }
-        public static void USR$set(@C("struct ") MemorySegment seg, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$USR$VH().set(seg, x);
+        public static MemoryAddress USR$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.USR$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void USR$set(@C("struct ") MemorySegment seg, long index, @C("char*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$USR$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void USR$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityInfo.USR$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(32, 32));
         }
+        static final VarHandle attributes$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("attributes")));
         public static VarHandle attributes$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$attributes$VH();
+            return CXIdxEntityInfo.attributes$VH;
         }
-        public static  @C("const CXIdxAttrInfo**") MemoryAddress attributes$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$attributes$VH().get(seg);
+        public static MemoryAddress attributes$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.attributes$VH.get(seg);
         }
-        public static  @C("const CXIdxAttrInfo**") MemoryAddress attributes$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityInfo$attributes$VH().get(seg.asSlice(index*sizeof()));
+        public static void attributes$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityInfo.attributes$VH.set(seg, x);
         }
-        public static void attributes$set(@C("struct ") MemorySegment seg, @C("const CXIdxAttrInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$attributes$VH().set(seg, x);
+        public static MemoryAddress attributes$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityInfo.attributes$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void attributes$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxAttrInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityInfo$attributes$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void attributes$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityInfo.attributes$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle numAttributes$VH = CXIdxEntityInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("numAttributes"));
         public static VarHandle numAttributes$VH() {
-            return Index_h$constants_1.CXIdxEntityInfo$numAttributes$VH();
+            return CXIdxEntityInfo.numAttributes$VH;
         }
-        public static  @C("unsigned int") int numAttributes$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$numAttributes$VH().get(seg);
+        public static int numAttributes$get(MemorySegment seg) {
+            return (int)CXIdxEntityInfo.numAttributes$VH.get(seg);
         }
-        public static  @C("unsigned int") int numAttributes$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityInfo$numAttributes$VH().get(seg.asSlice(index*sizeof()));
+        public static void numAttributes$set( MemorySegment seg, int x) {
+            CXIdxEntityInfo.numAttributes$VH.set(seg, x);
         }
-        public static void numAttributes$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$numAttributes$VH().set(seg, x);
+        public static int numAttributes$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityInfo.numAttributes$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void numAttributes$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxEntityInfo$numAttributes$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void numAttributes$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityInfo.numAttributes$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxContainerInfo {
 
-        private CXIdxContainerInfo() {}
+        static final MemoryLayout CXIdxContainerInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxContainerInfo$struct$LAYOUT();
+            return CXIdxContainerInfo.CXIdxContainerInfo$struct$LAYOUT;
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 32));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxIBOutletCollectionAttrInfo {
 
-        private CXIdxIBOutletCollectionAttrInfo() {}
+        static final MemoryLayout CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("attrInfo"),
+            C_POINTER.withName("objcClass"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("classCursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("classLoc")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT();
+            return CXIdxIBOutletCollectionAttrInfo.CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT;
         }
+        static final VarHandle attrInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("attrInfo")));
         public static VarHandle attrInfo$VH() {
-            return Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$attrInfo$VH();
+            return CXIdxIBOutletCollectionAttrInfo.attrInfo$VH;
         }
-        public static  @C("const CXIdxAttrInfo*") MemoryAddress attrInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$attrInfo$VH().get(seg);
+        public static MemoryAddress attrInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIBOutletCollectionAttrInfo.attrInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxAttrInfo*") MemoryAddress attrInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$attrInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void attrInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxIBOutletCollectionAttrInfo.attrInfo$VH.set(seg, x);
         }
-        public static void attrInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxAttrInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$attrInfo$VH().set(seg, x);
+        public static MemoryAddress attrInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIBOutletCollectionAttrInfo.attrInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void attrInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxAttrInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$attrInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void attrInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxIBOutletCollectionAttrInfo.attrInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle objcClass$VH = MemoryHandles.asAddressVarHandle(CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("objcClass")));
         public static VarHandle objcClass$VH() {
-            return Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$objcClass$VH();
+            return CXIdxIBOutletCollectionAttrInfo.objcClass$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress objcClass$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$objcClass$VH().get(seg);
+        public static MemoryAddress objcClass$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIBOutletCollectionAttrInfo.objcClass$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress objcClass$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$objcClass$VH().get(seg.asSlice(index*sizeof()));
+        public static void objcClass$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxIBOutletCollectionAttrInfo.objcClass$VH.set(seg, x);
         }
-        public static void objcClass$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$objcClass$VH().set(seg, x);
+        public static MemoryAddress objcClass$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxIBOutletCollectionAttrInfo.objcClass$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void objcClass$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxIBOutletCollectionAttrInfo$objcClass$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void objcClass$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxIBOutletCollectionAttrInfo.objcClass$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment classCursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(16, 32));
@@ -6622,45 +11069,67 @@ public final class Index_h {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(48, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXIdxDeclFlag_Skipped() {
-        return Index_h$constants_1.CXIdxDeclFlag_Skipped();
-    }
     public static class CXIdxDeclInfo {
 
-        private CXIdxDeclInfo() {}
+        static final MemoryLayout CXIdxDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("entityInfo"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc"),
+            C_POINTER.withName("semanticContainer"),
+            C_POINTER.withName("lexicalContainer"),
+            C_INT.withName("isRedeclaration"),
+            C_INT.withName("isDefinition"),
+            C_INT.withName("isContainer"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("declAsContainer"),
+            C_INT.withName("isImplicit"),
+            MemoryLayout.ofPaddingBits(32),
+            C_POINTER.withName("attributes"),
+            C_INT.withName("numAttributes"),
+            C_INT.withName("flags")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxDeclInfo$struct$LAYOUT();
+            return CXIdxDeclInfo.CXIdxDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle entityInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("entityInfo")));
         public static VarHandle entityInfo$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$entityInfo$VH();
+            return CXIdxDeclInfo.entityInfo$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress entityInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$entityInfo$VH().get(seg);
+        public static MemoryAddress entityInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.entityInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress entityInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$entityInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void entityInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxDeclInfo.entityInfo$VH.set(seg, x);
         }
-        public static void entityInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$entityInfo$VH().set(seg, x);
+        public static MemoryAddress entityInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.entityInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void entityInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$entityInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void entityInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxDeclInfo.entityInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 32));
@@ -6668,255 +11137,275 @@ public final class Index_h {
         public static MemorySegment loc$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
+        static final VarHandle semanticContainer$VH = MemoryHandles.asAddressVarHandle(CXIdxDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("semanticContainer")));
         public static VarHandle semanticContainer$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$semanticContainer$VH();
+            return CXIdxDeclInfo.semanticContainer$VH;
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress semanticContainer$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$semanticContainer$VH().get(seg);
+        public static MemoryAddress semanticContainer$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.semanticContainer$VH.get(seg);
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress semanticContainer$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$semanticContainer$VH().get(seg.asSlice(index*sizeof()));
+        public static void semanticContainer$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxDeclInfo.semanticContainer$VH.set(seg, x);
         }
-        public static void semanticContainer$set(@C("struct ") MemorySegment seg, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$semanticContainer$VH().set(seg, x);
+        public static MemoryAddress semanticContainer$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.semanticContainer$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void semanticContainer$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$semanticContainer$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void semanticContainer$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxDeclInfo.semanticContainer$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle lexicalContainer$VH = MemoryHandles.asAddressVarHandle(CXIdxDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("lexicalContainer")));
         public static VarHandle lexicalContainer$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$lexicalContainer$VH();
+            return CXIdxDeclInfo.lexicalContainer$VH;
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress lexicalContainer$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$lexicalContainer$VH().get(seg);
+        public static MemoryAddress lexicalContainer$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.lexicalContainer$VH.get(seg);
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress lexicalContainer$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$lexicalContainer$VH().get(seg.asSlice(index*sizeof()));
+        public static void lexicalContainer$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxDeclInfo.lexicalContainer$VH.set(seg, x);
         }
-        public static void lexicalContainer$set(@C("struct ") MemorySegment seg, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$lexicalContainer$VH().set(seg, x);
+        public static MemoryAddress lexicalContainer$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.lexicalContainer$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void lexicalContainer$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$lexicalContainer$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void lexicalContainer$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxDeclInfo.lexicalContainer$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isRedeclaration$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isRedeclaration"));
         public static VarHandle isRedeclaration$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$isRedeclaration$VH();
+            return CXIdxDeclInfo.isRedeclaration$VH;
         }
-        public static  @C("int") int isRedeclaration$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isRedeclaration$VH().get(seg);
+        public static int isRedeclaration$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.isRedeclaration$VH.get(seg);
         }
-        public static  @C("int") int isRedeclaration$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isRedeclaration$VH().get(seg.asSlice(index*sizeof()));
+        public static void isRedeclaration$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.isRedeclaration$VH.set(seg, x);
         }
-        public static void isRedeclaration$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isRedeclaration$VH().set(seg, x);
+        public static int isRedeclaration$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.isRedeclaration$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isRedeclaration$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isRedeclaration$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isRedeclaration$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.isRedeclaration$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isDefinition$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isDefinition"));
         public static VarHandle isDefinition$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$isDefinition$VH();
+            return CXIdxDeclInfo.isDefinition$VH;
         }
-        public static  @C("int") int isDefinition$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isDefinition$VH().get(seg);
+        public static int isDefinition$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.isDefinition$VH.get(seg);
         }
-        public static  @C("int") int isDefinition$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isDefinition$VH().get(seg.asSlice(index*sizeof()));
+        public static void isDefinition$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.isDefinition$VH.set(seg, x);
         }
-        public static void isDefinition$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isDefinition$VH().set(seg, x);
+        public static int isDefinition$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.isDefinition$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isDefinition$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isDefinition$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isDefinition$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.isDefinition$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isContainer$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isContainer"));
         public static VarHandle isContainer$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$isContainer$VH();
+            return CXIdxDeclInfo.isContainer$VH;
         }
-        public static  @C("int") int isContainer$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isContainer$VH().get(seg);
+        public static int isContainer$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.isContainer$VH.get(seg);
         }
-        public static  @C("int") int isContainer$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isContainer$VH().get(seg.asSlice(index*sizeof()));
+        public static void isContainer$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.isContainer$VH.set(seg, x);
         }
-        public static void isContainer$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isContainer$VH().set(seg, x);
+        public static int isContainer$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.isContainer$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isContainer$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isContainer$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isContainer$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.isContainer$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle declAsContainer$VH = MemoryHandles.asAddressVarHandle(CXIdxDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("declAsContainer")));
         public static VarHandle declAsContainer$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$declAsContainer$VH();
+            return CXIdxDeclInfo.declAsContainer$VH;
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress declAsContainer$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$declAsContainer$VH().get(seg);
+        public static MemoryAddress declAsContainer$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.declAsContainer$VH.get(seg);
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress declAsContainer$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$declAsContainer$VH().get(seg.asSlice(index*sizeof()));
+        public static void declAsContainer$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxDeclInfo.declAsContainer$VH.set(seg, x);
         }
-        public static void declAsContainer$set(@C("struct ") MemorySegment seg, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$declAsContainer$VH().set(seg, x);
+        public static MemoryAddress declAsContainer$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.declAsContainer$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void declAsContainer$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$declAsContainer$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void declAsContainer$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxDeclInfo.declAsContainer$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle isImplicit$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("isImplicit"));
         public static VarHandle isImplicit$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$isImplicit$VH();
+            return CXIdxDeclInfo.isImplicit$VH;
         }
-        public static  @C("int") int isImplicit$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isImplicit$VH().get(seg);
+        public static int isImplicit$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.isImplicit$VH.get(seg);
         }
-        public static  @C("int") int isImplicit$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$isImplicit$VH().get(seg.asSlice(index*sizeof()));
+        public static void isImplicit$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.isImplicit$VH.set(seg, x);
         }
-        public static void isImplicit$set(@C("struct ") MemorySegment seg, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isImplicit$VH().set(seg, x);
+        public static int isImplicit$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.isImplicit$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void isImplicit$set(@C("struct ") MemorySegment seg, long index, @C("int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$isImplicit$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void isImplicit$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.isImplicit$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle attributes$VH = MemoryHandles.asAddressVarHandle(CXIdxDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("attributes")));
         public static VarHandle attributes$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$attributes$VH();
+            return CXIdxDeclInfo.attributes$VH;
         }
-        public static  @C("const CXIdxAttrInfo**") MemoryAddress attributes$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$attributes$VH().get(seg);
+        public static MemoryAddress attributes$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.attributes$VH.get(seg);
         }
-        public static  @C("const CXIdxAttrInfo**") MemoryAddress attributes$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxDeclInfo$attributes$VH().get(seg.asSlice(index*sizeof()));
+        public static void attributes$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxDeclInfo.attributes$VH.set(seg, x);
         }
-        public static void attributes$set(@C("struct ") MemorySegment seg, @C("const CXIdxAttrInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$attributes$VH().set(seg, x);
+        public static MemoryAddress attributes$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxDeclInfo.attributes$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void attributes$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxAttrInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxDeclInfo$attributes$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void attributes$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxDeclInfo.attributes$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle numAttributes$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("numAttributes"));
         public static VarHandle numAttributes$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$numAttributes$VH();
+            return CXIdxDeclInfo.numAttributes$VH;
         }
-        public static  @C("unsigned int") int numAttributes$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$numAttributes$VH().get(seg);
+        public static int numAttributes$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.numAttributes$VH.get(seg);
         }
-        public static  @C("unsigned int") int numAttributes$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$numAttributes$VH().get(seg.asSlice(index*sizeof()));
+        public static void numAttributes$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.numAttributes$VH.set(seg, x);
         }
-        public static void numAttributes$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$numAttributes$VH().set(seg, x);
+        public static int numAttributes$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.numAttributes$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void numAttributes$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$numAttributes$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void numAttributes$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.numAttributes$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle flags$VH = CXIdxDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("flags"));
         public static VarHandle flags$VH() {
-            return Index_h$constants_1.CXIdxDeclInfo$flags$VH();
+            return CXIdxDeclInfo.flags$VH;
         }
-        public static  @C("unsigned int") int flags$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$flags$VH().get(seg);
+        public static int flags$get(MemorySegment seg) {
+            return (int)CXIdxDeclInfo.flags$VH.get(seg);
         }
-        public static  @C("unsigned int") int flags$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxDeclInfo$flags$VH().get(seg.asSlice(index*sizeof()));
+        public static void flags$set( MemorySegment seg, int x) {
+            CXIdxDeclInfo.flags$VH.set(seg, x);
         }
-        public static void flags$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$flags$VH().set(seg, x);
+        public static int flags$get(MemorySegment seg, long index) {
+            return (int)CXIdxDeclInfo.flags$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void flags$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxDeclInfo$flags$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void flags$set(MemorySegment seg, long index, int x) {
+            CXIdxDeclInfo.flags$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXIdxObjCContainer_ForwardRef() {
-        return Index_h$constants_1.CXIdxObjCContainer_ForwardRef();
-    }
-    public static @C("int") int CXIdxObjCContainer_Interface() {
-        return Index_h$constants_1.CXIdxObjCContainer_Interface();
-    }
-    public static @C("int") int CXIdxObjCContainer_Implementation() {
-        return Index_h$constants_1.CXIdxObjCContainer_Implementation();
-    }
     public static class CXIdxObjCContainerDeclInfo {
 
-        private CXIdxObjCContainerDeclInfo() {}
+        static final MemoryLayout CXIdxObjCContainerDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("declInfo"),
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCContainerDeclInfo$struct$LAYOUT();
+            return CXIdxObjCContainerDeclInfo.CXIdxObjCContainerDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle declInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCContainerDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("declInfo")));
         public static VarHandle declInfo$VH() {
-            return Index_h$constants_1.CXIdxObjCContainerDeclInfo$declInfo$VH();
+            return CXIdxObjCContainerDeclInfo.declInfo$VH;
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCContainerDeclInfo$declInfo$VH().get(seg);
+        public static MemoryAddress declInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCContainerDeclInfo.declInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCContainerDeclInfo$declInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void declInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCContainerDeclInfo.declInfo$VH.set(seg, x);
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCContainerDeclInfo$declInfo$VH().set(seg, x);
+        public static MemoryAddress declInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCContainerDeclInfo.declInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCContainerDeclInfo$declInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void declInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCContainerDeclInfo.declInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle kind$VH = CXIdxObjCContainerDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_1.CXIdxObjCContainerDeclInfo$kind$VH();
+            return CXIdxObjCContainerDeclInfo.kind$VH;
         }
-        public static  @C("CXIdxObjCContainerKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxObjCContainerDeclInfo$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXIdxObjCContainerDeclInfo.kind$VH.get(seg);
         }
-        public static  @C("CXIdxObjCContainerKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxObjCContainerDeclInfo$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXIdxObjCContainerDeclInfo.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("CXIdxObjCContainerKind") int x) {
-            Index_h$constants_1.CXIdxObjCContainerDeclInfo$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXIdxObjCContainerDeclInfo.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxObjCContainerKind") int x) {
-            Index_h$constants_1.CXIdxObjCContainerDeclInfo$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXIdxObjCContainerDeclInfo.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxBaseClassInfo {
 
-        private CXIdxBaseClassInfo() {}
+        static final MemoryLayout CXIdxBaseClassInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("base"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxBaseClassInfo$struct$LAYOUT();
+            return CXIdxBaseClassInfo.CXIdxBaseClassInfo$struct$LAYOUT;
         }
+        static final VarHandle base$VH = MemoryHandles.asAddressVarHandle(CXIdxBaseClassInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("base")));
         public static VarHandle base$VH() {
-            return Index_h$constants_1.CXIdxBaseClassInfo$base$VH();
+            return CXIdxBaseClassInfo.base$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress base$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxBaseClassInfo$base$VH().get(seg);
+        public static MemoryAddress base$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxBaseClassInfo.base$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress base$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxBaseClassInfo$base$VH().get(seg.asSlice(index*sizeof()));
+        public static void base$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxBaseClassInfo.base$VH.set(seg, x);
         }
-        public static void base$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxBaseClassInfo$base$VH().set(seg, x);
+        public static MemoryAddress base$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxBaseClassInfo.base$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void base$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxBaseClassInfo$base$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void base$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxBaseClassInfo.base$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 32));
@@ -6925,42 +11414,55 @@ public final class Index_h {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCProtocolRefInfo {
 
-        private CXIdxObjCProtocolRefInfo() {}
+        static final MemoryLayout CXIdxObjCProtocolRefInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("protocol"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCProtocolRefInfo$struct$LAYOUT();
+            return CXIdxObjCProtocolRefInfo.CXIdxObjCProtocolRefInfo$struct$LAYOUT;
         }
+        static final VarHandle protocol$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCProtocolRefInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("protocol")));
         public static VarHandle protocol$VH() {
-            return Index_h$constants_1.CXIdxObjCProtocolRefInfo$protocol$VH();
+            return CXIdxObjCProtocolRefInfo.protocol$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress protocol$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCProtocolRefInfo$protocol$VH().get(seg);
+        public static MemoryAddress protocol$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCProtocolRefInfo.protocol$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress protocol$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCProtocolRefInfo$protocol$VH().get(seg.asSlice(index*sizeof()));
+        public static void protocol$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCProtocolRefInfo.protocol$VH.set(seg, x);
         }
-        public static void protocol$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefInfo$protocol$VH().set(seg, x);
+        public static MemoryAddress protocol$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCProtocolRefInfo.protocol$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void protocol$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefInfo$protocol$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void protocol$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCProtocolRefInfo.protocol$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 32));
@@ -6969,178 +11471,207 @@ public final class Index_h {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCProtocolRefListInfo {
 
-        private CXIdxObjCProtocolRefListInfo() {}
+        static final MemoryLayout CXIdxObjCProtocolRefListInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("protocols"),
+            C_INT.withName("numProtocols"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCProtocolRefListInfo$struct$LAYOUT();
+            return CXIdxObjCProtocolRefListInfo.CXIdxObjCProtocolRefListInfo$struct$LAYOUT;
         }
+        static final VarHandle protocols$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCProtocolRefListInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("protocols")));
         public static VarHandle protocols$VH() {
-            return Index_h$constants_1.CXIdxObjCProtocolRefListInfo$protocols$VH();
+            return CXIdxObjCProtocolRefListInfo.protocols$VH;
         }
-        public static  @C("const CXIdxObjCProtocolRefInfo**") MemoryAddress protocols$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCProtocolRefListInfo$protocols$VH().get(seg);
+        public static MemoryAddress protocols$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCProtocolRefListInfo.protocols$VH.get(seg);
         }
-        public static  @C("const CXIdxObjCProtocolRefInfo**") MemoryAddress protocols$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCProtocolRefListInfo$protocols$VH().get(seg.asSlice(index*sizeof()));
+        public static void protocols$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCProtocolRefListInfo.protocols$VH.set(seg, x);
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, @C("const CXIdxObjCProtocolRefInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefListInfo$protocols$VH().set(seg, x);
+        public static MemoryAddress protocols$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCProtocolRefListInfo.protocols$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxObjCProtocolRefInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefListInfo$protocols$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void protocols$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCProtocolRefListInfo.protocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle numProtocols$VH = CXIdxObjCProtocolRefListInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("numProtocols"));
         public static VarHandle numProtocols$VH() {
-            return Index_h$constants_1.CXIdxObjCProtocolRefListInfo$numProtocols$VH();
+            return CXIdxObjCProtocolRefListInfo.numProtocols$VH;
         }
-        public static  @C("unsigned int") int numProtocols$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxObjCProtocolRefListInfo$numProtocols$VH().get(seg);
+        public static int numProtocols$get(MemorySegment seg) {
+            return (int)CXIdxObjCProtocolRefListInfo.numProtocols$VH.get(seg);
         }
-        public static  @C("unsigned int") int numProtocols$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxObjCProtocolRefListInfo$numProtocols$VH().get(seg.asSlice(index*sizeof()));
+        public static void numProtocols$set( MemorySegment seg, int x) {
+            CXIdxObjCProtocolRefListInfo.numProtocols$VH.set(seg, x);
         }
-        public static void numProtocols$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefListInfo$numProtocols$VH().set(seg, x);
+        public static int numProtocols$get(MemorySegment seg, long index) {
+            return (int)CXIdxObjCProtocolRefListInfo.numProtocols$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void numProtocols$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxObjCProtocolRefListInfo$numProtocols$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void numProtocols$set(MemorySegment seg, long index, int x) {
+            CXIdxObjCProtocolRefListInfo.numProtocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCInterfaceDeclInfo {
 
-        private CXIdxObjCInterfaceDeclInfo() {}
+        static final MemoryLayout CXIdxObjCInterfaceDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("containerInfo"),
+            C_POINTER.withName("superInfo"),
+            C_POINTER.withName("protocols")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$struct$LAYOUT();
+            return CXIdxObjCInterfaceDeclInfo.CXIdxObjCInterfaceDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle containerInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCInterfaceDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("containerInfo")));
         public static VarHandle containerInfo$VH() {
-            return Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$containerInfo$VH();
+            return CXIdxObjCInterfaceDeclInfo.containerInfo$VH;
         }
-        public static  @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress containerInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$containerInfo$VH().get(seg);
+        public static MemoryAddress containerInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.containerInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress containerInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$containerInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void containerInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.containerInfo$VH.set(seg, x);
         }
-        public static void containerInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$containerInfo$VH().set(seg, x);
+        public static MemoryAddress containerInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.containerInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void containerInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$containerInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void containerInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.containerInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle superInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCInterfaceDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("superInfo")));
         public static VarHandle superInfo$VH() {
-            return Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$superInfo$VH();
+            return CXIdxObjCInterfaceDeclInfo.superInfo$VH;
         }
-        public static  @C("const CXIdxBaseClassInfo*") MemoryAddress superInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$superInfo$VH().get(seg);
+        public static MemoryAddress superInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.superInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxBaseClassInfo*") MemoryAddress superInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$superInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void superInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.superInfo$VH.set(seg, x);
         }
-        public static void superInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxBaseClassInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$superInfo$VH().set(seg, x);
+        public static MemoryAddress superInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.superInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void superInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxBaseClassInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$superInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void superInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.superInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle protocols$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCInterfaceDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("protocols")));
         public static VarHandle protocols$VH() {
-            return Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$protocols$VH();
+            return CXIdxObjCInterfaceDeclInfo.protocols$VH;
         }
-        public static  @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress protocols$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$protocols$VH().get(seg);
+        public static MemoryAddress protocols$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.protocols$VH.get(seg);
         }
-        public static  @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress protocols$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$protocols$VH().get(seg.asSlice(index*sizeof()));
+        public static void protocols$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.protocols$VH.set(seg, x);
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$protocols$VH().set(seg, x);
+        public static MemoryAddress protocols$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCInterfaceDeclInfo.protocols$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCInterfaceDeclInfo$protocols$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void protocols$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCInterfaceDeclInfo.protocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCCategoryDeclInfo {
 
-        private CXIdxObjCCategoryDeclInfo() {}
+        static final MemoryLayout CXIdxObjCCategoryDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("containerInfo"),
+            C_POINTER.withName("objcClass"),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("classCursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("classLoc"),
+            C_POINTER.withName("protocols")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCCategoryDeclInfo$struct$LAYOUT();
+            return CXIdxObjCCategoryDeclInfo.CXIdxObjCCategoryDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle containerInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCCategoryDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("containerInfo")));
         public static VarHandle containerInfo$VH() {
-            return Index_h$constants_1.CXIdxObjCCategoryDeclInfo$containerInfo$VH();
+            return CXIdxObjCCategoryDeclInfo.containerInfo$VH;
         }
-        public static  @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress containerInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$containerInfo$VH().get(seg);
+        public static MemoryAddress containerInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.containerInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress containerInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$containerInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void containerInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.containerInfo$VH.set(seg, x);
         }
-        public static void containerInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$containerInfo$VH().set(seg, x);
+        public static MemoryAddress containerInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.containerInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void containerInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$containerInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void containerInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.containerInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle objcClass$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCCategoryDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("objcClass")));
         public static VarHandle objcClass$VH() {
-            return Index_h$constants_1.CXIdxObjCCategoryDeclInfo$objcClass$VH();
+            return CXIdxObjCCategoryDeclInfo.objcClass$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress objcClass$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$objcClass$VH().get(seg);
+        public static MemoryAddress objcClass$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.objcClass$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress objcClass$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$objcClass$VH().get(seg.asSlice(index*sizeof()));
+        public static void objcClass$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.objcClass$VH.set(seg, x);
         }
-        public static void objcClass$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$objcClass$VH().set(seg, x);
+        public static MemoryAddress objcClass$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.objcClass$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void objcClass$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$objcClass$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void objcClass$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.objcClass$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment classCursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(16, 32));
@@ -7148,230 +11679,229 @@ public final class Index_h {
         public static MemorySegment classLoc$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(48, 24));
         }
+        static final VarHandle protocols$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCCategoryDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("protocols")));
         public static VarHandle protocols$VH() {
-            return Index_h$constants_1.CXIdxObjCCategoryDeclInfo$protocols$VH();
+            return CXIdxObjCCategoryDeclInfo.protocols$VH;
         }
-        public static  @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress protocols$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$protocols$VH().get(seg);
+        public static MemoryAddress protocols$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.protocols$VH.get(seg);
         }
-        public static  @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress protocols$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCCategoryDeclInfo$protocols$VH().get(seg.asSlice(index*sizeof()));
+        public static void protocols$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.protocols$VH.set(seg, x);
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$protocols$VH().set(seg, x);
+        public static MemoryAddress protocols$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCCategoryDeclInfo.protocols$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void protocols$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCCategoryDeclInfo$protocols$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void protocols$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCCategoryDeclInfo.protocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCPropertyDeclInfo {
 
-        private CXIdxObjCPropertyDeclInfo() {}
+        static final MemoryLayout CXIdxObjCPropertyDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("declInfo"),
+            C_POINTER.withName("getter"),
+            C_POINTER.withName("setter")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxObjCPropertyDeclInfo$struct$LAYOUT();
+            return CXIdxObjCPropertyDeclInfo.CXIdxObjCPropertyDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle declInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCPropertyDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("declInfo")));
         public static VarHandle declInfo$VH() {
-            return Index_h$constants_1.CXIdxObjCPropertyDeclInfo$declInfo$VH();
+            return CXIdxObjCPropertyDeclInfo.declInfo$VH;
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$declInfo$VH().get(seg);
+        public static MemoryAddress declInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.declInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$declInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void declInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.declInfo$VH.set(seg, x);
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$declInfo$VH().set(seg, x);
+        public static MemoryAddress declInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.declInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$declInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void declInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.declInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle getter$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCPropertyDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("getter")));
         public static VarHandle getter$VH() {
-            return Index_h$constants_1.CXIdxObjCPropertyDeclInfo$getter$VH();
+            return CXIdxObjCPropertyDeclInfo.getter$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress getter$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$getter$VH().get(seg);
+        public static MemoryAddress getter$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.getter$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress getter$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$getter$VH().get(seg.asSlice(index*sizeof()));
+        public static void getter$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.getter$VH.set(seg, x);
         }
-        public static void getter$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$getter$VH().set(seg, x);
+        public static MemoryAddress getter$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.getter$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void getter$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$getter$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void getter$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.getter$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle setter$VH = MemoryHandles.asAddressVarHandle(CXIdxObjCPropertyDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("setter")));
         public static VarHandle setter$VH() {
-            return Index_h$constants_1.CXIdxObjCPropertyDeclInfo$setter$VH();
+            return CXIdxObjCPropertyDeclInfo.setter$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress setter$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$setter$VH().get(seg);
+        public static MemoryAddress setter$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.setter$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress setter$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxObjCPropertyDeclInfo$setter$VH().get(seg.asSlice(index*sizeof()));
+        public static void setter$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.setter$VH.set(seg, x);
         }
-        public static void setter$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$setter$VH().set(seg, x);
+        public static MemoryAddress setter$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxObjCPropertyDeclInfo.setter$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void setter$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxObjCPropertyDeclInfo$setter$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void setter$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxObjCPropertyDeclInfo.setter$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxCXXClassDeclInfo {
 
-        private CXIdxCXXClassDeclInfo() {}
+        static final MemoryLayout CXIdxCXXClassDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("declInfo"),
+            C_POINTER.withName("bases"),
+            C_INT.withName("numBases"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxCXXClassDeclInfo$struct$LAYOUT();
+            return CXIdxCXXClassDeclInfo.CXIdxCXXClassDeclInfo$struct$LAYOUT;
         }
+        static final VarHandle declInfo$VH = MemoryHandles.asAddressVarHandle(CXIdxCXXClassDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("declInfo")));
         public static VarHandle declInfo$VH() {
-            return Index_h$constants_1.CXIdxCXXClassDeclInfo$declInfo$VH();
+            return CXIdxCXXClassDeclInfo.declInfo$VH;
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxCXXClassDeclInfo$declInfo$VH().get(seg);
+        public static MemoryAddress declInfo$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxCXXClassDeclInfo.declInfo$VH.get(seg);
         }
-        public static  @C("const CXIdxDeclInfo*") MemoryAddress declInfo$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxCXXClassDeclInfo$declInfo$VH().get(seg.asSlice(index*sizeof()));
+        public static void declInfo$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxCXXClassDeclInfo.declInfo$VH.set(seg, x);
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$declInfo$VH().set(seg, x);
+        public static MemoryAddress declInfo$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxCXXClassDeclInfo.declInfo$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void declInfo$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxDeclInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$declInfo$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void declInfo$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxCXXClassDeclInfo.declInfo$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle bases$VH = MemoryHandles.asAddressVarHandle(CXIdxCXXClassDeclInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("bases")));
         public static VarHandle bases$VH() {
-            return Index_h$constants_1.CXIdxCXXClassDeclInfo$bases$VH();
+            return CXIdxCXXClassDeclInfo.bases$VH;
         }
-        public static  @C("const CXIdxBaseClassInfo**") MemoryAddress bases$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxCXXClassDeclInfo$bases$VH().get(seg);
+        public static MemoryAddress bases$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxCXXClassDeclInfo.bases$VH.get(seg);
         }
-        public static  @C("const CXIdxBaseClassInfo**") MemoryAddress bases$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxCXXClassDeclInfo$bases$VH().get(seg.asSlice(index*sizeof()));
+        public static void bases$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxCXXClassDeclInfo.bases$VH.set(seg, x);
         }
-        public static void bases$set(@C("struct ") MemorySegment seg, @C("const CXIdxBaseClassInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$bases$VH().set(seg, x);
+        public static MemoryAddress bases$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxCXXClassDeclInfo.bases$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void bases$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxBaseClassInfo**") MemoryAddress x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$bases$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void bases$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxCXXClassDeclInfo.bases$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle numBases$VH = CXIdxCXXClassDeclInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("numBases"));
         public static VarHandle numBases$VH() {
-            return Index_h$constants_1.CXIdxCXXClassDeclInfo$numBases$VH();
+            return CXIdxCXXClassDeclInfo.numBases$VH;
         }
-        public static  @C("unsigned int") int numBases$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxCXXClassDeclInfo$numBases$VH().get(seg);
+        public static int numBases$get(MemorySegment seg) {
+            return (int)CXIdxCXXClassDeclInfo.numBases$VH.get(seg);
         }
-        public static  @C("unsigned int") int numBases$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxCXXClassDeclInfo$numBases$VH().get(seg.asSlice(index*sizeof()));
+        public static void numBases$set( MemorySegment seg, int x) {
+            CXIdxCXXClassDeclInfo.numBases$VH.set(seg, x);
         }
-        public static void numBases$set(@C("struct ") MemorySegment seg, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$numBases$VH().set(seg, x);
+        public static int numBases$get(MemorySegment seg, long index) {
+            return (int)CXIdxCXXClassDeclInfo.numBases$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void numBases$set(@C("struct ") MemorySegment seg, long index, @C("unsigned int") int x) {
-            Index_h$constants_1.CXIdxCXXClassDeclInfo$numBases$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void numBases$set(MemorySegment seg, long index, int x) {
+            CXIdxCXXClassDeclInfo.numBases$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static @C("int") int CXIdxEntityRef_Direct() {
-        return Index_h$constants_1.CXIdxEntityRef_Direct();
-    }
-    public static @C("int") int CXIdxEntityRef_Implicit() {
-        return Index_h$constants_1.CXIdxEntityRef_Implicit();
-    }
-    public static @C("int") int CXSymbolRole_None() {
-        return Index_h$constants_1.CXSymbolRole_None();
-    }
-    public static @C("int") int CXSymbolRole_Declaration() {
-        return Index_h$constants_1.CXSymbolRole_Declaration();
-    }
-    public static @C("int") int CXSymbolRole_Definition() {
-        return Index_h$constants_1.CXSymbolRole_Definition();
-    }
-    public static @C("int") int CXSymbolRole_Reference() {
-        return Index_h$constants_1.CXSymbolRole_Reference();
-    }
-    public static @C("int") int CXSymbolRole_Read() {
-        return Index_h$constants_1.CXSymbolRole_Read();
-    }
-    public static @C("int") int CXSymbolRole_Write() {
-        return Index_h$constants_1.CXSymbolRole_Write();
-    }
-    public static @C("int") int CXSymbolRole_Call() {
-        return Index_h$constants_1.CXSymbolRole_Call();
-    }
-    public static @C("int") int CXSymbolRole_Dynamic() {
-        return Index_h$constants_1.CXSymbolRole_Dynamic();
-    }
-    public static @C("int") int CXSymbolRole_AddressOf() {
-        return Index_h$constants_1.CXSymbolRole_AddressOf();
-    }
-    public static @C("int") int CXSymbolRole_Implicit() {
-        return Index_h$constants_1.CXSymbolRole_Implicit();
-    }
     public static class CXIdxEntityRefInfo {
 
-        private CXIdxEntityRefInfo() {}
+        static final MemoryLayout CXIdxEntityRefInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_INT.withName("kind"),
+            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ).withName("cursor"),
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+                C_INT.withName("int_data"),
+                MemoryLayout.ofPaddingBits(32)
+            ).withName("loc"),
+            C_POINTER.withName("referencedEntity"),
+            C_POINTER.withName("parentEntity"),
+            C_POINTER.withName("container"),
+            C_INT.withName("role"),
+            MemoryLayout.ofPaddingBits(32)
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$struct$LAYOUT();
+            return CXIdxEntityRefInfo.CXIdxEntityRefInfo$struct$LAYOUT;
         }
+        static final VarHandle kind$VH = CXIdxEntityRefInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("kind"));
         public static VarHandle kind$VH() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$kind$VH();
+            return CXIdxEntityRefInfo.kind$VH;
         }
-        public static  @C("CXIdxEntityRefKind") int kind$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityRefInfo$kind$VH().get(seg);
+        public static int kind$get(MemorySegment seg) {
+            return (int)CXIdxEntityRefInfo.kind$VH.get(seg);
         }
-        public static  @C("CXIdxEntityRefKind") int kind$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityRefInfo$kind$VH().get(seg.asSlice(index*sizeof()));
+        public static void kind$set( MemorySegment seg, int x) {
+            CXIdxEntityRefInfo.kind$VH.set(seg, x);
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, @C("CXIdxEntityRefKind") int x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$kind$VH().set(seg, x);
+        public static int kind$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityRefInfo.kind$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void kind$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxEntityRefKind") int x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$kind$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void kind$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityRefInfo.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static MemorySegment cursor$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 32));
@@ -7379,459 +11909,420 @@ public final class Index_h {
         public static MemorySegment loc$slice(MemorySegment seg) {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
+        static final VarHandle referencedEntity$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityRefInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("referencedEntity")));
         public static VarHandle referencedEntity$VH() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$referencedEntity$VH();
+            return CXIdxEntityRefInfo.referencedEntity$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress referencedEntity$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$referencedEntity$VH().get(seg);
+        public static MemoryAddress referencedEntity$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.referencedEntity$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress referencedEntity$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$referencedEntity$VH().get(seg.asSlice(index*sizeof()));
+        public static void referencedEntity$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityRefInfo.referencedEntity$VH.set(seg, x);
         }
-        public static void referencedEntity$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$referencedEntity$VH().set(seg, x);
+        public static MemoryAddress referencedEntity$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.referencedEntity$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void referencedEntity$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$referencedEntity$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void referencedEntity$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityRefInfo.referencedEntity$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle parentEntity$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityRefInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("parentEntity")));
         public static VarHandle parentEntity$VH() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$parentEntity$VH();
+            return CXIdxEntityRefInfo.parentEntity$VH;
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress parentEntity$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$parentEntity$VH().get(seg);
+        public static MemoryAddress parentEntity$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.parentEntity$VH.get(seg);
         }
-        public static  @C("const CXIdxEntityInfo*") MemoryAddress parentEntity$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$parentEntity$VH().get(seg.asSlice(index*sizeof()));
+        public static void parentEntity$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityRefInfo.parentEntity$VH.set(seg, x);
         }
-        public static void parentEntity$set(@C("struct ") MemorySegment seg, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$parentEntity$VH().set(seg, x);
+        public static MemoryAddress parentEntity$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.parentEntity$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void parentEntity$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxEntityInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$parentEntity$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void parentEntity$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityRefInfo.parentEntity$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle container$VH = MemoryHandles.asAddressVarHandle(CXIdxEntityRefInfo$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("container")));
         public static VarHandle container$VH() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$container$VH();
+            return CXIdxEntityRefInfo.container$VH;
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress container$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$container$VH().get(seg);
+        public static MemoryAddress container$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.container$VH.get(seg);
         }
-        public static  @C("const CXIdxContainerInfo*") MemoryAddress container$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.CXIdxEntityRefInfo$container$VH().get(seg.asSlice(index*sizeof()));
+        public static void container$set( MemorySegment seg, MemoryAddress x) {
+            CXIdxEntityRefInfo.container$VH.set(seg, x);
         }
-        public static void container$set(@C("struct ") MemorySegment seg, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$container$VH().set(seg, x);
+        public static MemoryAddress container$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)CXIdxEntityRefInfo.container$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void container$set(@C("struct ") MemorySegment seg, long index, @C("const CXIdxContainerInfo*") MemoryAddress x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$container$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void container$set(MemorySegment seg, long index, MemoryAddress x) {
+            CXIdxEntityRefInfo.container$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        static final VarHandle role$VH = CXIdxEntityRefInfo$struct$LAYOUT.varHandle(int.class, MemoryLayout.PathElement.groupElement("role"));
         public static VarHandle role$VH() {
-            return Index_h$constants_1.CXIdxEntityRefInfo$role$VH();
+            return CXIdxEntityRefInfo.role$VH;
         }
-        public static  @C("CXSymbolRole") int role$get(@C("struct ") MemorySegment seg) {
-            return (int)Index_h$constants_1.CXIdxEntityRefInfo$role$VH().get(seg);
+        public static int role$get(MemorySegment seg) {
+            return (int)CXIdxEntityRefInfo.role$VH.get(seg);
         }
-        public static  @C("CXSymbolRole") int role$get(@C("struct ") MemorySegment seg, long index) {
-            return (int)Index_h$constants_1.CXIdxEntityRefInfo$role$VH().get(seg.asSlice(index*sizeof()));
+        public static void role$set( MemorySegment seg, int x) {
+            CXIdxEntityRefInfo.role$VH.set(seg, x);
         }
-        public static void role$set(@C("struct ") MemorySegment seg, @C("CXSymbolRole") int x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$role$VH().set(seg, x);
+        public static int role$get(MemorySegment seg, long index) {
+            return (int)CXIdxEntityRefInfo.role$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void role$set(@C("struct ") MemorySegment seg, long index, @C("CXSymbolRole") int x) {
-            Index_h$constants_1.CXIdxEntityRefInfo$role$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void role$set(MemorySegment seg, long index, int x) {
+            CXIdxEntityRefInfo.role$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+    }
+
+    public static class constants$52 {
+
+        static final FunctionDescriptor clang_findReferencesInFileWithBlock$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_findReferencesInFileWithBlock$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_findReferencesInFileWithBlock",
+            "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$52.clang_findReferencesInFileWithBlock$FUNC, false
+        );
+        static final FunctionDescriptor clang_findIncludesInFileWithBlock$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final MethodHandle clang_findIncludesInFileWithBlock$MH = RuntimeHelper.downcallHandle(
+            LIBRARIES, "clang_findIncludesInFileWithBlock",
+            "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
+            constants$52.clang_findIncludesInFileWithBlock$FUNC, false
+        );
+        static final FunctionDescriptor abortQuery$FUNC = FunctionDescriptor.of(C_INT,
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor diagnostic$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor enteredMainFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor ppIncludedFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
     }
 
     public static class IndexerCallbacks {
 
-        private IndexerCallbacks() {}
+        static final MemoryLayout IndexerCallbacks$struct$LAYOUT = MemoryLayout.ofStruct(
+            C_POINTER.withName("abortQuery"),
+            C_POINTER.withName("diagnostic"),
+            C_POINTER.withName("enteredMainFile"),
+            C_POINTER.withName("ppIncludedFile"),
+            C_POINTER.withName("importedASTFile"),
+            C_POINTER.withName("startedTranslationUnit"),
+            C_POINTER.withName("indexDeclaration"),
+            C_POINTER.withName("indexEntityReference")
+        );
         public static MemoryLayout $LAYOUT() {
-            return Index_h$constants_1.IndexerCallbacks$struct$LAYOUT();
+            return IndexerCallbacks.IndexerCallbacks$struct$LAYOUT;
         }
+        public interface abortQuery {
+
+            int apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(abortQuery fi) {
+                return RuntimeHelper.upcallStub(abortQuery.class, fi, constants$52.abortQuery$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I");
+            }
+            static MemorySegment allocate(abortQuery fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle abortQuery$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("abortQuery")));
         public static VarHandle abortQuery$VH() {
-            return Index_h$constants_1.IndexerCallbacks$abortQuery$VH();
+            return IndexerCallbacks.abortQuery$VH;
         }
-        public static  @C("int(*)(CXClientData,void*)") MemoryAddress abortQuery$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$abortQuery$VH().get(seg);
+        public static MemoryAddress abortQuery$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.abortQuery$VH.get(seg);
         }
-        public static  @C("int(*)(CXClientData,void*)") MemoryAddress abortQuery$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$abortQuery$VH().get(seg.asSlice(index*sizeof()));
+        public static void abortQuery$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.abortQuery$VH.set(seg, x);
         }
-        public static void abortQuery$set(@C("struct ") MemorySegment seg, @C("int(*)(CXClientData,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$abortQuery$VH().set(seg, x);
+        public static MemoryAddress abortQuery$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.abortQuery$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void abortQuery$set(@C("struct ") MemorySegment seg, long index, @C("int(*)(CXClientData,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$abortQuery$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void abortQuery$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.abortQuery$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface diagnostic {
+
+            void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, jdk.incubator.foreign.MemoryAddress x2);
+            static MemorySegment allocate(diagnostic fi) {
+                return RuntimeHelper.upcallStub(diagnostic.class, fi, constants$52.diagnostic$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
+            }
+            static MemorySegment allocate(diagnostic fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle diagnostic$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("diagnostic")));
         public static VarHandle diagnostic$VH() {
-            return Index_h$constants_1.IndexerCallbacks$diagnostic$VH();
+            return IndexerCallbacks.diagnostic$VH;
         }
-        public static  @C("void(*)(CXClientData,CXDiagnosticSet,void*)") MemoryAddress diagnostic$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$diagnostic$VH().get(seg);
+        public static MemoryAddress diagnostic$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.diagnostic$VH.get(seg);
         }
-        public static  @C("void(*)(CXClientData,CXDiagnosticSet,void*)") MemoryAddress diagnostic$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$diagnostic$VH().get(seg.asSlice(index*sizeof()));
+        public static void diagnostic$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.diagnostic$VH.set(seg, x);
         }
-        public static void diagnostic$set(@C("struct ") MemorySegment seg, @C("void(*)(CXClientData,CXDiagnosticSet,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$diagnostic$VH().set(seg, x);
+        public static MemoryAddress diagnostic$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.diagnostic$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void diagnostic$set(@C("struct ") MemorySegment seg, long index, @C("void(*)(CXClientData,CXDiagnosticSet,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$diagnostic$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void diagnostic$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.diagnostic$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface enteredMainFile {
+
+            jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, jdk.incubator.foreign.MemoryAddress x2);
+            static MemorySegment allocate(enteredMainFile fi) {
+                return RuntimeHelper.upcallStub(enteredMainFile.class, fi, constants$52.enteredMainFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
+            }
+            static MemorySegment allocate(enteredMainFile fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle enteredMainFile$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("enteredMainFile")));
         public static VarHandle enteredMainFile$VH() {
-            return Index_h$constants_1.IndexerCallbacks$enteredMainFile$VH();
+            return IndexerCallbacks.enteredMainFile$VH;
         }
-        public static  @C("CXIdxClientFile(*)(CXClientData,CXFile,void*)") MemoryAddress enteredMainFile$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$enteredMainFile$VH().get(seg);
+        public static MemoryAddress enteredMainFile$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.enteredMainFile$VH.get(seg);
         }
-        public static  @C("CXIdxClientFile(*)(CXClientData,CXFile,void*)") MemoryAddress enteredMainFile$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$enteredMainFile$VH().get(seg.asSlice(index*sizeof()));
+        public static void enteredMainFile$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.enteredMainFile$VH.set(seg, x);
         }
-        public static void enteredMainFile$set(@C("struct ") MemorySegment seg, @C("CXIdxClientFile(*)(CXClientData,CXFile,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$enteredMainFile$VH().set(seg, x);
+        public static MemoryAddress enteredMainFile$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.enteredMainFile$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void enteredMainFile$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxClientFile(*)(CXClientData,CXFile,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$enteredMainFile$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void enteredMainFile$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.enteredMainFile$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface ppIncludedFile {
+
+            jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(ppIncludedFile fi) {
+                return RuntimeHelper.upcallStub(ppIncludedFile.class, fi, constants$52.ppIncludedFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
+            }
+            static MemorySegment allocate(ppIncludedFile fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle ppIncludedFile$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("ppIncludedFile")));
         public static VarHandle ppIncludedFile$VH() {
-            return Index_h$constants_1.IndexerCallbacks$ppIncludedFile$VH();
+            return IndexerCallbacks.ppIncludedFile$VH;
         }
-        public static  @C("CXIdxClientFile(*)(CXClientData,const CXIdxIncludedFileInfo*)") MemoryAddress ppIncludedFile$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$ppIncludedFile$VH().get(seg);
+        public static MemoryAddress ppIncludedFile$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.ppIncludedFile$VH.get(seg);
         }
-        public static  @C("CXIdxClientFile(*)(CXClientData,const CXIdxIncludedFileInfo*)") MemoryAddress ppIncludedFile$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$ppIncludedFile$VH().get(seg.asSlice(index*sizeof()));
+        public static void ppIncludedFile$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.ppIncludedFile$VH.set(seg, x);
         }
-        public static void ppIncludedFile$set(@C("struct ") MemorySegment seg, @C("CXIdxClientFile(*)(CXClientData,const CXIdxIncludedFileInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$ppIncludedFile$VH().set(seg, x);
+        public static MemoryAddress ppIncludedFile$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.ppIncludedFile$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void ppIncludedFile$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxClientFile(*)(CXClientData,const CXIdxIncludedFileInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$ppIncludedFile$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void ppIncludedFile$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.ppIncludedFile$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface importedASTFile {
+
+            jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(importedASTFile fi) {
+                return RuntimeHelper.upcallStub(importedASTFile.class, fi, constants$53.importedASTFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
+            }
+            static MemorySegment allocate(importedASTFile fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle importedASTFile$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("importedASTFile")));
         public static VarHandle importedASTFile$VH() {
-            return Index_h$constants_1.IndexerCallbacks$importedASTFile$VH();
+            return IndexerCallbacks.importedASTFile$VH;
         }
-        public static  @C("CXIdxClientASTFile(*)(CXClientData,const CXIdxImportedASTFileInfo*)") MemoryAddress importedASTFile$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$importedASTFile$VH().get(seg);
+        public static MemoryAddress importedASTFile$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.importedASTFile$VH.get(seg);
         }
-        public static  @C("CXIdxClientASTFile(*)(CXClientData,const CXIdxImportedASTFileInfo*)") MemoryAddress importedASTFile$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$importedASTFile$VH().get(seg.asSlice(index*sizeof()));
+        public static void importedASTFile$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.importedASTFile$VH.set(seg, x);
         }
-        public static void importedASTFile$set(@C("struct ") MemorySegment seg, @C("CXIdxClientASTFile(*)(CXClientData,const CXIdxImportedASTFileInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$importedASTFile$VH().set(seg, x);
+        public static MemoryAddress importedASTFile$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.importedASTFile$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void importedASTFile$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxClientASTFile(*)(CXClientData,const CXIdxImportedASTFileInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$importedASTFile$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void importedASTFile$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.importedASTFile$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface startedTranslationUnit {
+
+            jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(startedTranslationUnit fi) {
+                return RuntimeHelper.upcallStub(startedTranslationUnit.class, fi, constants$53.startedTranslationUnit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
+            }
+            static MemorySegment allocate(startedTranslationUnit fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle startedTranslationUnit$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("startedTranslationUnit")));
         public static VarHandle startedTranslationUnit$VH() {
-            return Index_h$constants_1.IndexerCallbacks$startedTranslationUnit$VH();
+            return IndexerCallbacks.startedTranslationUnit$VH;
         }
-        public static  @C("CXIdxClientContainer(*)(CXClientData,void*)") MemoryAddress startedTranslationUnit$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$startedTranslationUnit$VH().get(seg);
+        public static MemoryAddress startedTranslationUnit$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.startedTranslationUnit$VH.get(seg);
         }
-        public static  @C("CXIdxClientContainer(*)(CXClientData,void*)") MemoryAddress startedTranslationUnit$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$startedTranslationUnit$VH().get(seg.asSlice(index*sizeof()));
+        public static void startedTranslationUnit$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.startedTranslationUnit$VH.set(seg, x);
         }
-        public static void startedTranslationUnit$set(@C("struct ") MemorySegment seg, @C("CXIdxClientContainer(*)(CXClientData,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$startedTranslationUnit$VH().set(seg, x);
+        public static MemoryAddress startedTranslationUnit$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.startedTranslationUnit$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void startedTranslationUnit$set(@C("struct ") MemorySegment seg, long index, @C("CXIdxClientContainer(*)(CXClientData,void*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$startedTranslationUnit$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void startedTranslationUnit$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.startedTranslationUnit$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface indexDeclaration {
+
+            void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(indexDeclaration fi) {
+                return RuntimeHelper.upcallStub(indexDeclaration.class, fi, constants$53.indexDeclaration$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
+            }
+            static MemorySegment allocate(indexDeclaration fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle indexDeclaration$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("indexDeclaration")));
         public static VarHandle indexDeclaration$VH() {
-            return Index_h$constants_1.IndexerCallbacks$indexDeclaration$VH();
+            return IndexerCallbacks.indexDeclaration$VH;
         }
-        public static  @C("void(*)(CXClientData,const CXIdxDeclInfo*)") MemoryAddress indexDeclaration$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$indexDeclaration$VH().get(seg);
+        public static MemoryAddress indexDeclaration$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.indexDeclaration$VH.get(seg);
         }
-        public static  @C("void(*)(CXClientData,const CXIdxDeclInfo*)") MemoryAddress indexDeclaration$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$indexDeclaration$VH().get(seg.asSlice(index*sizeof()));
+        public static void indexDeclaration$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.indexDeclaration$VH.set(seg, x);
         }
-        public static void indexDeclaration$set(@C("struct ") MemorySegment seg, @C("void(*)(CXClientData,const CXIdxDeclInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$indexDeclaration$VH().set(seg, x);
+        public static MemoryAddress indexDeclaration$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.indexDeclaration$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void indexDeclaration$set(@C("struct ") MemorySegment seg, long index, @C("void(*)(CXClientData,const CXIdxDeclInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$indexDeclaration$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void indexDeclaration$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.indexDeclaration$VH.set(seg.asSlice(index*sizeof()), x);
         }
+        public interface indexEntityReference {
+
+            void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
+            static MemorySegment allocate(indexEntityReference fi) {
+                return RuntimeHelper.upcallStub(indexEntityReference.class, fi, constants$53.indexEntityReference$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
+            }
+            static MemorySegment allocate(indexEntityReference fi, NativeScope scope) {
+                return allocate(fi).handoff(scope);
+            }
+        }
+
+        static final VarHandle indexEntityReference$VH = MemoryHandles.asAddressVarHandle(IndexerCallbacks$struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("indexEntityReference")));
         public static VarHandle indexEntityReference$VH() {
-            return Index_h$constants_1.IndexerCallbacks$indexEntityReference$VH();
+            return IndexerCallbacks.indexEntityReference$VH;
         }
-        public static  @C("void(*)(CXClientData,const CXIdxEntityRefInfo*)") MemoryAddress indexEntityReference$get(@C("struct ") MemorySegment seg) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$indexEntityReference$VH().get(seg);
+        public static MemoryAddress indexEntityReference$get(MemorySegment seg) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.indexEntityReference$VH.get(seg);
         }
-        public static  @C("void(*)(CXClientData,const CXIdxEntityRefInfo*)") MemoryAddress indexEntityReference$get(@C("struct ") MemorySegment seg, long index) {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.IndexerCallbacks$indexEntityReference$VH().get(seg.asSlice(index*sizeof()));
+        public static void indexEntityReference$set( MemorySegment seg, MemoryAddress x) {
+            IndexerCallbacks.indexEntityReference$VH.set(seg, x);
         }
-        public static void indexEntityReference$set(@C("struct ") MemorySegment seg, @C("void(*)(CXClientData,const CXIdxEntityRefInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$indexEntityReference$VH().set(seg, x);
+        public static MemoryAddress indexEntityReference$get(MemorySegment seg, long index) {
+            return (jdk.incubator.foreign.MemoryAddress)IndexerCallbacks.indexEntityReference$VH.get(seg.asSlice(index*sizeof()));
         }
-        public static void indexEntityReference$set(@C("struct ") MemorySegment seg, long index, @C("void(*)(CXClientData,const CXIdxEntityRefInfo*)") MemoryAddress x) {
-            Index_h$constants_1.IndexerCallbacks$indexEntityReference$VH().set(seg.asSlice(index*sizeof()), x);
+        public static void indexEntityReference$set(MemorySegment seg, long index, MemoryAddress x) {
+            IndexerCallbacks.indexEntityReference$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static @C("struct ") MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
-        public static @C("struct ") MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static @C("struct []") MemorySegment allocateArray(int len) {
+        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
+        public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
+        public static MemorySegment allocateArray(int len) {
             return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static @C("struct []") MemorySegment allocateArray(int len, NativeScope scope) {
+        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
             return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
         }
-        public static @C("struct *") MemorySegment allocatePointer() {
+        public static MemorySegment allocatePointer() {
             return MemorySegment.allocateNative(C_POINTER);
         }
-        public static @C("struct *") MemorySegment allocatePointer(NativeScope scope) {
+        public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static @C("struct ") MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
     }
 
-    public static  MethodHandle clang_index_isEntityObjCContainerKind$MH() {
-        return Index_h$constants_1.clang_index_isEntityObjCContainerKind$MH();
-    }
-    public static @C("int") int clang_index_isEntityObjCContainerKind (@C("CXIdxEntityKind") int x0) {
-        try {
-            return (int)Index_h$constants_1.clang_index_isEntityObjCContainerKind$MH().invokeExact(x0);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getObjCContainerDeclInfo$MH() {
-        return Index_h$constants_1.clang_index_getObjCContainerDeclInfo$MH();
-    }
-    public static @C("const CXIdxObjCContainerDeclInfo*") MemoryAddress clang_index_getObjCContainerDeclInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getObjCContainerDeclInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getObjCInterfaceDeclInfo$MH() {
-        return Index_h$constants_1.clang_index_getObjCInterfaceDeclInfo$MH();
-    }
-    public static @C("const CXIdxObjCInterfaceDeclInfo*") MemoryAddress clang_index_getObjCInterfaceDeclInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getObjCInterfaceDeclInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getObjCCategoryDeclInfo$MH() {
-        return Index_h$constants_1.clang_index_getObjCCategoryDeclInfo$MH();
-    }
-    public static @C("const CXIdxObjCCategoryDeclInfo*") MemoryAddress clang_index_getObjCCategoryDeclInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getObjCCategoryDeclInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getObjCProtocolRefListInfo$MH() {
-        return Index_h$constants_1.clang_index_getObjCProtocolRefListInfo$MH();
-    }
-    public static @C("const CXIdxObjCProtocolRefListInfo*") MemoryAddress clang_index_getObjCProtocolRefListInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getObjCProtocolRefListInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getObjCPropertyDeclInfo$MH() {
-        return Index_h$constants_1.clang_index_getObjCPropertyDeclInfo$MH();
-    }
-    public static @C("const CXIdxObjCPropertyDeclInfo*") MemoryAddress clang_index_getObjCPropertyDeclInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getObjCPropertyDeclInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getIBOutletCollectionAttrInfo$MH() {
-        return Index_h$constants_1.clang_index_getIBOutletCollectionAttrInfo$MH();
-    }
-    public static @C("const CXIdxIBOutletCollectionAttrInfo*") MemoryAddress clang_index_getIBOutletCollectionAttrInfo (@C("const CXIdxAttrInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getIBOutletCollectionAttrInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getCXXClassDeclInfo$MH() {
-        return Index_h$constants_1.clang_index_getCXXClassDeclInfo$MH();
-    }
-    public static @C("const CXIdxCXXClassDeclInfo*") MemoryAddress clang_index_getCXXClassDeclInfo (@C("const CXIdxDeclInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getCXXClassDeclInfo$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getClientContainer$MH() {
-        return Index_h$constants_1.clang_index_getClientContainer$MH();
-    }
-    public static @C("CXIdxClientContainer") MemoryAddress clang_index_getClientContainer (@C("const CXIdxContainerInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getClientContainer$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_setClientContainer$MH() {
-        return Index_h$constants_1.clang_index_setClientContainer$MH();
-    }
-    public static void clang_index_setClientContainer (@C("const CXIdxContainerInfo*") Addressable x0, @C("CXIdxClientContainer") Addressable x1) {
-        try {
-            Index_h$constants_1.clang_index_setClientContainer$MH().invokeExact(x0.address(), x1.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_getClientEntity$MH() {
-        return Index_h$constants_1.clang_index_getClientEntity$MH();
-    }
-    public static @C("CXIdxClientEntity") MemoryAddress clang_index_getClientEntity (@C("const CXIdxEntityInfo*") Addressable x0) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_index_getClientEntity$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_index_setClientEntity$MH() {
-        return Index_h$constants_1.clang_index_setClientEntity$MH();
-    }
-    public static void clang_index_setClientEntity (@C("const CXIdxEntityInfo*") Addressable x0, @C("CXIdxClientEntity") Addressable x1) {
-        try {
-            Index_h$constants_1.clang_index_setClientEntity$MH().invokeExact(x0.address(), x1.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_IndexAction_create$MH() {
-        return Index_h$constants_1.clang_IndexAction_create$MH();
-    }
-    public static @C("CXIndexAction") MemoryAddress clang_IndexAction_create (@C("CXIndex") Addressable CIdx) {
-        try {
-            return (jdk.incubator.foreign.MemoryAddress)Index_h$constants_1.clang_IndexAction_create$MH().invokeExact(CIdx.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_IndexAction_dispose$MH() {
-        return Index_h$constants_1.clang_IndexAction_dispose$MH();
-    }
-    public static void clang_IndexAction_dispose (@C("CXIndexAction") Addressable x0) {
-        try {
-            Index_h$constants_1.clang_IndexAction_dispose$MH().invokeExact(x0.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static @C("int") int CXIndexOpt_None() {
-        return Index_h$constants_1.CXIndexOpt_None();
-    }
-    public static @C("int") int CXIndexOpt_SuppressRedundantRefs() {
-        return Index_h$constants_1.CXIndexOpt_SuppressRedundantRefs();
-    }
-    public static @C("int") int CXIndexOpt_IndexFunctionLocalSymbols() {
-        return Index_h$constants_1.CXIndexOpt_IndexFunctionLocalSymbols();
-    }
-    public static @C("int") int CXIndexOpt_IndexImplicitTemplateInstantiations() {
-        return Index_h$constants_1.CXIndexOpt_IndexImplicitTemplateInstantiations();
-    }
-    public static @C("int") int CXIndexOpt_SuppressWarnings() {
-        return Index_h$constants_1.CXIndexOpt_SuppressWarnings();
-    }
-    public static @C("int") int CXIndexOpt_SkipParsedBodiesInSession() {
-        return Index_h$constants_1.CXIndexOpt_SkipParsedBodiesInSession();
-    }
-    public static  MethodHandle clang_indexSourceFile$MH() {
-        return Index_h$constants_1.clang_indexSourceFile$MH();
-    }
-    public static @C("int") int clang_indexSourceFile (@C("CXIndexAction") Addressable x0, @C("CXClientData") Addressable client_data, @C("IndexerCallbacks*") Addressable index_callbacks, @C("unsigned int") int index_callbacks_size, @C("unsigned int") int index_options, @C("char*") Addressable source_filename, @C("char**") Addressable command_line_args, @C("int") int num_command_line_args, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("CXTranslationUnit*") Addressable out_TU, @C("unsigned int") int TU_options) {
-        try {
-            return (int)Index_h$constants_1.clang_indexSourceFile$MH().invokeExact(x0.address(), client_data.address(), index_callbacks.address(), index_callbacks_size, index_options, source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, out_TU.address(), TU_options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_indexSourceFileFullArgv$MH() {
-        return Index_h$constants_1.clang_indexSourceFileFullArgv$MH();
-    }
-    public static @C("int") int clang_indexSourceFileFullArgv (@C("CXIndexAction") Addressable x0, @C("CXClientData") Addressable client_data, @C("IndexerCallbacks*") Addressable index_callbacks, @C("unsigned int") int index_callbacks_size, @C("unsigned int") int index_options, @C("char*") Addressable source_filename, @C("char**") Addressable command_line_args, @C("int") int num_command_line_args, @C("struct CXUnsavedFile*") Addressable unsaved_files, @C("unsigned int") int num_unsaved_files, @C("CXTranslationUnit*") Addressable out_TU, @C("unsigned int") int TU_options) {
-        try {
-            return (int)Index_h$constants_1.clang_indexSourceFileFullArgv$MH().invokeExact(x0.address(), client_data.address(), index_callbacks.address(), index_callbacks_size, index_options, source_filename.address(), command_line_args.address(), num_command_line_args, unsaved_files.address(), num_unsaved_files, out_TU.address(), TU_options);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_indexTranslationUnit$MH() {
-        return Index_h$constants_1.clang_indexTranslationUnit$MH();
-    }
-    public static @C("int") int clang_indexTranslationUnit (@C("CXIndexAction") Addressable x0, @C("CXClientData") Addressable client_data, @C("IndexerCallbacks*") Addressable index_callbacks, @C("unsigned int") int index_callbacks_size, @C("unsigned int") int index_options, @C("CXTranslationUnit") Addressable x5) {
-        try {
-            return (int)Index_h$constants_1.clang_indexTranslationUnit$MH().invokeExact(x0.address(), client_data.address(), index_callbacks.address(), index_callbacks_size, index_options, x5.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_indexLoc_getFileLocation$MH() {
-        return Index_h$constants_1.clang_indexLoc_getFileLocation$MH();
-    }
-    public static void clang_indexLoc_getFileLocation (@C("CXIdxLoc") MemorySegment loc, @C("CXIdxClientFile*") Addressable indexFile, @C("CXFile*") Addressable file, @C("unsigned int*") Addressable line, @C("unsigned int*") Addressable column, @C("unsigned int*") Addressable offset) {
-        try {
-            Index_h$constants_1.clang_indexLoc_getFileLocation$MH().invokeExact(loc, indexFile.address(), file.address(), line.address(), column.address(), offset.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_indexLoc_getCXSourceLocation$MH() {
-        return Index_h$constants_1.clang_indexLoc_getCXSourceLocation$MH();
-    }
-    public static @C("CXSourceLocation") MemorySegment clang_indexLoc_getCXSourceLocation (@C("CXIdxLoc") MemorySegment loc) {
-        try {
-            return (jdk.incubator.foreign.MemorySegment)Index_h$constants_1.clang_indexLoc_getCXSourceLocation$MH().invokeExact(loc);
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public static  MethodHandle clang_Type_visitFields$MH() {
-        return Index_h$constants_1.clang_Type_visitFields$MH();
-    }
-    public static @C("unsigned int") int clang_Type_visitFields (@C("CXType") MemorySegment T, @C("CXFieldVisitor") Addressable visitor, @C("CXClientData") Addressable client_data) {
-        try {
-            return (int)Index_h$constants_1.clang_Type_visitFields$MH().invokeExact(T, visitor.address(), client_data.address());
-        } catch (Throwable ex) {
-            throw new AssertionError(ex);
-        }
-    }
-    public interface clang_Type_visitFields$visitor {
+    public interface CXFieldVisitor {
+
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemoryAddress x1);
-        public static  @C("CXFieldVisitor") MemorySegment allocate(clang_Type_visitFields$visitor fi) {
-            return RuntimeHelper.upcallStub(clang_Type_visitFields$visitor.class, fi, Index_h$constants_1.clang_Type_visitFields$visitor$FUNC(), "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
+        static MemorySegment allocate(CXFieldVisitor fi) {
+            return RuntimeHelper.upcallStub(CXFieldVisitor.class, fi, constants$53.CXFieldVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
-        public static  @C("CXFieldVisitor") MemorySegment allocate(clang_Type_visitFields$visitor fi, NativeScope scope) {
+        static MemorySegment allocate(CXFieldVisitor fi, NativeScope scope) {
             return allocate(fi).handoff(scope);
         }
     }
-    public static @C("int") int CINDEX_VERSION() {
-        return Index_h$constants_1.CINDEX_VERSION();
+
+    public static class constants$53 {
+
+        static final FunctionDescriptor importedASTFile$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor startedTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor indexDeclaration$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor indexEntityReference$FUNC = FunctionDescriptor.ofVoid(
+            C_POINTER,
+            C_POINTER
+        );
+        static final FunctionDescriptor CXFieldVisitor$FUNC = FunctionDescriptor.of(C_INT,
+            MemoryLayout.ofStruct(
+                C_INT.withName("kind"),
+                C_INT.withName("xdata"),
+                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            ),
+            C_POINTER
+        );
     }
-    public static @C("char*") MemorySegment CINDEX_VERSION_STRING() {
-        return Index_h$constants_1.CINDEX_VERSION_STRING();
-    }
+
 }
 
 
