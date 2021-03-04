@@ -148,19 +148,19 @@ public class TestResourceScope {
     public void testLockSingleThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
         ResourceScope scope = ResourceScope.ofConfined(null, cleaner);
-        List<ResourceScope.Lock> locks = new ArrayList<>();
+        List<ResourceScope.Handle> handles = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
-            locks.add(scope.lock());
+            handles.add(scope.acquire());
         }
 
         while (true) {
             try {
                 scope.close();
-                assertEquals(locks.size(), 0);
+                assertEquals(handles.size(), 0);
                 break;
             } catch (IllegalStateException ex) {
-                assertTrue(locks.size() > 0);
-                locks.remove(0).close();
+                assertTrue(handles.size() > 0);
+                handles.remove(0).close();
             }
         }
     }
@@ -171,7 +171,7 @@ public class TestResourceScope {
         ResourceScope scope = ResourceScope.ofShared(null, cleaner);
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
-                try (ResourceScope.Lock lock = scope.lock()) {
+                try (ResourceScope.Handle handle = scope.acquire()) {
                     waitSomeTime();
                 } catch (IllegalStateException ex) {
                     // might be already closed - do nothing
@@ -201,11 +201,11 @@ public class TestResourceScope {
 
     @Test
     public void testCloseConfinedLock() {
-        ResourceScope.Lock lock = ResourceScope.ofConfined().lock();
+        ResourceScope.Handle handle = ResourceScope.ofConfined().acquire();
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
-                lock.close();
+                handle.close();
             } catch (Throwable ex) {
                 failure.set(ex);
             }

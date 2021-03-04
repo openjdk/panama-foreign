@@ -103,21 +103,21 @@ try (ResourceScope scope = ResourceScope.ofShared()) {
  * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
  * accessing/closing the resources associated with the shared resource scope.
  *
- * <h2>Scope locks</h2>
+ * <h2>Scope handles</h2>
  *
- * Resource scopes can be <em>locked</em>. When a resource scope is locked, a new instance of type {@link ResourceScope.Lock}
- * is created; a resource scope lock can be used to make sure that its corresponding scope cannot be closed (either explicitly, or implicitly)
- * for a certain period of time - e.g. when one or more resources associated with the parent scope need to be accessed.
- * A resource scope can be acquired multiple times; the resource scope can only be closed <em>after</em> all
- * the locks held against that scope have been closed. This can be useful when clients need to perform a critical
- * operation on a memory segment, during which they have to ensure that the segment will not be released; this
- * can be done as follows:
+ * Resource scopes can be made <em>non-closeable</em> by acquiring one or more resource scope <em>handles</em> (see
+ * {@link #acquire()}. A resource scope handle can be used to make sure that its corresponding scope cannot be closed
+ * (either explicitly, or implicitly) for a certain period of time - e.g. when one or more resources associated with
+ * the parent scope need to be accessed. A resource scope can be acquired multiple times; the resource scope can only be
+ * closed <em>after</em> all the handles acquired against that scope have been closed (see {@link Handle#close()}).
+ * This can be useful when clients need to perform a critical operation on a memory segment, during which they have
+ * to ensure that the segment will not be released; this can be done as follows:
  *
  * <blockquote><pre>{@code
 MemorySegment segment = ...
-try (ResourceScope.Lock segmentLock = segment.scope().lock()) {
+try (ResourceScope.Handle segmentHandle = segment.scope().acquire()) {
    <critical operation on segment>
-} // release scope lock
+} // release scope handle
  * }</pre></blockquote>
  *
  * @apiNote In the future, if the Java language permits, {@link ResourceScope}
@@ -155,7 +155,7 @@ public interface ResourceScope extends AutoCloseable {
      *     <li>this resource scope is not <em>alive</em>
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
-     *     <li>one or more locks (see {@link #lock()}) associated with this resource scope have not been closed</li>
+     *     <li>one or more locks (see {@link #acquire()}) associated with this resource scope have not been closed</li>
      * </ul>
      * @throws UnsupportedOperationException if the {@code close} operation is not supported by this resource scope. This
      * is the case for the resource scope returned by {@link #globalScope()}, or the resource scopes associated to
@@ -171,22 +171,22 @@ public interface ResourceScope extends AutoCloseable {
     void addOnClose(Runnable runnable);
 
     /**
-     * Locks this resource scope by acquiring a new resource scope lock. This scope cannot be closed unless all its
-     * locks have been released first.
-     * @return a resource scope lock.
+     * Make this resource scope non-closeable by acquiring a new resource scope handle. This scope cannot be closed unless all its
+     * acquired handles have been closed first.
+     * @return a resource scope handle.
      */
-    Lock lock();
+    Handle acquire();
 
     /**
-     * An abstraction modelling a lock on a resource scope. Features a method (see {@link #close()}) which
-     * can be used by clients to release the lock.
+     * An abstraction modelling resource scope handle. A resource scope handle is typically acquired by clients (see
+     * {@link #acquire()} in order to prevent the resource scope from being closed while executing a certain operation.
+     * A resource scope handle features a method (see {@link #close()}) which can be used by clients to release the handle.
      */
-    interface Lock extends AutoCloseable {
+    interface Handle extends AutoCloseable {
 
         /**
-         * Release the lock on the resource scope associated with this instance. This method is idempotent,
-         * that is, closing an already closed lock has no effect. This enabled resource scope implementations
-         * to achieve greater efficiencies by e.g. reuse lock instances where possible (e.g. non-closeable scopes).
+         * Release this handle on the resource scope associated with this instance. This method is idempotent,
+         * that is, closing an already closed handle has no effect.
          */
         @Override
         void close();

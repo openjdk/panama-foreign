@@ -91,7 +91,7 @@ public class TestScopedOperations {
     static {
             // scope operations
             ScopedOperation.ofScope(scope -> scope.addOnClose(() -> {}), "ResourceScope::addOnClose");
-            ScopedOperation.ofScope(scope -> scope.lock().close(), "ResourceScope::lock");
+            ScopedOperation.ofScope(scope -> scope.acquire().close(), "ResourceScope::lock");
             // segment operations
             ScopedOperation.ofSegment(MemorySegment::toByteArray, "MemorySegment::toByteArray");
             ScopedOperation.ofSegment(MemorySegment::toCharArray, "MemorySegment::toCharArray");

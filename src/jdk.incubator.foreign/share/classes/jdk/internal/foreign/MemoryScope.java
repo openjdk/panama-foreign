@@ -220,11 +220,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         @Override
-        public Lock lock() {
+        public Handle acquire() {
             checkValidState();
             if (!closeable) return DUMMY_LOCK;
             lockCount++;
-            return new ConfinedLock();
+            return new ConfinedHandle();
         }
 
         @Override
@@ -246,7 +246,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return owner;
         }
 
-        class ConfinedLock implements Lock {
+        class ConfinedHandle implements Handle {
             boolean released = false;
 
             @Override
@@ -306,7 +306,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
 
         @Override
-        public Lock lock() {
+        public Handle acquire() {
             if (!closeable) return DUMMY_LOCK;
             int value;
             do {
@@ -319,7 +319,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                     throw new IllegalStateException("Segment acquire limit exceeded");
                 }
             } while (!STATE.compareAndSet(this, value, value + 1));
-            return new SharedLock();
+            return new SharedHandle();
         }
 
         void release() {
@@ -352,7 +352,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return (int)STATE.getVolatile(this) != CLOSED;
         }
 
-        class SharedLock implements Lock {
+        class SharedHandle implements Handle {
             final AtomicBoolean released = new AtomicBoolean(false);
 
             @Override
@@ -371,5 +371,5 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     };
 
-    public final Lock DUMMY_LOCK = () -> { };
+    public final Handle DUMMY_LOCK = () -> { };
 }
