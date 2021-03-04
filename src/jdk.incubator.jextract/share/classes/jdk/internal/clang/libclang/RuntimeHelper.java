@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,13 @@ final class RuntimeHelper {
     private final static CLinker LINKER = CLinker.getInstance();
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
+
+    static <T> T requireNonNull(T obj, String symbolName) {
+        if (obj == null) {
+            throw new UnsatisfiedLinkError("unresolved symbol: " + symbolName);
+        }
+        return obj;
+    }
 
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
