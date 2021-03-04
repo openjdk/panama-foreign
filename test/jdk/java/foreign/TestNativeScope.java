@@ -336,7 +336,7 @@ public class TestNativeScope {
             this.isBound = isBound;
             this.factory = factory;
         }
-        
+
         SegmentAllocator allocator(long size, ResourceScope scope) {
             return factory.apply(size, scope);
         }

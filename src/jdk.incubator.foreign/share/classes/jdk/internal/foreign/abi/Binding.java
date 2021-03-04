@@ -238,7 +238,7 @@ public abstract class Binding {
     public static class Context implements AutoCloseable {
         private final SegmentAllocator allocator;
         private final ResourceScope scope;
-        
+
         private Context(SegmentAllocator allocator, ResourceScope scope) {
             this.allocator = allocator;
             this.scope = scope;
