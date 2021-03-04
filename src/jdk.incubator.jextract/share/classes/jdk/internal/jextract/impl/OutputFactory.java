@@ -403,7 +403,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else {
             Optional<String> funcTypedef = getAsFunctionPointerTypedef(type);
             if (funcTypedef.isPresent()) {
-                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, funcTypedef.get());
+                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, Utils.javaSafeIdentifier(funcTypedef.get()));
             }
         }
 
