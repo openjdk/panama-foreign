@@ -23,7 +23,6 @@
 
 /*
  * @test
- * @requires os.family != "windows"
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build BadBitfieldTest
@@ -31,9 +30,6 @@
  */
 
 /*
- * Not running on Windows since MSVC will not cross storage unit boundaries.
- * Resulting struct on SysV is 16 bytes, but 24 on MSx64
- *
  * MSVC: (/d1reportSingleClassLayoutFoo)
  * class Foo    size(24):
  *      +---
@@ -65,8 +61,6 @@ public class BadBitfieldTest extends JextractToolRunner {
     @Test
     public void testBadBitfield() {
         run("-d", getOutputFilePath("badBitfieldsGen").toString(),
-                getInputFilePath("badBitfields.h").toString())
-            .checkFailure()
-            .checkContainsOutput("Crossing storage unit boundaries");
+                getInputFilePath("badBitfields.h").toString()).checkSuccess();
     }
 }

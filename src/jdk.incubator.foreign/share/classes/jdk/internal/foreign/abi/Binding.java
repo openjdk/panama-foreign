@@ -541,7 +541,10 @@ public abstract class Binding {
         }
 
         public VarHandle varHandle() {
-            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), 1, offset);
+            // alignment is set to 1 byte here to avoid exceptions for cases where we do super word
+            // copies of e.g. 2 int fields of a struct as a single long, while the struct is only
+            // 4-byte-aligned (since it only contains ints)
+            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(type, 1, ByteOrder.nativeOrder()), 1, offset);
         }
     }
 
@@ -922,7 +925,7 @@ public abstract class Binding {
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle toSegmentHandle = insertArguments(MH_TO_SEGMENT, 1, size);
-            specializedHandle = filterArguments(specializedHandle, insertPos, toSegmentHandle);
+            specializedHandle = collectArguments(specializedHandle, insertPos, toSegmentHandle);
             return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 

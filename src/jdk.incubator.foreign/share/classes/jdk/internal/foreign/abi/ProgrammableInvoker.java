@@ -28,7 +28,6 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.abi.SharedUtils.Allocator;
@@ -44,19 +43,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
-import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.internal.foreign.abi.SharedUtils.Allocator.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
@@ -79,12 +73,7 @@ public class ProgrammableInvoker {
 
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
-
     private static final MethodHandle MH_ADDR_TO_LONG;
-    private static final MethodHandle MH_MAKE_SCOPE;
-    private static final MethodHandle MH_CLOSE_SCOPE;
-    private static final MethodHandle MH_WRAP_SCOPE;
-
     private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
 
     private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
@@ -96,12 +85,6 @@ public class ProgrammableInvoker {
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
                     methodType(Object.class, Addressable.class, Object[].class, MethodHandle.class, Map.class, Map.class));
-            MH_MAKE_SCOPE = lookup.findStatic(NativeScope.class, "boundedScope",
-                    methodType(NativeScope.class, long.class));
-            MH_CLOSE_SCOPE = lookup.findVirtual(NativeScope.class, "close",
-                    methodType(void.class));
-            MH_WRAP_SCOPE = lookup.findStatic(Allocator.class, "ofScope",
-                    methodType(Allocator.class, NativeScope.class));
             MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
                     methodType(MemoryAddress.class));
             MethodHandle MH_MemoryAddress_toRawLongValue = lookup.findVirtual(MemoryAddress.class, "toRawLongValue",
@@ -176,8 +159,8 @@ public class ProgrammableInvoker {
         if (USE_SPEC && isSimple) {
             handle = specialize(handle);
          } else {
-            Map<VMStorage, Integer> argIndexMap = indexMap(argMoves);
-            Map<VMStorage, Integer> retIndexMap = indexMap(retMoves);
+            Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
+            Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);
 
             handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argIndexMap, retIndexMap);
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
@@ -217,7 +200,6 @@ public class ProgrammableInvoker {
 
     private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
-        MethodType leafType = leafHandle.type();
 
         MethodHandle specializedHandle = leafHandle; // initial
 
@@ -257,31 +239,9 @@ public class ProgrammableInvoker {
         }
 
         if (bufferCopySize > 0) {
-            // insert try-finally to close the NativeScope used for Binding.Copy
-            MethodHandle closer = leafType.returnType() == void.class
-                  // (Throwable, Addressable, NativeScope) -> void
-                ? collectArguments(empty(methodType(void.class, Throwable.class, Addressable.class)), 2, MH_CLOSE_SCOPE)
-                  // (Throwable, V, Addressable, NativeScope) -> V
-                : collectArguments( // (Throwable, V, Addressable, NativeScope) -> V
-                    dropArguments( // (Throwable, V, Addressable) -> V
-                        dropArguments( // (Throwable, V) -> V
-                            identity(specializedHandle.type().returnType()), // (V) -> V
-                            0, Throwable.class),
-                        2, Addressable.class),
-                                   3, MH_CLOSE_SCOPE);
-            // Handle takes a SharedUtils.Allocator, so need to wrap our NativeScope
-            specializedHandle = filterArguments(specializedHandle, argAllocatorPos, MH_WRAP_SCOPE);
-            specializedHandle = tryFinally(specializedHandle, closer);
-            MethodHandle makeScopeHandle = insertArguments(MH_MAKE_SCOPE, 0, bufferCopySize);
-            specializedHandle = collectArguments(specializedHandle, argAllocatorPos, makeScopeHandle);
+            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, bufferCopySize, false);
         }
         return specializedHandle;
-    }
-
-    private static Map<VMStorage, Integer> indexMap(Binding.Move[] moves) {
-        return IntStream.range(0, moves.length)
-                        .boxed()
-                        .collect(Collectors.toMap(i -> moves[i].storage(), i -> i));
     }
 
     /**
@@ -350,10 +310,7 @@ public class ProgrammableInvoker {
     Object invokeInterpBindings(Addressable address, Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        Allocator unboxAllocator = bufferCopySize != 0
-                ? Allocator.ofScope(NativeScope.boundedScope(bufferCopySize))
-                : THROWING_ALLOCATOR;
-        try (unboxAllocator) {
+        try (Allocator unboxAllocator = SharedUtils.makeAllocator(bufferCopySize)) {
             // do argument processing, get Object[] as result
             Object[] leafArgs = new Object[leaf.type().parameterCount()];
             leafArgs[0] = address; // addr

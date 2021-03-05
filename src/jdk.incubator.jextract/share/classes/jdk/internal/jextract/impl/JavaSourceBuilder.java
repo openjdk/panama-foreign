@@ -237,7 +237,14 @@ abstract class JavaSourceBuilder {
      */
     final String uniqueNestedClassName(String name) {
         name = Utils.javaSafeIdentifier(name);
-        return nestedClassNames.add(name.toLowerCase()) ? name : (name + "$" + nestedClassNameCount++);
+        var notSeen = nestedClassNames.add(name.toLowerCase());
+        var notEnclosed = !isEnclosedBySameName(name.toLowerCase());
+        return notSeen && notEnclosed? name : (name + "$" + nestedClassNameCount++);
+    }
+
+    // is the name enclosed enclosed by a class of the same name?
+    boolean isEnclosedBySameName(String name) {
+        return className().equals(name);
     }
 
     protected void emitPackagePrefix() {
@@ -253,9 +260,8 @@ abstract class JavaSourceBuilder {
     protected void emitImportSection() {
         append("import java.lang.invoke.MethodHandle;\n");
         append("import java.lang.invoke.VarHandle;\n");
-        append("import java.util.Objects;\n");
+        append("import java.nio.ByteOrder;\n");
         append("import jdk.incubator.foreign.*;\n");
-        append("import jdk.incubator.foreign.MemoryLayout.PathElement;\n");
         append("import static ");
         append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
         append(".*;\n");

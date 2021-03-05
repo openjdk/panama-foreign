@@ -26,9 +26,7 @@
 
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
@@ -137,13 +135,8 @@ abstract class RecordLayoutComputer {
         return c.isBitField() ? c.getBitFieldWidth() : c.type().size() * 8;
     }
 
-    ValueLayout bitfield(ValueLayout container, List<MemoryLayout> sublayouts) {
-        return Utils.addContents(container, MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
-    }
-
-    ValueLayout bitfield(long containerSize, List<MemoryLayout> sublayouts) {
-        return bitfield((ValueLayout)LayoutUtils.valueLayoutForSize(containerSize)
-                        .layout().orElseThrow(() -> new IllegalStateException("Unsupported size: " + containerSize)), sublayouts);
+    MemoryLayout bitfield(List<MemoryLayout> sublayouts) {
+        return LayoutUtils.setBitfields(MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
     }
 
     long offsetOf(Type parent, Cursor c) {

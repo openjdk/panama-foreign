@@ -85,7 +85,7 @@ public class Parser {
                     } else {
                         Declaration decl = treeMaker.createTree(c);
                         if (decl != null) {
-                            decls.add(treeMaker.createTree(c));
+                            decls.add(decl);
                         }
                     }
                 } else if (isMacro(c) && src.path() != null) {
