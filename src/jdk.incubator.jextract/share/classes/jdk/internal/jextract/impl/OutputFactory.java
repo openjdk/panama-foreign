@@ -71,6 +71,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
+    private final Map<Type, String> functionTypeDefNames = new HashMap<>();
 
     private void addStructDefinition(Declaration decl, String name) {
         structClassNames.put(decl, name);
@@ -82,6 +83,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private String structDefinitionName(Declaration decl) {
         return structClassNames.get(decl);
+    }
+
+    private void addFunctionTypedef(Type.Delegated typedef, String name) {
+        functionTypeDefNames.put(typedef, name);
+    }
+
+    private boolean functionTypedefSeen(Type.Delegated typedef) {
+        return functionTypeDefNames.containsKey(typedef);
+    }
+
+    private String functionTypedefName(Type.Delegated decl) {
+        return functionTypeDefNames.get(decl);
     }
 
     // have we seen this Variable earlier?
@@ -278,8 +291,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     Optional<String> getAsFunctionPointerTypedef(Type type) {
         if (type instanceof Type.Delegated delegated &&
                 delegated.kind() == Type.Delegated.Kind.TYPEDEF &&
-                getAsFunctionPointer(delegated.type()) != null) {
-            return delegated.name();
+                functionTypedefSeen(delegated)) {
+            return Optional.of(functionTypedefName(delegated));
         } else {
             return Optional.empty();
         }
@@ -344,7 +357,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
-                generateFunctionalInterface(func, tree.name());
+                String funcIntfName = generateFunctionalInterface(func, tree.name());
+                if (funcIntfName != null) {
+                    addFunctionTypedef(Type.typedef(tree.name(), tree.type()), funcIntfName);
+                }
             }
         }
         return null;

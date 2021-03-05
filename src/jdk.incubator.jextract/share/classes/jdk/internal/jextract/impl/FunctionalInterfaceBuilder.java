@@ -51,7 +51,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     JavaSourceBuilder classEnd() {
         emitFunctionalInterfaceMethod();
         emitFunctionalFactories();
-        emitFunctionaRestrictedFactory();
+        emitFunctionalRestrictedFactory();
         return super.classEnd();
     }
 
@@ -95,7 +95,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
         });
     }
 
-    private void emitFunctionaRestrictedFactory() {
+    private void emitFunctionalRestrictedFactory() {
         emitWithConstantClass(className(), constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
             incrAlign();

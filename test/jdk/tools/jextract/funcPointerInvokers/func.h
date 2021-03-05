@@ -39,6 +39,12 @@ struct Bar {
 
 EXPORT Foo f;
 
+struct Baz {
+   void (*fp)(int arg);
+};
+
+EXPORT void (*fp)(int arg);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
