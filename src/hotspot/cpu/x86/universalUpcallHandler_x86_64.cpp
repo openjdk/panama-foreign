@@ -325,9 +325,6 @@ void save_java_frame_anchor(MacroAssembler* _masm, ByteSize store_offset, Regist
   __ movptr(rscratch1, Address(thread, JavaThread::last_Java_pc_offset()));
   __ movptr(Address(rsp, store_offset + JavaFrameAnchor::last_Java_pc_offset()), rscratch1);
 
-  __ movptr(rscratch1, Address(thread, JavaThread::saved_rbp_address_offset()));
-  __ movptr(Address(rsp, store_offset + JavaFrameAnchor::saved_rbp_address_offset()), rscratch1);
-
   // upcall->jfa._last_Java_sp = _thread->_anchor._last_Java_sp;
   __ movptr(rscratch1, Address(thread, JavaThread::last_Java_sp_offset()));
   __ movptr(Address(rsp, store_offset + JavaFrameAnchor::last_Java_sp_offset()), rscratch1);
@@ -353,9 +350,6 @@ void restore_java_frame_anchor(MacroAssembler* _masm, ByteSize load_offset, Regi
 
   __ movptr(rscratch1, Address(rsp, load_offset + JavaFrameAnchor::last_Java_pc_offset()));
   __ movptr(Address(thread, JavaThread::last_Java_pc_offset()), rscratch1);
-
-  __ movptr(rscratch1, Address(rsp, load_offset + JavaFrameAnchor::saved_rbp_address_offset()));
-  __ movptr(Address(thread, JavaThread::saved_rbp_address_offset()), rscratch1);
 
   __ movptr(rscratch1, Address(rsp, load_offset + JavaFrameAnchor::last_Java_sp_offset()));
   __ movptr(Address(thread, JavaThread::last_Java_sp_offset()), rscratch1);
