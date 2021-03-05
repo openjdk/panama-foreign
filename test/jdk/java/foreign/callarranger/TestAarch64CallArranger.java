@@ -281,21 +281,21 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
             { vmStore(r0, int.class) },
             {
                 dup(),
-                bufferLoad(0, int.class),
-                vmStore(v1, int.class),
-                bufferLoad(4, int.class),
-                vmStore(v2, int.class)
+                bufferLoad(0, float.class),
+                vmStore(v1, float.class),
+                bufferLoad(4, float.class),
+                vmStore(v2, float.class)
             }
         });
 
         checkReturnBindings(callingSequence, new Binding[]{
             allocate(hfa),
             dup(),
-            vmLoad(v0, int.class),
-            bufferStore(0, int.class),
+            vmLoad(v0, float.class),
+            bufferStore(0, float.class),
             dup(),
-            vmLoad(v1, int.class),
-            bufferStore(4, int.class),
+            vmLoad(v1, float.class),
+            bufferStore(4, float.class),
         });
     }
 
@@ -315,23 +315,23 @@ public class TestAarch64CallArranger extends CallArrangerTestBase {
         checkArgumentBindings(callingSequence, new Binding[][]{
             {
                 dup(),
-                bufferLoad(0, int.class),
-                vmStore(v0, int.class),
+                bufferLoad(0, float.class),
+                vmStore(v0, float.class),
                 dup(),
-                bufferLoad(4, int.class),
-                vmStore(v1, int.class),
-                bufferLoad(8, int.class),
-                vmStore(v2, int.class)
+                bufferLoad(4, float.class),
+                vmStore(v1, float.class),
+                bufferLoad(8, float.class),
+                vmStore(v2, float.class)
             },
             {
                 dup(),
-                bufferLoad(0, int.class),
-                vmStore(v3, int.class),
+                bufferLoad(0, float.class),
+                vmStore(v3, float.class),
                 dup(),
-                bufferLoad(4, int.class),
-                vmStore(v4, int.class),
-                bufferLoad(8, int.class),
-                vmStore(v5, int.class)
+                bufferLoad(4, float.class),
+                vmStore(v4, float.class),
+                bufferLoad(8, float.class),
+                vmStore(v5, float.class)
             },
             {
                 dup(),

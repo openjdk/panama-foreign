@@ -357,6 +357,8 @@ public interface MemoryLayout extends Constable {
      * layout path contains one or more path elements that select multiple sequence element indices
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
      * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size.
+     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
+     * in {@code elements} is {@code null}.
      */
     default long bitOffset(PathElement... elements) {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::offset,
@@ -406,6 +408,8 @@ public interface MemoryLayout extends Constable {
      * (see {@link PathElement#sequenceElement()} and {@link PathElement#sequenceElement(long, long)}).
      * @throws UnsupportedOperationException if one of the layouts traversed by the layout path has unspecified size,
      * or if {@code bitOffset(elements)} is not a multiple of 8.
+     * @throws NullPointerException if either {@code elements == null}, or if any of the elements
+     * in {@code elements} is {@code null}.
      */
     default long byteOffset(PathElement... elements) {
         return Utils.bitsToBytesOrThrow(bitOffset(elements), Utils.bitsToBytesThrowOffset);

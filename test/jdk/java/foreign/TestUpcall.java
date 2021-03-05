@@ -30,23 +30,6 @@
  *
  * @run testng/othervm
  *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   TestUpcall
- * @run testng/othervm
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   TestUpcall
- * @run testng/othervm
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   TestUpcall
- * @run testng/othervm
- *   -Dforeign.restricted=permit
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
- *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
  *   TestUpcall
  */
 
@@ -86,7 +69,8 @@ public class TestUpcall extends CallGeneratorHelper {
     static {
         try {
             DUMMY = MethodHandles.lookup().findStatic(TestUpcall.class, "dummy", MethodType.methodType(void.class));
-            PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave", MethodType.methodType(Object.class, Object[].class, AtomicReference.class));
+            PASS_AND_SAVE = MethodHandles.lookup().findStatic(TestUpcall.class, "passAndSave",
+                    MethodType.methodType(Object.class, Object[].class, AtomicReference.class, List.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -156,7 +140,7 @@ public class TestUpcall extends CallGeneratorHelper {
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
-        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box);
+        MethodHandle mh = insertArguments(PASS_AND_SAVE, 1, box, segments);
         mh = mh.asCollector(Object[].class, params.size());
 
         for (int i = 0; i < params.size(); i++) {
@@ -194,7 +178,16 @@ public class TestUpcall extends CallGeneratorHelper {
         return stub.address();
     }
 
-    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref) {
+    static Object passAndSave(Object[] o, AtomicReference<Object[]> ref, List<MemorySegment> copies) {
+        for (int i = 0; i < o.length; i++) {
+            if (o[i] instanceof MemorySegment) {
+                MemorySegment ms = (MemorySegment) o[i];
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
+                copy.copyFrom(ms);
+                o[i] = copy;
+                copies.add(copy);
+            }
+        }
         ref.set(o);
         return o[0];
     }

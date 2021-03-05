@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import jdk.internal.foreign.MemoryAddressImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -44,7 +43,6 @@ import java.nio.ByteOrder;
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodType.methodType;
 
 /**
@@ -222,7 +220,7 @@ public abstract class Binding {
             MH_ALLOCATE_BUFFER = lookup.findStatic(Binding.Allocate.class, "allocateBuffer",
                     methodType(MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
             MH_TO_SEGMENT = lookup.findStatic(Binding.ToSegment.class, "toSegment",
-                    methodType(MemorySegment.class, MemoryAddress.class, long.class));
+                    methodType(MemorySegment.class, MemoryAddress.class, long.class, SharedUtils.Allocator.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -258,27 +256,6 @@ public abstract class Binding {
                                    BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator);
 
     public abstract MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos);
-
-    private static MethodHandle mergeArguments(MethodHandle mh, int sourceIndex, int destIndex) {
-        MethodType oldType = mh.type();
-        Class<?> sourceType = oldType.parameterType(sourceIndex);
-        Class<?> destType = oldType.parameterType(destIndex);
-        if (sourceType != destType) {
-            // TODO meet?
-            throw new IllegalArgumentException("Parameter types differ: " + sourceType + " != " + destType);
-        }
-        MethodType newType = oldType.dropParameterTypes(destIndex, destIndex + 1);
-        int[] reorder = new int[oldType.parameterCount()];
-        assert destIndex > sourceIndex;
-        for (int i = 0, index = 0; i < reorder.length; i++) {
-            if (i != destIndex) {
-                reorder[i] = index++;
-            } else {
-                reorder[i] = sourceIndex;
-            }
-        }
-        return permuteArguments(mh, newType, reorder);
-    }
 
     private static void checkType(Class<?> type) {
         if (!type.isPrimitive() || type == void.class || type == boolean.class)
@@ -564,7 +541,10 @@ public abstract class Binding {
         }
 
         public VarHandle varHandle() {
-            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(type, ByteOrder.nativeOrder()), 1, offset);
+            // alignment is set to 1 byte here to avoid exceptions for cases where we do super word
+            // copies of e.g. 2 int fields of a struct as a single long, while the struct is only
+            // 4-byte-aligned (since it only contains ints)
+            return MemoryHandles.insertCoordinates(MemoryHandles.varHandle(type, 1, ByteOrder.nativeOrder()), 1, offset);
         }
     }
 
@@ -715,7 +695,7 @@ public abstract class Binding {
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle filter = insertArguments(MH_COPY_BUFFER, 1, size, alignment);
             specializedHandle = collectArguments(specializedHandle, insertPos, filter);
-            return mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
         @Override
@@ -784,7 +764,7 @@ public abstract class Binding {
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle allocateBuffer = insertArguments(MH_ALLOCATE_BUFFER, 0, size, alignment);
             specializedHandle = collectArguments(specializedHandle, insertPos, allocateBuffer);
-            return mergeArguments(specializedHandle, allocatorPos, insertPos);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos);
         }
 
         @Override
@@ -839,7 +819,7 @@ public abstract class Binding {
     }
 
     /**
-     * Box_ADDRESS()
+     * BOX_ADDRESS()
      * Pops a 'long' from the operand stack, converts it to a 'MemoryAddress',
      *     and pushes that onto the operand stack.
      */
@@ -909,8 +889,8 @@ public abstract class Binding {
     }
 
     /**
-     * BASE_ADDRESS([size])
-     *   Pops a MemoryAddress from the operand stack, and takes the converts it to a MemorySegment
+     * TO_SEGMENT([size])
+     *   Pops a MemoryAddress from the operand stack, and converts it to a MemorySegment
      *   with the given size, and pushes that onto the operand stack
      */
     public static class ToSegment extends Binding {
@@ -922,9 +902,9 @@ public abstract class Binding {
             this.size = size;
         }
 
-        // FIXME should register with scope
-        private static MemorySegment toSegment(MemoryAddress operand, long size) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+        private static MemorySegment toSegment(MemoryAddress operand, long size, SharedUtils.Allocator allocator) {
+            MemorySegment ms = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
+            return allocator.handoff(ms);
         }
 
         @Override
@@ -938,14 +918,15 @@ public abstract class Binding {
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
                               BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
             MemoryAddress operand = (MemoryAddress) stack.pop();
-            MemorySegment segment = toSegment(operand, size);
+            MemorySegment segment = toSegment(operand, size, allocator);
             stack.push(segment);
         }
 
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
             MethodHandle toSegmentHandle = insertArguments(MH_TO_SEGMENT, 1, size);
-            return filterArguments(specializedHandle, insertPos, toSegmentHandle);
+            specializedHandle = collectArguments(specializedHandle, insertPos, toSegmentHandle);
+            return SharedUtils.mergeArguments(specializedHandle, allocatorPos, insertPos + 1);
         }
 
         @Override
@@ -1012,7 +993,7 @@ public abstract class Binding {
          */
         @Override
         public MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos) {
-            return mergeArguments(specializedHandle, insertPos, insertPos + 1);
+            return SharedUtils.mergeArguments(specializedHandle, insertPos, insertPos + 1);
         }
 
         @Override

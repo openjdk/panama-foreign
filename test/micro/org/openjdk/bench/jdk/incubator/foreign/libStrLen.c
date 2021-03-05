@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,28 +23,13 @@
  * questions.
  */
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
+#include <jni.h>
+#include <stdlib.h>
+#include <string.h>
 
-EXPORT void blank(void (*cb)(void)) {
-    cb();
-}
-
-EXPORT int identity(int x, int (*cb)(int)) {
-    return cb(x);
-}
-
-EXPORT void args5(long long a0, double a1, long long a2, double a3, long long a4,
-                  void (*cb)(long long, double, long long, double, long long)) {
-    cb(a0, a1, a2, a3, a4);
-}
-
-EXPORT void args10(long long a0, double a1, long long a2, double a3, long long a4,
-                   double a5, long long a6, double a7, long long a8, double a9,
-                   void (*cb)(long long, double, long long, double, long long,
-                              double, long long, double, long long, double)) {
-    cb(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_StrLenTest_strlen(JNIEnv *const env, const jclass cls, const jstring text) {
+    const char *str = (*env)->GetStringUTFChars(env, text, NULL);
+    int len = (int)strlen(str);
+    (*env)->ReleaseStringUTFChars(env, text, str);
+    return len;
 }

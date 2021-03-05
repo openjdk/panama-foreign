@@ -19,27 +19,16 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "runtime/interfaceSupport.inline.hpp"
-#include "code/vmreg.hpp"
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index))
-  return VMRegImpl::vmStorageToVMReg(type, index)->value();
-JNI_END
+struct S_PDI { void* p0; double p1; int p2; };
 
-#define CC (char*)  /*cast a literal from (const char*)*/
-#define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
-
-static JNINativeMethod NEP_methods[] = {
-  {CC "vmStorageToVMReg", CC "(II)J", FN_PTR(NEP_vmStorageToVMReg)},
-};
-
-JNI_ENTRY(void, JVM_RegisterNativeEntryPointMethods(JNIEnv *env, jclass NEP_class))
-  ThreadToNativeFromVM ttnfv(thread);
-  int status = env->RegisterNatives(NEP_class, NEP_methods, sizeof(NEP_methods)/sizeof(JNINativeMethod));
-  guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-            "register jdk.internal.invoke.NativeEntryPoint natives");
-JNI_END
+EXPORT void do_upcall(void (*cb)(struct S_PDI), struct S_PDI a0) {
+    cb(a0);
+}
