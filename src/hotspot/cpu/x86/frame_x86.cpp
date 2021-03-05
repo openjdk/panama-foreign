@@ -350,10 +350,6 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   vmassert(jfa->last_Java_pc() != NULL, "not walkable");
   frame fr(jfa->last_Java_sp(), jfa->last_Java_fp(), jfa->last_Java_pc());
 
-  if (map->update_map() && jfa->saved_rbp_address()) {
-    update_map_with_saved_link(map, jfa->saved_rbp_address());
-  }
-
   return fr;
 }
 
@@ -379,10 +375,6 @@ frame frame::sender_for_panama_entry_frame(RegisterMap* map) const {
   assert(map->include_argument_oops(), "should be set by clear");
   vmassert(jfa->last_Java_pc() != NULL, "not walkable");
   frame fr(jfa->last_Java_sp(), jfa->last_Java_fp(), jfa->last_Java_pc());
-
-  if (map->update_map() && jfa->saved_rbp_address()) {
-    update_map_with_saved_link(map, jfa->saved_rbp_address());
-  }
 
   return fr;
 }

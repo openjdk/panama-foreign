@@ -2000,9 +2000,9 @@ void GraphKit::increment_counter(address counter_addr) {
 void GraphKit::increment_counter(Node* counter_addr) {
   int adr_type = Compile::AliasIdxRaw;
   Node* ctrl = control();
-  Node* cnt  = make_load(ctrl, counter_addr, TypeInt::INT, T_INT, adr_type, MemNode::unordered);
-  Node* incr = _gvn.transform(new AddINode(cnt, _gvn.intcon(1)));
-  store_to_memory(ctrl, counter_addr, incr, T_INT, adr_type, MemNode::unordered);
+  Node* cnt  = make_load(ctrl, counter_addr, TypeLong::LONG, T_LONG, adr_type, MemNode::unordered);
+  Node* incr = _gvn.transform(new AddLNode(cnt, _gvn.longcon(1)));
+  store_to_memory(ctrl, counter_addr, incr, T_LONG, adr_type, MemNode::unordered);
 }
 
 
@@ -2636,9 +2636,9 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   );
 
   if (nep->need_transition()) {
-    BufferBlob* invoker = SharedRuntime::make_native_invoker(call_addr,
-                                                             nep->shadow_space(),
-                                                             arg_regs, ret_regs);
+    RuntimeStub* invoker = SharedRuntime::make_native_invoker(call_addr,
+                                                              nep->shadow_space(),
+                                                              arg_regs, ret_regs);
     if (invoker == NULL) {
       C->record_failure("native invoker not implemented on this platform");
       return NULL;
