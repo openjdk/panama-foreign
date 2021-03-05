@@ -223,7 +223,7 @@ public interface ResourceScope extends AutoCloseable {
     }
 
     /**
-     * Create a new shared scope. The resulting scope is closeable, and is also managed by a {@link Cleaner}.
+     * Create a new shared scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.
      * @return a new shared scope, managed by {@code cleaner}.
      */
     static ResourceScope ofShared() {
