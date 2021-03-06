@@ -24,12 +24,16 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,7 +139,7 @@ class StructBuilder extends ConstantBuilder {
     }
 
     @Override
-    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    public void addVar(String javaName, String nativeName, VarInfo varInfo) {
         try {
             structLayout.byteOffset(elementPaths(nativeName));
         } catch (UnsupportedOperationException uoe) {
@@ -143,17 +147,33 @@ class StructBuilder extends ConstantBuilder {
             OutputFactory.warn("skipping '" + className() + "." + nativeName + "' : " + uoe.toString());
             return;
         }
-
-        if (type.equals(MemorySegment.class)) {
-            emitSegmentGetter(javaName, nativeName, layout);
+        if (varInfo.carrier().equals(MemorySegment.class)) {
+            emitSegmentGetter(javaName, nativeName, varInfo.layout());
         } else {
-            Constant vhConstant = addFieldVarHandle(javaName, nativeName, layout, type, layoutField(), prefixNamesList())
+            Constant vhConstant = addFieldVarHandle(javaName, nativeName, varInfo, layoutField(), prefixNamesList())
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
-            emitFieldGetter(vhConstant, javaName, type);
-            emitFieldSetter(vhConstant, javaName, type);
-            emitIndexedFieldGetter(vhConstant, javaName, type);
-            emitIndexedFieldSetter(vhConstant, javaName, type);
+            emitFieldGetter(vhConstant, javaName, varInfo.carrier());
+            emitFieldSetter(vhConstant, javaName, varInfo.carrier());
+            emitIndexedFieldGetter(vhConstant, javaName, varInfo.carrier());
+            emitIndexedFieldSetter(vhConstant, javaName, varInfo.carrier());
+            if (varInfo.fiName().isPresent()) {
+                emitFunctionalInterfaceGetter(varInfo.fiName().get(), javaName);
+            }
         }
+    }
+
+    private void emitFunctionalInterfaceGetter(String fiName, String javaName) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        append(fiName + " " + javaName + " (MemorySegment segment) {\n");
+        incrAlign();
+        indent();
+        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get(segment));\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
     }
 
     private void emitFieldGetter(Constant vhConstant, String javaName, Class<?> type) {

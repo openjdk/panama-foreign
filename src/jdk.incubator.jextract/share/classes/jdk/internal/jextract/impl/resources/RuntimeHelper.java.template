@@ -65,6 +65,14 @@ final class RuntimeHelper {
                 }).orElse(null);
     }
 
+    static final MethodHandle downcallHandle(String desc, FunctionDescriptor fdesc, boolean variadic) {
+        if (variadic) {
+            throw new AssertionError("Cannot get here!");
+        }
+        MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+        return LINKER.downcallHandle(mt, fdesc);
+    }
+
     static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",

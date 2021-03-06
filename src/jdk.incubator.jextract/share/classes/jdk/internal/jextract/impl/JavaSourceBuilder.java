@@ -35,6 +35,7 @@ import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -120,11 +121,40 @@ abstract class JavaSourceBuilder {
 
     // public API (used by OutputFactory)
 
-    public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
+    public static record FunctionInfo(
+            MethodType methodType,
+            FunctionDescriptor descriptor,
+            boolean isVarargs,
+            Optional<List<String>> parameterNames) {
+
+        static FunctionInfo ofFunction(MethodType methodType, FunctionDescriptor functionDescriptor, boolean isVarargs, List<String> parameterNames) {
+            return new FunctionInfo(methodType, functionDescriptor, isVarargs, Optional.of(parameterNames));
+        }
+
+        static FunctionInfo ofFunctionPointer(MethodType methodType, FunctionDescriptor functionDescriptor) {
+            return new FunctionInfo(methodType, functionDescriptor, false, Optional.empty());
+        }
+    }
+
+    public static record VarInfo(
+            Class<?> carrier,
+            MemoryLayout layout,
+            Optional<String> fiName) {
+
+        static VarInfo ofVar(Class<?> carrier, MemoryLayout layout) {
+            return new VarInfo(carrier, layout, Optional.empty());
+        }
+
+        static VarInfo ofFunctionalPointerVar(Class<?> carrier, MemoryLayout layout, String fiName) {
+            return new VarInfo(carrier, layout, Optional.ofNullable(fiName));
+        }
+    }
+
+    public void addVar(String javaName, String nativeName, VarInfo varInfo) {
         throw new UnsupportedOperationException();
     }
 
-    public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
+    public void addFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
         throw new UnsupportedOperationException();
     }
 
@@ -140,10 +170,12 @@ abstract class JavaSourceBuilder {
         return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
     }
 
-    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
+    public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name,
+                functionInfo.methodType(), functionInfo.descriptor());
         builder.classBegin();
         builder.classEnd();
+        return builder.fullName();
     }
 
     public List<JavaFileObject> toFiles() {

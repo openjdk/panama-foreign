@@ -66,24 +66,24 @@ public class ConstantBuilder extends NestedClassBuilder {
                 () -> emitLayoutField(javaName, layout));
     }
 
-    public Constant addFieldVarHandle(String javaName, String nativeName, MemoryLayout layout,
-                                    Class<?> type, String rootJavaName, List<String> prefixElementNames) {
-        return addVarHandle(javaName, nativeName, layout, type, rootJavaName, prefixElementNames);
+    public Constant addFieldVarHandle(String javaName, String nativeName, VarInfo varInfo,
+                                      String rootJavaName, List<String> prefixElementNames) {
+        return addVarHandle(javaName, nativeName, varInfo, rootJavaName, prefixElementNames);
     }
 
-    public Constant addGlobalVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
-        return addVarHandle(javaName, nativeName, layout, type, null, List.of());
+    public Constant addGlobalVarHandle(String javaName, String nativeName, VarInfo varInfo) {
+        return addVarHandle(javaName, nativeName, varInfo, null, List.of());
     }
 
-    private Constant addVarHandle(String javaName, String nativeName, MemoryLayout layout, Class<?> type,
+    private Constant addVarHandle(String javaName, String nativeName, VarInfo varInfo,
                                 String rootLayoutName, List<String> prefixElementNames) {
         return emitIfAbsent(javaName, Constant.Kind.VAR_HANDLE,
-                () -> emitVarHandleField(javaName, nativeName, type, layout, rootLayoutName, prefixElementNames));
+                () -> emitVarHandleField(javaName, nativeName, varInfo, rootLayoutName, prefixElementNames));
     }
 
-    public Constant addMethodHandle(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs) {
+    public Constant addMethodHandle(String javaName, String nativeName, FunctionInfo functionInfo, boolean virtual) {
         return emitIfAbsent(javaName, Constant.Kind.METHOD_HANDLE,
-                () -> emitMethodHandleField(javaName, nativeName, mtype, desc, varargs));
+                () -> emitMethodHandleField(javaName, nativeName, functionInfo, virtual));
     }
 
     public Constant addSegment(String javaName, String nativeName, MemoryLayout layout) {
@@ -141,7 +141,7 @@ public class ConstantBuilder extends NestedClassBuilder {
             this.kind = kind;
         }
 
-        private List<String> getterNameParts() {
+        List<String> getterNameParts() {
             return List.of(className, javaName, kind.nameSuffix);
         }
 
@@ -185,9 +185,8 @@ public class ConstantBuilder extends NestedClassBuilder {
         return constant;
     }
 
-    private Constant emitMethodHandleField(String javaName, String nativeName, MethodType mtype,
-                                         FunctionDescriptor desc, boolean varargs) {
-        Constant functionDesc = addFunctionDesc(javaName, desc);
+    private Constant emitMethodHandleField(String javaName, String nativeName, FunctionInfo functionInfo, boolean virtual) {
+        Constant functionDesc = addFunctionDesc(javaName, functionInfo.descriptor());
         incrAlign();
         String fieldName = Constant.Kind.METHOD_HANDLE.fieldName(javaName);
         indent();
@@ -195,15 +194,17 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
-        append("LIBRARIES, \"" + nativeName + "\"");
-        append(",\n");
-        indent();
-        append("\"" + mtype.toMethodDescriptorString() + "\",\n");
+        if (!virtual) {
+            append("LIBRARIES, \"" + nativeName + "\"");
+            append(",\n");
+            indent();
+        }
+        append("\"" + functionInfo.methodType().toMethodDescriptorString() + "\",\n");
         indent();
         append(functionDesc.accessExpression());
         append(", ");
         // isVariadic
-        append(varargs);
+        append(functionInfo.isVarargs());
         append("\n");
         decrAlign();
         indent();
@@ -212,13 +213,13 @@ public class ConstantBuilder extends NestedClassBuilder {
         return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
     }
 
-    private Constant emitVarHandleField(String javaName, String nativeName, Class<?> type, MemoryLayout layout,
+    private Constant emitVarHandleField(String javaName, String nativeName, VarInfo varInfo,
                                       String rootLayoutName, List<String> prefixElementNames) {
         String layoutAccess = rootLayoutName != null ?
                 Constant.Kind.LAYOUT.fieldName(rootLayoutName) :
-                addLayout(javaName, layout).accessExpression();
+                addLayout(javaName, varInfo.layout()).accessExpression();
         incrAlign();
-        String typeName = type.getName();
+        String typeName = varInfo.carrier().getName();
         boolean isAddr = typeName.contains("MemoryAddress");
         if (isAddr) {
             typeName = "long";
