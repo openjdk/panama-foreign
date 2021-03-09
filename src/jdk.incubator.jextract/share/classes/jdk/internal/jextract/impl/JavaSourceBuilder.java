@@ -133,7 +133,7 @@ abstract class JavaSourceBuilder {
             enclosing.append(build());
             return enclosing;
         } else {
-            return this;
+            return null;
         }
     }
 
@@ -156,21 +156,19 @@ abstract class JavaSourceBuilder {
     }
 
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
-        return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
+        throw new UnsupportedOperationException();
     }
 
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
-        builder.classBegin();
-        builder.classEnd();
+        throw new UnsupportedOperationException();
     }
 
     public List<JavaFileObject> toFiles() {
         if (enclosing != null) {
             throw new UnsupportedOperationException("Nested builder!");
         }
-        classEnd();
         String res = build();
+        sb = null;
         return List.of(Utils.fileFromString(packageName(), className(), res));
     }
 
@@ -212,7 +210,6 @@ abstract class JavaSourceBuilder {
 
     String build() {
         String s = sb.toString();
-        sb = null;
         return s;
     }
 

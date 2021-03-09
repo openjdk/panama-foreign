@@ -47,6 +47,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private int declCount;
     private final String[] libraryNames;
     private final List<SplitHeader> headers = new ArrayList<>();
+    private final List<JavaSourceBuilder> builders = new ArrayList<>();
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
@@ -73,7 +74,10 @@ class ToplevelBuilder extends JavaSourceBuilder {
                 .orElse(lastHeader()).emitLibraries(libraryNames);
         List<JavaFileObject> files = new ArrayList<>();
         files.addAll(headers.stream()
-                .flatMap(hf -> hf.toFiles().stream())
+                .flatMap(hf -> { hf.classEnd(); return hf.toFiles().stream(); })
+                .collect(Collectors.toList()));
+        files.addAll(builders.stream()
+                .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
     }
@@ -100,12 +104,18 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     @Override
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
-        return nextHeader().addStruct(name, parent, layout, type);
+        String structName = name.isEmpty() ? parent.name() : name;
+        StructBuilder structBuilder = new StructBuilder(ClassDesc.of(packageName(), structName), layout, type);
+        builders.add(structBuilder);
+        return structBuilder;
     }
 
     @Override
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        nextHeader().addFunctionalInterface(name, mtype, desc);
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(ClassDesc.of(packageName(), name), mtype, desc);
+        builders.add(builder);
+        builder.classBegin();
+        builder.classEnd();
     }
 
     private SplitHeader lastHeader() {

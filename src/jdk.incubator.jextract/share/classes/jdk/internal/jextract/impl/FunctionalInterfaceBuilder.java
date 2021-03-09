@@ -29,6 +29,7 @@ import jdk.incubator.foreign.*;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 
 public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
@@ -41,6 +42,13 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className, MethodType fiType,
                                FunctionDescriptor fiDesc) {
         super(enclosing, Kind.INTERFACE, className);
+        this.fiType = fiType;
+        this.fiDesc = fiDesc;
+    }
+
+    FunctionalInterfaceBuilder(ClassDesc desc, MethodType fiType,
+                               FunctionDescriptor fiDesc) {
+        super(Kind.INTERFACE, desc);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
     }

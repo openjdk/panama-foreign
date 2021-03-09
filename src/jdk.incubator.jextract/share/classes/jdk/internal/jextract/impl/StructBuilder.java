@@ -24,12 +24,15 @@
  */
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import java.lang.constant.ClassDesc;
+import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,13 @@ class StructBuilder extends ConstantBuilder {
 
     StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
+        this.structLayout = structLayout;
+        this.structType = structType;
+        prefixElementNames = new ArrayDeque<>();
+    }
+
+    StructBuilder(ClassDesc desc, GroupLayout structLayout, Type structType) {
+        super(Kind.CLASS, desc);
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
@@ -115,8 +125,15 @@ class StructBuilder extends ConstantBuilder {
             pushPrefixElement(anonName);
             return this;
         } else {
-            return super.addStruct(name, parent, layout, type);
+            return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
         }
+    }
+
+    @Override
+    public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
+        builder.classBegin();
+        builder.classEnd();
     }
 
     private String findAnonymousStructName(GroupLayout parentLayout, GroupLayout layout) {

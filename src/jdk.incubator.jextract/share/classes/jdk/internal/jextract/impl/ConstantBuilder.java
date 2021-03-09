@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
+import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
@@ -52,6 +53,10 @@ public class ConstantBuilder extends JavaSourceBuilder {
 
     public ConstantBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
         super(enclosing, kind, className);
+    }
+
+    public ConstantBuilder(Kind kind, ClassDesc desc) {
+        super(kind, desc);
     }
 
     String memberMods() {
