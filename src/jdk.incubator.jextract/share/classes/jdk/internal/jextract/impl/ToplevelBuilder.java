@@ -51,10 +51,9 @@ class ToplevelBuilder extends JavaSourceBuilder {
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
     ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
-        super(Kind.CLASS, desc);
+        super(new ConstantHelper(desc.packageName(), libraryNames), Kind.CLASS, desc);
         FirstHeader first = new FirstHeader(className());
         first.classBegin();
-        first.emitLibraries(libraryNames);
         headers.add(first);
     }
 
@@ -69,10 +68,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     public List<JavaFileObject> toFiles() {
-        if (constantBuilder != null) {
-            constantBuilder.classEnd();
-        }
-        List<JavaFileObject> files = new ArrayList<>();
+        List<JavaFileObject> files = new ArrayList<>(constantHelper.toFiles());
         files.addAll(headers.stream()
                 .flatMap(hf -> { hf.classEnd(); return hf.toFiles().stream(); })
                 .collect(Collectors.toList()));
@@ -80,16 +76,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
                 .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
-    }
-
-    @Override
-    boolean isNested() {
-        return false;
-    }
-
-    @Override
-    boolean isEnclosedBySameName(String name) {
-        return false;
     }
 
     @Override
@@ -113,7 +99,8 @@ class ToplevelBuilder extends JavaSourceBuilder {
             // primitive
             nextHeader().emitPrimitiveTypedef((Type.Primitive)type, name);
         } else {
-            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
+            TypedefBuilder builder = new TypedefBuilder(constantHelper, Kind.CLASS,
+                    ClassDesc.of(packageName(), uniqueNestedClassName(name)), superClass);
             builders.add(builder);
             builder.classBegin();
             builder.classEnd();
@@ -123,14 +110,16 @@ class ToplevelBuilder extends JavaSourceBuilder {
     @Override
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
         String structName = name.isEmpty() ? parent.name() : name;
-        StructBuilder structBuilder = new StructBuilder(this, structName, layout, type);
+        StructBuilder structBuilder = new StructBuilder(constantHelper,
+                ClassDesc.of(packageName(), uniqueNestedClassName(structName)), layout, type);
         builders.add(structBuilder);
         return structBuilder;
     }
 
     @Override
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(constantHelper,
+                ClassDesc.of(packageName(), uniqueNestedClassName(name)), mtype, desc);
         builders.add(builder);
         builder.classBegin();
         builder.classEnd();
@@ -155,30 +144,10 @@ class ToplevelBuilder extends JavaSourceBuilder {
         }
     }
 
-    int constant_counter = 0;
-    int constant_class_index = 0;
-
-    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
-    ConstantBuilder constantBuilder;
-
-    @Override
-    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
-            if (constantBuilder != null) {
-                constantBuilder.classEnd();
-            }
-            constant_counter = 0;
-            constantBuilder = new ConstantBuilder(this, Kind.CLASS, "constants$" + constant_class_index++);
-            builders.add(constantBuilder);
-            constantBuilder.classBegin();
-        }
-        constantConsumer.accept(constantBuilder);
-        constant_counter++;
-    }
-
     class SplitHeader extends HeaderFileBuilder {
         SplitHeader(String name, String superclass) {
-            super(ToplevelBuilder.this, name, superclass);
+            super(ToplevelBuilder.this.constantHelper, Kind.CLASS,
+                    ClassDesc.of(ToplevelBuilder.this.packageName(), name), superclass);
         }
 
         @Override
@@ -219,28 +188,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
             HeaderFileBuilder last = lastHeader();
             return super.build().replace("extends #{SUPER}",
                     last != this ? "extends " + last.className() : "");
-        }
-
-        private void emitLibraries(String[] libraryNames) {
-            incrAlign();
-            indent();
-            append("static final ");
-            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
-            incrAlign();
-            for (String lib : libraryNames) {
-                indent();
-                append('\"');
-                append(quoteLibraryName(lib));
-                append("\",\n");
-            }
-            decrAlign();
-            indent();
-            append("});\n\n");
-            decrAlign();
-        }
-
-        private String quoteLibraryName(String lib) {
-            return lib.replace("\\", "\\\\"); // double up slashes
         }
     }
 }

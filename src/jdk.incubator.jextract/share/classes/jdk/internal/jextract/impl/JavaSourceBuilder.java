@@ -57,6 +57,7 @@ abstract class JavaSourceBuilder {
     final Kind kind;
     final ClassDesc desc;
     protected final JavaSourceBuilder enclosing;
+    protected final ConstantHelper constantHelper;
 
     Set<String> nestedClassNames = new HashSet<>();
     int nestedClassNameCount = 0;
@@ -66,7 +67,8 @@ abstract class JavaSourceBuilder {
     // current line alignment (number of 4-spaces)
     private int align;
 
-    JavaSourceBuilder(Kind kind, ClassDesc desc) {
+    JavaSourceBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc) {
+        this.constantHelper = constantHelper;
         this.enclosing = null;
         this.align = 0;
         this.kind = kind;
@@ -74,14 +76,15 @@ abstract class JavaSourceBuilder {
     }
 
     JavaSourceBuilder(JavaSourceBuilder enclosing, Kind kind, String name) {
+        this.constantHelper = enclosing.constantHelper;
         this.enclosing = enclosing;
-        this.align = isNested() ? enclosing.align : 0;
+        this.align = enclosing.align;
         this.kind = kind;
         this.desc = ClassDesc.of(enclosing.packageName(), enclosing.uniqueNestedClassName(name));
     }
 
     boolean isNested() {
-        return !(enclosing instanceof ToplevelBuilder);
+        return enclosing != null;
     }
 
     String className() {
@@ -225,7 +228,8 @@ abstract class JavaSourceBuilder {
 
     // is the name enclosed enclosed by a class of the same name?
     boolean isEnclosedBySameName(String name) {
-        return className().equals(name) || enclosing.isEnclosedBySameName(name);
+        return className().equals(name) ||
+                (isNested() && enclosing.isEnclosedBySameName(name));
     }
 
     protected void emitPackagePrefix() {
@@ -277,9 +281,5 @@ abstract class JavaSourceBuilder {
 
     protected void emitGetter(String mods, Class<?> type, String name, String access) {
         emitGetter(mods, type, name, access, false, null);
-    }
-
-    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        enclosing.emitWithConstantClass(javaName, constantConsumer);
     }
 }

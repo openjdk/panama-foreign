@@ -52,6 +52,13 @@ class StructBuilder extends ConstantBuilder {
     private final Type structType;
     private final Deque<String> prefixElementNames;
 
+    StructBuilder(ConstantHelper constantHelper, ClassDesc desc, GroupLayout structLayout, Type structType) {
+        super(constantHelper, Kind.CLASS, desc);
+        this.structLayout = structLayout;
+        this.structType = structType;
+        prefixElementNames = new ArrayDeque<>();
+    }
+
     StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
         super(enclosing, Kind.CLASS, className);
         this.structLayout = structLayout;

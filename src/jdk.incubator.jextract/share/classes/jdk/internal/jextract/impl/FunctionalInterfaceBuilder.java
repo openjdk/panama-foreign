@@ -40,9 +40,16 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
-    FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className, MethodType fiType,
-                               FunctionDescriptor fiDesc) {
+    FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className,
+                               MethodType fiType, FunctionDescriptor fiDesc) {
         super(enclosing, Kind.INTERFACE, className);
+        this.fiType = fiType;
+        this.fiDesc = fiDesc;
+    }
+
+    FunctionalInterfaceBuilder(ConstantHelper constantHelper, ClassDesc desc,
+                               MethodType fiType, FunctionDescriptor fiDesc) {
+        super(constantHelper, Kind.INTERFACE, desc);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
     }
@@ -70,7 +77,7 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     }
 
     private void emitFunctionalFactories() {
-        emitWithConstantClass(className(), constantBuilder -> {
+        constantHelper.emitWithConstantClass(constantBuilder -> {
             Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();

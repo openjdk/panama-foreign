@@ -33,8 +33,8 @@ public class TypedefBuilder extends JavaSourceBuilder {
 
     private final String superClass;
 
-    public TypedefBuilder(JavaSourceBuilder enclosing, String name, String superClass) {
-        super(enclosing, Kind.CLASS, name);
+    public TypedefBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc, String superClass) {
+        super(constantHelper, kind, desc);
         this.superClass = superClass;
     }
 

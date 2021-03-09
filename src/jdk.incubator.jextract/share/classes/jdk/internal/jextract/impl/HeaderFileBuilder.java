@@ -49,8 +49,8 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     private final String superclass;
 
-    HeaderFileBuilder(JavaSourceBuilder enclosing, String name, String superclass) {
-        super(enclosing, Kind.CLASS, name);
+    HeaderFileBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc, String superclass) {
+        super(constantHelper, kind, desc);
         this.superclass = superclass;
     }
 
@@ -62,12 +62,12 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addVar(String javaName, String nativeName, MemoryLayout layout, Class<?> type) {
         if (type.equals(MemorySegment.class)) {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            constantHelper.emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addSegment(javaName, nativeName, layout)
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             });
         } else {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            constantHelper.emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addLayout(javaName, layout)
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
                 Constant vhConstant = constantBuilder.addGlobalVarHandle(javaName, nativeName, layout, type)
@@ -82,7 +82,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     @Override
     public void addFunction(String javaName, String nativeName, MethodType mtype, FunctionDescriptor desc, boolean varargs, List<String> paramNames) {
-        emitWithConstantClass(javaName, constantBuilder -> {
+        constantHelper.emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, mtype, desc, varargs)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, mtype, varargs, paramNames);
@@ -92,7 +92,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
         if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            constantHelper.emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addConstantDesc(javaName, type, value)
                         .emitGetter(this, MEMBER_MODS, Constant.JAVA_NAME);
             });
