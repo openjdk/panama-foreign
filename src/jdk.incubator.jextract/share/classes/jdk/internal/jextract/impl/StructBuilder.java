@@ -354,12 +354,11 @@ class StructBuilder extends ConstantBuilder {
     }
 
     private String qualifiedName(JavaSourceBuilder builder) {
-        if (builder instanceof NestedClassBuilder) {
-            NestedClassBuilder nestedClassBuilder = (NestedClassBuilder)builder;
-            String prefix = qualifiedName(nestedClassBuilder.enclosing);
+        if (builder.enclosing != null) {
+            String prefix = qualifiedName(builder.enclosing);
             return prefix.isEmpty() ?
-                    nestedClassBuilder.className() :
-                    prefix + "$" + nestedClassBuilder.className();
+                    builder.className() :
+                    prefix + "$" + builder.className();
         } else {
             return "";
         }

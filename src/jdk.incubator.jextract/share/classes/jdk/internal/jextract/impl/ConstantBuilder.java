@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ConstantBuilder extends NestedClassBuilder {
+public class ConstantBuilder extends JavaSourceBuilder {
 
     // set of names generates already
     private final Map<String, Constant> namesGenerated = new HashMap<>();

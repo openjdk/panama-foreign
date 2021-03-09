@@ -25,7 +25,7 @@
 
 package jdk.internal.jextract.impl;
 
-public class TypedefBuilder extends NestedClassBuilder {
+public class TypedefBuilder extends JavaSourceBuilder {
 
     private static String MEMBER_MODS = "public static ";
 

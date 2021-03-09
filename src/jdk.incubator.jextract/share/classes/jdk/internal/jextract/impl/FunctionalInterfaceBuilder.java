@@ -31,7 +31,7 @@ import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
 
-public class FunctionalInterfaceBuilder extends NestedClassBuilder {
+public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
 
     private static final String MEMBER_MODS = "static";
 
