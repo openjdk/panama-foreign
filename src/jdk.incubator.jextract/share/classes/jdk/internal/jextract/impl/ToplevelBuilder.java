@@ -45,16 +45,17 @@ import java.util.stream.Collectors;
 class ToplevelBuilder extends JavaSourceBuilder {
 
     private int declCount;
-    private final List<SplitHeader> headers = new ArrayList<>();
     private final List<JavaSourceBuilder> builders = new ArrayList<>();
+    private SplitHeader lastHeader;
+    private int headersCount;
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
     ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
         super(new ConstantHelper(desc.packageName(), libraryNames), Kind.CLASS, desc);
-        FirstHeader first = new FirstHeader(className());
+        SplitHeader first = lastHeader = new FirstHeader(className());
         first.classBegin();
-        headers.add(first);
+        builders.add(first);
     }
 
     @Override
@@ -68,10 +69,8 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     public List<JavaFileObject> toFiles() {
+        lastHeader.classEnd();
         List<JavaFileObject> files = new ArrayList<>(constantHelper.toFiles());
-        files.addAll(headers.stream()
-                .flatMap(hf -> { hf.classEnd(); return hf.toFiles().stream(); })
-                .collect(Collectors.toList()));
         files.addAll(builders.stream()
                 .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
@@ -125,22 +124,20 @@ class ToplevelBuilder extends JavaSourceBuilder {
         builder.classEnd();
     }
 
-    private SplitHeader lastHeader() {
-        return headers.get(headers.size() - 1);
-    }
-
     private SplitHeader nextHeader() {
         if (declCount == DECLS_PER_HEADER_CLASS) {
-            boolean hasSuper = !(lastHeader() instanceof FirstHeader);
-            SplitHeader headerFileBuilder = new SplitHeader(className() + "_" + headers.size(),
-                    hasSuper ? lastHeader().className() : null);
+            boolean hasSuper = !(lastHeader instanceof FirstHeader);
+            SplitHeader headerFileBuilder = new SplitHeader(className() + "_" + ++headersCount,
+                    hasSuper ? lastHeader.className() : null);
+            lastHeader.classEnd();
             headerFileBuilder.classBegin();
-            headers.add(headerFileBuilder);
+            builders.add(headerFileBuilder);
+            lastHeader = headerFileBuilder;
             declCount = 1;
             return headerFileBuilder;
         } else {
             declCount++;
-            return lastHeader();
+            return lastHeader;
         }
     }
 
@@ -185,7 +182,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
         @Override
         String build() {
-            HeaderFileBuilder last = lastHeader();
+            HeaderFileBuilder last = lastHeader;
             return super.build().replace("extends #{SUPER}",
                     last != this ? "extends " + last.className() : "");
         }
