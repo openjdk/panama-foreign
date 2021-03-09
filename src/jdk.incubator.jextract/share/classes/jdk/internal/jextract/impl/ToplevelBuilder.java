@@ -45,7 +45,6 @@ import java.util.stream.Collectors;
 class ToplevelBuilder extends JavaSourceBuilder {
 
     private int declCount;
-    private final String[] libraryNames;
     private final List<SplitHeader> headers = new ArrayList<>();
     private final List<JavaSourceBuilder> builders = new ArrayList<>();
 
@@ -53,7 +52,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
         super(Kind.CLASS, desc);
-        this.libraryNames = libraryNames;
         FirstHeader first = new FirstHeader(className());
         first.classBegin();
         first.emitLibraries(libraryNames);
@@ -82,6 +80,11 @@ class ToplevelBuilder extends JavaSourceBuilder {
                 .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
+    }
+
+    @Override
+    boolean isNested() {
+        return false;
     }
 
     @Override

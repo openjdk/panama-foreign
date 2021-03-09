@@ -130,6 +130,7 @@ abstract class JavaSourceBuilder {
         if (isNested()) {
             decrAlign();
             enclosing.append(build());
+            sb = null;
         }
         return enclosing;
     }
@@ -170,10 +171,6 @@ abstract class JavaSourceBuilder {
     }
 
     // Internal generation helpers (used by other builders)
-
-    int align() {
-        return align;
-    }
 
     void append(String s) {
         sb.append(s);
