@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import jdk.incubator.foreign.NativeScope;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8252465.test8252465_h.*;
+import test.jextract.test8252465.*;
 
 /*
  * @test id=classes

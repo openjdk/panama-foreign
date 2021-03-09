@@ -99,20 +99,28 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     @Override
     public void addTypedef(String name, String superClass, Type type) {
-        nextHeader().addTypedef(name, superClass, type);
+        if (type instanceof Type.Primitive) {
+            // primitive
+            nextHeader().emitPrimitiveTypedef((Type.Primitive)type, name);
+        } else {
+            TypedefBuilder builder = new TypedefBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(name)), superClass);
+            builders.add(builder);
+            builder.classBegin();
+            builder.classEnd();
+        }
     }
 
     @Override
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
         String structName = name.isEmpty() ? parent.name() : name;
-        StructBuilder structBuilder = new StructBuilder(ClassDesc.of(packageName(), structName), layout, type);
+        StructBuilder structBuilder = new StructBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(structName)), layout, type);
         builders.add(structBuilder);
         return structBuilder;
     }
 
     @Override
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(ClassDesc.of(packageName(), name), mtype, desc);
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(name)), mtype, desc);
         builders.add(builder);
         builder.classBegin();
         builder.classEnd();

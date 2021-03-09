@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static test.jextract.fp.funcPtr_h.*;
+import test.jextract.fp.*;
 
 /*
  * @test id=classes

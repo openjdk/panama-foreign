@@ -31,6 +31,7 @@ import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
+import java.util.function.Consumer;
 
 public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
 

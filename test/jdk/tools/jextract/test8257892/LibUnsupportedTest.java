@@ -32,6 +32,7 @@ import test.jextract.unsupported.unsupported_h;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static test.jextract.unsupported.unsupported_h.*;
+import test.jextract.unsupported.*;
 
 /*
  * @test id=classes

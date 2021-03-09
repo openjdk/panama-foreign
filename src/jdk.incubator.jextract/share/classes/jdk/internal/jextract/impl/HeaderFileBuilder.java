@@ -101,18 +101,6 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         }
     }
 
-    @Override
-    public void addTypedef(String name, String superClass, Type type) {
-        if (type instanceof Type.Primitive) {
-            // primitive
-            emitPrimitiveTypedef((Type.Primitive)type, name);
-        } else {
-            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
-            builder.classBegin();
-            builder.classEnd();
-        }
-    }
-
     // private generation
 
     private void emitFunctionWrapper(Constant mhConstant, String javaName, String nativeName, MethodType mtype,
@@ -180,7 +168,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();
