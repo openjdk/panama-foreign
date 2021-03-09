@@ -29,6 +29,9 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.JextractTool;
 import jdk.incubator.jextract.Type;
 
+import jdk.internal.jextract.impl.JavaSourceBuilder.VarInfo;
+import jdk.internal.jextract.impl.JavaSourceBuilder.FunctionInfo;
+
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -44,7 +47,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /*
@@ -66,6 +71,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final String pkgName;
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
+    private final Map<Type, String> functionTypeDefNames = new HashMap<>();
 
     private void addStructDefinition(Declaration decl, String name) {
         structClassNames.put(decl, name);
@@ -77,6 +83,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private String structDefinitionName(Declaration decl) {
         return structClassNames.get(decl);
+    }
+
+    private void addFunctionTypedef(Type.Delegated typedef, String name) {
+        functionTypeDefNames.put(typedef, name);
+    }
+
+    private boolean functionTypedefSeen(Type.Delegated typedef) {
+        return functionTypeDefNames.containsKey(typedef);
+    }
+
+    private String functionTypedefName(Type.Delegated decl) {
+        return functionTypeDefNames.get(decl);
     }
 
     // have we seen this Variable earlier?
@@ -158,7 +176,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         toplevelBuilder.addConstant(Utils.javaSafeIdentifier(constant.name()),
                 constant.value() instanceof String ? MemorySegment.class :
-                clazz, constant.value());
+                typeTranslator.getJavaType(constant.type()), constant.value());
         return null;
     }
 
@@ -192,22 +210,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             }
         }
         return null;
-    }
-
-    private static boolean isVaList(FunctionDescriptor desc) {
-        List<MemoryLayout> argLayouts = desc.argumentLayouts();
-        int size = argLayouts.size();
-        if (size > 0) {
-            MemoryLayout lastLayout = argLayouts.get(size - 1);
-            if (lastLayout instanceof SequenceLayout) {
-                SequenceLayout seq = (SequenceLayout)lastLayout;
-                MemoryLayout elem = seq.elementLayout();
-                // FIXME: hack for now to use internal symbol used by clang for va_list
-                return elem.name().orElse("").equals(VA_LIST_TAG);
-            }
-        }
-
-        return false;
     }
 
     private static MemoryLayout isUnsupported(MemoryLayout layout) {
@@ -247,64 +249,16 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return null;
     }
 
-    private boolean generateFunctionalInterface(Type.Function func, String name) {
-        name = Utils.javaSafeIdentifier(name);
-        //generate functional interface
-        if (func.varargs()) {
-            warn("varargs in callbacks is not supported: " + name);
-        }
-        MethodType fitype = getMethodType(func, false);
-        if (fitype == null) {
-            warn("skipping " + name + " because of unsupported type usage");
-            return false;
-        }
-
-        FunctionDescriptor fpDesc = Type.descriptorFor(func).orElseThrow();
-        MemoryLayout unsupportedLayout = isUnsupported(fpDesc);
-        if (unsupportedLayout != null) {
-            warn("skipping " + name + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
-            return false;
-        }
-
-        currentBuilder.addFunctionalInterface(name, fitype, fpDesc);
-        return true;
+    private String generateFunctionalInterface(Type.Function func, String name) {
+        return functionInfo(func, name, false, FunctionInfo::ofFunctionPointer)
+                .map(fInfo -> currentBuilder.addFunctionalInterface(Utils.javaSafeIdentifier(name), fInfo))
+                .orElse(null);
     }
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree)) {
             return null;
-        }
-
-        FunctionDescriptor descriptor = Type.descriptorFor(funcTree.type()).orElse(null);
-        if (descriptor == null) {
-            //abort
-            return null;
-        }
-
-        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
-        if (unsupportedLayout != null) {
-            warn("skipping " + funcTree.name() + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
-            return null;
-        }
-
-        MethodType mtype = getMethodType(funcTree.type());
-        if (mtype == null) {
-            warn("skipping " + funcTree.name() + " because of unsupported type usage");
-            return null;
-        }
-
-        if (isVaList(descriptor)) {
-            MemoryLayout[] argLayouts = descriptor.argumentLayouts().toArray(new MemoryLayout[0]);
-            argLayouts[argLayouts.length - 1] = CLinker.C_VA_LIST;
-            descriptor = descriptor.returnLayout().isEmpty()?
-                    FunctionDescriptor.ofVoid(argLayouts) :
-                    FunctionDescriptor.of(descriptor.returnLayout().get(), argLayouts);
-            Class<?>[] argTypes = mtype.parameterArray();
-            argTypes[argLayouts.length - 1] = MemoryAddress.class;
-            mtype = MethodType.methodType(mtype.returnType(), argTypes);
         }
 
         String mhName = Utils.javaSafeIdentifier(funcTree.name());
@@ -314,29 +268,44 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                                           .map(Declaration.Variable::name)
                                           .map(p -> !p.isEmpty() ? Utils.javaSafeIdentifier(p) : p)
                                           .collect(Collectors.toList());
-        int i = 0;
-        for (Declaration.Variable param : funcTree.parameters()) {
-            Type.Function f = getAsFunctionPointer(param.type());
-            if (f != null) {
-                String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
-                if (! generateFunctionalInterface(f, name)) {
-                    return null;
-                }
-                i++;
-            }
-        }
 
-        toplevelBuilder.addFunction(mhName, funcTree.name(), mtype,
-                descriptor, funcTree.type().varargs(), paramNames);
+        Optional<FunctionInfo> functionInfo = functionInfo(funcTree.type(), funcTree.name(), true,
+                (mtype, desc) -> FunctionInfo.ofFunction(mtype, desc, funcTree.type().varargs(), paramNames));
+
+        if (functionInfo.isPresent()) {
+            int i = 0;
+            for (Declaration.Variable param : funcTree.parameters()) {
+                Type.Function f = getAsFunctionPointer(param.type());
+                if (f != null) {
+                    String name = funcTree.name() + "$" + (param.name().isEmpty() ? "x" + i : param.name());
+                    if (generateFunctionalInterface(f, name) == null) {
+                        return null;
+                    }
+                    i++;
+                }
+            }
+
+            toplevelBuilder.addFunction(mhName, funcTree.name(), functionInfo.get());
+        }
 
         return null;
     }
 
+    Optional<String> getAsFunctionPointerTypedef(Type type) {
+        if (type instanceof Type.Delegated delegated &&
+                delegated.kind() == Type.Delegated.Kind.TYPEDEF &&
+                functionTypedefSeen(delegated)) {
+            return Optional.of(functionTypedefName(delegated));
+        } else {
+            return Optional.empty();
+        }
+    }
+
     Type.Function getAsFunctionPointer(Type type) {
         if (type instanceof Type.Delegated) {
-            Type.Delegated delegated = (Type.Delegated)type;
-            return delegated.kind() == Type.Delegated.Kind.POINTER ?
-                getAsFunctionPointer(delegated.type()) : null;
+            Type.Delegated delegated = (Type.Delegated) type;
+            return (delegated.kind() == Type.Delegated.Kind.POINTER) ?
+                    getAsFunctionPointer(delegated.type()) : null;
         } else if (type instanceof Type.Function) {
             /*
              * // pointer to function declared as function like this
@@ -344,7 +313,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
              * typedef void CB(int);
              * void func(CB cb);
              */
-            return (Type.Function)type;
+            return (Type.Function) type;
         } else {
             return null;
         }
@@ -391,7 +360,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } else {
             Type.Function func = getAsFunctionPointer(type);
             if (func != null) {
-                generateFunctionalInterface(func, tree.name());
+                String funcIntfName = generateFunctionalInterface(func, tree.name());
+                if (funcIntfName != null) {
+                    addFunctionTypedef(Type.typedef(tree.name(), tree.type()), funcIntfName);
+                }
             }
         }
         return null;
@@ -430,9 +402,28 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
+        Class<?> clazz = getJavaType(type);
+        if (clazz == null) {
+            String name = parent != null? parent.name() + "." : "";
+            name += fieldName;
+            warn("skipping " + name + " because of unsupported type usage");
+            return null;
+        }
+
+
+        VarInfo varInfo = VarInfo.ofVar(clazz, layout);
         Type.Function func = getAsFunctionPointer(type);
+        String fiName;
         if (func != null) {
-            generateFunctionalInterface(func, fieldName);
+            fiName = generateFunctionalInterface(func, fieldName);
+            if (fiName != null) {
+                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, fiName);
+            }
+        } else {
+            Optional<String> funcTypedef = getAsFunctionPointerTypedef(type);
+            if (funcTypedef.isPresent()) {
+                varInfo = VarInfo.ofFunctionalPointerVar(clazz, layout, Utils.javaSafeIdentifier(funcTypedef.get()));
+            }
         }
 
         if (tree.kind() == Declaration.Variable.Kind.BITFIELD ||
@@ -448,21 +439,40 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } catch (Exception ignored) {
             sizeAvailable = false;
         }
-        MemoryLayout treeLayout = tree.layout().orElseThrow();
         if (sizeAvailable) {
-            Class<?> clazz = getJavaType(type);
-            if (clazz == null) {
-                String name = parent != null? parent.name() + "." : "";
-                name += fieldName;
-                warn("skipping " + name + " because of unsupported type usage");
-                return null;
-            }
-            currentBuilder.addVar(fieldName, tree.name(), treeLayout, clazz);
+            currentBuilder.addVar(fieldName, tree.name(), varInfo);
         } else {
             warn("Layout size not available for " + fieldName);
         }
 
         return null;
+    }
+
+    private Optional<FunctionInfo> functionInfo(Type.Function funcPtr, String nativeName, boolean allowVarargs,
+                                                BiFunction<MethodType, FunctionDescriptor, FunctionInfo> functionInfoFactory) {
+        FunctionDescriptor descriptor = Type.descriptorFor(funcPtr).orElse(null);
+        if (descriptor == null) {
+            //abort
+            return Optional.empty();
+        }
+
+        //generate functional interface
+        if (!allowVarargs && funcPtr.varargs() && !funcPtr.argumentTypes().isEmpty()) {
+            warn("varargs in callbacks is not supported: " + funcPtr);
+            return Optional.empty();
+        }
+
+        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
+        if (unsupportedLayout != null) {
+            warn("skipping " + nativeName + " because of unsupported type usage: " +
+                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
+            return Optional.empty();
+        }
+
+        MethodType mtype = getMethodType(funcPtr, allowVarargs);
+        return mtype != null ?
+                Optional.of(functionInfoFactory.apply(mtype, descriptor)) :
+                Optional.empty();
     }
 
     protected static MemoryLayout layoutFor(Declaration decl) {
