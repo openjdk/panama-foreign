@@ -186,9 +186,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         } finally {
             if (isStructKind) {
                 currentBuilder = currentBuilder.classEnd();
-                if (currentBuilder == null) {
-                    currentBuilder = toplevelBuilder;
-                }
             }
         }
         return null;

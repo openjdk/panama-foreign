@@ -55,10 +55,6 @@ public class ConstantBuilder extends JavaSourceBuilder {
         super(enclosing, kind, className);
     }
 
-    public ConstantBuilder(Kind kind, ClassDesc desc) {
-        super(kind, desc);
-    }
-
     String memberMods() {
         return kind == JavaSourceBuilder.Kind.CLASS ?
                 "static final " : "";
@@ -200,7 +196,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         append(fieldName + " = RuntimeHelper.downcallHandle(\n");
         incrAlign();
         indent();
-        append("LIBRARIES, \"" + nativeName + "\"");
+        append(librariesClass() + ".LIBRARIES, \"" + nativeName + "\"");
         append(",\n");
         indent();
         append("\"" + mtype.toMethodDescriptorString() + "\",\n");
@@ -396,12 +392,20 @@ public class ConstantBuilder extends JavaSourceBuilder {
         append(fieldName);
         append(" = ");
         append("RuntimeHelper.lookupGlobalVariable(");
-        append("LIBRARIES, \"");
+        append(librariesClass() + ".LIBRARIES, \"");
         append(nativeName);
         append("\", ");
         append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.SEGMENT);
+    }
+
+    String librariesClass() {
+        JavaSourceBuilder encl = enclosing;
+        while (!(encl instanceof ToplevelBuilder)) {
+            encl = encl.enclosing;
+        }
+        return encl.className();
     }
 }

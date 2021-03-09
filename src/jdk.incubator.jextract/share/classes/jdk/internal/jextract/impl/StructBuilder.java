@@ -59,13 +59,6 @@ class StructBuilder extends ConstantBuilder {
         prefixElementNames = new ArrayDeque<>();
     }
 
-    StructBuilder(ClassDesc desc, GroupLayout structLayout, Type structType) {
-        super(Kind.CLASS, desc);
-        this.structLayout = structLayout;
-        this.structType = structType;
-        prefixElementNames = new ArrayDeque<>();
-    }
-
     private String safeParameterName(String paramName) {
         return isEnclosedBySameName(paramName)? paramName + "$" : paramName;
     }

@@ -54,8 +54,9 @@ class ToplevelBuilder extends JavaSourceBuilder {
     ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
         super(Kind.CLASS, desc);
         this.libraryNames = libraryNames;
-        SplitHeader first = new FirstHeader(ClassDesc.of(packageName(), className()));
+        FirstHeader first = new FirstHeader(className());
         first.classBegin();
+        first.emitLibraries(libraryNames);
         headers.add(first);
     }
 
@@ -70,8 +71,9 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     public List<JavaFileObject> toFiles() {
-        headers.stream().skip(1).findFirst()
-                .orElse(lastHeader()).emitLibraries(libraryNames);
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
         List<JavaFileObject> files = new ArrayList<>();
         files.addAll(headers.stream()
                 .flatMap(hf -> { hf.classEnd(); return hf.toFiles().stream(); })
@@ -80,6 +82,11 @@ class ToplevelBuilder extends JavaSourceBuilder {
                 .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
+    }
+
+    @Override
+    boolean isEnclosedBySameName(String name) {
+        return false;
     }
 
     @Override
@@ -103,7 +110,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
             // primitive
             nextHeader().emitPrimitiveTypedef((Type.Primitive)type, name);
         } else {
-            TypedefBuilder builder = new TypedefBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(name)), superClass);
+            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
             builders.add(builder);
             builder.classBegin();
             builder.classEnd();
@@ -113,14 +120,14 @@ class ToplevelBuilder extends JavaSourceBuilder {
     @Override
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
         String structName = name.isEmpty() ? parent.name() : name;
-        StructBuilder structBuilder = new StructBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(structName)), layout, type);
+        StructBuilder structBuilder = new StructBuilder(this, structName, layout, type);
         builders.add(structBuilder);
         return structBuilder;
     }
 
     @Override
     public void addFunctionalInterface(String name, MethodType mtype, FunctionDescriptor desc) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(ClassDesc.of(packageName(), uniqueNestedClassName(name)), mtype, desc);
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, mtype, desc);
         builders.add(builder);
         builder.classBegin();
         builder.classEnd();
@@ -133,7 +140,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private SplitHeader nextHeader() {
         if (declCount == DECLS_PER_HEADER_CLASS) {
             boolean hasSuper = !(lastHeader() instanceof FirstHeader);
-            SplitHeader headerFileBuilder = new SplitHeader(ClassDesc.of(packageName(), className() + "_" + headers.size()),
+            SplitHeader headerFileBuilder = new SplitHeader(className() + "_" + headers.size(),
                     hasSuper ? lastHeader().className() : null);
             headerFileBuilder.classBegin();
             headers.add(headerFileBuilder);
@@ -145,43 +152,42 @@ class ToplevelBuilder extends JavaSourceBuilder {
         }
     }
 
-    static class SplitHeader extends HeaderFileBuilder {
-        SplitHeader(ClassDesc desc, String superclass) {
-            super(desc, superclass);
+    int constant_counter = 0;
+    int constant_class_index = 0;
+
+    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
+    ConstantBuilder constantBuilder;
+
+    @Override
+    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
+        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, Kind.CLASS, "constants$" + constant_class_index++);
+            builders.add(constantBuilder);
+            constantBuilder.classBegin();
+        }
+        constantConsumer.accept(constantBuilder);
+        constant_counter++;
+    }
+
+    class SplitHeader extends HeaderFileBuilder {
+        SplitHeader(String name, String superclass) {
+            super(ToplevelBuilder.this, name, superclass);
         }
 
         @Override
         String mods() {
             return " ";
         }
-
-        private void emitLibraries(String[] libraryNames) {
-            incrAlign();
-            indent();
-            append("static final ");
-            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
-            incrAlign();
-            for (String lib : libraryNames) {
-                indent();
-                append('\"');
-                append(quoteLibraryName(lib));
-                append("\",\n");
-            }
-            decrAlign();
-            indent();
-            append("});\n\n");
-            decrAlign();
-        }
-
-        private static String quoteLibraryName(String lib) {
-            return lib.replace("\\", "\\\\"); // double up slashes
-        }
     }
 
     class FirstHeader extends SplitHeader {
 
-        FirstHeader(ClassDesc desc) {
-            super(desc, "#{SUPER}");
+        FirstHeader(String name) {
+            super(name, "#{SUPER}");
         }
 
         @Override
@@ -210,6 +216,28 @@ class ToplevelBuilder extends JavaSourceBuilder {
             HeaderFileBuilder last = lastHeader();
             return super.build().replace("extends #{SUPER}",
                     last != this ? "extends " + last.className() : "");
+        }
+
+        private void emitLibraries(String[] libraryNames) {
+            incrAlign();
+            indent();
+            append("static final ");
+            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+            incrAlign();
+            for (String lib : libraryNames) {
+                indent();
+                append('\"');
+                append(quoteLibraryName(lib));
+                append("\",\n");
+            }
+            decrAlign();
+            indent();
+            append("});\n\n");
+            decrAlign();
+        }
+
+        private String quoteLibraryName(String lib) {
+            return lib.replace("\\", "\\\\"); // double up slashes
         }
     }
 }

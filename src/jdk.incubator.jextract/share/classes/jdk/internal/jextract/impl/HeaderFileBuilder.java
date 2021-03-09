@@ -49,8 +49,8 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     private final String superclass;
 
-    HeaderFileBuilder(ClassDesc desc, String superclass) {
-        super(Kind.CLASS, desc);
+    HeaderFileBuilder(JavaSourceBuilder enclosing, String name, String superclass) {
+        super(enclosing, Kind.CLASS, name);
         this.superclass = superclass;
     }
 

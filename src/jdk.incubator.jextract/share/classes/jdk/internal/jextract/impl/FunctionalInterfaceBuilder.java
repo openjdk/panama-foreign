@@ -47,13 +47,6 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
         this.fiDesc = fiDesc;
     }
 
-    FunctionalInterfaceBuilder(ClassDesc desc, MethodType fiType,
-                               FunctionDescriptor fiDesc) {
-        super(Kind.INTERFACE, desc);
-        this.fiType = fiType;
-        this.fiDesc = fiDesc;
-    }
-
     @Override
     JavaSourceBuilder classEnd() {
         emitFunctionalInterfaceMethod();

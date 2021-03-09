@@ -194,7 +194,7 @@ public class TestClassGeneration extends JextractToolRunner {
     public void testStructMember(String structName, MemoryLayout memberLayout, Class<?> expectedType, Object testValue) throws Throwable {
         String memberName = memberLayout.name().orElseThrow();
 
-        Class<?> structCls = loader.loadClass("com.acme.examples_h$" + structName);
+        Class<?> structCls = loader.loadClass("com.acme." + structName);
         Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
         try (MemorySegment struct = MemorySegment.allocateNative(structLayout)) {
@@ -212,7 +212,7 @@ public class TestClassGeneration extends JextractToolRunner {
 
     @Test(dataProvider = "functionalInterfaces")
     public void testFunctionalInterface(String name, MethodType type) {
-        Class<?> fiClass = findNestedClass(cls, name);
+        Class<?> fiClass = loader.loadClass("com.acme." + name);
         assertNotNull(fiClass);
         checkMethod(fiClass, "apply", type);
         checkMethod(fiClass, "allocate", MemorySegment.class, fiClass);
