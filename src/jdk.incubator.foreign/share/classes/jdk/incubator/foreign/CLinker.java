@@ -130,9 +130,10 @@ public interface CLinker {
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address. If the provided method
-     * type's return type is {@code MemorySegment}, then the resulting method handle features an additional
-     * prefix parameter, of type {@link SegmentAllocator}), which will be used by the linker runtime
+     * which can be used to call a target foreign function at the given address.
+     * <p>
+     * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
+     * an additional prefix parameter, of type {@link SegmentAllocator}), which will be used by the linker runtime
      * to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
@@ -141,9 +142,7 @@ public interface CLinker {
      * @param type     the method type.
      * @param function the function descriptor.
      * @return the downcall method handle.
-     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch,
-     * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
-     * in {@code function} is not a {@link GroupLayout}.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
     default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(symbol);
@@ -152,9 +151,10 @@ public interface CLinker {
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address. If the provided method
-     * type's return type is {@code MemorySegment}, then the provided allocator will be used by the linker runtime
-     * to allocate structs returned by-value.
+     * which can be used to call a target foreign function at the given address.
+     * <p>
+     * If the provided method type's return type is {@code MemorySegment}, then the provided allocator will be used by
+     * the linker runtime to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -163,9 +163,7 @@ public interface CLinker {
      * @param type      the method type.
      * @param function  the function descriptor.
      * @return the downcall method handle.
-     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch,
-     * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
-     * in {@code function} is not a {@link GroupLayout}.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
     default MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(symbol);
@@ -191,16 +189,13 @@ public interface CLinker {
      * @param type     the method type.
      * @param function the function descriptor.
      * @return the downcall method handle.
-     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch,
-     * or if {@code type} has a prefix carrier of type {@link SegmentAllocator} but the return descriptor
-     * in {@code function} is not a {@link GroupLayout}.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
     MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
-     * Allocates a native segment whose base address (see {@link MemorySegment#address}) and scope which can be
-     * passed to other foreign functions (as a function pointer); calling such a function pointer
-     * from native code will result in the execution of the provided method handle.
+     * Allocates a native segment with given scope which can be passed to other foreign functions (as a function pointer);
+     * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
      * <p>The returned segment is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.</p>
@@ -214,9 +209,8 @@ public interface CLinker {
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
-     * Allocates a native segment whose base address (see {@link MemorySegment#address}) and scope which can be
-     * passed to other foreign functions (as a function pointer); calling such a function pointer
-     * from native code will result in the execution of the provided method handle.
+     * Allocates a native segment which can be passed to other foreign functions (as a function pointer);
+     * calling such a function pointer from native code will result in the execution of the provided method handle.
      * <p>
      * The returned segment is associated with a fresh, shared, resource scope,
      * which will be automatically closed when the segment (or views derived from it) is no longer in use.
@@ -671,9 +665,6 @@ public interface CLinker {
          * If this method needs to allocate native memory for the va list, it will use
          * {@link MemorySegment#allocateNative(long, long, ResourceScope)} to do so, where the resource scope
          * used for the allocation is the valist scope itself (see {@link VaList#scope()}).
-         * <p>
-         * Any native resource required by the execution of this method will be allocated in the resource scope
-         * associated with this instance (see {@link #scope()}).
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.

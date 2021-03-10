@@ -60,7 +60,7 @@ import java.util.Spliterator;
  *
  * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
- * becomes <em>unreachable</em>.
+ * becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * <p>
  * Managed resource scopes can still be closed explicitly (see {@link #close()}); this can be useful to allow for predictable,
  * deterministic resource deallocation, while still prevent accidental native memory leaks. In case a managed resource
@@ -74,7 +74,7 @@ import java.util.Spliterator;
  * <p>
  * Confined resource scopes (see {@link #ofConfined()}), support strong thread-confinement guarantees. Upon creation,
  * they are assigned an <em>owner thread</em>, typically the thread which initiated the creation operation (see {@link #ownerThread()}).
- * After creating a confined resource scopeon, only the owner thread will be allowed to directly manipulate the resources
+ * After creating a confined resource scope, only the owner thread will be allowed to directly manipulate the resources
  * associated with this resource scope. Any attempt to perform resource access from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
@@ -155,7 +155,7 @@ public interface ResourceScope extends AutoCloseable {
      *     <li>this resource scope is not <em>alive</em>
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
-     *     <li>one or more locks (see {@link #acquire()}) associated with this resource scope have not been closed</li>
+     *     <li>one or more handles (see {@link #acquire()}) associated with this resource scope have not been closed</li>
      * </ul>
      * @throws UnsupportedOperationException if the {@code close} operation is not supported by this resource scope. This
      * is the case for the resource scope returned by {@link #globalScope()}, or the resource scopes associated to
@@ -216,7 +216,7 @@ public interface ResourceScope extends AutoCloseable {
      * An optional attachment can be associated with the resulting scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @return a new confined scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
+     * @return a new confined scope, managed by {@code cleaner} (where provided).
      */
     static ResourceScope ofConfined(Object attachment, Cleaner cleaner) {
         return MemoryScope.createConfined(attachment, cleaner);
@@ -224,7 +224,7 @@ public interface ResourceScope extends AutoCloseable {
 
     /**
      * Create a new shared scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.
-     * @return a new shared scope, managed by {@code cleaner}.
+     * @return a new shared scope.
      */
     static ResourceScope ofShared() {
         return ofShared(null, null);
@@ -246,7 +246,7 @@ public interface ResourceScope extends AutoCloseable {
      * An optional attachment can be associated with the resulting scope.
      * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
      * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @return a new shared scope, managed by {@code cleaner}; the resulting scope is closeable if {@code closeable == true}.
+     * @return a new shared scope, managed by {@code cleaner} (where provided).
      */
     static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
         return MemoryScope.createShared(attachment, cleaner);

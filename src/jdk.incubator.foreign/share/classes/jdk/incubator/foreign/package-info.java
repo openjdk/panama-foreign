@@ -64,9 +64,9 @@ for (int i = 0 ; i < 10 ; i++) {
  * When writing code that manipulates memory segments, especially if backed by memory which resides outside the Java heap, it is
  * often crucial that the resources associated with a memory segment are released when the segment is no longer in use,
  * and in a timely fashion. For this reason, there might be cases where waiting for the garbage collector to determine that a segment
- * is <em>unreachable</em> is not optimal. Clients that operate under these assumptions might want to be able to programmatically
- * release the memory associated with a memory segment. This can be done, using the {@link jdk.incubator.foreign.ResourceScope}
- * abstraction, as shown below:
+ * is <a href="../../../java/lang/ref/package.html#reachability">unreachable</a> is not optimal.
+ * Clients that operate under these assumptions might want to be able to programmatically release the memory associated
+ * with a memory segment. This can be done, using the {@link jdk.incubator.foreign.ResourceScope} abstraction, as shown below:
  *
  * <pre>{@code
 try (ResourceScope scope = ResourceScope.ofConfined()) {

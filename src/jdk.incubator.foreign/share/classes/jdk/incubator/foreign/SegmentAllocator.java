@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- *  This is interface models a memory allocator. Clients implementing this interface
+ *  This interface models a memory allocator. Clients implementing this interface
  *  must implement the {@link #allocate(long, long)} method. This interface defines several default methods
  *  which can be useful to create segments from several kinds of Java values such as primitives and arrays.
  *  This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
@@ -449,7 +449,7 @@ public interface SegmentAllocator {
      * Returns a native allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
      * constraints are ignored by this allocator). This can be useful to limit allocation requests in case a client
-     * knows that he has fully processed the contents of the allocated segment before the subsequent allocation request
+     * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
      * takes place.
      *
      * @param segment the memory segment to be recycled by the returned allocator.

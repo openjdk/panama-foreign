@@ -89,7 +89,7 @@ public interface MemoryAddress extends Addressable {
     long segmentOffset(MemorySegment segment);
 
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address. This method
+     * Returns a shared native memory segment with given size, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is associated with the global resource scope (see {@link ResourceScope#globalScope()}).
@@ -100,7 +100,7 @@ public interface MemoryAddress extends Addressable {
      * <p>
      * This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, ResourceScope.ofShared(Cleaner.create()));
+    asSegmentRestricted(byteSize, null, ResourceScope.globalScope());
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -118,7 +118,7 @@ public interface MemoryAddress extends Addressable {
     }
 
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address. This method
+     * Returns a native memory segment with given size and resource scope, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
@@ -128,10 +128,9 @@ public interface MemoryAddress extends Addressable {
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
-     * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will <em>not</em> result in releasing any
-     * memory resources. This method is equivalent to the following code:
+     * This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, ResourceScope.ofConfined(Cleaner.create()));
+    asSegmentRestricted(byteSize, null, scope);
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -150,7 +149,7 @@ public interface MemoryAddress extends Addressable {
     }
 
     /**
-     * Returns a new native memory segment with given size, and whose base address is this address. This method
+     * Returns a new native memory segment with given size and resource scope, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is associated with the provided resource scope.

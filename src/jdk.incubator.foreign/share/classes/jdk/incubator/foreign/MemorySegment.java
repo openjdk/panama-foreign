@@ -774,7 +774,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Returns a native memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
      * This method can be very useful when dereferencing memory addresses obtained when interacting with native libraries.
-     * The returned is associated with the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment is associated with the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      * Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
     MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
