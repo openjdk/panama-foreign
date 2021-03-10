@@ -86,10 +86,11 @@ public class NestedClassBuilder extends JavaSourceBuilder {
 
     @Override
     protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        if (kind == Kind.INTERFACE) {
-            enclosing.emitWithConstantClass(javaName, constantConsumer);
+        if (this instanceof ConstantBuilder cb) {
+            // use this class to emit constants
+            constantConsumer.accept(cb);
         } else {
-            super.emitWithConstantClass(javaName, constantConsumer);
+            enclosing.emitWithConstantClass(javaName, constantConsumer);
         }
     }
 }
