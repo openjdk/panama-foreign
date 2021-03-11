@@ -75,10 +75,9 @@ public class SharedUtils {
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
-    private static final MethodHandle MH_MAKE_SCOPE;
-    private static final MethodHandle MH_CLOSE_SCOPE;
-    private static final MethodHandle MH_ALLOCATOR_TO_BINDING_CONTEXT;
-    private static final MethodHandle MH_SCOPE_TO_BINDING_CONTEXT;
+    private static final MethodHandle MH_MAKE_CONTEXT_NO_ALLOCATOR;
+    private static final MethodHandle MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR;
+    private static final MethodHandle MH_CLOSE_CONTEXT;
 
     static {
         try {
@@ -89,14 +88,12 @@ public class SharedUtils {
                     methodType(MemoryAddress.class));
             MH_BUFFER_COPY = lookup.findStatic(SharedUtils.class, "bufferCopy",
                     methodType(MemoryAddress.class, MemoryAddress.class, MemorySegment.class));
-            MH_MAKE_SCOPE = lookup.findStatic(ResourceScope.class, "ofConfined",
-                    methodType(ResourceScope.class));
-            MH_CLOSE_SCOPE = lookup.findVirtual(ResourceScope.class, "close",
+            MH_MAKE_CONTEXT_NO_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofScope",
+                    methodType(Binding.Context.class));
+            MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
+                    methodType(Binding.Context.class, long.class));
+            MH_CLOSE_CONTEXT = lookup.findVirtual(Binding.Context.class, "close",
                     methodType(void.class));
-            MH_ALLOCATOR_TO_BINDING_CONTEXT = lookup.findStatic(Binding.Context.class, "ofBoundedAllocator",
-                    methodType(Binding.Context.class, ResourceScope.class, long.class));
-            MH_SCOPE_TO_BINDING_CONTEXT = lookup.findStatic(Binding.Context.class, "ofScope",
-                    methodType(Binding.Context.class, ResourceScope.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -360,6 +357,7 @@ public class SharedUtils {
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
+        System.err.println(specializedHandle.type().descriptorString());
         // insert try-finally to close the NativeScope used for Binding.Copy
         MethodHandle closer;
         int insertPos;
@@ -378,23 +376,21 @@ public class SharedUtils {
             insertPos+=2;
         }
 
-        closer = collectArguments(closer, insertPos, MH_CLOSE_SCOPE); // (Throwable, V?, Addressable?, ResourceScope) -> V/void
+        closer = collectArguments(closer, insertPos, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
 
-        MethodHandle scopeFilter;
+        MethodHandle contextFactory;
 
         if (bufferCopySize > 0) {
-            scopeFilter = MethodHandles.insertArguments(MH_ALLOCATOR_TO_BINDING_CONTEXT, 1, bufferCopySize);
+            contextFactory = MethodHandles.insertArguments(MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR, 0, bufferCopySize);
         } else if (upcall) {
-            scopeFilter = MH_SCOPE_TO_BINDING_CONTEXT;
+            contextFactory = MH_MAKE_CONTEXT_NO_ALLOCATOR;
         } else {
             // this path is probably never used now, since ProgrammableInvoker never calls this routine with bufferCopySize == 0
-            scopeFilter = constant(Binding.Context.class, Binding.Context.DUMMY);
-            scopeFilter = dropArguments(scopeFilter, 0, ResourceScope.class);
+            contextFactory = constant(Binding.Context.class, Binding.Context.DUMMY);
         }
 
-        specializedHandle = filterArguments(specializedHandle, allocatorPos, scopeFilter);
         specializedHandle = tryFinally(specializedHandle, closer);
-        specializedHandle = collectArguments(specializedHandle, allocatorPos, MH_MAKE_SCOPE);
+        specializedHandle = collectArguments(specializedHandle, allocatorPos, contextFactory);
         return specializedHandle;
     }
 

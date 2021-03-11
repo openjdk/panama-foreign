@@ -320,7 +320,7 @@ public class ProgrammableInvoker {
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
         Binding.Context unboxContext = bufferCopySize != 0
-                ? Binding.Context.ofBoundedAllocator(ResourceScope.ofConfined(), bufferCopySize)
+                ? Binding.Context.ofBoundedAllocator(bufferCopySize)
                 : Binding.Context.DUMMY;
         try (unboxContext) {
             // do argument processing, get Object[] as result

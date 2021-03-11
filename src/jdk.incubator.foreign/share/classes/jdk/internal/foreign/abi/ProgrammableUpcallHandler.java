@@ -259,8 +259,8 @@ public class ProgrammableUpcallHandler {
                                                CallingSequence callingSequence,
                                                long bufferCopySize) throws Throwable {
         Binding.Context allocator = bufferCopySize != 0
-                ? Binding.Context.ofBoundedAllocator(ResourceScope.ofConfined(), bufferCopySize)
-                : Binding.Context.ofScope(ResourceScope.ofConfined());
+                ? Binding.Context.ofBoundedAllocator(bufferCopySize)
+                : Binding.Context.ofScope();
         try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
             Object[] args = new Object[callingSequence.methodType().parameterCount()];

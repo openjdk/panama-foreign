@@ -260,7 +260,8 @@ public abstract class Binding {
         /**
          * Create a binding context from given native scope.
          */
-        public static Context ofBoundedAllocator(ResourceScope scope, long size) {
+        public static Context ofBoundedAllocator(long size) {
+            ResourceScope scope = ResourceScope.ofConfined();
             return new Context(SegmentAllocator.arenaBounded(size, scope), scope);
         }
 
@@ -281,7 +282,8 @@ public abstract class Binding {
          * Create a binding context from given scope. The resulting context will throw when
          * the context's allocator is accessed.
          */
-        public static Context ofScope(ResourceScope scope) {
+        public static Context ofScope() {
+            ResourceScope scope = ResourceScope.ofConfined();
             return new Context(null, scope) {
                 @Override
                 public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
