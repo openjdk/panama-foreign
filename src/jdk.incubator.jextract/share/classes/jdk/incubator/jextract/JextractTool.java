@@ -27,6 +27,7 @@ package jdk.incubator.jextract;
 
 import jdk.internal.jextract.impl.ClangException;
 import jdk.internal.jextract.impl.Filter;
+import jdk.internal.jextract.impl.IncludeHelper;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
 import jdk.internal.jextract.impl.Options;
@@ -118,7 +119,12 @@ public final class JextractTool {
 
     public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName,
                                                 String targetPkg, List<String> libNames) {
-        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, new IncludeHelper(), libNames));
+    }
+
+    private static List<JavaFileObject> generateInternal(Declaration.Scoped decl, String headerName,
+                                                String targetPkg, IncludeHelper includeHelper, List<String> libNames) {
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, includeHelper, libNames));
     }
 
     /**
@@ -163,6 +169,9 @@ public final class JextractTool {
         parser.accepts("I", format("help.I")).withRequiredArg();
         parser.accepts("d", format("help.d")).withRequiredArg();
         parser.accepts("filter", format("help.filter")).withRequiredArg();
+        for (IncludeHelper.IncludeKind includeKind : IncludeHelper.IncludeKind.values()) {
+            parser.accepts(includeKind.optionName(), format("help." + includeKind.optionName())).withRequiredArg();
+        }
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("source", format("help.source"));
         parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
@@ -198,6 +207,12 @@ public final class JextractTool {
 
         if (optionSet.has("filter")) {
             optionSet.valuesOf("filter").forEach(p -> builder.addFilter((String) p));
+        }
+
+        for (IncludeHelper.IncludeKind includeKind : IncludeHelper.IncludeKind.values()) {
+            if (optionSet.has(includeKind.optionName())) {
+                optionSet.valuesOf(includeKind.optionName()).forEach(p -> builder.addIncludeSymbol(includeKind, (String)p));
+            }
         }
 
         if (optionSet.has("d")) {
@@ -253,9 +268,9 @@ public final class JextractTool {
                 System.out.println(toplevel);
             }
 
-            files = generate(
+            files = generateInternal(
                 toplevel, header.getFileName().toString(),
-                options.targetPackage, options.libraryNames);
+                options.targetPackage, options.includeHelper, options.libraryNames);
         } catch (ClangException ce) {
             err.println(ce.getMessage());
             if (JextractTool.DEBUG) {

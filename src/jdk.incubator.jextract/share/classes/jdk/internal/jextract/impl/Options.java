@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class Options {
+
     // The args for parsing C
     public final List<String> clangArgs;
     // The list of library names
@@ -37,16 +38,18 @@ public final class Options {
     // output directory
     public final String outputDir;
     public final boolean source;
+    public final IncludeHelper includeHelper;
 
     private Options(List<String> clangArgs, List<String> libraryNames,
             List<String> filters, String targetPackage,
-            String outputDir, boolean source) {
+            String outputDir, boolean source, IncludeHelper includeHelper) {
         this.clangArgs = clangArgs;
         this.libraryNames = libraryNames;
         this.filters = filters;
         this.targetPackage = targetPackage;
         this.outputDir = outputDir;
         this.source = source;
+        this.includeHelper = includeHelper;
     }
 
     public static Builder builder() {
@@ -64,6 +67,7 @@ public final class Options {
         private String targetPackage;
         private String outputDir;
         private boolean source;
+        private final IncludeHelper includeHelper = new IncludeHelper();
 
         public Builder() {
             this.clangArgs = new ArrayList<>();
@@ -79,7 +83,7 @@ public final class Options {
                     Collections.unmodifiableList(clangArgs),
                     Collections.unmodifiableList(libraryNames),
                     Collections.unmodifiableList(filters),
-                    targetPackage, outputDir, source
+                    targetPackage, outputDir, source, includeHelper
             );
         }
 
@@ -105,6 +109,10 @@ public final class Options {
 
         public void setGenerateSource() {
             source = true;
+        }
+
+        public void addIncludeSymbol(IncludeHelper.IncludeKind kind, String symbolName) {
+            includeHelper.addSymbol(kind, symbolName);
         }
     }
 }
