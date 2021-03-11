@@ -356,7 +356,6 @@ public class SharedUtils {
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
-        System.err.println(specializedHandle.type().descriptorString());
         // insert try-finally to close the NativeScope used for Binding.Copy
         MethodHandle closer;
         int insertPos;
