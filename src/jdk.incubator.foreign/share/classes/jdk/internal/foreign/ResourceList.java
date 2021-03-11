@@ -39,7 +39,7 @@ public abstract class ResourceList implements Runnable {
         cleanup(); // cleaner interop
     }
 
-    final void cleanup(ResourceCleanup first) {
+    static void cleanup(ResourceCleanup first) {
         ResourceCleanup current = first;
         while (current != null) {
             current.cleanup();
@@ -52,10 +52,10 @@ public abstract class ResourceList implements Runnable {
 
         public abstract void cleanup();
 
-        final static ResourceCleanup DUMMY_CLEANUP = new ResourceCleanup() {
+        final static ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
             @Override
             public void cleanup() {
-                // do nothing
+                throw new IllegalStateException("This resource list has already been closed!");
             }
         };
 
@@ -72,7 +72,7 @@ public abstract class ResourceList implements Runnable {
     static class ConfinedResourceList extends ResourceList {
         @Override
         void add(ResourceCleanup cleanup) {
-            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+            if (fst != ResourceCleanup.CLOSED_LIST) {
                 cleanup.next = fst;
                 fst = cleanup;
             } else {
@@ -82,10 +82,12 @@ public abstract class ResourceList implements Runnable {
 
         @Override
         void cleanup() {
-            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+            if (fst != ResourceCleanup.CLOSED_LIST) {
                 ResourceCleanup prev = fst;
-                fst = ResourceCleanup.DUMMY_CLEANUP;
+                fst = ResourceCleanup.CLOSED_LIST;
                 cleanup(prev);
+            } else {
+                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
             }
         }
     }
@@ -108,7 +110,7 @@ public abstract class ResourceList implements Runnable {
                 ResourceCleanup prev = (ResourceCleanup) FST.getAcquire(this);
                 cleanup.next = prev;
                 ResourceCleanup newSegment = (ResourceCleanup) FST.compareAndExchangeRelease(this, prev, cleanup);
-                if (newSegment == ResourceCleanup.DUMMY_CLEANUP) {
+                if (newSegment == ResourceCleanup.CLOSED_LIST) {
                     // too late
                     throw new IllegalStateException("Already closed");
                 } else if (newSegment == prev) {
@@ -119,17 +121,23 @@ public abstract class ResourceList implements Runnable {
         }
 
         void cleanup() {
-            if (fst != ResourceCleanup.DUMMY_CLEANUP) {
+            // At this point we are only interested about add vs. close races - not close vs. close
+            // (because MemoryScope::justClose ensured that this thread won the race to close the scope).
+            // So, the only "bad" thing that could happen is that some other thread adds to this list
+            // while we're closing it.
+            if (FST.getAcquire(this) != ResourceCleanup.CLOSED_LIST) {
                 //ok now we're really closing down
                 ResourceCleanup prev = null;
                 while (true) {
                     prev = (ResourceCleanup) FST.getAcquire(this);
                     // no need to check for DUMMY, since only one thread can get here!
-                    if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.DUMMY_CLEANUP)) {
+                    if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.CLOSED_LIST)) {
                         break;
                     }
                 }
                 cleanup(prev);
+            } else {
+                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
             }
         }
     }

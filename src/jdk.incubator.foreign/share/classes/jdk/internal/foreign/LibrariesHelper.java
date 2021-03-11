@@ -34,6 +34,8 @@ import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.ref.CleanerFactory;
 
+import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Objects;
@@ -84,16 +86,20 @@ public final class LibrariesHelper {
             throw new IllegalArgumentException(notFoundMsg);
         }
         ResourceScope[] holder = new ResourceScope[1];
-        WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
-            MemoryScope s = MemoryScope.createDefault();
-            holder[0] = s; // keep the scope alive at least until the outer method returns
-            s.addOrCleanupIfFail(ResourceList.ResourceCleanup.ofRunnable(() -> {
-                nativeLibraries.unload(library);
-                loadedLibraries.remove(library);
-            }));
-            return new WeakReference<>(s);
-        });
-        return new LibraryLookupImpl(library, scopeRef.get());
+        try {
+            WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
+                MemoryScope s = MemoryScope.createDefault();
+                holder[0] = s; // keep the scope alive at least until the outer method returns
+                s.addOrCleanupIfFail(ResourceList.ResourceCleanup.ofRunnable(() -> {
+                    nativeLibraries.unload(library);
+                    loadedLibraries.remove(library);
+                }));
+                return new WeakReference<>(s);
+            });
+            return new LibraryLookupImpl(library, scopeRef.get());
+        } finally {
+            Reference.reachabilityFence(holder);
+        }
     }
 
     //Todo: in principle we could expose a scope accessor, so that users could unload libraries at will

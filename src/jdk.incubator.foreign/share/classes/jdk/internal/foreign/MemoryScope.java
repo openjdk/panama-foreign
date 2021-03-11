@@ -144,8 +144,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    abstract void release();
-
     abstract void justClose();
 
     /**
@@ -227,11 +225,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return new ConfinedHandle();
         }
 
-        @Override
-        void release() {
-            lockCount--;
-        }
-
         void justClose() {
             this.checkValidState();
             if (lockCount == 0) {
@@ -253,7 +246,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             public void close() {
                 checkValidState(); // thread check
                 if (!released) {
-                    release();
+                    released = true;
+                    lockCount--;
                 }
             }
         }
@@ -270,7 +264,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      */
     static class SharedScope extends MemoryScope {
 
-        private static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
+        private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
         private final static int ALIVE = 0;
         private final static int CLOSING = -1;
@@ -322,17 +316,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             return new SharedHandle();
         }
 
-        void release() {
-            int value;
-            do {
-                value = (int)STATE.getVolatile(this);
-                if (value <= ALIVE) {
-                    //cannot get here - we can't close segment twice
-                    throw new IllegalStateException("Already closed");
-                }
-            } while (!STATE.compareAndSet(this, value, value - 1));
-        }
-
         void justClose() {
             int prevState = (int)STATE.compareAndExchange(this, ALIVE, CLOSING);
             if (prevState < 0) {
@@ -358,7 +341,14 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             @Override
             public void close() {
                 if (released.compareAndSet(false, true)) {
-                    release();
+                    int value;
+                    do {
+                        value = (int)STATE.getVolatile(SharedScope.this);
+                        if (value <= ALIVE) {
+                            //cannot get here - we can't close segment twice
+                            throw new IllegalStateException("Already closed");
+                        }
+                    } while (!STATE.compareAndSet(SharedScope.this, value, value - 1));
                 }
             }
         }
