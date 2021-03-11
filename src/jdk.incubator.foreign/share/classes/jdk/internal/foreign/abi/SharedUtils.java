@@ -467,18 +467,6 @@ public class SharedUtils {
         return methodType(mt.returnType(), params);
     }
 
-    public static MethodHandle adaptDowncall(MethodType type, FunctionDescriptor descriptor,
-                                             MethodHandle MH_unboxVaList, Function<MethodType, MethodHandle> downcallFactory) {
-        MethodType sigMethodType = type;
-        MethodHandle handle = downcallFactory.apply(sigMethodType);
-        if (!sigMethodType.returnType().equals(MemorySegment.class)) {
-            // not returning segment, just insert default allocator
-            handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
-        }
-        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
-        return handle;
-    }
-
     public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
         for (int i = 0; i < type.parameterCount(); i++) {
             if (type.parameterType(i) == VaList.class) {

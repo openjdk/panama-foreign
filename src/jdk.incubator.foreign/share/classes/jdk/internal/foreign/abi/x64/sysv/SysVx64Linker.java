@@ -30,6 +30,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -85,10 +86,14 @@ public class SysVx64Linker implements CLinker {
     public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
-        return SharedUtils.adaptDowncall(type, function, MH_unboxVaList, sigType -> {
-            MethodType llMt = SharedUtils.convertVaListCarriers(sigType, SysVVaList.CARRIER);
-            return CallArranger.arrangeDowncall(llMt, function);
-        });
+        MethodType llMt = SharedUtils.convertVaListCarriers(type, SysVVaList.CARRIER);
+        MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
+        if (!type.returnType().equals(MemorySegment.class)) {
+            // not returning segment, just insert default allocator
+            handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
+        }
+        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
+        return handle;
     }
 
     @Override
