@@ -160,7 +160,10 @@ public class TestResourceScope {
                 break;
             } catch (IllegalStateException ex) {
                 assertTrue(handles.size() > 0);
-                handles.remove(0).close();
+                ResourceScope.Handle handle = handles.remove(0);
+                handle.close();
+                handle.close(); // make sure it's idempotent
+                handle.close(); // make sure it's idempotent
             }
         }
     }
@@ -171,8 +174,12 @@ public class TestResourceScope {
         ResourceScope scope = ResourceScope.ofShared(null, cleaner);
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
-                try (ResourceScope.Handle handle = scope.acquire()) {
+                try {
+                    ResourceScope.Handle handle = scope.acquire();
                     waitSomeTime();
+                    handle.close();
+                    handle.close(); // make sure it's idempotent
+                    handle.close(); // make sure it's idempotent
                 } catch (IllegalStateException ex) {
                     // might be already closed - do nothing
                 }
@@ -206,6 +213,8 @@ public class TestResourceScope {
         Thread t = new Thread(() -> {
             try {
                 handle.close();
+                handle.close(); // make sure it's idempotent
+                handle.close(); // make sure it's idempotent
             } catch (Throwable ex) {
                 failure.set(ex);
             }

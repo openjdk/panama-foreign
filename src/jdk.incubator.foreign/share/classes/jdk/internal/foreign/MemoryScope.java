@@ -29,14 +29,10 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.CleanerFactory;
-import jdk.internal.vm.annotation.ForceInline;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class manages the temporal bounds associated with a memory segment as well
@@ -185,175 +181,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         throw new CloneNotSupportedException();
     }
 
-    /**
-     * A confined scope, which features an owner thread. The liveness check features an additional
-     * confinement check - that is, calling any operation on this scope from a thread other than the
-     * owner thread will result in an exception. Because of this restriction, checking the liveness bit
-     * can be performed in plain mode.
-     */
-    static class ConfinedScope extends MemoryScope {
-
-        private boolean closed; // = false
-        private int lockCount = 0;
-        private final Thread owner;
-
-        public ConfinedScope(Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
-            super(ref, cleaner, closeable, new ResourceList.ConfinedResourceList());
-            this.owner = owner;
-        }
-
-        @ForceInline
-        public final void checkValidState() {
-            if (owner != Thread.currentThread()) {
-                throw new IllegalStateException("Attempted access outside owning thread");
-            }
-            if (closed) {
-                throw new IllegalStateException("Already closed");
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return !closed;
-        }
-
-        @Override
-        public Handle acquire() {
-            checkValidState();
-            if (!closeable) return DUMMY_LOCK;
-            lockCount++;
-            return new ConfinedHandle();
-        }
-
-        void justClose() {
-            this.checkValidState();
-            if (lockCount == 0) {
-                closed = true;
-            } else {
-                throw new IllegalStateException("Scope is acquired by " + lockCount + " locks");
-            }
-        }
-
-        @Override
-        public Thread ownerThread() {
-            return owner;
-        }
-
-        class ConfinedHandle implements Handle {
-            boolean released = false;
-
-            @Override
-            public void close() {
-                checkValidState(); // thread check
-                if (!released) {
-                    released = true;
-                    lockCount--;
-                }
-            }
-        }
-    }
-
-    /**
-     * A shared scope, which can be shared across multiple threads. Closing a shared scope has to ensure that
-     * (i) only one thread can successfully close a scope (e.g. in a close vs. close race) and that
-     * (ii) no other thread is accessing the memory associated with this scope while the segment is being
-     * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
-     * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
-     * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
-     * checking the liveness bit upon access can be performed in plain mode, as in the confined case.
-     */
-    static class SharedScope extends MemoryScope {
-
-        private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
-
-        private final static int ALIVE = 0;
-        private final static int CLOSING = -1;
-        private final static int CLOSED = -2;
-        private final static int MAX_FORKS = Integer.MAX_VALUE;
-
-        private int state = ALIVE;
-
-        private static final VarHandle STATE;
-
-        static {
-            try {
-                STATE = MethodHandles.lookup().findVarHandle(SharedScope.class, "state", int.class);
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
-            }
-        }
-
-        SharedScope(Object ref, Cleaner cleaner, boolean closeable) {
-            super(ref, cleaner, closeable, new ResourceList.SharedResourceList());
-        }
-
-        @Override
-        public Thread ownerThread() {
-            return null;
-        }
-
-        @Override
-        public void checkValidState() {
-            if (state < ALIVE) {
-                throw ScopedAccessError.INSTANCE;
-            }
-        }
-
-        @Override
-        public Handle acquire() {
-            if (!closeable) return DUMMY_LOCK;
-            int value;
-            do {
-                value = (int)STATE.getVolatile(this);
-                if (value < ALIVE) {
-                    //segment is not alive!
-                    throw new IllegalStateException("Already closed");
-                } else if (value == MAX_FORKS) {
-                    //overflow
-                    throw new IllegalStateException("Segment acquire limit exceeded");
-                }
-            } while (!STATE.compareAndSet(this, value, value + 1));
-            return new SharedHandle();
-        }
-
-        void justClose() {
-            int prevState = (int)STATE.compareAndExchange(this, ALIVE, CLOSING);
-            if (prevState < 0) {
-                throw new IllegalStateException("Already closed");
-            } else if (prevState != ALIVE) {
-                throw new IllegalStateException("Scope is acquired by " + prevState + " locks");
-            }
-            boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
-            STATE.setVolatile(this, success ? CLOSED : ALIVE);
-            if (!success) {
-                throw new IllegalStateException("Cannot close while another thread is accessing the segment");
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return (int)STATE.getVolatile(this) != CLOSED;
-        }
-
-        class SharedHandle implements Handle {
-            final AtomicBoolean released = new AtomicBoolean(false);
-
-            @Override
-            public void close() {
-                if (released.compareAndSet(false, true)) {
-                    int value;
-                    do {
-                        value = (int)STATE.getVolatile(SharedScope.this);
-                        if (value <= ALIVE) {
-                            //cannot get here - we can't close segment twice
-                            throw new IllegalStateException("Already closed");
-                        }
-                    } while (!STATE.compareAndSet(SharedScope.this, value, value - 1));
-                }
-            }
-        }
-    }
-
     public static MemoryScope GLOBAL = new SharedScope( null, null, false) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
@@ -362,4 +189,53 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     };
 
     public final Handle DUMMY_LOCK = () -> { };
+
+    /**
+     * A list of all cleanup actions associated with a resource scope. Cleanup actions are modelled as instances
+     * of the {@link ResourceCleanup} class, and, together, form a linked list. Depending on whether a scope
+     * is shared or confined, different implementations of this class will be used, see {@link ConfinedScope.ConfinedResourceList}
+     * and {@link SharedScope.SharedResourceList}.
+     */
+    public abstract static class ResourceList implements Runnable {
+        ResourceCleanup fst;
+
+        abstract void add(ResourceCleanup cleanup);
+
+        abstract void cleanup();
+
+        public final void run() {
+            cleanup(); // cleaner interop
+        }
+
+        static void cleanup(ResourceCleanup first) {
+            ResourceCleanup current = first;
+            while (current != null) {
+                current.cleanup();
+                current = current.next;
+            }
+        }
+
+        public static abstract class ResourceCleanup {
+            ResourceCleanup next;
+
+            public abstract void cleanup();
+
+            final static ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
+                @Override
+                public void cleanup() {
+                    throw new IllegalStateException("This resource list has already been closed!");
+                }
+            };
+
+            static ResourceCleanup ofRunnable(Runnable cleanupAction) {
+                return new ResourceCleanup() {
+                    @Override
+                    public void cleanup() {
+                        cleanupAction.run();
+                    }
+                };
+            }
+        }
+
+    }
 }

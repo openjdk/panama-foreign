@@ -32,9 +32,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
-import jdk.internal.ref.CleanerFactory;
 
-import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -90,7 +88,7 @@ public final class LibrariesHelper {
             WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
                 MemoryScope s = MemoryScope.createDefault();
                 holder[0] = s; // keep the scope alive at least until the outer method returns
-                s.addOrCleanupIfFail(ResourceList.ResourceCleanup.ofRunnable(() -> {
+                s.addOrCleanupIfFail(MemoryScope.ResourceList.ResourceCleanup.ofRunnable(() -> {
                     nativeLibraries.unload(library);
                     loadedLibraries.remove(library);
                 }));

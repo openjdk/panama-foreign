@@ -100,7 +100,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
-        scope.addOrCleanupIfFail(new ResourceList.ResourceCleanup() {
+        scope.addOrCleanupIfFail(new MemoryScope.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);

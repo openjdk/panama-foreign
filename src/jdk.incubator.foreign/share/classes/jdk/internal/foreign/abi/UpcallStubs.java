@@ -28,7 +28,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.ResourceList;
 
 public class UpcallStubs {
 
