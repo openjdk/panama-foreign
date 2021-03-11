@@ -31,7 +31,7 @@ public class ArenaAllocator implements SegmentAllocator {
     }
 
     @Override
-    public synchronized MemorySegment allocate(long bytesSize, long bytesAlignment) {
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
         if (Utils.alignUp(bytesSize, bytesAlignment) > MAX_ALLOC_SIZE) {
             return newSegment(bytesSize, bytesAlignment);
         }
@@ -72,6 +72,38 @@ public class ArenaAllocator implements SegmentAllocator {
         @Override
         MemorySegment newSegment(long size, long align) {
             throw new OutOfMemoryError("Not enough space left to allocate");
+        }
+    }
+
+    public static class BoundedSharedArenaAllocator extends BoundedArenaAllocator {
+        public BoundedSharedArenaAllocator(ResourceScope scope, long size) {
+            super(scope, size);
+        }
+
+        @Override
+        public synchronized MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            return super.allocate(bytesSize, bytesAlignment);
+        }
+    }
+
+    public static class UnboundedSharedArenaAllocator implements SegmentAllocator {
+
+        final ResourceScope scope;
+
+        final ThreadLocal<ArenaAllocator> allocators = new ThreadLocal<>() {
+            @Override
+            protected ArenaAllocator initialValue() {
+                return new ArenaAllocator(scope);
+            }
+        };
+
+        public UnboundedSharedArenaAllocator(ResourceScope scope) {
+            this.scope = scope;
+        }
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            return allocators.get().allocate(bytesSize, bytesAlignment);
         }
     }
 }

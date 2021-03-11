@@ -424,7 +424,9 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return new ArenaAllocator.BoundedArenaAllocator(scope, size);
+        return scope.ownerThread() == null ?
+                new ArenaAllocator.BoundedSharedArenaAllocator(scope, size) :
+                new ArenaAllocator.BoundedArenaAllocator(scope, size);
     }
 
     /**
@@ -442,7 +444,9 @@ public interface SegmentAllocator {
      */
     static SegmentAllocator arenaUnbounded(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return new ArenaAllocator(scope);
+        return scope.ownerThread() == null ?
+                new ArenaAllocator.UnboundedSharedArenaAllocator(scope) :
+                new ArenaAllocator(scope);
     }
 
     /**

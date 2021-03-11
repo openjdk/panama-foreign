@@ -64,27 +64,33 @@ public class TestSegmentAllocators {
         for (ValueLayout alignedLayout : layouts) {
             List<MemorySegment> addressList = new ArrayList<>();
             int elems = ELEMS / ((int)alignedLayout.byteAlignment() / (int)layout.byteAlignment());
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
-                SegmentAllocator allocator = allocationFactory.allocator(alignedLayout.byteSize() * ELEMS, scope);
-                for (int i = 0 ; i < elems ; i++) {
-                    MemorySegment address = allocationFunction.allocate(allocator, alignedLayout, value);
-                    assertEquals(address.byteSize(), alignedLayout.byteSize());
-                    addressList.add(address);
-                    VarHandle handle = handleFactory.apply(alignedLayout);
-                    assertEquals(value, handle.get(address));
+            ResourceScope[] scopes = {
+                    ResourceScope.ofConfined(),
+                    ResourceScope.ofShared()
+            };
+            for (ResourceScope scope : scopes) {
+                try (scope) {
+                    SegmentAllocator allocator = allocationFactory.allocator(alignedLayout.byteSize() * ELEMS, scope);
+                    for (int i = 0; i < elems; i++) {
+                        MemorySegment address = allocationFunction.allocate(allocator, alignedLayout, value);
+                        assertEquals(address.byteSize(), alignedLayout.byteSize());
+                        addressList.add(address);
+                        VarHandle handle = handleFactory.apply(alignedLayout);
+                        assertEquals(value, handle.get(address));
+                    }
+                    boolean isBound = allocationFactory.isBound();
+                    try {
+                        allocationFunction.allocate(allocator, alignedLayout, value); //too much, should fail if bound
+                        assertFalse(isBound);
+                    } catch (OutOfMemoryError ex) {
+                        //failure is expected if bound
+                        assertTrue(isBound);
+                    }
                 }
-                boolean isBound = allocationFactory.isBound();
-                try {
-                    allocationFunction.allocate(allocator, alignedLayout, value); //too much, should fail if bound
-                    assertFalse(isBound);
-                } catch (OutOfMemoryError ex) {
-                    //failure is expected if bound
-                    assertTrue(isBound);
+                // addresses should be invalid now
+                for (MemorySegment address : addressList) {
+                    assertFalse(address.scope().isAlive());
                 }
-            }
-            // addresses should be invalid now
-            for (MemorySegment address : addressList) {
-                assertFalse(address.scope().isAlive());
             }
         }
     }
@@ -108,11 +114,17 @@ public class TestSegmentAllocators {
     @Test(dataProvider = "arrayScopes")
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object> allocationFunction, ToArrayHelper<Z> arrayHelper) {
         Z arr = arrayHelper.array();
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
-            SegmentAllocator allocator = allocationFactory.allocator(100, scope);
-            MemorySegment address = allocationFunction.allocate(allocator, layout, arr);
-            Z found = arrayHelper.toArray(address, layout);
-            assertEquals(found, arr);
+        ResourceScope[] scopes = {
+                ResourceScope.ofConfined(),
+                ResourceScope.ofShared()
+        };
+        for (ResourceScope scope : scopes) {
+            try (scope) {
+                SegmentAllocator allocator = allocationFactory.allocator(100, scope);
+                MemorySegment address = allocationFunction.allocate(allocator, layout, arr);
+                Z found = arrayHelper.toArray(address, layout);
+                assertEquals(found, arr);
+            }
         }
     }
 
