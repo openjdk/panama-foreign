@@ -67,7 +67,7 @@ public final class Options {
         private String targetPackage;
         private String outputDir;
         private boolean source;
-        private final IncludeHelper includeHelper = new IncludeHelper();
+        private final IncludeHelper includeHelper = new IncludeHelper(false); // for now, do not collect usages
 
         public Builder() {
             this.clangArgs = new ArrayList<>();

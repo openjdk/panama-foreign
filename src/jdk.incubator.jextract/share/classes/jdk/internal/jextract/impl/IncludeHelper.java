@@ -25,11 +25,14 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.jextract.Declaration;
+
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Set;
 
 public class IncludeHelper {
+
     public enum IncludeKind {
         MACRO,
         VAR,
@@ -43,23 +46,57 @@ public class IncludeHelper {
         }
     }
 
-    private final EnumMap<IncludeKind, Set<String>> symbolNamesByKind = new EnumMap<>(IncludeKind.class);
+    private final EnumMap<IncludeKind, Set<String>> includesSymbolNamesByKind = new EnumMap<>(IncludeKind.class);
+    private final Set<Declaration> usedDeclarations = new HashSet<>();
+    private final boolean collectUsages;
+
+    public IncludeHelper(boolean collectUsages) {
+        this.collectUsages = collectUsages;
+    }
 
     public void addSymbol(IncludeKind kind, String symbolName) {
-        Set<String> names = symbolNamesByKind.computeIfAbsent(kind, (_unused) -> new HashSet<>());
+        Set<String> names = includesSymbolNamesByKind.computeIfAbsent(kind, (_unused) -> new HashSet<>());
         names.add(symbolName);
     }
 
-    public boolean isIncluded(IncludeKind kind, String symbolName) {
+    public boolean isIncluded(Declaration.Variable variable) {
+        return isIncludedInternal(IncludeKind.VAR, variable);
+    }
+
+    public boolean isIncluded(Declaration.Function function) {
+        return isIncludedInternal(IncludeKind.FUNCTION, function);
+    }
+
+    public boolean isIncluded(Declaration.Constant constant) {
+        return isIncludedInternal(IncludeKind.MACRO, constant);
+    }
+
+    public boolean isIncluded(Declaration.Typedef typedef) {
+        return isIncludedInternal(IncludeKind.TYPEDEF, typedef);
+    }
+
+    public boolean isIncluded(Declaration.Scoped scoped) {
+        IncludeKind kind = switch (scoped.kind()) {
+            case STRUCT -> IncludeKind.STRUCT;
+            case UNION ->  IncludeKind.UNION;
+            default -> throw new IllegalStateException("Cannot get here!");
+        };
+        return isIncludedInternal(kind, scoped);
+    }
+
+    private boolean isIncludedInternal(IncludeKind kind, Declaration declaration) {
+        if (collectUsages) {
+            usedDeclarations.add(declaration);
+        }
         if (!isEnabled()) {
             return true;
         } else {
-            Set<String> names = symbolNamesByKind.computeIfAbsent(kind, (_unused) -> new HashSet<>());
-            return names.contains(symbolName);
+            Set<String> names = includesSymbolNamesByKind.computeIfAbsent(kind, (_unused) -> new HashSet<>());
+            return names.contains(declaration.name());
         }
     }
 
     public boolean isEnabled() {
-        return symbolNamesByKind.size() > 0;
+        return includesSymbolNamesByKind.size() > 0;
     }
 }

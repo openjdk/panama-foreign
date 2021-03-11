@@ -166,8 +166,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitConstant(Declaration.Constant constant, Declaration parent) {
-        if (!constants.add(constant.name()) ||
-            !includeHelper.isIncluded(IncludeHelper.IncludeKind.MACRO, constant.name())) {
+        if (!constants.add(constant.name()) || !includeHelper.isIncluded(constant)) {
             //skip
             return null;
         }
@@ -196,9 +195,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         if (isStructKind) {
             String className = d.name();
-            IncludeHelper.IncludeKind includeKind = d.kind() == Declaration.Scoped.Kind.STRUCT ?
-                    IncludeHelper.IncludeKind.STRUCT : IncludeHelper.IncludeKind.UNION;
-            if (!className.isEmpty() && !includeHelper.isIncluded(includeKind, className)) {
+            if (!className.isEmpty() && !includeHelper.isIncluded(d)) {
                 return null;
             }
             GroupLayout layout = (GroupLayout) layoutFor(d);
@@ -264,7 +261,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
         if (functionSeen(funcTree) ||
-                !includeHelper.isIncluded(IncludeHelper.IncludeKind.FUNCTION, funcTree.name())) {
+                !includeHelper.isIncluded(funcTree)) {
             return null;
         }
 
@@ -328,7 +325,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitTypedef(Declaration.Typedef tree, Declaration parent) {
-        if (!includeHelper.isIncluded(IncludeHelper.IncludeKind.TYPEDEF, tree.name())) {
+        if (!includeHelper.isIncluded(tree)) {
             return null;
         }
         Type type = tree.type();
@@ -381,8 +378,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
-        if (parent == null &&
-                (variableSeen(tree) || !includeHelper.isIncluded(IncludeHelper.IncludeKind.VAR, tree.name()))) {
+        if (parent == null && (variableSeen(tree) || !includeHelper.isIncluded(tree))) {
             return null;
         }
 
