@@ -27,9 +27,17 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.jextract.Declaration;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class IncludeHelper {
 
@@ -44,15 +52,35 @@ public class IncludeHelper {
         public String optionName() {
             return "include-" + name().toLowerCase();
         }
+
+        static IncludeKind fromDeclaration(Declaration d) {
+            if (d instanceof Declaration.Constant) {
+                return MACRO;
+            } else if (d instanceof Declaration.Variable) {
+                return VAR;
+            } else if (d instanceof Declaration.Function) {
+                return FUNCTION;
+            } else if (d instanceof Declaration.Typedef) {
+                return TYPEDEF;
+            } else if (d instanceof Declaration.Scoped scoped) {
+                return fromScoped(scoped);
+            } else {
+                throw new IllegalStateException("Cannot get here!");
+            }
+        }
+
+        static IncludeKind fromScoped(Declaration.Scoped scoped) {
+            return switch (scoped.kind()) {
+                case STRUCT -> IncludeKind.STRUCT;
+                case UNION ->  IncludeKind.UNION;
+                default -> throw new IllegalStateException("Cannot get here!");
+            };
+        }
     }
 
     private final EnumMap<IncludeKind, Set<String>> includesSymbolNamesByKind = new EnumMap<>(IncludeKind.class);
     private final Set<Declaration> usedDeclarations = new HashSet<>();
-    private final boolean collectUsages;
-
-    public IncludeHelper(boolean collectUsages) {
-        this.collectUsages = collectUsages;
-    }
+    public String dumpIncludesFile;
 
     public void addSymbol(IncludeKind kind, String symbolName) {
         Set<String> names = includesSymbolNamesByKind.computeIfAbsent(kind, (_unused) -> new HashSet<>());
@@ -76,16 +104,11 @@ public class IncludeHelper {
     }
 
     public boolean isIncluded(Declaration.Scoped scoped) {
-        IncludeKind kind = switch (scoped.kind()) {
-            case STRUCT -> IncludeKind.STRUCT;
-            case UNION ->  IncludeKind.UNION;
-            default -> throw new IllegalStateException("Cannot get here!");
-        };
-        return isIncludedInternal(kind, scoped);
+        return isIncludedInternal(IncludeKind.fromScoped(scoped), scoped);
     }
 
     private boolean isIncludedInternal(IncludeKind kind, Declaration declaration) {
-        if (collectUsages) {
+        if (dumpIncludesFile != null) {
             usedDeclarations.add(declaration);
         }
         if (!isEnabled()) {
@@ -98,5 +121,26 @@ public class IncludeHelper {
 
     public boolean isEnabled() {
         return includesSymbolNamesByKind.size() > 0;
+    }
+
+    public void dumpIncludes() {
+        try (var writer = Files.newBufferedWriter(Path.of(dumpIncludesFile), StandardOpenOption.CREATE)) {
+            Map<Path, List<Declaration>> declsByPath = usedDeclarations.stream()
+                    .collect(Collectors.groupingBy(d -> d.pos().path()));
+            for (Map.Entry<Path, List<Declaration>> pathEntries : declsByPath.entrySet()) {
+                writer.append("# " + pathEntries.getKey().toString() + "\n");
+                Map<IncludeKind, List<Declaration>> declsByKind = pathEntries.getValue().stream()
+                        .collect(Collectors.groupingBy(IncludeKind::fromDeclaration));
+                for (Map.Entry<IncludeKind, List<Declaration>> kindEntries : declsByKind.entrySet()) {
+                    for (Declaration d : kindEntries.getValue()) {
+                        writer.append(String.format("%s %s", // figure out formatting
+                                "--" + kindEntries.getKey().optionName() + " " + d.name(),
+                                       "# header: " + pathEntries.getKey() + "\n"));
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            throw new UncheckedIOException(exception);
+        }
     }
 }

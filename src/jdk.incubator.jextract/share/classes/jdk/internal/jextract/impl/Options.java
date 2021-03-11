@@ -67,7 +67,7 @@ public final class Options {
         private String targetPackage;
         private String outputDir;
         private boolean source;
-        private final IncludeHelper includeHelper = new IncludeHelper(false); // for now, do not collect usages
+        private IncludeHelper includeHelper = new IncludeHelper();
 
         public Builder() {
             this.clangArgs = new ArrayList<>();
@@ -109,6 +109,10 @@ public final class Options {
 
         public void setGenerateSource() {
             source = true;
+        }
+
+        public void setDumpIncludeFile(String dumpIncludesFile) {
+            includeHelper.dumpIncludesFile = dumpIncludesFile;
         }
 
         public void addIncludeSymbol(IncludeHelper.IncludeKind kind, String symbolName) {
