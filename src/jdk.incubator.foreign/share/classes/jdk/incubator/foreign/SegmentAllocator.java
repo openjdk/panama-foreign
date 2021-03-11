@@ -430,11 +430,22 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native arena-based allocator which allocates a memory segment of a certain fixed size (using malloc)
-     * and then responds to allocation request by returning different slices of the same segment (until no further allocation is possible,
-     * in which case a new segment, of the same fixed size, is allocated). This can be useful when clients want to
-     * perform multiple allocation requests while avoiding the cost associated with allocating a new off-heap memory
-     * region upon each allocation request.
+     * Returns a native unbounded arena-based allocator.
+     * <p>
+     * The returned allocator allocates a memory segment {@code S} of a certain fixed size (using malloc) and then
+     * responds to allocation requests in one of the following ways:
+     * <ul>
+     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has a <em>free</em>
+     *     slice {@code S'} which fits that allocation request, return that {@code S'}.
+     *     <li>if the size of the allocation requests is smaller than the size of {@code S}, and {@code S} has no <em>free</em>
+     *     slices which fits that allocation request, allocate a new segment {@code S'} (using malloc), which has same size as {@code S}
+     *     and set {@code S = S'}; the allocator then tries to respond to the same allocation request again.
+     *     <li>if the size of the allocation requests is bigger than the size of {@code S}, allocate a new segment {@code S'}
+     *     (using malloc), which has a sufficient size to satisfy the allocation request, and return {@code S'}.
+     * </ul>
+     * <p>
+     * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
+     * cost associated with allocating a new off-heap memory region upon each allocation request.
      * <p>
      * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
      * the system capacity.
