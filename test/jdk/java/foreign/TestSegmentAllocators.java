@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm TestNativeScope
+ * @run testng/othervm TestSegmentAllocators
  */
 
 import jdk.incubator.foreign.*;
@@ -48,7 +48,7 @@ import java.util.stream.LongStream;
 
 import static org.testng.Assert.*;
 
-public class TestNativeScope {
+public class TestSegmentAllocators {
 
     final static int ELEMS = 128;
     final static Class<?> ADDRESS_CARRIER = MemoryLayouts.ADDRESS.bitSize() == 64 ? long.class : int.class;

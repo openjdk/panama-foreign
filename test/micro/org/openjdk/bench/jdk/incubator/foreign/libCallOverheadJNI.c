@@ -33,29 +33,3 @@ JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead
   (JNIEnv *env, jclass cls, jint x) {
     return identity(x);
 }
-
-JNIEXPORT jobject JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_identityStruct
-  (JNIEnv *env, jclass cls, jobject pointBuf) {
-    Point *pInput = (Point*)(*env)->GetDirectBufferAddress(env, pointBuf);
-    Point p = identity_struct(*pInput);
-    Point *ret = (Point*)malloc(sizeof(Point));
-    ret->x = p.x;
-    ret->y = p.y;
-    return (jobject)(*env)->NewDirectByteBuffer(env, ret, sizeof(Point));
-}
-
-JNIEXPORT jobject JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_identityStructAlloc
-  (JNIEnv *env, jclass cls, jobject pointBuf, jobject resBuf) {
-    Point *pInput = (Point*)(*env)->GetDirectBufferAddress(env, pointBuf);
-    Point p = identity_struct(*pInput);
-    Point *pOutput = (Point*)(*env)->GetDirectBufferAddress(env, resBuf);
-    pOutput->x = p.x;
-    pOutput->y = p.y;
-    return resBuf;
-}
-
-JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverhead_freeStruct
- (JNIEnv *env, jclass cls, jobject pointBuf) {
-    void *buf = (void*)(*env)->GetDirectBufferAddress(env, pointBuf);
-    free(buf);
-}

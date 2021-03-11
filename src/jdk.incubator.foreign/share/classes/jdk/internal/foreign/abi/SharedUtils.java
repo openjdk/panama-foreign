@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
@@ -263,7 +264,7 @@ public class SharedUtils {
             }
         }
 
-        throw new IllegalArgumentException("Size too large: " + size);
+        throw new IllegalArgumentException("No type for size: " + size + " isFloat=" + useFloat);
     }
 
     public static CLinker getSystemLinker() {
@@ -387,7 +388,7 @@ public class SharedUtils {
             scopeFilter = MH_SCOPE_TO_BINDING_CONTEXT;
         } else {
             // this path is probably never used now, since ProgrammableInvoker never calls this routine with bufferCopySize == 0
-            scopeFilter = insertArguments(identity(Binding.Context.class), 0, Binding.Context.DUMMY);
+            scopeFilter = constant(Binding.Context.class, Binding.Context.DUMMY);
             scopeFilter = dropArguments(scopeFilter, 0, ResourceScope.class);
         }
 

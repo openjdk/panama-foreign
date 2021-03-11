@@ -26,7 +26,6 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;

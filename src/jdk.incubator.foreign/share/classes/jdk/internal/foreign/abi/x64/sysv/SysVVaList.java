@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -230,13 +231,11 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
-                        MemorySegment seg = allocator.allocate(layout);
-                        seg.copyFrom(slice);
-                        postAlignStack(layout);
-                        yield seg;
-                    }
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment seg = allocator.allocate(layout);
+                    seg.copyFrom(slice);
+                    postAlignStack(layout);
+                    yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);

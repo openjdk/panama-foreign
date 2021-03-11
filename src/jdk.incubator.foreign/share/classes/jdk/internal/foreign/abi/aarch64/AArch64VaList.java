@@ -26,6 +26,7 @@
 package jdk.internal.foreign.abi.aarch64;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -252,22 +253,18 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
-                        MemorySegment seg = allocator.allocate(layout);
-                        seg.copyFrom(slice);
-                        postAlignStack(layout);
-                        yield seg;
-                    }
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment seg = allocator.allocate(layout);
+                    seg.copyFrom(slice);
+                    postAlignStack(layout);
+                    yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
-                        Object res = reader.get(slice);
-                        postAlignStack(layout);
-                        yield res;
-                    }
+                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    Object res = reader.get(slice);
+                    postAlignStack(layout);
+                    yield res;
                 }
             };
         } else {
@@ -309,12 +306,10 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    try (ResourceScope scope = ResourceScope.ofConfined()) {
-                        MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope);
-                        MemorySegment seg = allocator.allocate(layout);
-                        seg.copyFrom(slice);
-                        yield seg;
-                    }
+                    MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment seg = allocator.allocate(layout);
+                    seg.copyFrom(slice);
+                    yield seg;
                 }
                 case POINTER, INTEGER -> {
                     VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);

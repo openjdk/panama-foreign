@@ -93,8 +93,7 @@ public class TestUpcall extends CallGeneratorHelper {
             MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
             Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
-            mh = mh.asSpreader(Object[].class, paramTypes.size() + 1);
-            Object res = mh.invoke(callArgs);
+            Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
             if (ret == Ret.NON_VOID) {
                 returnChecks.forEach(c -> c.accept(res));
