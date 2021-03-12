@@ -131,22 +131,22 @@ public class ConstantBuilder extends ClassSourceBuilder {
             }
         }
 
-        private final ConstantBuilder builder;
+        private final String className;
         private final String javaName;
         private final Kind kind;
 
-        Constant(ConstantBuilder builder, String javaName, Kind kind) {
-            this.builder = builder;
+        Constant(String className, String javaName, Kind kind) {
+            this.className = className;
             this.javaName = javaName;
             this.kind = kind;
         }
 
         List<String> getterNameParts() {
-            return List.of(builder.className(), javaName, kind.nameSuffix);
+            return List.of(className, javaName, kind.nameSuffix);
         }
 
         String accessExpression() {
-            return builder.fullName() + "." + kind.fieldName(javaName);
+            return className + "." + kind.fieldName(javaName);
         }
 
         Constant emitGetter(ClassSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
@@ -210,7 +210,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         indent();
         append(");\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.METHOD_HANDLE);
+        return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
     }
 
     private Constant emitVarHandleField(String javaName, String nativeName, VarInfo varInfo,
@@ -244,7 +244,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         }
         append(";\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.VAR_HANDLE);
+        return new Constant(className(), javaName, Constant.Kind.VAR_HANDLE);
     }
 
     private Constant emitLayoutField(String javaName, MemoryLayout layout) {
@@ -255,7 +255,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         emitLayoutString(layout, false);
         append(";\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.LAYOUT);
+        return new Constant(className(), javaName, Constant.Kind.LAYOUT);
     }
 
     private void emitLayoutString(MemoryLayout l, boolean inBitfield) {
@@ -330,7 +330,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         }
         append(");\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.FUNCTION_DESCRIPTOR);
+        return new Constant(className(), javaName, Constant.Kind.FUNCTION_DESCRIPTOR);
     }
 
     private Constant emitConstantSegment(String javaName, Object value) {
@@ -344,7 +344,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(Utils.quote(Objects.toString(value)));
         append("\");\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.SEGMENT);
+        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
 
     private Constant emitConstantAddress(String javaName, Object value) {
@@ -358,7 +358,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(((Number)value).longValue());
         append("L);\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.ADDRESS);
+        return new Constant(className(), javaName, Constant.Kind.ADDRESS);
     }
 
     private static String typeToLayoutName(ValueLayout vl, boolean inBitfields) {
@@ -398,7 +398,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();
-        return new Constant(this, javaName, Constant.Kind.SEGMENT);
+        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
 
     @Override

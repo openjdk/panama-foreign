@@ -108,9 +108,6 @@ abstract class ClassSourceBuilder extends JavaSourceBuilder {
     }
 
     JavaSourceBuilder classEnd() {
-        if (constantBuilder != null) {
-            constantBuilder.classEnd();
-        }
         indent();
         append("}\n\n");
         if (isNested()) {
@@ -233,22 +230,8 @@ abstract class ClassSourceBuilder extends JavaSourceBuilder {
         return (ToplevelBuilder)encl;
     }
 
-    int constant_counter = 0;
-    int constant_class_index = 0;
-
-    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
-    ConstantBuilder constantBuilder;
-
+    @Override
     protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
-        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
-            if (constantBuilder != null) {
-                constantBuilder.classEnd();
-            }
-            constant_counter = 0;
-            constantBuilder = new ConstantBuilder(this, "constants$" + constant_class_index++);
-            constantBuilder.classBegin();
-        }
-        constantConsumer.accept(constantBuilder);
-        constant_counter++;
+        enclosing.emitWithConstantClass(constantConsumer);
     }
 }

@@ -33,11 +33,13 @@ import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class JavaSourceBuilder {
 

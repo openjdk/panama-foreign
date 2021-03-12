@@ -59,7 +59,11 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     public List<JavaFileObject> toFiles() {
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
         lastHeader.classEnd();
+        builders.addAll(constantBuilders);
         List<JavaFileObject> files = new ArrayList<>();
         files.addAll(builders.stream()
                 .flatMap(b -> b.toFiles().stream())
@@ -69,11 +73,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     public String headerClassName() {
         return headerDesc.displayName();
-    }
-
-    @Override
-    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
-        lastHeader.emitWithConstantClass(constantConsumer);
     }
 
     @Override
@@ -216,5 +215,28 @@ class ToplevelBuilder extends JavaSourceBuilder {
         private String quoteLibraryName(String lib) {
             return lib.replace("\\", "\\\\"); // double up slashes
         }
+    }
+
+    // constant support
+
+    int constant_counter = 0;
+    int constant_class_index = 0;
+    List<ConstantBuilder> constantBuilders = new ArrayList<>();
+
+    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
+    ConstantBuilder constantBuilder;
+
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, "constants$" + constant_class_index++);
+            constantBuilders.add(constantBuilder);
+            constantBuilder.classBegin();
+        }
+        constantConsumer.accept(constantBuilder);
+        constant_counter++;
     }
 }
