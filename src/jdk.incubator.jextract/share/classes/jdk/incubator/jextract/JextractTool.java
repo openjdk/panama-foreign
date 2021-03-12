@@ -26,7 +26,6 @@
 package jdk.incubator.jextract;
 
 import jdk.internal.jextract.impl.ClangException;
-import jdk.internal.jextract.impl.Filter;
 import jdk.internal.jextract.impl.IncludeHelper;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
@@ -112,10 +111,6 @@ public final class JextractTool {
         return new Parser().parse(source, Stream.of(parserOptions).collect(Collectors.toList()));
     }
 
-    public static Declaration.Scoped filter(Declaration.Scoped decl, String... includedNames) {
-        return Filter.filter(decl, includedNames);
-    }
-
     public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName,
                                                 String targetPkg, List<String> libNames) {
         return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, new IncludeHelper(), libNames));
@@ -168,7 +163,6 @@ public final class JextractTool {
         parser.accepts("I", format("help.I")).withRequiredArg();
         parser.accepts("d", format("help.d")).withRequiredArg();
         parser.accepts("dump-includes", format("help.dump-includes")).withRequiredArg();
-        parser.accepts("filter", format("help.filter")).withRequiredArg();
         for (IncludeHelper.IncludeKind includeKind : IncludeHelper.IncludeKind.values()) {
             parser.accepts(includeKind.optionName(), format("help." + includeKind.optionName())).withRequiredArg();
         }
@@ -262,11 +256,6 @@ public final class JextractTool {
         List<JavaFileObject> files = null;
         try {
             Declaration.Scoped toplevel = parse(List.of(header), options.clangArgs.toArray(new String[0]));
-
-            //filter
-            if (!options.filters.isEmpty()) {
-                toplevel = filter(toplevel, options.filters.toArray(new String[0]));
-            }
 
             if (JextractTool.DEBUG) {
                 System.out.println(toplevel);

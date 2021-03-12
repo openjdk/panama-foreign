@@ -32,11 +32,15 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class IncludeHelper {
@@ -88,29 +92,34 @@ public class IncludeHelper {
     }
 
     public boolean isIncluded(Declaration.Variable variable) {
-        return isIncludedInternal(IncludeKind.VAR, variable);
+        return checkIncludedAndAddIfNeeded(IncludeKind.VAR, variable);
     }
 
     public boolean isIncluded(Declaration.Function function) {
-        return isIncludedInternal(IncludeKind.FUNCTION, function);
+        return checkIncludedAndAddIfNeeded(IncludeKind.FUNCTION, function);
     }
 
     public boolean isIncluded(Declaration.Constant constant) {
-        return isIncludedInternal(IncludeKind.MACRO, constant);
+        return checkIncludedAndAddIfNeeded(IncludeKind.MACRO, constant);
     }
 
     public boolean isIncluded(Declaration.Typedef typedef) {
-        return isIncludedInternal(IncludeKind.TYPEDEF, typedef);
+        return checkIncludedAndAddIfNeeded(IncludeKind.TYPEDEF, typedef);
     }
 
     public boolean isIncluded(Declaration.Scoped scoped) {
-        return isIncludedInternal(IncludeKind.fromScoped(scoped), scoped);
+        return checkIncludedAndAddIfNeeded(IncludeKind.fromScoped(scoped), scoped);
+    }
+
+    private boolean checkIncludedAndAddIfNeeded(IncludeKind kind, Declaration declaration) {
+        boolean included = isIncludedInternal(kind, declaration);
+        if (included && dumpIncludesFile != null) {
+            usedDeclarations.add(declaration);
+        }
+        return included;
     }
 
     private boolean isIncludedInternal(IncludeKind kind, Declaration declaration) {
-        if (dumpIncludesFile != null) {
-            usedDeclarations.add(declaration);
-        }
         if (!isEnabled()) {
             return true;
         } else {
@@ -125,19 +134,30 @@ public class IncludeHelper {
 
     public void dumpIncludes() {
         try (var writer = Files.newBufferedWriter(Path.of(dumpIncludesFile), StandardOpenOption.CREATE)) {
-            Map<Path, List<Declaration>> declsByPath = usedDeclarations.stream()
-                    .collect(Collectors.groupingBy(d -> d.pos().path()));
-            for (Map.Entry<Path, List<Declaration>> pathEntries : declsByPath.entrySet()) {
-                writer.append("# " + pathEntries.getKey().toString() + "\n");
+            Map<Path, Set<Declaration>> declsByPath = usedDeclarations.stream()
+                    .collect(Collectors.groupingBy(d -> d.pos().path(),
+                            () -> new TreeMap<>(Path::compareTo),
+                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Declaration::name)))));
+            String lineSep = "";
+            for (Map.Entry<Path, Set<Declaration>> pathEntries : declsByPath.entrySet()) {
+                writer.append(lineSep);
+                writer.append("#### Extracted from: " + pathEntries.getKey().toString() + "\n\n");
                 Map<IncludeKind, List<Declaration>> declsByKind = pathEntries.getValue().stream()
                         .collect(Collectors.groupingBy(IncludeKind::fromDeclaration));
+                int maxLengthOptionCol = pathEntries.getValue().stream().mapToInt(d -> d.name().length()).max().getAsInt();
+                maxLengthOptionCol += 2; // --
+                maxLengthOptionCol += IncludeKind.FUNCTION.optionName().length(); // max option name
+                maxLengthOptionCol += 1; // space
+                int maxLengthHeaderCol = pathEntries.getKey().toString().length();
+                maxLengthHeaderCol += "# header:".length();
                 for (Map.Entry<IncludeKind, List<Declaration>> kindEntries : declsByKind.entrySet()) {
                     for (Declaration d : kindEntries.getValue()) {
-                        writer.append(String.format("%s %s", // figure out formatting
+                        writer.append(String.format("%-" + maxLengthOptionCol + "s %-" + maxLengthHeaderCol + "s",
                                 "--" + kindEntries.getKey().optionName() + " " + d.name(),
                                        "# header: " + pathEntries.getKey() + "\n"));
                     }
                 }
+                lineSep = "\n";
             }
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
