@@ -112,7 +112,7 @@ class ConfinedScope extends MemoryScope {
     /**
      * A confined resource scope handle; no races are possible here.
      */
-    class ConfinedHandle implements Handle {
+    final class ConfinedHandle implements Handle {
         boolean released = false;
 
         @Override
