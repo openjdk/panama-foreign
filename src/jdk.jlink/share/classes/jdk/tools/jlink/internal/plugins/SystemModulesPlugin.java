@@ -54,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -111,6 +112,11 @@ public final class SystemModulesPlugin extends AbstractPlugin {
     public SystemModulesPlugin() {
         super("system-modules");
         this.enabled = true;
+    }
+
+    @Override
+    public Category getType() {
+        return Category.MODULEINFO_TRANSFORMER;
     }
 
     @Override
@@ -360,6 +366,10 @@ public final class SystemModulesPlugin extends AbstractPlugin {
 
         ModuleResolution moduleResolution() {
             return attrs.moduleResolution();
+        }
+
+        boolean usesRestrictedNative() {
+            return attrs.usesRestrictedNative();
         }
 
         /**
@@ -625,6 +635,9 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             // generate concealedPackagesToOpen and exportedPackagesToOpen
             genXXXPackagesToOpenMethods(cw);
 
+            // generate restrictedNativeModules
+            genRestrictedNativeModules(cw);
+
             return cw;
         }
 
@@ -863,6 +876,41 @@ public final class SystemModulesPlugin extends AbstractPlugin {
             IllegalAccessMaps maps = IllegalAccessMaps.generate(finder);
             generate(cw, "concealedPackagesToOpen", maps.concealedPackagesToOpen(), false);
             generate(cw, "exportedPackagesToOpen", maps.exportedPackagesToOpen(), false);
+        }
+
+        /**
+         * Generate restrictedNativeModules.
+         */
+        private void genRestrictedNativeModules(ClassWriter cw) {
+            genBooleanArrayMethod(cw, "restrictedNativeModules", ModuleInfo::usesRestrictedNative);
+        }
+
+        private void genBooleanArrayMethod(ClassWriter cw, String methodName,
+                                           Function<ModuleInfo, Boolean> isIncluded) {
+            MethodVisitor mresmv =
+                    cw.visitMethod(ACC_PUBLIC,
+                            methodName,
+                            "()[Z",
+                            "()[Z",
+                            null);
+            mresmv.visitCode();
+            pushInt(mresmv, moduleInfos.size());
+            mresmv.visitIntInsn(NEWARRAY, T_BOOLEAN);
+            mresmv.visitVarInsn(ASTORE, 0);
+
+            for (int index=0; index < moduleInfos.size(); index++) {
+                ModuleInfo minfo = moduleInfos.get(index);
+                if (isIncluded.apply(minfo)) {
+                    mresmv.visitVarInsn(ALOAD, 0);
+                    pushInt(mresmv, index);
+                    pushInt(mresmv, 1);
+                    mresmv.visitInsn(BASTORE);
+                }
+            }
+            mresmv.visitVarInsn(ALOAD, 0);
+            mresmv.visitInsn(ARETURN);
+            mresmv.visitMaxs(0, 0);
+            mresmv.visitEnd();
         }
 
         /**
@@ -1863,7 +1911,8 @@ public final class SystemModulesPlugin extends AbstractPlugin {
                                           mi.target(),
                                           null,
                                           null,
-                                          mi.moduleResolution());
+                                          mi.moduleResolution(),
+                                          mi.usesRestrictedNative());
             namesToReference.put(name, mref);
         }
 

@@ -179,12 +179,14 @@ public final class ModulePatcher {
         ModuleHashes recordedHashes = null;
         ModuleHashes.HashSupplier hasher = null;
         ModuleResolution mres = null;
+        boolean usesRestrictiveNative = false;
         if (mref instanceof ModuleReferenceImpl) {
             ModuleReferenceImpl impl = (ModuleReferenceImpl)mref;
             target = impl.moduleTarget();
             recordedHashes = impl.recordedHashes();
             hasher = impl.hasher();
             mres = impl.moduleResolution();
+            usesRestrictiveNative = impl.usesRestrictedNative();
         }
 
         return new ModuleReferenceImpl(descriptor,
@@ -194,8 +196,8 @@ public final class ModulePatcher {
                                        target,
                                        recordedHashes,
                                        hasher,
-                                       mres);
-
+                                       mres,
+                                       usesRestrictiveNative);
     }
 
     /**

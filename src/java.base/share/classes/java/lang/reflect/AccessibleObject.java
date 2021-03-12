@@ -30,12 +30,15 @@ import java.lang.invoke.MethodHandle;
 import java.lang.ref.WeakReference;
 import java.security.AccessController;
 
+import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.module.IllegalAccessLogger;
+import jdk.internal.module.IllegalNativeAccessChecker;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
+import jdk.internal.vm.annotation.RestrictedNative;
 import sun.security.action.GetPropertyAction;
 import sun.security.util.SecurityConstants;
 
@@ -690,6 +693,21 @@ public class AccessibleObject implements AnnotatedElement {
                 e.printStackTrace(System.err);
             }
             throw e;
+        }
+    }
+
+    final void checkRestricted(Executable e, Class<?> caller) throws IllegalAccessException {
+        Module module = caller.getModule();
+        if (VM.isBooted() && e.isAnnotationPresent(RestrictedNative.class)) {
+            JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+            if (!jla.isNative(module)) {
+                String moduleName = module.isNamed() ?
+                        module.getName() : "<UNNAMED>";
+                if (module.isNamed() ||
+                        !IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
+                    throw new IllegalAccessException("Illegal native access from module: " + moduleName);
+                }
+            }
         }
     }
 

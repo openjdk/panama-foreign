@@ -73,6 +73,7 @@ module jdk.jlink {
         jdk.tools.jlink.internal.plugins.IncludeLocalesPlugin,
         jdk.tools.jlink.internal.plugins.GenerateJLIClassesPlugin,
         jdk.tools.jlink.internal.plugins.ReleaseInfoPlugin,
+        jdk.tools.jlink.internal.plugins.RestrictedNativeMarkerPlugin,
         jdk.tools.jlink.internal.plugins.AddOptionsPlugin,
         jdk.tools.jlink.internal.plugins.VendorBugURLPlugin,
         jdk.tools.jlink.internal.plugins.VendorVMBugURLPlugin,

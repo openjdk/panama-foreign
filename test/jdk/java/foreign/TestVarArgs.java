@@ -25,7 +25,7 @@
 /*
  * @test
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @run testng/othervm -Dforeign.restricted=permit TestVarArgs
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestVarArgs
  */
 
 import jdk.incubator.foreign.CLinker;

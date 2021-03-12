@@ -70,6 +70,13 @@ public class NoConsoleOutput {
                 + " --add-exports=java.rmi/sun.rmi.server=ALL-UNNAMED"
                 + " --add-exports=java.rmi/sun.rmi.transport=ALL-UNNAMED"
                 + " --add-exports=java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED"
+                + " --enable-native-access=jdk.internal.le"
+                + " --enable-native-access=jdk.compiler"
+                + " --enable-native-access=jdk.attach"
+                + " --enable-native-access=jdk.internal.ed"
+                + " --enable-native-access=jdk.jshell"
+                + " --enable-native-access=jdk.jdi"
+                + " --enable-native-access=jdk.jpackage"
                 + " -Djava.util.logging.config.file="
                 + loggingPropertiesFile, "", out, err);
         try {

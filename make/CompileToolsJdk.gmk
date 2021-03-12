@@ -89,6 +89,24 @@ TARGETS += $(COMPILE_DEPEND) $(DEPEND_SERVICE_PROVIDER)
 
 ################################################################################
 
+$(eval $(call SetupJavaCompilation, COMPILE_PANAMA, \
+    TARGET_RELEASE := $(TARGET_RELEASE_BOOTJDK), \
+    SRC := $(TOPDIR)/make/jdk/src/classes, \
+    INCLUDES := build/tools/panama, \
+    BIN := $(BUILDTOOLS_OUTPUTDIR)/panama, \
+    DISABLED_WARNINGS := options, \
+))
+
+PANAMA_SERVICE_PROVIDER := $(BUILDTOOLS_OUTPUTDIR)/panama/META-INF/services/com.sun.source.util.Plugin
+
+$(PANAMA_SERVICE_PROVIDER):
+	$(call MakeDir, $(BUILDTOOLS_OUTPUTDIR)/panama/META-INF/services)
+	$(ECHO) build.tools.panama.RestrictedMethodsFinder > $@
+
+TARGETS += $(COMPILE_PANAMA) $(PANAMA_SERVICE_PROVIDER)
+
+################################################################################
+
 # To be able to call the javascript filter when generating man pages using
 # pandoc, we need to create this executable wrapper script.
 ifeq ($(ENABLE_PANDOC), true)

@@ -42,6 +42,7 @@ public class ClassFileConstants {
     public static final String MODULE_TARGET      = "ModuleTarget";
     public static final String MODULE_HASHES      = "ModuleHashes";
     public static final String MODULE_RESOLUTION  = "ModuleResolution";
+    public static final String MODULE_RESTRICTED_NATIVE = "ModuleRestrictedNative";
 
     // access, requires, exports, and opens flags
     public static final int ACC_MODULE        = 0x8000;

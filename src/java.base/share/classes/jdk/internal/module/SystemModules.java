@@ -95,4 +95,14 @@ interface SystemModules {
      * module name, the value is the set of exported packages to open.
      */
     Map<String, Set<String>> exportedPackagesToOpen();
+
+    /**
+     * Returns the restricted native flags for modules
+     */
+    boolean[] restrictedNativeModules();
+
+    /**
+     * Returns the restricted JNI flags for modules
+     */
+    boolean[] restrictedJNIModules();
 }

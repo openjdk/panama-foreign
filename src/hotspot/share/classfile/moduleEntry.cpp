@@ -28,6 +28,9 @@
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
+#include "classfile/modules.hpp"
+#include "classfile/symbolTable.hpp"
+#include "classfile/vmSymbols.hpp"
 #include "logging/log.hpp"
 #include "memory/archiveBuilder.hpp"
 #include "memory/archiveUtils.hpp"
@@ -38,6 +41,7 @@
 #include "oops/oopHandle.inline.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/jniHandles.inline.hpp"
 #include "runtime/safepoint.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
@@ -206,6 +210,12 @@ void ModuleEntry::set_read_walk_required(ClassLoaderData* m_loader_data) {
 void ModuleEntry::set_is_open(bool is_open) {
   assert_lock_strong(Module_lock);
   _is_open = is_open;
+}
+
+// Set whether the module is native, i.e. restricted native operations are allowed by clients in this module
+void ModuleEntry::set_is_native(bool is_native) {
+  assert_lock_strong(Module_lock);
+  _is_native = is_native;
 }
 
 // Returns true if the module has a non-empty reads list. As such, the unnamed
@@ -750,4 +760,18 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(loader_data() != NULL, "A module entry must be associated with a loader.");
+}
+
+static bool is_native_access(ModuleEntry* module) {
+  return module->is_native() || (module->name() == NULL && Modules::is_all_unnamed_native_access());
+}
+
+void ModuleEntry::check_native_module(Symbol* exception_symbol, TRAPS) {
+  if (!is_native_access(this)) {
+    ResourceMark rm(THREAD);
+    stringStream ss;
+    ss.print("Illegal native access from module: %s",
+            name() == NULL ? UNNAMED_MODULE : name()->as_C_string());
+    THROW_MSG(vmSymbols::java_lang_IllegalAccessException(), ss.as_string());
+  }
 }

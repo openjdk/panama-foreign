@@ -435,7 +435,7 @@ define SetupJavaCompilationBody
 
     ifeq ($$($1_CREATE_API_DIGEST), true)
       $1_API_DIGEST_FLAGS := \
-          -classpath $$(BUILDTOOLS_OUTPUTDIR)/depend \
+          -classpath $$(call PathList, $$(BUILDTOOLS_OUTPUTDIR)/depend $$(BUILDTOOLS_OUTPUTDIR)/panama) \
           -Xplugin:"depend $$($1_API_TARGET)" \
           #
 

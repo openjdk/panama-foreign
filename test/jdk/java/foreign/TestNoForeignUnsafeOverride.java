@@ -21,23 +21,15 @@
  * questions.
  */
 
-/*
- * @test
- * @run testng TestNoForeignUnsafeOverride
- */
+package org.openjdk.foreigntest;
 
-import jdk.incubator.foreign.MemoryAddress;
-
-import jdk.incubator.foreign.MemorySegment;
-import org.testng.annotations.Test;
-
-public class TestNoForeignUnsafeOverride {
-    static {
-        System.setProperty("foreign.restricted", "permit");
-    }
-
-    @Test(expectedExceptions = IllegalAccessError.class)
-    public void testUnsafeAccess() {
-        MemorySegment.ofNativeRestricted();
+public class JNIMain {
+    public static void main(String[] args) {
+        System.out.println("About to load library 'foreigntestfoo'");
+        try {
+            System.loadLibrary("org_openjdk_foreigntest_nativelib");
+        } catch (Throwable ignored) {
+            // expected failure
+        }
     }
 }

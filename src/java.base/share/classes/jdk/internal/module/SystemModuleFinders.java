@@ -147,12 +147,13 @@ public final class SystemModuleFinders {
         ModuleTarget[] targets = systemModules.moduleTargets();
         ModuleHashes[] recordedHashes = systemModules.moduleHashes();
         ModuleResolution[] moduleResolutions = systemModules.moduleResolutions();
+        boolean[] restrictedNative = systemModules.restrictedNativeModules();
 
         int moduleCount = descriptors.length;
         ModuleReference[] mrefs = new ModuleReference[moduleCount];
         @SuppressWarnings(value = {"rawtypes", "unchecked"})
         Map.Entry<String, ModuleReference>[] map
-            = (Map.Entry<String, ModuleReference>[])new Map.Entry[moduleCount];
+                = (Map.Entry<String, ModuleReference>[]) new Map.Entry[moduleCount];
 
         Map<String, byte[]> nameToHash = generateNameToHash(recordedHashes);
 
@@ -160,10 +161,11 @@ public final class SystemModuleFinders {
             String name = descriptors[i].name();
             HashSupplier hashSupplier = hashSupplier(nameToHash, name);
             ModuleReference mref = toModuleReference(descriptors[i],
-                                                     targets[i],
-                                                     recordedHashes[i],
-                                                     hashSupplier,
-                                                     moduleResolutions[i]);
+                    targets[i],
+                    recordedHashes[i],
+                    hashSupplier,
+                    moduleResolutions[i],
+                    restrictedNative[i]);
             mrefs[i] = mref;
             map[i] = Map.entry(name, mref);
         }
@@ -259,7 +261,8 @@ public final class SystemModuleFinders {
                                                      attrs.target(),
                                                      attrs.recordedHashes(),
                                                      hashSupplier,
-                                                     attrs.moduleResolution());
+                                                     attrs.moduleResolution(),
+                                                     attrs.usesRestrictedNative());
             mrefs.add(mref);
             nameToModule.put(mn, mref);
         }
@@ -305,7 +308,8 @@ public final class SystemModuleFinders {
                                              ModuleTarget target,
                                              ModuleHashes recordedHashes,
                                              HashSupplier hasher,
-                                             ModuleResolution mres) {
+                                             ModuleResolution mres,
+                                             boolean usesRestrictedNative) {
         String mn = descriptor.name();
         URI uri = JNUA.create("jrt", "/".concat(mn));
 
@@ -323,7 +327,8 @@ public final class SystemModuleFinders {
                                                        target,
                                                        recordedHashes,
                                                        hasher,
-                                                       mres);
+                                                       mres,
+                                                       usesRestrictedNative);
 
         // may need a reference to a patched module if --patch-module specified
         mref = ModuleBootstrap.patcher().patchIfNeeded(mref);

@@ -22,6 +22,8 @@
  *
  */
 
+package org.openjdk.zipfstest;
+
 import org.testng.annotations.*;
 
 import java.io.*;
@@ -30,6 +32,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
@@ -45,7 +49,7 @@ import static org.testng.Assert.*;
  * @bug 8230870
  * @summary Test ZIP Filesystem behavior with ~64k entries
  * @modules jdk.zipfs
- * @run testng LargeEntriesTest
+ * @run testng org.openjdk.zipfstest.LargeEntriesTest
  */
 public class LargeEntriesTest {
 
@@ -445,6 +449,18 @@ public class LargeEntriesTest {
                 .collect(joining(", "));
     }
 
+    private static List<String> enableNativeAccessOptions() {
+        return List.of(
+            "--enable-native-access=ALL-UNNAMED/org.openjdk.zipfstest",
+            "--enable-native-access=jdk.internal.ed",
+            "--enable-native-access=jdk.internal.le",
+            "--enable-native-access=jdk.jdi",
+            "--enable-native-access=jdk.jshell",
+            "--enable-native-access=jdk.compiler",
+            "--enable-native-access=jdk.attach",
+            "--enable-native-access=jdk.jpackage");
+    }
+
     /**
      * Validates that a jar created using ZIP FS can be used by the java
      * tool to run a program specified in the Main-Class Manifest attribute
@@ -456,9 +472,13 @@ public class LargeEntriesTest {
     private static Result runJar(String jarFile) {
         String javaHome = System.getProperty("java.home");
         String java = Paths.get(javaHome, "bin", "java").toString();
-        String[] cmd = {java, "-jar", jarFile};
+        List<String> cmds = new ArrayList();
+        cmds.add(java);
+        cmds.addAll(enableNativeAccessOptions());
+        cmds.add("-jar");
+        cmds.add(jarFile);
         String output;
-        ProcessBuilder pb = new ProcessBuilder(cmd);
+        ProcessBuilder pb = new ProcessBuilder(cmds);
         Process p;
         try {
             p = pb.start();

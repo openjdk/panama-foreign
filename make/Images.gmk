@@ -70,12 +70,15 @@ JLINK_ORDER_RESOURCES += \
     /jdk.localedata/** \
     #
 
+JLINK_RESTRICTED_NATIVE := --restricted-native-marker=@$(SUPPORT_OUTPUTDIR)/link_opt/restricted_native_methods.txt
+
 JLINK_TOOL := $(JLINK) -J-Djlink.debug=true \
     --module-path $(IMAGES_OUTPUTDIR)/jmods \
     --endian $(OPENJDK_TARGET_CPU_ENDIAN) \
     --release-info $(BASE_RELEASE_FILE) \
     --order-resources=$(call CommaList, $(JLINK_ORDER_RESOURCES)) \
     --dedup-legal-notices=error-if-not-same-content \
+    $(JLINK_RESTRICTED_NATIVE) \
     $(JLINK_JLI_CLASSES) \
     #
 

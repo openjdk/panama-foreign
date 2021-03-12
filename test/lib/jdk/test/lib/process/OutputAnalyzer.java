@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -554,7 +555,11 @@ public final class OutputAnalyzer {
      * @return Content of the stderr buffer
      */
     public String getStderr() {
-        return buffer.getStderr();
+        String str = buffer.getStderr();
+        String[] lines = str.toString().split(System.lineSeparator());
+        return Stream.of(lines).
+            filter(s -> !s.contains("WARNING: JNI access from module not specified in --enable-native-access")).
+            collect(Collectors.joining(System.lineSeparator()));
     }
 
     /**

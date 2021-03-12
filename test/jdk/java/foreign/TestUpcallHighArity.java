@@ -29,7 +29,7 @@
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   TestUpcallHighArity
  */
 

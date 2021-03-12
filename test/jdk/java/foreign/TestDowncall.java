@@ -29,7 +29,7 @@
  * @build NativeTestHelper CallGeneratorHelper TestDowncall
  *
  * @run testng/othervm
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   TestDowncall
  */
 

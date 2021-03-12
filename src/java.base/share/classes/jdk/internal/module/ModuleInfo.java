@@ -92,14 +92,19 @@ public final class ModuleInfo {
         private final ModuleTarget target;
         private final ModuleHashes recordedHashes;
         private final ModuleResolution moduleResolution;
+        private final boolean usesRestrictedNative;
+
         Attributes(ModuleDescriptor descriptor,
                    ModuleTarget target,
                    ModuleHashes recordedHashes,
-                   ModuleResolution moduleResolution) {
+                   ModuleResolution moduleResolution,
+                   boolean usesRestrictedNative) {
             this.descriptor = descriptor;
             this.target = target;
             this.recordedHashes = recordedHashes;
             this.moduleResolution = moduleResolution;
+            this.usesRestrictedNative = usesRestrictedNative;
+
         }
         public ModuleDescriptor descriptor() {
             return descriptor;
@@ -113,6 +118,7 @@ public final class ModuleInfo {
         public ModuleResolution moduleResolution() {
             return moduleResolution;
         }
+        public boolean usesRestrictedNative() { return usesRestrictedNative; }
     }
 
 
@@ -232,6 +238,7 @@ public final class ModuleInfo {
         ModuleTarget moduleTarget = null;
         ModuleHashes moduleHashes = null;
         ModuleResolution moduleResolution = null;
+        boolean moduleRestrictedNative = false;
 
         for (int i = 0; i < attributes_count ; i++) {
             int name_index = in.readUnsignedShort();
@@ -273,6 +280,9 @@ public final class ModuleInfo {
 
                 case MODULE_RESOLUTION :
                     moduleResolution = readModuleResolution(in, cpool);
+                    break;
+                case MODULE_RESTRICTED_NATIVE:
+                    moduleRestrictedNative = true;
                     break;
 
                 default:
@@ -337,7 +347,8 @@ public final class ModuleInfo {
         return new Attributes(descriptor,
                               moduleTarget,
                               moduleHashes,
-                              moduleResolution);
+                              moduleResolution,
+                              moduleRestrictedNative);
     }
 
     /**

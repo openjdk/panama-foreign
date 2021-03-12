@@ -62,6 +62,8 @@ public class ModuleReferenceImpl extends ModuleReference {
     // ModuleResolution flags
     private final ModuleResolution moduleResolution;
 
+    private final boolean usesRestrictedNative;
+
     // cached hash of this module to avoid needing to compute it many times
     private byte[] cachedHash;
 
@@ -75,7 +77,8 @@ public class ModuleReferenceImpl extends ModuleReference {
                                ModuleTarget target,
                                ModuleHashes recordedHashes,
                                ModuleHashes.HashSupplier hasher,
-                               ModuleResolution moduleResolution)
+                               ModuleResolution moduleResolution,
+                               boolean usesRestrictedNative)
     {
         super(descriptor, Objects.requireNonNull(location));
         this.location = location;
@@ -85,6 +88,7 @@ public class ModuleReferenceImpl extends ModuleReference {
         this.recordedHashes = recordedHashes;
         this.hasher = hasher;
         this.moduleResolution = moduleResolution;
+        this.usesRestrictedNative = usesRestrictedNative;
     }
 
     @Override
@@ -131,6 +135,11 @@ public class ModuleReferenceImpl extends ModuleReference {
     public ModuleResolution moduleResolution() {
         return moduleResolution;
     }
+
+    public boolean usesRestrictedNative() {
+        return usesRestrictedNative;
+    }
+
 
     /**
      * Computes the hash of this module. Returns {@code null} if the hash

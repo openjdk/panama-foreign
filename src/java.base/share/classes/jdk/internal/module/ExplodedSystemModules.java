@@ -78,4 +78,14 @@ class ExplodedSystemModules implements SystemModules {
     public  Map<String, Set<String>> exportedPackagesToOpen() {
         return Map.of();
     }
+
+    @Override
+    public boolean[] restrictedNativeModules() {
+        throw new InternalError();
+    }
+
+    @Override
+    public boolean[] restrictedJNIModules() {
+        throw new InternalError();
+    }
 }

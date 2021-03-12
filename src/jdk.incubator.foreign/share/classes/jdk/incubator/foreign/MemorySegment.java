@@ -34,7 +34,7 @@ import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
+import jdk.internal.vm.annotation.RestrictedNative;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -936,8 +936,8 @@ allocateNative(bytesSize, 1);
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @RestrictedNative
     static MemorySegment ofNativeRestricted() {
-        Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
         return NativeMemorySegmentImpl.EVERYTHING;
     }
 
