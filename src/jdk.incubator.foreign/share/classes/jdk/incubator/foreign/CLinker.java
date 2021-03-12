@@ -129,7 +129,7 @@ public interface CLinker {
     }
 
     /**
-     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
      * which can be used to call a target foreign function at the given address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
