@@ -36,6 +36,7 @@ import jdk.incubator.jextract.Type;
 
 public class PrettyPrinter implements Declaration.Visitor<Void, Void> {
 
+    private static String SPACES = " ".repeat(92);
     int align = 0;
 
     void incr() {
@@ -47,7 +48,7 @@ public class PrettyPrinter implements Declaration.Visitor<Void, Void> {
     }
 
     void indent() {
-        builder.append("                                                                                           ".substring(0, align));
+        builder.append(SPACES.substring(0, align));
     }
 
     StringBuilder builder = new StringBuilder();

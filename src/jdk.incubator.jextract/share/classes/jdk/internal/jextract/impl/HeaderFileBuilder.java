@@ -25,16 +25,13 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Type;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.constant.ClassDesc;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -36,7 +36,6 @@ import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.HashMap;
 import java.util.List;

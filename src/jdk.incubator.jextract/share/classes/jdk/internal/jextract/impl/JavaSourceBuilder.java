@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Superclass for .java source generator classes.
@@ -77,7 +76,7 @@ abstract class JavaSourceBuilder {
     }
 
     JavaSourceBuilder(JavaSourceBuilder enclosing, Kind kind, String name) {
-        this.constantHelper = enclosing.constantHelper;
+        this.constantHelper = enclosing.constantHelper();
         this.enclosing = enclosing;
         this.align = enclosing.align;
         this.kind = kind;
@@ -137,6 +136,10 @@ abstract class JavaSourceBuilder {
             sb = null;
         }
         return enclosing;
+    }
+
+    public ConstantHelper constantHelper() {
+        return constantHelper;
     }
 
     // public API (used by OutputFactory)

@@ -24,17 +24,13 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
-import java.lang.invoke.MethodType;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +48,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
     ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
-        super(new ConstantHelper(desc.packageName(), libraryNames), Kind.CLASS, desc);
+        super(new MultiConstantHelper(desc.packageName(), libraryNames), Kind.CLASS, desc);
         SplitHeader first = lastHeader = new FirstHeader(className());
         first.classBegin();
         builders.add(first);
@@ -70,7 +66,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     public List<JavaFileObject> toFiles() {
         lastHeader.classEnd();
-        List<JavaFileObject> files = new ArrayList<>(constantHelper.toFiles());
+        List<JavaFileObject> files = new ArrayList<>(((MultiConstantHelper)constantHelper).toFiles());
         files.addAll(builders.stream()
                 .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));

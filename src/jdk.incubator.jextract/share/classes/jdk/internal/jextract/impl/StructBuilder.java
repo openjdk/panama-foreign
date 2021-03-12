@@ -24,22 +24,20 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
-import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
 
@@ -403,5 +401,20 @@ class StructBuilder extends ConstantBuilder {
     private String layoutField() {
         String suffix = structLayout.isUnion() ? "union" : "struct";
         return qualifiedName(this) + "$" + suffix;
+    }
+
+    @Override
+    public ConstantHelper constantHelper() {
+        return new ConstantHelper() {
+            @Override
+            public String librariesClass() {
+                return constantHelper.librariesClass();
+            }
+
+            @Override
+            public void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+                constantConsumer.accept(StructBuilder.this);
+            }
+        };
     }
 }

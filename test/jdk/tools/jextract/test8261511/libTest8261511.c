@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,12 +21,26 @@
  * questions.
  */
 
-package jdk.internal.jextract.impl;
+#include "test8261511.h"
+#include <stdio.h>
 
-import java.util.function.Consumer;
+struct Foo theFoo;
 
-public interface ConstantHelper {
-    String librariesClass();
-
-    void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer);
+int foo_sum(int x, int y) {
+    printf("foo_sum called\n");
+    return x + y;
 }
+
+EXPORT struct Foo get_foo() {
+    theFoo.sum = foo_sum;
+    return theFoo;
+}
+
+EXPORT double sum(double x, double y) {
+    printf("sum called\n");
+    return x + y;
+}
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
