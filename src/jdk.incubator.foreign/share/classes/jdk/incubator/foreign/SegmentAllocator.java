@@ -62,14 +62,16 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
  * native allocator which returns segments backed by separate resources scopes, while {@link #arenaUnbounded(ResourceScope)}
  * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #of(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
+ * <p>
+ * Unless otherwise specified, whenever an allocator is associated with a <em>shared</em> resource scope, then allocation is
+ * thread-safe and may be performed concurrently; conversely, if the allocator is associated with a <em>confined</em> resource scope
+ * then allocation is confined to the owning thread of the allocator's resource scope.
  */
 @FunctionalInterface
 public interface SegmentAllocator {
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given byte value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given byte value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -84,9 +86,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given char value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given char value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -101,9 +101,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given short value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given short value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -118,9 +116,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given int value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given int value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -135,9 +131,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given float value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given float value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -152,9 +146,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given long value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given long value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -169,9 +161,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given double value.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given double value.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -186,11 +176,9 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given address value
+     * Allocate a block of memory with given layout and initialize it with given address value
      * (expressed as an {@link Addressable} instance).
      * The address value might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
-     * The segment returned by this method cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
      * @param layout the layout of the block of memory to be allocated.
      * @param value the value to be set on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -210,9 +198,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given byte array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given byte array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -223,9 +209,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given short array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given short array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -236,9 +220,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given char array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given char array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -249,9 +231,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given int array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given int array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -262,9 +242,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given float array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given float array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -275,9 +253,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given long array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given long array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -288,9 +264,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given double array.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
+     * Allocate a block of memory with given layout and initialize it with given double array.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -301,10 +275,8 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout and initialize it with given address array.
+     * Allocate a block of memory with given layout and initialize it with given address array.
      * The address value of each array element might be narrowed according to the platform address size (see {@link MemoryLayouts#ADDRESS}).
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover, the returned
-     * segment must conform to the layout alignment constraints.
      * @param elementLayout the element layout of the array to be allocated.
      * @param array the array to be copied on the newly allocated memory block.
      * @return a segment for the newly allocated memory block.
@@ -343,8 +315,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given layout. The segment returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned segment must conform to the layout alignment constraints.
+     * Allocate a block of memory  with given layout.
      * @param layout the layout of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
      */
@@ -355,12 +326,6 @@ public interface SegmentAllocator {
 
     /**
      * Allocate a block of memory corresponding to an array with given element layout and size.
-     * The segment returned by this method is associated with a segment which cannot be closed.
-     * Moreover, the returned segment must conform to the layout alignment constraints. This is equivalent to the
-     * following code:
-     * <pre>{@code
-    allocate(MemoryLayout.ofSequence(size, elementLayout));
-     * }</pre>
      * @param elementLayout the array element layout.
      * @param count the array element count.
      * @return a segment for the newly allocated memory block.
@@ -371,8 +336,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Allocate a block of memory  with given size. The segment returned by this method is
-     * associated with a segment which cannot be closed. Moreover, the returned segment must be aligned to {@code size}.
+     * Allocate a block of memory with given size, with default alignment (1-byte aligned).
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
      */
@@ -382,8 +346,6 @@ public interface SegmentAllocator {
 
     /**
      * Allocate a block of memory  with given size and alignment constraint.
-     * The segment returned by this method is associated with a segment which cannot be closed. Moreover,
-     * the returned segment must be aligned to {@code alignment}.
      * @param bytesSize the size (in bytes) of the block of memory to be allocated.
      * @param bytesAlignment the alignment (in bytes) of the block of memory to be allocated.
      * @return a segment for the newly allocated memory block.
@@ -466,6 +428,9 @@ public interface SegmentAllocator {
      * constraints are ignored by this allocator). This can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request
      * takes place.
+     * <p>
+     * While the allocator returned by this method is <em>thread-safe</em>, concurrent access on the same recycling
+     * allocator might cause a thread to overwrite contents written to the underlying segment by a different thread.
      *
      * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
