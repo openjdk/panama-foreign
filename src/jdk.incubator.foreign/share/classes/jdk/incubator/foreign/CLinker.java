@@ -177,11 +177,13 @@ public interface CLinker {
 
 
     /**
-     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at the given address, which is passed as
-     * the first dynamic parameter to the resulting method handle. If the provided method
-     * type's return type is {@code MemorySegment}, then the resulting method handle features an additional
-     * prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
+     * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
+     * used to call a target foreign function at an address.
+     * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the address, of
+     * type {@link Addressable}.
+     * <p>
+     * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features an
+     * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
