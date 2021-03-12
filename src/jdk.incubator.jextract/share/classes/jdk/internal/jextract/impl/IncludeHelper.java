@@ -148,11 +148,9 @@ public class IncludeHelper {
                 maxLengthOptionCol += 2; // --
                 maxLengthOptionCol += IncludeKind.FUNCTION.optionName().length(); // max option name
                 maxLengthOptionCol += 1; // space
-                int maxLengthHeaderCol = pathEntries.getKey().toString().length();
-                maxLengthHeaderCol += "# header:".length();
                 for (Map.Entry<IncludeKind, List<Declaration>> kindEntries : declsByKind.entrySet()) {
                     for (Declaration d : kindEntries.getValue()) {
-                        writer.append(String.format("%-" + maxLengthOptionCol + "s %-" + maxLengthHeaderCol + "s",
+                        writer.append(String.format("%-" + maxLengthOptionCol + "s %s",
                                 "--" + kindEntries.getKey().optionName() + " " + d.name(),
                                        "# header: " + pathEntries.getKey() + "\n"));
                     }
