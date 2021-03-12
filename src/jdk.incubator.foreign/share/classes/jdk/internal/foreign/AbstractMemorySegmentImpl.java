@@ -338,11 +338,11 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     private int checkArraySize(String typeName, int elemSize) {
         if (length % elemSize != 0) {
-            throw new UnsupportedOperationException(String.format("Segment size is not a multiple of %d. Size: %d", elemSize, length));
+            throw new IllegalStateException(String.format("Segment size is not a multiple of %d. Size: %d", elemSize, length));
         }
         long arraySize = length / elemSize;
         if (arraySize > (Integer.MAX_VALUE - 8)) { //conservative check
-            throw new UnsupportedOperationException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
+            throw new IllegalStateException(String.format("Segment is too large to wrap as %s. Size: %d", typeName, length));
         }
         return (int)arraySize;
     }

@@ -92,7 +92,7 @@ public interface MemoryAddress extends Addressable {
      * Returns a shared native memory segment with given size, and whose base address is this address. This method
      * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * The returned segment is associated with the global resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment is associated with the {@link ResourceScope#globalScope() global} resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,

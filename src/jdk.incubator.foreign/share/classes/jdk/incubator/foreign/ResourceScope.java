@@ -78,9 +78,9 @@ import java.util.Spliterator;
  * associated with this resource scope. Any attempt to perform resource access from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Shared resource scopes (see {@link #ofShared()}), support strong thread-confinement guarantees. A shared resource scope
- * has no owner thread; as such resources associated with this scope can be accessed by multiple threads. This might be useful
- * when multiple threads need to access the same resource concurrently (e.g. in the case of parallel processing). For instance, a client
+ * Shared resource scopes (see {@link #ofShared()}), on the other hand, have no owner thread; as such resources associated
+ * with this shared resource scopes can be accessed by multiple threads. This might be useful when multiple threads need
+ * to access the same resource concurrently (e.g. in the case of parallel processing). For instance, a client
  * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
  * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
  *

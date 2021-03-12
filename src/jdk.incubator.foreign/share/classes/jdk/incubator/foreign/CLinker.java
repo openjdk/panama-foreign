@@ -628,7 +628,7 @@ public interface CLinker {
 
         /**
          * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the global resource scope (see {@link ResourceScope#globalScope()}).
+         * backed by the {@link ResourceScope#globalScope() global} resource scope.
          * <p>
          * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on

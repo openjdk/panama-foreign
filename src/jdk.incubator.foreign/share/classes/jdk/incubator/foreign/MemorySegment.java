@@ -34,7 +34,6 @@ import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.ref.CleanerFactory;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -397,70 +396,63 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh byte array.
      * @return a fresh byte array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link byte[]} instance,
-     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link byte[]} instance,
+     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      */
     byte[] toByteArray();
 
     /**
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link short[]} instance,
-     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link short[]} instance,
+     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
      */
     short[] toShortArray();
 
     /**
      * Copy the contents of this memory segment into a fresh char array.
      * @return a fresh char array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link char[]} instance,
-     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link char[]} instance,
+     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      */
     char[] toCharArray();
 
     /**
      * Copy the contents of this memory segment into a fresh int array.
      * @return a fresh int array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link int[]} instance,
-     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link int[]} instance,
+     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     int[] toIntArray();
 
     /**
      * Copy the contents of this memory segment into a fresh float array.
      * @return a fresh float array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link float[]} instance,
-     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link float[]} instance,
+     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     float[] toFloatArray();
 
     /**
      * Copy the contents of this memory segment into a fresh long array.
      * @return a fresh long array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link long[]} instance,
-     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link long[]} instance,
+     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     long[] toLongArray();
 
     /**
      * Copy the contents of this memory segment into a fresh double array.
      * @return a fresh double array copy of this memory segment.
-     * @throws UnsupportedOperationException if this segment's contents cannot be copied into a {@link double[]} instance,
-     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment.
+     * thread owning this segment, or if this segment's contents cannot be copied into a {@link double[]} instance,
+     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     double[] toDoubleArray();
 
@@ -469,10 +461,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
-     * If the buffer is read-only (see {@link ByteBuffer#isReadOnly()}), the resulting segment will also be read-only
-     * (see {@link #isReadOnly()}). The scope associated with this segment can either be the <em>global</em> resource scope
-     * (see {@link ResourceScope#globalScope()}), in case the buffer has been created independently, or to some other
-     * (possibly closeable) resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * If the buffer is {@link ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
+     * {@link ByteBuffer#isReadOnly() read-only}. The scope associated with this segment can either be the
+     * {@link ResourceScope#globalScope() global} resource scope, in case the buffer has been created independently,
+     * or to some other (possibly closeable) resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
@@ -485,7 +477,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated byte array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -496,7 +488,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -507,7 +499,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated short array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -518,7 +510,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated int array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -529,7 +521,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated float array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -540,7 +532,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated long array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -551,7 +543,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated double array.
-     * The returned segment's resource scope is set to the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
+     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -570,8 +562,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <blockquote><pre>{@code
     allocateNative(layout.bytesSize(), layout.bytesAlignment());
      * }</pre></blockquote>
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
@@ -590,8 +582,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <blockquote><pre>{@code
     allocateNative(layout.bytesSize(), layout.bytesAlignment(), scope);
      * }</pre></blockquote>
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param layout the layout of the off-heap memory block backing the native memory segment.
      * @param scope the segment scope.
@@ -614,12 +606,12 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <blockquote><pre>{@code
     allocateNative(bytesSize, 1);
      * }</pre></blockquote>
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      */
     static MemorySegment allocateNative(long bytesSize) {
         return allocateNative(bytesSize, 1);
@@ -634,13 +626,13 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <blockquote><pre>{@code
     allocateNative(bytesSize, 1, scope);
      * }</pre></blockquote>
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param scope the segment scope.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      */
     static MemorySegment allocateNative(long bytesSize, ResourceScope scope) {
         return allocateNative(bytesSize, 1, scope);
@@ -651,13 +643,13 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared resource scope,
      * which will be automatically closed when the segment (or any slices and views derived from it) is no longer in use.
      * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
@@ -669,14 +661,14 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * (in bytes), alignment constraint (in bytes) and resource scope. A client is responsible make sure that the resource
      * scope associated to the returned segment is closed when the segment is no longer in use.
      * Failure to do so will result in off-heap memory leaks.
-     *
-     * @implNote The block of off-heap memory associated with the returned native memory segment is initialized to zero.
+     * <p>
+     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
      * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
      * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
      * @param scope the segment scope.
      * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}, {@code alignmentBytes < 0}, or if {@code alignmentBytes}
+     * @throws IllegalArgumentException if {@code bytesSize <= 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
@@ -685,7 +677,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
             throw new IllegalArgumentException("Invalid allocation size : " + bytesSize);
         }
 
-        if (alignmentBytes < 0 ||
+        if (alignmentBytes <= 0 ||
                 ((alignmentBytes & (alignmentBytes - 1)) != 0L)) {
             throw new IllegalArgumentException("Invalid alignment constraint : " + alignmentBytes);
         }

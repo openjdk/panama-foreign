@@ -461,7 +461,7 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns a native allocator which responds to allocation requests by recycling a single segment; that is,
+     * Returns a segment allocator which responds to allocation requests by recycling a single segment; that is,
      * each new allocation request will return a new slice starting at the segment offset {@code 0} (alignment
      * constraints are ignored by this allocator). This can be useful to limit allocation requests in case a client
      * knows that they have fully processed the contents of the allocated segment before the subsequent allocation request

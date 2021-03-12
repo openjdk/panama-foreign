@@ -108,7 +108,7 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-            expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = IllegalStateException.class)
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
@@ -117,9 +117,9 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-            expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = IllegalStateException.class)
     public void testBadSize(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        if (layout.byteSize() == 1) throw new UnsupportedOperationException(); //make it fail
+        if (layout.byteSize() == 1) throw new IllegalStateException(); //make it fail
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1, layout.byteSize(), scope);
             arrayFactory.apply(segment);
@@ -127,9 +127,9 @@ public class TestArrays {
     }
 
     @Test(dataProvider = "elemLayouts",
-            expectedExceptions = UnsupportedOperationException.class)
+            expectedExceptions = IllegalStateException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofConfined());
         segment.scope().close();
         arrayFactory.apply(segment);
     }
