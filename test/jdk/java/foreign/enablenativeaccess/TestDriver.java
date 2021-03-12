@@ -37,7 +37,7 @@
  */
 
 /**
- * @test id=panama_no_all_module_blanket_native_access
+ * @test id=panama_no_all_module_path_blanket_native_access
  * @build panama_module/*
  * @run main/othervm/fail --enable-native-access=ALL-MODULE-PATH panama_module/org.openjdk.foreigntest.PanamaMain
  * @summary --enable-native-access does not work with ALL-MODULE-PATH
@@ -51,7 +51,7 @@
  */
 
 /**
- * @test id=panama_unnamed_module_package_specific_native_access
+ * @test id=panama_all_unnamed_module_native_access
  * @build org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @run main/othervm --enable-native-access=ALL-UNNAMED org.openjdk.foreigntest.PanamaMainUnnamedModule
  * @summary --enable-native-access ALL-UNNAMED works

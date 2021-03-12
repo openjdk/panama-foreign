@@ -2257,7 +2257,7 @@ public final class System {
                 layer.bindToLoader(loader);
             }
             public Stream<ModuleLayer> layers(ModuleLayer layer) {
-                return layer.layers().stream();
+                return layer.layers();
             }
             public Stream<ModuleLayer> layers(ClassLoader loader) {
                 return ModuleLayer.layers(loader);

@@ -1291,7 +1291,7 @@ public final class Module implements AnnotatedElement {
                                      ResolvedModule resolvedModule) {
         Configuration cf = resolvedModule.configuration();
         String dn = resolvedModule.name();
-        return parent.layers().stream()
+        return parent.layers()
                 .filter(l -> l.configuration() == cf)
                 .findAny()
                 .map(layer -> {

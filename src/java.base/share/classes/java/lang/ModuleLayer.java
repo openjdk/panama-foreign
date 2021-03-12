@@ -769,10 +769,10 @@ public final class ModuleLayer {
      * @implNote For now, the assumption is that the number of elements will
      * be very low and so this method does not use a specialized spliterator.
      */
-    List<ModuleLayer> layers() {
+    Stream<ModuleLayer> layers() {
         List<ModuleLayer> allLayers = this.allLayers;
         if (allLayers != null)
-            return allLayers;
+            return allLayers.stream();
 
         allLayers = new ArrayList<>();
         Set<ModuleLayer> visited = new HashSet<>();
@@ -794,7 +794,7 @@ public final class ModuleLayer {
         }
 
         this.allLayers = allLayers = Collections.unmodifiableList(allLayers);
-        return allLayers;
+        return allLayers.stream();
     }
 
     private volatile List<ModuleLayer> allLayers;
@@ -838,14 +838,11 @@ public final class ModuleLayer {
         if (m != null)
             return Optional.of(m);
 
-        List<ModuleLayer> layers = layers();
-        for (int i = 1 ; i < layers.size() ; i++) {
-            Module module = layers.get(i).nameToModule.get(name);
-            if (module != null) {
-                return Optional.of(module);
-            }
-        }
-        return Optional.empty();
+        return layers()
+                .skip(1)  // skip this layer
+                .map(l -> l.nameToModule.get(name))
+                .filter(Objects::nonNull)
+                .findAny();
     }
 
 
