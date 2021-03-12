@@ -35,7 +35,7 @@ import java.lang.ref.Cleaner;
  * owner thread will result in an exception. Because of this restriction, checking the liveness bit
  * can be performed in plain mode.
  */
-class ConfinedScope extends MemoryScope {
+final class ConfinedScope extends MemoryScope {
 
     private boolean closed; // = false
     private int lockCount = 0;
