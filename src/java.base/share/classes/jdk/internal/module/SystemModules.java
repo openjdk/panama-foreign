@@ -100,9 +100,4 @@ interface SystemModules {
      * Returns the restricted native flags for modules
      */
     boolean[] restrictedNativeModules();
-
-    /**
-     * Returns the restricted JNI flags for modules
-     */
-    boolean[] restrictedJNIModules();
 }

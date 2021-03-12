@@ -83,9 +83,4 @@ class ExplodedSystemModules implements SystemModules {
     public boolean[] restrictedNativeModules() {
         throw new InternalError();
     }
-
-    @Override
-    public boolean[] restrictedJNIModules() {
-        throw new InternalError();
-    }
 }
