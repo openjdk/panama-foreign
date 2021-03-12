@@ -77,7 +77,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
 }
  * }</pre>
  *
- * This example is almost identical to the one shown above; this time we first create a so called <em>resource scope</em>,
+ * This example is almost identical to the prior one; this time we first create a so called <em>resource scope</em>,
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
  * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
  * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
