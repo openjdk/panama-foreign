@@ -31,7 +31,6 @@ import jdk.incubator.jextract.Type;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
-import java.lang.constant.ClassDesc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +39,7 @@ import java.util.List;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-abstract class HeaderFileBuilder extends BasicSourceBuilder {
+abstract class HeaderFileBuilder extends ClassSourceBuilder {
 
     private static final String MEMBER_MODS = "public static";
 

@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 /**
  * Superclass for .java source generator classes.
  */
-abstract class BasicSourceBuilder extends JavaSourceBuilder {
+abstract class ClassSourceBuilder extends JavaSourceBuilder {
 
     enum Kind {
         CLASS("class"),
@@ -54,16 +54,16 @@ abstract class BasicSourceBuilder extends JavaSourceBuilder {
     // current line alignment (number of 4-spaces)
     private int align;
 
-    BasicSourceBuilder(JavaSourceBuilder enclosing, Kind kind, String name) {
+    ClassSourceBuilder(JavaSourceBuilder enclosing, Kind kind, String name) {
         this.enclosing = enclosing;
-        this.align = (enclosing instanceof BasicSourceBuilder) ?
-            ((BasicSourceBuilder) enclosing).align : 0;
+        this.align = (enclosing instanceof ClassSourceBuilder) ?
+            ((ClassSourceBuilder) enclosing).align : 0;
         this.kind = kind;
         this.desc = ClassDesc.of(enclosing.packageName(), enclosing.uniqueNestedClassName(name));
     }
 
     boolean isNested() {
-        return enclosing instanceof BasicSourceBuilder;
+        return enclosing instanceof ClassSourceBuilder;
     }
 
     String className() {
@@ -72,7 +72,7 @@ abstract class BasicSourceBuilder extends JavaSourceBuilder {
 
     String fullName() {
         return isNested() ?
-                ((BasicSourceBuilder)enclosing).className() + "." + className() :
+                ((ClassSourceBuilder)enclosing).className() + "." + className() :
                 className();
     }
 
@@ -115,7 +115,7 @@ abstract class BasicSourceBuilder extends JavaSourceBuilder {
         append("}\n\n");
         if (isNested()) {
             decrAlign();
-            ((BasicSourceBuilder)enclosing).append(build());
+            ((ClassSourceBuilder)enclosing).append(build());
             sb = null;
         }
         return enclosing;
@@ -227,8 +227,8 @@ abstract class BasicSourceBuilder extends JavaSourceBuilder {
 
     ToplevelBuilder toplevel() {
         JavaSourceBuilder encl = enclosing;
-        while (encl instanceof BasicSourceBuilder) {
-            encl = ((BasicSourceBuilder) encl).enclosing;
+        while (encl instanceof ClassSourceBuilder) {
+            encl = ((ClassSourceBuilder) encl).enclosing;
         }
         return (ToplevelBuilder)encl;
     }

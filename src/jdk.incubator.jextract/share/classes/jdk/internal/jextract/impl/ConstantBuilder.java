@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ConstantBuilder extends BasicSourceBuilder {
+public class ConstantBuilder extends ClassSourceBuilder {
 
     // set of names generates already
     private final Map<String, Constant> namesGenerated = new HashMap<>();
@@ -55,7 +55,7 @@ public class ConstantBuilder extends BasicSourceBuilder {
     }
 
     String memberMods() {
-        return kind == BasicSourceBuilder.Kind.CLASS ?
+        return kind == ClassSourceBuilder.Kind.CLASS ?
                 "static final " : "";
     }
 
@@ -149,12 +149,12 @@ public class ConstantBuilder extends BasicSourceBuilder {
             return builder.fullName() + "." + kind.fieldName(javaName);
         }
 
-        Constant emitGetter(BasicSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
+        Constant emitGetter(ClassSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression());
             return this;
         }
 
-        Constant emitGetter(BasicSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
+        Constant emitGetter(ClassSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, symbolName);
             return this;
         }

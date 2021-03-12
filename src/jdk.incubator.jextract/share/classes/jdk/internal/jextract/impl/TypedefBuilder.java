@@ -25,7 +25,7 @@
 
 package jdk.internal.jextract.impl;
 
-public class TypedefBuilder extends BasicSourceBuilder {
+public class TypedefBuilder extends ClassSourceBuilder {
 
     private static String MEMBER_MODS = "public static ";
 

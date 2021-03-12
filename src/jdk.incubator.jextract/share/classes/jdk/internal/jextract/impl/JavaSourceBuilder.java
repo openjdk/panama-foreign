@@ -33,13 +33,11 @@ import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public abstract class JavaSourceBuilder {
 
@@ -74,11 +72,11 @@ public abstract class JavaSourceBuilder {
         }
     }
 
-    public void addVar(String javaName, String nativeName, BasicSourceBuilder.VarInfo varInfo) {
+    public void addVar(String javaName, String nativeName, ClassSourceBuilder.VarInfo varInfo) {
         throw new UnsupportedOperationException();
     }
 
-    public void addFunction(String javaName, String nativeName, BasicSourceBuilder.FunctionInfo functionInfo) {
+    public void addFunction(String javaName, String nativeName, ClassSourceBuilder.FunctionInfo functionInfo) {
         throw new UnsupportedOperationException();
     }
 
@@ -94,7 +92,7 @@ public abstract class JavaSourceBuilder {
         throw new UnsupportedOperationException();
     }
 
-    public String addFunctionalInterface(String name, BasicSourceBuilder.FunctionInfo fInfo) {
+    public String addFunctionalInterface(String name, ClassSourceBuilder.FunctionInfo fInfo) {
         throw new UnsupportedOperationException();
     }
 

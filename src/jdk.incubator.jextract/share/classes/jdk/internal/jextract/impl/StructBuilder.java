@@ -30,13 +30,11 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import java.lang.constant.ClassDesc;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static jdk.internal.jextract.impl.LayoutUtils.JEXTRACT_ANONYMOUS;
 
@@ -379,9 +377,9 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private String qualifiedName(BasicSourceBuilder builder) {
+    private String qualifiedName(ClassSourceBuilder builder) {
         if (builder.isNested()) {
-            String prefix = qualifiedName((BasicSourceBuilder)builder.enclosing);
+            String prefix = qualifiedName((ClassSourceBuilder)builder.enclosing);
             return prefix.isEmpty() ?
                     builder.className() :
                     prefix + "$" + builder.className();

@@ -45,16 +45,14 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private final List<JavaSourceBuilder> builders = new ArrayList<>();
     private SplitHeader lastHeader;
     private int headersCount;
-    private final String packageName;
-    private final String headerClassName;
+    private final ClassDesc headerDesc;
     private final String[] libraryNames;
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
     ToplevelBuilder(String packageName, String headerClassName, String[] libraryNames) {
         this.libraryNames = libraryNames;
-        this.packageName = packageName;
-        this.headerClassName = headerClassName;
+        this.headerDesc = ClassDesc.of(packageName, headerClassName);
         SplitHeader first = lastHeader = new FirstHeader(headerClassName);
         first.classBegin();
         builders.add(first);
@@ -70,9 +68,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     }
 
     public String headerClassName() {
-        return packageName.isEmpty() ?
-                headerClassName :
-                packageName + "." + headerClassName;
+        return headerDesc.displayName();
     }
 
     @Override
@@ -87,7 +83,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     @Override
     public String packageName() {
-        return packageName;
+        return headerDesc.packageName();
     }
 
     @Override
@@ -139,7 +135,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private SplitHeader nextHeader() {
         if (declCount == DECLS_PER_HEADER_CLASS) {
             boolean hasSuper = !(lastHeader instanceof FirstHeader);
-            SplitHeader headerFileBuilder = new SplitHeader(headerClassName + "_" + ++headersCount,
+            SplitHeader headerFileBuilder = new SplitHeader(headerDesc.displayName() + "_" + ++headersCount,
                     hasSuper ? lastHeader.className() : null);
             lastHeader.classEnd();
             headerFileBuilder.classBegin();

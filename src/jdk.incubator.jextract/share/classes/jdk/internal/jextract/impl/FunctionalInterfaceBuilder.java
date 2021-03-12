@@ -29,13 +29,12 @@ import jdk.incubator.foreign.*;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
-import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class FunctionalInterfaceBuilder extends BasicSourceBuilder {
+public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
 
     private static final String MEMBER_MODS = "static";
 
