@@ -25,16 +25,14 @@
 
 package jdk.internal.jextract.impl;
 
-import java.lang.constant.ClassDesc;
-
-public class TypedefBuilder extends JavaSourceBuilder {
+public class TypedefBuilder extends BasicSourceBuilder {
 
     private static String MEMBER_MODS = "public static ";
 
     private final String superClass;
 
-    public TypedefBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc, String superClass) {
-        super(constantHelper, kind, desc);
+    public TypedefBuilder(JavaSourceBuilder enclosing, String name, String superClass) {
+        super(enclosing, Kind.CLASS, name);
         this.superClass = superClass;
     }
 

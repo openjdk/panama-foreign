@@ -34,32 +34,28 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
-import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ConstantBuilder extends JavaSourceBuilder {
+public class ConstantBuilder extends BasicSourceBuilder {
 
     // set of names generates already
     private final Map<String, Constant> namesGenerated = new HashMap<>();
 
-    public ConstantBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing, kind, className);
-    }
-
-    public ConstantBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc) {
-        super(constantHelper, kind, desc);
+    public ConstantBuilder(JavaSourceBuilder enclosing, String className) {
+        super(enclosing, Kind.CLASS, className);
     }
 
     String memberMods() {
-        return kind == JavaSourceBuilder.Kind.CLASS ?
+        return kind == BasicSourceBuilder.Kind.CLASS ?
                 "static final " : "";
     }
 
@@ -135,30 +131,30 @@ public class ConstantBuilder extends JavaSourceBuilder {
             }
         }
 
-        private final String className;
+        private final ConstantBuilder builder;
         private final String javaName;
         private final Kind kind;
 
-        Constant(String className, String javaName, Kind kind) {
-            this.className = className;
+        Constant(ConstantBuilder builder, String javaName, Kind kind) {
+            this.builder = builder;
             this.javaName = javaName;
             this.kind = kind;
         }
 
         List<String> getterNameParts() {
-            return List.of(className, javaName, kind.nameSuffix);
+            return List.of(builder.className(), javaName, kind.nameSuffix);
         }
 
         String accessExpression() {
-            return className + "." + kind.fieldName(javaName);
+            return builder.fullName() + "." + kind.fieldName(javaName);
         }
 
-        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
+        Constant emitGetter(BasicSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression());
             return this;
         }
 
-        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
+        Constant emitGetter(BasicSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, symbolName);
             return this;
         }
@@ -199,7 +195,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         if (!virtual) {
-            append(constantHelper.librariesClass() + ".LIBRARIES, \"" + nativeName + "\"");
+            append(toplevel().headerClassName() + ".LIBRARIES, \"" + nativeName + "\"");
             append(",\n");
             indent();
         }
@@ -214,7 +210,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         indent();
         append(");\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.METHOD_HANDLE);
+        return new Constant(this, javaName, Constant.Kind.METHOD_HANDLE);
     }
 
     private Constant emitVarHandleField(String javaName, String nativeName, VarInfo varInfo,
@@ -248,7 +244,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         }
         append(";\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.VAR_HANDLE);
+        return new Constant(this, javaName, Constant.Kind.VAR_HANDLE);
     }
 
     private Constant emitLayoutField(String javaName, MemoryLayout layout) {
@@ -259,7 +255,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         emitLayoutString(layout, false);
         append(";\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.LAYOUT);
+        return new Constant(this, javaName, Constant.Kind.LAYOUT);
     }
 
     private void emitLayoutString(MemoryLayout l, boolean inBitfield) {
@@ -334,7 +330,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         }
         append(");\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.FUNCTION_DESCRIPTOR);
+        return new Constant(this, javaName, Constant.Kind.FUNCTION_DESCRIPTOR);
     }
 
     private Constant emitConstantSegment(String javaName, Object value) {
@@ -348,7 +344,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         append(Utils.quote(Objects.toString(value)));
         append("\");\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
+        return new Constant(this, javaName, Constant.Kind.SEGMENT);
     }
 
     private Constant emitConstantAddress(String javaName, Object value) {
@@ -362,7 +358,7 @@ public class ConstantBuilder extends JavaSourceBuilder {
         append(((Number)value).longValue());
         append("L);\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.ADDRESS);
+        return new Constant(this, javaName, Constant.Kind.ADDRESS);
     }
 
     private static String typeToLayoutName(ValueLayout vl, boolean inBitfields) {
@@ -396,12 +392,17 @@ public class ConstantBuilder extends JavaSourceBuilder {
         append(fieldName);
         append(" = ");
         append("RuntimeHelper.lookupGlobalVariable(");
-        append(constantHelper.librariesClass() + ".LIBRARIES, \"");
+        append(toplevel().headerClassName() + ".LIBRARIES, \"");
         append(nativeName);
         append("\", ");
         append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();
-        return new Constant(className(), javaName, Constant.Kind.SEGMENT);
+        return new Constant(this, javaName, Constant.Kind.SEGMENT);
+    }
+
+    @Override
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        constantConsumer.accept(this);
     }
 }

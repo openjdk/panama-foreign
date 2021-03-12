@@ -31,10 +31,11 @@ import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
+public class FunctionalInterfaceBuilder extends BasicSourceBuilder {
 
     private static final String MEMBER_MODS = "static";
 
@@ -44,13 +45,6 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className,
                                MethodType fiType, FunctionDescriptor fiDesc) {
         super(enclosing, Kind.INTERFACE, className);
-        this.fiType = fiType;
-        this.fiDesc = fiDesc;
-    }
-
-    FunctionalInterfaceBuilder(ConstantHelper constantHelper, ClassDesc desc,
-                               MethodType fiType, FunctionDescriptor fiDesc) {
-        super(constantHelper, Kind.INTERFACE, desc);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
     }
@@ -79,7 +73,7 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     }
 
     private void emitFunctionalFactories() {
-        constantHelper.emitWithConstantClass(constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();
@@ -104,7 +98,7 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
     }
 
     private void emitFunctionalRestrictedFactory() {
-        constantHelper.emitWithConstantClass(constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
             incrAlign();
             indent();
@@ -157,5 +151,10 @@ public class FunctionalInterfaceBuilder extends JavaSourceBuilder {
             append("}\n");
             decrAlign();
         });
+    }
+
+    @Override
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        enclosing.emitWithConstantClass(constantConsumer);
     }
 }

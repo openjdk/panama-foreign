@@ -40,14 +40,14 @@ import java.util.List;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-abstract class HeaderFileBuilder extends JavaSourceBuilder {
+abstract class HeaderFileBuilder extends BasicSourceBuilder {
 
     private static final String MEMBER_MODS = "public static";
 
     private final String superclass;
 
-    HeaderFileBuilder(ConstantHelper constantHelper, Kind kind, ClassDesc desc, String superclass) {
-        super(constantHelper, kind, desc);
+    HeaderFileBuilder(ToplevelBuilder enclosing, String name, String superclass) {
+        super(enclosing, Kind.CLASS, name);
         this.superclass = superclass;
     }
 
@@ -59,12 +59,12 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addVar(String javaName, String nativeName, VarInfo varInfo) {
         if (varInfo.carrier().equals(MemorySegment.class)) {
-            constantHelper.emitWithConstantClass(constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addSegment(javaName, nativeName, varInfo.layout())
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             });
         } else {
-            constantHelper.emitWithConstantClass(constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addLayout(javaName, varInfo.layout())
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
                 Constant vhConstant = constantBuilder.addGlobalVarHandle(javaName, nativeName, varInfo)
@@ -82,7 +82,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     @Override
     public void addFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
-        constantHelper.emitWithConstantClass(constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
@@ -92,7 +92,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
         if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
-            constantHelper.emitWithConstantClass(constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addConstantDesc(javaName, type, value)
                         .emitGetter(this, MEMBER_MODS, Constant.JAVA_NAME);
             });

@@ -30,7 +30,6 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -52,15 +51,8 @@ class StructBuilder extends ConstantBuilder {
     private final Type structType;
     private final Deque<String> prefixElementNames;
 
-    StructBuilder(ConstantHelper constantHelper, ClassDesc desc, GroupLayout structLayout, Type structType) {
-        super(constantHelper, Kind.CLASS, desc);
-        this.structLayout = structLayout;
-        this.structType = structType;
-        prefixElementNames = new ArrayDeque<>();
-    }
-
-    StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
-        super(enclosing, Kind.CLASS, className);
+    StructBuilder(JavaSourceBuilder enclosing, String name, GroupLayout structLayout, Type structType) {
+        super(enclosing, name);
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
@@ -387,9 +379,9 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private String qualifiedName(JavaSourceBuilder builder) {
-        if (builder.enclosing != null) {
-            String prefix = qualifiedName(builder.enclosing);
+    private String qualifiedName(BasicSourceBuilder builder) {
+        if (builder.isNested()) {
+            String prefix = qualifiedName((BasicSourceBuilder)builder.enclosing);
             return prefix.isEmpty() ?
                     builder.className() :
                     prefix + "$" + builder.className();
@@ -401,20 +393,5 @@ class StructBuilder extends ConstantBuilder {
     private String layoutField() {
         String suffix = structLayout.isUnion() ? "union" : "struct";
         return qualifiedName(this) + "$" + suffix;
-    }
-
-    @Override
-    public ConstantHelper constantHelper() {
-        return new ConstantHelper() {
-            @Override
-            public String librariesClass() {
-                return constantHelper.librariesClass();
-            }
-
-            @Override
-            public void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
-                constantConsumer.accept(StructBuilder.this);
-            }
-        };
     }
 }
