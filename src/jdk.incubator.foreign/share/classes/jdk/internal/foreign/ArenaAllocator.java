@@ -26,8 +26,7 @@ public class ArenaAllocator implements SegmentAllocator {
     }
 
     MemorySegment newSegment(long size, long align) {
-        MemorySegment segment = allocator.allocate(size, align);
-        return segment;
+        return allocator.allocate(size, align);
     }
 
     @Override
