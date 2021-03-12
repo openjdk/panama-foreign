@@ -31,6 +31,7 @@ public class ArenaAllocator implements SegmentAllocator {
 
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        checkConfinementIfNeeded();
         if (Utils.alignUp(bytesSize, bytesAlignment) > MAX_ALLOC_SIZE) {
             return newSegment(bytesSize, bytesAlignment);
         }
@@ -59,6 +60,13 @@ public class ArenaAllocator implements SegmentAllocator {
             MemorySegment slice = segment.asSlice(start, bytesSize);
             sp = start + bytesSize;
             return slice;
+        }
+    }
+
+    private void checkConfinementIfNeeded() {
+        Thread segmentThread = segment.scope().ownerThread();
+        if (segmentThread != null && segmentThread != Thread.currentThread()) {
+            throw new IllegalStateException("Attempt to allocate outside confinement thread");
         }
     }
 
