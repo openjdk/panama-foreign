@@ -467,9 +467,7 @@ public class TestHelper {
             rdr = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String in = rdr.readLine();
             while (in != null) {
-                if (!in.contains("WARNING: JNI access from module not specified in --enable-native-access")) {
-                    outputList.add(in);
-                }
+                outputList.add(in);
                 in = rdr.readLine();
             }
             p.waitFor();
