@@ -21,7 +21,6 @@
  * questions.
  */
 
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8258605.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;

@@ -34,6 +34,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SegmentAllocator;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -78,9 +79,10 @@ final class RuntimeHelper {
 
     static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
         return lookup(LIBRARIES, name).map(s ->
-            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                    .share())).orElse(null);
+            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize()))).orElse(null);
     }
+
+    final static SegmentAllocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
 
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
         return lookup(LIBRARIES, name).map(
@@ -88,7 +90,17 @@ final class RuntimeHelper {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
                     return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
-                        LINKER.downcallHandle(addr, mt, fdesc);
+                        LINKER.downcallHandle(addr, DEFAULT_ALLOCATOR, mt, fdesc);
+                }).orElse(null);
+    }
+
+    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic, NativeScope scope) {
+        return lookup(LIBRARIES, name).map(
+                addr -> {
+                    MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+                    return variadic ?
+                            VarargsInvoker.make(addr, mt, fdesc) :
+                            LINKER.downcallHandle(addr, scope, mt, fdesc);
                 }).orElse(null);
     }
 
@@ -103,8 +115,19 @@ final class RuntimeHelper {
         }
     }
 
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, NativeScope scope) {
+        try {
+            MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
+                    MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
+            handle = handle.bindTo(z);
+            return LINKER.upcallStub(handle, fdesc, scope.scope());
+        } catch (Throwable ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
     static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
+        return seg;
     }
 
     static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
@@ -113,7 +136,7 @@ final class RuntimeHelper {
 
     // Internals only below this point
     private static final MemorySegment nonCloseableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
+        return seg;
     }
 
     private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {

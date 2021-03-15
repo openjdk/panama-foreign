@@ -23,7 +23,6 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246400.*;
 import static org.testng.Assert.assertEquals;
@@ -62,8 +61,7 @@ public class LibTest8246400Test {
             Vector.x$set(v2, 0.0);
             Vector.y$set(v2, 1.0);
 
-            sum = add(v1, v2);
-            sum = sum.handoff(scope);
+            sum = add(scope, v1, v2);
 
             assertEquals(Vector.x$get(sum), 1.0, 0.1);
             assertEquals(Vector.y$get(sum), 1.0, 0.1);
@@ -79,7 +77,7 @@ public class LibTest8246400Test {
             value = cosine_similarity(v1, v1, callback);
             assertEquals(value, 1.0, 0.1);
         }
-        assertTrue(!sum.isAlive());
-        assertTrue(!callback.isAlive());
+        assertTrue(!sum.scope().isAlive());
+        assertTrue(!callback.scope().isAlive());
     }
 }

@@ -36,6 +36,7 @@
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -197,7 +198,8 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> structCls = loader.loadClass("com.acme.examples_h$" + structName);
         Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
-        try (MemorySegment struct = MemorySegment.allocateNative(structLayout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment struct = MemorySegment.allocateNative(structLayout, scope);
             Method vh_getter = checkMethod(structCls, memberName + "$VH", VarHandle.class);
             VarHandle vh = (VarHandle) vh_getter.invoke(null);
             assertEquals(vh.varType(), expectedType);

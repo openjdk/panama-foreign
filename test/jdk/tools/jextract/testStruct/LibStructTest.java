@@ -50,33 +50,30 @@ import static test.jextract.struct.struct_h.*;
 public class LibStructTest {
     @Test
     public void testMakePoint() {
-        try (var seg = makePoint(42, -39)) {
-            assertEquals(Point.x$get(seg), 42);
-            assertEquals(Point.y$get(seg), -39);
-        }
+        var seg = makePoint(42, -39);
+        assertEquals(Point.x$get(seg), 42);
+        assertEquals(Point.y$get(seg), -39);
     }
 
     @Test
     public void testAllocate() {
-        try (var seg = Point.allocate()) {
-            Point.x$set(seg, 56);
-            Point.y$set(seg, 65);
-            assertEquals(Point.x$get(seg), 56);
-            assertEquals(Point.y$get(seg), 65);
-        }
+        var seg = Point.allocate();
+        Point.x$set(seg, 56);
+        Point.y$set(seg, 65);
+        assertEquals(Point.x$get(seg), 56);
+        assertEquals(Point.y$get(seg), 65);
     }
 
     @Test
     public void testAllocateArray() {
-        try (var seg = Point.allocateArray(3)) {
-            for (int i = 0; i < 3; i++) {
-                Point.x$set(seg, i, 56 + i);
-                Point.y$set(seg, i, 65 + i);
-            }
-            for (int i = 0; i < 3; i++) {
-                assertEquals(Point.x$get(seg, i), 56 + i);
-                assertEquals(Point.y$get(seg, i), 65 + i);
-            }
+        var seg = Point.allocateArray(3);
+        for (int i = 0; i < 3; i++) {
+            Point.x$set(seg, i, 56 + i);
+            Point.y$set(seg, i, 65 + i);
+        }
+        for (int i = 0; i < 3; i++) {
+            assertEquals(Point.x$get(seg, i), 56 + i);
+            assertEquals(Point.y$get(seg, i), 65 + i);
         }
     }
 

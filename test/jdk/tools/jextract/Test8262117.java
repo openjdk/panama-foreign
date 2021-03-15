@@ -23,7 +23,6 @@
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertNotNull;

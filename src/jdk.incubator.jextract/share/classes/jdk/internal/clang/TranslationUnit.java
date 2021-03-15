@@ -31,8 +31,10 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
+import jdk.internal.clang.libclang.NativeScope;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -63,11 +65,10 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        try (MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString())) {
-            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
-            if (res != SaveError.None) {
-                throw new TranslationUnitSaveException(path, res);
-            }
+        MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString());
+        SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
+        if (res != SaveError.None) {
+            throw new TranslationUnitSaveException(path, res);
         }
     }
 
@@ -158,8 +159,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken.$LAYOUT().byteSize());
-            return p.asSegmentRestricted(Index_h.CXToken.$LAYOUT().byteSize())
-                    .share();
+            return p.asSegmentRestricted(Index_h.CXToken.$LAYOUT().byteSize());
         }
 
         public Token getToken(int index) {

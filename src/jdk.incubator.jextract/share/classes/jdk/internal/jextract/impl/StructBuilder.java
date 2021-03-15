@@ -225,13 +225,11 @@ class StructBuilder extends ConstantBuilder {
         append(MEMBER_MODS + " MemorySegment " + javaName + "$slice(MemorySegment " + seg + ") {\n");
         incrAlign();
         indent();
-        append("return RuntimeHelper.nonCloseableNonTransferableSegment(");
-        append(seg);
-        append(".asSlice(");
+        append("return " + seg + ".asSlice(");
         append(structLayout.byteOffset(elementPaths(nativeName)));
         append(", ");
         append(layout.byteSize());
-        append("));\n");
+        append(");\n");
         decrAlign();
         indent();
         append("}\n");

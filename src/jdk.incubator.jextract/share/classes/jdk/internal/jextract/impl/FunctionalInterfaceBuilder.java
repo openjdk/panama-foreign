@@ -87,7 +87,8 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
             incrAlign();
             indent();
-            append("return allocate(fi).handoff(scope);\n");
+            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
+                    "\"" + fiType.toMethodDescriptorString() + "\", scope);\n");
             decrAlign();
             indent();
             append("}\n");

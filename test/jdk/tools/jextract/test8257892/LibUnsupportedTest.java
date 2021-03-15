@@ -53,12 +53,11 @@ import static test.jextract.unsupported.unsupported_h.*;
 public class LibUnsupportedTest {
     @Test
     public void testAllocateFoo() {
-        try (var seg = Foo.allocate()) {
-            Foo.i$set(seg, 32);
-            Foo.c$set(seg, (byte)'z');
-            assertEquals(Foo.i$get(seg), 32);
-            assertEquals(Foo.c$get(seg), (byte)'z');
-        }
+        var seg = Foo.allocate();
+        Foo.i$set(seg, 32);
+        Foo.c$set(seg, (byte)'z');
+        assertEquals(Foo.i$get(seg), 32);
+        assertEquals(Foo.c$get(seg), (byte)'z');
     }
 
     @Test

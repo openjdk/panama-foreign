@@ -88,7 +88,11 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         emitWithConstantClass(javaName, constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
-            emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
+            emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo, false);
+            if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
+                // emit scoped overload
+                emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo, true);
+            }
         });
     }
 
@@ -118,12 +122,16 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     // private generation
 
-    private void emitFunctionWrapper(Constant mhConstant, String javaName, String nativeName, FunctionInfo functionInfo) {
+    private void emitFunctionWrapper(Constant mhConstant, String javaName, String nativeName, FunctionInfo functionInfo, boolean scoped) {
         incrAlign();
         indent();
         append(MEMBER_MODS + " ");
         append(functionInfo.methodType().returnType().getSimpleName() + " " + javaName + " (");
         String delim = "";
+        if (scoped) {
+            append("NativeScope scope");
+            delim = ", ";
+        }
         List<String> pExprs = new ArrayList<>();
         List<String> paramNames = functionInfo.parameterNames().get();
         final int numParams = paramNames.size();
@@ -146,10 +154,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         }
         if (functionInfo.isVarargs()) {
             String lastArg = "x" + numParams;
-            if (numParams > 0) {
-                append(", ");
-            }
-            append("Object... " + lastArg);
+            append(delim + "Object... " + lastArg);
             pExprs.add(lastArg);
         }
         append(") {\n");
@@ -166,6 +171,9 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         indent();
         if (!functionInfo.methodType().returnType().equals(void.class)) {
             append("return (" + functionInfo.methodType().returnType().getName() + ")");
+        }
+        if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
+            pExprs.add(0, scoped ? "(SegmentAllocator)scope" : "RuntimeHelper.DEFAULT_ALLOCATOR");
         }
         append("mh$.invokeExact(" + String.join(", ", pExprs) + ");\n");
         decrAlign();

@@ -159,10 +159,9 @@ public class TestNested extends JextractToolRunner {
             if (type == MemorySegment.class) {
                 Method slicer = cls.getMethod(fieldName + "$slice", MemorySegment.class);
                 assertEquals(slicer.getReturnType(), MemorySegment.class);
-                try (MemorySegment struct = MemorySegment.allocateNative(layout)) {
-                    MemorySegment slice = (MemorySegment) slicer.invoke(null, struct);
-                    assertEquals(slice.byteSize(), fieldLayout.byteSize());
-                }
+                MemorySegment struct = MemorySegment.allocateNative(layout);
+                MemorySegment slice = (MemorySegment) slicer.invoke(null, struct);
+                assertEquals(slice.byteSize(), fieldLayout.byteSize());
             } else {
                 Method getter = cls.getMethod(fieldName + "$get", MemorySegment.class);
                 assertEquals(getter.getReturnType(), type);
@@ -170,11 +169,10 @@ public class TestNested extends JextractToolRunner {
                 assertEquals(setter.getReturnType(), void.class);
 
                 Object zero = MethodHandles.zero(type).invoke();
-                try (MemorySegment struct = MemorySegment.allocateNative(layout)) {
-                    setter.invoke(null, struct, zero);
-                    Object actual = getter.invoke(null, struct);
-                    assertEquals(actual, zero);
-                }
+                MemorySegment struct = MemorySegment.allocateNative(layout);
+                setter.invoke(null, struct, zero);
+                Object actual = getter.invoke(null, struct);
+                assertEquals(actual, zero);
             }
         } catch (Throwable t) {
             fail("Unexpected exception", t);

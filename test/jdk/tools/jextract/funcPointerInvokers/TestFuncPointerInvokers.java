@@ -22,12 +22,13 @@
  */
 
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
+
+import test.jextract.funcpointers.NativeScope;
 import static test.jextract.funcpointers.func_h.*;
 
 /*

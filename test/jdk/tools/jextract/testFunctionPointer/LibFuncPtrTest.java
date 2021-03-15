@@ -43,8 +43,7 @@ import static test.jextract.fp.funcPtr_h.*;
 public class LibFuncPtrTest {
     @Test
     public void test() {
-        try (var handle = func$f.allocate(x -> x*x)) {
-            assertEquals(func(handle, 35), 35 * 35 + 35);
-        } //deallocate
+        var handle = func$f.allocate(x -> x*x);
+        assertEquals(func(handle, 35), 35 * 35 + 35);
     }
 }

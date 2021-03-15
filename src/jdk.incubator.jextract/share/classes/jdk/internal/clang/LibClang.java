@@ -41,8 +41,7 @@ public class LibClang {
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private final static MemorySegment disableCrashRecovery =
-            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
-                .withAccessModes(MemorySegment.READ);
+            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY);
 
     static {
         if (!CRASH_RECOVERY) {
