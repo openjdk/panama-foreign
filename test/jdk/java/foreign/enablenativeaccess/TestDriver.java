@@ -23,10 +23,17 @@
 
 
 /**
- * @test id=panama
+ * @test id=panama_enable_native_access
  * @build panama_module/*
  * @run main/othervm --enable-native-access=panama_module panama_module/org.openjdk.foreigntest.PanamaMain
  * @summary with --enable-native-access access to specific module Panama unsafe API succeeds
+ */
+
+/**
+ * @test id=panama_comma_separated_enable
+ * @build panama_module/*
+ * @run main/othervm --enable-native-access=com.acme,panama_module panama_module/org.openjdk.foreigntest.PanamaMain
+ * @summary with --enable-native-access access to comma separated list of modules
  */
 
 /**
