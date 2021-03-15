@@ -25,10 +25,12 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.ref.CleanerFactory;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
@@ -66,7 +68,8 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * carrier type can be used to match the native {@code va_list} type.
  * <p>
  * For the linking process to be successful, some requirements must be satisfied; if {@code M} and {@code F} are
- * the method type and the function descriptor, respectively, used during the linking process, then it must be that:
+ * the method type (obtained after dropping any prefix arguments) and the function descriptor, respectively,
+ * used during the linking process, then it must be that:
  * <ul>
  *     <li>The arity of {@code M} is the same as that of {@code F};</li>
  *     <li>If the return type of {@code M} is {@code void}, then {@code F} should have no return layout
@@ -126,8 +129,12 @@ public interface CLinker {
     }
 
     /**
-     * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
+     * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
      * which can be used to call a target foreign function at the given address.
+     * <p>
+     * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
+     * an additional prefix parameter, of type {@link SegmentAllocator}), which will be used by the linker runtime
+     * to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -144,11 +151,40 @@ public interface CLinker {
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
-     * which can be used to call a target foreign function at an address passed in as a leading argument.
+     * which can be used to call a target foreign function at the given address.
      * <p>
-     * For a given method type {@code (As...) -> R}, the returned method handle shall have the method type
-     * {@code (Addressable, As...) -> R}, where {@code As...} are zero or more parameter types, and {@code R}
-     * is the return type (which can be {@code void}).
+     * If the provided method type's return type is {@code MemorySegment}, then the provided allocator will be used by
+     * the linker runtime to allocate structs returned by-value.
+     *
+     * @see LibraryLookup#lookup(String)
+     *
+     * @param symbol    downcall symbol.
+     * @param allocator the segment allocator.
+     * @param type      the method type.
+     * @param function  the function descriptor.
+     * @return the downcall method handle.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
+     */
+    default MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
+        Objects.requireNonNull(symbol);
+        Objects.requireNonNull(allocator);
+        MethodHandle downcall = MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
+        if (type.returnType().equals(MemorySegment.class)) {
+            downcall = MethodHandles.insertArguments(downcall, 0, allocator);
+        }
+        return downcall;
+    }
+
+
+    /**
+     * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
+     * used to call a target foreign function at an address.
+     * The resulting method handle features a prefix parameter (as the first parameter) corresponding to the address, of
+     * type {@link Addressable}.
+     * <p>
+     * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features an
+     * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
+     * which will be used by the linker runtime to allocate structs returned by-value.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -160,20 +196,36 @@ public interface CLinker {
     MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
-     * Allocates a native segment whose base address (see {@link MemorySegment#address}) can be
-     * passed to other foreign functions (as a function pointer); calling such a function pointer
-     * from native code will result in the execution of the provided method handle.
+     * Allocates a native segment with given scope which can be passed to other foreign functions (as a function pointer);
+     * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned segment is <a href=MemorySegment.html#thread-confinement>shared</a>, and it only features
-     * the {@link MemorySegment#CLOSE} access mode. When the returned segment is closed,
+     * <p>The returned segment is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.</p>
+     *
+     * @param target   the target method handle.
+     * @param function the function descriptor.
+     * @param scope the upcall stub scope.
+     * @return the native stub segment.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     */
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
+
+    /**
+     * Allocates a native segment which can be passed to other foreign functions (as a function pointer);
+     * calling such a function pointer from native code will result in the execution of the provided method handle.
+     * <p>
+     * The returned segment is associated with a fresh, shared, resource scope,
+     * which will be automatically closed when the segment (or views derived from it) is no longer in use.
+     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
+    default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
+        return upcallStub(target, function, MemoryScope.createDefault());
+    }
 
     /**
      * The layout for the {@code char} C type
@@ -274,7 +326,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, NativeScope scope) {
+    static MemorySegment toCString(String str, SegmentAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(scope);
         return toCString(str.getBytes(), scope);
@@ -294,7 +346,7 @@ public interface CLinker {
      * @param scope the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, Charset charset, NativeScope scope) {
+    static MemorySegment toCString(String str, Charset charset, SegmentAllocator scope) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
         Objects.requireNonNull(scope);
@@ -395,7 +447,7 @@ public interface CLinker {
         return segment;
     }
 
-    private static MemorySegment toCString(byte[] bytes, NativeScope scope) {
+    private static MemorySegment toCString(byte[] bytes, SegmentAllocator scope) {
         MemorySegment addr = scope.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
@@ -458,15 +510,15 @@ public interface CLinker {
      * explicitly permitted types.
      *
      */
-    interface VaList extends Addressable, AutoCloseable {
+    interface VaList extends Addressable {
 
         /**
          * Reads the next value as an {@code int} and advances this va list's position.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code int}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code int}
          */
         int vargAsInt(MemoryLayout layout);
@@ -476,8 +528,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code long}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code long}
          */
         long vargAsLong(MemoryLayout layout);
@@ -487,8 +539,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code double}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code double}
          */
         double vargAsDouble(MemoryLayout layout);
@@ -498,8 +550,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemoryAddress}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemoryAddress}
          */
         MemoryAddress vargAsAddress(MemoryLayout layout);
@@ -512,8 +564,8 @@ public interface CLinker {
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
         MemorySegment vargAsSegment(MemoryLayout layout);
@@ -521,54 +573,39 @@ public interface CLinker {
         /**
          * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
          * <p>
-         * The memory segment returned by this method will be allocated using the given {@code NativeScope}.
+         * The memory segment returned by this method will be allocated using the given {@code NativeAllocator}.
          *
          * @param layout the layout of the value
          * @param scope the scope to allocate the segment in
          * @return the value read as an {@code MemorySegment}
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
-        MemorySegment vargAsSegment(MemoryLayout layout, NativeScope scope);
+        MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope);
 
         /**
          * Skips a number of elements with the given memory layouts, and advances this va list's position.
          *
          * @param layouts the layout of the value
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          */
         void skip(MemoryLayout... layouts);
 
         /**
-         * A predicate used to check if the memory associated with the C {@code va_list} modelled
-         * by this instance is still valid to use.
-         *
-         * @return true, if the memory associated with the C {@code va_list} modelled by this instance is still valid
-         * @see #close()
+         * Returns the resource scope associated with this instance.
+         * @return the resource scope associated with this instance.
          */
-        boolean isAlive();
-
-        /**
-         * Releases the underlying C {@code va_list} modelled by this instance, and any native memory that is attached
-         * to this va list that holds its elements (see {@link VaList#make(Consumer)}).
-         * <p>
-         * After calling this method, {@link #isAlive()} will return {@code false} and further attempts to read values
-         * from this va list will result in an exception.
-         *
-         * @see #isAlive()
-         */
-        void close();
+        ResourceScope scope();
 
         /**
          * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
          * starting from the current position, without affecting the state of the original va list, essentially
          * allowing the elements to be traversed multiple times.
          * <p>
-         * If this method needs to allocate native memory for the copy, it will use
-         * {@link MemorySegment#allocateNative(long, long)} to do so. {@link #close()} will have to be called on the
-         * returned va list instance to release the allocated memory.
+         * Any native resource required by the execution of this method will be allocated in the resource scope
+         * associated with this instance (see {@link #scope()}).
          * <p>
          * This method only copies the va list cursor itself and not the memory that may be attached to the
          * va list which holds its elements. That means that if this va list was created with the
@@ -576,30 +613,10 @@ public interface CLinker {
          * elements, making the copy unusable.
          *
          * @return a copy of this C {@code va_list}.
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
          */
         VaList copy();
-
-        /**
-         * Copies this C {@code va_list} at its current position. Copying is useful to traverse the va list's elements
-         * starting from the current position, without affecting the state of the original va list, essentially
-         * allowing the elements to be traversed multiple times.
-         * <p>
-         * If this method needs to allocate native memory for the copy, it will use
-         * the given {@code NativeScope} to do so.
-         * <p>
-         * This method only copies the va list cursor itself and not the memory that may be attached to the
-         * va list which holds its elements. That means that if this va list was created with the
-         * {@link #make(Consumer)} method, closing this va list will also release the native memory that holds its
-         * elements, making the copy unusable.
-         *
-         * @param scope the scope to allocate the copy in
-         * @return a copy of this C {@code va_list}.
-         * @throws IllegalStateException if the C {@code va_list} associated with this instance is no longer valid
-         * (see {@link #close()}).
-         */
-        VaList copy(NativeScope scope);
 
         /**
          * Returns the memory address of the C {@code va_list} associated with this instance.
@@ -610,7 +627,8 @@ public interface CLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
+         * backed by the {@link ResourceScope#globalScope() global} resource scope.
          * <p>
          * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -620,20 +638,35 @@ public interface CLinker {
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
         static VaList ofAddressRestricted(MemoryAddress address) {
-            Utils.checkRestrictedAccess("VaList.ofAddressRestricted");
-            Objects.requireNonNull(address);
-            return SharedUtils.newVaListOfAddress(address);
+            return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
         }
 
         /**
-         * Constructs a new {@code VaList} using a builder (see {@link Builder}).
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
+         * with given resource scope.
+         * <p>
+         * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+         * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+         * restricted methods, and use safe and supported functionalities, where possible.
+         *
+         * @param address a memory address pointing to an existing C {@code va_list}.
+         * @param scope the resource scope to be associated with the returned {@code VaList} instance.
+         * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
+         */
+        static VaList ofAddressRestricted(MemoryAddress address, ResourceScope scope) {
+            Utils.checkRestrictedAccess("VaList.ofAddressRestricted");
+            Objects.requireNonNull(address);
+            Objects.requireNonNull(scope);
+            return SharedUtils.newVaListOfAddress(address, scope);
+        }
+
+        /**
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a fresh shared,
+         * non-closeable resource scope (see {@link ResourceScope}).
          * <p>
          * If this method needs to allocate native memory for the va list, it will use
-         * {@link MemorySegment#allocateNative(long, long)} to do so.
-         * <p>
-         * This method will allocate native memory to hold the elements in the va list. This memory
-         * will be 'attached' to the returned va list instance, and will be released when {@link VaList#close()}
-         * is called.
+         * {@link MemorySegment#allocateNative(long, long, ResourceScope)} to do so, where the resource scope
+         * used for the allocation is the valist scope itself (see {@link VaList#scope()}).
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.
@@ -644,17 +677,17 @@ public interface CLinker {
          */
         static VaList make(Consumer<Builder> actions) {
             Objects.requireNonNull(actions);
-            return SharedUtils.newVaList(actions, MemorySegment::allocateNative);
+            return SharedUtils.newVaList(actions, MemoryScope.createDefault());
         }
 
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}).
          * <p>
          * If this method needs to allocate native memory for the va list, it will use
-         * the given {@code NativeScope} to do so.
+         * the given {@code NativeAllocator} to do so.
          * <p>
          * This method will allocate native memory to hold the elements in the va list. This memory
-         * will be managed by the given {@code NativeScope}, and will be released when the scope is closed.
+         * will be managed by the given {@code NativeAllocator}, and will be released when the scope is closed.
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.
@@ -664,10 +697,10 @@ public interface CLinker {
          * @param scope the scope to be used for the valist allocation.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
          */
-        static VaList make(Consumer<Builder> actions, NativeScope scope) {
+        static VaList make(Consumer<Builder> actions, ResourceScope scope) {
             Objects.requireNonNull(actions);
             Objects.requireNonNull(scope);
-            return SharedUtils.newVaList(actions, SharedUtils.Allocator.ofScope(scope));
+            return SharedUtils.newVaList(actions, scope);
         }
 
         /**
@@ -750,7 +783,7 @@ public interface CLinker {
      * A C type kind. Each kind corresponds to a particular C language builtin type, and can be attached to
      * {@link ValueLayout} instances using the {@link MemoryLayout#withAttribute(String, Constable)} in order
      * to obtain a layout which can be classified accordingly by {@link CLinker#downcallHandle(Addressable, MethodType, FunctionDescriptor)}
-     * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor)}.
+     * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}.
      */
     enum TypeKind {
         /**

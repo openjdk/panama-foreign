@@ -40,7 +40,9 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +56,7 @@ import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 @Test
-public class StdLibTest {
+public class StdLibTest extends NativeTestHelper {
 
     final static CLinker abi = CLinker.getInstance();
 
@@ -206,8 +208,9 @@ public class StdLibTest {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (MemorySegment buf = MemorySegment.allocateNative(s1.length() + s2.length() + 1) ;
-                 MemorySegment other = toCString(s2)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment buf = scope.allocate(s1.length() + s2.length() + 1);
+                MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
                     setByteAtOffset(buf, i, (byte)chars[(int)i]);
@@ -218,26 +221,30 @@ public class StdLibTest {
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (MemorySegment ns1 = toCString(s1) ;
-                 MemorySegment ns2 = toCString(s2)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment ns1 = toCString(s1, scope);
+                MemorySegment ns2 = toCString(s2, scope);
                 return (int)strcmp.invokeExact(ns1.address(), ns2.address());
             }
         }
 
         int puts(String msg) throws Throwable {
-            try (MemorySegment s = toCString(msg)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment s = toCString(msg, scope);
                 return (int)puts.invokeExact(s.address());
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (MemorySegment s = toCString(msg)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment s = toCString(msg, scope);
                 return (int)strlen.invokeExact(s.address());
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (MemorySegment time = MemorySegment.allocateNative(8)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment time = scope.allocate(8);
                 setLong(time, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
             }
@@ -286,13 +293,12 @@ public class StdLibTest {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            try (NativeScope scope = NativeScope.unboundedScope()) {
+            try (NativeScope scope = new NativeScope()) {
 
                 MemorySegment nativeArr = scope.allocateArray(C_INT, arr);
 
                 //call qsort
-                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction);
-                qsortUpcallStub = qsortUpcallStub.handoff(scope);
+                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope.scope());
 
                 qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.address());
 
@@ -311,23 +317,18 @@ public class StdLibTest {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (MemorySegment formatStr = toCString(format)) {
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment formatStr = toCString(format, scope);
                 return (int)specializedPrintf(args).invokeExact(formatStr.address(),
-                        args.stream().map(a -> a.nativeValue).toArray());
+                        args.stream().map(a -> a.nativeValue(scope)).toArray());
             }
         }
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
-            try (MemorySegment formatStr = toCString(format)) {
-                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b)));
-                int result = (int)vprintf.invokeExact(formatStr.address(), vaList);
-                try {
-                    vaList.close();
-                }
-                catch (UnsupportedOperationException e) {
-                    assertEquals(e.getMessage(), "Empty VaList");
-                }
-                return result;
+            try (NativeScope scope = new NativeScope()) {
+                MemorySegment formatStr = toCString(format, scope);
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope.scope());
+                return (int)vprintf.invokeExact(formatStr.address(), vaList);
             }
         }
 
@@ -398,38 +399,42 @@ public class StdLibTest {
                 .toArray(Object[][]::new);
     }
 
-    enum PrintfArg implements Consumer<VaList.Builder> {
+    enum PrintfArg implements BiConsumer<VaList.Builder, NativeScope> {
 
-        INTEGRAL(int.class, asVarArg(C_INT), "%d", 42, 42, VaList.Builder::vargFromInt),
-        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", toCString("str").address(), "str", VaList.Builder::vargFromAddress),
-        CHAR(byte.class, asVarArg(C_CHAR), "%c", (byte) 'h', 'h', (builder, layout, value) -> builder.vargFromInt(C_INT, (int)value)),
-        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", 1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
+        INTEGRAL(int.class, asVarArg(C_INT), "%d", scope -> 42, 42, VaList.Builder::vargFromInt),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", scope -> toCString("str", scope).address(), "str", VaList.Builder::vargFromAddress),
+        CHAR(byte.class, asVarArg(C_CHAR), "%c", scope -> (byte) 'h', 'h', (builder, layout, value) -> builder.vargFromInt(C_INT, (int)value)),
+        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", scope ->1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
 
         final Class<?> carrier;
         final ValueLayout layout;
         final String format;
-        final Object nativeValue;
+        final Function<NativeScope, ?> nativeValueFactory;
         final Object javaValue;
         @SuppressWarnings("rawtypes")
         final VaListBuilderCall builderCall;
 
-        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Z nativeValue, Object javaValue, VaListBuilderCall<Z> builderCall) {
+        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Function<NativeScope, Z> nativeValueFactory, Object javaValue, VaListBuilderCall<Z> builderCall) {
             this.carrier = carrier;
             this.layout = layout;
             this.format = format;
-            this.nativeValue = nativeValue;
+            this.nativeValueFactory = nativeValueFactory;
             this.javaValue = javaValue;
             this.builderCall = builderCall;
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public void accept(VaList.Builder builder) {
-            builderCall.build(builder, layout, nativeValue);
+        public void accept(VaList.Builder builder, NativeScope scope) {
+            builderCall.build(builder, layout, nativeValueFactory.apply(scope));
         }
 
         interface VaListBuilderCall<V> {
             void build(VaList.Builder builder, ValueLayout layout, V value);
+        }
+
+        public Object nativeValue(NativeScope scope) {
+            return nativeValueFactory.apply(scope);
         }
     }
 

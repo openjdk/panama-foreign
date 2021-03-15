@@ -28,9 +28,10 @@ import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import jdk.internal.invoke.NativeEntryPoint;
 import jdk.internal.invoke.VMStorageProxy;
 import sun.security.action.GetPropertyAction;
@@ -47,11 +48,12 @@ import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
+import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
+import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.internal.foreign.abi.SharedUtils.DEFAULT_ALLOCATOR;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
@@ -74,6 +76,8 @@ public class ProgrammableInvoker {
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
     private static final MethodHandle MH_ADDR_TO_LONG;
+    private static final MethodHandle MH_WRAP_ALLOCATOR;
+
     private static final Map<ABIDescriptor, Long> adapterStubs = new ConcurrentHashMap<>();
 
     private static final MethodHandle EMPTY_OBJECT_ARRAY_HANDLE = MethodHandles.constant(Object[].class, new Object[0]);
@@ -84,7 +88,9 @@ public class ProgrammableInvoker {
             MH_INVOKE_MOVES = lookup.findVirtual(ProgrammableInvoker.class, "invokeMoves",
                     methodType(Object.class, long.class, Object[].class, Binding.VMStore[].class, Binding.VMLoad[].class));
             MH_INVOKE_INTERP_BINDINGS = lookup.findVirtual(ProgrammableInvoker.class, "invokeInterpBindings",
-                    methodType(Object.class, Addressable.class, Object[].class, MethodHandle.class, Map.class, Map.class));
+                    methodType(Object.class, Addressable.class, SegmentAllocator.class, Object[].class, MethodHandle.class, Map.class, Map.class));
+            MH_WRAP_ALLOCATOR = lookup.findStatic(Binding.Context.class, "ofAllocator",
+                    methodType(Binding.Context.class, SegmentAllocator.class));
             MethodHandle MH_Addressable_address = lookup.findVirtual(Addressable.class, "address",
                     methodType(MemoryAddress.class));
             MethodHandle MH_MemoryAddress_toRawLongValue = lookup.findVirtual(MemoryAddress.class, "toRawLongValue",
@@ -162,9 +168,9 @@ public class ProgrammableInvoker {
             Map<VMStorage, Integer> argIndexMap = SharedUtils.indexMap(argMoves);
             Map<VMStorage, Integer> retIndexMap = SharedUtils.indexMap(retMoves);
 
-            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 2, handle, argIndexMap, retIndexMap);
+            handle = insertArguments(MH_INVOKE_INTERP_BINDINGS.bindTo(this), 3, handle, argIndexMap, retIndexMap);
             MethodHandle collectorInterp = makeCollectorHandle(callingSequence.methodType());
-            handle = collectArguments(handle, 1, collectorInterp);
+            handle = collectArguments(handle, 2, collectorInterp);
             handle = handle.asType(handle.type().changeReturnType(callingSequence.methodType().returnType()));
          }
 
@@ -201,15 +207,11 @@ public class ProgrammableInvoker {
     private MethodHandle specialize(MethodHandle leafHandle) {
         MethodType highLevelType = callingSequence.methodType();
 
-        MethodHandle specializedHandle = leafHandle; // initial
+        int argInsertPos = 1;
+        int argContextPos = 1;
 
-        int argInsertPos = 0; // +1 for addr
-        int argAllocatorPos = -1;
-        if (bufferCopySize > 0) {
-            argAllocatorPos = 1;
-            specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Allocator.class);
-            argInsertPos++;
-        }
+        MethodHandle specializedHandle = dropArguments(leafHandle, argContextPos, Binding.Context.class);
+
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             List<Binding> bindings = callingSequence.argumentBindings(i);
             argInsertPos += bindings.stream().filter(Binding.VMStore.class::isInstance).count() + 1;
@@ -219,27 +221,37 @@ public class ProgrammableInvoker {
                 if (binding.tag() == Binding.Tag.VM_STORE) {
                     argInsertPos--;
                 } else {
-                    specializedHandle = binding.specialize(specializedHandle, argInsertPos, argAllocatorPos);
+                    specializedHandle = binding.specialize(specializedHandle, argInsertPos, argContextPos);
                 }
             }
         }
 
         if (highLevelType.returnType() != void.class) {
             MethodHandle returnFilter = identity(highLevelType.returnType());
-            int retAllocatorPos = 0;
+            int retContextPos = 0;
             int retInsertPos = 1;
-            returnFilter = dropArguments(returnFilter, retAllocatorPos, Allocator.class);
+            returnFilter = dropArguments(returnFilter, retContextPos, Binding.Context.class);
             List<Binding> bindings = callingSequence.returnBindings();
             for (int j = bindings.size() - 1; j >= 0; j--) {
                 Binding binding = bindings.get(j);
-                returnFilter = binding.specialize(returnFilter, retInsertPos, retAllocatorPos);
+                returnFilter = binding.specialize(returnFilter, retInsertPos, retContextPos);
             }
-            returnFilter = insertArguments(returnFilter, retAllocatorPos, DEFAULT_ALLOCATOR);
-            specializedHandle = MethodHandles.filterReturnValue(specializedHandle, returnFilter);
+            returnFilter = MethodHandles.filterArguments(returnFilter, retContextPos, MH_WRAP_ALLOCATOR);
+            // (SegmentAllocator, Addressable, Context, ...) -> ...
+            specializedHandle = MethodHandles.collectArguments(returnFilter, retInsertPos, specializedHandle);
+            // (Addressable, SegmentAllocator, Context, ...) -> ...
+            specializedHandle = SharedUtils.swapArguments(specializedHandle, 0, 1); // normalize parameter order
+        } else {
+            specializedHandle = MethodHandles.dropArguments(specializedHandle, 1, SegmentAllocator.class);
         }
 
+        // now bind the internal context parameter
+
+        argContextPos++; // skip over the return SegmentAllocator (inserted by the above code)
         if (bufferCopySize > 0) {
-            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argAllocatorPos, bufferCopySize, false);
+            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);
+        } else {
+            specializedHandle = insertArguments(specializedHandle, argContextPos, Binding.Context.DUMMY);
         }
         return specializedHandle;
     }
@@ -255,9 +267,10 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        try (MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
             if (stackArgsBytes > 0) {
-                stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8);
+                stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);
             }
 
             VH_LONG.set(argBuffer.asSlice(layout.arguments_next_pc), addr);
@@ -300,17 +313,16 @@ public class ProgrammableInvoker {
                 }
                 return returns;
             }
-        } finally {
-            if (stackArgsSeg != null) {
-                stackArgsSeg.close();
-            }
         }
     }
 
-    Object invokeInterpBindings(Addressable address, Object[] args, MethodHandle leaf,
+    Object invokeInterpBindings(Addressable address, SegmentAllocator allocator, Object[] args, MethodHandle leaf,
                                 Map<VMStorage, Integer> argIndexMap,
                                 Map<VMStorage, Integer> retIndexMap) throws Throwable {
-        try (Allocator unboxAllocator = SharedUtils.makeAllocator(bufferCopySize)) {
+        Binding.Context unboxContext = bufferCopySize != 0
+                ? Binding.Context.ofBoundedAllocator(bufferCopySize)
+                : Binding.Context.DUMMY;
+        try (unboxContext) {
             // do argument processing, get Object[] as result
             Object[] leafArgs = new Object[leaf.type().parameterCount()];
             leafArgs[0] = address; // addr
@@ -319,7 +331,7 @@ public class ProgrammableInvoker {
                 BindingInterpreter.unbox(arg, callingSequence.argumentBindings(i),
                         (storage, type, value) -> {
                             leafArgs[argIndexMap.get(storage) + 1] = value; // +1 to skip addr
-                        }, unboxAllocator);
+                        }, unboxContext);
             }
 
             // call leaf
@@ -331,10 +343,10 @@ public class ProgrammableInvoker {
             } else if (o instanceof Object[]) {
                 Object[] oArr = (Object[]) o;
                 return BindingInterpreter.box(callingSequence.returnBindings(),
-                        (storage, type) -> oArr[retIndexMap.get(storage)], DEFAULT_ALLOCATOR);
+                        (storage, type) -> oArr[retIndexMap.get(storage)], Binding.Context.ofAllocator(allocator));
             } else {
                 return BindingInterpreter.box(callingSequence.returnBindings(), (storage, type) -> o,
-                        DEFAULT_ALLOCATOR);
+                        Binding.Context.ofAllocator(allocator));
             }
         }
     }

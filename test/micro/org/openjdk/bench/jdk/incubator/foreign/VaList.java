@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -75,13 +76,13 @@ public class VaList {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (CLinker.VaList vaList = CLinker.VaList.make(b ->
-            b.vargFromInt(C_INT, 1)
-             .vargFromDouble(C_DOUBLE, 2D)
-             .vargFromLong(C_LONG_LONG, 3L)
-        )) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            CLinker.VaList vaList = CLinker.VaList.make(b ->
+                    b.vargFromInt(C_INT, 1)
+                            .vargFromDouble(C_DOUBLE, 2D)
+                            .vargFromLong(C_LONG_LONG, 3L), scope);
             MH_vaList.invokeExact(3,
-                                  vaList);
+                    vaList);
         }
     }
 }

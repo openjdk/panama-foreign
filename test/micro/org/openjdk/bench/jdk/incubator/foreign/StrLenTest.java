@@ -31,7 +31,8 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -58,7 +59,10 @@ import static jdk.incubator.foreign.CLinker.*;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class StrLenTest {
 
-    NativeScope scope = NativeScope.unboundedScope();
+    ResourceScope scope = ResourceScope.ofConfined();
+
+    SegmentAllocator segmentAllocator;
+    SegmentAllocator arenaAllocator = SegmentAllocator.arenaUnbounded(scope);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -94,6 +98,7 @@ public class StrLenTest {
     @Setup
     public void setup() {
         str = makeString(size);
+        segmentAllocator = SegmentAllocator.of(MemorySegment.allocateNative(size + 1));
     }
 
     @TearDown
@@ -108,14 +113,20 @@ public class StrLenTest {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (MemorySegment segment = CLinker.toCString(str)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = CLinker.toCString(str, SegmentAllocator.of(scope));
             return (int)STRLEN.invokeExact(segment.address());
         }
     }
 
     @Benchmark
     public int panama_strlen_scope() throws Throwable {
-        return (int)STRLEN.invokeExact(CLinker.toCString(str, scope).address());
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, arenaAllocator).address());
+    }
+
+    @Benchmark
+    public int panama_strlen_recycle() throws Throwable {
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
     }
 
     @Benchmark
@@ -138,7 +149,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = CLinker.allocateMemoryRestricted(len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
@@ -148,7 +159,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
