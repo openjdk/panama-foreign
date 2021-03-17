@@ -169,7 +169,7 @@ public class RestrictedMethodsFinder implements Plugin {
 
     @Override
     public String getName() {
-        return "panama";
+        return "RestrictedMethodsFinder";
     }
 
     public boolean autoStart() {

@@ -110,7 +110,7 @@ $(eval $(call SetupJavaCompilation, $(MODULE), \
     JAVAC_FLAGS := \
         $(DOCLINT) \
         $(JAVAC_FLAGS) \
-        -Xplugin:"panama $(SUPPORT_OUTPUTDIR)/link_opt/restricted_native_methods.txt" \
+        -Xplugin:"RestrictedMethodsFinder $(SUPPORT_OUTPUTDIR)/link_opt/restricted_native_methods.txt" \
         --module-source-path $(MODULESOURCEPATH) \
         --module-path $(MODULEPATH) \
         --system none, \
