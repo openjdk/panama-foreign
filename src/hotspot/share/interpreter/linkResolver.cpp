@@ -670,7 +670,13 @@ void LinkResolver::check_restricted_method(const LinkInfo& link_info,
   if (link_info.current_klass() != NULL) {
     if (resolved_method->is_restricted_native()) {
       ModuleEntry* module = link_info.current_klass()->module();
-      module->check_native_module(vmSymbols::java_lang_IllegalAccessException(), CHECK);
+      if (!module->is_native()) {
+        ResourceMark rm(THREAD);
+        stringStream ss;
+        ss.print("Illegal native access from module: %s",
+            module->name() == NULL ? UNNAMED_MODULE : module->name()->as_C_string());
+        THROW_MSG(vmSymbols::java_lang_IllegalAccessException(), ss.as_string());
+      }
     }
   }
 }

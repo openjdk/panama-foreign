@@ -206,6 +206,10 @@ void ModuleEntry::set_read_walk_required(ClassLoaderData* m_loader_data) {
   }
 }
 
+bool ModuleEntry::is_native() const {
+  return _is_native || (name() == NULL && Modules::is_all_unnamed_native_access());
+}
+
 // Set whether the module is open, i.e. all its packages are unqualifiedly exported
 void ModuleEntry::set_is_open(bool is_open) {
   assert_lock_strong(Module_lock);
@@ -760,18 +764,4 @@ void ModuleEntryTable::verify() {
 
 void ModuleEntry::verify() {
   guarantee(loader_data() != NULL, "A module entry must be associated with a loader.");
-}
-
-static bool is_native_access(ModuleEntry* module) {
-  return module->is_native() || (module->name() == NULL && Modules::is_all_unnamed_native_access());
-}
-
-void ModuleEntry::check_native_module(Symbol* exception_symbol, TRAPS) {
-  if (!is_native_access(this)) {
-    ResourceMark rm(THREAD);
-    stringStream ss;
-    ss.print("Illegal native access from module: %s",
-            name() == NULL ? UNNAMED_MODULE : name()->as_C_string());
-    THROW_MSG(vmSymbols::java_lang_IllegalAccessException(), ss.as_string());
-  }
 }
