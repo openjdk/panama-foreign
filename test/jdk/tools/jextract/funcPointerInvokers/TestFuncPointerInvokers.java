@@ -22,6 +22,7 @@
  */
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +49,7 @@ import static test.jextract.funcpointers.func_h.*;
 public class TestFuncPointerInvokers {
     @Test
     public void testStructFieldTypedef() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment bar = Bar.allocate(scope);
             Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
@@ -59,7 +60,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testStructFieldFITypedef() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment bar = Bar.allocate(scope);
             Bar.foo$set(bar, Foo.allocate((i) -> val.set(i), scope).address());
@@ -70,7 +71,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testGlobalTypedef() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             f$set(Foo.allocate((i) -> val.set(i), scope).address());
             f().apply(42);
@@ -80,7 +81,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testGlobalFITypedef() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             f$set(Foo.allocate((i) -> val.set(i), scope).address());
             Foo.ofAddressRestricted(f$get()).apply(42);
@@ -90,7 +91,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testStructFieldFunctionPointer() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment baz = Baz.allocate(scope);
             Baz.fp$set(baz, Baz.fp.allocate((i) -> val.set(i), scope).address());
@@ -101,7 +102,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testStructFieldFIFunctionPointer() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             MemorySegment baz = Baz.allocate(scope);
             Baz.fp$set(baz, Baz.fp.allocate((i) -> val.set(i), scope).address());
@@ -112,7 +113,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testGlobalFunctionPointer() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             fp$set(fp.allocate((i) -> val.set(i), scope).address());
             fp().apply(42);
@@ -122,7 +123,7 @@ public class TestFuncPointerInvokers {
 
     @Test
     public void testGlobalFIFunctionPointer() {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             AtomicInteger val = new AtomicInteger(-1);
             fp$set(fp.allocate((i) -> val.set(i), scope).address());
             fp.ofAddressRestricted(fp$get()).apply(42);

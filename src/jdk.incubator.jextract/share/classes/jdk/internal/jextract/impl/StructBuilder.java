@@ -24,16 +24,12 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
-import java.lang.invoke.MethodType;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,13 +87,14 @@ class StructBuilder extends ConstantBuilder {
     JavaSourceBuilder classEnd() {
         if (!inAnonymousNested()) {
             emitSizeof();
+            emitAllocatorAllocate();
             emitAllocate();
             emitScopeAllocate();
+            emitAllocatorAllocateArray();
             emitAllocateArray();
             emitScopeAllocateArray();
-            emitAllocatePoiner();
-            emitScopeAllocatePointer();
             emitAsRestricted();
+            emitAsRestrictedScoped();
             return super.classEnd();
         } else {
             // we're in an anonymous struct which got merged into this one, return this very builder and keep it open
@@ -248,7 +245,7 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }\n");
+        append(" MemorySegment allocate() { return allocate(RuntimeHelper.DEFAULT_ALLOCATOR); }\n");
         decrAlign();
     }
 
@@ -256,7 +253,15 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }\n");
+        append(" MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.scoped(scope)); }\n");
+        decrAlign();
+    }
+
+    private void emitAllocatorAllocate() {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }\n");
         decrAlign();
     }
 
@@ -267,7 +272,7 @@ class StructBuilder extends ConstantBuilder {
         append(" MemorySegment allocateArray(int len) {\n");
         incrAlign();
         indent();
-        append("return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
+        append("return allocateArray(len, RuntimeHelper.DEFAULT_ALLOCATOR);\n");
         decrAlign();
         indent();
         append('}');
@@ -278,38 +283,24 @@ class StructBuilder extends ConstantBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment allocateArray(int len, NativeScope scope) {\n");
+        append(" MemorySegment allocateArray(int len, ResourceScope scope) {\n");
         incrAlign();
         indent();
-        append("return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
+        append("return allocateArray(len, SegmentAllocator.scoped(scope));\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
     }
 
-    private void emitAllocatePoiner() {
+    private void emitAllocatorAllocateArray() {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment allocatePointer() {\n");
+        append(" MemorySegment allocateArray(int len, SegmentAllocator allocator) {\n");
         incrAlign();
         indent();
-        append("return MemorySegment.allocateNative(C_POINTER);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-    }
-
-    private void emitScopeAllocatePointer() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocatePointer(NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.allocate(C_POINTER);\n");
+        append("return allocator.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
         decrAlign();
         indent();
         append("}\n");
@@ -321,6 +312,14 @@ class StructBuilder extends ConstantBuilder {
         indent();
         append(MEMBER_MODS);
         append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
+        decrAlign();
+    }
+
+    private void emitAsRestrictedScoped() {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" MemorySegment ofAddressRestricted(MemoryAddress addr, ResourceScope scope) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1, scope); }\n");
         decrAlign();
     }
 

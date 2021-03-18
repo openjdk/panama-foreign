@@ -23,6 +23,7 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246400.*;
 import static org.testng.Assert.assertEquals;
@@ -52,7 +53,7 @@ public class LibTest8246400Test {
     public void testSegmentRegister() {
         MemorySegment sum = null;
         MemorySegment callback = null;
-        try (var scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             var v1 = Vector.allocate(scope);
             Vector.x$set(v1, 1.0);
             Vector.y$set(v1, 0.0);

@@ -84,7 +84,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             indent();
             append("}\n");
             indent();
-            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, ResourceScope scope) {\n");
             incrAlign();
             indent();
             append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
@@ -104,16 +104,13 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             append(MEMBER_MODS + " " + className() + " ofAddressRestricted(MemoryAddress addr) {\n");
             incrAlign();
             indent();
-            append("return new " + className() + "() {\n");
-            incrAlign();
-            indent();
-            append("public " + fiType.returnType().getName() + " apply(");
+            append("return (");
             String delim = "";
             for (int i = 0 ; i < fiType.parameterCount(); i++) {
                 append(delim + fiType.parameterType(i).getName() + " x" + i);
                 delim = ", ";
             }
-            append(") {\n");
+            append(") -> {\n");
             incrAlign();
             indent();
             append("try {\n");
@@ -136,9 +133,6 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             incrAlign();
             indent();
             append("throw new AssertionError(\"should not reach here\", ex$);\n");
-            decrAlign();
-            indent();
-            append("}\n");
             decrAlign();
             indent();
             append("}\n");
