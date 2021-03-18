@@ -26,7 +26,6 @@
 package jdk.internal.foreign.abi.aarch64;
 
 import jdk.incubator.foreign.*;
-import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.misc.Unsafe;
@@ -238,6 +237,11 @@ public class AArch64VaList implements VaList {
     public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
+    }
+
+    @Override
+    public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
+        return vargAsSegment(layout, SegmentAllocator.scoped(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {

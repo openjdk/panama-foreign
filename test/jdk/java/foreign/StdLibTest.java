@@ -41,7 +41,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -56,7 +55,7 @@ import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 @Test
-public class StdLibTest extends NativeTestHelper {
+public class StdLibTest {
 
     final static CLinker abi = CLinker.getInstance();
 
@@ -208,8 +207,8 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
-                MemorySegment buf = scope.allocate(s1.length() + s2.length() + 1);
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                MemorySegment buf = MemorySegment.allocateNative(s1.length() + s2.length() + 1, scope);
                 MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
@@ -221,7 +220,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
                 MemorySegment ns1 = toCString(s1, scope);
                 MemorySegment ns2 = toCString(s2, scope);
                 return (int)strcmp.invokeExact(ns1.address(), ns2.address());
@@ -229,22 +228,22 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int puts(String msg) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)puts.invokeExact(s.address());
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)strlen.invokeExact(s.address());
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
-                MemorySegment time = scope.allocate(8);
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                MemorySegment time = MemorySegment.allocateNative(8, scope);
                 setLong(time, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
             }
@@ -293,12 +292,12 @@ public class StdLibTest extends NativeTestHelper {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            try (NativeScope scope = new NativeScope()) {
-
-                MemorySegment nativeArr = scope.allocateArray(C_INT, arr);
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                SegmentAllocator allocator = SegmentAllocator.scoped(scope);
+                MemorySegment nativeArr = allocator.allocateArray(C_INT, arr);
 
                 //call qsort
-                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope.scope());
+                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope);
 
                 qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.address());
 
@@ -317,7 +316,7 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
                 MemorySegment formatStr = toCString(format, scope);
                 return (int)specializedPrintf(args).invokeExact(formatStr.address(),
                         args.stream().map(a -> a.nativeValue(scope)).toArray());
@@ -325,9 +324,9 @@ public class StdLibTest extends NativeTestHelper {
         }
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
-            try (NativeScope scope = new NativeScope()) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
                 MemorySegment formatStr = toCString(format, scope);
-                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope.scope());
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
                 return (int)vprintf.invokeExact(formatStr.address(), vaList);
             }
         }
@@ -399,7 +398,7 @@ public class StdLibTest extends NativeTestHelper {
                 .toArray(Object[][]::new);
     }
 
-    enum PrintfArg implements BiConsumer<VaList.Builder, NativeScope> {
+    enum PrintfArg implements BiConsumer<VaList.Builder, ResourceScope> {
 
         INTEGRAL(int.class, asVarArg(C_INT), "%d", scope -> 42, 42, VaList.Builder::vargFromInt),
         STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", scope -> toCString("str", scope).address(), "str", VaList.Builder::vargFromAddress),
@@ -409,12 +408,12 @@ public class StdLibTest extends NativeTestHelper {
         final Class<?> carrier;
         final ValueLayout layout;
         final String format;
-        final Function<NativeScope, ?> nativeValueFactory;
+        final Function<ResourceScope, ?> nativeValueFactory;
         final Object javaValue;
         @SuppressWarnings("rawtypes")
         final VaListBuilderCall builderCall;
 
-        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Function<NativeScope, Z> nativeValueFactory, Object javaValue, VaListBuilderCall<Z> builderCall) {
+        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Function<ResourceScope, Z> nativeValueFactory, Object javaValue, VaListBuilderCall<Z> builderCall) {
             this.carrier = carrier;
             this.layout = layout;
             this.format = format;
@@ -425,7 +424,7 @@ public class StdLibTest extends NativeTestHelper {
 
         @Override
         @SuppressWarnings("unchecked")
-        public void accept(VaList.Builder builder, NativeScope scope) {
+        public void accept(VaList.Builder builder, ResourceScope scope) {
             builderCall.build(builder, layout, nativeValueFactory.apply(scope));
         }
 
@@ -433,7 +432,7 @@ public class StdLibTest extends NativeTestHelper {
             void build(VaList.Builder builder, ValueLayout layout, V value);
         }
 
-        public Object nativeValue(NativeScope scope) {
+        public Object nativeValue(ResourceScope scope) {
             return nativeValueFactory.apply(scope);
         }
     }

@@ -549,7 +549,12 @@ public class SharedUtils {
         }
 
         @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope) {
+        public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
+            throw uoe();
+        }
+
+        @Override
+        public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
             throw uoe();
         }
 

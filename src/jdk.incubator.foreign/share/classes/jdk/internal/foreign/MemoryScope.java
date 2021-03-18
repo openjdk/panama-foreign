@@ -26,9 +26,12 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.CleanerFactory;
+import jdk.internal.vm.annotation.Stable;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
@@ -51,6 +54,9 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
     final ResourceList resourceList;
     final boolean closeable;
+    protected final Object ref;
+    @Stable
+    SegmentAllocator allocator;
 
     @Override
     public void addOnClose(Runnable runnable) {
@@ -121,8 +127,6 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         return new SharedScope(ref, cleaner, true);
     }
 
-    protected final Object ref;
-
     /**
      * Closes this scope, executing any cleanup action (where provided).
      * @throws IllegalStateException if this scope is already closed or if this is
@@ -179,6 +183,17 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     @Override
     protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
+    }
+
+    /**
+     * Return a scoped allocator; the instance returned by this method is lazily created and then shared
+     * upon subsequent requests.
+     */
+    public SegmentAllocator allocator() {
+        if (allocator == null) {
+            allocator = (size, align) -> MemorySegment.allocateNative(size, align, this);
+        }
+        return allocator;
     }
 
     public static MemoryScope GLOBAL = new SharedScope( null, null, false) {

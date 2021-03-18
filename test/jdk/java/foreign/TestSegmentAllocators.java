@@ -337,7 +337,7 @@ public class TestSegmentAllocators {
     }
 
     interface AllocationFunction<X> {
-        MemorySegment allocate(SegmentAllocator scope, ValueLayout layout, X value);
+        MemorySegment allocate(SegmentAllocator allocator, ValueLayout layout, X value);
     }
 
     static class AllocationFactory {

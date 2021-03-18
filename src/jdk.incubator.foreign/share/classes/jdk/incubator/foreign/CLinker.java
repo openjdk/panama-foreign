@@ -30,7 +30,6 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.ref.CleanerFactory;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
@@ -39,7 +38,6 @@ import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
 
@@ -323,13 +321,30 @@ public interface CLinker {
      * control over the encoding process is required.
      *
      * @param str the Java string to be converted into a C string.
-     * @param scope the scope to be used for the native segment allocation.
+     * @param allocator the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, SegmentAllocator scope) {
+    static MemorySegment toCString(String str, SegmentAllocator allocator) {
         Objects.requireNonNull(str);
-        Objects.requireNonNull(scope);
-        return toCString(str.getBytes(), scope);
+        Objects.requireNonNull(allocator);
+        return toCString(str.getBytes(), allocator);
+    }
+
+    /**
+     * Converts a Java string into a null-terminated C string, using the platform's default charset,
+     * storing the result into a native memory segment associated with the provided resource scope.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @param scope the resource scope to be associated with the returned segment.
+     * @return a new native memory segment containing the converted C string.
+     */
+    static MemorySegment toCString(String str, ResourceScope scope) {
+        return toCString(str, SegmentAllocator.scoped(scope));
     }
 
     /**
@@ -343,14 +358,32 @@ public interface CLinker {
      *
      * @param str the Java string to be converted into a C string.
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the C string.
-     * @param scope the scope to be used for the native segment allocation.
+     * @param allocator the scope to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
-    static MemorySegment toCString(String str, Charset charset, SegmentAllocator scope) {
+    static MemorySegment toCString(String str, Charset charset, SegmentAllocator allocator) {
         Objects.requireNonNull(str);
         Objects.requireNonNull(charset);
-        Objects.requireNonNull(scope);
-        return toCString(str.getBytes(charset), scope);
+        Objects.requireNonNull(allocator);
+        return toCString(str.getBytes(charset), allocator);
+    }
+
+    /**
+     * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
+     * storing the result into a new native memory segment native memory segment associated with the provided resource scope.
+     * <p>
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement byte array.  The
+     * {@link java.nio.charset.CharsetEncoder} class should be used when more
+     * control over the encoding process is required.
+     *
+     * @param str the Java string to be converted into a C string.
+     * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the C string.
+     * @param scope the resource scope to be associated with the returned segment.
+     * @return a new native memory segment containing the converted C string.
+     */
+    static MemorySegment toCString(String str, Charset charset, ResourceScope scope) {
+        return toCString(str, charset, SegmentAllocator.scoped(scope));
     }
 
     /**
@@ -447,8 +480,8 @@ public interface CLinker {
         return segment;
     }
 
-    private static MemorySegment toCString(byte[] bytes, SegmentAllocator scope) {
-        MemorySegment addr = scope.allocate(bytes.length + 1, 1L);
+    private static MemorySegment toCString(byte[] bytes, SegmentAllocator allocator) {
+        MemorySegment addr = allocator.allocate(bytes.length + 1, 1L);
         copy(addr, bytes);
         return addr;
     }
@@ -573,16 +606,30 @@ public interface CLinker {
         /**
          * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
          * <p>
-         * The memory segment returned by this method will be allocated using the given {@code NativeAllocator}.
+         * The memory segment returned by this method will be allocated using the given {@link SegmentAllocator}.
          *
          * @param layout the layout of the value
-         * @param scope the scope to allocate the segment in
+         * @param allocator the scope to be used for the native segment allocation
          * @return the value read as an {@code MemorySegment}
          * @throws IllegalStateException if the resource scope associated with this instance has been closed
          * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
          */
-        MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator scope);
+        MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator);
+
+        /**
+         * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
+         * <p>
+         * The memory segment returned by this method will be associated with the given {@link ResourceScope}.
+         *
+         * @param layout the layout of the value
+         * @param scope the resource scope to be associated with the returned segment
+         * @return the value read as an {@code MemorySegment}
+         * @throws IllegalStateException if the resource scope associated with this instance has been closed
+         * (see {@link #scope()}).
+         * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
+         */
+        MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope);
 
         /**
          * Skips a number of elements with the given memory layouts, and advances this va list's position.
@@ -662,11 +709,11 @@ public interface CLinker {
 
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a fresh shared,
-         * non-closeable resource scope (see {@link ResourceScope}).
+         * non-closeable {@link ResourceScope resource scope}.
          * <p>
-         * If this method needs to allocate native memory for the va list, it will use
-         * {@link MemorySegment#allocateNative(long, long, ResourceScope)} to do so, where the resource scope
-         * used for the allocation is the valist scope itself (see {@link VaList#scope()}).
+         * If this method needs to allocate native memory, such memory will be managed by the same scope which also
+         * manages the returned valist instance; as such, this memory will be released only when the returned
+         * valist instance becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.
@@ -681,13 +728,11 @@ public interface CLinker {
         }
 
         /**
-         * Constructs a new {@code VaList} using a builder (see {@link Builder}).
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a given
+         * {@link ResourceScope resource scope}.
          * <p>
-         * If this method needs to allocate native memory for the va list, it will use
-         * the given {@code NativeAllocator} to do so.
-         * <p>
-         * This method will allocate native memory to hold the elements in the va list. This memory
-         * will be managed by the given {@code NativeAllocator}, and will be released when the scope is closed.
+         * If this method needs to allocate native memory, such memory will be managed by the given
+         * {@link ResourceScope resource scope}, and will be released when the resource scope is {@link ResourceScope#close closed}.
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.

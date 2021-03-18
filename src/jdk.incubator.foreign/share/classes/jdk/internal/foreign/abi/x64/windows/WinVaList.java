@@ -105,6 +105,11 @@ class WinVaList implements VaList {
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
     }
 
+    @Override
+    public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
+        return vargAsSegment(layout, SegmentAllocator.scoped(scope));
+    }
+
     private Object read(Class<?> carrier, MemoryLayout layout) {
         return read(carrier, layout, MemorySegment::allocateNative);
     }
