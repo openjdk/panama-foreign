@@ -24,25 +24,11 @@
 package org.openjdk.foreigntest;
 
 import jdk.incubator.foreign.*;
-import org.testng.annotations.Test;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 
-public class PanamaMainUnnamedModule {
-   @Test
-   public void testReflection() throws Throwable {
+public class PanamaMainReflection {
+   public static void main(String[] args) throws Throwable {
        Method method = CLinker.class.getDeclaredMethod("getInstance");
        method.invoke(null);
-   }
-
-   @Test
-   public void testLookup() throws Throwable {
-       MethodHandles.lookup().findStatic(CLinker.class, "getInstance", MethodType.methodType(CLinker.class));
-   }
-
-   @Test
-   public void testDirectAccess() throws Throwable {
-       CLinker.getInstance();
    }
 }
