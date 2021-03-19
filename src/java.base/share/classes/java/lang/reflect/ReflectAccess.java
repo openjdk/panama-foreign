@@ -42,7 +42,7 @@ class ReflectAccess implements jdk.internal.access.JavaLangReflectAccess {
                                              byte[] annotations,
                                              byte[] parameterAnnotations)
     {
-        return new Constructor<>(0, declaringClass,
+        return new Constructor<>(declaringClass,
                                   parameterTypes,
                                   checkedExceptions,
                                   modifiers,

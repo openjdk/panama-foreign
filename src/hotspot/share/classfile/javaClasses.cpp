@@ -2917,9 +2917,7 @@ void java_lang_LiveStackFrameInfo::set_mode(oop element, int value) {
 }
 
 
-// java_lang_AccessibleObject
-
-const int java_lang_reflect_AccessibleObject::RESTRICTED_NATIVE = 0x1;
+// java_lang_reflect_AccessibleObject
 
 int java_lang_reflect_AccessibleObject::_override_offset;
 
@@ -2946,6 +2944,8 @@ void java_lang_reflect_AccessibleObject::set_override(oop reflect, jboolean valu
 }
 
 // java_lang_reflect_Method
+
+const int java_lang_reflect_Method::RESTRICTED_NATIVE = 0x1;
 
 int java_lang_reflect_Method::_flags_offset;
 int java_lang_reflect_Method::_clazz_offset;
@@ -3062,7 +3062,6 @@ void java_lang_reflect_Method::set_annotation_default(oop method, oop value) {
   method->obj_field_put(_annotation_default_offset, value);
 }
 
-int java_lang_reflect_Constructor::_flags_offset;
 int java_lang_reflect_Constructor::_clazz_offset;
 int java_lang_reflect_Constructor::_parameterTypes_offset;
 int java_lang_reflect_Constructor::_exceptionTypes_offset;
@@ -3073,7 +3072,6 @@ int java_lang_reflect_Constructor::_annotations_offset;
 int java_lang_reflect_Constructor::_parameter_annotations_offset;
 
 #define CONSTRUCTOR_FIELDS_DO(macro) \
-  macro(_flags_offset,          k, vmSymbols::flags_name(),          int_signature,         false); \
   macro(_clazz_offset,          k, vmSymbols::clazz_name(),          class_signature,       false); \
   macro(_parameterTypes_offset, k, vmSymbols::parameterTypes_name(), class_array_signature, false); \
   macro(_exceptionTypes_offset, k, vmSymbols::exceptionTypes_name(), class_array_signature, false); \
@@ -3102,14 +3100,6 @@ Handle java_lang_reflect_Constructor::create(TRAPS) {
   // Ensure it is initialized
   ik->initialize(CHECK_NH);
   return ik->allocate_instance_handle(THREAD);
-}
-
-int java_lang_reflect_Constructor::flags(oop reflect) {
-  return reflect->int_field(_flags_offset);
-}
-
-void java_lang_reflect_Constructor::set_flags(oop reflect, int value) {
-  reflect->int_field_put(_flags_offset, value);
 }
 
 oop java_lang_reflect_Constructor::clazz(oop reflect) {

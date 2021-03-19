@@ -26,6 +26,9 @@
 package java.lang.reflect;
 
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.misc.VM;
+import jdk.internal.module.IllegalNativeAccessChecker;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.MethodAccessor;
 import jdk.internal.reflect.Reflection;
@@ -67,6 +70,8 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Method extends Executable {
+    private static final int RESTRICTED_NATIVE = 0x1;
+    // Method internal flags needed here. For now, only RESTRICTED_NATIVE.
     private final int           flags;
     @Stable
     private Class<?>            clazz;
@@ -494,8 +499,19 @@ public final class Method extends Executable {
         sb.append(getName());
     }
 
-    boolean isRestrictedNative() {
-        return (flags & RESTRICTED_NATIVE) != 0;
+    private final void checkRestrictedNative(Executable e, Class<?> caller) throws IllegalAccessException {
+        Module module = caller.getModule();
+        if (VM.isBooted() && ((flags & RESTRICTED_NATIVE) != 0)) {
+            JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+            if (!jla.isNative(module)) {
+                String moduleName = module.isNamed() ?
+                        module.getName() : "<UNNAMED>";
+                if (module.isNamed() ||
+                        !IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
+                    throw new IllegalAccessException("Illegal native access from module: " + moduleName);
+                }
+            }
+        }
     }
 
     /**
@@ -567,7 +583,7 @@ public final class Method extends Executable {
             checkAccess(caller, clazz,
                         Modifier.isStatic(modifiers) ? null : obj.getClass(),
                         modifiers);
-            checkRestricted(this, caller);
+            checkRestrictedNative(this, caller);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {

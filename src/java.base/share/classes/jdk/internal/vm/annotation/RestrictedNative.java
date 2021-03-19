@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 /**
  * FIXME
  */
-@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RestrictedNative {
 }

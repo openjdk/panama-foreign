@@ -63,7 +63,6 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Constructor<T> extends Executable {
-    private final int           flags;
     private Class<T>            clazz;
     private int                 slot;
     private Class<?>[]          parameterTypes;
@@ -115,8 +114,7 @@ public final class Constructor<T> extends Executable {
      * instantiation of these objects in Java code from the java.lang
      * package via jdk.internal.access.JavaLangReflectAccess.
      */
-    Constructor(int flags,
-                Class<T> declaringClass,
+    Constructor(Class<T> declaringClass,
                 Class<?>[] parameterTypes,
                 Class<?>[] checkedExceptions,
                 int modifiers,
@@ -124,7 +122,6 @@ public final class Constructor<T> extends Executable {
                 String signature,
                 byte[] annotations,
                 byte[] parameterAnnotations) {
-        this.flags = flags;
         this.clazz = declaringClass;
         this.parameterTypes = parameterTypes;
         this.exceptionTypes = checkedExceptions;
@@ -151,7 +148,7 @@ public final class Constructor<T> extends Executable {
         if (this.root != null)
             throw new IllegalArgumentException("Can not copy a non-root Constructor");
 
-        Constructor<T> res = new Constructor<>(flags, clazz,
+        Constructor<T> res = new Constructor<>(clazz,
                                                parameterTypes,
                                                exceptionTypes, modifiers, slot,
                                                signature,
@@ -426,11 +423,6 @@ public final class Constructor<T> extends Executable {
         specificToStringHeader(sb);
     }
 
-    @Override
-    boolean isRestrictedNative() {
-        return (flags & RESTRICTED_NATIVE) != 0;
-    }
-
     /**
      * Uses the constructor represented by this {@code Constructor} object to
      * create and initialize a new instance of the constructor's
@@ -496,7 +488,6 @@ public final class Constructor<T> extends Executable {
     {
         if (checkAccess) {
             checkAccess(caller, clazz, clazz, modifiers);
-            checkRestricted(this, caller);
         }
 
         if ((clazz.getModifiers() & Modifier.ENUM) != 0)

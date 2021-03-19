@@ -825,7 +825,7 @@ oop Reflection::new_method(const methodHandle& method, bool for_constant_pool_ac
   Handle mh = java_lang_reflect_Method::create(CHECK_NULL);
 
   if (method->is_restricted_native()) {
-    java_lang_reflect_Method::set_flags(mh(), java_lang_reflect_AccessibleObject::RESTRICTED_NATIVE);
+    java_lang_reflect_Method::set_flags(mh(), java_lang_reflect_Method::RESTRICTED_NATIVE);
   }
 
   java_lang_reflect_Method::set_clazz(mh(), holder->java_mirror());
@@ -869,9 +869,6 @@ oop Reflection::new_constructor(const methodHandle& method, TRAPS) {
 
   Handle ch = java_lang_reflect_Constructor::create(CHECK_NULL);
 
-  if (method->is_restricted_native()) {
-    java_lang_reflect_Method::set_flags(ch(), java_lang_reflect_AccessibleObject::RESTRICTED_NATIVE);
-  }
   java_lang_reflect_Constructor::set_clazz(ch(), holder->java_mirror());
   java_lang_reflect_Constructor::set_slot(ch(), slot);
   java_lang_reflect_Constructor::set_parameter_types(ch(), parameter_types());
