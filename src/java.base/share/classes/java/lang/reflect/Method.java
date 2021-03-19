@@ -67,6 +67,7 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Method extends Executable {
+    private final int           flags;
     @Stable
     private Class<?>            clazz;
     private int                 slot;
@@ -118,7 +119,8 @@ public final class Method extends Executable {
     /**
      * Package-private constructor
      */
-    Method(Class<?> declaringClass,
+    Method(int flags,
+           Class<?> declaringClass,
            String name,
            Class<?>[] parameterTypes,
            Class<?> returnType,
@@ -129,6 +131,7 @@ public final class Method extends Executable {
            byte[] annotations,
            byte[] parameterAnnotations,
            byte[] annotationDefault) {
+        this.flags = flags;
         this.clazz = declaringClass;
         this.name = name;
         this.parameterTypes = parameterTypes;
@@ -158,7 +161,7 @@ public final class Method extends Executable {
         if (this.root != null)
             throw new IllegalArgumentException("Can not copy a non-root Method");
 
-        Method res = new Method(clazz, name, parameterTypes, returnType,
+        Method res = new Method(flags, clazz, name, parameterTypes, returnType,
                                 exceptionTypes, modifiers, slot, signature,
                                 annotations, parameterAnnotations, annotationDefault);
         res.root = this;
@@ -174,7 +177,7 @@ public final class Method extends Executable {
         if (this.root == null)
             throw new IllegalArgumentException("Can only leafCopy a non-root Method");
 
-        Method res = new Method(clazz, name, parameterTypes, returnType,
+        Method res = new Method(flags, clazz, name, parameterTypes, returnType,
                 exceptionTypes, modifiers, slot, signature,
                 annotations, parameterAnnotations, annotationDefault);
         res.root = root;
@@ -489,6 +492,10 @@ public final class Method extends Executable {
         sb.append(genRetType.getTypeName()).append(' ');
         sb.append(getDeclaringClass().getTypeName()).append('.');
         sb.append(getName());
+    }
+
+    boolean isRestrictedNative() {
+        return (flags & RESTRICTED_NATIVE) != 0;
     }
 
     /**

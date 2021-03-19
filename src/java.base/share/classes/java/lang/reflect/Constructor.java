@@ -30,6 +30,7 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstructorAccessor;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
 import sun.reflect.annotation.TypeAnnotation;
 import sun.reflect.annotation.TypeAnnotationParser;
 import sun.reflect.generics.repository.ConstructorRepository;
@@ -62,6 +63,7 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Constructor<T> extends Executable {
+    private final int           flags;
     private Class<T>            clazz;
     private int                 slot;
     private Class<?>[]          parameterTypes;
@@ -113,7 +115,8 @@ public final class Constructor<T> extends Executable {
      * instantiation of these objects in Java code from the java.lang
      * package via jdk.internal.access.JavaLangReflectAccess.
      */
-    Constructor(Class<T> declaringClass,
+    Constructor(int flags,
+                Class<T> declaringClass,
                 Class<?>[] parameterTypes,
                 Class<?>[] checkedExceptions,
                 int modifiers,
@@ -121,6 +124,7 @@ public final class Constructor<T> extends Executable {
                 String signature,
                 byte[] annotations,
                 byte[] parameterAnnotations) {
+        this.flags = flags;
         this.clazz = declaringClass;
         this.parameterTypes = parameterTypes;
         this.exceptionTypes = checkedExceptions;
@@ -147,7 +151,7 @@ public final class Constructor<T> extends Executable {
         if (this.root != null)
             throw new IllegalArgumentException("Can not copy a non-root Constructor");
 
-        Constructor<T> res = new Constructor<>(clazz,
+        Constructor<T> res = new Constructor<>(flags, clazz,
                                                parameterTypes,
                                                exceptionTypes, modifiers, slot,
                                                signature,
@@ -420,6 +424,11 @@ public final class Constructor<T> extends Executable {
     @Override
     void specificToGenericStringHeader(StringBuilder sb) {
         specificToStringHeader(sb);
+    }
+
+    @Override
+    boolean isRestrictedNative() {
+        return (flags & RESTRICTED_NATIVE) != 0;
     }
 
     /**

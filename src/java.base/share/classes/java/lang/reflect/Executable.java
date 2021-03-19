@@ -34,6 +34,9 @@ import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.misc.VM;
+import jdk.internal.module.IllegalNativeAccessChecker;
 import sun.reflect.annotation.AnnotationParser;
 import sun.reflect.annotation.AnnotationSupport;
 import sun.reflect.annotation.TypeAnnotationParser;
@@ -49,6 +52,9 @@ import sun.reflect.generics.repository.ConstructorRepository;
  */
 public abstract class Executable extends AccessibleObject
     implements Member, GenericDeclaration {
+
+    static final int RESTRICTED_NATIVE = 0x1;
+
     /*
      * Only grant package-visibility to the constructor.
      */
@@ -180,6 +186,23 @@ public abstract class Executable extends AccessibleObject
             return sb.toString();
         } catch (Exception e) {
             return "<" + e + ">";
+        }
+    }
+
+    abstract boolean isRestrictedNative();
+
+    final void checkRestricted(Executable e, Class<?> caller) throws IllegalAccessException {
+        Module module = caller.getModule();
+        if (VM.isBooted() && isRestrictedNative()) {
+            JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+            if (!jla.isNative(module)) {
+                String moduleName = module.isNamed() ?
+                        module.getName() : "<UNNAMED>";
+                if (module.isNamed() ||
+                        !IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
+                    throw new IllegalAccessException("Illegal native access from module: " + moduleName);
+                }
+            }
         }
     }
 

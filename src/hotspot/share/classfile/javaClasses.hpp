@@ -557,6 +557,9 @@ class java_lang_reflect_AccessibleObject: AllStatic {
   static void compute_offsets();
 
  public:
+  // value should be in-sync with static field of java.lang.reflect.AccessibleObject
+  static const int RESTRICTED_NATIVE;
+
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Accessors
@@ -574,6 +577,7 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
  private:
   // Note that to reduce dependencies on the JDK we compute these
   // offsets at run-time.
+  static int _flags_offset;
   static int _clazz_offset;
   static int _name_offset;
   static int _returnType_offset;
@@ -594,6 +598,9 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
   static Handle create(TRAPS);
 
   // Accessors
+  static int flags(oop reflect);
+  static void set_flags(oop reflect, int value);
+
   static oop clazz(oop reflect);
   static void set_clazz(oop reflect, oop value);
 
@@ -626,6 +633,7 @@ class java_lang_reflect_Constructor : public java_lang_reflect_AccessibleObject 
  private:
   // Note that to reduce dependencies on the JDK we compute these
   // offsets at run-time.
+  static int _flags_offset;
   static int _clazz_offset;
   static int _parameterTypes_offset;
   static int _exceptionTypes_offset;
@@ -643,6 +651,9 @@ class java_lang_reflect_Constructor : public java_lang_reflect_AccessibleObject 
   static Handle create(TRAPS);
 
   // Accessors
+  static int flags(oop reflect);
+  static void set_flags(oop reflect, int value);
+
   static oop clazz(oop reflect);
   static void set_clazz(oop reflect, oop value);
 
