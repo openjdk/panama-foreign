@@ -358,7 +358,7 @@ public interface CLinker {
      *
      * @param str the Java string to be converted into a C string.
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the C string.
-     * @param allocator the scope to be used for the native segment allocation.
+     * @param allocator the allocator to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
     static MemorySegment toCString(String str, Charset charset, SegmentAllocator allocator) {
