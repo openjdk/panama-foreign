@@ -167,7 +167,7 @@ public interface MemorySegment extends Addressable {
      * scope as the given segment.
      * <p>
      * The returned spliterator effectively allows to slice this segment into disjoint sub-segments, which can then
-     * be processed in parallel by multiple threads (if the segment is shared).
+     * be processed in parallel by multiple threads.
      *
      * @param layout the layout to be used for splitting.
      * @return the element spliterator for this segment
@@ -554,9 +554,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout.
-     * The returned segment is associated with a fresh, shared, resource scope which will be automatically closed when
-     * the segment (or any slices and views derived from it) is no longer in use.
-     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
+     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
+     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -598,9 +597,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes).
-     * The returned segment is associated with a fresh, shared resource scope, which will be automatically closed when
-     * the segment (or any slices and views derived from it) is no longer in use.
-     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
+     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
+     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code
@@ -640,9 +638,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * and alignment constraints (in bytes). The returned segment is associated with a fresh, shared resource scope,
-     * which will be automatically closed when the segment (or any slices and views derived from it) is no longer in use.
-     * The scope associated with the returned segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
+     * and alignment constraints (in bytes). The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}.
+     * Resources associated with this segment will be automatically released when the returned segment
+     * (or any slices and views derived from it) is no longer in use.
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
      *
@@ -687,9 +685,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
-     * The returned segment is associated with a fresh, shared resource scope, which will be automatically closed when
-     * the segment (or any slices and views derived from it) is no longer in use. The scope associated with the returned
-     * segment cannot be closed directly e.g. by calling {@link ResourceScope#close()}.
+     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
+     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
      * <p>
      * This is equivalent to the following code:
      * <blockquote><pre>{@code

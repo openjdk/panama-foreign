@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.ArenaAllocator;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
@@ -39,15 +40,13 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- *  This interface models a memory allocator. Clients implementing this interface
- *  must implement the {@link #allocate(long, long)} method. This interface defines several default methods
- *  which can be useful to create segments from several kinds of Java values such as primitives and arrays.
- *  This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- *  (e.g. {@link MemorySegment#allocateNative(long, long)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
- *  clients can easily obtain a native allocator instance as follows:
- * <blockquote><pre>{@code
-SegmentAllocator defaultAllocator = MemorySegment::allocateNative;
- * }</pre></blockquote>
+ * This interface models a memory allocator. Clients implementing this interface
+ * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
+ * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
+ * This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
+ * (e.g. {@link MemorySegment#allocateNative(long, long)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
+ * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
+ * <p>
  * This interface provides a factory, namely {@link SegmentAllocator#scoped(ResourceScope)} which can be used to obtain
  * a <em>scoped</em> allocator, that is, an allocator which creates segment bound by a given scope. This can be useful
  * when working inside a <em>try-with-resources</em> construct:
@@ -444,13 +443,30 @@ public interface SegmentAllocator {
     /**
      * Returns a native allocator which responds to allocation requests by allocating new segments
      * bound by the given resource scope, using the {@link MemorySegment#allocateNative(long, long, ResourceScope)}
-     * factory.
+     * factory. This code is equivalent (but likely more efficient) to the following:
+     * <blockquote><pre>{@code
+    Resource scope = ...
+    SegmentAllocator scoped = (size, align) -> MemorySegment.allocateNative(size, align, scope);
+     * }</pre></blockquote>
      *
      * @param scope the resource scope associated to the segments created by the returned allocator.
      * @return an allocator which allocates new memory segment bound by the provided resource scope.
      */
     static SegmentAllocator scoped(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return ((MemoryScope)scope).allocator();
+        return (MemoryScope)scope;
+    }
+
+    /**
+     * Returns the default native allocator which creates segments using the default
+     * {@link MemorySegment#allocateNative(long, long) native segment factory}. This code is equivalent
+     * (but likely more efficient) to the following:
+     * <blockquote><pre>{@code
+    SegmentAllocator defaultAllocator = (size, align) -> MemorySegment.allocateNative(size, align);
+     * }</pre></blockquote>
+     * @return the default native allocator.
+     */
+    static SegmentAllocator ofDefault() {
+        return NativeMemorySegmentImpl.DEFAULT_ALLOCATOR;
     }
 }
