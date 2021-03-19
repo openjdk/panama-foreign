@@ -609,7 +609,7 @@ public interface CLinker {
          * The memory segment returned by this method will be allocated using the given {@link SegmentAllocator}.
          *
          * @param layout the layout of the value
-         * @param allocator the scope to be used for the native segment allocation
+         * @param allocator the allocator to be used for the native segment allocation
          * @return the value read as an {@code MemorySegment}
          * @throws IllegalStateException if the resource scope associated with this instance has been closed
          * (see {@link #scope()}).
