@@ -37,6 +37,13 @@ public class PanamaMainUnnamedModule {
    }
 
    @Test
+   public void testSetAccessible() throws Throwable {
+       Method method = CLinker.class.getDeclaredMethod("getInstance");
+       method.setAccessible(true);
+       method.invoke(null);
+   }
+
+   @Test
    public void testLookup() throws Throwable {
        MethodHandles.lookup().findStatic(CLinker.class, "getInstance", MethodType.methodType(CLinker.class));
    }

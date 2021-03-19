@@ -499,9 +499,13 @@ public final class Method extends Executable {
         sb.append(getName());
     }
 
-    private final void checkRestrictedNative(Executable e, Class<?> caller) throws IllegalAccessException {
+    private boolean isRestrictedNative() {
+        return (flags & RESTRICTED_NATIVE) != 0;
+    }
+
+    private final void checkRestrictedNative(Class<?> caller) throws IllegalAccessException {
         Module module = caller.getModule();
-        if (VM.isBooted() && ((flags & RESTRICTED_NATIVE) != 0)) {
+        if (VM.isBooted()) {
             JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
             if (!jla.isNative(module)) {
                 String moduleName = module.isNamed() ?
@@ -583,7 +587,10 @@ public final class Method extends Executable {
             checkAccess(caller, clazz,
                         Modifier.isStatic(modifiers) ? null : obj.getClass(),
                         modifiers);
-            checkRestrictedNative(this, caller);
+        }
+        if (isRestrictedNative()) {
+            Class<?> caller = Reflection.getCallerClass();
+            checkRestrictedNative(caller);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {
