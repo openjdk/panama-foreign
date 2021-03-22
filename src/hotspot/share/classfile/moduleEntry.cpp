@@ -206,8 +206,8 @@ void ModuleEntry::set_read_walk_required(ClassLoaderData* m_loader_data) {
   }
 }
 
-bool ModuleEntry::is_native() const {
-  return _is_native || (name() == NULL && Modules::is_all_unnamed_native_access());
+bool ModuleEntry::is_native_access() const {
+  return _is_native_access || (name() == NULL && Modules::is_all_unnamed_native_access());
 }
 
 // Set whether the module is open, i.e. all its packages are unqualifiedly exported
@@ -216,10 +216,10 @@ void ModuleEntry::set_is_open(bool is_open) {
   _is_open = is_open;
 }
 
-// Set whether the module is native, i.e. restricted native operations are allowed by clients in this module
-void ModuleEntry::set_is_native(bool is_native) {
+// Set whether the module is native, i.e. native operations are allowed by clients in this module
+void ModuleEntry::set_is_native_access(bool is_native_access) {
   assert_lock_strong(Module_lock);
-  _is_native = is_native;
+  _is_native_access = is_native_access;
 }
 
 // Returns true if the module has a non-empty reads list. As such, the unnamed

@@ -49,7 +49,7 @@ $(INTERIM_IMAGE_DIR)/$(JIMAGE_TARGET_FILE): $(JMODS) \
 	$(JLINK_TOOL) \
 	    --output $(INTERIM_IMAGE_DIR) \
 	    --disable-plugin generate-jli-classes \
-	    --disable-plugin restricted-native-marker \
+	    --disable-plugin native-access-marker \
 	    --add-modules $(INTERIM_MODULES_LIST)
 	$(TOUCH) $@
 

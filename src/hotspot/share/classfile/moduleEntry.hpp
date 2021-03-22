@@ -74,7 +74,7 @@ private:
   bool _has_default_read_edges;        // JVMTI redefine/retransform support
   bool _must_walk_reads;               // walk module's reads list at GC safepoints to purge out dead modules
   bool _is_open;                       // whether the packages in the module are all unqualifiedly exported
-  bool _is_native;                     // whether the module is native via --enable-native-access
+  bool _is_native_access;              // whether the module is native via --enable-native-access
   bool _is_patched;                    // whether the module is patched via --patch-module
   CDS_JAVA_HEAP_ONLY(int _archived_module_index;)
 
@@ -96,7 +96,7 @@ public:
     _must_walk_reads = false;
     _is_patched = false;
     _is_open = false;
-    _is_native = false;
+    _is_native_access = false;
     CDS_ONLY(_shared_path_index = -1);
   }
 
@@ -131,10 +131,10 @@ public:
   void             set_read_walk_required(ClassLoaderData* m_loader_data);
 
   bool             is_open() const                     { return _is_open; }
-  bool             is_native() const;
+  bool             is_native_access() const;
 
   void             set_is_open(bool is_open);
-  void             set_is_native(bool is_native);
+  void             set_is_native_access(bool is_native_access);
 
   bool             is_named() const                    { return (name() != NULL); }
 

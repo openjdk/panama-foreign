@@ -665,12 +665,12 @@ Method* LinkResolver::resolve_method_statically(Bytecodes::Code code,
   }
 }
 
-void LinkResolver::check_restricted_method(const LinkInfo& link_info,
+void LinkResolver::check_native_access_method(const LinkInfo& link_info,
                                           const methodHandle& resolved_method, TRAPS) {
   if (link_info.current_klass() != NULL) {
-    if (resolved_method->is_restricted_native()) {
+    if (resolved_method->is_native_access()) {
       ModuleEntry* module = link_info.current_klass()->module();
-      if (!module->is_native()) {
+      if (!module->is_native_access()) {
         ResourceMark rm(THREAD);
         stringStream ss;
         ss.print("Illegal native access from module: %s",
@@ -824,7 +824,7 @@ Method* LinkResolver::resolve_method(const LinkInfo& link_info,
     // check loader constraints
     check_method_loader_constraints(link_info, resolved_method, "method", CHECK_NULL);
   }
-  check_restricted_method(link_info, resolved_method, CHECK_NULL);
+  check_native_access_method(link_info, resolved_method, CHECK_NULL);
 
   return resolved_method();
 }
@@ -921,7 +921,7 @@ Method* LinkResolver::resolve_interface_method(const LinkInfo& link_info, Byteco
   if (link_info.check_loader_constraints()) {
     check_method_loader_constraints(link_info, resolved_method, "interface method", CHECK_NULL);
   }
-  check_restricted_method(link_info, resolved_method, CHECK_NULL);
+  check_native_access_method(link_info, resolved_method, CHECK_NULL);
 
   if (code != Bytecodes::_invokestatic && resolved_method->is_static()) {
     ResourceMark rm(THREAD);

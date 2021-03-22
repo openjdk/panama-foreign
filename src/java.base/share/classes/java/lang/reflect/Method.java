@@ -70,8 +70,8 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Method extends Executable {
-    private static final int RESTRICTED_NATIVE = 0x1;
-    // Method internal flags needed here. For now, only RESTRICTED_NATIVE.
+    private static final int NATIVE_ACCESS = 0x1;
+    // Method internal flags needed here. For now, only NATIVE_ACCESS.
     private final int           flags;
     @Stable
     private Class<?>            clazz;
@@ -499,11 +499,11 @@ public final class Method extends Executable {
         sb.append(getName());
     }
 
-    private boolean isRestrictedNative() {
-        return (flags & RESTRICTED_NATIVE) != 0;
+    private boolean isNativeAccess() {
+        return (flags & NATIVE_ACCESS) != 0;
     }
 
-    private final void checkRestrictedNative(Class<?> caller) throws IllegalAccessException {
+    private final void checkNativeAccess(Class<?> caller) throws IllegalAccessException {
         Module module = caller.getModule();
         if (VM.isBooted()) {
             JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
@@ -588,9 +588,9 @@ public final class Method extends Executable {
                         Modifier.isStatic(modifiers) ? null : obj.getClass(),
                         modifiers);
         }
-        if (isRestrictedNative()) {
+        if (isNativeAccess()) {
             Class<?> caller = Reflection.getCallerClass();
-            checkRestrictedNative(caller);
+            checkNativeAccess(caller);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {

@@ -590,7 +590,7 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
   static void compute_offsets();
  public:
   // value should be in-sync with static field of java.lang.reflect.Method
-  static const int RESTRICTED_NATIVE;
+  static const int NATIVE_ACCESS;
 
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 

@@ -56,19 +56,19 @@ import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
 /**
- * Jlink plugin makes modules that use RestrictedNative methods.
+ * Jlink plugin makes modules that use NativeAccessNative methods.
  */
-public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
-    private static final boolean DEBUG = Boolean.getBoolean("jlink.restricted_native_marker.debug");
-    private static final String RESTRICTED_NATIVE_METHODS_FILE = "restricted_native_methods.txt";
+public final class NativeAccessMarkerPlugin extends AbstractPlugin {
+    private static final boolean DEBUG = Boolean.getBoolean("jlink.native_access_marker.debug");
+    private static final String NATIVE_ACCESS_METHODS_FILE = "native_access_methods.txt";
 
-    // info on restricted methods
-    private List<RestrictedMethod> restrictedMethods;
-    // modules that use Panama RestrictedNative methods
-    private Set<String> restrictedPanamaModules = new HashSet<>();
+    // info on @NativeAccess methods
+    private List<NativeAccessMethod> nativeAccessMethods;
+    // modules that call @NativeAccess methods
+    private Set<String> nativeAccessCallerModules = new HashSet<>();
 
-    public RestrictedNativeMarkerPlugin() {
-        super("restricted-native-marker");
+    public NativeAccessMarkerPlugin() {
+        super("native-access-marker");
     }
 
     @Override
@@ -88,29 +88,29 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
         // - if none was supplied we look for the default file
         if (mainArgument == null || !mainArgument.startsWith("@")) {
             try (InputStream traceFile =
-                         this.getClass().getResourceAsStream(RESTRICTED_NATIVE_METHODS_FILE)) {
-                restrictedMethods = new BufferedReader(new InputStreamReader(traceFile)).
-                        lines().map(RestrictedMethod::new).collect(Collectors.toList());
+                         this.getClass().getResourceAsStream(NATIVE_ACCESS_METHODS_FILE)) {
+                nativeAccessMethods = new BufferedReader(new InputStreamReader(traceFile)).
+                        lines().map(NativeAccessMethod::new).collect(Collectors.toList());
             } catch (Exception e) {
-                throw new PluginException("Couldn't read " + RESTRICTED_NATIVE_METHODS_FILE, e);
+                throw new PluginException("Couldn't read " + NATIVE_ACCESS_METHODS_FILE, e);
             }
         } else {
             File file = new File(mainArgument.substring(1));
-            restrictedMethods = fileLines(file);
+            nativeAccessMethods = fileLines(file);
         }
 
         if (DEBUG) {
-            System.err.println("====== Restricted methods start ======");
-            for (RestrictedMethod rm : restrictedMethods) {
+            System.err.println("====== NativeAccess methods start ======");
+            for (NativeAccessMethod rm : nativeAccessMethods) {
                 rm.print();
             }
-            System.err.println("====== Restricted methods end ======");
+            System.err.println("====== NativeAccess methods end ======");
         }
     }
 
-    private List<RestrictedMethod> fileLines(File file) {
+    private List<NativeAccessMethod> fileLines(File file) {
         try {
-            return Files.lines(file.toPath()).map(RestrictedMethod::new).collect(Collectors.toList());
+            return Files.lines(file.toPath()).map(NativeAccessMethod::new).collect(Collectors.toList());
         } catch (IOException io) {
             throw new PluginException("Couldn't read file");
         }
@@ -124,7 +124,7 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
                 .forEach(data -> checkNative(data, out));
 
         if (DEBUG) {
-            System.err.printf("restricted panama modules: %s\n", restrictedPanamaModules);
+            System.err.printf("restricted panama modules: %s\n", nativeAccessCallerModules);
         }
 
         // transform (if needed), and add the module-info.class files
@@ -136,7 +136,7 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
     private void checkNative(ResourcePoolEntry data, ResourcePoolBuilder out) {
         out.add(data);
         String moduleName = data.moduleName();
-        if (isRestrictedPanama(moduleName)) {
+        if (isNativeAccessPanama(moduleName)) {
             // already detected to be restricted panama module. No need to check
             // further resources.
             if (DEBUG) {
@@ -148,23 +148,23 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
         // check only .class resources
         if (data.type().equals(ResourcePoolEntry.Type.CLASS_OR_RESOURCE) &&
                 data.path().endsWith(".class")) {
-            if (hasRestrictedCalls(data.contentBytes())) {
+            if (hasNativeAccessCalls(data.contentBytes())) {
                 if (DEBUG) {
-                    System.err.printf("module %s RestrictedNativedue to %s\n", moduleName, data.path());
+                    System.err.printf("module %s NativeAccessNative due to %s\n", moduleName, data.path());
                 }
-                restrictedPanamaModules.add(moduleName);
+                nativeAccessCallerModules.add(moduleName);
             }
         }
     }
 
-    private boolean isRestrictedPanama(String moduleName) {
-        return restrictedPanamaModules.contains(moduleName);
+    private boolean isNativeAccessPanama(String moduleName) {
+        return nativeAccessCallerModules.contains(moduleName);
     }
 
     // find if there are restricted calls in the given .class resource
-    private boolean hasRestrictedCalls(byte[] bytes) {
+    private boolean hasNativeAccessCalls(byte[] bytes) {
         ClassReader reader = new ClassReader(bytes);
-        boolean[] foundRestricted = new boolean[1];
+        boolean[] foundNativeAccess = new boolean[1];
 
         ClassVisitor cv = new ClassVisitor(Opcodes.ASM8) {
             @Override
@@ -179,8 +179,8 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
                         public void visitMethodInsn(int opcode, String owner,
                                                     String name, String descriptor, boolean isInterface) {
                             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-                            if (!foundRestricted[0]) {
-                                foundRestricted[0] = isRestrictedMethod(owner, name, descriptor);
+                            if (!foundNativeAccess[0]) {
+                                foundNativeAccess[0] = isNativeAccessMethod(owner, name, descriptor);
                             }
                         }
                     };
@@ -191,12 +191,12 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
         };
 
         reader.accept(cv, 0);
-        return foundRestricted[0];
+        return foundNativeAccess[0];
     }
 
     // check against known restricted methods
-    private boolean isRestrictedMethod(String owner, String name, String descriptor) {
-        for (RestrictedMethod rm : restrictedMethods) {
+    private boolean isNativeAccessMethod(String owner, String name, String descriptor) {
+        for (NativeAccessMethod rm : nativeAccessMethods) {
             if (rm.match(owner, name, descriptor)) {
                 return true;
             }
@@ -219,7 +219,7 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
             assert module.name().equals(data.moduleName());
 
             String moduleName = data.moduleName();
-            boolean isPanama = restrictedPanamaModules.contains(moduleName);
+            boolean isPanama = nativeAccessCallerModules.contains(moduleName);
             if (isPanama) {
                 // add a class level attribute if we found a panama method
                 // call from the currently visited module
@@ -260,12 +260,12 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
     }
 
     // info about a restricted method
-    private static class RestrictedMethod {
+    private static class NativeAccessMethod {
         final String className;
         final String methodName;
         final String methodDesc;
 
-        RestrictedMethod(String line) {
+        NativeAccessMethod(String line) {
             String[] parts = line.split(" ");
             this.className = parts[0];
             this.methodName = parts[1];
@@ -273,7 +273,7 @@ public final class RestrictedNativeMarkerPlugin extends AbstractPlugin {
         }
 
         void print() {
-            System.err.printf("Restricted method: %s %s %s\n", className, methodName, methodDesc);
+            System.err.printf("NativeAccess method: %s %s %s\n", className, methodName, methodDesc);
         }
 
         boolean match(String owner, String name, String descriptor) {

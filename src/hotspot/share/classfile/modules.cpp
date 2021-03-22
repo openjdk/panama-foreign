@@ -793,7 +793,7 @@ void Modules::add_module_enable_native_access(Handle module, TRAPS) {
               "module is invalid");
   }
 
-  module_entry->set_is_native(true);
+  module_entry->set_is_native_access(true);
 
   if (log_is_enabled(Debug, module)) {
     ResourceMark rm(THREAD);

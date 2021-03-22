@@ -2945,7 +2945,7 @@ void java_lang_reflect_AccessibleObject::set_override(oop reflect, jboolean valu
 
 // java_lang_reflect_Method
 
-const int java_lang_reflect_Method::RESTRICTED_NATIVE = 0x1;
+const int java_lang_reflect_Method::NATIVE_ACCESS = 0x1;
 
 int java_lang_reflect_Method::_flags_offset;
 int java_lang_reflect_Method::_clazz_offset;

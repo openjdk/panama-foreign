@@ -54,9 +54,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import static java.nio.file.StandardOpenOption.*;
 
-public class RestrictedMethodsFinder implements Plugin {
+public class NativeAccessMethodsFinder implements Plugin {
     private static final boolean DEBUG = Boolean.getBoolean("panama.javac.plugin.debug");
-    private static final String RESTRICTED_NATIVE = "jdk.internal.vm.annotation.RestrictedNative";
+    private static final String NATIVE_ACCESS = "jdk.internal.vm.annotation.NativeAccess";
 
     private final List<String> declarations = new ArrayList<>();
 
@@ -159,7 +159,7 @@ public class RestrictedMethodsFinder implements Plugin {
     }
 
     private boolean isRestrictedNative(ExecutableElement execElem) {
-        return checkAnnotation(execElem, RESTRICTED_NATIVE);
+        return checkAnnotation(execElem, NATIVE_ACCESS);
     }
 
     private boolean checkAnnotation(Element execElem, String name) {
@@ -169,7 +169,7 @@ public class RestrictedMethodsFinder implements Plugin {
 
     @Override
     public String getName() {
-        return "RestrictedMethodsFinder";
+        return "NativeAccessMethodsFinder";
     }
 
     public boolean autoStart() {

@@ -824,8 +824,8 @@ oop Reflection::new_method(const methodHandle& method, bool for_constant_pool_ac
 
   Handle mh = java_lang_reflect_Method::create(CHECK_NULL);
 
-  if (method->is_restricted_native()) {
-    java_lang_reflect_Method::set_flags(mh(), java_lang_reflect_Method::RESTRICTED_NATIVE);
+  if (method->is_native_access()) {
+    java_lang_reflect_Method::set_flags(mh(), java_lang_reflect_Method::NATIVE_ACCESS);
   }
 
   java_lang_reflect_Method::set_clazz(mh(), holder->java_mirror());

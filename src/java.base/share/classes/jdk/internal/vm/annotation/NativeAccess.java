@@ -31,9 +31,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * FIXME
+ * Documents that the method is a native access method.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RestrictedNative {
+public @interface NativeAccess {
 }

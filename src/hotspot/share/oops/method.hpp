@@ -93,7 +93,7 @@ class Method : public Metadata {
     _intrinsic_candidate   = 1 << 6,
     _reserved_stack_access = 1 << 7,
     _scoped                = 1 << 8,
-    _restricted_native     = 1 << 9
+    _native_access         = 1 << 9
   };
   mutable u2 _flags;
 
@@ -880,12 +880,12 @@ public:
     _flags = x ? (_flags | _scoped) : (_flags & ~_scoped);
   }
 
-  bool is_restricted_native() const {
-    return (_flags & _restricted_native) != 0;
+  bool is_native_access() const {
+    return (_flags & _native_access) != 0;
   }
 
-  void set_restricted_native(bool x) {
-    _flags = x ? (_flags | _restricted_native) : (_flags & ~_restricted_native);
+  void set_native_access(bool x) {
+    _flags = x ? (_flags | _native_access) : (_flags & ~_native_access);
   }
 
   bool intrinsic_candidate() {

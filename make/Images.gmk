@@ -70,7 +70,7 @@ JLINK_ORDER_RESOURCES += \
     /jdk.localedata/** \
     #
 
-JLINK_RESTRICTED_NATIVE := --restricted-native-marker=@$(SUPPORT_OUTPUTDIR)/link_opt/restricted_native_methods.txt
+JLINK_NATIVE_ACCESS := --native-access-marker=@$(SUPPORT_OUTPUTDIR)/link_opt/native_access_methods.txt
 
 JLINK_TOOL := $(JLINK) -J-Djlink.debug=true \
     --module-path $(IMAGES_OUTPUTDIR)/jmods \
@@ -78,7 +78,7 @@ JLINK_TOOL := $(JLINK) -J-Djlink.debug=true \
     --release-info $(BASE_RELEASE_FILE) \
     --order-resources=$(call CommaList, $(JLINK_ORDER_RESOURCES)) \
     --dedup-legal-notices=error-if-not-same-content \
-    $(JLINK_RESTRICTED_NATIVE) \
+    $(JLINK_NATIVE_ACCESS) \
     $(JLINK_JLI_CLASSES) \
     #
 

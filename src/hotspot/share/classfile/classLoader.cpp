@@ -1623,7 +1623,7 @@ void ClassLoader::create_javabase() {
       if (jb_module == NULL) {
         vm_exit_during_initialization("Unable to create ModuleEntry for " JAVA_BASE_NAME);
       }
-      jb_module->set_is_native(true);
+      jb_module->set_is_native_access(true);
       ModuleEntryTable::set_javabase_moduleEntry(jb_module);
     }
   }

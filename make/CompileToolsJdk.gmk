@@ -101,7 +101,7 @@ PANAMA_SERVICE_PROVIDER := $(BUILDTOOLS_OUTPUTDIR)/panama/META-INF/services/com.
 
 $(PANAMA_SERVICE_PROVIDER):
 	$(call MakeDir, $(BUILDTOOLS_OUTPUTDIR)/panama/META-INF/services)
-	$(ECHO) build.tools.panama.RestrictedMethodsFinder > $@
+	$(ECHO) build.tools.panama.NativeAccessMethodsFinder > $@
 
 TARGETS += $(COMPILE_PANAMA) $(PANAMA_SERVICE_PROVIDER)
 
