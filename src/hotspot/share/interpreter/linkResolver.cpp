@@ -823,9 +823,8 @@ Method* LinkResolver::resolve_method(const LinkInfo& link_info,
   if (link_info.check_loader_constraints()) {
     // check loader constraints
     check_method_loader_constraints(link_info, resolved_method, "method", CHECK_NULL);
-
-    check_restricted_method(link_info, resolved_method, CHECK_NULL);
   }
+  check_restricted_method(link_info, resolved_method, CHECK_NULL);
 
   return resolved_method();
 }
@@ -921,9 +920,8 @@ Method* LinkResolver::resolve_interface_method(const LinkInfo& link_info, Byteco
   }
   if (link_info.check_loader_constraints()) {
     check_method_loader_constraints(link_info, resolved_method, "interface method", CHECK_NULL);
-
-    check_restricted_method(link_info, resolved_method, CHECK_NULL);
   }
+  check_restricted_method(link_info, resolved_method, CHECK_NULL);
 
   if (code != Bytecodes::_invokestatic && resolved_method->is_static()) {
     ResourceMark rm(THREAD);

@@ -119,7 +119,7 @@ public:
 
   // Mark the module as native
   static void add_module_enable_native_access(Handle module, TRAPS);
-  static void enable_native_access_all_unnamed(TRAPS);
+  static void enable_native_access_all_unnamed();
   static bool is_all_unnamed_native_access() {
       return _native_access_all_unnamed;
   }

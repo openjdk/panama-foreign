@@ -1105,7 +1105,7 @@ JVM_ENTRY(void, JVM_AddModuleEnableNativeAccess(JNIEnv *env, jobject from_module
 JVM_END
 
 JVM_ENTRY(void, JVM_EnableNativeAccessAllUnnamed(JNIEnv *env))
-  Modules::enable_native_access_all_unnamed(CHECK);
+  Modules::enable_native_access_all_unnamed();
 JVM_END
 
 JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package))

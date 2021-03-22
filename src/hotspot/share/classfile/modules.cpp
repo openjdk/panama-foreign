@@ -806,6 +806,6 @@ void Modules::add_module_enable_native_access(Handle module, TRAPS) {
 
 volatile bool Modules::_native_access_all_unnamed = false;
 
-void Modules::enable_native_access_all_unnamed(TRAPS) {
+void Modules::enable_native_access_all_unnamed() {
   _native_access_all_unnamed = true;
 }
