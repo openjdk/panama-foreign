@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import org.testng.annotations.Test;
 
@@ -33,7 +34,6 @@ import java.lang.reflect.Method;
  * @run testng TestRestricted
  */
 public class TestRestricted {
-
     @Test(expectedExceptions = IllegalAccessException.class)
     public void testReflection() throws Throwable {
         Method method = MemorySegment.class.getDeclaredMethod("ofNativeRestricted");
@@ -48,5 +48,22 @@ public class TestRestricted {
     @Test(expectedExceptions = IllegalAccessException.class)
     public void testDirectAccess() throws Throwable {
         MemorySegment.ofNativeRestricted();
+    }
+
+    @Test(expectedExceptions = IllegalAccessException.class)
+    public void testReflection2() throws Throwable {
+        Method method = MemoryAddress.class.getDeclaredMethod("asSegmentRestricted", long.class);
+        method.invoke(MemoryAddress.NULL, 4000L);
+    }
+
+    @Test(expectedExceptions = IllegalAccessException.class)
+    public void testLookup2() throws Throwable {
+        MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegmentRestricted",
+            MethodType.methodType(MemorySegment.class, long.class));
+    }
+
+    @Test(expectedExceptions = IllegalAccessException.class)
+    public void testDirectAccess2() throws Throwable {
+        MemoryAddress.NULL.asSegmentRestricted(4000L);
     }
 }

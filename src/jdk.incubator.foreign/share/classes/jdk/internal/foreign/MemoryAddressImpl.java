@@ -95,6 +95,12 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     @NativeAccess
+    public MemorySegment asSegmentRestricted(long bytesSize) {
+        return MemoryAddress.super.asSegmentRestricted(bytesSize);
+    }
+
+    @Override
+    @NativeAccess
     public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
