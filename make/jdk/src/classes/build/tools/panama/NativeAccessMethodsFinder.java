@@ -76,10 +76,10 @@ public class NativeAccessMethodsFinder implements Plugin {
                             Element el = trees.getElement(curPath);
                             if (el instanceof ExecutableElement) {
                                 ExecutableElement execElem = (ExecutableElement)el;
-                                if (isRestrictedNative(execElem)) {
+                                if (isNativeAccess(execElem)) {
                                     if (DEBUG) {
                                         trees.printMessage(Diagnostic.Kind.NOTE,
-                                            "Found a method marked with @RestrictedNative", node, cut);
+                                            "Found a method marked with @NativeAccess", node, cut);
                                     }
                                     StringBuilder buf = new StringBuilder();
                                     Element parent = trees.getElement(curPath.getParentPath());
@@ -158,7 +158,7 @@ public class NativeAccessMethodsFinder implements Plugin {
         }
     }
 
-    private boolean isRestrictedNative(ExecutableElement execElem) {
+    private boolean isNativeAccess(ExecutableElement execElem) {
         return checkAnnotation(execElem, NATIVE_ACCESS);
     }
 
