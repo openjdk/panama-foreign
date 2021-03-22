@@ -228,7 +228,7 @@ public final class NativeAccessMarkerPlugin extends AbstractPlugin {
                 ClassVisitor cv = new ClassVisitor(Opcodes.ASM8, cw) {
                     @Override
                     public void visitEnd() {
-                        cw.visitAttribute(newAttribute(MODULE_RESTRICTED_NATIVE));
+                        cw.visitAttribute(newAttribute(MODULE_NATIVE_ACCESS));
                         super.visitEnd();
                     }
                 };

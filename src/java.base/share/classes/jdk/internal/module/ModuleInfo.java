@@ -238,7 +238,7 @@ public final class ModuleInfo {
         ModuleTarget moduleTarget = null;
         ModuleHashes moduleHashes = null;
         ModuleResolution moduleResolution = null;
-        boolean moduleRestrictedNative = false;
+        boolean moduleNativeAccess = false;
 
         for (int i = 0; i < attributes_count ; i++) {
             int name_index = in.readUnsignedShort();
@@ -281,8 +281,8 @@ public final class ModuleInfo {
                 case MODULE_RESOLUTION :
                     moduleResolution = readModuleResolution(in, cpool);
                     break;
-                case MODULE_RESTRICTED_NATIVE:
-                    moduleRestrictedNative = true;
+                case MODULE_NATIVE_ACCESS:
+                    moduleNativeAccess = true;
                     break;
 
                 default:
@@ -348,7 +348,7 @@ public final class ModuleInfo {
                               moduleTarget,
                               moduleHashes,
                               moduleResolution,
-                              moduleRestrictedNative);
+                              moduleNativeAccess);
     }
 
     /**
