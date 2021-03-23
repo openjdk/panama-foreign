@@ -34,6 +34,9 @@ class Symbol;
 class Modules : AllStatic {
   static void check_cds_restrictions(TRAPS) NOT_CDS_JAVA_HEAP_RETURN;
 
+private:
+  static volatile bool _native_access_all_unnamed;
+
 public:
   // define_module defines a module containing the specified packages. It binds the
   // module to its class loader by creating the ModuleEntry record in the
@@ -113,6 +116,13 @@ public:
   // If module or package is bad, or module is unnamed, or package is not in
   // module then IllegalArgumentException is thrown.
   static void add_module_exports_to_all_unnamed(Handle module, jstring package, TRAPS);
+
+  // Mark the module as native
+  static void add_module_enable_native_access(Handle module, TRAPS);
+  static void enable_native_access_all_unnamed();
+  static bool is_all_unnamed_native_access() {
+      return _native_access_all_unnamed;
+  }
 
   // Return TRUE iff package is defined by loader
   static bool is_package_defined(Symbol* package_name, Handle h_loader, TRAPS);

@@ -30,8 +30,8 @@ import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.Utils;
-
 import java.lang.ref.Cleaner;
+import jdk.internal.vm.annotation.NativeAccess;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
@@ -118,6 +118,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @NativeAccess
     default MemorySegment asSegmentRestricted(long bytesSize) {
         return asSegmentRestricted(bytesSize, null, null);
     }
@@ -156,6 +157,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @NativeAccess
     MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment);
 
     /**

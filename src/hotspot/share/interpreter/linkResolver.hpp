@@ -25,6 +25,7 @@
 #ifndef SHARE_INTERPRETER_LINKRESOLVER_HPP
 #define SHARE_INTERPRETER_LINKRESOLVER_HPP
 
+#include "classfile/packageEntry.hpp"
 #include "interpreter/bootstrapInfo.hpp"
 #include "oops/method.hpp"
 
@@ -222,6 +223,8 @@ class LinkResolver: AllStatic {
   static void check_field_loader_constraints(Symbol* field, Symbol* sig,
                                              Klass* current_klass,
                                              Klass* sel_klass, TRAPS);
+  static void check_native_access_method(const LinkInfo& link_info,
+                                      const methodHandle& resolved_method, TRAPS);
 
   static Method* resolve_interface_method(const LinkInfo& link_info, Bytecodes::Code code, TRAPS);
   static Method* resolve_method          (const LinkInfo& link_info, Bytecodes::Code code, TRAPS);

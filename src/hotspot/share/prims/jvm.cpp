@@ -1099,6 +1099,15 @@ JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_modul
   Modules::add_module_exports_to_all_unnamed(h_from_module, package, CHECK);
 JVM_END
 
+JVM_ENTRY(void, JVM_AddModuleEnableNativeAccess(JNIEnv *env, jobject from_module))
+  Handle h_module (THREAD, JNIHandles::resolve(from_module));
+  Modules::add_module_enable_native_access(h_module, CHECK);
+JVM_END
+
+JVM_ENTRY(void, JVM_EnableNativeAccessAllUnnamed(JNIEnv *env))
+  Modules::enable_native_access_all_unnamed();
+JVM_END
+
 JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package))
   Handle h_from_module (THREAD, JNIHandles::resolve(from_module));
   Modules::add_module_exports(h_from_module, package, Handle(), CHECK);

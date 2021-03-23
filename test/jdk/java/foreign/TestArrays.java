@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm -Dforeign.restricted=permit TestArrays
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestArrays
  */
 
 import jdk.incubator.foreign.MemoryAddress;

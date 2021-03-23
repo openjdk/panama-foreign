@@ -26,6 +26,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.vm.annotation.NativeAccess;
 
 import java.io.File;
 import java.lang.invoke.MethodType;
@@ -101,6 +102,7 @@ public interface LibraryLookup {
      * Obtain a default library lookup object.
      * @return the default library lookup object.
      */
+    @NativeAccess
     static LibraryLookup ofDefault() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -116,6 +118,7 @@ public interface LibraryLookup {
      * @throws IllegalArgumentException if the specified path does not correspond to an absolute path,
      * e.g. if {@code !path.isAbsolute()}.
      */
+    @NativeAccess
     static LibraryLookup ofPath(Path path) {
         Objects.requireNonNull(path);
         if (!path.isAbsolute()) {
@@ -137,6 +140,7 @@ public interface LibraryLookup {
      * @param libName the library name.
      * @return a library lookup object for given library name.
      */
+    @NativeAccess
     static LibraryLookup ofLibrary(String libName) {
         Objects.requireNonNull(libName);
         SecurityManager security = System.getSecurityManager();

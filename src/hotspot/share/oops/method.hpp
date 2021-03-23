@@ -92,7 +92,8 @@ class Method : public Metadata {
     _running_emcp          = 1 << 5,
     _intrinsic_candidate   = 1 << 6,
     _reserved_stack_access = 1 << 7,
-    _scoped                = 1 << 8
+    _scoped                = 1 << 8,
+    _native_access         = 1 << 9
   };
   mutable u2 _flags;
 
@@ -877,6 +878,14 @@ public:
 
   void set_scoped(bool x) {
     _flags = x ? (_flags | _scoped) : (_flags & ~_scoped);
+  }
+
+  bool is_native_access() const {
+    return (_flags & _native_access) != 0;
+  }
+
+  void set_native_access(bool x) {
+    _flags = x ? (_flags | _native_access) : (_flags & ~_native_access);
   }
 
   bool intrinsic_candidate() {

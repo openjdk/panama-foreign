@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm TestNativeScope
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestNativeScope
  */
 
 import jdk.incubator.foreign.*;

@@ -205,3 +205,5 @@ JVM_AddReadsModule
 JVM_DefineArchivedModules
 JVM_DefineModule
 JVM_SetBootLoaderUnnamedModule
+JVM_AddModuleEnableNativeAccess
+JVM_EnableNativeAccessAllUnnamed

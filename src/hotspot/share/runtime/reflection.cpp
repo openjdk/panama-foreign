@@ -796,7 +796,6 @@ static Handle new_type(Symbol* signature, Klass* k, TRAPS) {
   return Handle(THREAD, nt);
 }
 
-
 oop Reflection::new_method(const methodHandle& method, bool for_constant_pool_access, TRAPS) {
   // Allow sun.reflect.ConstantPool to refer to <clinit> methods as java.lang.reflect.Methods.
   assert(!method()->is_initializer() ||
@@ -824,6 +823,10 @@ oop Reflection::new_method(const methodHandle& method, bool for_constant_pool_ac
   const int modifiers = method->access_flags().as_int() & JVM_RECOGNIZED_METHOD_MODIFIERS;
 
   Handle mh = java_lang_reflect_Method::create(CHECK_NULL);
+
+  if (method->is_native_access()) {
+    java_lang_reflect_Method::set_flags(mh(), java_lang_reflect_Method::NATIVE_ACCESS);
+  }
 
   java_lang_reflect_Method::set_clazz(mh(), holder->java_mirror());
   java_lang_reflect_Method::set_slot(mh(), slot);

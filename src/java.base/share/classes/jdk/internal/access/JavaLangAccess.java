@@ -373,4 +373,8 @@ public interface JavaLangAccess {
      * @see java.lang.invoke.MethodHandles.Lookup#defineHiddenClass(byte[], boolean, MethodHandles.Lookup.ClassOption...)
      */
     Object classData(Class<?> c);
+
+    Module addEnableNativeAccess(Module m);
+
+    boolean isNative(Module m);
 }

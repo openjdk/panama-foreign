@@ -60,6 +60,7 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.loader.NativeLibrary;
 import jdk.internal.loader.NativeLibraries;
+import jdk.internal.module.IllegalNativeAccessChecker;
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -1992,6 +1993,8 @@ public abstract class ClassLoader {
         } else {
             scl = builtinLoader;
         }
+
+        Module.enableNativeAccessAllUnnamed();
         return scl;
     }
 

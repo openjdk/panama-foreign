@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng/othervm -Dforeign.restricted=permit TestSharedAccess
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestSharedAccess
  */
 
 import jdk.incubator.foreign.*;

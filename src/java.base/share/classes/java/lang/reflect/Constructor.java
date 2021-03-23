@@ -30,6 +30,7 @@ import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.ConstructorAccessor;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
 import sun.reflect.annotation.TypeAnnotation;
 import sun.reflect.annotation.TypeAnnotationParser;
 import sun.reflect.generics.repository.ConstructorRepository;
@@ -485,8 +486,9 @@ public final class Constructor<T> extends Executable {
         throws InstantiationException, IllegalAccessException,
                InvocationTargetException
     {
-        if (checkAccess)
+        if (checkAccess) {
             checkAccess(caller, clazz, clazz, modifiers);
+        }
 
         if ((clazz.getModifiers() & Modifier.ENUM) != 0)
             throw new IllegalArgumentException("Cannot reflectively create enum objects");
