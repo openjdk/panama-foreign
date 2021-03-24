@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -43,7 +44,9 @@ import static test.jextract.fp.funcPtr_h.*;
 public class LibFuncPtrTest {
     @Test
     public void test() {
-        var handle = func$f.allocate(x -> x*x);
-        assertEquals(func(handle, 35), 35 * 35 + 35);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            var handle = func$f.allocate(x -> x * x, scope);
+            assertEquals(func(handle, 35), 35 * 35 + 35);
+        }
     }
 }

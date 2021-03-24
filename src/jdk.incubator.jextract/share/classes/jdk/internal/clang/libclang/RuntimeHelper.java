@@ -84,23 +84,43 @@ final class RuntimeHelper {
 
     final static SegmentAllocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
 
+    // This class can be used to debug usages of functions requiring allocation - disabled by default
+    final static class DumpAllocator implements SegmentAllocator {
+
+        boolean reported = false;
+
+        @Override
+        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+            if (!reported) {
+                new AssertionError("allocator required?").printStackTrace();
+            }
+            reported = true;
+            return SegmentAllocator.ofDefault().allocate(bytesSize, bytesAlignment);
+        }
+    }
+
+    // switch this to "true" to enable verbose analysis of function requiring allocation
+    static boolean DEBUG_ALLOCATOR = false;
+
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+                    SegmentAllocator allocator = mt.returnType().equals(MemorySegment.class) && DEBUG_ALLOCATOR ?
+                            new DumpAllocator() : DEFAULT_ALLOCATOR;
                     return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
-                        LINKER.downcallHandle(addr, DEFAULT_ALLOCATOR, mt, fdesc);
+                        LINKER.downcallHandle(addr, allocator, mt, fdesc);
                 }).orElse(null);
     }
 
-    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic, NativeScope scope) {
+    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic, SegmentAllocator allocator) {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
                     return variadic ?
                             VarargsInvoker.make(addr, mt, fdesc) :
-                            LINKER.downcallHandle(addr, scope, mt, fdesc);
+                            LINKER.downcallHandle(addr, allocator, mt, fdesc);
                 }).orElse(null);
     }
 

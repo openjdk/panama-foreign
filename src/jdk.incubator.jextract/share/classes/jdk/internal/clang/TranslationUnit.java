@@ -65,10 +65,12 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString());
-        SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
-        if (res != SaveError.None) {
-            throw new TranslationUnitSaveException(path, res);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString(), scope);
+            SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
+            if (res != SaveError.None) {
+                throw new TranslationUnitSaveException(path, res);
+            }
         }
     }
 

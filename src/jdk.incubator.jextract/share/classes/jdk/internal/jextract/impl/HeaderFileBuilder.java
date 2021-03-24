@@ -136,7 +136,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
             // needs allocator parameter
             declType = declType.insertParameterTypes(0, SegmentAllocator.class);
             paramNames = new ArrayList<>(paramNames);
-            paramNames.add("allocator");
+            paramNames.add(0, "allocator");
         }
         List<String> pExprs = emitFunctionWrapperDecl(javaName, declType, functionInfo.isVarargs(), paramNames);
         append(" {\n");

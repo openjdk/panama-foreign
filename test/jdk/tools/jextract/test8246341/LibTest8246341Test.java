@@ -23,6 +23,7 @@
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246341.*;
 import static org.testng.Assert.assertEquals;
@@ -52,16 +53,18 @@ public class LibTest8246341Test {
     @Test
     public void testPointerArray() {
         boolean[] callbackCalled = new boolean[1];
-        var callback = func$callback.allocate((argc, argv) -> {
-            callbackCalled[0] = true;
-            var addr = argv.asSegmentRestricted(C_POINTER.byteSize() * argc);
-            assertEquals(argc, 4);
-            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 0)), "java");
-            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 1)), "python");
-            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 2)), "javascript");
-            assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 3)), "c++");
-        });
-        func(callback);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            var callback = func$callback.allocate((argc, argv) -> {
+                callbackCalled[0] = true;
+                var addr = argv.asSegmentRestricted(C_POINTER.byteSize() * argc, scope);
+                assertEquals(argc, 4);
+                assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 0)), "java");
+                assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 1)), "python");
+                assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 2)), "javascript");
+                assertEquals(toJavaStringRestricted(MemoryAccess.getAddressAtIndex(addr, 3)), "c++");
+            }, scope);
+            func(callback);
+        }
         assertTrue(callbackCalled[0]);
     }
 
