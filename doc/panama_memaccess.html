@@ -1,284 +1,629 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<!doctype html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="pandoc" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>panama_memaccess</title>
-  <style type="text/css">
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
-  </style>
-  <style type="text/css">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+<title>foreign-memaccess_v2</title><link href='https://fonts.loli.net/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext' rel='stylesheet' type='text/css' /><style type='text/css'>html {overflow-x: initial !important;}:root { --bg-color:#ffffff; --text-color:#333333; --select-text-bg-color:#B5D6FC; --select-text-font-color:auto; --monospace:"Lucida Console",Consolas,"Courier",monospace; --title-bar-height:20px; }
+.mac-os-11 { --title-bar-height:28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0px; padding: 0px; height: auto; bottom: 0px; top: 0px; left: 0px; right: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; tab-size: 4; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+  .CodeMirror-sizer { margin-left: 0px !important; }
+  .CodeMirror-gutters { display: none !important; }
 }
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p { position: relative; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
+.CodeMirror-linenumber { user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-diagram-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; padding-top: 0px; border-color: transparent !important; }
+  .typora-export * { -webkit-print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {  }
-@media screen {
-a.sourceLine::before { text-decoration: underline; }
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
 }
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-  </style>
-  <link rel="stylesheet" href="../make/data/docs-resources/resources/jdk-default.css" />
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.8; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.md-inline-math .MathJax_SVG .noError { display: none !important; }
+.html-for-mac .inline-math-svg .MathJax_SVG { vertical-align: 0.2px; }
+.md-math-block .MathJax_SVG_Display { text-align: center; margin: 0px; position: relative; text-indent: 0px; max-width: none; max-height: none; min-height: 0px; min-width: 100%; width: auto; overflow-y: hidden; display: block !important; }
+.MathJax_SVG_Display, .md-inline-math .MathJax_SVG_Display { width: auto; margin: inherit; display: inline-block !important; }
+.MathJax_SVG .MJX-monospace { font-family: var(--monospace); }
+.MathJax_SVG .MJX-sans-serif { font-family: sans-serif; }
+.MathJax_SVG { display: inline; font-style: normal; font-weight: 400; line-height: normal; zoom: 90%; text-indent: 0px; text-align: left; text-transform: none; letter-spacing: normal; word-spacing: normal; overflow-wrap: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0px; min-height: 0px; border: 0px; padding: 0px; margin: 0px; }
+.MathJax_SVG * { transition: none 0s ease 0s; }
+.MathJax_SVG_Display svg { vertical-align: middle !important; margin-bottom: 0px !important; margin-top: 0px !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom: 0px; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: none; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+mark .md-meta { color: rgb(0, 0, 0); opacity: 0.3 !important; }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-require-zoom-fix foreignobject { font-size: var(--mermaid-font-zoom); }
+
+
+.CodeMirror { height: auto; }
+.CodeMirror.cm-s-inner { background: inherit; }
+.CodeMirror-scroll { overflow: auto hidden; z-index: 3; }
+.CodeMirror-gutter-filler, .CodeMirror-scrollbar-filler { background-color: rgb(255, 255, 255); }
+.CodeMirror-gutters { border-right: 1px solid rgb(221, 221, 221); background: inherit; white-space: nowrap; }
+.CodeMirror-linenumber { padding: 0px 3px 0px 5px; text-align: right; color: rgb(153, 153, 153); }
+.cm-s-inner .cm-keyword { color: rgb(119, 0, 136); }
+.cm-s-inner .cm-atom, .cm-s-inner.cm-atom { color: rgb(34, 17, 153); }
+.cm-s-inner .cm-number { color: rgb(17, 102, 68); }
+.cm-s-inner .cm-def { color: rgb(0, 0, 255); }
+.cm-s-inner .cm-variable { color: rgb(0, 0, 0); }
+.cm-s-inner .cm-variable-2 { color: rgb(0, 85, 170); }
+.cm-s-inner .cm-variable-3 { color: rgb(0, 136, 85); }
+.cm-s-inner .cm-string { color: rgb(170, 17, 17); }
+.cm-s-inner .cm-property { color: rgb(0, 0, 0); }
+.cm-s-inner .cm-operator { color: rgb(152, 26, 26); }
+.cm-s-inner .cm-comment, .cm-s-inner.cm-comment { color: rgb(170, 85, 0); }
+.cm-s-inner .cm-string-2 { color: rgb(255, 85, 0); }
+.cm-s-inner .cm-meta { color: rgb(85, 85, 85); }
+.cm-s-inner .cm-qualifier { color: rgb(85, 85, 85); }
+.cm-s-inner .cm-builtin { color: rgb(51, 0, 170); }
+.cm-s-inner .cm-bracket { color: rgb(153, 153, 119); }
+.cm-s-inner .cm-tag { color: rgb(17, 119, 0); }
+.cm-s-inner .cm-attribute { color: rgb(0, 0, 204); }
+.cm-s-inner .cm-header, .cm-s-inner.cm-header { color: rgb(0, 0, 255); }
+.cm-s-inner .cm-quote, .cm-s-inner.cm-quote { color: rgb(0, 153, 0); }
+.cm-s-inner .cm-hr, .cm-s-inner.cm-hr { color: rgb(153, 153, 153); }
+.cm-s-inner .cm-link, .cm-s-inner.cm-link { color: rgb(0, 0, 204); }
+.cm-negative { color: rgb(221, 68, 68); }
+.cm-positive { color: rgb(34, 153, 34); }
+.cm-header, .cm-strong { font-weight: 700; }
+.cm-del { text-decoration: line-through; }
+.cm-em { font-style: italic; }
+.cm-link { text-decoration: underline; }
+.cm-error { color: red; }
+.cm-invalidchar { color: red; }
+.cm-constant { color: rgb(38, 139, 210); }
+.cm-defined { color: rgb(181, 137, 0); }
+div.CodeMirror span.CodeMirror-matchingbracket { color: rgb(0, 255, 0); }
+div.CodeMirror span.CodeMirror-nonmatchingbracket { color: rgb(255, 34, 34); }
+.cm-s-inner .CodeMirror-activeline-background { background: inherit; }
+.CodeMirror { position: relative; overflow: hidden; }
+.CodeMirror-scroll { height: 100%; outline: 0px; position: relative; box-sizing: content-box; background: inherit; }
+.CodeMirror-sizer { position: relative; }
+.CodeMirror-gutter-filler, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-vscrollbar { position: absolute; z-index: 6; display: none; }
+.CodeMirror-vscrollbar { right: 0px; top: 0px; overflow: hidden; }
+.CodeMirror-hscrollbar { bottom: 0px; left: 0px; overflow: hidden; }
+.CodeMirror-scrollbar-filler { right: 0px; bottom: 0px; }
+.CodeMirror-gutter-filler { left: 0px; bottom: 0px; }
+.CodeMirror-gutters { position: absolute; left: 0px; top: 0px; padding-bottom: 30px; z-index: 3; }
+.CodeMirror-gutter { white-space: normal; height: 100%; box-sizing: content-box; padding-bottom: 30px; margin-bottom: -32px; display: inline-block; }
+.CodeMirror-gutter-wrapper { position: absolute; z-index: 4; background: 0px 0px !important; border: none !important; }
+.CodeMirror-gutter-background { position: absolute; top: 0px; bottom: 0px; z-index: 4; }
+.CodeMirror-gutter-elt { position: absolute; cursor: default; z-index: 4; }
+.CodeMirror-lines { cursor: text; }
+.CodeMirror pre { border-radius: 0px; border-width: 0px; background: 0px 0px; font-family: inherit; font-size: inherit; margin: 0px; white-space: pre; overflow-wrap: normal; color: inherit; z-index: 2; position: relative; overflow: visible; }
+.CodeMirror-wrap pre { overflow-wrap: break-word; white-space: pre-wrap; word-break: normal; }
+.CodeMirror-code pre { border-right: 30px solid transparent; width: fit-content; }
+.CodeMirror-wrap .CodeMirror-code pre { border-right: none; width: auto; }
+.CodeMirror-linebackground { position: absolute; left: 0px; right: 0px; top: 0px; bottom: 0px; z-index: 0; }
+.CodeMirror-linewidget { position: relative; z-index: 2; overflow: auto; }
+.CodeMirror-wrap .CodeMirror-scroll { overflow-x: hidden; }
+.CodeMirror-measure { position: absolute; width: 100%; height: 0px; overflow: hidden; visibility: hidden; }
+.CodeMirror-measure pre { position: static; }
+.CodeMirror div.CodeMirror-cursor { position: absolute; visibility: hidden; border-right: none; width: 0px; }
+.CodeMirror div.CodeMirror-cursor { visibility: hidden; }
+.CodeMirror-focused div.CodeMirror-cursor { visibility: inherit; }
+.cm-searching { background: rgba(255, 255, 0, 0.4); }
+@media print {
+  .CodeMirror div.CodeMirror-cursor { visibility: hidden; }
+}
+
+
+:root {
+    --side-bar-bg-color: #fafafa;
+    --control-text-color: #777;
+}
+
+@include-when-export url(https://fonts.loli.net/css?family=Open+Sans:400italic,700italic,700,400&subset=latin,latin-ext);
+
+/* open-sans-regular - latin-ext_latin */
+  /* open-sans-italic - latin-ext_latin */
+    /* open-sans-700 - latin-ext_latin */
+    /* open-sans-700italic - latin-ext_latin */
+  html {
+    font-size: 16px;
+}
+
+body {
+    font-family: "Open Sans","Clear Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: rgb(51, 51, 51);
+    line-height: 1.6;
+}
+
+#write {
+    max-width: 860px;
+  	margin: 0 auto;
+  	padding: 30px;
+    padding-bottom: 100px;
+}
+
+@media only screen and (min-width: 1400px) {
+	#write {
+		max-width: 1024px;
+	}
+}
+
+@media only screen and (min-width: 1800px) {
+	#write {
+		max-width: 1200px;
+	}
+}
+
+#write > ul:first-child,
+#write > ol:first-child{
+    margin-top: 30px;
+}
+
+a {
+    color: #4183C4;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+    cursor: text;
+}
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h5:hover a.anchor,
+h6:hover a.anchor {
+    text-decoration: none;
+}
+h1 tt,
+h1 code {
+    font-size: inherit;
+}
+h2 tt,
+h2 code {
+    font-size: inherit;
+}
+h3 tt,
+h3 code {
+    font-size: inherit;
+}
+h4 tt,
+h4 code {
+    font-size: inherit;
+}
+h5 tt,
+h5 code {
+    font-size: inherit;
+}
+h6 tt,
+h6 code {
+    font-size: inherit;
+}
+h1 {
+    font-size: 2.25em;
+    line-height: 1.2;
+    border-bottom: 1px solid #eee;
+}
+h2 {
+    font-size: 1.75em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+/*@media print {
+    .typora-export h1,
+    .typora-export h2 {
+        border-bottom: none;
+        padding-bottom: initial;
+    }
+
+    .typora-export h1::after,
+    .typora-export h2::after {
+        content: "";
+        display: block;
+        height: 100px;
+        margin-top: -96px;
+        border-top: 1px solid #eee;
+    }
+}*/
+
+h3 {
+    font-size: 1.5em;
+    line-height: 1.43;
+}
+h4 {
+    font-size: 1.25em;
+}
+h5 {
+    font-size: 1em;
+}
+h6 {
+   font-size: 1em;
+    color: #777;
+}
+p,
+blockquote,
+ul,
+ol,
+dl,
+table{
+    margin: 0.8em 0;
+}
+li>ol,
+li>ul {
+    margin: 0 0;
+}
+hr {
+    height: 2px;
+    padding: 0;
+    margin: 16px 0;
+    background-color: #e7e7e7;
+    border: 0 none;
+    overflow: hidden;
+    box-sizing: content-box;
+}
+
+li p.first {
+    display: inline-block;
+}
+ul,
+ol {
+    padding-left: 30px;
+}
+ul:first-child,
+ol:first-child {
+    margin-top: 0;
+}
+ul:last-child,
+ol:last-child {
+    margin-bottom: 0;
+}
+blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding: 0 15px;
+    color: #777777;
+}
+blockquote blockquote {
+    padding-right: 0;
+}
+table {
+    padding: 0;
+    word-break: initial;
+}
+table tr {
+    border-top: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 0;
+}
+table tr:nth-child(2n),
+thead {
+    background-color: #f8f8f8;
+}
+table th {
+    font-weight: bold;
+    border: 1px solid #dfe2e5;
+    border-bottom: 0;
+    margin: 0;
+    padding: 6px 13px;
+}
+table td {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 6px 13px;
+}
+table th:first-child,
+table td:first-child {
+    margin-top: 0;
+}
+table th:last-child,
+table td:last-child {
+    margin-bottom: 0;
+}
+
+.CodeMirror-lines {
+    padding-left: 4px;
+}
+
+.code-tooltip {
+    box-shadow: 0 1px 1px 0 rgba(0,28,36,.3);
+    border-top: 1px solid #eef2f2;
+}
+
+.md-fences,
+code,
+tt {
+    border: 1px solid #e7eaed;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    padding: 0;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+code {
+    background-color: #f3f4f4;
+    padding: 0 2px 0 2px;
+}
+
+.md-fences {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    padding-top: 8px;
+    padding-bottom: 6px;
+}
+
+
+.md-task-list-item > input {
+  margin-left: -1.3em;
+}
+
+@media print {
+    html {
+        font-size: 13px;
+    }
+    table,
+    pre {
+        page-break-inside: avoid;
+    }
+    pre {
+        word-wrap: break-word;
+    }
+}
+
+.md-fences {
+	background-color: #f8f8f8;
+}
+#write pre.md-meta-block {
+	padding: 1rem;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border: 0;
+    border-radius: 3px;
+    color: #777777;
+    margin-top: 0 !important;
+}
+
+.mathjax-block>.code-tooltip {
+	bottom: .375rem;
+}
+
+.md-mathjax-midline {
+    background: #fafafa;
+}
+
+#write>h3.md-focus:before{
+	left: -1.5625rem;
+	top: .375rem;
+}
+#write>h4.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h5.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+#write>h6.md-focus:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+.md-image>.md-meta {
+    /*border: 1px solid #ddd;*/
+    border-radius: 3px;
+    padding: 2px 0px 0px 4px;
+    font-size: 0.9em;
+    color: inherit;
+}
+
+.md-tag {
+    color: #a7a7a7;
+    opacity: 1;
+}
+
+.md-toc { 
+    margin-top:20px;
+    padding-bottom:20px;
+}
+
+.sidebar-tabs {
+    border-bottom: none;
+}
+
+#typora-quick-open {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+}
+
+#typora-quick-open-item {
+    background-color: #FAFAFA;
+    border-color: #FEFEFE #e5e5e5 #e5e5e5 #eee;
+    border-style: solid;
+    border-width: 1px;
+}
+
+/** focus mode */
+.on-focus-mode blockquote {
+    border-left-color: rgba(85, 85, 85, 0.12);
+}
+
+header, .context-menu, .megamenu-content, footer{
+    font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.file-node-content:hover .file-node-icon,
+.file-node-content:hover .file-node-open-state{
+    visibility: visible;
+}
+
+.mac-seamless-mode #typora-sidebar {
+    background-color: #fafafa;
+    background-color: var(--side-bar-bg-color);
+}
+
+.md-lang {
+    color: #b4654d;
+}
+
+.html-for-mac .context-menu {
+    --item-hover-bg-color: #E6F0FE;
+}
+
+#md-notification .btn {
+    border: 0;
+}
+
+.dropdown-menu .divider {
+    border-color: #e5e5e5;
+}
+
+.ty-preferences .window-content {
+    background-color: #fafafa;
+}
+
+.ty-preferences .nav-group-item.active {
+    color: white;
+    background: #999;
+}
+
+
+</style>
 </head>
-<body>
-<nav id="TOC">
-<ul>
-<li><a href="#state-of-foreign-memory-support">State of foreign memory support</a><ul>
-<li><a href="#segments">Segments</a></li>
-<li><a href="#memory-access-handles">Memory access handles</a></li>
-<li><a href="#safety">Safety</a></li>
-<li><a href="#layouts">Layouts</a></li>
-<li><a href="#var-handle-combinators">Var handle combinators</a></li>
-<li><a href="#segment-accessors">Segment accessors</a></li>
-<li><a href="#interoperability">Interoperability</a></li>
-<li><a href="#unsafe-segments">Unsafe segments</a></li>
-<li><a href="#confinement">Confinement</a></li>
-<li><a href="#implicit-deallocation">Implicit deallocation</a></li>
-</ul></li>
-</ul>
-</nav>
-<h2 id="state-of-foreign-memory-support">State of foreign memory support</h2>
-<p><strong>October 2020</strong></p>
-<ul>
-<li>Reflect latest API changes in handoff/implicit deallocation</li>
-<li>Updated section on restricted segments reflecting new, simpler API</li>
-<li>Revamped section on confinement to add description of shared segments</li>
-<li>Added section on implicit deallocation</li>
-</ul>
-<p><strong>Maurizio Cimadamore</strong></p>
-<p>A crucial part of any native interop story lies in the ability of accessing off-heap memory in an efficient fashion. Panama achieves this goal through the so called Foreign Memory Access API. This API has been made available as an incubating API in Java <a href="https://openjdk.java.net/jeps/370">14</a> ad <a href="https://openjdk.java.net/jeps/383">15</a>, and is, to date, the most mature part of the Panama interop story.</p>
-<h3 id="segments">Segments</h3>
-<p>Memory segments are abstractions which can be used to model memory regions, located either on- or off- the Java heap. Segments can be allocated from native memory (e.g. like a <code>malloc</code>), or can be wrapped around existing memory sources (e.g. a Java array or a <code>ByteBuffer</code>). Memory segments provide <em>strong</em> guarantees which make memory dereference operation <em>safe</em>. More specifically, each segment provides:</p>
-<ul>
-<li><em>spatial bounds</em> - that is, a segment has a base address and a size, and accessing a segment outside those boundaries is forbidden</li>
-<li><em>temporal bounds</em> - that is, a segment has a <em>state</em> - meaning that it can be used and then <em>closed</em> when the memory backing the segment is no longer needed (note, this might trigger deallocation of said memory)</li>
-<li><em>thread-confinement</em> - that is, a segment is a view over a memory region that is <em>owned</em> by the thread which created it. Attempting to dereference or close a segment outside the confinement thread is forbidden (this is crucial to avoid access vs. close races in multi-threaded scenario)</li>
-</ul>
-<p>For instance, the following snippet allocates 100 bytes off-heap:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">try</span> (MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">100</span>)) {</a>
-<a class="sourceLine" id="cb1-2" title="2">    ...</a>
-<a class="sourceLine" id="cb1-3" title="3">} <span class="co">// frees memory</span></a></code></pre></div>
-<p>Since segments are <code>AutoCloseable</code> they can be used inside a <em>try-with-resources</em> statement, which helps ensure that memory will be released when the segment is no longer needed.</p>
-<p>Memory segments support <em>slicing</em> — that is, given a segment, it is possible to create a new segment whose spatial bounds are stricter than that of the original segment:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb2-1" title="1">MemorySegment segment = MemorySement.<span class="fu">allocateNative</span>(<span class="dv">10</span>);</a>
-<a class="sourceLine" id="cb2-2" title="2">MemorySegment slice = segment.<span class="fu">asSlice</span>(<span class="dv">4</span>, <span class="dv">4</span>);</a></code></pre></div>
-<p>The above code creates a slice that starts at offset 4 and has a length of 4 bytes. Slices have the <em>same</em> temporal bounds as the parent segment - this means that when the parent segment is closed, all the slices derived from it are also closed. The opposite is also true, closing a slice closes the parent segment (and all the other slices derived from it). If a library wants to share a slice, but prevent a client from closing it (could be useful e.g. when implementing a slab allocator), the library could prevent a client from closing the slice by creating a <em>non-closeable</em> view:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb3-1" title="1">MemorySegment sharedSlice = slice.<span class="fu">withAccessModes</span>(ALL_ACCESS &amp; ~CLOSE);</a></code></pre></div>
-<p>Any attempt to call <code>close</code> on <code>sharedSlice</code> will be met with an exception. Memory segments support various access modes (including those for read/write access) which can be used to constrain the set of operations available to clients.</p>
-<h3 id="memory-access-handles">Memory access handles</h3>
-<p>Dereferencing memory associated with segments is made possible by using <em>memory access var handles</em>. A memory access var handle is a special kind of var handle which takes a memory segment access coordinate, together with a byte offset — the offset, relative to the segment's base address at which the dereference operation should occur. A memory access var handle can be obtained as follows:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb4-1" title="1">VarHandle intHandle = MemoryHandles.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>, <span class="bu">ByteOrder</span>.<span class="fu">nativeOrder</span>())    </a></code></pre></div>
-<p>To create a dereference handle we have to specify a carrier type — the type we want to use e.g. to extract values from memory, as well as to whether any byte swapping should be applied when contents are read from or stored to memory. Additionally, the user can supply an extra alignment parameter (not shown here) — this can be useful to impose additional constraints on how memory dereferences should occur; for instance, a client might want to prevent access to misaligned 32 bit values.</p>
-<p>For instance, to read 10 int values from a segment, we can write the following code:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb5-1" title="1">MemorySegment segment = ...</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="dt">int</span>[] values = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">10</span>];</a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span> ; i &lt; values.<span class="fu">length</span> ; i++) {</a>
-<a class="sourceLine" id="cb5-4" title="4">    values[i] = (<span class="dt">int</span>)intHandle.<span class="fu">get</span>(segment, (<span class="dt">long</span>)i * <span class="dv">4</span>);</a>
-<a class="sourceLine" id="cb5-5" title="5">}</a></code></pre></div>
-<p>Memory access var handles (as any other var handle) are <em>strongly</em> typed; and to get maximum efficiency, it is generally necessary to introduce casts to make sure that the access coordinates match the expected types — in this case we have to cast <code>i * 4</code> into a long; similarly, since the signature polymorphic method <code>VarHandle::get</code> notionally returns <code>Object</code> a cast is necessary to force the right return type the var handle operation.</p>
-<p>Note that, since the offset of the dereference operation is expressed in bytes, we have to manually compute the starting offset, by multiplying the logical index <code>i</code> by <code>4</code> — the size (in bytes) of a Java int value; this is not dissimilar to what happens with the <code>ByteBuffer</code> absolute get/put methods. We shall see later how memory layouts help us achieving higher level, structured access.</p>
-<h3 id="safety">Safety</h3>
-<p>The memory access API provides basic safety guarantees for memory dereference operations. More specifically, dereferencing memory should either succeed, or result in a runtime exception - but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring <em>outside</em> the region of memory associated with a memory segment.</p>
-<p>To enforce this, strong spatial and temporal checks are enforced upon every access. Consider the following code:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb6-1" title="1">MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>);</a>
-<a class="sourceLine" id="cb6-2" title="2">intHandle.<span class="fu">get</span>(segment, <span class="dv">8</span>); <span class="co">//throws ISE</span></a></code></pre></div>
-<p>The above code leads to a runtime exception, as we trying to access memory outside the segment's bounds — the access operation starts at offset 8 (which is within bounds), but ends at offset 11 (which is outside bounds).</p>
-<p>Similarly, attempting to access an already closed segment leads to a failure:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb7-1" title="1">segment.<span class="fu">close</span>();</a>
-<a class="sourceLine" id="cb7-2" title="2">intHandle.<span class="fu">get</span>(segment, <span class="dv">0</span>); <span class="co">//throws ISE</span></a></code></pre></div>
-<p>This time, the access occurs within the spatial bounds implied by the segment, but when access occurs, the segment has already been <em>closed</em>, so the access operation fails. This is crucial to guarantee safety: since memory segments ensure <em>deterministic deallocation</em>, the above code might end up attempting to dereference already freed memory.</p>
-<p>On top of basic spatial and temporal bound guarantees, memory segments also enforce thread-confinement guarantees, which will be discussed in a later <a href="#Confinement">section</a>. Note that, while these checks might seem expensive when considered in isolation, the Foreign Memory Access API is designed and implemented such that the JIT compiler can hoist most, if not all, such checks outside hot loops. Hence, memory access efficiency is not negatively impacted by the safety requirements of the API.</p>
-<h3 id="layouts">Layouts</h3>
-<p>Expressing byte offsets (as in the <a href="#memory-access-handles">above</a> example) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, we add a <em>memory layout</em> API which allows clients to define memory layouts <em>programmatically</em>. For instance, the layout of the array used in the above example can be expressed using the following code:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb8-1" title="1">MemoryLayout intArray = MemoryLayout.<span class="fu">ofSequence</span>(<span class="dv">10</span>, MemoryLayout.<span class="fu">ofValueBits</span>(<span class="dv">32</span>));</a></code></pre></div>
-<p>That is, our layout is a repetition of 10 elements whose size is 32 bit each. The advantage of defining a memory layout upfront, using an API, is that we can then query on the layout — for instance we can compute the offset of the 3rd element of the array:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb9-1" title="1"><span class="dt">long</span> element3 = intArray.<span class="fu">byteOffset</span>(PathElement.<span class="fu">sequenceElement</span>(<span class="dv">3</span>)); <span class="co">// 12</span></a></code></pre></div>
-<p>To specify which nested layout element should be used for the offset calculation we use a so called <em>layout path</em> - that is, a selection expression that navigates the layout, from the <em>root</em> layout, down to the leaf layout we wish to select (in this case the 3rd layout element in the sequence).</p>
-<p>Layouts can also be used to obtain memory access var handles; so we can rewrite the above example as follows:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb10-1" title="1">MemorySegment segment = ...</a>
-<a class="sourceLine" id="cb10-2" title="2"><span class="dt">int</span>[] values = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">10</span>];</a>
-<a class="sourceLine" id="cb10-3" title="3">VarHandle elemHandle = intArray.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>, PathElement.<span class="fu">sequenceElement</span>());</a>
-<a class="sourceLine" id="cb10-4" title="4"><span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span> ; i &lt; values.<span class="fu">length</span> ; i++) {</a>
-<a class="sourceLine" id="cb10-5" title="5">    values[i] = (<span class="dt">int</span>)elemHandle.<span class="fu">get</span>(segment, (<span class="dt">long</span>)i);</a>
-<a class="sourceLine" id="cb10-6" title="6">}</a></code></pre></div>
-<p>In the above, <code>elemHandle</code> is a var handle whose type is <code>int</code> , which takes two access coordinates:</p>
-<ol type="1">
-<li>a <code>MemorySegment</code> instance; the segment whose memory should be dereferenced</li>
-<li>a <em>logical</em> index, which is used to select the element of the sequence we want to access</li>
-</ol>
-<p>In other words, manual offset computation is no longer needed — offsets and strides can in fact be derived from the layout object.</p>
-<p>Memory layouts shine when structured access is needed — consider the following C declaration:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode c"><code class="sourceCode c"><a class="sourceLine" id="cb11-1" title="1"><span class="kw">typedef</span> <span class="kw">struct</span> {</a>
-<a class="sourceLine" id="cb11-2" title="2">    <span class="dt">char</span> kind;</a>
-<a class="sourceLine" id="cb11-3" title="3">    <span class="dt">int</span> value;</a>
-<a class="sourceLine" id="cb11-4" title="4">} TaggedValues[<span class="dv">5</span>];</a></code></pre></div>
-<p>The above C declaration can be modeled using the layout below:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb12-1" title="1">SequenceLayout taggedValues <span class="op">=</span> <span class="va">MemoryLayout</span>.<span class="at">ofSequence</span>(<span class="dv">5</span><span class="op">,</span></a>
-<a class="sourceLine" id="cb12-2" title="2">    <span class="va">MemoryLayout</span>.<span class="at">ofStruct</span>(</a>
-<a class="sourceLine" id="cb12-3" title="3">        <span class="va">MemoryLayout</span>.<span class="at">ofValueBits</span>(<span class="dv">8</span><span class="op">,</span> <span class="va">ByteOrder</span>.<span class="at">nativeOrder</span>()).<span class="at">withName</span>(<span class="st">&quot;kind&quot;</span>)<span class="op">,</span></a>
-<a class="sourceLine" id="cb12-4" title="4">        <span class="va">MemoryLayout</span>.<span class="at">ofPaddingBits</span>(<span class="dv">24</span>)<span class="op">,</span></a>
-<a class="sourceLine" id="cb12-5" title="5">        <span class="va">MemoryLayout</span>.<span class="at">ofValueBits</span>(<span class="dv">32</span><span class="op">,</span> <span class="va">ByteOrder</span>.<span class="at">nativeOrder</span>()).<span class="at">withName</span>(<span class="st">&quot;value&quot;</span>)</a>
-<a class="sourceLine" id="cb12-6" title="6">    )</a>
-<a class="sourceLine" id="cb12-7" title="7">).<span class="at">withName</span>(<span class="st">&quot;TaggedValues&quot;</span>)<span class="op">;</span></a></code></pre></div>
-<p>Here we assume that we need to insert some padding after the <code>kind</code> field to honor the alignment requirements of the <code>value</code> field <a href="#1"><sup>1</sup></a>. Now, if we had to access the <code>value</code> field of all the elements of the array using manual offset computation, the code would quickly become pretty hard to read — on each iteration we would have to remember that the stride of the array is 8 bytes and that the offset of the <code>value</code> field relative to the <code>TaggedValue</code> struct is 4 bytes. This gives us an access expression like <code>(i * 8) + 4</code>, where <code>i</code> is the index of the element whose <code>value</code> field needs to be accessed.</p>
-<p>With memory layouts, we can simply compute, once and for all, the memory access var handle to access the <code>value</code> field inside the sequence, as follows:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb13-1" title="1">VarHandle valuesHandle = taggedValues.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>,</a>
-<a class="sourceLine" id="cb13-2" title="2">                                               PathElement.<span class="fu">sequenceElement</span>(),</a>
-<a class="sourceLine" id="cb13-3" title="3">                                               PathElement.<span class="fu">groupElement</span>(<span class="st">&quot;value&quot;</span>));</a></code></pre></div>
-<p>When using this var handle, no manual offset computation will be required: the resulting <code>valuesHandle</code> will feature an additional <code>long</code> coordinate which can be used to select the desired <code>value</code> field from the sequence.</p>
-<h3 id="var-handle-combinators">Var handle combinators</h3>
-<p>The attentive reader might have noted how rich the var handles returned by the layout API are, compared to the simple memory access var handle we have seen at play <a href="#memory-access-handles">here</a>. How do we go from a simple access var handle that takes a byte offset to a var handle that can dereference a complex layout path? The answer is, by using var handle <em>combinators</em>. Developers familiar with the method handle API know how simpler method handles can be combined into more complex ones using the various combinator methods in the <code>MethodHandles</code> API. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.</p>
-<p>Sadly, none of these features are available when working with var handles. The Foreign Memory Access API rectifies this, by adding a rich set of var handle combinators in the <code>MemoryHandles</code> class; with these tools, developers can express var handle transformations such as:</p>
-<ul>
-<li>mapping a var handle carrier type into a different one, using an embedding/projection method handle pairs</li>
-<li>filter one or more var handle access coordinates using unary filters</li>
-<li>permute var handle access coordinates</li>
-<li>bind concrete access coordinates to an existing var handle</li>
-</ul>
-<p>Without diving too deep, let's consider how we might want to take a basic memory access handle and turn it into a var handle which dereference a segment at a specific offset (again using the <code>taggedValues</code> layout defined previously):</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb14-1" title="1">VarHandle intHandle = MemoryHandles.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>, <span class="bu">ByteOrder</span>.<span class="fu">nativeOrder</span>()); <span class="co">// (MS, J) -&gt; I</span></a>
-<a class="sourceLine" id="cb14-2" title="2"><span class="dt">long</span> offsetOfValue = taggedValues.<span class="fu">byteOffset</span>(PathElement.<span class="fu">sequenceElement</span>(<span class="dv">0</span>),</a>
-<a class="sourceLine" id="cb14-3" title="3">                                             PathElement.<span class="fu">groupElement</span>(<span class="st">&quot;value&quot;</span>));</a>
-<a class="sourceLine" id="cb14-4" title="4">VarHandle valueHandle = MemoryHandles.<span class="fu">insertCoordinates</span>(intHandle, <span class="dv">0</span>, offsetOfValue); <span class="co">// (MS) -&gt; I</span></a></code></pre></div>
-<p>We have been able to derive, from a basic memory access var handle, a new var handle that dereferences a segment at a given fixed offset. It is easy to see how other, richer, var handles obtained using the layout API can be constructed manually using the var handle combinator API.</p>
-<h3 id="segment-accessors">Segment accessors</h3>
-<p>Building complex memory access var handles using layout paths and the combinator API is useful, especially for structured access. But in simple cases, creating a <code>VarHandle</code> just to be able to read an int value at a given segment offset can be perceived as overkill. For this reason, the foreign memory access API provides ready-made static accessors in the <code>MemoryAccess</code> class, which allows to dereference a segment in various ways. For instance, if a client wants to read an int value from a segment, one of the following methods can be used:</p>
-<ul>
-<li><code>MemoryAccess::getInt(MemorySegment)</code> — reads an int value (4 bytes) starting at the segment's base address</li>
-<li><code>MemoryAccess::getIntAtOffset(MemorySegment, long)</code> — reads an int value (4 bytes) starting at the address <code>A = B + O</code> where <code>B</code> is the segment's base address, and <code>O</code> is an offset (in bytes) supplied by the client</li>
-<li><code>MemoryAccess::getIntAtIndex(MemorySegment, long)</code> — reads an int value (4 bytes) starting at the address <code>A = B + (4 * I)</code> where <code>B</code> is the segment's base address, and <code>I</code> is a logical index supplied by the client; this accessor is useful for mimicking array access.</li>
-</ul>
-<p>In other words, at least in simple cases, memory dereference operations can be achieved without the need of going through the <code>VarHandle</code> API; of course in more complex cases (structured and/or multidimensional access, fenced access) the full power of the <code>VarHandle</code> API might still come in handy.</p>
-<h3 id="interoperability">Interoperability</h3>
-<p>Memory segments are pretty flexible when it comes to interacting with existing memory sources. For instance it is possible to:</p>
-<ul>
-<li>create segment from a Java array</li>
-<li>convert a segment into a Java array</li>
-<li>create a segment from a byte buffer</li>
-<li>convert a segment into a byte buffer</li>
-</ul>
-<p>For instance, thanks to bi-directional integration with the byte buffer API, it is possible for users to create a memory segment, and then de-reference it using the byte buffer API, as follows:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb15-1" title="1">MemorySegment segment = ...</a>
-<a class="sourceLine" id="cb15-2" title="2"><span class="dt">int</span>[] values = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">10</span>];</a>
-<a class="sourceLine" id="cb15-3" title="3"><span class="bu">ByteBuffer</span> bb = segment.<span class="fu">asByteBuffer</span>();</a>
-<a class="sourceLine" id="cb15-4" title="4"><span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span> ; i &lt; values.<span class="fu">length</span> ; i++) {</a>
-<a class="sourceLine" id="cb15-5" title="5">    values[i] = bb.<span class="fu">getInt</span>();</a>
-<a class="sourceLine" id="cb15-6" title="6">}</a></code></pre></div>
-<p>The only thing to remember is that, when a byte buffer view is created out of a memory segment, the buffer has the same temporal bound and thread-confinement guarantees as those of the segment it originated from. This means that if the segment is closed, any subsequent attempt to dereference its memory via a (previously obtained) byte buffer view will fail with an exception.</p>
-<h3 id="unsafe-segments">Unsafe segments</h3>
-<p>It is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of memory managed by a custom allocator.</p>
-<p>The ByteBuffer API allows such a move, through a JNI <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer">method</a>, namely <code>NewDirectByteBuffer</code>. This native method can be used to wrap a long address in a fresh byte buffer instance which is then returned to unsuspecting Java code.</p>
-<p>Memory segments provide a similar capability - that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial, temporal and confinement bounds; a cleanup action to be executed when the segment is closed might also be specified.</p>
-<p>For instance, assuming we have an address pointing at some externally managed memory block, we can construct an <em>unsafe</em> segment, as follows:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb16-1" title="1">MemoryAddress addr = MemoryAddress.<span class="fu">ofLong</span>(someLongAddr);</a>
-<a class="sourceLine" id="cb16-2" title="2">var unsafeSegment = addr.<span class="fu">asSegmentRestricted</span>(<span class="dv">10</span>);</a></code></pre></div>
-<p>The above code creates a new confined unsafe segment from a given address; the size of the segment is 10 bytes; the confinement thread is the current thread, and there's no cleanup action associated with the segment (that can be changed as needed by calling <code>MemorySegment::withCleanupAction</code>).</p>
-<p>Of course, segments created this way are completely <em>unsafe</em>. There is no way for the runtime to verify that the provided address indeed points to a valid memory location, or that the size of the memory region pointed to by <code>addr</code> is indeed 10 bytes. Similarly, there are no guarantees that the underlying memory region associated with <code>addr</code> will not be deallocated <em>prior</em> to the call to <code>MemorySegment::close</code>.</p>
-<p>For these reasons, creating unsafe segments is a <em>restricted</em> operation in the Foreign Memory Access API. Restricted operations can only be performed if the running application has set a read-only runtime property — <code>foreign.restricted=permit</code>. Any attempt to call restricted operations without said runtime property will fail with a runtime exception.</p>
-<p>We plan, in the future, to make access to restricted operations more integrated with the module system; that is, certain modules might <em>require</em> restricted native access; when an application which depends on said modules is executed, the user might need to provide <em>permissions</em> to said modules to perform restricted native operations, or the runtime will refuse to build the application's module graph.</p>
-<h3 id="confinement">Confinement</h3>
-<p>In addition to spatial and temporal bounds, segments also feature thread-confinement. That is, a segment is <em>owned</em> by the thread which created it, and no other thread can access the contents on the segment, or perform certain operations (such as <code>close</code>) on it. Thread confinement, while restrictive, is crucial to guarantee optimal memory access performance even in a multi-threaded environment.</p>
-<p>The Foreign Memory Access API provides several ways to relax the thread confinement barriers. First, threads can cooperatively share segments by performing explicit <em>handoff</em> operations, where a thread releases its ownership on a given segment and transfers it onto another thread. Consider the following code:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb17-1" title="1">MemorySegment segmentA = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
-<a class="sourceLine" id="cb17-2" title="2">...</a>
-<a class="sourceLine" id="cb17-3" title="3">var segmentB = segmentA.<span class="fu">handoff</span>(threadB); <span class="co">// confined by thread B</span></a></code></pre></div>
-<p>This pattern of access is also known as <em>serial confinement</em> and might be useful in producer/consumer use cases where only one thread at a time needs to access a segment. Note that, to make the handoff operation safe, the API <em>kills</em> the original segment (as if <code>close</code> was called, but without releasing the underlying memory) and returns a <em>new</em> segment with the correct owner. That is, handoff operations are <em>terminal operations</em> (like <code>MemorySegment::close</code>). The implementation also makes sure that all writes by the first thread are flushed into memory by the time the second thread accesses the segment.</p>
-<p>When serial confinement is not enough, clients can optionally remove thread ownership, that is, turn a confined segment into a <em>shared</em> one which can be accessed — and closed — concurrently, by multiple threads<a href="#2"><sup>2</sup></a>. As before, sharing a segment kills the original segment and returns a new segment with no owner thread:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb18-1" title="1">MemorySegment segmentA = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
-<a class="sourceLine" id="cb18-2" title="2">...</a>
-<a class="sourceLine" id="cb18-3" title="3">var sharedSegment = segmentA.<span class="fu">share</span>() <span class="co">// shared segment</span></a></code></pre></div>
-<p>A shared segments is especially useful when multiple threads need to operate on the segment's contents in <em>parallel</em> (e.g. using a framework such as Fork/Join) — by obtaining a <code>Spliterator</code> instance out of a memory segment. For instance to sum all the 32 bit values of a memory segment in parallel, we can use the following code:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb19-1" title="1">SequenceLayout seq = MemoryLayout.<span class="fu">ofSequence</span>(<span class="dv">1_000_000</span>, MemoryLayouts.<span class="fu">JAVA_INT</span>);</a>
-<a class="sourceLine" id="cb19-2" title="2">SequenceLayout seq_bulk = seq.<span class="fu">reshape</span>(-<span class="dv">1</span>, <span class="dv">100</span>);</a>
-<a class="sourceLine" id="cb19-3" title="3">VarHandle intHandle = seq.<span class="fu">varHandle</span>(<span class="dt">int</span>.<span class="fu">class</span>, <span class="fu">sequenceElement</span>());    </a>
-<a class="sourceLine" id="cb19-4" title="4"></a>
-<a class="sourceLine" id="cb19-5" title="5"><span class="dt">int</span> sum = StreamSupport.<span class="fu">stream</span>(MemorySegment.<span class="fu">spliterator</span>(segment.<span class="fu">share</span>(), seq_bulk), <span class="kw">true</span>)</a>
-<a class="sourceLine" id="cb19-6" title="6">                .<span class="fu">mapToInt</span>(slice -&gt; {</a>
-<a class="sourceLine" id="cb19-7" title="7">                    <span class="dt">int</span> res = <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb19-8" title="8">                    <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; <span class="dv">100</span> ; i++) {</a>
-<a class="sourceLine" id="cb19-9" title="9">                        res += MemoryAccess.<span class="fu">getIntAtIndex</span>(slice, i);</a>
-<a class="sourceLine" id="cb19-10" title="10">                    }</a>
-<a class="sourceLine" id="cb19-11" title="11">                    <span class="kw">return</span> res;</a>
-<a class="sourceLine" id="cb19-12" title="12">                }).<span class="fu">sum</span>();</a></code></pre></div>
-<p>The <code>MemorySegment::spliterator</code> takes a segment, a <em>sequence</em> layout and returns a spliterator instance which splits the segment into chunks which corresponds to the elements in the provided sequence layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes <em>exactly</em> one element would be inefficient, so instead we use the layout API to derive a <em>bulk</em> sequence layout. The bulk layout is a sequence layout which has the same size of the original layouts, but where the elements are arranged into groups of 100 elements — which should make it more amenable to parallel processing.</p>
-<p>Once we have the spliterator, we can use it to construct a parallel stream and sum the contents of the segment in parallel. Since the segment operated upon by the spliterator is shared, the segment can be accessed from multiple threads concurrently; the spliterator API ensures that the access occurs in a regular fashion: a slice is created from the original segment, and given to a thread to perform some computation — thus ensuring that no two threads can ever operate concurrently on the same memory region.</p>
-<p>Shared segment can also be useful to perform serial confinement in cases where the thread handing off the segment does not know which other thread will continue the work on the segment, for instance:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb20-1" title="1"><span class="co">// thread A</span></a>
-<a class="sourceLine" id="cb20-2" title="2">MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">10</span>); <span class="co">// confined by thread A</span></a>
-<a class="sourceLine" id="cb20-3" title="3"><span class="co">//do some work</span></a>
-<a class="sourceLine" id="cb20-4" title="4">segment = segment.<span class="fu">share</span>();</a>
-<a class="sourceLine" id="cb20-5" title="5"></a>
-<a class="sourceLine" id="cb20-6" title="6"><span class="co">// thread B</span></a>
-<a class="sourceLine" id="cb20-7" title="7">segment.<span class="fu">handoff</span>(<span class="bu">Thread</span>.<span class="fu">currentThread</span>()); <span class="co">// now confined by thread B</span></a>
-<a class="sourceLine" id="cb20-8" title="8"><span class="co">// do some more work</span></a></code></pre></div>
-<p>That is, multiple threads can <em>race</em> to acquire a given shared segment — the API ensures that only one of them will succeed in acquiring ownership of the shared segment.</p>
-<h3 id="implicit-deallocation">Implicit deallocation</h3>
-<p>While memory segment feature <em>deterministic deallocation</em> they can also be registered against a <code>Cleaner</code>, to make sure that the memory resources associated with a segment are released when the GC determines that the segment is no longer <em>reachable</em>:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb21-1" title="1">MemorySegment segment = MemorySegment.<span class="fu">allocateNative</span>(<span class="dv">100</span>);</a>
-<a class="sourceLine" id="cb21-2" title="2">Cleaner cleaner = Cleaner.<span class="fu">create</span>();</a>
-<a class="sourceLine" id="cb21-3" title="3">segment = segment.<span class="fu">registerCleaner</span>(cleaner);</a>
-<a class="sourceLine" id="cb21-4" title="4"><span class="co">// do some work</span></a>
-<a class="sourceLine" id="cb21-5" title="5">segment = <span class="kw">null</span>; <span class="co">// Cleaner might reclaim the segment memory now</span></a></code></pre></div>
-<p>As for handoff, registering a segment with a cleaner <em>kills</em> the current segment and returns a new one which features implicit deallocation; this is also a <em>terminal operation</em>. Note that registering a segment with a cleaner doesn't prevent clients from calling <code>MemorySegment::close</code> explicitly on the returned segment; the API will guarantee that the segment's cleanup action will be called at most once — either explicitly, or implicitly (by a cleaner). Moreover, since an unreachable segment cannot (by definition) be accessed by any thread, the cleaner can always release any memory resources associated with an unreachable segment, regardless of whether it is a confined, or a shared segment.</p>
-<ul>
-<li><a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C <code>struct</code> declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small></li>
-<li><a id="2"/>(<sup>2</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP <a href="https://openjdk.java.net/jeps/312">312</a>) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, <code>MemorySegment::close</code> might be slower on shared segments than on confined ones.</small></li>
-</ul>
+<body class='typora-export'>
+<div id='write'  class=''><h2><a name="state-of-foreign-memory-support" class="md-header-anchor"></a><span>State of foreign memory support</span></h2><p><strong><span>March 2021</span></strong></p><ul><li><span>Reorganize the document, starting from simpler use cases to more advanced ones</span></li><li><span>Reorganized section on shared segments and confinement into a brand new section on deterministic deallocation</span></li></ul><p><strong><span>Maurizio Cimadamore</span></strong></p><p><span>A crucial part of any native interop story lies in the ability of accessing off-heap memory in an efficient fashion. Panama achieves this goal through the so called Foreign Memory Access API. This API has been made available as an incubating API in Java </span><a href='https://openjdk.java.net/jeps/370'><span>14</span></a><span> , </span><a href='https://openjdk.java.net/jeps/383'><span>15</span></a><span> and </span><a href='https://openjdk.java.net/jeps/393'><span>16</span></a><span> and is, to date, the most mature part of the Panama interop story.</span></p><h3><a name="segments" class="md-header-anchor"></a><span>Segments</span></h3><p><span>Memory segments are abstractions which can be used to model contiguous memory regions, located either on- or off- the Java heap. Segments can be allocated from native memory (e.g. like a </span><code>malloc</code><span>), or can be wrapped around existing memory sources (e.g. a Java array or a </span><code>ByteBuffer</code><span>). Memory segments provide </span><em><span>strong</span></em><span> spatial, temporal and thread-confinement guarantees which make memory dereference operation </span><em><span>safe</span></em><span> (more on that later), although in most simple cases some of the properties of memory segments can safely be ignored.</span></p><p><span>For instance, the following snippet allocates 100 bytes off-heap:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 507.75px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">100</span>);</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre><p><span>The above code allocates a 100-bytes long memory segment. The segment memory will not be </span><em><span>freed</span></em><span> as long as the segment instance is deemed </span><em><span>reachable</span></em><span>. In other words, the above factory creates a segment whose behavior closely matches that of a </span><code>ByteBuffer</code><span> allocated with the </span><code>allocateDirect</code><span> factory. Of course, the memory access API also supports deterministic memory release; we will cover that in a later section of this document.</span></p><p><span>Memory segments support </span><em><span>slicing</span></em><span> — that is, given a segment, it is possible to create a new segment whose spatial bounds are stricter than that of the original segment:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 490px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySement</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">10</span>);</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">slice</span> <span class="cm-operator">=</span> <span class="cm-variable">segment</span>.<span class="cm-variable">asSlice</span>(<span class="cm-number">4</span>, <span class="cm-number">4</span>);</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 46px;"></div><div class="CodeMirror-gutters" style="display: none; height: 46px;"></div></div></div></pre><p><span>The above code creates a slice that starts at offset 4 and has a length of 4 bytes. Generally speaking, slices have the </span><em><span>same</span></em><span> temporal bounds as the parent segment (we will refine this concept later in this document). In this example, the memory associated with the parent segment will not be released as long as there is at least one </span><em><span>reachable</span></em><span> slice derived from that segment.</span></p><p><span>The Foreign Memory Access API provides ready-made static accessors in the </span><code>MemoryAccess</code><span> class, which allows to dereference a segment in various ways. The following example reads pair of 32-bit values (as Java ints) and uses them to construct an array of points:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 559px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">record</span> <span class="cm-def">Point</span>(<span class="cm-variable-3">int</span> <span class="cm-variable">x</span>, <span class="cm-variable-3">int</span> <span class="cm-variable">y</span>);</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySement</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">10</span> <span class="cm-operator">*</span> <span class="cm-number">4</span> <span class="cm-operator">*</span> <span class="cm-number">2</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">Point</span>[] <span class="cm-variable">values</span> <span class="cm-operator">=</span> <span class="cm-keyword">new</span> <span class="cm-variable">Point</span>[<span class="cm-number">10</span>];</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">for</span> (<span class="cm-variable-3">int</span> <span class="cm-variable">i</span> <span class="cm-operator">=</span> <span class="cm-number">0</span> ; <span class="cm-variable">i</span> <span class="cm-operator">&lt;</span> <span class="cm-variable">values</span>.<span class="cm-variable">length</span> ; <span class="cm-variable">i</span><span class="cm-operator">++</span>) {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">x</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">getIntAtIndex</span>(<span class="cm-variable">segment</span>, <span class="cm-variable">i</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">y</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">getIntAtIndex</span>(<span class="cm-variable">segment</span>, (<span class="cm-variable">i</span> <span class="cm-operator">*</span> <span class="cm-number">2</span>) <span class="cm-operator">+</span> <span class="cm-number">1</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 161px;"></div><div class="CodeMirror-gutters" style="display: none; height: 161px;"></div></div></div></pre><p><span>The above snippet allocates a flat array of 80 bytes using </span><code>MemorySegment::allocateNative</code><span>. Then, inside the loop, elements in the array are accessed using the </span><code>MemoryAccess.getIntAtIndex</code><span> method, which accesses </span><code>int</code><span> elements in a segment at a certain </span><em><span>logical</span></em><span> index (in other words, the segment offset being accessed is obtained by multiplying the index by 4, which is the stride of a Java </span><code>int</code><span> array). Thus, all coordinates </span><code>x</code><span> and </span><code>y</code><span> are collected into instances of a </span><code>Point</code><span> record.</span></p><p><span>Memory segments are pretty flexible when it comes to interacting with existing memory sources and APIs. For instance it is possible to create a </span><code>ByteBuffer</code><span> </span><em><span>view</span></em><span> out of an existing memory segment, as follows:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 516px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">IntBuffer</span> <span class="cm-variable">intBuffer</span> <span class="cm-operator">=</span> <span class="cm-variable">segment</span>.<span class="cm-variable">asByteBuffer</span>().<span class="cm-variable">asIntBuffer</span>();</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">Point</span>[] <span class="cm-variable">values</span> <span class="cm-operator">=</span> <span class="cm-keyword">new</span> <span class="cm-variable">Point</span>[<span class="cm-number">10</span>];</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">for</span> (<span class="cm-variable-3">int</span> <span class="cm-variable">i</span> <span class="cm-operator">=</span> <span class="cm-number">0</span> ; <span class="cm-variable">i</span> <span class="cm-operator">&lt;</span> <span class="cm-variable">values</span>.<span class="cm-variable">length</span> ; <span class="cm-variable">i</span><span class="cm-operator">++</span>) {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">x</span> <span class="cm-operator">=</span> <span class="cm-variable">intBuffer</span>.<span class="cm-variable">get</span>(<span class="cm-variable">i</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">y</span> <span class="cm-operator">=</span> <span class="cm-variable">intBuffer</span>.<span class="cm-variable">get</span>((<span class="cm-variable">i</span> <span class="cm-operator">*</span> <span class="cm-number">2</span>) <span class="cm-operator">+</span> <span class="cm-number">1</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><span>Creating buffer views out of existing segment is a crucial tool enabling interoperability with existing API (especially those dealing with I/O) which might be expressed in terms of the ByteBuffer API.</span></p><h3><a name="layouts-and-structured-access" class="md-header-anchor"></a><span>Layouts and structured access</span></h3><p><span>Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, we add a </span><em><span>memory layout</span></em><span> API which allows clients to define memory layouts </span><em><span>programmatically</span></em><span>. For instance, the layout of the array used in the above example can be expressed using the following code </span><sup class='md-footnote'><a href='#dfref-footnote-1' name='ref-footnote-1'>1</a></sup><span>:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 430.047px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemoryLayout</span> <span class="cm-variable">points</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryLayout</span>.<span class="cm-variable">ofSequence</span>(<span class="cm-number">10</span>,</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemoryLayout</span>.<span class="cm-variable">ofStruct</span>(</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-variable">MemoryLayouts</span>.<span class="cm-variable">JAVA_INT</span>.<span class="cm-variable">withName</span>(<span class="cm-string">"x"</span>),</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-variable">MemoryLayouts</span>.<span class="cm-variable">JAVA_INT</span>.<span class="cm-variable">withName</span>(<span class="cm-string">"y"</span>)</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    )</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">);            </span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><span>That is, our layout is a repetition of 10 </span><em><span>struct</span></em><span> elements, each struct element containing two 32-bit values each. The advantage of defining a memory layout upfront, using an API, is that we can then query the layout  — for instance we can compute the offset of the </span><code>y</code><span> coordinate in the 4th element of the points array:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 844px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable-3">long</span> <span class="cm-variable">y3</span> <span class="cm-operator">=</span> <span class="cm-variable">points</span>.<span class="cm-variable">byteOffset</span>(<span class="cm-variable">PathElement</span>.<span class="cm-variable">sequenceElement</span>(<span class="cm-number">3</span>), <span class="cm-variable">PathElement</span>.<span class="cm-variable">groupElement</span>(<span class="cm-string">"y"</span>)); <span class="cm-comment">// 28</span></span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre><p><span>To specify which nested layout element should be used for the offset calculation we use a so called </span><em><span>layout path</span></em><span> - that is, a selection expression that navigates the layout, from the </span><em><span>root</span></em><span> layout, down to the leaf layout we wish to select; in this case we need to select the 4th layout element in the sequence, and then select the layout named </span><code>y</code><span> inside the selected group layout.</span></p><p><span>One of the things that can be derived from a layout is a so called </span><em><span>memory access var handle</span></em><span>. A memory access var handle is a special kind of var handle which takes a memory segment access coordinate, together with a byte offset — the offset, relative to the segment&#39;s base address at which the dereference operation should occur. With memory access var handles we can rewrite our example above as follows:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 861.781px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-variable">points</span>);</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">VarHandle</span> <span class="cm-variable">xHandle</span> <span class="cm-operator">=</span> <span class="cm-variable">points</span>.<span class="cm-variable">varHandle</span>(<span class="cm-variable">PathElement</span>.<span class="cm-variable">sequenceElement</span>(), <span class="cm-variable">PathElement</span>.<span class="cm-variable">groupElement</span>(<span class="cm-string">"x"</span>));</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">VarHandle</span> <span class="cm-variable">yHandle</span> <span class="cm-operator">=</span> <span class="cm-variable">points</span>.<span class="cm-variable">varHandle</span>(<span class="cm-variable">PathElement</span>.<span class="cm-variable">sequenceElement</span>(), <span class="cm-variable">PathElement</span>.<span class="cm-variable">groupElement</span>(<span class="cm-string">"y"</span>));</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">Point</span>[] <span class="cm-variable">values</span> <span class="cm-operator">=</span> <span class="cm-keyword">new</span> <span class="cm-variable">Point</span>[<span class="cm-number">10</span>];</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">for</span> (<span class="cm-variable-3">int</span> <span class="cm-variable">i</span> <span class="cm-operator">=</span> <span class="cm-number">0</span> ; <span class="cm-variable">i</span> <span class="cm-operator">&lt;</span> <span class="cm-variable">values</span>.<span class="cm-variable">length</span> ; <span class="cm-variable">i</span><span class="cm-operator">++</span>) {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">x</span> <span class="cm-operator">=</span> (<span class="cm-variable-3">int</span>)<span class="cm-variable">xHandle</span>.<span class="cm-variable">get</span>(<span class="cm-variable">segment</span>, (<span class="cm-variable-3">long</span>)<span class="cm-variable">i</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable-3">int</span> <span class="cm-variable">y</span> <span class="cm-operator">=</span> (<span class="cm-variable-3">int</span>)<span class="cm-variable">yHandle</span>.<span class="cm-variable">get</span>(<span class="cm-variable">segment</span>, (<span class="cm-variable-3">long</span>)<span class="cm-variable">i</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 184px;"></div><div class="CodeMirror-gutters" style="display: none; height: 184px;"></div></div></div></pre><p><span>In the above,  </span><code>xHandle</code><span> and </span><code>yHandle</code><span> are two var handle instances whose type is </span><code>int</code><span>  and which takes two access coordinates:</span></p><ol start='' ><li><span>a </span><code>MemorySegment</code><span> instance; the segment whose memory should be dereferenced</span></li><li><span>a </span><em><span>logical</span></em><span> index, which is used to select the element of the sequence we want to access (as the layout path used to construct these var handles contains one free dimension)</span></li></ol><p><span>Note that memory access var handles (as any other var handle) are </span><em><span>strongly</span></em><span> typed; and to get maximum efficiency, it is generally necessary to introduce casts to make sure that the access coordinates match the expected types — in this case we have to cast </span><code>i</code><span> into a </span><code>long</code><span>; similarly, since the signature polymorphic method </span><code>VarHandle::get</code><span> notionally returns </span><code>Object</code><span> a cast is necessary to force the right return type the var handle operation.</span></p><p><span>In other words, manual offset computation is no longer needed — offsets and strides can in fact be derived from the layout object; note how </span><code>yHandle</code><span> is able to compute the required offset of the </span><code>y</code><span> coordinate in the flat array without the need of any error-prone arithmetic computation.</span></p><h3><a name="deterministic-deallocation" class="md-header-anchor"></a><span>Deterministic deallocation</span></h3><p><span>In addition to spatial bounds, memory segments also feature temporal bounds as well as thread-confinement. In the examples shown so far, we have always used the API in its simpler form, leaving the runtime to handle details such as whether it was safe or not to reclaim memory associated with a given memory segment. But there are cases where this behavior is not desirable: consider the case where a large memory segment is mapped from a file (this is possible using </span><code>MemorySegment::map</code><span>); in this case, an application would probably prefer to deterministically release (e.g. unmap) the memory associated with this segment, to ensure that memory doesn&#39;t remain available for longer than in needs to (and therefore potentially impacting the performance of the application).</span></p><p><span>Memory segments support deterministic deallocation, through an abstraction called </span><code>ResourceScope</code><span>. A resource scope models the lifecycle associated with one or more resources (in this document, by resources we mean mostly memory segments); a resource scope has a state: it starts off in the </span><em><span>alive</span></em><span> state, which means that all the resources it manages can be safely accessed - and, at the user request, it can be </span><em><span>closed</span></em><span>. After a resource scope is closed, access to resources managed by that scope is no longer allowed. Resource scope support the </span><code>AutoCloseable</code><span> interface, which means that user can use resource scopes with the </span><em><span>try-with-resources</span></em><span> construct, as demonstrated in the following code:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 939px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">try</span> (<span class="cm-variable">ResourceScope</span> <span class="cm-variable">scope</span> <span class="cm-operator">=</span> <span class="cm-variable">ResourceScope</span>.<span class="cm-variable">ofConfined</span>()) {</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemorySegment</span> <span class="cm-variable">mapped</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">map</span>(<span class="cm-variable">Path</span>.<span class="cm-variable">of</span>(<span class="cm-string">"someFile"</span>), <span class="cm-number">0</span>, <span class="cm-number">100000</span>, <span class="cm-variable">MapMode</span>.<span class="cm-variable">READ_WRITE</span>, <span class="cm-variable">scope</span>);    </span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">} <span class="cm-comment">// segment is unmapped here</span></span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 69px;"></div><div class="CodeMirror-gutters" style="display: none; height: 69px;"></div></div></div></pre><p><span>Here, we create a new </span><em><span>confined</span></em><span> resource scope, which is then used when creating a mapped segment; this means that the lifecycle of the </span><code>mapped</code><span> segment will be tied to that of the resource scope, and that accessing the segment (e.g. dereference) </span><em><span>after</span></em><span> </span><code>scope</code><span> has been closed will not be possible.</span></p><p><span>As this example alludes to, resource scopes can come in many flavors: they can be </span><em><span>confined</span></em><span> (where access is restricted to the thread which created the segment), </span><em><span>shared</span></em><span> </span><sup class='md-footnote'><a href='#dfref-footnote-2' name='ref-footnote-2'>2</a></sup><span> (where access can occur in any thread) and can be optionally associated with a </span><code>Cleaner</code><span> object, which would take care of performing implicit deallocation, in case the resource scope becomes </span><em><span>unreachable</span></em><span> and the </span><code>close</code><span> method has not been called by the user. In fact, all the memory segments we have seen previously were associated with the so called </span><em><span>default</span></em><span> scope: a shared scope which does not support deterministic deallocation (e.g. calling </span><code>close</code><span> will fail), and whose resources are managed by a </span><code>Cleaner</code><span>.</span></p><p><span>Resource scopes are very handy when managing the lifecycle of multiple resources:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 611px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">try</span> (<span class="cm-variable">ResourceScope</span> <span class="cm-variable">scope</span> <span class="cm-operator">=</span> <span class="cm-variable">ResourceScope</span>.<span class="cm-variable">ofConfined</span>()) {</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment1</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">100</span>, <span class="cm-variable">scope</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment2</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">100</span>, <span class="cm-variable">scope</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    ...</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemorySegment</span> <span class="cm-variable">segmentN</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-number">100</span>, <span class="cm-variable">scope</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">} <span class="cm-comment">// all segments are deallocated here</span></span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><span>Here we create another confined scope, and then, inside the </span><em><span>try-with-resources</span></em><span> we use the scope to create many segments; all such segments share the </span><em><span>same</span></em><span> resource scope - meaning that when such scope is closed, the memory associated with all these segments will be reclaimed at once.</span></p><p><span>Dealing with shared access </span><em><span>and</span></em><span> deterministic deallocation at the same time is tricky, and poses new problems for the user code; consider the case where a method receives a segment and has to write two values in that segment (e.g. two point coordinates):</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 473px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable-3">void</span> <span class="cm-def">writePoint</span>(<span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span>, <span class="cm-variable-3">int</span> <span class="cm-variable">x</span>, <span class="cm-variable-3">int</span> <span class="cm-variable">y</span>) {</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">setIntAtIndex</span>(<span class="cm-variable">segment</span>, <span class="cm-number">0</span>, <span class="cm-variable">x</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">setIntAtIndex</span>(<span class="cm-variable">segment</span>, <span class="cm-number">1</span>, <span class="cm-variable">y</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 92px;"></div><div class="CodeMirror-gutters" style="display: none; height: 92px;"></div></div></div></pre><p><span>If the segment is associated with a confined scope, no problem arises: the thread that created the segment is the same thread that performs the dereference - as such, when </span><code>writePoint</code><span> is called, the segment&#39;s scope is either alive (and will remain so for the duration of the call), or already closed (in which case some exception will be thrown, and no value will be written).</span></p><p><span>But, if the segment is associated with a shared scope, there is a new problem we are faced with: the segment might be closed (concurrently) in between the two accesses! This means that, the method ends up writing only one value instead of two; in other words, the behavior of the method is no longer atomic. Note that this cannot happen in the case where the scope is shared but associated with the </span><em><span>default scope</span></em><span> - as that scope does not support explicit deallocation.</span></p><p><span>To avoid this problem, clients can acquire a so called resource scope </span><em><span>handle</span></em><span>. A resource scope handle effectively prevents a scope to be closed, until said handle is released by the application. Let&#39;s illustrate how that works in practice:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 507.734px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable-3">void</span> <span class="cm-def">writePointSafe</span>(<span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span>, <span class="cm-variable-3">int</span> <span class="cm-variable">x</span>, <span class="cm-variable-3">int</span> <span class="cm-variable">y</span>) {</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-keyword">try</span> (<span class="cm-variable">var</span> <span class="cm-variable">handle</span> <span class="cm-operator">=</span> <span class="cm-variable">segment</span>.<span class="cm-variable">scope</span>().<span class="cm-variable">acquire</span>()) {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">setIntAtIndex</span>(<span class="cm-variable">segment</span>, <span class="cm-number">0</span>, <span class="cm-variable">x</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">setIntAtIndex</span>(<span class="cm-variable">segment</span>, <span class="cm-number">1</span>, <span class="cm-variable">y</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    } <span class="cm-comment">// handle released here</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 138px;"></div><div class="CodeMirror-gutters" style="display: none; height: 138px;"></div></div></div></pre><p><span>A resource scope handle acts as a more restricted version </span><sup class='md-footnote'><a href='#dfref-footnote-3' name='ref-footnote-3'>3</a></sup><span> of an </span><em><span>atomic reference count</span></em><span>; each time a scope is acquired, its </span><em><span>acquired count</span></em><span> goes up; conversely the count goes down each time an handle associated with that scope is released. A scope can only be closed if its acquired count is exactly zero - meaning that no other client is attempting to access that (shared) segment. In our example above, the semantics of resource scope handles guarantees that the method will be able to either acquire the handle successfully, and write both values, or fail to acquire the handle, and write no value.</span></p><h3><a name="parallel-processing" class="md-header-anchor"></a><span>Parallel processing</span></h3><p><span>The contents of a memory segment can be processed in </span><em><span>parallel</span></em><span> (e.g. using a framework such as Fork/Join) — by obtaining a </span><code>Spliterator</code><span> instance out of a memory segment. For instance to sum all the 32 bit values of a memory segment in parallel, we can use the following code:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 714.953px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><span><span>​</span>x</span></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">SequenceLayout</span> <span class="cm-variable">seq</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryLayout</span>.<span class="cm-variable">ofSequence</span>(<span class="cm-number">1_000_000</span>, <span class="cm-variable">MemoryLayouts</span>.<span class="cm-variable">JAVA_INT</span>);</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">MemorySegment</span> <span class="cm-variable">segment</span> <span class="cm-operator">=</span> <span class="cm-variable">MemorySegment</span>.<span class="cm-variable">allocateNative</span>(<span class="cm-variable">seq</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">SequenceLayout</span> <span class="cm-variable">seq_bulk</span> <span class="cm-operator">=</span> <span class="cm-variable">seq</span>.<span class="cm-variable">reshape</span>(<span class="cm-operator">-</span><span class="cm-number">1</span>, <span class="cm-number">100</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span cm-text="">​</span></span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable-3">int</span> <span class="cm-variable">sum</span> <span class="cm-operator">=</span> <span class="cm-variable">StreamSupport</span>.<span class="cm-variable">stream</span>(<span class="cm-variable">MemorySegment</span>.<span class="cm-variable">spliterator</span>(<span class="cm-variable">segment</span>, <span class="cm-variable">seq_bulk</span>), <span class="cm-atom">true</span>)</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">                .<span class="cm-variable">mapToInt</span>(<span class="cm-variable">slice</span> <span class="cm-operator">-&gt;</span> {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-variable-3">int</span> <span class="cm-variable">res</span> <span class="cm-operator">=</span> <span class="cm-number">0</span>;</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-keyword">for</span> (<span class="cm-variable-3">int</span> <span class="cm-variable">i</span> <span class="cm-operator">=</span> <span class="cm-number">0</span>; <span class="cm-variable">i</span> <span class="cm-operator">&lt;</span> <span class="cm-number">100</span> ; <span class="cm-variable">i</span><span class="cm-operator">++</span>) {</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">            <span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-variable">res</span> <span class="cm-operator">+=</span> <span class="cm-variable">MemoryAccess</span>.<span class="cm-variable">getIntAtIndex</span>(<span class="cm-variable">slice</span>, <span class="cm-variable">i</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span>}</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">        <span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-tab" role="presentation" cm-text="	">    </span><span class="cm-keyword">return</span> <span class="cm-variable">res</span>;</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">                }).<span class="cm-variable">sum</span>();</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 276px;"></div><div class="CodeMirror-gutters" style="display: none; height: 276px;"></div></div></div></pre><p><span>The </span><code>MemorySegment::spliterator</code><span> takes a segment, a </span><em><span>sequence</span></em><span> layout and returns a spliterator instance which splits the segment into chunks which corresponds to the elements in the provided sequence layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes </span><em><span>exactly</span></em><span> one element would be inefficient, so instead we use the layout API to derive a </span><em><span>bulk</span></em><span> sequence layout. The bulk layout is a sequence layout which has the same size of the original layouts, but where the elements are arranged into groups of 100 elements — which should make it more amenable to parallel processing.</span></p><p><span>Once we have the spliterator, we can use it to construct a parallel stream and sum the contents of the segment in parallel. Since the segment operated upon by the spliterator is shared, the segment can be accessed from multiple threads concurrently; the spliterator API ensures that the access occurs in a regular fashion: a slice is created from the original segment, and given to a thread to perform some computation — thus ensuring that no two threads can ever operate concurrently on the same memory region.</span></p><h3><a name="combining-memory-access-handles" class="md-header-anchor"></a><span>Combining memory access handles</span></h3><p><span>We have seen in the previous sections how memory access var handle dramatically simplify user code when structured access is involved. While deriving memory access var handles from layout is the most convenient option, the Foreign Memory Access API also allows to create such memory access var handles in a standalone fashion, as demonstrated in the following code:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 740.891px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">VarHandle</span> <span class="cm-variable">intHandle</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryHandles</span>.<span class="cm-variable">varHandle</span>(<span class="cm-variable-3">int</span>.<span class="cm-keyword">class</span>, <span class="cm-variable">ByteOrder</span>.<span class="cm-variable">nativeOrder</span>())    </span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 23px;"></div><div class="CodeMirror-gutters" style="display: none; height: 23px;"></div></div></div></pre><p><span>The above code creates a memory access var handle which reads/writes </span><code>int</code><span> values at a certain byte offset in a segment. To create this var handle we have to specify a carrier type — the type we want to use e.g. to extract values from memory, as well as to whether any byte swapping should be applied when contents are read from or stored to memory. Additionally, the user can supply an extra alignment parameter (not shown here) — this can be useful to impose additional constraints on how memory dereferences should occur; for instance, a client might want to prevent access to misaligned 32 bit values. Of course, when deriving memory access var handles from layouts, all the above information can more simply inferred from the selected layout.</span></p><p><span>The attentive reader might have noted how rich the var handles returned by the layout API are, compared to the simple memory access var handle we have constructed above. How do we go from a simple access var handle that takes a byte offset to a var handle that can dereference a complex layout path? The answer is, by using var handle </span><em><span>combinators</span></em><span>. Developers familiar with the method handle API know how simpler method handles can be combined into more complex ones using the various combinator methods in the </span><code>MethodHandles</code><span> API. These methods allow, for instance, to insert (or bind) arguments into a target method handle, filter return values, permute arguments and much more.</span></p><p><span>Sadly, none of these features are available when working with var handles. The Foreign Memory Access API rectifies this, by adding a rich set of var handle combinators in the </span><code>MemoryHandles</code><span> class; with these tools, developers can express var handle transformations such as:</span></p><ul><li><span>mapping a var handle carrier type into a different one, using an embedding/projection method handle pairs</span></li><li><span>filter one or more var handle access coordinates using unary filters</span></li><li><span>permute var handle access coordinates</span></li><li><span>bind concrete access coordinates to an existing var handle</span></li></ul><p><span>Without diving too deep, let&#39;s consider how we might want to take a basic memory access handle and turn it into a var handle which dereference a segment at a specific offset (again using the </span><code>points</code><span> layout defined previously):</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 853px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">VarHandle</span> <span class="cm-variable">intHandle</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryHandles</span>.<span class="cm-variable">varHandle</span>(<span class="cm-variable-3">int</span>.<span class="cm-keyword">class</span>, <span class="cm-variable">ByteOrder</span>.<span class="cm-variable">nativeOrder</span>()); <span class="cm-comment">// (MS, J) -&gt; I</span></span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable-3">long</span> <span class="cm-variable">offsetOfY</span> <span class="cm-operator">=</span> <span class="cm-variable">points</span>.<span class="cm-variable">byteOffset</span>(<span class="cm-variable">PathElement</span>.<span class="cm-variable">sequenceElement</span>(<span class="cm-number">3</span>), <span class="cm-variable">PathElement</span>.<span class="cm-variable">groupElement</span>(<span class="cm-string">"y"</span>));</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">VarHandle</span> <span class="cm-variable">valueHandle</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryHandles</span>.<span class="cm-variable">insertCoordinates</span>(<span class="cm-variable">intHandle</span>, <span class="cm-number">1</span>, <span class="cm-variable">offsetOfValue</span>); <span class="cm-comment">// (MS) -&gt; I</span></span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 69px;"></div><div class="CodeMirror-gutters" style="display: none; height: 69px;"></div></div></div></pre><p><span>We have been able to derive, from a basic memory access var handle, a new var handle that dereferences a segment at a given fixed offset. It is easy to see how other, richer, var handles obtained using the layout API can be constructed manually using the var handle combinator API.</span></p><h3><a name="unsafe-segments" class="md-header-anchor"></a><span>Unsafe segments</span></h3><p><span>The memory access API provides basic safety guarantees for all memory segments created using the API. More specifically, dereferencing memory should either succeed, or result in a runtime exception - but, crucially, should never result in a VM crash, or, more subtly, in memory corruption occurring </span><em><span>outside</span></em><span> the region of memory associated with a memory segment. This is possible, since all segments have immutable </span><em><span>spatial bounds</span></em><span>, and, as we have seen, are associated with a resource scope which make sure that the segment cannot be dereferenced after the scope has been closed, or, in case of a confined scope, that the segment is dereferenced from the very same thread which created the scope.</span></p><p><span>That said, it is sometimes necessary to create a segment out of an existing memory source, which might be managed by native code. This is the case, for instance, if we want to create a segment out of memory managed by a custom allocator.</span></p><p><span>The ByteBuffer API allows such a move, through a JNI </span><a href='https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/functions.html#NewDirectByteBuffer'><span>method</span></a><span>, namely </span><code>NewDirectByteBuffer</code><span>. This native method can be used to wrap a long address in a fresh byte buffer instance which is then returned to unsuspecting Java code.</span></p><p><span>Memory segments provide a similar capability - that is, given an address (which might have been obtained through some native calls), it is possible to wrap a segment around it, with given spatial bounds and resource scope; a cleanup action to be executed when the segment is closed might also be specified.</span></p><p><span>For instance, assuming we have an address pointing at some externally managed memory block, we can construct an </span><em><span>unsafe</span></em><span> segment, as follows:</span></p><pre spellcheck="false" class="md-fences md-end-block ty-contain-cm modeLoaded" lang="java"><div class="CodeMirror cm-s-inner" lang="java"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 0px; left: 8px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 0px; margin-bottom: 0px; border-right-width: 0px; min-width: 525px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: 0px; width: 0px;"></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">try</span> (<span class="cm-variable">ResourceScope</span> <span class="cm-variable">scope</span> <span class="cm-operator">=</span> <span class="cm-variable">ResourceScope</span>.<span class="cm-variable">ofShared</span>()) {</span></pre></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">MemoryAddress</span> <span class="cm-variable">addr</span> <span class="cm-operator">=</span> <span class="cm-variable">MemoryAddress</span>.<span class="cm-variable">ofLong</span>(<span class="cm-variable">someLongAddr</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    <span class="cm-variable">var</span> <span class="cm-variable">unsafeSegment</span> <span class="cm-operator">=</span> <span class="cm-variable">addr</span>.<span class="cm-variable">asSegmentRestricted</span>(<span class="cm-number">10</span>, <span class="cm-variable">scope</span>);</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">    ...</span></pre><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 115px;"></div><div class="CodeMirror-gutters" style="display: none; height: 115px;"></div></div></div></pre><p><span>The above code creates a shared scope and then, inside the </span><em><span>try-with-resources</span></em><span> it creates a </span><em><span>new</span></em><span> unsafe segment from a given address; the size of the segment is 10 bytes, and the unsafe segment is associated with the current shared scope. This means that the unsafe segment cannot be dereferenced after the shared scope has been closed.</span></p><p><span>Of course, segments created this way are completely </span><em><span>unsafe</span></em><span>. There is no way for the runtime to verify that the provided address indeed points to a valid memory location, or that the size of the memory region pointed to by </span><code>addr</code><span> is indeed 10 bytes. Similarly, there are no guarantees that the underlying memory region associated with </span><code>addr</code><span> will not be deallocated </span><em><span>prior</span></em><span> to the call to </span><code>ResourceScope::close</code><span>.</span></p><p><span>For these reasons, creating unsafe segments is a </span><em><span>restricted</span></em><span> operation in the Foreign Memory Access API. Restricted operations can only be performed if the running application has set a read-only runtime property — </span><code>foreign.restricted=permit</code><span>. Any attempt to call restricted operations without said runtime property will fail with a runtime exception.</span></p><p><span>We plan, in the future, to make access to restricted operations more integrated with the module system; that is, certain modules might </span><em><span>require</span></em><span> restricted native access; when an application which depends on said modules is executed, the user might need to provide </span><em><span>permissions</span></em><span> to said modules to perform restricted native operations, or the runtime will refuse to build the application&#39;s module graph.</span></p><p>&nbsp;</p><div class='footnotes-area'  ><hr/>
+<div class='footnote-line'><span class='md-fn-count'>1</span> <span>In general, deriving a complete layout from a C </span><code>struct</code><span> declaration is no trivial matter, and it&#39;s one of those areas where tooling can help greatly.</span> <a name='dfref-footnote-1' href='#ref-footnote-1' title='back to document' class='reversefootnote' >↩</a></div>
+<div class='footnote-line'><span class='md-fn-count'>2</span> <span>Shared segments rely on VM thread-local handshakes (JEP </span><a href='https://openjdk.java.net/jeps/312'><span>312</span></a><span>) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, </span><code>MemorySegment::close</code><span> might be slower on shared segments than on confined ones.</span> <a name='dfref-footnote-2' href='#ref-footnote-2' title='back to document' class='reversefootnote' >↩</a></div>
+<div class='footnote-line'><span class='md-fn-count'>3</span> <span>The main difference between reference counting and the mechanism proposed here is that reference counting is </span><em><span>symmetric</span></em><span> - meaning that any client is able to both increment and decrement the reference count at will. The resource scope handle mechanism is </span><em><span>asymmetric</span></em><span>, since only the client acquiring a handle has the capability to release that handle. This avoids situation where a client might be tempted to e.g. decrement the reference count multiple times in order to perform some task which would otherwise be forbidden. </span> <a name='dfref-footnote-3' href='#ref-footnote-3' title='back to document' class='reversefootnote' >↩</a></div></div></div>
 </body>
 </html>
