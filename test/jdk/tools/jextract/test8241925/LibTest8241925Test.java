@@ -24,7 +24,6 @@
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8241925.*;
 import static org.testng.Assert.assertEquals;

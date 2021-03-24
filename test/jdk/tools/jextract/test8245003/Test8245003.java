@@ -48,27 +48,20 @@ import static jdk.incubator.foreign.CLinker.*;
  * @run testng/othervm -Dforeign.restricted=permit Test8245003
  */
 public class Test8245003 {
-    private void checkAccess(MemorySegment seg) {
-        assertFalse(seg.hasAccessModes(MemorySegment.CLOSE | MemorySegment.HANDOFF));
-    }
-
     @Test
     public void testStructAccessor() {
         var seg = special_pt$SEGMENT();
-        checkAccess(seg);
         assertEquals(seg.byteSize(), Point.sizeof());
         assertEquals(Point.x$get(seg), 56);
         assertEquals(Point.y$get(seg), 75);
 
         seg = special_pt3d$SEGMENT();
-        checkAccess(seg);
         assertEquals(seg.byteSize(), Point3D.sizeof());
         assertEquals(Point3D.z$get(seg), 35);
         var pointSeg = Point3D.p$slice(seg);
         assertEquals(pointSeg.byteSize(), Point.sizeof());
         assertEquals(Point.x$get(pointSeg), 43);
         assertEquals(Point.y$get(pointSeg), 45);
-        checkAccess(pointSeg);
     }
 
     @Test

@@ -26,8 +26,9 @@ import org.testng.annotations.Test;
 import java.util.stream.IntStream;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import static org.testng.Assert.assertEquals;
+
+import test.jextract.arrayparam.*;
 import static test.jextract.arrayparam.arrayparam_h.*;
 
 /*

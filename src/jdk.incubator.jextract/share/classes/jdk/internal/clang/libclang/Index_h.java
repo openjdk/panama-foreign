@@ -6860,7 +6860,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$31.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         static MemorySegment allocate(CXCursorVisitor fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$31.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
         }
     }
 
@@ -6904,7 +6904,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(CXCursorVisitorBlock.class, fi, constants$31.CXCursorVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
         static MemorySegment allocate(CXCursorVisitorBlock fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(CXCursorVisitorBlock.class, fi, constants$31.CXCursorVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
         }
     }
 
@@ -9026,7 +9026,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, constants$44.clang_executeOnThread$fn$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;)V");
         }
         static MemorySegment allocate(clang_executeOnThread$fn fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, constants$44.clang_executeOnThread$fn$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;)V", scope);
         }
     }
 
@@ -9837,7 +9837,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(CXInclusionVisitor.class, fi, constants$48.CXInclusionVisitor$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V");
         }
         static MemorySegment allocate(CXInclusionVisitor fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(CXInclusionVisitor.class, fi, constants$48.CXInclusionVisitor$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V", scope);
         }
     }
 
@@ -10236,7 +10236,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(visit.class, fi, constants$51.visit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
             }
             static MemorySegment allocate(visit fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(visit.class, fi, constants$51.visit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
             }
         }
 
@@ -10311,7 +10311,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(CXCursorAndRangeVisitorBlock.class, fi, constants$51.CXCursorAndRangeVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
         static MemorySegment allocate(CXCursorAndRangeVisitorBlock fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(CXCursorAndRangeVisitorBlock.class, fi, constants$51.CXCursorAndRangeVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
         }
     }
 
@@ -12058,7 +12058,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(abortQuery.class, fi, constants$52.abortQuery$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I");
             }
             static MemorySegment allocate(abortQuery fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(abortQuery.class, fi, constants$52.abortQuery$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
             }
         }
 
@@ -12085,7 +12085,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(diagnostic.class, fi, constants$52.diagnostic$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
             static MemorySegment allocate(diagnostic fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(diagnostic.class, fi, constants$52.diagnostic$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
         }
 
@@ -12112,7 +12112,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(enteredMainFile.class, fi, constants$52.enteredMainFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
             static MemorySegment allocate(enteredMainFile fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(enteredMainFile.class, fi, constants$52.enteredMainFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
         }
 
@@ -12139,7 +12139,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(ppIncludedFile.class, fi, constants$52.ppIncludedFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
             static MemorySegment allocate(ppIncludedFile fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(ppIncludedFile.class, fi, constants$52.ppIncludedFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
         }
 
@@ -12166,7 +12166,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(importedASTFile.class, fi, constants$53.importedASTFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
             static MemorySegment allocate(importedASTFile fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(importedASTFile.class, fi, constants$53.importedASTFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
         }
 
@@ -12193,7 +12193,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(startedTranslationUnit.class, fi, constants$53.startedTranslationUnit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
             static MemorySegment allocate(startedTranslationUnit fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(startedTranslationUnit.class, fi, constants$53.startedTranslationUnit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
         }
 
@@ -12220,7 +12220,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(indexDeclaration.class, fi, constants$53.indexDeclaration$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
             static MemorySegment allocate(indexDeclaration fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(indexDeclaration.class, fi, constants$53.indexDeclaration$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
         }
 
@@ -12247,7 +12247,7 @@ public class Index_h extends Index_h_1 {
                 return RuntimeHelper.upcallStub(indexEntityReference.class, fi, constants$53.indexEntityReference$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
             static MemorySegment allocate(indexEntityReference fi, NativeScope scope) {
-                return allocate(fi).handoff(scope);
+                return RuntimeHelper.upcallStub(indexEntityReference.class, fi, constants$53.indexEntityReference$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
         }
 
@@ -12291,7 +12291,7 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.upcallStub(CXFieldVisitor.class, fi, constants$53.CXFieldVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
         static MemorySegment allocate(CXFieldVisitor fi, NativeScope scope) {
-            return allocate(fi).handoff(scope);
+            return RuntimeHelper.upcallStub(CXFieldVisitor.class, fi, constants$53.CXFieldVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
     }
 

@@ -57,7 +57,7 @@ public class LibTest8253102Test {
         CLinker.freeMemoryRestricted(addr);
         boolean caughtException = false;
         try {
-            seg.close();
+            seg.scope().close();
         } catch (UnsupportedOperationException uoe) {
             System.err.println(uoe);
             caughtException = true;

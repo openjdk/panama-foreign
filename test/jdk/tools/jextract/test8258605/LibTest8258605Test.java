@@ -21,7 +21,7 @@
  * questions.
  */
 
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import test.jextract.test8258605.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
@@ -50,7 +50,7 @@ import static test.jextract.test8258605.funcParam_h.*;
 public class LibTest8258605Test {
     @Test
     public void testFunctionCallback() {
-        try (var scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
              boolean[] callbackReached = new boolean[1];
              f(CB.allocate(i -> {
                  assertTrue(i == 10);
@@ -62,7 +62,7 @@ public class LibTest8258605Test {
 
     @Test
     public void testStructFunctionPointerCallback() {
-        try (var scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
              boolean[] callbackReached = new boolean[1];
 
              // get struct Foo instance

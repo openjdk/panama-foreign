@@ -24,11 +24,12 @@
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.NativeScope;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+
+import test.jextract.test8244412.*;
 import static test.jextract.test8244412.test8244412_h.*;
 
 /*
