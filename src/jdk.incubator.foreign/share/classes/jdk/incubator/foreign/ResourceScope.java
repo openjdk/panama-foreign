@@ -39,7 +39,7 @@ import java.util.Spliterator;
  * with a resource scope can only be accessed while the resource scope is <em>alive</em> (see {@link #isAlive()}),
  * and by the thread associated with the resource scope (if any).
  *
- * <h2>Explicit deallocation</h2>
+ * <h2>Explicit closure</h2>
  *
  * Resource scopes created using one of the factories in this class can be closed explicitly (see {@link ResourceScope#close()}).
  * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operation on
@@ -56,7 +56,7 @@ import java.util.Spliterator;
  *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
  * </ul>
  *
- * <h2>Implicit deallocation</h2>
+ * <h2>Implicit closure</h2>
  *
  * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
@@ -250,6 +250,23 @@ public interface ResourceScope extends AutoCloseable {
      */
     static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
         return MemoryScope.createShared(attachment, cleaner);
+    }
+
+    /**
+     * Create a new <em>default scope</em>, a shared, non-closeable scope which only features implicit closure.
+     * This resource scope is used as a valid default where no resource scope is provided by the user. For instance, this code:
+     * <blockquote><pre>{@code
+    MemorySegment.allocateNative(10);
+     * }</pre></blockquote>
+     * is equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemorySegment.allocateNative(10, ResourceScope.ofDefault());
+     * }</pre></blockquote>
+     *
+     * @return a new default scope.
+     */
+    static ResourceScope ofDefault() {
+        return MemoryScope.createDefault();
     }
 
     /**

@@ -50,13 +50,11 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope {
+public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
     final ResourceList resourceList;
     final boolean closeable;
     protected final Object ref;
-    @Stable
-    SegmentAllocator allocator;
 
     @Override
     public void addOnClose(Runnable runnable) {
@@ -186,14 +184,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     /**
-     * Return a scoped allocator; the instance returned by this method is lazily created and then shared
-     * upon subsequent requests.
+     * Allocates a segment using this scope. Used by {@link SegmentAllocator#scoped(ResourceScope)}.
      */
-    public SegmentAllocator allocator() {
-        if (allocator == null) {
-            allocator = (size, align) -> MemorySegment.allocateNative(size, align, this);
-        }
-        return allocator;
+    @Override
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
     public static MemoryScope GLOBAL = new SharedScope( null, null, false) {

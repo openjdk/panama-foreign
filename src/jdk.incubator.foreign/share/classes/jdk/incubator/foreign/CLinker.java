@@ -277,7 +277,8 @@ public interface CLinker {
 
     /**
      * Converts a Java string into a null-terminated C string, using the
-     * platform's default charset, storing the result into a new native memory segment.
+     * platform's default charset, storing the result into a new native memory segment, associated with
+     * a fresh {@link ResourceScope#ofDefault() default scope}.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -294,7 +295,7 @@ public interface CLinker {
 
     /**
      * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
-     * storing the result into a new native memory segment.
+     * storing the result into a new native memory segment, associated with a fresh {@link ResourceScope#ofDefault() default scope}.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -313,7 +314,7 @@ public interface CLinker {
 
     /**
      * Converts a Java string into a null-terminated C string, using the platform's default charset,
-     * storing the result into a native memory segment allocated using the provided scope.
+     * storing the result into a native memory segment allocated using the provided allocator.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -321,7 +322,7 @@ public interface CLinker {
      * control over the encoding process is required.
      *
      * @param str the Java string to be converted into a C string.
-     * @param allocator the scope to be used for the native segment allocation.
+     * @param allocator the allocator to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
     static MemorySegment toCString(String str, SegmentAllocator allocator) {
@@ -349,7 +350,7 @@ public interface CLinker {
 
     /**
      * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
-     * storing the result into a new native memory segment native memory segment allocated using the provided scope.
+     * storing the result into a new native memory segment native memory segment allocated using the provided allocator.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -358,7 +359,7 @@ public interface CLinker {
      *
      * @param str the Java string to be converted into a C string.
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the C string.
-     * @param allocator the scope to be used for the native segment allocation.
+     * @param allocator the allocator to be used for the native segment allocation.
      * @return a new native memory segment containing the converted C string.
      */
     static MemorySegment toCString(String str, Charset charset, SegmentAllocator allocator) {
@@ -370,7 +371,7 @@ public interface CLinker {
 
     /**
      * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
-     * storing the result into a new native memory segment native memory segment associated with the provided resource scope.
+     * storing the result into a native memory segment associated with the provided resource scope.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement byte array.  The
@@ -592,8 +593,7 @@ public interface CLinker {
         /**
          * Reads the next value as a {@code MemorySegment}, and advances this va list's position.
          * <p>
-         * The memory segment returned by this method will be allocated using
-         * {@link MemorySegment#allocateNative(long, long)}, and will have to be closed separately.
+         * The memory segment returned by this method is associated with a fresh {@link ResourceScope#ofDefault() default scope}.
          *
          * @param layout the layout of the value
          * @return the value read as an {@code MemorySegment}
@@ -609,7 +609,7 @@ public interface CLinker {
          * The memory segment returned by this method will be allocated using the given {@link SegmentAllocator}.
          *
          * @param layout the layout of the value
-         * @param allocator the scope to be used for the native segment allocation
+         * @param allocator the allocator to be used for the native segment allocation
          * @return the value read as an {@code MemorySegment}
          * @throws IllegalStateException if the resource scope associated with this instance has been closed
          * (see {@link #scope()}).
@@ -708,8 +708,8 @@ public interface CLinker {
         }
 
         /**
-         * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a fresh shared,
-         * non-closeable {@link ResourceScope resource scope}.
+         * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a fresh
+         * a fresh {@link ResourceScope#ofDefault() default scope}.
          * <p>
          * If this method needs to allocate native memory, such memory will be managed by the same scope which also
          * manages the returned valist instance; as such, this memory will be released only when the returned
