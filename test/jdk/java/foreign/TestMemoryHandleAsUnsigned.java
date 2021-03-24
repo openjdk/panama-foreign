@@ -31,8 +31,11 @@ import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.*;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import static org.testng.Assert.*;
@@ -58,7 +61,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, intValue);
             int expectedIntValue = Byte.toUnsignedInt(byteValue);
             assertEquals((int) intHandle.get(segment), expectedIntValue);
@@ -80,7 +84,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Byte.toUnsignedLong(byteValue);
             assertEquals((long) longHandle.get(segment), expectedLongValue);
@@ -102,7 +107,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(shortHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, intValue);
             int expectedIntValue = Short.toUnsignedInt(shortValue);
             assertEquals((int) intHandle.get(segment), expectedIntValue);
@@ -124,7 +130,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(shortHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Short.toUnsignedLong(shortValue);
             assertEquals((long) longHandle.get(segment), expectedLongValue);
@@ -150,7 +157,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = layout.varHandle(int.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(intHandle, long.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Integer.toUnsignedLong(intValue);
             assertEquals((long) longHandle.get(segment), expectedLongValue);
@@ -164,7 +172,8 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class, PathElement.sequenceElement());
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (MemorySegment segment = MemorySegment.allocateNative(layout)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, 0L, (int) -1);
             assertEquals((int) intHandle.get(segment, 0L), 255);
             intHandle.set(segment, 1L, (int) 200);

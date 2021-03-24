@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 
 import java.util.Objects;
 
@@ -93,19 +94,26 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
-    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment) {
+    public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
+        Objects.requireNonNull(scope);
         Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize, cleanupAction, attachment);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
+                cleanupAction,
+                (MemoryScope) scope);
     }
 
     public static MemorySegment ofLongUnchecked(long value) {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
+    public static MemorySegment ofLongUnchecked(long value, long byteSize, MemoryScope memoryScope) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, memoryScope);
+    }
+
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return MemoryAddress.ofLong(value).asSegmentRestricted(byteSize).share();
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemoryScope.GLOBAL);
     }
 }

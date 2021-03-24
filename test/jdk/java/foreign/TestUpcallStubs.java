@@ -32,12 +32,14 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 import static org.testng.Assert.assertFalse;
@@ -57,29 +59,30 @@ public class TestUpcallStubs {
     }
 
     private static MemorySegment getStub() {
-        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid());
+        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid(), ResourceScope.ofConfined());
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
+    @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testNoAccess() {
-        try (MemorySegment stub = getStub()) {
-            VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub, 10);
-        }
+        MemorySegment stub = getStub();
+        VarHandle vh = JAVA_INT.varHandle(int.class);
+        vh.set(stub, 10);
+        stub.scope().close();
     }
 
     @Test
     public void testFree() {
         MemorySegment stub = getStub();
-        stub.close();
-        assertFalse(stub.isAlive());
+        stub.scope().close();
+        assertFalse(stub.scope().isAlive());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testAlreadyFreed() {
         MemorySegment stub = getStub();
-        stub.close();
-        stub.close(); // should fail
+        stub.scope().close();
+        // should fail
+        stub.scope().close();
     }
 
     @DataProvider

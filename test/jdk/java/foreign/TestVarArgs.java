@@ -34,6 +34,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -67,9 +68,10 @@ public class TestVarArgs {
 
     @Test(dataProvider = "args")
     public void testVarArgs(List<VarArg> args) throws Throwable {
-        try (MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG);
-            MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo);
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT))) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG, WRITEBACK_BYTES_PER_ARG, scope);
+            MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo, scope);
+            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT), scope);
 
             MemoryAddress callInfoPtr = callInfo.address();
 

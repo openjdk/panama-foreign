@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -108,7 +109,8 @@ public class TestVarHandleCombinators {
 
         VarHandle vh = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder());
         int count = 0;
-        try (MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(inner_size * outer_size * 8, 4, scope);
             for (long i = 0; i < outer_size; i++) {
                 for (long j = 0; j < inner_size; j++) {
                     vh.set(segment, i * 40 + j * 8, count);

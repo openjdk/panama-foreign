@@ -28,10 +28,11 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.abi.SharedUtils.Allocator;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
@@ -168,12 +169,12 @@ public class ProgrammableUpcallHandler {
 
         int argAllocatorPos = 0;
         int argInsertPos = 1;
-        specializedHandle = dropArguments(specializedHandle, argAllocatorPos, SharedUtils.Allocator.class);
+        specializedHandle = dropArguments(specializedHandle, argAllocatorPos, Binding.Context.class);
         for (int i = 0; i < highLevelType.parameterCount(); i++) {
             MethodHandle filter = identity(highLevelType.parameterType(i));
             int filterAllocatorPos = 0;
             int filterInsertPos = 1; // +1 for allocator
-            filter = dropArguments(filter, filterAllocatorPos, Allocator.class);
+            filter = dropArguments(filter, filterAllocatorPos, Binding.Context.class);
 
             List<Binding> bindings = callingSequence.argumentBindings(i);
             for (int j = bindings.size() - 1; j >= 0; j--) {
@@ -257,7 +258,10 @@ public class ProgrammableUpcallHandler {
                                                Map<VMStorage, Integer> retIndexMap,
                                                CallingSequence callingSequence,
                                                long bufferCopySize) throws Throwable {
-        try (Allocator allocator = SharedUtils.makeAllocator(bufferCopySize)) {
+        Binding.Context allocator = bufferCopySize != 0
+                ? Binding.Context.ofBoundedAllocator(bufferCopySize)
+                : Binding.Context.ofScope();
+        try (allocator) {
             /// Invoke interpreter, got array of high-level arguments back
             Object[] args = new Object[callingSequence.methodType().parameterCount()];
             for (int i = 0; i < args.length; i++) {
