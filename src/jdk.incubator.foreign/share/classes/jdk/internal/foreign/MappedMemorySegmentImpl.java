@@ -30,7 +30,6 @@ import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
 import sun.nio.ch.FileChannelImpl;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -40,7 +39,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Implementation for a mapped memory segments. A mapped memory segment is a native memory segment, which
@@ -61,7 +59,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null, this);
+        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null,
+                scope == MemoryScope.GLOBAL ? null : this);
     }
 
     @Override
@@ -75,11 +74,6 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     @Override
     public MappedMemorySegmentImpl asSlice(long offset, long newSize) {
         return (MappedMemorySegmentImpl)super.asSlice(offset, newSize);
-    }
-
-    @Override
-    public MappedMemorySegmentImpl withAccessModes(int accessModes) {
-        return (MappedMemorySegmentImpl)super.withAccessModes(accessModes);
     }
 
     @Override
@@ -111,9 +105,10 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemoryScope scope) throws IOException {
         Objects.requireNonNull(path);
         Objects.requireNonNull(mapMode);
+        scope.checkValidStateSlow();
         if (bytesSize < 0) throw new IllegalArgumentException("Requested bytes size must be >= 0.");
         if (bytesOffset < 0) throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         FileSystem fs = path.getFileSystem();
@@ -125,14 +120,20 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             UnmapperProxy unmapperProxy = ((FileChannelImpl)channelImpl).mapInternal(mapMode, bytesOffset, bytesSize);
             int modes = defaultAccessModes(bytesSize);
             if (mapMode == FileChannel.MapMode.READ_ONLY) {
-                modes &= ~WRITE;
+                modes |= READ_ONLY;
             }
             if (unmapperProxy != null) {
-                MemoryScope scope = MemoryScope.createConfined(null, unmapperProxy::unmap, null);
-                return new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
+                AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
                         modes, scope);
+                scope.addOrCleanupIfFail(new MemoryScope.ResourceList.ResourceCleanup() {
+                    @Override
+                    public void cleanup() {
+                        unmapperProxy.unmap();
+                    }
+                });
+                return segment;
             } else {
-                return new EmptyMappedMemorySegmentImpl(modes);
+                return new EmptyMappedMemorySegmentImpl(modes, scope);
             }
         }
     }
@@ -149,9 +150,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes) {
-            super(0, null, 0, modes,
-                    MemoryScope.createConfined(null, MemoryScope.DUMMY_CLEANUP_ACTION, null));
+        public EmptyMappedMemorySegmentImpl(int modes, MemoryScope scope) {
+            super(0, null, 0, modes, scope);
         }
 
         @Override

@@ -77,7 +77,7 @@ public class CallOverheadVirtual {
 
     @Benchmark
     public MemorySegment panama_identity_struct() throws Throwable {
-        return (MemorySegment) identity_struct_v.invokeExact(identity_struct_addr, point);
+        return (MemorySegment) identity_struct_v.invokeExact(identity_struct_addr, recycling_allocator, point);
     }
 
     @Benchmark

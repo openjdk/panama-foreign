@@ -36,6 +36,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 
 import java.io.File;
@@ -186,7 +187,8 @@ public class TestByteBuffer {
 
     @Test
     public void testOffheap() {
-        try (MemorySegment segment = MemorySegment.allocateNative(tuples)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(tuples, scope);
             initTuples(segment, tuples.elementCount().getAsLong());
 
             ByteBuffer bb = segment.asByteBuffer();
@@ -230,14 +232,14 @@ public class TestByteBuffer {
 
     @Test
     public void testDefaultAccessModesMappedSegment() throws Throwable {
-        try (MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS));
-            assertEquals(segment.accessModes(), ALL_ACCESS);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_WRITE, scope);
+            assertFalse(segment.isReadOnly());
         }
 
-        try (MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.mapFile(tempPath, 0L, 8, FileChannel.MapMode.READ_ONLY, scope);
+            assertTrue(segment.isReadOnly());
         }
     }
 
@@ -247,19 +249,21 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        //write to channel
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            //write to channel
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
             initTuples(segment, tuples.elementCount().getAsLong());
             MappedMemorySegments.force(segment);
         }
 
-        //read from channel
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            //read from channel
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, scope);
             checkTuples(segment, segment.asByteBuffer(), tuples.elementCount().getAsLong());
         }
     }
 
-    @Test(dataProvider = "mappedOps", expectedExceptions = IllegalStateException.class)
+    @Test(dataProvider = "mappedOps", expectedExceptions = UnsupportedOperationException.class)
     public void testMappedSegmentOperations(MappedSegmentOp mappedBufferOp) throws Throwable {
         File f = new File("test3.out");
         f.createNewFile();
@@ -267,7 +271,7 @@ public class TestByteBuffer {
 
         MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
         assertTrue(segment.isMapped());
-        segment.close();
+        segment.scope().close();
         mappedBufferOp.apply(segment);
     }
 
@@ -281,8 +285,9 @@ public class TestByteBuffer {
 
         // write one at a time
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
-            //write to channel
-            try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE)) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                //write to channel
+                MemorySegment segment = MemorySegment.mapFile(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
                 initTuples(segment, 1);
                 MappedMemorySegments.force(segment);
             }
@@ -290,8 +295,9 @@ public class TestByteBuffer {
 
         // check one at a time
         for (int i = 0 ; i < tuples.byteSize() ; i += tupleLayout.byteSize()) {
-            //read from channel
-            try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY)) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                //read from channel
+                MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, scope);
                 checkTuples(segment, segment.asByteBuffer(), 1);
             }
         }
@@ -319,7 +325,8 @@ public class TestByteBuffer {
     @Test(dataProvider = "bufferOps")
     public void testScopedBuffer(Function<ByteBuffer, Buffer> bufferFactory, @NoInjection Method method, Object[] args) {
         Buffer bb;
-        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(bytes, scope);
             bb = bufferFactory.apply(segment.asByteBuffer());
         }
         //outside of scope!!
@@ -330,7 +337,7 @@ public class TestByteBuffer {
             Throwable cause = ex.getCause();
             if (cause instanceof IllegalStateException) {
                 //all get/set buffer operation should fail because of the scope check
-                assertTrue(ex.getCause().getMessage().contains("already closed"));
+                assertTrue(ex.getCause().getMessage().contains("Already closed"));
             } else {
                 //all other exceptions were unexpected - fail
                 fail("Unexpected exception", cause);
@@ -344,7 +351,8 @@ public class TestByteBuffer {
     @Test(dataProvider = "bufferHandleOps")
     public void testScopedBufferAndVarHandle(VarHandle bufferHandle) {
         ByteBuffer bb;
-        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(bytes, scope);
             bb = segment.asByteBuffer();
             for (Map.Entry<MethodHandle, Object[]> e : varHandleMembers(bb, bufferHandle).entrySet()) {
                 MethodHandle handle = e.getKey().bindTo(bufferHandle)
@@ -366,7 +374,7 @@ public class TestByteBuffer {
                 handle.invoke(e.getValue());
                 fail();
             } catch (IllegalStateException ex) {
-                assertTrue(ex.getMessage().contains("already closed"));
+                assertTrue(ex.getMessage().contains("Already closed"));
             } catch (UnsupportedOperationException ex) {
                 //skip
             } catch (Throwable ex) {
@@ -377,7 +385,8 @@ public class TestByteBuffer {
 
     @Test(dataProvider = "bufferOps")
     public void testDirectBuffer(Function<ByteBuffer, Buffer> bufferFactory, @NoInjection Method method, Object[] args) {
-        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(bytes, scope);
             Buffer bb = bufferFactory.apply(segment.asByteBuffer());
             assertTrue(bb.isDirect());
             DirectBuffer directBuffer = ((DirectBuffer)bb);
@@ -389,7 +398,8 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeOffheap(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(seq, scope);
             initializer.accept(segment);
             checker.accept(segment);
         }
@@ -426,7 +436,8 @@ public class TestByteBuffer {
 
     @Test(dataProvider="resizeOps")
     public void testResizeRoundtripNative(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
-        try (MemorySegment segment = MemorySegment.allocateNative(seq)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(seq, scope);
             initializer.accept(segment);
             MemorySegment second = MemorySegment.ofByteBuffer(segment.asByteBuffer());
             checker.accept(second);
@@ -436,18 +447,17 @@ public class TestByteBuffer {
     @Test(expectedExceptions = IllegalStateException.class)
     public void testBufferOnClosedScope() {
         MemorySegment leaked;
-        try (MemorySegment segment = MemorySegment.allocateNative(bytes)) {
-            leaked = segment;
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            leaked = MemorySegment.allocateNative(bytes, scope);
         }
         ByteBuffer byteBuffer = leaked.asByteBuffer(); // ok
         byteBuffer.get(); // should throw
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        try (MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(Integer.MAX_VALUE + 10L)) {
-            segment.asByteBuffer();
-        }
+        MemorySegment segment = MemoryAddress.NULL.asSegmentRestricted(Integer.MAX_VALUE + 10L);
+        segment.asByteBuffer();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -474,7 +484,8 @@ public class TestByteBuffer {
 
         int SIZE = Byte.MAX_VALUE;
 
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, SIZE, FileChannel.MapMode.READ_WRITE)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, SIZE, FileChannel.MapMode.READ_WRITE, scope);
             for (byte offset = 0; offset < SIZE; offset++) {
                 MemoryAccess.setByteAtOffset(segment, offset, offset);
             }
@@ -482,7 +493,8 @@ public class TestByteBuffer {
         }
 
         for (int offset = 0 ; offset < SIZE ; offset++) {
-            try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), offset, SIZE - offset, FileChannel.MapMode.READ_ONLY)) {
+            try (ResourceScope scope = ResourceScope.ofConfined()) {
+                MemorySegment segment = MemorySegment.mapFile(f.toPath(), offset, SIZE - offset, FileChannel.MapMode.READ_ONLY, scope);
                 assertEquals(MemoryAccess.getByte(segment), offset);
             }
         }
@@ -494,20 +506,22 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
         //RW
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_WRITE)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_WRITE, scope);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
-            assertTrue((segment.accessModes() & (READ | WRITE)) == (READ | WRITE));
+            assertFalse(segment.isReadOnly());
             MappedMemorySegments.force(segment);
             MappedMemorySegments.load(segment);
             MappedMemorySegments.isLoaded(segment);
             MappedMemorySegments.unload(segment);
         }
         //RO
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_ONLY)) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 0L, FileChannel.MapMode.READ_ONLY, scope);
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
-            assertTrue((segment.accessModes() & (READ | WRITE)) == READ);
+            assertTrue(segment.isReadOnly());
             MappedMemorySegments.force(segment);
             MappedMemorySegments.load(segment);
             MappedMemorySegments.isLoaded(segment);
@@ -525,8 +539,9 @@ public class TestByteBuffer {
     public void testCopyHeapToNative(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
         checkByteArrayAlignment(seq.elementLayout());
         int bytes = (int)seq.byteSize();
-        try (MemorySegment nativeArray = MemorySegment.allocateNative(bytes);
-             MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment nativeArray = MemorySegment.allocateNative(bytes, 1, scope);
+            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
             initializer.accept(heapArray);
             nativeArray.copyFrom(heapArray);
             checker.accept(nativeArray);
@@ -537,8 +552,9 @@ public class TestByteBuffer {
     public void testCopyNativeToHeap(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
         checkByteArrayAlignment(seq.elementLayout());
         int bytes = (int)seq.byteSize();
-        try (MemorySegment nativeArray = MemorySegment.allocateNative(seq);
-             MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes])) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment nativeArray = MemorySegment.allocateNative(seq, scope);
+            MemorySegment heapArray = MemorySegment.ofArray(new byte[bytes]);
             initializer.accept(nativeArray);
             heapArray.copyFrom(nativeArray);
             checker.accept(heapArray);
@@ -548,60 +564,59 @@ public class TestByteBuffer {
     @Test
     public void testDefaultAccessModesOfBuffer() {
         ByteBuffer rwBuffer = ByteBuffer.wrap(new byte[4]);
-        try (MemorySegment segment = MemorySegment.ofByteBuffer(rwBuffer)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS));
-            assertEquals(segment.accessModes(), ALL_ACCESS);
+        {
+            MemorySegment segment = MemorySegment.ofByteBuffer(rwBuffer);
+            assertFalse(segment.isReadOnly());
         }
 
-        ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
-        try (MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer)) {
-            assertTrue(segment.hasAccessModes(ALL_ACCESS & ~WRITE));
-            assertEquals(segment.accessModes(), ALL_ACCESS & ~WRITE);
+        {
+            ByteBuffer roBuffer = rwBuffer.asReadOnlyBuffer();
+            MemorySegment segment = MemorySegment.ofByteBuffer(roBuffer);
+            assertTrue(segment.isReadOnly());
         }
     }
 
     @Test(dataProvider="bufferSources")
     public void testBufferToSegment(ByteBuffer bb, Predicate<MemorySegment> segmentChecker) {
         MemorySegment segment = MemorySegment.ofByteBuffer(bb);
-        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
+        assertEquals(segment.isReadOnly(), bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
-        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
         //another round trip
         segment = MemorySegment.ofByteBuffer(segment.asByteBuffer());
-        assertEquals(segment.hasAccessModes(MemorySegment.WRITE), !bb.isReadOnly());
+        assertEquals(segment.isReadOnly(), bb.isReadOnly());
         assertTrue(segmentChecker.test(segment));
         assertTrue(segmentChecker.test(segment.asSlice(0, segment.byteSize())));
-        assertTrue(segmentChecker.test(segment.withAccessModes(MemorySegment.READ)));
         assertEquals(bb.capacity(), segment.byteSize());
     }
 
     @Test(dataProvider="bufferSources")
     public void bufferProperties(ByteBuffer bb, Predicate<MemorySegment> _unused) {
-        try (MemorySegment segment = MemorySegment.ofByteBuffer(bb)) {
-            ByteBuffer buffer = segment.asByteBuffer();
-            assertEquals(buffer.position(), 0);
-            assertEquals(buffer.capacity(), segment.byteSize());
-            assertEquals(buffer.limit(), segment.byteSize());
-        }
+        MemorySegment segment = MemorySegment.ofByteBuffer(bb);
+        ByteBuffer buffer = segment.asByteBuffer();
+        assertEquals(buffer.position(), 0);
+        assertEquals(buffer.capacity(), segment.byteSize());
+        assertEquals(buffer.limit(), segment.byteSize());
     }
 
     @Test
     public void testRoundTripAccess() {
-        try(MemorySegment ms = MemorySegment.allocateNative(4)) {
-            MemorySegment msNoAccess = ms.withAccessModes(MemorySegment.READ); // READ is required to make BB
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment ms = MemorySegment.allocateNative(4, 1, scope);
+            MemorySegment msNoAccess = ms.asReadOnly();
             MemorySegment msRoundTrip = MemorySegment.ofByteBuffer(msNoAccess.asByteBuffer());
-            assertEquals(msNoAccess.accessModes(), msRoundTrip.accessModes());
+            assertEquals(msNoAccess.isReadOnly(), msRoundTrip.isReadOnly());
         }
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testDeadAccessOnClosedBufferSegment() {
-        MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT);
+        MemorySegment s1 = MemorySegment.allocateNative(MemoryLayouts.JAVA_INT, ResourceScope.ofConfined());
         MemorySegment s2 = MemorySegment.ofByteBuffer(s1.asByteBuffer());
 
-        s1.close(); // memory freed
+        // memory freed
+        s1.scope().close();
 
         MemoryAccess.setInt(s2, 10); // Dead access!
     }
@@ -610,13 +625,14 @@ public class TestByteBuffer {
     public void testIOOnSharedSegmentBuffer() throws IOException {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
-        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10).share();
+        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE) ;
+             ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(10, 1, scope);
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            segment.close();
+            segment.scope().close();
             channel.write(bb);
         }
     }
@@ -626,12 +642,12 @@ public class TestByteBuffer {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
         try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10);
+            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.ofConfined());
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            segment.close();
+            segment.scope().close();
             channel.write(bb);
         }
     }
@@ -641,7 +657,7 @@ public class TestByteBuffer {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
         try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10);
+            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.ofConfined());
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
@@ -650,9 +666,10 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(dataProvider="segments")
-    public void buffersAndArraysFromSlices(Supplier<MemorySegment> segmentSupplier) {
-        try (MemorySegment segment = segmentSupplier.get()) {
+    @Test
+    public void buffersAndArraysFromSlices() {
+        try (ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(16, scope);
             int newSize = 8;
             var slice = segment.asSlice(4, newSize);
 
@@ -667,9 +684,10 @@ public class TestByteBuffer {
         }
     }
 
-    @Test(dataProvider="segments")
-    public void viewsFromSharedSegment(Supplier<MemorySegment> segmentSupplier) {
-        try (MemorySegment segment = segmentSupplier.get().share()) {
+    @Test
+    public void viewsFromSharedSegment() {
+        try (ResourceScope scope = ResourceScope.ofShared()) {
+            MemorySegment segment = MemorySegment.allocateNative(16, scope);
             var byteBuffer = segment.asByteBuffer();
             byteBuffer.asReadOnlyBuffer();
             byteBuffer.slice(0, 8);
