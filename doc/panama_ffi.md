@@ -62,7 +62,7 @@ Here the function `foo` takes an output parameter, a pointer to an `int` variabl
 ```java
 MethodHandle foo = ...
 MemorySegment size = MemorySegment.allocateNative(C_INT);
-MemoryAccess.setInt(size, 5);
+MemoryAccess.setInt(size.address(), 5);
 foo.invokeExact(42, size);
 ```
 
@@ -76,10 +76,10 @@ To address these problems, Panama provides a `SegmentAllocator` abstraction, a f
 
 ```java
 MemorySegment size = SegmentAllocator.ofDefault().allocate(C_INT, 5);
-foo.invokeExact(42, size);
+foo.invokeExact(42, size.address());
 ```
 
-The above code retrieves the *default allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a new memory segment holding the int value `5`. Another important allocator is the so called *scoped* allocator, which returns segments associated with a given scope:
+The above code retrieves the *default allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a new memory segment holding the int value `5`. Memory associated with segments returned by the default allocator is released as soon as said segments become *unreachable*. To have better control over the lifetime of the segments returned by an allocator, clients can use the so called *scoped* allocator, which returns segments associated with a given scope:
 
 ```java
 try (ResourceScope scope = ResourceScope.ofConfined()) {
@@ -93,7 +93,7 @@ Scoped allocator make sure that all segments allocated with a scoped allocator a
 Custom segment allocators are critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
 
 ```java
-try (ResourceScope scope : ResourceScope.ofConfined()) {
+try (ResourceScope scope = ResourceScope.ofConfined()) {
     SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
     for (int i = 0 ; i < 100 ; i++) {
         allocator.allocate(C_INT, i);
