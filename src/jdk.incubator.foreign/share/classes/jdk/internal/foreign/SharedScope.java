@@ -30,6 +30,7 @@ import jdk.internal.misc.ScopedMemoryAccess;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
+import java.lang.ref.Reference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -183,6 +184,7 @@ class SharedScope extends MemoryScope {
                         throw new IllegalStateException("Already closed");
                     }
                 } while (!STATE.compareAndSet(jdk.internal.foreign.SharedScope.this, value, value - 1));
+                Reference.reachabilityFence(SharedScope.this);
             }
         }
     }

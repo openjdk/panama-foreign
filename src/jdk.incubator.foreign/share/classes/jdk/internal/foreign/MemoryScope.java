@@ -201,15 +201,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
             super(ref, cleaner);
         }
 
-        private void release() {
-            // do nothing
-        }
-
         @Override
         public Handle acquire() {
             if (handle != null) {
                 // capture 'this'
-                handle = this::release;
+                handle = () -> Reference.reachabilityFence(NonCloseableScope.this);
             }
             return handle;
         }

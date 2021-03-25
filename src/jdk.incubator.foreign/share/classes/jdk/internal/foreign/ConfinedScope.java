@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.ref.Cleaner;
+import java.lang.ref.Reference;
 
 /**
  * A confined scope, which features an owner thread. The liveness check features an additional
@@ -120,6 +121,7 @@ final class ConfinedScope extends MemoryScope {
             if (!released) {
                 released = true;
                 lockCount--;
+                Reference.reachabilityFence(ConfinedScope.this);
             }
         }
     }
