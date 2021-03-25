@@ -40,6 +40,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -248,11 +249,7 @@ public class ProgrammableInvoker {
         // now bind the internal context parameter
 
         argContextPos++; // skip over the return SegmentAllocator (inserted by the above code)
-        if (bufferCopySize > 0) {
-            specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);
-        } else {
-            specializedHandle = insertArguments(specializedHandle, argContextPos, Binding.Context.DUMMY);
-        }
+        specializedHandle = SharedUtils.wrapWithAllocator(specializedHandle, argContextPos, bufferCopySize, false);
         return specializedHandle;
     }
 
@@ -336,6 +333,12 @@ public class ProgrammableInvoker {
 
             // call leaf
             Object o = leaf.invokeWithArguments(leafArgs);
+            // make sure arguments are reachable during the call
+            // technically we only need to do all Addressable parameters here
+            Reference.reachabilityFence(address);
+            for (int i = 0; i < args.length; i++) {
+                Reference.reachabilityFence(args[i]);
+            }
 
             // return value processing
             if (o == null) {
