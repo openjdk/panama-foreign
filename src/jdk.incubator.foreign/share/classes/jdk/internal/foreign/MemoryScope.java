@@ -53,7 +53,6 @@ import java.util.Objects;
 public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
     final ResourceList resourceList;
-    final boolean closeable;
     protected final Object ref;
 
     @Override
@@ -89,21 +88,20 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    protected MemoryScope(Object ref, Cleaner cleaner, boolean closeable, ResourceList resourceList) {
+    protected MemoryScope(Object ref, Cleaner cleaner, ResourceList resourceList) {
         this.ref = ref;
         this.resourceList = resourceList;
-        this.closeable = closeable;
         if (cleaner != null) {
             cleaner.register(this, resourceList);
         }
     }
 
     public static MemoryScope createDefault() {
-        return new SharedScope(null, CleanerFactory.cleaner(), false);
+        return new NonCloseableSharedScope(null, CleanerFactory.cleaner());
     }
 
     public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
-        return new ConfinedScope(thread, ref, cleaner, true);
+        return new ConfinedScope(thread, ref, cleaner);
     }
 
     /**
@@ -113,7 +111,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @return a confined memory scope
      */
     public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleaner, true);
+        return new ConfinedScope(Thread.currentThread(), ref, cleaner);
     }
 
     /**
@@ -122,7 +120,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @return a shared memory scope
      */
     public static MemoryScope createShared(Object ref, Cleaner cleaner) {
-        return new SharedScope(ref, cleaner, true);
+        return new SharedScope(ref, cleaner);
     }
 
     /**
@@ -130,10 +128,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    public final void close() {
-        if (!closeable) {
-            throw new UnsupportedOperationException("Scope cannot be closed");
-        }
+    public void close() {
         try {
             justClose();
             resourceList.cleanup();
@@ -191,14 +186,47 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
-    public static MemoryScope GLOBAL = new SharedScope( null, null, false) {
+    /**
+     * A non-closeable, shared scope. Similar to a shared scope, but its {@link #close()} method throws unconditionally.
+     * In addition, non-closeable scopes feature a much simpler scheme for generating resource scope handles, where
+     * the same per-scope handle is shared across multiple calls to {@link #acquire()}. In fact, for non-closeable
+     * scopes, it is sufficient for resource scope handles to keep a strong reference to their scopes, to prevent closure.
+     */
+    static class NonCloseableSharedScope extends SharedScope {
+
+        @Stable
+        private Handle handle;
+
+        public NonCloseableSharedScope(Object ref, Cleaner cleaner) {
+            super(ref, cleaner);
+        }
+
+        @Override
+        public Handle acquire() {
+            if (handle != null) {
+                // capture 'this'
+                handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
+            }
+            return handle;
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("Scope cannot be closed");
+        }
+    }
+
+    /**
+     * The global, always alive, non-closeable, shared scope. This is like a {@link NonCloseableSharedScope non-closeable scope},
+     * except that the operation which adds new resources to the global scope does nothing: as the scope can never
+     * become not-alive, there is nothing to track.
+     */
+    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null, null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing
         }
     };
-
-    public final Handle DUMMY_LOCK = () -> { };
 
     /**
      * A list of all cleanup actions associated with a resource scope. Cleanup actions are modelled as instances

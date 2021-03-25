@@ -56,7 +56,7 @@ import java.util.Spliterator;
  *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
  * </ul>
  *
- * <h2>Implicit closure</h2>
+ * <h2><a id = "implicit-closure">Implicit closure</a></h2>
  *
  * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
@@ -172,7 +172,10 @@ public interface ResourceScope extends AutoCloseable {
 
     /**
      * Make this resource scope non-closeable by acquiring a new resource scope handle. This scope cannot be closed unless all its
-     * acquired handles have been closed first.
+     * acquired handles have been closed first. Additionally, a resource scope handle maintains a strong reference
+     * to its resource scope; this means that if a resource scope features
+     * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>, the scope cannot be implicitly closed
+     * until all its acquired handles becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
      * @return a resource scope handle.
      */
     Handle acquire();

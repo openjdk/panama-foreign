@@ -30,6 +30,7 @@ import jdk.internal.misc.ScopedMemoryAccess;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
+import java.lang.ref.Reference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -62,8 +63,8 @@ class SharedScope extends MemoryScope {
         }
     }
 
-    SharedScope(Object ref, Cleaner cleaner, boolean closeable) {
-        super(ref, cleaner, closeable, new SharedResourceList());
+    SharedScope(Object ref, Cleaner cleaner) {
+        super(ref, cleaner, new SharedResourceList());
     }
 
     @Override
@@ -80,7 +81,6 @@ class SharedScope extends MemoryScope {
 
     @Override
     public Handle acquire() {
-        if (!closeable) return DUMMY_LOCK;
         int value;
         do {
             value = (int) STATE.getVolatile(this);
@@ -184,6 +184,7 @@ class SharedScope extends MemoryScope {
                         throw new IllegalStateException("Already closed");
                     }
                 } while (!STATE.compareAndSet(jdk.internal.foreign.SharedScope.this, value, value - 1));
+                Reference.reachabilityFence(SharedScope.this);
             }
         }
     }
