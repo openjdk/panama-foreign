@@ -97,7 +97,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     public static MemoryScope createDefault() {
-        return new NonCloseableScope(null, CleanerFactory.cleaner());
+        return new NonCloseableSharedScope(null, CleanerFactory.cleaner());
     }
 
     public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
@@ -192,12 +192,12 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * the same per-scope handle is shared across multiple calls to {@link #acquire()}. In fact, for non-closeable
      * scopes, it is sufficient for resource scope handles to keep a strong reference to their scopes, to prevent closure.
      */
-    static class NonCloseableScope extends SharedScope {
+    static class NonCloseableSharedScope extends SharedScope {
 
         @Stable
         private Handle handle;
 
-        public NonCloseableScope(Object ref, Cleaner cleaner) {
+        public NonCloseableSharedScope(Object ref, Cleaner cleaner) {
             super(ref, cleaner);
         }
 
@@ -205,7 +205,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         public Handle acquire() {
             if (handle != null) {
                 // capture 'this'
-                handle = () -> Reference.reachabilityFence(NonCloseableScope.this);
+                handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
             }
             return handle;
         }
@@ -217,11 +217,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     /**
-     * The global, always alive, non-closeable, shared scope. This is like a {@link NonCloseableScope non-closeable scope},
+     * The global, always alive, non-closeable, shared scope. This is like a {@link NonCloseableSharedScope non-closeable scope},
      * except that the operation which adds new resources to the global scope does nothing: as the scope can never
      * become not-alive, there is nothing to track.
      */
-    public static MemoryScope GLOBAL = new NonCloseableScope( null, null) {
+    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null, null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing
