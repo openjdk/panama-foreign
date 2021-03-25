@@ -51,58 +51,57 @@ Of course, since accessing the entire native heap is inherently *unsafe*, access
 Idiomatic C code implicitly relies on stack allocation to allow for concise variable declarations; consider this example:
 
 ```c
-void foo(int i, int *size);
-
-int size = 5;
-foo(42, &size);
+int arr[] = { 1, 2, 3, 4, 5 };
 ```
 
-Here the function `foo` takes an output parameter, a pointer to an `int` variable. Unfortunately (and we have seen part of that pain in the `qsort` example above), implementing this idiom in Panama is not straightforward:
+Here the function `foo` takes an output parameter, a pointer to an `int` variable. This idiom can be implemented as follows, using the Foreign Memory Access API:
 
 ```java
-MethodHandle foo = ...
-MemorySegment size = MemorySegment.allocateNative(C_INT);
-MemoryAccess.setInt(size.address(), 5);
-foo.invokeExact(42, size);
+MemorySegment arr = MemorySegment.allocateNative(C_INT);
+for (int i = 1 ; i <= 5 ; i++) {
+    MemoryAccess.setInt(arr, i);
+}
 ```
 
 There are a number of issues with the above code snippet:
 
-* compared to the C code, it is very verbose
-* allocation is very slow compared to C; allocating the `size` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
-* we end up with a standalone segment with its own temporal bounds, which will have to be *closed* later, to avoid leaks
+* compared to the C code, it is more verbose - the native array has to be initialized *element by element*
+* allocation is very slow compared to C; allocating the `arr` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
+* when having multiple declarations like the one above, it might become increasingly harder to manage the lifecycle of the various segments
 
 To address these problems, Panama provides a `SegmentAllocator` abstraction, a functional interface which provides many useful operation to allocate commonly used values. For instance, the above code can be rewritten as follows:
 
 ```java
-MemorySegment size = SegmentAllocator.ofDefault().allocate(C_INT, 5);
-foo.invokeExact(42, size.address());
+MemorySegment arr = SegmentAllocator.ofDefault().allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
 ```
 
-The above code retrieves the *default allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a new memory segment holding the int value `5`. Memory associated with segments returned by the default allocator is released as soon as said segments become *unreachable*. To have better control over the lifetime of the segments returned by an allocator, clients can use the so called *scoped* allocator, which returns segments associated with a given scope:
+The above code retrieves the *default allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 1, 2, 3, 4, 5}`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment.
+
+Memory associated with segments returned by the default allocator is released as soon as said segments become *unreachable*. To have better control over the lifetime of the segments returned by an allocator, clients can use the so called *scoped* allocator, which returns segments associated with a given scope:
 
 ```java
 try (ResourceScope scope = ResourceScope.ofConfined()) {
-    MemorySegment size = SegmentAllocator.scoped(scope).allocate(C_INT, 5);
-    foo.invokeExact(42, size.address());
-} // 'size' is released here
+    MemorySegment arr = SegmentAllocator.scoped(scope).allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+} // 'arr' is released here
 ```
 
-Scoped allocator make sure that all segments allocated with a scoped allocator are no longer usable after the scope associated with the allocator has been closed.
+Scoped allocator make sure that all segments allocated with a scoped allocator are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
 
-Custom segment allocators are critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
+Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
 
 ```java
 try (ResourceScope scope = ResourceScope.ofConfined()) {
     SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
     for (int i = 0 ; i < 100 ; i++) {
-        allocator.allocate(C_INT, i);
+        allocator.allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
     }
     ...
 } // all memory allocated is released here
 ```
 
 The above code creates a confined scope; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing scope. The allocator will allocate slabs of memory, of a specific size, and respond to allocation request by returning different slices of the pre-allocated slab. If a slab does not have sufficient space to accommodate a new allocation request, a new one will be allocated. If the scope associated with the arena allocator is closed, all memory associated with the segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
+
+For these reasons, all the methods in the Foreign Linker API which *produce* memory segments (see `CLinker::toCString`), allow an optional allocator to be provided by user code — this is key in ensuring that an application using the Foreign Linker API achieves optimal allocation performances, especially in non-trivial use cases.
 
 ### Symbol lookups
 
