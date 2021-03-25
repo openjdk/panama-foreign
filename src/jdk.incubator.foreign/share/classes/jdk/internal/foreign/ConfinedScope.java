@@ -41,8 +41,8 @@ final class ConfinedScope extends MemoryScope {
     private int lockCount = 0;
     private final Thread owner;
 
-    public ConfinedScope(Thread owner, Object ref, Cleaner cleaner, boolean closeable) {
-        super(ref, cleaner, closeable, new ConfinedResourceList());
+    public ConfinedScope(Thread owner, Object ref, Cleaner cleaner) {
+        super(ref, cleaner, new ConfinedResourceList());
         this.owner = owner;
     }
 
@@ -64,7 +64,6 @@ final class ConfinedScope extends MemoryScope {
     @Override
     public Handle acquire() {
         checkValidState();
-        if (!closeable) return DUMMY_LOCK;
         lockCount++;
         return new ConfinedHandle();
     }

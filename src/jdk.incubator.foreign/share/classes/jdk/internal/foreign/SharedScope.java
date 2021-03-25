@@ -62,8 +62,8 @@ class SharedScope extends MemoryScope {
         }
     }
 
-    SharedScope(Object ref, Cleaner cleaner, boolean closeable) {
-        super(ref, cleaner, closeable, new SharedResourceList());
+    SharedScope(Object ref, Cleaner cleaner) {
+        super(ref, cleaner, new SharedResourceList());
     }
 
     @Override
@@ -80,7 +80,6 @@ class SharedScope extends MemoryScope {
 
     @Override
     public Handle acquire() {
-        if (!closeable) return DUMMY_LOCK;
         int value;
         do {
             value = (int) STATE.getVolatile(this);
