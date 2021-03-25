@@ -37,8 +37,9 @@ record Point(int x, int y);
 MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2);
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
-    int x = MemoryAccess.getIntAtIndex(segment, i);
+    int x = MemoryAccess.getIntAtIndex(segment, i * 2);
     int y = MemoryAccess.getIntAtIndex(segment, (i * 2) + 1);
+    values[i] = new Point(x, y);
 }
 ```
 
@@ -50,8 +51,9 @@ Memory segments are pretty flexible when it comes to interacting with existing m
 IntBuffer intBuffer = segment.asByteBuffer().asIntBuffer();
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
-    int x = intBuffer.get(i);
+    int x = intBuffer.get(i * 2);
     int y = intBuffer.get((i * 2) + 1);
+    values[i] = new Point(x, y);
 }
 ```
 
@@ -96,7 +98,7 @@ In the above,  `xHandle` and `yHandle` are two var handle instances whose type i
 1. a `MemorySegment` instance; the segment whose memory should be dereferenced
 2. a *logical* index, which is used to select the element of the sequence we want to access (as the layout path used to construct these var handles contains one free dimension)
 
-Note that memory access var handles (as any other var handle) are *strongly* typed; and to get maximum efficiency, it is generally necessary to introduce casts to make sure that the access coordinates match the expected types — in this case we have to cast `i` into a `long`; similarly, since the signature polymorphic method `VarHandle::get` notionally returns `Object` a cast is necessary to force the right return type the var handle operation.
+Note that memory access var handles (as any other var handle) are *strongly* typed; and to get maximum efficiency, it is generally necessary to introduce casts to make sure that the access coordinates match the expected types — in this case we have to cast `i` into a `long`; similarly, since the signature polymorphic method `VarHandle::get` notionally returns `Object` a cast is necessary to force the right return type the var handle operation <a href="#2"><sup>2</sup></a>.
 
 In other words, manual offset computation is no longer needed — offsets and strides can in fact be derived from the layout object; note how `yHandle` is able to compute the required offset of the `y` coordinate in the flat array without the need of any error-prone arithmetic computation.
 
@@ -114,7 +116,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
 
 Here, we create a new *confined* resource scope, which is then used when creating a mapped segment; this means that the lifecycle of the `mapped` segment will be tied to that of the resource scope, and that accessing the segment (e.g. dereference) *after* `scope` has been closed will not be possible.
 
-As this example alludes to, resource scopes can come in many flavors: they can be *confined* (where access is restricted to the thread which created the segment), *shared* <a href="#2"><sup>2</sup></a> (where access can occur in any thread) and can be optionally associated with a `Cleaner` object, which would take care of performing implicit deallocation, in case the resource scope becomes *unreachable* and the `close` method has not been called by the user. In fact, all the memory segments we have seen previously were associated with the so called *default* scope: a shared scope which does not support deterministic deallocation (e.g. calling `close` will fail), and whose resources are managed by a `Cleaner`.
+As this example alludes to, resource scopes can come in many flavors: they can be *confined* (where access is restricted to the thread which created the scope), *shared* <a href="#3"><sup>3</sup></a> (where access can occur in any thread) and can be optionally associated with a `Cleaner` object, which would take care of performing implicit deallocation, in case the resource scope becomes *unreachable* and the `close` method has not been called by the user. In fact, all the memory segments we have seen previously were associated with the so called *default* scope: a shared scope which does not support deterministic deallocation (e.g. calling `close` will fail), and whose resources are managed by a `Cleaner`.
 
 Resource scopes are very handy when managing the lifecycle of multiple resources:
 
@@ -153,7 +155,7 @@ void writePointSafe(MemorySegment segment, int x, int y) {
 }
 ```
 
-A resource scope handle acts as a more restricted version <a href="#3"><sup>3</sup></a> of an *atomic reference count*; each time a scope is acquired, its *acquired count* goes up; conversely the count goes down each time an handle associated with that scope is released. A scope can only be closed if its acquired count is exactly zero - meaning that no other client is attempting to access that (shared) segment. In our example above, the semantics of resource scope handles guarantees that the method will be able to either acquire the handle successfully, and write both values, or fail to acquire the handle, and write no value.
+A resource scope handle acts as a more restricted version <a href="#4"><sup>4</sup></a> of an *atomic reference count*; each time a scope is acquired, its *acquired count* goes up; conversely the count goes down each time an handle associated with that scope is released. A scope can only be closed if its acquired count is exactly zero - meaning that no other client is attempting to access that (shared) segment. In our example above, the semantics of resource scope handles guarantees that the method will be able to either acquire the handle successfully, and write both values, or fail to acquire the handle, and write no value.
 
 ### Parallel processing
 
@@ -165,13 +167,13 @@ MemorySegment segment = MemorySegment.allocateNative(seq);
 SequenceLayout seq_bulk = seq.reshape(-1, 100);
 
 int sum = StreamSupport.stream(MemorySegment.spliterator(segment, seq_bulk), true)
-                .mapToInt(slice -> {
-					int res = 0;
-        			for (int i = 0; i < 100 ; i++) {
-            			res += MemoryAccess.getIntAtIndex(slice, i);
-        			}
-        			return res;
-                }).sum();
+                       .mapToInt(slice -> {
+                           int res = 0;
+                           for (int i = 0; i < 100 ; i++) {
+                               res += MemoryAccess.getIntAtIndex(slice, i);
+                           }
+                           return res;
+                       }).sum();
 ```
 
 The `MemorySegment::spliterator` takes a segment, a *sequence* layout and returns a spliterator instance which splits the segment into chunks which corresponds to the elements in the provided sequence layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use the layout API to derive a *bulk* sequence layout. The bulk layout is a sequence layout which has the same size of the original layouts, but where the elements are arranged into groups of 100 elements — which should make it more amenable to parallel processing.
@@ -236,6 +238,8 @@ For these reasons, creating unsafe segments is a *restricted* operation in the F
 We plan, in the future, to make access to restricted operations more integrated with the module system; that is, certain modules might *require* restricted native access; when an application which depends on said modules is executed, the user might need to provide *permissions* to said modules to perform restricted native operations, or the runtime will refuse to build the application's module graph.
 
 * <a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small>
-* <a id="2"/>(<sup>2</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.</small>
-* <a id="3"/>(<sup>3</sup>):<small> The main difference between reference counting and the mechanism proposed here is that reference counting is *symmetric* - meaning that any client is able to both increment and decrement the reference count at will. The resource scope handle mechanism is *asymmetric*, since only the client acquiring a handle has the capability to release that handle. This avoids situation where a client might be tempted to e.g. decrement the reference count multiple times in order to perform some task which would otherwise be forbidden. </small>
+* <a id="2"/>(<sup>2</sup>):<small> Clients can enforce stricter type checking when interacting with `VarHandle` instances, by obtaining an *exact* var handle, using the `VarHandle::withInvokeExactBehavior` method.</small>
+* <a id="3"/>(<sup>3</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.</small>
+
+* <a id="4"/>(<sup>4</sup>):<small> The main difference between reference counting and the mechanism proposed here is that reference counting is *symmetric* - meaning that any client is able to both increment and decrement the reference count at will. The resource scope handle mechanism is *asymmetric*, since only the client acquiring a handle has the capability to release that handle. This avoids situation where a client might be tempted to e.g. decrement the reference count multiple times in order to perform some task which would otherwise be forbidden. </small>
 
