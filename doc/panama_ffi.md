@@ -84,7 +84,7 @@ The above code retrieves the *default allocator* (an allocator built on top of `
 ```java
 try (ResourceScope scope = ResourceScope.ofConfined()) {
     MemorySegment size = SegmentAllocator.scoped(scope).allocate(C_INT, 5);
-    foo.invokeExact(42, size);
+    foo.invokeExact(42, size.address());
 } // 'size' is released here
 ```
 
@@ -98,6 +98,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
     for (int i = 0 ; i < 100 ; i++) {
         allocator.allocate(C_INT, i);
     }
+    ...
 } // all memory allocated is released here
 ```
 
