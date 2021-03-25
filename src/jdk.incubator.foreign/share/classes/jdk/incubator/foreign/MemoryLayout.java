@@ -494,6 +494,49 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
+     * Creates a method handle which can be used to create a slice of the layout selected by a given layout path,
+     * where the path is considered rooted in this layout.
+     *
+     * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
+     * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()},
+     * where the order of the parameters corresponds to the order of the path elements.
+     * The returned method handle can be used to create a slice similar to using {@link MemorySegment#asSlice(long, long)},
+     * but where the offset argument is dynamically compute based on indices specified when invoking the method handle.
+     *
+     * <p>The offset of the returned segment is computed as follows:
+     *
+     * <blockquote><pre>{@code
+    bitOffset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+    offset = bitOffset / 8
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
+     * <em>static</em> stride constants which are derived from the layout path.
+     *
+     * <p>After the offset is computed, the returned segment is create as if by calling:
+     * <blockquote><pre>{@code
+    segment.asSlice(offset, layout.byteSize());
+     * }</pre></blockquote>
+     *
+     * where {@code segment} is the segment to be sliced, and where {@code layout} is the layout selected by the given
+     * layout path.
+     *
+     * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
+     * offset in bits is not a multiple of 8.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle which can be used to create a slice of the selected layout element, given a segment.
+     * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
+     */
+    default MethodHandle sliceHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
+                Set.of(), elements);
+    }
+
+
+    /**
      * Selects the layout from a path rooted in this layout.
      *
      * @param elements the layout path elements.
