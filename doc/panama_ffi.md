@@ -213,7 +213,7 @@ MethodHandle strlen_virtual = CLinker.getInstance().downcallHandle( // address p
 try (ResourceScope scope = ResourceScope.ofConfined()) {
     long len = strlen_virtual.invokeExact(
         LibraryLookup.ofDefault().lookup("strlen").get() // address provided here!
-        CLinker.toCString("Hello").address()
+        CLinker.toCString("Hello", scope).address()
     ); // 5
 }
 ```
@@ -296,7 +296,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
 
 The above code creates  a memory segment — `comparFunc` — containing a stub that can be used to invoke our Java comparator function. The memory segment is associated with the provided resource scope instance; this means that the stub will be uninstalled when the resource scope is closed. It is also possible (not shown here) to create upcall stubs associated with the *default scope*, in which case the stub will be uninstalled when the upcall segment becomes *unreachable*.
 
-The snippet then creates an off-heap array from a Java array (using a `SegmemntAllocator`), which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side-effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
+The snippet then creates an off-heap array from a Java array (using a `SegmentAllocator`), which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side-effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
 ### Varargs
 
