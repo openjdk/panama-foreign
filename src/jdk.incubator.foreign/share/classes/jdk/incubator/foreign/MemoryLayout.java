@@ -382,8 +382,9 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * @param elements the layout path elements.
      * @return a method handle that can be used to compute the bit offset of the layout element
@@ -433,8 +434,9 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
      * offset in bits is not a multiple of 8.
@@ -470,9 +472,10 @@ public interface MemoryLayout extends Constable {
     offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
      * }</pre></blockquote>
      *
-     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as optional {@code long}
-     * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
@@ -494,8 +497,8 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Creates a method handle which can be used to create a slice of the layout selected by a given layout path,
-     * where the path is considered rooted in this layout.
+     * Creates a method handle which, given a memory segment, returns a {@link MemorySegment#asSlice(long,long)}
+     * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
      * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
@@ -512,8 +515,9 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * <p>After the offset is computed, the returned segment is create as if by calling:
      * <blockquote><pre>{@code
@@ -521,7 +525,7 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code segment} is the segment to be sliced, and where {@code layout} is the layout selected by the given
-     * layout path.
+     * layout path, as per {@link MemoryLayout#select(PathElement...)}.
      *
      * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
      * offset in bits is not a multiple of 8.

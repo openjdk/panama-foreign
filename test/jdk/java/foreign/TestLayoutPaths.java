@@ -515,22 +515,34 @@ public class TestLayoutPaths {
     public void testSliceHandleUOEInvalidSize() {
         MemoryLayout layout = MemoryLayout.ofStruct(
             MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("x"),
-            MemoryLayout.ofValueBits(31, ByteOrder.nativeOrder()).withName("y") // not a multiple of 8
+            MemoryLayout.ofValueBits(31, ByteOrder.nativeOrder()).withName("y") // size not a multiple of 8
         );
 
         layout.sliceHandle(groupElement("y")); // should throw
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testSliceHandleUOEInvalidOffset() throws Throwable {
+    public void testSliceHandleUOEInvalidOffsetEager() throws Throwable {
         MemoryLayout layout = MemoryLayout.ofStruct(
             MemoryLayout.ofPaddingBits(5),
             MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("y") // offset not a multiple of 8
         );
 
+        layout.sliceHandle(groupElement("y")); // should throw
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testSliceHandleUOEInvalidOffsetLate() throws Throwable {
+        MemoryLayout layout = MemoryLayout.ofSequence(3,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofPaddingBits(4),
+                MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("y") // offset not a multiple of 8
+            )
+        );
+
         MethodHandle sliceHandle;
         try {
-            sliceHandle = layout.sliceHandle(groupElement("y")); // should work
+            sliceHandle = layout.sliceHandle(sequenceElement(), groupElement("y")); // should work
         } catch (UnsupportedOperationException uoe) {
             fail("Unexpected exception", uoe);
             return;
@@ -538,7 +550,15 @@ public class TestLayoutPaths {
 
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
-            sliceHandle.invokeExact(segment); // should throw
+
+            try {
+                sliceHandle.invokeExact(segment, 1); // should work
+            } catch (UnsupportedOperationException uoe) {
+                fail("Unexpected exception", uoe);
+                return;
+            }
+
+            sliceHandle.invokeExact(segment, 0); // should throw
         }
     }
 }

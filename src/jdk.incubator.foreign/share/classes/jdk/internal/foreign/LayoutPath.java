@@ -73,8 +73,8 @@ public class LayoutPath {
                     MethodType.methodType(long.class, MemorySegment.class, long.class, long.class, long.class));
             MH_ADD_SCALED_OFFSET = lookup.findStatic(LayoutPath.class, "addScaledOffset",
                     MethodType.methodType(long.class, long.class, long.class, long.class));
-            MH_SLICE = lookup.findStatic(LayoutPath.class, "slice",
-                    MethodType.methodType(MemorySegment.class, MemorySegment.class, long.class, long.class));
+            MH_SLICE = lookup.findVirtual(MemorySegment.class, "asSlice",
+                    MethodType.methodType(MemorySegment.class, long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -203,11 +203,12 @@ public class LayoutPath {
         return mh;
     }
 
-    private static MemorySegment slice(MemorySegment base, long offset, long length) {
-        return base.asSlice(offset, length);
-    }
-
     public MethodHandle sliceHandle() {
+        if (strides.length == 0) {
+            // trigger checks eagerly
+            Utils.bitsToBytesOrThrow(offset, Utils.bitsToBytesThrowOffset);
+        }
+
         MethodHandle offsetHandle = offsetHandle(); // bit offset
         offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_bitsToBytesOrThrowForOffset); // byte offset
 
