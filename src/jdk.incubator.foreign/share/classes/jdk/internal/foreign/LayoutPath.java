@@ -208,8 +208,6 @@ public class LayoutPath {
     }
 
     public MethodHandle sliceHandle() {
-        checkAlignment(this);
-
         MethodHandle offsetHandle = offsetHandle(); // bit offset
         offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_bitsToBytesOrThrowForOffset); // byte offset
 
