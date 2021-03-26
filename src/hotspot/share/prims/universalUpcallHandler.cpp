@@ -75,7 +75,10 @@ void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address
   bool should_detach = false;
   Thread* thread = maybe_attach_and_get_thread(&should_detach);
 
-  upcall_helper(thread->as_Java_thread(), rec, buff);
+  {
+    MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, thread));
+    upcall_helper(thread->as_Java_thread(), rec, buff);
+  }
 
   if (should_detach) {
     detach_thread(thread);
