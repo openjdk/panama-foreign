@@ -42,7 +42,7 @@ import java.util.Objects;
  * Clients requiring sophisticated, low-level control over mapped memory segments, should consider writing
  * custom mapped memory segment factories; using JNI, e.g. on Linux, it is possible to call {@code mmap}
  * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
- * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegmentRestricted(long, Runnable, Object)}.
+ * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegmentRestricted(long, Runnable, ResourceScope)}.
  *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>

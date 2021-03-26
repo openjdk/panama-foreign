@@ -26,12 +26,13 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.ref.PhantomCleanable;
-import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.ref.CleanerFactory;
+import jdk.internal.vm.annotation.Stable;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
 import java.util.Objects;
@@ -39,7 +40,7 @@ import java.util.Objects;
 /**
  * This class manages the temporal bounds associated with a memory segment as well
  * as thread confinement. A scope has a liveness bit, which is updated when the scope is closed
- * (this operation is triggered by {@link AbstractMemorySegmentImpl#close()}). This bit is consulted prior
+ * (this operation is triggered by {@link ResourceScope#close()}). This bit is consulted prior
  * to memory access (see {@link #checkValidState()}).
  * There are two kinds of memory scope: confined memory scope and shared memory scope.
  * A confined memory scope has an associated owner thread that confines some operations to
@@ -49,116 +50,94 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-abstract class MemoryScope implements ScopedMemoryAccess.Scope {
+public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
-    static final Runnable DUMMY_CLEANUP_ACTION = () -> { };
+    final ResourceList resourceList;
+    protected final Object ref;
 
-    private MemoryScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        Objects.requireNonNull(cleanupAction);
+    @Override
+    public void addOnClose(Runnable runnable) {
+        Objects.requireNonNull(runnable);
+        addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
+    }
+
+    /**
+     * Add a cleanup action. If a failure occurred (because of a add vs. close race), call the cleanup action.
+     * This semantics is useful when allocating new memory segments, since we first do a malloc/mmap and _then_
+     * we register the cleanup (free/munmap) against the scope; so, if registration fails, we still have to
+     * cleanup memory. From the perspective of the client, such a failure would manifest as a factory
+     * returning a segment that is already "closed" - which is always possible anyway (e.g. if the scope
+     * is closed _after_ the cleanup for the segment is registered but _before_ the factory returns the
+     * new segment to the client). For this reason, it's not worth adding extra complexity to the segment
+     * initialization logic here - and using an optimistic logic works well in practice.
+     */
+    public void addOrCleanupIfFail(ResourceList.ResourceCleanup resource) {
+        try {
+            addInternal(resource);
+        } catch (Throwable ex) {
+            resource.cleanup();
+        }
+    }
+
+    void addInternal(ResourceList.ResourceCleanup resource) {
+        try {
+            checkValidStateSlow();
+            resourceList.add(resource);
+        } catch (ScopedMemoryAccess.Scope.ScopedAccessError err) {
+            throw new IllegalStateException("Already closed");
+        }
+    }
+
+    protected MemoryScope(Object ref, Cleaner cleaner, ResourceList resourceList) {
         this.ref = ref;
-        this.cleanupAction = cleanupAction;
-        this.scopeCleanable = cleaner != null ?
-                new ScopeCleanable(this, cleaner, cleanupAction) :
-                null;
+        this.resourceList = resourceList;
+        if (cleaner != null) {
+            cleaner.register(this, resourceList);
+        }
+    }
+
+    public static MemoryScope createDefault() {
+        return new NonCloseableSharedScope(null, CleanerFactory.cleaner());
+    }
+
+    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
+        return new ConfinedScope(thread, ref, cleaner);
     }
 
     /**
      * Creates a confined memory scope with given attachment and cleanup action. The returned scope
      * is assumed to be confined on the current thread.
      * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a confined memory scope
      */
-    static MemoryScope createConfined(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleanupAction, cleaner);
+    public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
+        return new ConfinedScope(Thread.currentThread(), ref, cleaner);
     }
 
     /**
      * Creates a shared memory scope with given attachment and cleanup action.
      * @param ref           an optional reference to an instance that needs to be kept reachable
-     * @param cleanupAction a cleanup action to be executed when returned scope is closed
      * @return a shared memory scope
      */
-    static MemoryScope createShared(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-        return new SharedScope(ref, cleanupAction, cleaner);
+    public static MemoryScope createShared(Object ref, Cleaner cleaner) {
+        return new SharedScope(ref, cleaner);
     }
-
-    protected final Object ref;
-    protected final ScopeCleanable scopeCleanable;
-    protected final Runnable cleanupAction;
 
     /**
      * Closes this scope, executing any cleanup action (where provided).
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    final void close() {
+    public void close() {
         try {
             justClose();
-            cleanupAction.run();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
+            resourceList.cleanup();
         } finally {
             Reference.reachabilityFence(this);
         }
     }
 
     abstract void justClose();
-
-    /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @param newOwner new owner thread of the returned memory scope
-     * @return a new confined scope, which is a duplicate of this scope, but with a new owner thread.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread.
-     */
-    final MemoryScope confineTo(Thread newOwner) {
-        try {
-            justClose();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
-            return new ConfinedScope(newOwner, ref, cleanupAction, scopeCleanable != null ?
-                    scopeCleanable.cleaner : null);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    /**
-     * Duplicates this scope with given new "owner" thread and {@link #close() closes} it.
-     * @return a new shared scope, which is a duplicate of this scope.
-     * @throws IllegalStateException if this scope is already closed or if this is
-     * a confined scope and this method is called outside of the owner thread,
-     * or if this is already a shared scope.
-     */
-    final MemoryScope share() {
-        try {
-            justClose();
-            if (scopeCleanable != null) {
-                scopeCleanable.clear();
-            }
-            return new SharedScope(ref, cleanupAction, scopeCleanable != null ?
-                    scopeCleanable.cleaner : null);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
-
-    final MemoryScope cleanable(Cleaner cleaner) {
-        if (scopeCleanable != null) {
-            throw new IllegalStateException("Already registered with a cleaner");
-        }
-        try {
-            justClose();
-            return ownerThread() == null ?
-                    new SharedScope(ref, cleanupAction, cleaner) :
-                    new ConfinedScope(ownerThread(), ref, cleanupAction, cleaner);
-        } finally {
-            Reference.reachabilityFence(this);
-        }
-    }
 
     /**
      * Returns "owner" thread of this scope.
@@ -172,12 +151,27 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
      */
     public abstract boolean isAlive();
 
+
+    /**
+     * This is a faster version of {@link #checkValidStateSlow()}, which is called upon memory access, and which
+     * relies on invariants associated with the memory scope implementations (typically, volatile access
+     * to the closed state bit is replaced with plain access, and ownership check is removed where not needed.
+     * Should be used with care.
+     */
+    public abstract void checkValidState();
+
     /**
      * Checks that this scope is still alive (see {@link #isAlive()}).
      * @throws IllegalStateException if this scope is already closed or if this is
      * a confined scope and this method is called outside of the owner thread.
      */
-    public abstract void checkValidState();
+    public final void checkValidStateSlow() {
+        if (ownerThread() != null && Thread.currentThread() != ownerThread()) {
+            throw new IllegalStateException("Attempted access outside owning thread");
+        } else if (!isAlive()) {
+            throw new IllegalStateException("Already closed");
+        }
+    }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
@@ -185,123 +179,101 @@ abstract class MemoryScope implements ScopedMemoryAccess.Scope {
     }
 
     /**
-     * A confined scope, which features an owner thread. The liveness check features an additional
-     * confinement check - that is, calling any operation on this scope from a thread other than the
-     * owner thread will result in an exception. Because of this restriction, checking the liveness bit
-     * can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}).
+     * Allocates a segment using this scope. Used by {@link SegmentAllocator#scoped(ResourceScope)}.
      */
-    static class ConfinedScope extends MemoryScope {
+    @Override
+    public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
+    }
 
-        private boolean closed; // = false
-        final Thread owner;
+    /**
+     * A non-closeable, shared scope. Similar to a shared scope, but its {@link #close()} method throws unconditionally.
+     * In addition, non-closeable scopes feature a much simpler scheme for generating resource scope handles, where
+     * the same per-scope handle is shared across multiple calls to {@link #acquire()}. In fact, for non-closeable
+     * scopes, it is sufficient for resource scope handles to keep a strong reference to their scopes, to prevent closure.
+     */
+    static class NonCloseableSharedScope extends SharedScope {
 
-        public ConfinedScope(Thread owner, Object ref, Runnable cleanupAction, Cleaner cleaner) {
-            super(ref, cleanupAction, cleaner);
-            this.owner = owner;
-        }
+        @Stable
+        private Handle handle;
 
-        @ForceInline
-        public final void checkValidState() {
-            if (owner != Thread.currentThread()) {
-                throw new IllegalStateException("Attempted access outside owning thread");
-            }
-            if (closed) {
-                throw ScopedAccessError.INSTANCE;
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return !closed;
-        }
-
-        void justClose() {
-            checkValidState();
-            closed = true;
+        public NonCloseableSharedScope(Object ref, Cleaner cleaner) {
+            super(ref, cleaner);
         }
 
         @Override
-        public Thread ownerThread() {
-            return owner;
+        public Handle acquire() {
+            if (handle != null) {
+                // capture 'this'
+                handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
+            }
+            return handle;
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("Scope cannot be closed");
         }
     }
 
     /**
-     * A shared scope, which can be shared across multiple threads. Closing a shared scope has to ensure that
-     * (i) only one thread can successfully close a scope (e.g. in a close vs. close race) and that
-     * (ii) no other thread is accessing the memory associated with this scope while the segment is being
-     * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
-     * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
-     * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
-     * checking the liveness bit upon access can be performed in plain mode (see {@link #checkAliveRaw(MemoryScope)}),
-     * as in the confined case.
+     * The global, always alive, non-closeable, shared scope. This is like a {@link NonCloseableSharedScope non-closeable scope},
+     * except that the operation which adds new resources to the global scope does nothing: as the scope can never
+     * become not-alive, there is nothing to track.
      */
-    static class SharedScope extends MemoryScope {
+    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null, null) {
+        @Override
+        void addInternal(ResourceList.ResourceCleanup resource) {
+            // do nothing
+        }
+    };
 
-        static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
+    /**
+     * A list of all cleanup actions associated with a resource scope. Cleanup actions are modelled as instances
+     * of the {@link ResourceCleanup} class, and, together, form a linked list. Depending on whether a scope
+     * is shared or confined, different implementations of this class will be used, see {@link ConfinedScope.ConfinedResourceList}
+     * and {@link SharedScope.SharedResourceList}.
+     */
+    public abstract static class ResourceList implements Runnable {
+        ResourceCleanup fst;
 
-        final static int ALIVE = 0;
-        final static int CLOSING = 1;
-        final static int CLOSED = 2;
+        abstract void add(ResourceCleanup cleanup);
 
-        int state = ALIVE;
+        abstract void cleanup();
 
-        private static final VarHandle STATE;
+        public final void run() {
+            cleanup(); // cleaner interop
+        }
 
-        static {
-            try {
-                STATE = MethodHandles.lookup().findVarHandle(SharedScope.class, "state", int.class);
-            } catch (Throwable ex) {
-                throw new ExceptionInInitializerError(ex);
+        static void cleanup(ResourceCleanup first) {
+            ResourceCleanup current = first;
+            while (current != null) {
+                current.cleanup();
+                current = current.next;
             }
         }
 
-        SharedScope(Object ref, Runnable cleanupAction, Cleaner cleaner) {
-            super(ref, cleanupAction, cleaner);
-        }
+        public static abstract class ResourceCleanup {
+            ResourceCleanup next;
 
-        @Override
-        public Thread ownerThread() {
-            return null;
-        }
+            public abstract void cleanup();
 
-        @Override
-        public void checkValidState() {
-            if (state != ALIVE) {
-                throw ScopedAccessError.INSTANCE;
+            final static ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
+                @Override
+                public void cleanup() {
+                    throw new IllegalStateException("This resource list has already been closed!");
+                }
+            };
+
+            static ResourceCleanup ofRunnable(Runnable cleanupAction) {
+                return new ResourceCleanup() {
+                    @Override
+                    public void cleanup() {
+                        cleanupAction.run();
+                    }
+                };
             }
         }
 
-        void justClose() {
-            if (!STATE.compareAndSet(this, ALIVE, CLOSING)) {
-                throw new IllegalStateException("Already closed");
-            }
-            boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
-            STATE.setVolatile(this, success ? CLOSED : ALIVE);
-            if (!success) {
-                throw new IllegalStateException("Cannot close while another thread is accessing the segment");
-            }
-        }
-
-        @Override
-        public boolean isAlive() {
-            return (int)STATE.getVolatile(this) != CLOSED;
-        }
-    }
-
-    static class ScopeCleanable extends PhantomCleanable<MemoryScope> {
-        final Cleaner cleaner;
-        final Runnable cleanupAction;
-
-        public ScopeCleanable(MemoryScope referent, Cleaner cleaner, Runnable cleanupAction) {
-            super(referent, cleaner);
-            this.cleaner = cleaner;
-            this.cleanupAction = cleanupAction;
-        }
-
-        @Override
-        protected void performCleanup() {
-            cleanupAction.run();
-        }
     }
 }

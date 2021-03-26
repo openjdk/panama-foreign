@@ -24,12 +24,13 @@
  */
 package jdk.internal.foreign.abi.x64.windows;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 
@@ -38,8 +39,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.function.Consumer;
-
-import static jdk.internal.foreign.PlatformLayouts.*;
 
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
@@ -65,8 +64,8 @@ public class Windowsx64Linker implements CLinker {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
                 MethodType.methodType(MemoryAddress.class));
-            MH_boxVaList = lookup.findStatic(Windowsx64Linker.class, "newVaListOfAddress",
-                MethodType.methodType(VaList.class, MemoryAddress.class));
+            MH_boxVaList = MethodHandles.insertArguments(lookup.findStatic(Windowsx64Linker.class, "newVaListOfAddress",
+                MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)), 1, ResourceScope.globalScope());
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -79,8 +78,8 @@ public class Windowsx64Linker implements CLinker {
         return instance;
     }
 
-    public static VaList newVaList(Consumer<VaList.Builder> actions, SharedUtils.Allocator allocator) {
-        WinVaList.Builder builder = WinVaList.builder(allocator);
+    public static VaList newVaList(Consumer<VaList.Builder> actions, ResourceScope scope) {
+        WinVaList.Builder builder = WinVaList.builder(scope);
         actions.accept(builder);
         return builder.build();
     }
@@ -91,20 +90,25 @@ public class Windowsx64Linker implements CLinker {
         Objects.requireNonNull(function);
         MethodType llMt = SharedUtils.convertVaListCarriers(type, WinVaList.CARRIER);
         MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
+        if (!type.returnType().equals(MemorySegment.class)) {
+            // not returning segment, just insert default allocator
+            handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
+        }
         handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
 
     @Override
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
+    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+        Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
-        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function));
+        return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (MemoryScope) scope);
     }
 
-    public static VaList newVaListOfAddress(MemoryAddress ma) {
-        return WinVaList.ofAddress(ma);
+    public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
+        return WinVaList.ofAddress(ma, scope);
     }
 
     public static VaList emptyVaList() {

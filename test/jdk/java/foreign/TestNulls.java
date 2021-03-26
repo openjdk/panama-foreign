@@ -55,6 +55,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -87,23 +88,29 @@ public class TestNulls {
             MappedMemorySegments.class,
             MemoryLayouts.class,
             MemoryHandles.class,
-            NativeScope.class,
             CLinker.class,
             CLinker.VaList.class,
             CLinker.VaList.Builder.class,
             FunctionDescriptor.class,
-            LibraryLookup.class
+            LibraryLookup.class,
+            SegmentAllocator.class,
+            ResourceScope.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(
             "jdk.incubator.foreign.MemoryLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/1/0",
             "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,java.lang.Object)/2/0",
+            "jdk.incubator.foreign.MemoryAddress/asSegmentRestricted(long,java.lang.Runnable,jdk.incubator.foreign.ResourceScope)/1/0",
             "jdk.incubator.foreign.SequenceLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
-            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
+            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/0/0",
+            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/1/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/0/0",
+            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/1/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -124,6 +131,7 @@ public class TestNulls {
         addDefaultMapping(float.class, 0f);
         addDefaultMapping(long.class, 0L);
         addDefaultMapping(double.class, 0d);
+        addDefaultMapping(boolean.class, true);
         addDefaultMapping(ByteOrder.class, ByteOrder.nativeOrder());
         addDefaultMapping(Thread.class, Thread.currentThread());
         addDefaultMapping(Cleaner.class, CleanerFactory.cleaner());
@@ -149,12 +157,14 @@ public class TestNulls {
         addDefaultMapping(GroupLayout.class, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
         addDefaultMapping(SequenceLayout.class, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT));
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
-        addDefaultMapping(NativeScope.class, NativeScope.boundedScope(10));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(CLinker.class, CLinker.getInstance());
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
+        addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
+        addDefaultMapping(SegmentAllocator.class, MemorySegment::allocateNative);
+        addDefaultMapping(Supplier.class, () -> null);
     }
 
     static class VaListHelper {

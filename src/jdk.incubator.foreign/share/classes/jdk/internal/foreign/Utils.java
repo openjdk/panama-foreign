@@ -133,5 +133,4 @@ public final class Utils {
         if (!layoutType.isInstance(layout))
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
     }
-
 }

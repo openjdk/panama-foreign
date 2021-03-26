@@ -28,7 +28,10 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.MemoryScope;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -216,14 +219,103 @@ public abstract class Binding {
             MH_BASE_ADDRESS = lookup.findVirtual(MemorySegment.class, "address",
                     methodType(MemoryAddress.class));
             MH_COPY_BUFFER = lookup.findStatic(Binding.Copy.class, "copyBuffer",
-                    methodType(MemorySegment.class, MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
+                    methodType(MemorySegment.class, MemorySegment.class, long.class, long.class, Context.class));
             MH_ALLOCATE_BUFFER = lookup.findStatic(Binding.Allocate.class, "allocateBuffer",
-                    methodType(MemorySegment.class, long.class, long.class, SharedUtils.Allocator.class));
+                    methodType(MemorySegment.class, long.class, long.class, Context.class));
             MH_TO_SEGMENT = lookup.findStatic(Binding.ToSegment.class, "toSegment",
-                    methodType(MemorySegment.class, MemoryAddress.class, long.class, SharedUtils.Allocator.class));
+                    methodType(MemorySegment.class, MemoryAddress.class, long.class, Context.class));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * A binding context is used as an helper to carry out evaluation of certain bindings; for instance,
+     * it helps {@link Allocate} bindings, by providing the {@link SegmentAllocator} that should be used for
+     * the allocation operation, or {@link ToSegment} bindings, by providing the {@link ResourceScope} that
+     * should be used to create an unsafe struct from a memory address.
+     */
+    public static class Context implements AutoCloseable {
+        private final SegmentAllocator allocator;
+        private final ResourceScope scope;
+
+        private Context(SegmentAllocator allocator, ResourceScope scope) {
+            this.allocator = allocator;
+            this.scope = scope;
+        }
+
+        public SegmentAllocator allocator() {
+            return allocator;
+        }
+
+        public ResourceScope scope() {
+            return scope;
+        }
+
+        @Override
+        public void close() {
+            scope().close();
+        }
+
+        /**
+         * Create a binding context from given native scope.
+         */
+        public static Context ofBoundedAllocator(long size) {
+            ResourceScope scope = ResourceScope.ofConfined();
+            return new Context(SegmentAllocator.arenaBounded(size, scope), scope);
+        }
+
+        /**
+         * Create a binding context from given segment allocator. The resulting context will throw when
+         * the context's scope is accessed.
+         */
+        public static Context ofAllocator(SegmentAllocator allocator) {
+            return new Context(allocator, null) {
+                @Override
+                public ResourceScope scope() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        /**
+         * Create a binding context from given scope. The resulting context will throw when
+         * the context's allocator is accessed.
+         */
+        public static Context ofScope() {
+            ResourceScope scope = ResourceScope.ofConfined();
+            return new Context(null, scope) {
+                @Override
+                public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
+            };
+        }
+
+        /**
+         * Dummy binding context. Throws exceptions when attempting to access allocator/scope, and its
+         * {@link #close()} is idempotent.
+         */
+        public static Context DUMMY = new Context(null, null) {
+            @Override
+            public SegmentAllocator allocator() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public ResourceScope scope() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void close() {
+                // do nothing
+            }
+        };
+
+        /**
+         * Default binding context. Does not provide a resource scope, but provides a default {@link SegmentAllocator}
+         * which uses {@link MemorySegment#allocateNative(long, long)}.
+         */
+        public static Context DEFAULT = ofAllocator(MemorySegment::allocateNative);
     }
 
     enum Tag {
@@ -253,7 +345,7 @@ public abstract class Binding {
     public abstract void verify(Deque<Class<?>> stack);
 
     public abstract void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                                   BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator);
+                                   BindingInterpreter.LoadFunc loadFunc, Context context);
 
     public abstract MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos);
 
@@ -454,7 +546,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             storeFunc.store(storage(), type(), stack.pop());
         }
 
@@ -489,7 +581,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(loadFunc.load(storage(), type()));
         }
 
@@ -569,7 +661,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             Object value = stack.pop();
             MemorySegment operand = (MemorySegment) stack.pop();
             MemorySegment writeAddress = operand.asSlice(offset());
@@ -613,7 +705,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             MemorySegment operand = (MemorySegment) stack.pop();
             MemorySegment readAddress = operand.asSlice(offset());
             stack.push(SharedUtils.read(readAddress, type()));
@@ -653,8 +745,8 @@ public abstract class Binding {
         }
 
         private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
-                                                    SharedUtils.Allocator allocator) {
-            MemorySegment copy = allocator.allocate(size, alignment);
+                                                    Context context) {
+            MemorySegment copy = context.allocator().allocate(size, alignment);
             copy.copyFrom(operand.asSlice(0, size));
             return copy;
         }
@@ -685,9 +777,9 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             MemorySegment operand = (MemorySegment) stack.pop();
-            MemorySegment copy = copyBuffer(operand, size, alignment, allocator);
+            MemorySegment copy = copyBuffer(operand, size, alignment, context);
             stack.push(copy);
         }
 
@@ -728,8 +820,8 @@ public abstract class Binding {
             this.alignment = alignment;
         }
 
-        private static MemorySegment allocateBuffer(long size, long allignment, SharedUtils.Allocator allocator) {
-            return allocator.allocate(size, allignment);
+        private static MemorySegment allocateBuffer(long size, long allignment, Context context) {
+            return context.allocator().allocate(size, allignment);
         }
 
         public long size() {
@@ -756,8 +848,8 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
-            stack.push(allocateBuffer(size, alignment, allocator));
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
+            stack.push(allocateBuffer(size, alignment, context));
         }
 
         @Override
@@ -803,7 +895,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(((MemoryAddress)stack.pop()).toRawLongValue());
         }
 
@@ -838,7 +930,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(MemoryAddress.ofLong((long) stack.pop()));
         }
 
@@ -873,7 +965,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(((MemorySegment) stack.pop()).address());
         }
 
@@ -902,9 +994,8 @@ public abstract class Binding {
             this.size = size;
         }
 
-        private static MemorySegment toSegment(MemoryAddress operand, long size, SharedUtils.Allocator allocator) {
-            MemorySegment ms = MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size);
-            return allocator.handoff(ms);
+        private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemoryScope) context.scope);
         }
 
         @Override
@@ -916,9 +1007,9 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             MemoryAddress operand = (MemoryAddress) stack.pop();
-            MemorySegment segment = toSegment(operand, size, allocator);
+            MemorySegment segment = toSegment(operand, size, context);
             stack.push(segment);
         }
 
@@ -969,7 +1060,7 @@ public abstract class Binding {
 
         @Override
         public void interpret(Deque<Object> stack, BindingInterpreter.StoreFunc storeFunc,
-                              BindingInterpreter.LoadFunc loadFunc, SharedUtils.Allocator allocator) {
+                              BindingInterpreter.LoadFunc loadFunc, Context context) {
             stack.push(stack.peekLast());
         }
 
