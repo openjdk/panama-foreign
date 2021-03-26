@@ -1,11 +1,10 @@
 ## State of foreign function support
 
-**October 2020**
+**March 2021**
 
-* Adjust reference to NativeScope handoff
-* Tweak references to restricted segments to use new API
-* Tweak signature of LibraryLookup::lookup
-* Replaced usages of ForeignLinker with CLinker, as per new API
+* Rewrite section on NativeScope (now Segment allocators) and move it earlier in the doc
+* Discuss life-cycle options for downcalls (struct returned by value), upcalls and valist
+* Tweak examples
 
 **Maurizio Cimadamore**
 
@@ -13,9 +12,9 @@ In this document we explore the main concepts behind Panama's foreign function s
 
 ### Native addresses
 
-Before we dive into the specifics of the foreign function support, it would be useful to briefly recap some of the main concepts we have learned when exploring the [foreign memory access support](http://cr.openjdk.java.net/~mcimadamore/panama/foreign-memaccess.html). The Foreign Memory Access API allows client to create and manipulate *memory segments*. A memory segment is a view over a memory source (either on- or off-heap) which is spatially bounded, temporally bounded and thread-confined. The guarantees ensure that dereferencing a segment that has been created by Java code is always *safe*, and can never result in a VM crash, or, worse, in silent memory corruption.
+Before we dive into the specifics of the foreign function support, it would be useful to briefly recap some of the main concepts we have learned when exploring the [foreign memory access support](panama_memaccess.md). The Foreign Memory Access API allows client to create and manipulate *memory segments*. A memory segment is a view over a memory source (either on- or off-heap) which is spatially bounded, temporally bounded and thread-confined. The guarantees ensure that dereferencing a segment that has been created by Java code is always *safe*, and can never result in a VM crash, or, worse, in silent memory corruption.
 
-Now, in the case of memory segments, the above properties (spatial bounds, temporal bounds and confinement) can be known *in full* when the segment is created. But when we interact with native libraries we will often be receiving *raw* pointers; such pointers have no spatial bounds (does a `char*` in C refer to one `char`, or a `char` array of a given size?), no notion of temporal bounds, nor thread-confinement. Raw addresses in our interop support are modelled using the `MemoryAddress` abstraction.
+Now, in the case of memory segments, the above properties (spatial bounds, temporal bounds and confinement) can be known *in full* when the segment is created. But when we interact with native libraries we will often be receiving *raw* pointers; such pointers have no spatial bounds (does a `char*` in C refer to one `char`, or a `char` array of a given size?), no notion of temporal bounds, nor thread-confinement. Raw addresses in our interop support are modeled using the `MemoryAddress` abstraction.
 
 A memory address is just what the name implies: it encapsulates a memory address (either on- or off-heap). Since, in order to dereference memory using a memory access var handle, we need a segment, it follows that it is *not* possible to directly dereference a memory address — to do that we need a segment first. So clients can proceed in three different ways here.
 
@@ -36,7 +35,7 @@ MemorySegment segment = addr.asSegmentRestricted(100);
 int x = MemoryAccess.getInt(segment);
 ```
 
-Alternatively, the client can fall back to use the so called *everything* segment - that is, a primordial segment which covers the entire native heap. Since this segment is available as a constant, dereference can happen without the need of creating any additional segment instances:
+Alternatively, the client can fall back to use the so called *everything* segment - that is, a primordial segment which covers the entire native heap and whose scope is always alive (the so called *global scope*). Since this segment is available as a constant, dereference can happen without the need of creating any additional segment instances:
 
 ```java
 MemoryAddress addr = ... //obtain address from native code
@@ -46,6 +45,63 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr.toR
 Of course, since accessing the entire native heap is inherently *unsafe*, accessing the *everything* segment is considered a *restricted* operation which is only allowed after explicit opt in by setting the `foreign.restricted=permit` runtime flag.
 
 `MemoryAddress`, like `MemorySegment` , implements the `Addressable` interface, which is a functional interface whose method projects an entity down to a `MemoryAddress` instance. In the case of `MemoryAddress` such a projection is the identity function; in the case of a memory segment, the projection returns the `MemoryAddres` instance for the segment's base address. This abstraction allows to pass either memory address or memory segments where an address is expected (this is especially useful when generating native bindings).
+
+### Segment allocators
+
+Idiomatic C code implicitly relies on stack allocation to allow for concise variable declarations; consider this example:
+
+```c
+int arr[] = { 1, 2, 3, 4, 5 };
+```
+
+Here the function `foo` takes an output parameter, a pointer to an `int` variable. This idiom can be implemented as follows, using the Foreign Memory Access API:
+
+```java
+MemorySegment arr = MemorySegment.allocateNative(C_INT);
+for (int i = 1 ; i <= 5 ; i++) {
+    MemoryAccess.setInt(arr, i);
+}
+```
+
+There are a number of issues with the above code snippet:
+
+* compared to the C code, it is more verbose - the native array has to be initialized *element by element*
+* allocation is very slow compared to C; allocating the `arr` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
+* when having multiple declarations like the one above, it might become increasingly harder to manage the lifecycle of the various segments
+
+To address these problems, Panama provides a `SegmentAllocator` abstraction, a functional interface which provides many useful operation to allocate commonly used values. For instance, the above code can be rewritten as follows:
+
+```java
+MemorySegment arr = SegmentAllocator.ofDefault().allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+```
+
+The above code retrieves the *default allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 1, 2, 3, 4, 5}`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment.
+
+Memory associated with segments returned by the default allocator is released as soon as said segments become *unreachable*. To have better control over the lifetime of the segments returned by an allocator, clients can use the so called *scoped* allocator, which returns segments associated with a given scope:
+
+```java
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    MemorySegment arr = SegmentAllocator.scoped(scope).allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+} // 'arr' is released here
+```
+
+Scoped allocator make sure that all segments allocated with a scoped allocator are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
+
+Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
+
+```java
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+    for (int i = 0 ; i < 100 ; i++) {
+        allocator.allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+    }
+    ...
+} // all memory allocated is released here
+```
+
+The above code creates a confined scope; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing scope. The allocator will allocate slabs of memory, of a specific size, and respond to allocation request by returning different slices of the pre-allocated slab. If a slab does not have sufficient space to accommodate a new allocation request, a new one will be allocated. If the scope associated with the arena allocator is closed, all memory associated with the segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
+
+For these reasons, all the methods in the Foreign Linker API which *produce* memory segments (see `CLinker::toCString`), allow an optional allocator to be provided by user code — this is key in ensuring that an application using the Foreign Linker API achieves optimal allocation performances, especially in non-trivial use cases.
 
 ### Symbol lookups
 
@@ -73,8 +129,9 @@ At the core of Panama foreign function support we find the `CLinker` abstraction
 ```java
 interface CLinker {
     MethodHandle downcallHandle(Addressable func, MethodType type, FunctionDescriptor function);
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
-    ...
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);    
+    ... // some overloads omitted here
+
     static CLinker getInstance() { ... }
 }
 ```
@@ -91,20 +148,21 @@ Layouts defined in the `CLinker` class are not only handy, as they already model
 
 Another similarity between `downcallHandle` and `upcallStub` is that they both accept (either directly, or indirectly) a `MethodType` instance. The method type describes the Java signatures that clients will be using when interacting with said downcall handles, or upcall stubs. The C linker implementation adds constraints on which layouts can be used with which Java carrier — for instance by enforcing that the size of the Java carrier is equal to that of the corresponding layout, or by making sure that certain layouts are associated with specific carriers. The following table shows the Java carrier vs. layout mappings enforced by the Linux/macOS foreign linker implementation:
 
-| C layout      | Java carrier    |
-| ------------- | --------------- |
-| `C_BOOL`      | `byte`          |
-| `C_CHAR`      | `byte`          |
-| `C_SHORT`     | `short`         |
-| `C_INT`       | `int`           |
-| `C_LONG`      | `long`          |
-| `C_LONGLONG`  | `long`          |
-| `C_FLOAT`     | `float`         |
-| `C_DOUBLE`    | `double`        |
-| `C_POINTER`   | `MemoryAddress` |
-| `GroupLayout` | `MemorySegment` |
+| C layout      | Java carrier     |
+| ------------- | ---------------- |
+| `C_BOOL`      | `byte`           |
+| `C_CHAR`      | `byte`           |
+| `C_SHORT`     | `short`          |
+| `C_INT`       | `int`            |
+| `C_LONG`      | `long`           |
+| `C_LONGLONG`  | `long`           |
+| `C_FLOAT`     | `float`          |
+| `C_DOUBLE`    | `double`         |
+| `C_POINTER`   | `MemoryAddress`  |
+| `GroupLayout` | `MemorySegment`  |
+| `C_VALIST`    | `CLinker.VaList` |
 
-Aside from the mapping between primitive layout and primitive Java carriers (which might vary across platforms), it is important to note how all pointer layouts must correspond to a `MemoryAddress` carrier, whereas structs (whose layout is defined by a `GroupLayout`) must be associated with a `MemorySegment` carrier.
+Aside from the mapping between primitive layout and primitive Java carriers (which might vary across platforms), it is important to note how all pointer layouts must correspond to a `MemoryAddress` carrier, whereas structs (whose layout is defined by a `GroupLayout`) must be associated with a `MemorySegment` carrier; there is also a layout/carrier pair for native `va_list` (which are covered later in this document).
 
 ### Downcalls
 
@@ -137,16 +195,34 @@ Note that, since the function `strlen` is part of the standard C library, which 
 One we have obtained the downcall native method handle, we can just use it as any other method handle:
 
 ```java
-long len = strlen.invokeExact(CLinker.toCString("Hello").address()) // 5
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    long len = strlen.invokeExact(CLinker.toCString("Hello", scope).address()); // 5
+}
 ```
 
-Here we are using one of the helper methods in `CLinker` to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this has been possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java.
+Here we are using one of the helper methods in `CLinker` to convert a Java string into an off-heap memory segment which contains a `NULL` terminated C string. We then pass that segment to the method handle and retrieve our result in a Java `long`. Note how all this has been possible *without* any piece of intervening native code — all the interop code can be expressed in (low level) Java. Note also how we used an explicit resource scope to control the lifecycle of the allocated C string; while using the implicit *default scope* is an option, extra care must be taken when using segments featuring implicitly deallocation which are then converted into `MemoryAddress` instances: since the address is eventually converted (by the linker support) into a raw Java long, there is no guarantee that the memory segment would be kept *reachable* for the entire duration of the native call.
+
+The `CLinker` interfaces also supports linking of native function without an address known at link time; when that happens, an address must be provided when the method handle returned by the linker is invoked - this is very useful to support *virtual calls*. For instance, the above code can be rewritten as follows:
+
+```java
+MethodHandle strlen_virtual = CLinker.getInstance().downcallHandle( // address parameter missing!
+		MethodType.methodType(long.class, MemoryAddress.class),
+        FunctionDescriptor.of(C_LONG, C_POINTER)
+);
+
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    long len = strlen_virtual.invokeExact(
+        LibraryLookup.ofDefault().lookup("strlen").get() // address provided here!
+        CLinker.toCString("Hello", scope).address()
+    ); // 5
+}
+```
 
 Now that we have seen the basics of how foreign function calls are supported in Panama, let's add some additional considerations. First, it is important to note that, albeit the interop code is written in Java, the above code can *not* be considered 100% safe. There are many arbitrary decisions to be made when setting up downcall method handles such as the one above, some of which might be obvious to us (e.g. how many parameters does the function take), but which cannot ultimately be verified by the Panama runtime. After all, a symbol in a dynamic library is, mostly a numeric offset and, unless we are using a shared library with debugging information, no type information is attached to a given library symbol. This means that, in this case, the Panama runtime has to *trust* our description of the `strlen` function. For this reason, access to the foreign linker is a restricted operation, which can only be performed if the runtime flag `foreign.restricted=permit` is passed on the command line of the Java launcher <a href="#1"><sup>1</sup></a>.
 
 Finally let's talk about the life-cycle of some of the entities involved here; first, as a downcall native handle wraps a lookup symbol, the library from which the symbol has been loaded will stay loaded until there are reachable downcall handles referring to one of its symbols; in the above example, this consideration is less important, given the use of the default lookup object, which can be assumed to stay alive for the entire duration of the application.
 
-Certain functions might return pointers, or structs; it is important to realize that if a function returns a pointer (or a `MemoryAddress`), no life-cycle whatsoever is attached to that pointer. It is then up to the client to e.g. free the memory associated with that pointer, or do nothing (in case the library is responsible for the life-cycle of that pointer). If a library returns a struct by value, things are different, as a *fresh*, confined memory segment is allocated off-heap and returned to the callee. It is the responsibility of the callee to cleanup that struct's segment (using `MemorySegment::close`) <a href="#2"><sup>2</sup></a>.
+Certain functions might return pointers, or structs; it is important to realize that if a function returns a pointer (or a `MemoryAddress`), no life-cycle whatsoever is attached to that pointer. It is then up to the client to e.g. free the memory associated with that pointer, or do nothing (in case the library is responsible for the life-cycle of that pointer). If a library returns a struct by value, things are different, as a *fresh*, memory segment is allocated off-heap and returned to the callee. In such cases, the foreign linker API will request an additional prefix `SegmentAllocator` (see above) parameter which will be responsible for allocating the returned segment. The allocation will likely associate the segment with a *resource scope* that is known to the callee and which can then be used to release the memory associated with that segment. An additional overload of `downcallHandle` is also provided by `CLinker` where a client can specify which allocator should be used in such cases at *link-time*.
 
 Performance-wise, the reader might ask how efficient calling a foreign function using a native method handle is; the answer is *very*. The JVM comes with some special support for native method handles, so that, if a give method handle is invoked many times (e.g, inside an *hot* loop), the JIT compiler might decide to just generate a snippet of assembly code required to call the native function, and execute that directly. In most cases, invoking native function this way is as efficient as doing so through JNI <a href="#3a"><sup>3a</sup></a><a href="#3b"><sup>3b</sup></a>.
 
@@ -182,7 +258,9 @@ class Qsort {
 }
 ```
 
-Here we can see that the function is performing some *unsafe* dereference of the pointer contents, by using the *everything* segment. Now let's create a method handle pointing to the comparator function above:
+Here we can see that the function is performing some *unsafe* dereference of the pointer contents, by using the *everything* segment.
+
+ Now let's create a method handle pointing to the comparator function above:
 
 ```java
 MethodHandle comparHandle = MethodHandles.lookup()
@@ -199,77 +277,26 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
 );
 ```
 
-So, we finally have a memory segment — `comparFunc` — containing a stub that can be used to invoke our Java comparator function; this means we now have all we need to call the `qsort` downcall handle:
+When no resource scope is specified (as in the above case), the upcall stub segment will be associated with the *default scope* - a non-closeable scope which does not support deterministic deallocation. This means that the upcall stub will be uninstalled when the upcall segment becomes *unreachable*. In cases where this is not desirable, the API also support associating a custom `ResourceScope` instance to the returned upcall segment.
+
+So, we finally have all the ingredients to create an upcall segment, and pass it to the `qsort` downcall handle:
 
 ```java
-MemorySegment array = MemorySegment.allocateNative(4 * 10);
-array.copyFrom(MemorySegment.ofArray(new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 }));
-qsort.invokeExact(array.address(), 10L, 4L, comparFunc.address());
-int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
-```
-
-The above code creates an off-heap array, then copies the contents of a Java array on it (we shall see in the next [section](#native-scope) ways to do that more succinctly), and then pass the array to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side-effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
-
-As before, we conclude with a quick note on life-cycle. First, the life-cycle of the upcall stub is tied to that of the segment returned by the foreign linker. When the segment is closed, the upcall is uninstalled from the VM and will no longer be a valid function pointer. Second, the life-cycle of structs (if any) passed by value to the Java upcall function is independent from that of the upcall <a href="#4"><sup>4</sup></a>, so again the user will have to pay attention not to leak memory and to call `MemorySegment::close` on any segments obtained through an upcall.
-
-### Native scope
-
-Idiomatic C code implicitly relies on stack allocation to allow for concise variable declarations; consider this example:
-
-```c
-void foo(int i, int *size);
-
-int size = 5;
-foo(42, &size);
-```
-
-Here the function `foo` takes an output parameter, a pointer to an `int` variable. Unfortunately (and we have seen part of that pain in the `qsort` example above), implementing this idiom in Panama is not straightforward:
-
-```java
-MethodHandle foo = ...
-MemorySegment size = MemorySegment.allocateNative(C_INT);
-MemoryAccess.setInt(size, 5);
-foo.invokeExact(42, size);
-```
-
-There are a number of issues with the above code snippet:
-
-* compared to the C code, it is very verbose
-* allocation is very slow compared to C; allocating the `size` variable now takes a full `malloc`, while in C the variable was simply stack-allocated
-* we end up with a standalone segment with its own temporal bounds, which will have to be *closed* later, to avoid leaks
-
-To address these problems, Panama provides a `NativeScope` abstraction, which can be used to group allocation so as to achieve superior allocation performance, but also so that groups of logically-related segments can share the same temporal bounds, and can therefore be closed at once (e.g. by using a single *try-with-resources* statement). With the help of native scopes, the above code can be rewritten as follows:
-
-```java
-try (NativeScope scope = NativeScope.unboundedScope()) {
-	MemorySegment size = scope.allocate(C_INT, 5);
-	foo.invokeExact(42, size);
-}
-```
-
-It's easy to see how this code improves over the former in many ways; first, native scopes have primitives to allocate *and* initialize the contents of a segment; secondly, native scope use more efficient allocation underneath, so that not every allocation request is turned into a `malloc` — in fact, if the size of memory to be used is known before hand, clients can also use the bounded variant of native scope, using the `NativeScope::boundedScope(long size)` factory <a href="#5"><sup>5</sup></a>. Third, a native scope can be used as a single temporal bound for all the segments allocated within it: that is, if the code needs to instantiate other variables, it can keep doing so using the same scope — when the *try-with-resource* statement completes, all resources associated with the scope will be freed.
-
-There are at least two cases where allocation of native resources occurs *outside* a native scope:
-
-* structs segments returned by native calls (or passed to upcalls Java methods)
-* upcall stubs segments returned by the foreign linker
-
-In these cases, the API gives us a segment which feature *its own* temporal bounds — this is handy, as we can use the segment to control the lifecycle of the resource allocated by the foreign linker support; but it is also a bit unfortunate: if the surrounding code happens to already have a native scope, these new segments won't be able to interoperate with it, and a separate *try-with-resource* segment should be used.
-
-To alleviate this problem, and allow *all* segments to be managed using the *same* native scope, the native scope API not only supports the ability to allocate *new* segments, but it also allows to take ownership of *existing* ones. To see an example of this, let's go back to our `qsort` example, and see how we can make it better by using native scopes:
-
-```java
-try (NativeScope scope = NativeScope.unboundedScope()) {
-    comparFunc = comparFunc.handoff(scope);
-    MemorySegment array = scope.allocateArray(C_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
-    qsort.invokeExact(array, 10L, 4L, comparFunc);
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    MemorySegment comparFunc = CLinker.getInstance().upcallStub(
+        comparHandle,
+    	FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER),
+        scope
+	);
+    MemorySegment array = SegmentAllocator.scoped(scope).allocateArray(new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 }));
+    qsort.invokeExact(array.address(), 10L, 4L, comparFunc.address());
     int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
 }
 ```
 
-Not only native scope helps in making the allocation of the native array simpler (we no longer need to create an heap segment, and dump its contents onto the off-heap array); but we can also use the native scope as an *handoff target* for existing upcall stub segments. When we do that, we obtain a *new* segment, whose temporal bounds are the same as that of the native scope; the old segment will be killed and will no longer be usable. As with all segments returned by native scope, the new segment we get back will be non-closeable — the only way to close it is to close the native scope it belongs to.
+The above code creates  a memory segment — `comparFunc` — containing a stub that can be used to invoke our Java comparator function. The memory segment is associated with the provided resource scope instance; this means that the stub will be uninstalled when the resource scope is closed. It is also possible (not shown here) to create upcall stubs associated with the *default scope*, in which case the stub will be uninstalled when the upcall segment becomes *unreachable*.
 
-In short, native scopes are a good way to manage the lifecycle of multiple, logically-related segments, and, despite their simplicity, they provide a fairly good usability and performance boost.
+The snippet then creates an off-heap array from a Java array (using a `SegmentAllocator`), which is then passed to the `qsort` handle, along with the comparator function we obtained from the foreign linker.  As a side-effect, after the call, the contents of the off-heap array will be sorted (as instructed by our comparator function, written in Java). We can than extract a new Java array from the segment, which contains the sorted elements. This is a more advanced example, but one that shows how powerful the native interop support provided by the foreign linker abstraction is, allowing full bidirectional interop support between Java and native.
 
 ### Varargs
 
@@ -330,16 +357,17 @@ Here, the notable thing is that `CLinker` comes equipped with the special `C_VA_
 To call the `vprintf` handle we need to create an instance of `VaList` which contains the arguments we want to pass to the `vprintf` function — we can do so, as follows:
 
 ```java
-vprintf.invoke(
-		CLinker.toCString("%d plus %d equals %d").address(),
-        VaList.make(builder ->
-                   		builder.vargFromInt(C_INT, 2)
-                               .vargFromInt(C_INT, 2)
-                               .vargFromInt(C_INT, 4))
+try (ResourceScope scope = ResourceScope.ofConfined()) {
+    vprintf.invoke(
+            CLinker.toCString("%d plus %d equals %d", scope).address(),
+            VaList.make(builder ->
+                            builder.vargFromInt(C_INT, 2)
+                                   .vargFromInt(C_INT, 2)
+                                   .vargFromInt(C_INT, 4), scope)
 ); //prints "2 plus 2 equals 4"
 ```
 
-While the callee has to do more work to call the `vprintf` handle, note that that now we're back in a place where the downcall handle  `vprintf` can be shared across multiple callees. A `VaList` object created this way has its own lifetime (`VaList` also supports a `close` operation), so it is up to the callee to make sure that the `VaList` instance is closed (or attached to some existing native scope) so as to avoid leaks.
+While the callee has to do more work to call the `vprintf` handle, note that that now we're back in a place where the downcall handle  `vprintf` can be shared across multiple callees. Note that both the format string and the `VaList` are associated with the given resource scope — this means that both will remain valid throughout the native function call. As for other APIs, it is also possible (not shown here) to create a `VaList` associated with the *default scope* - meaning that the resources allocated by the `VaList` will remain available as long as the `VaList` remains *reachable*.
 
 Another advantage of using `VaList` is that this approach also scales to upcall stubs — it is therefore possible for clients to create upcalls stubs which take a `VaList` and then, from the Java upcall, read the arguments packed inside the `VaList` one by one using the methods provided by the `VaList` API (e.g. `VaList::vargAsInt(MemoryLayout)`), which mimic the behavior of the C `va_arg` macro.
 
@@ -380,8 +408,24 @@ public class Examples {
                 FunctionDescriptor.of(C_LONG, C_POINTER)
         );
 
-        try (MemorySegment hello = CLinker.toCString("Hello")) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment hello = CLinker.toCString("Hello", scope);
             long len = (long) strlen.invokeExact(hello.address()); // 5
+            System.out.println(len);
+        }
+    }
+
+    public static void strlen_virtual() throws Throwable {
+        MethodHandle strlen_virtual = CLinker.getInstance().downcallHandle(
+                MethodType.methodType(long.class, MemoryAddress.class),
+                FunctionDescriptor.of(C_LONG, C_POINTER)
+        );
+
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment hello = CLinker.toCString("Hello", scope);
+            long len = (long) strlen_virtual.invokeExact(
+                LibraryLookup.ofDefault().lookup("strlen").get(),                
+                hello.address()); // 5
             System.out.println(len);
         }
     }
@@ -405,14 +449,13 @@ public class Examples {
                 .findStatic(Qsort.class, "qsortCompare",
                         MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class));
 
-        MemorySegment comparFunc = CLinker.getInstance().upcallStub(
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+			MemorySegment comparFunc = CLinker.getInstance().upcallStub(
                 comparHandle,
-                FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER)
-        );
-
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            comparFunc = comparFunc.handoff(scope);
-            MemorySegment array = scope.allocateArray(C_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
+                FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER), scope);
+            
+            MemorySegment array = SegmentAllocator.scoped(scope)
+                                                  .allocateArray(C_INT, new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 });
             qsort.invokeExact(array.address(), 10L, 4L, comparFunc.address());
             int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
             System.out.println(Arrays.toString(sorted));
@@ -425,7 +468,8 @@ public class Examples {
                 MethodType.methodType(int.class, MemoryAddress.class, int.class, int.class, int.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_INT)
         );
-        try (MemorySegment s = CLinker.toCString("%d plus %d equals %d\n")) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment s = CLinker.toCString("%d plus %d equals %d\n", scope);
             printf.invoke(s.address(), 2, 2, 4);
         }
     }
@@ -437,7 +481,7 @@ public class Examples {
                 MethodType.methodType(int.class, MemoryAddress.class, CLinker.VaList.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
 
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment s = CLinker.toCString("%d plus %d equals %d\n", scope);
             CLinker.VaList vlist = CLinker.VaList.make(builder ->
                      builder.vargFromInt(C_INT, 2)
@@ -451,16 +495,8 @@ public class Examples {
 
 
 
-
-
-
-
 * <a id="1"/>(<sup>1</sup>):<small> In reality this is not entirely new; even in JNI, when you call a `native` method the VM trusts that the corresponding implementing function in C will feature compatible parameter types and return values; if not a crash might occur.</small>
-* <a id="2"/>(<sup>2</sup>):<small> In the fututre we might consider knobs to allow structs returned by value to be allocated on-heap rather than off-heap. If these structs are always passed back and forth in an opaque manner, there could be a significant performance advantage in avoiding an off-heap allocation.</small>
-* <a id="3a"/>(<sup>3a</sup>):<small> At the time of writing, support for native method intrinsics has been disabled by default due to some spurious VM crash being detected when running `jextract` with the intrinsics support enabled. While we work to rectify this situation, the intrinsics support can still be enabled using the ` -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true` flag.</small>
-* <a id="3b"/>(<sup>3b</sup>):<small> As an advanced option, Panama allows the user to opt-in to remove Java to native thread transitions; while, in the general case it is unsafe doing so (removing thread transitions could have a negative impact on GC for long running native functions, and could crash the VM if the downcall needs to pop back out in Java, e.g. via an upcall), greater efficiency can be achieved; performance sensitive users should consider this option at least for the functions that are called more frquently, assuming that these functions are *leaf* functions (e.g. do not go back to Java via an upcall) and are relatively short-lived.</small>
-* <a id="4"/>(<sup>4</sup>):<small> This might change in the future, as we might want to tie the lifecycle of structs created for an upcall to the lifecycle of the upcall itself so that e.g. any segment that are created ahead of calling a Java upcall, are released immediately after the upcall returns</small>
-* <a id="5"/>(<sup>5</sup>):<small> We are currently investigating alternate allocation strategies to make allocation inside native scopes even faster</small>
-* <a id="6"/>(<sup>6</sup>):<small> On Windows, layouts for variadic arguments have to be adjusted using the `CLinker.Win64.asVarArg(ValueLayout)`; this is necessay because the Windows ABI passes variadic arguments using different rules than the ones used for ordinary arguments.</small>
+* <a id="2"/>(<sup>2</sup>):<small> As an advanced option, Panama allows the user to opt-in to remove Java to native thread transitions; while, in the general case it is unsafe doing so (removing thread transitions could have a negative impact on GC for long running native functions, and could crash the VM if the downcall needs to pop back out in Java, e.g. via an upcall), greater efficiency can be achieved; performance sensitive users should consider this option at least for the functions that are called more frequently, assuming that these functions are *leaf* functions (e.g. do not go back to Java via an upcall) and are relatively short-lived.</small>
+* <a id="3"/>(<sup>3</sup>):<small> On Windows, layouts for variadic arguments have to be adjusted using the `CLinker.Win64.asVarArg(ValueLayout)`; this is necessary because the Windows ABI passes variadic arguments using different rules than the ones used for ordinary arguments.</small>
 
 
