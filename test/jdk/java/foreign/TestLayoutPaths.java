@@ -31,11 +31,15 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 
+import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -398,7 +402,7 @@ public class TestLayoutPaths {
         assertTrue(seq2.elementLayout() == MemoryLayouts.JAVA_DOUBLE);
     }
 
-    @Test(dataProvider =  "offsetHandleCases")
+    @Test(dataProvider = "testLayouts")
     public void testOffsetHandle(MemoryLayout layout, PathElement[] pathElements, long[] indexes,
                                  long expectedBitOffset) throws Throwable {
         MethodHandle bitOffsetHandle = layout.bitOffsetHandle(pathElements);
@@ -414,7 +418,7 @@ public class TestLayoutPaths {
     }
 
     @DataProvider
-    public static Object[][] offsetHandleCases() {
+    public static Object[][] testLayouts() {
         List<Object[]> testCases = new ArrayList<>();
 
         testCases.add(new Object[] {
@@ -489,5 +493,73 @@ public class TestLayoutPaths {
         return testCases.toArray(Object[][]::new);
     }
 
+    @Test(dataProvider = "testLayouts")
+    public void testSliceHandle(MemoryLayout layout, PathElement[] pathElements, long[] indexes,
+                                long expectedBitOffset) throws Throwable {
+        if (expectedBitOffset % 8 != 0)
+            throw new SkipException("Offset not a multiple of 8");
+
+        MemoryLayout selected = layout.select(pathElements);
+        MethodHandle sliceHandle = layout.sliceHandle(pathElements);
+        sliceHandle = sliceHandle.asSpreader(long[].class, indexes.length);
+
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+            MemorySegment slice = (MemorySegment) sliceHandle.invokeExact(segment, indexes);
+            assertEquals(slice.address().segmentOffset(segment), expectedBitOffset / 8);
+            assertEquals(slice.byteSize(), selected.byteSize());
+        }
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testSliceHandleUOEInvalidSize() {
+        MemoryLayout layout = MemoryLayout.ofStruct(
+            MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("x"),
+            MemoryLayout.ofValueBits(31, ByteOrder.nativeOrder()).withName("y") // size not a multiple of 8
+        );
+
+        layout.sliceHandle(groupElement("y")); // should throw
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testSliceHandleUOEInvalidOffsetEager() throws Throwable {
+        MemoryLayout layout = MemoryLayout.ofStruct(
+            MemoryLayout.ofPaddingBits(5),
+            MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("y") // offset not a multiple of 8
+        );
+
+        layout.sliceHandle(groupElement("y")); // should throw
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testSliceHandleUOEInvalidOffsetLate() throws Throwable {
+        MemoryLayout layout = MemoryLayout.ofSequence(3,
+            MemoryLayout.ofStruct(
+                MemoryLayout.ofPaddingBits(4),
+                MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("y") // offset not a multiple of 8
+            )
+        );
+
+        MethodHandle sliceHandle;
+        try {
+            sliceHandle = layout.sliceHandle(sequenceElement(), groupElement("y")); // should work
+        } catch (UnsupportedOperationException uoe) {
+            fail("Unexpected exception", uoe);
+            return;
+        }
+
+        try (ResourceScope scope = ResourceScope.ofConfined()) {
+            MemorySegment segment = MemorySegment.allocateNative(layout, scope);
+
+            try {
+                sliceHandle.invokeExact(segment, 1); // should work
+            } catch (UnsupportedOperationException uoe) {
+                fail("Unexpected exception", uoe);
+                return;
+            }
+
+            sliceHandle.invokeExact(segment, 0); // should throw
+        }
+    }
 }
 
