@@ -62,6 +62,7 @@ public class LayoutPath {
 
     private static final MethodHandle ADD_STRIDE;
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
+    private static final MethodHandle MH_SLICE;
 
     private static final int UNSPECIFIED_ELEM_INDEX = -1;
 
@@ -72,6 +73,8 @@ public class LayoutPath {
                     MethodType.methodType(long.class, MemorySegment.class, long.class, long.class, long.class));
             MH_ADD_SCALED_OFFSET = lookup.findStatic(LayoutPath.class, "addScaledOffset",
                     MethodType.methodType(long.class, long.class, long.class, long.class));
+            MH_SLICE = lookup.findVirtual(MemorySegment.class, "asSlice",
+                    MethodType.methodType(MemorySegment.class, long.class, long.class));
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
@@ -198,6 +201,22 @@ public class LayoutPath {
         }
         mh = MethodHandles.insertArguments(mh, 0, offset);
         return mh;
+    }
+
+    public MethodHandle sliceHandle() {
+        if (strides.length == 0) {
+            // trigger checks eagerly
+            Utils.bitsToBytesOrThrow(offset, Utils.bitsToBytesThrowOffset);
+        }
+
+        MethodHandle offsetHandle = offsetHandle(); // bit offset
+        offsetHandle = MethodHandles.filterReturnValue(offsetHandle, Utils.MH_bitsToBytesOrThrowForOffset); // byte offset
+
+        MethodHandle sliceHandle = MH_SLICE; // (MS, long, long) -> MS
+        sliceHandle = MethodHandles.insertArguments(sliceHandle, 2, layout.byteSize()); // (MS, long) -> MS
+        sliceHandle = MethodHandles.collectArguments(sliceHandle, 1, offsetHandle); // (MS, ...) -> MS
+
+        return sliceHandle;
     }
 
     public MemoryLayout layout() {
