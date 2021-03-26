@@ -47,8 +47,6 @@ public class CallGeneratorHelper extends NativeTestHelper {
     static final int MAX_PARAMS = 3;
     static final int CHUNK_SIZE = 600;
 
-    static int functions = 0;
-
     public static void assertStructEquals(MemorySegment actual, MemorySegment expected, MemoryLayout layout) {
         assertEquals(actual.byteSize(), expected.byteSize());
         GroupLayout g = (GroupLayout) layout;
@@ -182,6 +180,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
 
     @DataProvider(name = "functions")
     public static Object[][] functions() {
+        int functions = 0;
         List<Object[]> downcalls = new ArrayList<>();
         for (Ret r : Ret.values()) {
             for (int i = 0; i <= MAX_PARAMS; i++) {
@@ -193,16 +192,18 @@ public class CallGeneratorHelper extends NativeTestHelper {
                         for (int j = 1; j <= MAX_FIELDS; j++) {
                             for (List<StructFieldType> fields : StructFieldType.perms(j)) {
                                 String structCode = sigCode(fields);
+                                int count = functions;
                                 int fCode = functions++ / CHUNK_SIZE;
                                 String fName = String.format("f%d_%s_%s_%s", fCode, retCode, sigCode, structCode);
-                                downcalls.add(new Object[] { fName, r, ptypes, fields });
+                                downcalls.add(new Object[] { count, fName, r, ptypes, fields });
                             }
                         }
                     } else {
                         String structCode = sigCode(List.<StructFieldType>of());
+                        int count = functions;
                         int fCode = functions++ / CHUNK_SIZE;
                         String fName = String.format("f%d_%s_%s_%s", fCode, retCode, sigCode, structCode);
-                        downcalls.add(new Object[] { fName, r, ptypes, List.of() });
+                        downcalls.add(new Object[] { count, fName, r, ptypes, List.of() });
                     }
                 }
             }

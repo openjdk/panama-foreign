@@ -209,7 +209,7 @@ public interface MemoryAddress extends Addressable {
     /**
      * The off-heap memory address instance modelling the {@code NULL} address.
      */
-    MemoryAddress NULL = new MemoryAddressImpl(null,  0L);
+    MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
 
     /**
      * Obtain an off-heap memory address instance from given long address.
