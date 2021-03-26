@@ -35,15 +35,10 @@ import java.util.Objects;
  * This class provides an immutable implementation for the {@code MemoryAddress} interface. This class contains information
  * about the segment this address is associated with, as well as an offset into such segment.
  */
-public final class MemoryAddressImpl implements MemoryAddress {
+public abstract class MemoryAddressImpl implements MemoryAddress {
 
-    private final Object base;
-    private final long offset;
-
-    public MemoryAddressImpl(Object base, long offset) {
-        this.base = base;
-        this.offset = offset;
-    }
+    abstract Object base();
+    abstract long offset();
 
     // MemoryAddress methods
 
@@ -51,38 +46,33 @@ public final class MemoryAddressImpl implements MemoryAddress {
     public long segmentOffset(MemorySegment segment) {
         Objects.requireNonNull(segment);
         AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl)segment;
-        if (segmentImpl.base() != base) {
+        if (segmentImpl.base() != base()) {
             throw new IllegalArgumentException("Invalid segment: " + segment);
         }
-        return offset - segmentImpl.min();
+        return offset() - segmentImpl.min();
     }
 
     @Override
     public long toRawLongValue() {
-        if (base != null) {
+        if (base() != null) {
             throw new UnsupportedOperationException("Not a native address");
         }
-        return offset;
-    }
-
-    @Override
-    public MemoryAddress addOffset(long bytes) {
-        return new MemoryAddressImpl(base, offset + bytes);
+        return offset();
     }
 
     // Object methods
 
     @Override
     public int hashCode() {
-        return Objects.hash(base, offset);
+        return Objects.hash(base(), offset());
     }
 
     @Override
     public boolean equals(Object that) {
         if (that instanceof MemoryAddressImpl) {
             MemoryAddressImpl addr = (MemoryAddressImpl)that;
-            return Objects.equals(base, addr.base) &&
-                    offset == addr.offset;
+            return Objects.equals(base(), addr.base()) &&
+                    offset() == addr.offset();
         } else {
             return false;
         }
@@ -90,7 +80,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public String toString() {
-        return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
+        return "MemoryAddress{ base: " + base() + " offset=0x" + Long.toHexString(offset()) + " }";
     }
 
     @Override
@@ -115,5 +105,60 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemoryScope.GLOBAL);
+    }
+
+    /**
+     * A memory address that wraps a raw address.
+     */
+    public static final class UncheckedAddress extends MemoryAddressImpl {
+        final long addr;
+
+        public UncheckedAddress(long addr) {
+            this.addr = addr;
+        }
+
+        @Override
+        public MemoryAddress addOffset(long offset) {
+            return new UncheckedAddress(addr + offset);
+        }
+
+        @Override
+        Object base() {
+            return null;
+        }
+
+        @Override
+        long offset() {
+            return addr;
+        }
+    }
+
+    /**
+     * A memory address expressed as an offset into a segment. Crucially, this keeps the segment reachable,
+     * which is useful when segments are passed to native functions "by reference".
+     */
+    public static final class SegmentAddress extends MemoryAddressImpl {
+        final AbstractMemorySegmentImpl segment;
+        final long offset;
+
+        public SegmentAddress(AbstractMemorySegmentImpl segment, long offset) {
+            this.segment = segment;
+            this.offset = offset;
+        }
+
+        @Override
+        public MemoryAddress addOffset(long offset) {
+            return new SegmentAddress(segment, this.offset + offset);
+        }
+
+        @Override
+        Object base() {
+            return segment.base();
+        }
+
+        @Override
+        long offset() {
+            return segment.min() + offset;
+        }
     }
 }

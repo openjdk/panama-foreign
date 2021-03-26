@@ -145,9 +145,10 @@ try (ResourceScope scope = ResourceScope.ofShared()) {
 public interface MemorySegment extends Addressable {
 
     /**
-     * The base memory address associated with this memory segment. The returned address is
-     * a <em>checked</em> memory address and can therefore be used in dereference operations
-     * (see {@link MemoryAddress}).
+     * The base memory address associated with this memory segment.
+     * The returned memory address contains a strong reference to this segment; this means that if this segment
+     * is associated with a resource scope featuring <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>,
+     * the scope won't be closed as long as the returned address is <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
      * @return The base memory address.
      * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
      * thread owning this segment

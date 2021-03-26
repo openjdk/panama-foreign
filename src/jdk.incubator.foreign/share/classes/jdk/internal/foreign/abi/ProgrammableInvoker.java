@@ -336,9 +336,7 @@ public class ProgrammableInvoker {
             // make sure arguments are reachable during the call
             // technically we only need to do all Addressable parameters here
             Reference.reachabilityFence(address);
-            for (int i = 0; i < args.length; i++) {
-                Reference.reachabilityFence(args[i]);
-            }
+            Reference.reachabilityFence(args);
 
             // return value processing
             if (o == null) {

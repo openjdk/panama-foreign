@@ -56,7 +56,7 @@ import java.util.Spliterator;
  *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
  * </ul>
  *
- * <h2>Implicit closure</h2>
+ * <h2><a id = "implicit-closure">Implicit closure</a></h2>
  *
  * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
@@ -253,7 +253,8 @@ public interface ResourceScope extends AutoCloseable {
     }
 
     /**
-     * Create a new <em>default scope</em>, a shared, non-closeable scope which only features implicit closure.
+     * Create a new <em>default scope</em>, a shared, non-closeable scope which only features
+     * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>.
      * This resource scope is used as a valid default where no resource scope is provided by the user. For instance, this code:
      * <blockquote><pre>{@code
     MemorySegment.allocateNative(10);
