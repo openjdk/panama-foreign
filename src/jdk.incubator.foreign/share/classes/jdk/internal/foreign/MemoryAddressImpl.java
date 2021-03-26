@@ -37,52 +37,62 @@ import java.util.Objects;
  */
 public final class MemoryAddressImpl implements MemoryAddress {
 
-    private final Object base;
+    private final AbstractMemorySegmentImpl segment;
     private final long offset;
 
-    public MemoryAddressImpl(Object base, long offset) {
-        this.base = base;
+    public MemoryAddressImpl(AbstractMemorySegmentImpl segment, long offset) {
+        this.segment = segment;
         this.offset = offset;
     }
 
+    Object base() {
+        return segment != null ? segment.base() : null;
+    }
+
+    long offset() {
+        return segment != null ?
+                segment.min() + offset : offset;
+    }
+
     // MemoryAddress methods
+
+
+    @Override
+    public MemoryAddress addOffset(long offset) {
+        return new MemoryAddressImpl(segment, this.offset + offset);
+    }
 
     @Override
     public long segmentOffset(MemorySegment segment) {
         Objects.requireNonNull(segment);
         AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl)segment;
-        if (segmentImpl.base() != base) {
+        if (segmentImpl.base() != base()) {
             throw new IllegalArgumentException("Invalid segment: " + segment);
         }
-        return offset - segmentImpl.min();
+        return offset() - segmentImpl.min();
     }
 
     @Override
     public long toRawLongValue() {
-        if (base != null) {
+        if (base() != null) {
             throw new UnsupportedOperationException("Not a native address");
         }
-        return offset;
-    }
-
-    @Override
-    public MemoryAddress addOffset(long bytes) {
-        return new MemoryAddressImpl(base, offset + bytes);
+        return offset();
     }
 
     // Object methods
 
     @Override
     public int hashCode() {
-        return Objects.hash(base, offset);
+        return Objects.hash(base(), offset());
     }
 
     @Override
     public boolean equals(Object that) {
         if (that instanceof MemoryAddressImpl) {
             MemoryAddressImpl addr = (MemoryAddressImpl)that;
-            return Objects.equals(base, addr.base) &&
-                    offset == addr.offset;
+            return Objects.equals(base(), addr.base()) &&
+                    offset() == addr.offset();
         } else {
             return false;
         }
@@ -90,7 +100,7 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public String toString() {
-        return "MemoryAddress{ base: " + base + " offset=0x" + Long.toHexString(offset) + " }";
+        return "MemoryAddress{ base: " + base() + " offset=0x" + Long.toHexString(offset()) + " }";
     }
 
     @Override

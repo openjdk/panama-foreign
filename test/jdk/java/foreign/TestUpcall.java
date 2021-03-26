@@ -40,6 +40,8 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -83,20 +85,39 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
-    public void testUpcalls(String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+    public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         LibraryLookup.Symbol addr = lib.lookup(fName).get();
         MethodType mtype = methodType(ret, paramTypes, fields);
         try (NativeScope scope = new NativeScope()) {
             MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
-            Object[] args = makeArgs(scope, ret, paramTypes, fields, returnChecks, argChecks);
+            Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
             argChecks.forEach(c -> c.accept(args));
             if (ret == Ret.NON_VOID) {
                 returnChecks.forEach(c -> c.accept(res));
             }
+        }
+    }
+
+    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
+    public void testUpcallsNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        List<Consumer<Object>> returnChecks = new ArrayList<>();
+        List<Consumer<Object[]>> argChecks = new ArrayList<>();
+        LibraryLookup.Symbol addr = lib.lookup(fName).get();
+        MethodType mtype = methodType(ret, paramTypes, fields);
+        MethodHandle mh = abi.downcallHandle(addr, SegmentAllocator.ofDefault(), mtype, function(ret, paramTypes, fields));
+        Object[] args = makeArgs(ResourceScope.ofDefault(), ret, paramTypes, fields, returnChecks, argChecks);
+        Object[] callArgs = args;
+        if (count % 100 == 0) {
+            System.gc();
+        }
+        Object res = mh.invokeWithArguments(callArgs);
+        argChecks.forEach(c -> c.accept(args));
+        if (ret == Ret.NON_VOID) {
+            returnChecks.forEach(c -> c.accept(res));
         }
     }
 
@@ -119,7 +140,7 @@ public class TestUpcall extends CallGeneratorHelper {
                 FunctionDescriptor.of(layouts[0], layouts);
     }
 
-    static Object[] makeArgs(NativeScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
+    static Object[] makeArgs(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) throws ReflectiveOperationException {
         Object[] args = new Object[params.size() + 1];
         for (int i = 0 ; i < params.size() ; i++) {
             args[i] = makeArg(params.get(i).layout(fields), checks, i == 0);
@@ -129,7 +150,7 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @SuppressWarnings("unchecked")
-    static MemoryAddress makeCallback(NativeScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static MemoryAddress makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
             return dummyStub.address();
         }
@@ -168,7 +189,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemorySegment stub = abi.upcallStub(mh, func, scope.scope());
+        MemorySegment stub = abi.upcallStub(mh, func, scope);
         return stub.address();
     }
 

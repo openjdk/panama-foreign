@@ -49,6 +49,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +78,7 @@ public class SharedUtils {
     private static final MethodHandle MH_MAKE_CONTEXT_NO_ALLOCATOR;
     private static final MethodHandle MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR;
     private static final MethodHandle MH_CLOSE_CONTEXT;
+    private static final MethodHandle MH_REACHBILITY_FENCE;
 
     static {
         try {
@@ -93,6 +95,8 @@ public class SharedUtils {
                     methodType(Binding.Context.class, long.class));
             MH_CLOSE_CONTEXT = lookup.findVirtual(Binding.Context.class, "close",
                     methodType(void.class));
+            MH_REACHBILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
+                    methodType(void.class, Object.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -353,6 +357,10 @@ public class SharedUtils {
         return permuteArguments(mh, swappedType, perms);
     }
 
+    private static MethodHandle reachabilityFenceHandle(Class<?> type) {
+        return MH_REACHBILITY_FENCE.asType(MethodType.methodType(void.class, type));
+    }
+
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
@@ -370,11 +378,25 @@ public class SharedUtils {
 
         // downcalls get the leading Addressable/SegmentAllocator param as well
         if (!upcall) {
-            closer = dropArguments(closer, insertPos, Addressable.class, SegmentAllocator.class); // (Throwable, V?, Addressable, SegmentAllocator) -> V/void
-            insertPos+=2;
+            closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(Addressable.class));
+            closer = dropArguments(closer, insertPos++, SegmentAllocator.class); // (Throwable, V?, Addressable, SegmentAllocator) -> V/void
         }
 
-        closer = collectArguments(closer, insertPos, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
+        closer = collectArguments(closer, insertPos++, MH_CLOSE_CONTEXT); // (Throwable, V?, Addressable?, BindingContext) -> V/void
+
+        if (!upcall) {
+            // now for each Addressable parameter, add a reachability fence
+            MethodType specType = specializedHandle.type();
+            // skip 3 for address, segment allocator, and binding context
+            for (int i = 3; i < specType.parameterCount(); i++) {
+                Class<?> param = specType.parameterType(i);
+                if (Addressable.class.isAssignableFrom(param)) {
+                    closer = collectArguments(closer, insertPos++, reachabilityFenceHandle(param));
+                } else {
+                    closer = dropArguments(closer, insertPos++, param);
+                }
+            }
+        }
 
         MethodHandle contextFactory;
 
