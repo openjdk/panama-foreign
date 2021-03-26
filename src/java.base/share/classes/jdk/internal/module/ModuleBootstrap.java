@@ -270,7 +270,7 @@ public final class ModuleBootstrap {
         BootLoader.loadModule(base);
         SharedSecrets.getJavaLangAccess()
                 .addEnableNativeAccess(Modules.defineModule(null, base.descriptor(), baseUri));
- 
+
         // Step 2a: Scan all modules when --validate-modules specified
 
         if (getAndRemoveProperty("jdk.module.validation") != null) {
