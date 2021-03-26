@@ -253,7 +253,7 @@ public interface ResourceScope extends AutoCloseable {
     }
 
     /**
-     * Create a new <em>default scope</em>, a shared, non-closeable scope which only features
+     * Create a new <em>default scope</em>. The default scope is a shared and non-closeable scope which only features
      * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>.
      * This resource scope is used as a valid default where no resource scope is provided by the user. For instance, this code:
      * <blockquote><pre>{@code

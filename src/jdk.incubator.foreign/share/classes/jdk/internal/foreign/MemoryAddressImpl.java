@@ -35,12 +35,32 @@ import java.util.Objects;
  * This class provides an immutable implementation for the {@code MemoryAddress} interface. This class contains information
  * about the segment this address is associated with, as well as an offset into such segment.
  */
-public abstract class MemoryAddressImpl implements MemoryAddress {
+public final class MemoryAddressImpl implements MemoryAddress {
 
-    abstract Object base();
-    abstract long offset();
+    private final AbstractMemorySegmentImpl segment;
+    private final long offset;
+
+    public MemoryAddressImpl(AbstractMemorySegmentImpl segment, long offset) {
+        this.segment = segment;
+        this.offset = offset;
+    }
+
+    Object base() {
+        return segment != null ? segment.base() : null;
+    }
+
+    long offset() {
+        return segment != null ?
+                segment.min() + offset : offset;
+    }
 
     // MemoryAddress methods
+
+
+    @Override
+    public MemoryAddress addOffset(long offset) {
+        return new MemoryAddressImpl(segment, this.offset + offset);
+    }
 
     @Override
     public long segmentOffset(MemorySegment segment) {
@@ -105,60 +125,5 @@ public abstract class MemoryAddressImpl implements MemoryAddress {
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemoryScope.GLOBAL);
-    }
-
-    /**
-     * A memory address that wraps a raw address.
-     */
-    public static final class UncheckedAddress extends MemoryAddressImpl {
-        final long addr;
-
-        public UncheckedAddress(long addr) {
-            this.addr = addr;
-        }
-
-        @Override
-        public MemoryAddress addOffset(long offset) {
-            return new UncheckedAddress(addr + offset);
-        }
-
-        @Override
-        Object base() {
-            return null;
-        }
-
-        @Override
-        long offset() {
-            return addr;
-        }
-    }
-
-    /**
-     * A memory address expressed as an offset into a segment. Crucially, this keeps the segment reachable,
-     * which is useful when segments are passed to native functions "by reference".
-     */
-    public static final class SegmentAddress extends MemoryAddressImpl {
-        final AbstractMemorySegmentImpl segment;
-        final long offset;
-
-        public SegmentAddress(AbstractMemorySegmentImpl segment, long offset) {
-            this.segment = segment;
-            this.offset = offset;
-        }
-
-        @Override
-        public MemoryAddress addOffset(long offset) {
-            return new SegmentAddress(segment, this.offset + offset);
-        }
-
-        @Override
-        Object base() {
-            return segment.base();
-        }
-
-        @Override
-        long offset() {
-            return segment.min() + offset;
-        }
     }
 }

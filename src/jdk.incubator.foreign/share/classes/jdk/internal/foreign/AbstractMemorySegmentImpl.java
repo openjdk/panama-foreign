@@ -224,7 +224,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     @ForceInline
     public final MemoryAddress address() {
         checkValidState();
-        return new MemoryAddressImpl.SegmentAddress(this, 0L);
+        return new MemoryAddressImpl(this, 0L);
     }
 
     @Override
