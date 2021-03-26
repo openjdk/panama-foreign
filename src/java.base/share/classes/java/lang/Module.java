@@ -112,8 +112,7 @@ public final class Module implements AnnotatedElement {
     private final ModuleDescriptor descriptor;
 
     // is this module a native module
-    private boolean enableNativeAccess = false;
-
+    private volatile boolean enableNativeAccess = false;
 
     /**
      * Creates a new named Module. The resulting Module will be defined to the
@@ -144,7 +143,6 @@ public final class Module implements AnnotatedElement {
         }
     }
 
-
     /**
      * Create the unnamed Module for the given ClassLoader.
      *
@@ -156,7 +154,6 @@ public final class Module implements AnnotatedElement {
         this.loader = loader;
         this.descriptor = null;
     }
-
 
     /**
      * Creates a named module but without defining the module to the VM.
@@ -254,7 +251,17 @@ public final class Module implements AnnotatedElement {
     }
 
     boolean isEnableNativeAccess() {
-        return enableNativeAccess;
+        if (enableNativeAccess) {
+            return true;
+        }
+
+        // lazy init for unnamed modules
+        if (!isNamed() && IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
+            enableNativeAccess = true;
+            return true;
+        }
+
+        return false;
     }
 
     // --
@@ -424,14 +431,7 @@ public final class Module implements AnnotatedElement {
 
     Module addEnableNativeAccess() {
         enableNativeAccess = true;
-        addEnableNativeAccess0(this);
         return this;
-    }
-
-    static void enableNativeAccessAllUnnamed() {
-        if (IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
-            enableNativeAccessAllUnnamed0();
-        }
     }
 
     /**
@@ -1744,9 +1744,4 @@ public final class Module implements AnnotatedElement {
 
     // JVM_AddModuleExportsToAllUnnamed
     private static native void addExportsToAllUnnamed0(Module from, String pn);
-
-    // JVM_AddPermitsNative
-    private static native void addEnableNativeAccess0(Module from);
-
-    private static native void enableNativeAccessAllUnnamed0();
 }

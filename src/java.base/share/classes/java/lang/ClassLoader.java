@@ -1994,7 +1994,6 @@ public abstract class ClassLoader {
             scl = builtinLoader;
         }
 
-        Module.enableNativeAccessAllUnnamed();
         return scl;
     }
 

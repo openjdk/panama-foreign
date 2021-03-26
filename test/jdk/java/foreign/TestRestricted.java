@@ -34,35 +34,38 @@ import java.lang.reflect.Method;
  * @run testng TestRestricted
  */
 public class TestRestricted {
-    @Test(expectedExceptions = IllegalAccessException.class)
+    @Test(expectedExceptions = IllegalCallerException.class)
     public void testReflection() throws Throwable {
         Method method = MemorySegment.class.getDeclaredMethod("ofNativeRestricted");
         method.invoke(null);
     }
 
-    @Test(expectedExceptions = IllegalAccessException.class)
-    public void testLookup() throws Throwable {
-        MethodHandles.lookup().findStatic(MemorySegment.class, "ofNativeRestricted", MethodType.methodType(MemorySegment.class));
+    @Test(expectedExceptions = IllegalCallerException.class)
+    public void testInvoke() throws Throwable {
+        var mh = MethodHandles.lookup().findStatic(MemorySegment.class,
+            "ofNativeRestricted", MethodType.methodType(MemorySegment.class));
+        var seg = (MemorySegment)mh.invokeExact();
     }
 
-    @Test(expectedExceptions = IllegalAccessException.class)
+    @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess() throws Throwable {
         MemorySegment.ofNativeRestricted();
     }
 
-    @Test(expectedExceptions = IllegalAccessException.class)
+    @Test(expectedExceptions = IllegalCallerException.class)
     public void testReflection2() throws Throwable {
         Method method = MemoryAddress.class.getDeclaredMethod("asSegmentRestricted", long.class);
         method.invoke(MemoryAddress.NULL, 4000L);
     }
 
-    @Test(expectedExceptions = IllegalAccessException.class)
-    public void testLookup2() throws Throwable {
-        MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegmentRestricted",
+    @Test(expectedExceptions = IllegalCallerException.class)
+    public void testInvoke2() throws Throwable {
+        var mh = MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegmentRestricted",
             MethodType.methodType(MemorySegment.class, long.class));
+        var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L);
     }
 
-    @Test(expectedExceptions = IllegalAccessException.class)
+    @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess2() throws Throwable {
         MemoryAddress.NULL.asSegmentRestricted(4000L);
     }

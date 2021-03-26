@@ -503,16 +503,16 @@ public final class Method extends Executable {
         return (flags & NATIVE_ACCESS) != 0;
     }
 
-    private final void checkNativeAccess(Class<?> caller) throws IllegalAccessException {
+    private final void checkNativeAccess(Class<?> caller) {
         Module module = caller.getModule();
         if (VM.isBooted()) {
             JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-            if (!jla.isNative(module)) {
+            if (!jla.isEnableNativeAccess(module)) {
                 String moduleName = module.isNamed() ?
                         module.getName() : "<UNNAMED>";
                 if (module.isNamed() ||
                         !IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
-                    throw new IllegalAccessException("Illegal native access from module: " + moduleName);
+                    throw new IllegalCallerException("Illegal native access from module: " + moduleName);
                 }
             }
         }

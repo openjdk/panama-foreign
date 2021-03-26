@@ -65,14 +65,3 @@ Java_java_lang_Module_addExportsToAllUnnamed0(JNIEnv *env, jclass cls,
 {
     JVM_AddModuleExportsToAllUnnamed(env, from, pkg);
 }
-
-JNIEXPORT void JNICALL
-Java_java_lang_Module_addEnableNativeAccess0(JNIEnv *env, jclass cls, jobject fromModule)
-{
-    JVM_AddModuleEnableNativeAccess(env, fromModule);
-}
-
-JNIEXPORT void JNICALL
-Java_java_lang_Module_enableNativeAccessAllUnnamed0(JNIEnv *env, jclass cls) {
-    JVM_EnableNativeAccessAllUnnamed(env);
-}

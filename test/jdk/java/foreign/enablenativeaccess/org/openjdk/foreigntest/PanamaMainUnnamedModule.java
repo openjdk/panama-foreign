@@ -44,8 +44,10 @@ public class PanamaMainUnnamedModule {
    }
 
    @Test
-   public void testLookup() throws Throwable {
-       MethodHandles.lookup().findStatic(CLinker.class, "getInstance", MethodType.methodType(CLinker.class));
+   public void testInvoke() throws Throwable {
+       var mh = MethodHandles.lookup().findStatic(CLinker.class, "getInstance",
+           MethodType.methodType(CLinker.class));
+       var linker = (CLinker)mh.invokeExact();
    }
 
    @Test

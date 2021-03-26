@@ -2317,7 +2317,7 @@ public final class System {
             }
 
             @Override
-            public boolean isNative(Module m) {
+            public boolean isEnableNativeAccess(Module m) {
                 return m.isEnableNativeAccess();
             }
         });

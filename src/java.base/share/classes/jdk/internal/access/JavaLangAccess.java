@@ -376,5 +376,5 @@ public interface JavaLangAccess {
 
     Module addEnableNativeAccess(Module m);
 
-    boolean isNative(Module m);
+    boolean isEnableNativeAccess(Module m);
 }
