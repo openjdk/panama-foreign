@@ -44,7 +44,6 @@ import static sun.security.action.GetPropertyAction.*;
  * This class contains misc helper functions to support creation of memory segments.
  */
 public final class Utils {
-
     // used when testing invoke exact behavior of memory access handles
     private static final boolean SHOULD_ADAPT_HANDLES
         = Boolean.parseBoolean(privilegedGetProperty("jdk.internal.foreign.SHOULD_ADAPT_HANDLES", "true"));
@@ -105,22 +104,6 @@ public final class Utils {
 
     private static MemorySegmentProxy filterSegment(MemorySegment segment) {
         return (AbstractMemorySegmentImpl)segment;
-    }
-
-    public static void checkRestrictedAccess(String method) {
-        switch (foreignRestrictedAccess) {
-            case "deny" -> throwIllegalAccessError(foreignRestrictedAccess, method);
-            case "warn" -> System.err.println("WARNING: Accessing restricted foreign method: " + method);
-            case "debug" -> {
-                StringBuilder sb = new StringBuilder("DEBUG: restricted foreign method: \" + method");
-                StackWalker.getInstance().forEach(f -> sb.append(System.lineSeparator())
-                        .append("\tat ")
-                        .append(f));
-                System.err.println(sb.toString());
-            }
-            case "permit" -> {}
-            default -> throwIllegalAccessError(foreignRestrictedAccess, method);
-        }
     }
 
     private static void throwIllegalAccessError(String value, String method) {

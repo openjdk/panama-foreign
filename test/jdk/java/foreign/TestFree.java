@@ -26,7 +26,7 @@
  * @test
  * @bug 8248421
  * @summary SystemCLinker should have a way to free memory allocated outside Java
- * @run testng/othervm -Dforeign.restricted=permit TestFree
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestFree
  */
 
 import jdk.incubator.foreign.MemoryAccess;

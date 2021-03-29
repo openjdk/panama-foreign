@@ -25,7 +25,7 @@
  * @test
  * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
  * @run testng/othervm
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   TestVirtualCalls
  */
 

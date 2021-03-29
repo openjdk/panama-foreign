@@ -33,7 +33,9 @@ import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
+import jdk.internal.vm.annotation.NativeAccess;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -778,8 +780,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @CallerSensitive
+    @NativeAccess
     static MemorySegment ofNativeRestricted() {
-        Utils.checkRestrictedAccess("MemorySegment.ofNativeRestricted");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return NativeMemorySegmentImpl.EVERYTHING;
     }
 }
