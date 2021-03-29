@@ -192,7 +192,7 @@ public class StdLibTest {
                 MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
 
-        final static LibraryLookup.Symbol printfAddr = lookup.lookup("printf").get();
+        final static MemoryAddress printfAddr = lookup.lookup("printf").get();
 
         final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
