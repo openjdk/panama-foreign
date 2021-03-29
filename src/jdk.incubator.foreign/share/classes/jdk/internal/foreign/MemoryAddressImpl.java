@@ -27,7 +27,6 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.vm.annotation.NativeAccess;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -98,7 +97,6 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     @CallerSensitive
-    @NativeAccess
     public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
