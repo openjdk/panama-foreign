@@ -127,7 +127,6 @@ public:
   void             set_read_walk_required(ClassLoaderData* m_loader_data);
 
   bool             is_open() const                     { return _is_open; }
-
   void             set_is_open(bool is_open);
 
   bool             is_named() const                    { return (name() != NULL); }

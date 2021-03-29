@@ -2917,7 +2917,7 @@ void java_lang_LiveStackFrameInfo::set_mode(oop element, int value) {
 }
 
 
-// java_lang_reflect_AccessibleObject
+// java_lang_AccessibleObject
 
 int java_lang_reflect_AccessibleObject::_override_offset;
 
@@ -2945,9 +2945,6 @@ void java_lang_reflect_AccessibleObject::set_override(oop reflect, jboolean valu
 
 // java_lang_reflect_Method
 
-const int java_lang_reflect_Method::NATIVE_ACCESS = 0x1;
-
-int java_lang_reflect_Method::_flags_offset;
 int java_lang_reflect_Method::_clazz_offset;
 int java_lang_reflect_Method::_name_offset;
 int java_lang_reflect_Method::_returnType_offset;
@@ -2961,7 +2958,6 @@ int java_lang_reflect_Method::_parameter_annotations_offset;
 int java_lang_reflect_Method::_annotation_default_offset;
 
 #define METHOD_FIELDS_DO(macro) \
-  macro(_flags_offset,          k, vmSymbols::flags_name(),          int_signature,         false); \
   macro(_clazz_offset,          k, vmSymbols::clazz_name(),          class_signature,       false); \
   macro(_name_offset,           k, vmSymbols::name_name(),           string_signature,      false); \
   macro(_returnType_offset,     k, vmSymbols::returnType_name(),     class_signature,       false); \
@@ -2992,14 +2988,6 @@ Handle java_lang_reflect_Method::create(TRAPS) {
   // to one of the methods
   assert(InstanceKlass::cast(klass)->is_initialized(), "must be initialized");
   return InstanceKlass::cast(klass)->allocate_instance_handle(THREAD);
-}
-
-int java_lang_reflect_Method::flags(oop reflect) {
-  return reflect->int_field(_flags_offset);
-}
-
-void java_lang_reflect_Method::set_flags(oop reflect, int value) {
-  reflect->int_field_put(_flags_offset, value);
 }
 
 oop java_lang_reflect_Method::clazz(oop reflect) {

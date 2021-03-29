@@ -26,9 +26,6 @@
 package java.lang.reflect;
 
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.misc.VM;
-import jdk.internal.module.IllegalNativeAccessChecker;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.MethodAccessor;
 import jdk.internal.reflect.Reflection;
@@ -70,9 +67,6 @@ import java.util.StringJoiner;
  * @since 1.1
  */
 public final class Method extends Executable {
-    private static final int NATIVE_ACCESS = 0x1;
-    // Method internal flags needed here. For now, only NATIVE_ACCESS.
-    private final int           flags;
     @Stable
     private Class<?>            clazz;
     private int                 slot;
@@ -124,8 +118,7 @@ public final class Method extends Executable {
     /**
      * Package-private constructor
      */
-    Method(int flags,
-           Class<?> declaringClass,
+    Method(Class<?> declaringClass,
            String name,
            Class<?>[] parameterTypes,
            Class<?> returnType,
@@ -136,7 +129,6 @@ public final class Method extends Executable {
            byte[] annotations,
            byte[] parameterAnnotations,
            byte[] annotationDefault) {
-        this.flags = flags;
         this.clazz = declaringClass;
         this.name = name;
         this.parameterTypes = parameterTypes;
@@ -166,7 +158,7 @@ public final class Method extends Executable {
         if (this.root != null)
             throw new IllegalArgumentException("Can not copy a non-root Method");
 
-        Method res = new Method(flags, clazz, name, parameterTypes, returnType,
+        Method res = new Method(clazz, name, parameterTypes, returnType,
                                 exceptionTypes, modifiers, slot, signature,
                                 annotations, parameterAnnotations, annotationDefault);
         res.root = this;
@@ -182,7 +174,7 @@ public final class Method extends Executable {
         if (this.root == null)
             throw new IllegalArgumentException("Can only leafCopy a non-root Method");
 
-        Method res = new Method(flags, clazz, name, parameterTypes, returnType,
+        Method res = new Method(clazz, name, parameterTypes, returnType,
                 exceptionTypes, modifiers, slot, signature,
                 annotations, parameterAnnotations, annotationDefault);
         res.root = root;
@@ -499,25 +491,6 @@ public final class Method extends Executable {
         sb.append(getName());
     }
 
-    private boolean isNativeAccess() {
-        return (flags & NATIVE_ACCESS) != 0;
-    }
-
-    private final void checkNativeAccess(Class<?> caller) {
-        Module module = caller.getModule();
-        if (VM.isBooted()) {
-            JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-            if (!jla.isEnableNativeAccess(module)) {
-                String moduleName = module.isNamed() ?
-                        module.getName() : "<UNNAMED>";
-                if (module.isNamed() ||
-                        !IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
-                    throw new IllegalCallerException("Illegal native access from module: " + moduleName);
-                }
-            }
-        }
-    }
-
     /**
      * Invokes the underlying method represented by this {@code Method}
      * object, on the specified object with the specified parameters.
@@ -587,10 +560,6 @@ public final class Method extends Executable {
             checkAccess(caller, clazz,
                         Modifier.isStatic(modifiers) ? null : obj.getClass(),
                         modifiers);
-        }
-        if (isNativeAccess()) {
-            Class<?> caller = Reflection.getCallerClass();
-            checkNativeAccess(caller);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {

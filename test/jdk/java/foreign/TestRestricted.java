@@ -28,13 +28,14 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 /*
  * @test
  * @run testng TestRestricted
  */
 public class TestRestricted {
-    @Test(expectedExceptions = IllegalCallerException.class)
+    @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection() throws Throwable {
         Method method = MemorySegment.class.getDeclaredMethod("ofNativeRestricted");
         method.invoke(null);
@@ -52,7 +53,7 @@ public class TestRestricted {
         MemorySegment.ofNativeRestricted();
     }
 
-    @Test(expectedExceptions = IllegalCallerException.class)
+    @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection2() throws Throwable {
         Method method = MemoryAddress.class.getDeclaredMethod("asSegmentRestricted", long.class);
         method.invoke(MemoryAddress.NULL, 4000L);
