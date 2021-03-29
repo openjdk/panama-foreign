@@ -29,9 +29,13 @@ import jdk.incubator.foreign.MemoryAddress;
 
 import java.io.File;
 import jdk.incubator.foreign.LibraryLookup;
+import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -103,29 +107,36 @@ public final class LibrariesHelper {
     //Todo: in principle we could expose a scope accessor, so that users could unload libraries at will
     static class LibraryLookupImpl implements LibraryLookup {
         final NativeLibrary library;
-        final ResourceScope scope;
+        final MemorySegment librarySegment;
 
         LibraryLookupImpl(NativeLibrary library, ResourceScope scope) {
             this.library = library;
-            this.scope = scope;
+            this.librarySegment = MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE, scope);
         }
 
         @Override
-        public Optional<Symbol> lookup(String name) {
+        public Optional<MemoryAddress> lookup(String name) {
             try {
                 Objects.requireNonNull(name);
                 MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
-                return Optional.of(new Symbol() { // inner class - retains a link to the scope
-                    @Override
-                    public String name() {
-                        return name;
-                    }
+                return Optional.of(librarySegment.asSlice(addr).address());
+            } catch (NoSuchMethodException ex) {
+                return Optional.empty();
+            }
+        }
 
-                    @Override
-                    public MemoryAddress address() {
-                        return addr;
-                    }
-                });
+        @Override
+        @CallerSensitive
+        public Optional<MemorySegment> lookup(String name, MemoryLayout layout) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass());
+            try {
+                Objects.requireNonNull(name);
+                Objects.requireNonNull(layout);
+                MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
+                if (addr.toRawLongValue() % layout.byteAlignment() != 0) {
+                    throw new IllegalArgumentException("Bad layout alignment constraints: " + layout.byteAlignment());
+                }
+                return Optional.of(librarySegment.asSlice(addr, layout.byteSize()));
             } catch (NoSuchMethodException ex) {
                 return Optional.empty();
             }
