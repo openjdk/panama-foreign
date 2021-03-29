@@ -28,8 +28,10 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.ref.CleanerFactory;
-
 import java.lang.ref.Cleaner;
+import jdk.internal.vm.annotation.NativeAccess;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
@@ -113,7 +115,10 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @CallerSensitive
+    @NativeAccess
     default MemorySegment asSegmentRestricted(long bytesSize) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return asSegmentRestricted(bytesSize, null, ResourceScope.globalScope());
     }
 
@@ -144,6 +149,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @NativeAccess
     default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {
         return asSegmentRestricted(bytesSize, null, scope);
     }
@@ -174,6 +180,7 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @NativeAccess
     MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**

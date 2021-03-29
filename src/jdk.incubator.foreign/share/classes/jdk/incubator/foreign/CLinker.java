@@ -28,8 +28,10 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
-import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.vm.annotation.NativeAccess;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
@@ -121,8 +123,10 @@ public interface CLinker {
      * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
      * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
+    @CallerSensitive
+    @NativeAccess
     static CLinker getInstance() {
-        Utils.checkRestrictedAccess("CLinker.getInstance");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return SharedUtils.getSystemLinker();
     }
 
@@ -402,8 +406,10 @@ public interface CLinker {
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      */
+    @CallerSensitive
+    @NativeAccess
     static String toJavaStringRestricted(MemoryAddress addr) {
-        Utils.checkRestrictedAccess("CLinker.toJavaStringRestricted");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), Charset.defaultCharset());
     }
@@ -424,8 +430,10 @@ public interface CLinker {
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      */
+    @CallerSensitive
+    @NativeAccess
     static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
-        Utils.checkRestrictedAccess("CLinker.toJavaStringRestricted");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         Objects.requireNonNull(charset);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), charset);
@@ -498,8 +506,10 @@ public interface CLinker {
      * @return addr memory address of the allocated memory
      * @throws OutOfMemoryError if malloc could not allocate the required amount of native memory.
      */
+    @CallerSensitive
+    @NativeAccess
     static MemoryAddress allocateMemoryRestricted(long size) {
-        Utils.checkRestrictedAccess("CLinker.allocateMemoryRestricted");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         MemoryAddress addr = SharedUtils.allocateMemoryInternal(size);
         if (addr.equals(MemoryAddress.NULL)) {
             throw new OutOfMemoryError();
@@ -517,8 +527,10 @@ public interface CLinker {
      *
      * @param addr memory address of the native memory to be freed
      */
+    @CallerSensitive
+    @NativeAccess
     static void freeMemoryRestricted(MemoryAddress addr) {
-        Utils.checkRestrictedAccess("CLinker.freeMemoryRestricted");
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         SharedUtils.freeMemoryInternal(addr);
     }
@@ -684,7 +696,10 @@ public interface CLinker {
          * @param address a memory address pointing to an existing C {@code va_list}.
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
+        @CallerSensitive
+        @NativeAccess
         static VaList ofAddressRestricted(MemoryAddress address) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass());
             return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
         }
 
@@ -700,8 +715,10 @@ public interface CLinker {
          * @param scope the resource scope to be associated with the returned {@code VaList} instance.
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
+        @CallerSensitive
+        @NativeAccess
         static VaList ofAddressRestricted(MemoryAddress address, ResourceScope scope) {
-            Utils.checkRestrictedAccess("VaList.ofAddressRestricted");
+            Reflection.ensureNativeAccess(Reflection.getCallerClass());
             Objects.requireNonNull(address);
             Objects.requireNonNull(scope);
             return SharedUtils.newVaListOfAddress(address, scope);

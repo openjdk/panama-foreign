@@ -27,11 +27,11 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  *
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   TestUpcallStructScope
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   TestUpcallStructScope
  */
