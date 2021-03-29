@@ -34,6 +34,8 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -124,7 +126,9 @@ public final class LibrariesHelper {
         }
 
         @Override
+        @CallerSensitive
         public Optional<MemorySegment> lookup(String name, MemoryLayout layout) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass());
             try {
                 Objects.requireNonNull(name);
                 Objects.requireNonNull(layout);

@@ -81,6 +81,7 @@ public interface LibraryLookup {
      * @throws IllegalArgumentException if the address associated with the lookup symbol do not match the
      * {@link MemoryLayout#byteAlignment() alignment constraints} in {@code layout}.
      */
+    @NativeAccess
     Optional<MemorySegment> lookup(String name, MemoryLayout layout);
 
     /**
