@@ -26,7 +26,9 @@
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules java.base/jdk.internal.ref
  *          jdk.incubator.foreign
- * @run testng/othervm -Dforeign.restricted=permit TestNulls
+ * @run testng/othervm
+ *     --enable-native-access=ALL-UNNAMED
+ *     TestNulls
  */
 
 import jdk.incubator.foreign.*;

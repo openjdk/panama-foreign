@@ -33,7 +33,7 @@
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=true
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   TestStackWalk
  *
@@ -42,7 +42,7 @@
  *   -XX:+UnlockDiagnosticVMOptions
  *   -XX:+WhiteBoxAPI
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_INTRINSICS=false
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Xbatch
  *   TestStackWalk
  */

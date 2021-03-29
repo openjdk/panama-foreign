@@ -26,6 +26,9 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.vm.annotation.NativeAccess;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
 import java.io.File;
 import java.lang.invoke.MethodType;
@@ -101,7 +104,10 @@ public interface LibraryLookup {
      * Obtain a default library lookup object.
      * @return the default library lookup object.
      */
+    @CallerSensitive
+    @NativeAccess
     static LibraryLookup ofDefault() {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.getDefaultLibrary"));
@@ -116,7 +122,10 @@ public interface LibraryLookup {
      * @throws IllegalArgumentException if the specified path does not correspond to an absolute path,
      * e.g. if {@code !path.isAbsolute()}.
      */
+    @CallerSensitive
+    @NativeAccess
     static LibraryLookup ofPath(Path path) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(path);
         if (!path.isAbsolute()) {
             throw new IllegalArgumentException("Not an absolute path: " + path.toString());
@@ -137,7 +146,10 @@ public interface LibraryLookup {
      * @param libName the library name.
      * @return a library lookup object for given library name.
      */
+    @CallerSensitive
+    @NativeAccess
     static LibraryLookup ofLibrary(String libName) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(libName);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {

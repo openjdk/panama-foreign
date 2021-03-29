@@ -25,9 +25,8 @@
  * @test
  * @modules java.base/sun.nio.ch
  *          jdk.incubator.foreign/jdk.internal.foreign
- * @run testng/othervm -Dforeign.restricted=permit TestByteBuffer
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
-
 
 import jdk.incubator.foreign.MappedMemorySegments;
 import jdk.incubator.foreign.MemoryAccess;

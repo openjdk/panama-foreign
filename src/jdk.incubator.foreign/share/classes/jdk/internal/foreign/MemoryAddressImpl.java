@@ -27,8 +27,10 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
 
+import jdk.incubator.foreign.ResourceScope;
 import java.util.Objects;
 
 /**
@@ -104,9 +106,10 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
+    @CallerSensitive
     public MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
-        Utils.checkRestrictedAccess("MemoryAddress.asSegmentRestricted");
         if (bytesSize <= 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
