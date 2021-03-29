@@ -66,7 +66,7 @@ public interface LibraryLookup {
 
     /**
      * Looks up a symbol with given name in this library. The returned memory address maintains a strong reference to this lookup object.
-     * @param name the symbol name. This method can be useful to lookup function symbols in a foreign library.
+     * @param name the symbol name.
      * @return the memory address associated with the library symbol (if any).
      */
     Optional<MemoryAddress> lookup(String name);

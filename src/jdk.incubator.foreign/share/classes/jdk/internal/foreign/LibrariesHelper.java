@@ -136,8 +136,7 @@ public final class LibrariesHelper {
                 if (addr.toRawLongValue() % layout.byteAlignment() != 0) {
                     throw new IllegalArgumentException("Bad layout alignment constraints: " + layout.byteAlignment());
                 }
-                return Optional.of(librarySegment.asSlice(addr)
-                        .asSlice(0L, layout.byteSize()));
+                return Optional.of(librarySegment.asSlice(addr, layout.byteSize()));
             } catch (NoSuchMethodException ex) {
                 return Optional.empty();
             }
