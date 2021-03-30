@@ -145,11 +145,11 @@ public class TestNative {
     public static native long getCapacity(Buffer buffer);
 
     public static MemoryAddress allocate(int size) {
-        return CLinker.allocateMemoryRestricted(size);
+        return CLinker.allocateMemory(size);
     }
 
     public static void free(MemoryAddress addr) {
-        CLinker.freeMemoryRestricted(addr);
+        CLinker.freeMemory(addr);
     }
 
     @Test(dataProvider="nativeAccessOps")
@@ -178,14 +178,14 @@ public class TestNative {
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
         try (ResourceScope scope = ResourceScope.ofConfined()) {
-            MemorySegment mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), scope);
+            MemorySegment mallocSegment = addr.asSegment(12, () -> free(addr), scope);
             assertFalse(mallocSegment.isReadOnly());
         }
     }
 
     @Test
     public void testDefaultAccessModesEverthing() {
-        MemorySegment everything = MemorySegment.ofNativeRestricted();
+        MemorySegment everything = MemorySegment.ofNative();
         assertFalse(everything.isReadOnly());
     }
 
@@ -194,7 +194,7 @@ public class TestNative {
         MemoryAddress addr = allocate(12);
         MemorySegment mallocSegment = null;
         try (ResourceScope scope = ResourceScope.ofConfined()) {
-            mallocSegment = addr.asSegmentRestricted(12, () -> free(addr), scope);
+            mallocSegment = addr.asSegment(12, () -> free(addr), scope);
             assertEquals(mallocSegment.byteSize(), 12);
             //free here
         }
@@ -204,7 +204,7 @@ public class TestNative {
     @Test
     public void testEverythingSegment() {
         MemoryAddress addr = allocate(4);
-        MemorySegment everything = MemorySegment.ofNativeRestricted();
+        MemorySegment everything = MemorySegment.ofNative();
         MemoryAccess.setIntAtOffset(everything, addr.toRawLongValue(), 42);
         assertEquals(MemoryAccess.getIntAtOffset(everything, addr.toRawLongValue()), 42);
         free(addr);
@@ -214,7 +214,7 @@ public class TestNative {
     public void testBadResize() {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
-            segment.address().asSegmentRestricted(0);
+            segment.address().asSegment(0);
         }
     }
 

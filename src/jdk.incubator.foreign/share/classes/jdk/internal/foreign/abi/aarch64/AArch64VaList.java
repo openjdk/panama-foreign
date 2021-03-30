@@ -111,17 +111,17 @@ public class AArch64VaList implements VaList {
     }
 
     private static AArch64VaList readFromSegment(MemorySegment segment) {
-        MemorySegment gpRegsArea = grTop(segment).addOffset(-MAX_GP_OFFSET).asSegmentRestricted(
+        MemorySegment gpRegsArea = grTop(segment).addOffset(-MAX_GP_OFFSET).asSegment(
                 MAX_GP_OFFSET, segment.scope());
 
-        MemorySegment fpRegsArea = vrTop(segment).addOffset(-MAX_FP_OFFSET).asSegmentRestricted(
+        MemorySegment fpRegsArea = vrTop(segment).addOffset(-MAX_FP_OFFSET).asSegment(
                 MAX_FP_OFFSET, segment.scope());
         return new AArch64VaList(segment, gpRegsArea, fpRegsArea);
     }
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment ms = MemoryAddress.ofLong(ptr).asSegmentRestricted(
+        MemorySegment ms = MemoryAddress.ofLong(ptr).asSegment(
                 LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
         cleaner.register(AArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
@@ -257,7 +257,7 @@ public class AArch64VaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass) {
                 case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
-                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment slice = stackPtr().asSegment(layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     postAlignStack(layout);
@@ -265,7 +265,7 @@ public class AArch64VaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment slice = stackPtr().asSegment(layout.byteSize(), scope());
                     Object res = reader.get(slice);
                     postAlignStack(layout);
                     yield res;
@@ -310,7 +310,7 @@ public class AArch64VaList implements VaList {
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
 
-                    MemorySegment slice = ptr.asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment slice = ptr.asSegment(layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     yield seg;
@@ -355,7 +355,7 @@ public class AArch64VaList implements VaList {
     }
 
     public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {
-        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize(), scope));
+        return readFromSegment(ma.asSegment(LAYOUT.byteSize(), scope));
     }
 
     @Override

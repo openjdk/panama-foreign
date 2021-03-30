@@ -120,8 +120,6 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      * @return a linker for this system.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     @CallerSensitive
     @NativeAccess
@@ -146,10 +144,8 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(symbol);
-        return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
-    }
+    @NativeAccess
+    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
@@ -167,16 +163,8 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    default MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
-        Objects.requireNonNull(symbol);
-        Objects.requireNonNull(allocator);
-        MethodHandle downcall = MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
-        if (type.returnType().equals(MemorySegment.class)) {
-            downcall = MethodHandles.insertArguments(downcall, 0, allocator);
-        }
-        return downcall;
-    }
-
+    @NativeAccess
+    MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
@@ -195,6 +183,7 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
+    @NativeAccess
     MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
@@ -210,6 +199,7 @@ public interface CLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
+    @NativeAccess
     MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
@@ -225,9 +215,8 @@ public interface CLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
-    default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        return upcallStub(target, function, MemoryScope.createDefault());
-    }
+    @NativeAccess
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
      * The layout for the {@code char} C type
@@ -408,7 +397,7 @@ public interface CLinker {
      */
     @CallerSensitive
     @NativeAccess
-    static String toJavaStringRestricted(MemoryAddress addr) {
+    static String toJavaString(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), Charset.defaultCharset());
@@ -432,7 +421,7 @@ public interface CLinker {
      */
     @CallerSensitive
     @NativeAccess
-    static String toJavaStringRestricted(MemoryAddress addr, Charset charset) {
+    static String toJavaString(MemoryAddress addr, Charset charset) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         Objects.requireNonNull(charset);
@@ -508,7 +497,7 @@ public interface CLinker {
      */
     @CallerSensitive
     @NativeAccess
-    static MemoryAddress allocateMemoryRestricted(long size) {
+    static MemoryAddress allocateMemory(long size) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         MemoryAddress addr = SharedUtils.allocateMemoryInternal(size);
         if (addr.equals(MemoryAddress.NULL)) {
@@ -529,7 +518,7 @@ public interface CLinker {
      */
     @CallerSensitive
     @NativeAccess
-    static void freeMemoryRestricted(MemoryAddress addr) {
+    static void freeMemory(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
         SharedUtils.freeMemoryInternal(addr);
@@ -698,7 +687,7 @@ public interface CLinker {
          */
         @CallerSensitive
         @NativeAccess
-        static VaList ofAddressRestricted(MemoryAddress address) {
+        static VaList ofAddress(MemoryAddress address) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
         }
@@ -717,7 +706,7 @@ public interface CLinker {
          */
         @CallerSensitive
         @NativeAccess
-        static VaList ofAddressRestricted(MemoryAddress address, ResourceScope scope) {
+        static VaList ofAddress(MemoryAddress address, ResourceScope scope) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             Objects.requireNonNull(address);
             Objects.requireNonNull(scope);

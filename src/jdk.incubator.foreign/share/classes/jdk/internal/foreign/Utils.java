@@ -48,9 +48,6 @@ public final class Utils {
     private static final boolean SHOULD_ADAPT_HANDLES
         = Boolean.parseBoolean(privilegedGetProperty("jdk.internal.foreign.SHOULD_ADAPT_HANDLES", "true"));
 
-    private static final String foreignRestrictedAccess = Optional.ofNullable(VM.getSavedProperty("foreign.restricted"))
-            .orElse("deny");
-
     private static final MethodHandle SEGMENT_FILTER;
     public static final MethodHandle MH_bitsToBytesOrThrowForOffset;
 

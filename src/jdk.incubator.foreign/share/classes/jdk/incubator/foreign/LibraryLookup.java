@@ -69,6 +69,7 @@ public interface LibraryLookup {
      * @param name the symbol name.
      * @return the memory address associated with the library symbol (if any).
      */
+    @NativeAccess
     Optional<MemoryAddress> lookup(String name);
 
     /**
