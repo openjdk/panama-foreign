@@ -55,23 +55,23 @@ public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.allocateNative(size, align);
+        MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
     }
 
     @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testBadAllocateLayout(MemoryLayout layout) {
-        MemorySegment.allocateNative(layout);
+        MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
     }
 
     @Test(expectedExceptions = { OutOfMemoryError.class,
                                  IllegalArgumentException.class })
     public void testAllocateTooBig() {
-        MemorySegment.allocateNative(Long.MAX_VALUE);
+        MemorySegment.allocateNative(Long.MAX_VALUE, ResourceScope.ofImplicit());
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testNativeAllocationTooBig() {
-        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2); // 2M
+        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, ResourceScope.ofImplicit()); // 2M
     }
 
     @Test
@@ -116,10 +116,8 @@ public class TestSegments {
     }
 
     static void tryClose(MemorySegment segment) {
-        try {
+        if (!segment.scope().isImplicit()) {
             segment.scope().close();
-        } catch (UnsupportedOperationException ex) {
-            // whoops - scope is not closeable
         }
     }
 
@@ -133,9 +131,9 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new int[] { 1, 2, 3, 4 }),
                 () -> MemorySegment.ofArray(new long[] { 1l, 2l, 3l, 4l } ),
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
-                () -> MemorySegment.allocateNative(4),
-                () -> MemorySegment.allocateNative(4, 8),
-                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder())),
+                () -> MemorySegment.allocateNative(4, ResourceScope.ofImplicit()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.ofImplicit()),
+                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()), ResourceScope.ofImplicit()),
                 () -> MemorySegment.allocateNative(4, ResourceScope.ofConfined()),
                 () -> MemorySegment.allocateNative(4, 8, ResourceScope.ofConfined()),
                 () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()), ResourceScope.ofConfined())

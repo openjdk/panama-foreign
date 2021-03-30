@@ -58,10 +58,4 @@ public abstract class AbstractCLinker implements CLinker {
         }
         return downcall;
     }
-
-    @CallerSensitive
-    public final MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        return upcallStub(target, function, MemoryScope.createDefault());
-    }
 }

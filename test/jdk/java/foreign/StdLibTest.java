@@ -257,7 +257,7 @@ public class StdLibTest {
             static final long SIZE = 56;
 
             Tm(MemoryAddress addr) {
-                this.base = addr.asSegment(SIZE);
+                this.base = addr.asSegment(SIZE, ResourceScope.globalScope());
             }
 
             int sec() {

@@ -221,7 +221,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Integer>> sumStructJavaFact
                 = (pointLayout, VH_Point_x, VH_Point_y) ->
                 list -> {
-                    MemorySegment struct = list.vargAsSegment(pointLayout);
+                    MemorySegment struct = list.vargAsSegment(pointLayout, ResourceScope.ofImplicit());
                     int x = (int) VH_Point_x.get(struct);
                     int y = (int) VH_Point_y.get(struct);
                     return x + y;
@@ -273,7 +273,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
                 = (BigPoint_LAYOUT, VH_BigPoint_x, VH_BigPoint_y) ->
                 list -> {
-                    MemorySegment struct = list.vargAsSegment(BigPoint_LAYOUT);
+                    MemorySegment struct = list.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     long x = (long) VH_BigPoint_x.get(struct);
                     long y = (long) VH_BigPoint_y.get(struct);
                     return x + y;
@@ -325,7 +325,7 @@ public class VaListTest extends NativeTestHelper {
         TriFunction<MemoryLayout, VarHandle, VarHandle, Function<VaList, Float>> sumStructJavaFact
                 = (FloatPoint_LAYOUT, VH_FloatPoint_x, VH_FloatPoint_y) ->
                 list -> {
-                    MemorySegment struct = list.vargAsSegment(FloatPoint_LAYOUT);
+                    MemorySegment struct = list.vargAsSegment(FloatPoint_LAYOUT, ResourceScope.ofImplicit());
                     float x = (float) VH_FloatPoint_x.get(struct);
                     float y = (float) VH_FloatPoint_y.get(struct);
                     return x + y;
@@ -382,7 +382,7 @@ public class VaListTest extends NativeTestHelper {
         QuadFunc<MemoryLayout, VarHandle, VarHandle, VarHandle, Function<VaList, Long>> sumStructJavaFact
                 = (HugePoint_LAYOUT, VH_HugePoint_x, VH_HugePoint_y, VH_HugePoint_z) ->
                 list -> {
-                    MemorySegment struct = list.vargAsSegment(HugePoint_LAYOUT);
+                    MemorySegment struct = list.vargAsSegment(HugePoint_LAYOUT, ResourceScope.ofImplicit());
                     long x = (long) VH_HugePoint_x.get(struct);
                     long y = (long) VH_HugePoint_y.get(struct);
                     long z = (long) VH_HugePoint_z.get(struct);
@@ -657,13 +657,13 @@ public class VaListTest extends NativeTestHelper {
 
         return new Object[][]{
                 { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT);
+                    MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
                 })},
                 { linkVaListCB("upcallBigStruct"), VaListConsumer.mh(vaList -> {
                     VaList copy = vaList.copy();
-                    MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT);
+                    MemorySegment struct = vaList.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
 
@@ -671,29 +671,29 @@ public class VaListTest extends NativeTestHelper {
                     VH_BigPoint_y.set(struct, 0);
 
                     // should be independent
-                    struct = copy.vargAsSegment(BigPoint_LAYOUT);
+                    struct = copy.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_BigPoint_x.get(struct), 8);
                     assertEquals((long) VH_BigPoint_y.get(struct), 16);
                 })},
                 { linkVaListCB("upcallStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = vaList.vargAsSegment(Point_LAYOUT);
+                    MemorySegment struct = vaList.vargAsSegment(Point_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((int) VH_Point_x.get(struct), 5);
                     assertEquals((int) VH_Point_y.get(struct), 10);
                 })},
                 { linkVaListCB("upcallHugeStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = vaList.vargAsSegment(HugePoint_LAYOUT);
+                    MemorySegment struct = vaList.vargAsSegment(HugePoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_HugePoint_x.get(struct), 1);
                     assertEquals((long) VH_HugePoint_y.get(struct), 2);
                     assertEquals((long) VH_HugePoint_z.get(struct), 3);
                 })},
                 { linkVaListCB("upcallFloatStruct"), VaListConsumer.mh(vaList -> {
-                    MemorySegment struct = vaList.vargAsSegment(FloatPoint_LAYOUT);
+                    MemorySegment struct = vaList.vargAsSegment(FloatPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((float) VH_FloatPoint_x.get(struct), 1.0f);
                     assertEquals((float) VH_FloatPoint_y.get(struct), 2.0f);
                 })},
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
-                    MemorySegment ms = intPtr.asSegment(C_INT.byteSize());
+                    MemorySegment ms = intPtr.asSegment(C_INT.byteSize(), ResourceScope.globalScope());
                     int x = MemoryAccess.getInt(ms);
                     assertEquals(x, 10);
                 })},
@@ -732,12 +732,12 @@ public class VaListTest extends NativeTestHelper {
                     assertEquals((float) vaList.vargAsDouble(C_DOUBLE), 13.0F);
                     assertEquals(vaList.vargAsDouble(C_DOUBLE), 14.0D);
 
-                    MemorySegment point = vaList.vargAsSegment(Point_LAYOUT);
+                    MemorySegment point = vaList.vargAsSegment(Point_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((int) VH_Point_x.get(point), 5);
                     assertEquals((int) VH_Point_y.get(point), 10);
 
                     VaList copy = vaList.copy();
-                    MemorySegment bigPoint = vaList.vargAsSegment(BigPoint_LAYOUT);
+                    MemorySegment bigPoint = vaList.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_BigPoint_x.get(bigPoint), 15);
                     assertEquals((long) VH_BigPoint_y.get(bigPoint), 20);
 
@@ -745,7 +745,7 @@ public class VaListTest extends NativeTestHelper {
                     VH_BigPoint_y.set(bigPoint, 0);
 
                     // should be independent
-                    MemorySegment struct = copy.vargAsSegment(BigPoint_LAYOUT);
+                    MemorySegment struct = copy.vargAsSegment(BigPoint_LAYOUT, ResourceScope.ofImplicit());
                     assertEquals((long) VH_BigPoint_x.get(struct), 15);
                     assertEquals((long) VH_BigPoint_y.get(struct), 20);
                 })},

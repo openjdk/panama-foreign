@@ -75,7 +75,7 @@ public class TestVarHandleCombinators {
     public void testAlign() {
         VarHandle vh = MemoryHandles.varHandle(byte.class, 2, ByteOrder.nativeOrder());
 
-        MemorySegment segment = MemorySegment.allocateNative(1, 2);
+        MemorySegment segment = MemorySegment.allocateNative(1, 2, ResourceScope.ofImplicit());
         vh.set(segment, 0L, (byte) 10); // fine, memory region is aligned
         assertEquals((byte) vh.get(segment, 0L), (byte) 10);
     }

@@ -28,6 +28,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
@@ -46,7 +47,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
-    public static final SegmentAllocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
+    public static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
 
     // The maximum alignment supported by malloc - typically 16 on
     // 64-bit platforms and 8 on 32-bit platforms.

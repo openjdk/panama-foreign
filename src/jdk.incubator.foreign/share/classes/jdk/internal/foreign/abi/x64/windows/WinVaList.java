@@ -95,11 +95,6 @@ class WinVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout) {
-        return (MemorySegment) read(MemorySegment.class, layout);
-    }
-
-    @Override
     public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
@@ -111,7 +106,7 @@ class WinVaList implements VaList {
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
-        return read(carrier, layout, MemorySegment::allocateNative);
+        return read(carrier, layout, SharedUtils.THROWING_ALLOCATOR);
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {

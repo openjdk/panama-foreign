@@ -126,7 +126,7 @@ try (var cString = CLinker.toCString("Hello")) {
  * the method handle invocation (here performed using {@link java.lang.invoke.MethodHandle#invokeExact(java.lang.Object...)})
  * into a foreign function call, according to the rules specified by the platform C ABI. The {@link jdk.incubator.foreign.CLinker}
  * class also provides many useful methods for interacting with native code, such as converting Java strings into
- * native strings and viceversa (see {@link jdk.incubator.foreign.CLinker#toCString(java.lang.String)} and
+ * native strings and viceversa (see {@link jdk.incubator.foreign.CLinker#toCString(java.lang.String, ResourceScope)} and
  * {@link jdk.incubator.foreign.CLinker#toJavaString(jdk.incubator.foreign.MemorySegment)}, respectively), as
  * demonstrated in the above example.
  *
@@ -153,7 +153,7 @@ int x = MemoryAccess.getIntAtOffset(segment, addr.segmentOffset(segment));
  * }</pre>
  *
  * Secondly, if the client does <em>not</em> have a segment which contains a given memory address, it can create one <em>unsafely</em>,
- * using the {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)} factory. This allows the client to
+ * using the {@link jdk.incubator.foreign.MemoryAddress#asSegment(long, ResourceScope)} factory. This allows the client to
  * inject extra knowledge about spatial bounds which might, for instance, be available in the documentation of the foreign function
  * which produced the native address. Here is how an unsafe segment can be created from a native address:
  *
@@ -214,11 +214,11 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  * <h2>Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by client. For instance
- * the restricted method {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)} can be used to create
+ * the restricted method {@link jdk.incubator.foreign.MemoryAddress#asSegment(long, ResourceScope)} can be used to create
  * a fresh segment with given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
- * For instance, in the case of {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)}, if the provided
+ * For instance, in the case of {@link jdk.incubator.foreign.MemoryAddress#asSegment(long, ResourceScope)}, if the provided
  * spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.

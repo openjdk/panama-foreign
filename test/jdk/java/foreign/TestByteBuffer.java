@@ -268,7 +268,7 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE);
+        MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, 8, FileChannel.MapMode.READ_WRITE, ResourceScope.ofImplicit());
         assertTrue(segment.isMapped());
         segment.scope().close();
         mappedBufferOp.apply(segment);
@@ -455,7 +455,7 @@ public class TestByteBuffer {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testTooBigForByteBuffer() {
-        MemorySegment segment = MemoryAddress.NULL.asSegment(Integer.MAX_VALUE + 10L);
+        MemorySegment segment = MemoryAddress.NULL.asSegment(Integer.MAX_VALUE + 10L, ResourceScope.globalScope());
         segment.asByteBuffer();
     }
 
@@ -464,7 +464,7 @@ public class TestByteBuffer {
         File f = new File("testNeg1.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE);
+        MemorySegment.mapFile(f.toPath(), 0L, -1, FileChannel.MapMode.READ_WRITE, ResourceScope.ofImplicit());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -472,7 +472,7 @@ public class TestByteBuffer {
         File f = new File("testNeg2.out");
         f.createNewFile();
         f.deleteOnExit();
-        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE);
+        MemorySegment.mapFile(f.toPath(), -1, 1, FileChannel.MapMode.READ_WRITE, ResourceScope.ofImplicit());
     }
 
     @Test
@@ -531,7 +531,7 @@ public class TestByteBuffer {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testMapCustomPath() throws IOException {
         Path path = Path.of(URI.create("jrt:/"));
-        MemorySegment.mapFile(path, 0L, 0L, FileChannel.MapMode.READ_WRITE);
+        MemorySegment.mapFile(path, 0L, 0L, FileChannel.MapMode.READ_WRITE, ResourceScope.ofImplicit());
     }
 
     @Test(dataProvider="resizeOps")
@@ -696,7 +696,7 @@ public class TestByteBuffer {
     @DataProvider(name = "segments")
     public static Object[][] segments() throws Throwable {
         return new Object[][] {
-                { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16) },
+                { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.ofImplicit()) },
                 { (Supplier<MemorySegment>) () -> MemorySegment.ofArray(new byte[16]) }
         };
     }
