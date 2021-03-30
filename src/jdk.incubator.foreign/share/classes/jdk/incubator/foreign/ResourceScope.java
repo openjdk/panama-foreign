@@ -146,7 +146,7 @@ public interface ResourceScope extends AutoCloseable {
 
     /**
      * Is this resource scope an <em>implicit scope</em>?
-     * @return true if this scope is an an <em>implicit scope</em>.
+     * @return true if this scope is an <em>implicit scope</em>.
      * @see #ofImplicit()
      * @see #globalScope()
      */
