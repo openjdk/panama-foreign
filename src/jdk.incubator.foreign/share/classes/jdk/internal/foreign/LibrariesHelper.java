@@ -105,7 +105,7 @@ public final class LibrariesHelper {
     }
 
     //Todo: in principle we could expose a scope accessor, so that users could unload libraries at will
-    static class LibraryLookupImpl implements LibraryLookup {
+    static final class LibraryLookupImpl implements LibraryLookup {
         final NativeLibrary library;
         final MemorySegment librarySegment;
 
@@ -116,7 +116,7 @@ public final class LibrariesHelper {
 
         @Override
         @CallerSensitive
-        public Optional<MemoryAddress> lookup(String name) {
+        public final Optional<MemoryAddress> lookup(String name) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             try {
                 Objects.requireNonNull(name);
@@ -129,7 +129,7 @@ public final class LibrariesHelper {
 
         @Override
         @CallerSensitive
-        public Optional<MemorySegment> lookup(String name, MemoryLayout layout) {
+        public final Optional<MemorySegment> lookup(String name, MemoryLayout layout) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             try {
                 Objects.requireNonNull(name);

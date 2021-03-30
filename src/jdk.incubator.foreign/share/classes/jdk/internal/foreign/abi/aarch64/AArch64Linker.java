@@ -77,7 +77,7 @@ public final class AArch64Linker extends AbstractCLinker {
 
     @Override
     @CallerSensitive
-    public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
+    public final MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
@@ -93,7 +93,7 @@ public final class AArch64Linker extends AbstractCLinker {
 
     @Override
     @CallerSensitive
-    public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+    public final MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);

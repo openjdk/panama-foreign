@@ -107,21 +107,21 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     @CallerSensitive
-    public MemorySegment asSegment(long bytesSize) {
+    public final MemorySegment asSegment(long bytesSize) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return asSegment(bytesSize, null, ResourceScope.globalScope());
     }
 
     @Override
     @CallerSensitive
-    public MemorySegment asSegment(long bytesSize, ResourceScope scope) {
+    public final MemorySegment asSegment(long bytesSize, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return asSegment(bytesSize, null, scope);
     }
 
     @Override
     @CallerSensitive
-    public MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
+    public final MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
         if (bytesSize <= 0) {
