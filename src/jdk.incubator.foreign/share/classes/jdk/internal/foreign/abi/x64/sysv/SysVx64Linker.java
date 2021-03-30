@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
-public class SysVx64Linker extends AbstractCLinker {
+public final class SysVx64Linker extends AbstractCLinker {
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
     public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;

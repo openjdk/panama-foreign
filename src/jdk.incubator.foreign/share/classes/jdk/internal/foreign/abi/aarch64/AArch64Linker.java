@@ -48,7 +48,7 @@ import java.util.function.Consumer;
  * ABI implementation based on ARM document "Procedure Call Standard for
  * the ARM 64-bit Architecture".
  */
-public class AArch64Linker extends AbstractCLinker {
+public final class AArch64Linker extends AbstractCLinker {
     private static AArch64Linker instance;
 
     static final long ADDRESS_SIZE = 64; // bits

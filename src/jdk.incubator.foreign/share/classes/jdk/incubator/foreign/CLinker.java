@@ -144,13 +144,8 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    @CallerSensitive
     @NativeAccess
-    default MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(symbol);
-        return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
-    }
+    MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
      * Obtain a foreign method handle, with the given type and featuring the given function descriptor,
@@ -168,18 +163,8 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    @CallerSensitive
     @NativeAccess
-    default MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(symbol);
-        Objects.requireNonNull(allocator);
-        MethodHandle downcall = MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
-        if (type.returnType().equals(MemorySegment.class)) {
-            downcall = MethodHandles.insertArguments(downcall, 0, allocator);
-        }
-        return downcall;
-    }
+    MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
     /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor, which can be
@@ -231,11 +216,7 @@ public interface CLinker {
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
     @NativeAccess
-    @CallerSensitive
-    default MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        return upcallStub(target, function, MemoryScope.createDefault());
-    }
+    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function);
 
     /**
      * The layout for the {@code char} C type

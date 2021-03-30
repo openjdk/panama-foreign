@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
-public class Windowsx64Linker extends AbstractCLinker {
+public final class Windowsx64Linker extends AbstractCLinker {
 
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 4;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 1;
