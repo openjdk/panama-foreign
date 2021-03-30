@@ -244,7 +244,7 @@ public interface ResourceScope extends AutoCloseable {
     }
 
     /**
-     * Create a new <em>implicit scope</em>. The implicit scope is a shared and non-closeable scope which only features
+     * Create a new <em>implicit scope</em>. The implicit scope is a managed, shared, and non-closeable scope which only features
      * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>.
      * Since implicit scopes can only be closed implicitly by the garbage collector, it is recommended that implicit
      * scopes are only used in cases where deallocation performance is not a critical concern, to avoid unnecessary
