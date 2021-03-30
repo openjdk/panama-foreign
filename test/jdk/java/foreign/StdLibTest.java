@@ -215,7 +215,7 @@ public class StdLibTest {
                     setByteAtOffset(buf, i, (byte)chars[(int)i]);
                 }
                 setByteAtOffset(buf, chars.length, (byte)'\0');
-                return toJavaStringRestricted(((MemoryAddress)strcat.invokeExact(buf.address(), other.address())));
+                return toJavaString(((MemoryAddress)strcat.invokeExact(buf.address(), other.address())));
             }
         }
 
@@ -257,7 +257,7 @@ public class StdLibTest {
             static final long SIZE = 56;
 
             Tm(MemoryAddress addr) {
-                this.base = addr.asSegmentRestricted(SIZE);
+                this.base = addr.asSegment(SIZE);
             }
 
             int sec() {

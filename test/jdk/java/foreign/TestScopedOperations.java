@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @run testng/othervm -Dforeign.restricted=permit TestScopedOperations
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestScopedOperations
  */
 
 import jdk.incubator.foreign.CLinker;
@@ -195,7 +195,7 @@ public class TestScopedOperations {
                     throw new AssertionError(ex);
                 }
             }),
-            UNSAFE(scope -> MemoryAddress.NULL.asSegmentRestricted(10, scope));
+            UNSAFE(scope -> MemoryAddress.NULL.asSegment(10, scope));
 
             static {
                 try {

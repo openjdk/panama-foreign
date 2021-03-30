@@ -30,8 +30,6 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.ref.CleanerFactory;
 import java.lang.ref.Cleaner;
 import jdk.internal.vm.annotation.NativeAccess;
-import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
@@ -102,7 +100,7 @@ public interface MemoryAddress extends Addressable {
      * <p>
      * This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, ResourceScope.globalScope());
+    asSegment(byteSize, null, ResourceScope.globalScope());
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -112,15 +110,9 @@ public interface MemoryAddress extends Addressable {
      * @return a new native memory segment with given base address and size.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    @CallerSensitive
     @NativeAccess
-    default MemorySegment asSegmentRestricted(long bytesSize) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        return asSegmentRestricted(bytesSize, null, ResourceScope.globalScope());
-    }
+    MemorySegment asSegment(long bytesSize);
 
     /**
      * Returns a native memory segment with given size and resource scope, and whose base address is this address. This method
@@ -135,7 +127,7 @@ public interface MemoryAddress extends Addressable {
      * <p>
      * This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, scope);
+    asSegment(byteSize, null, scope);
      * }</pre>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
@@ -146,13 +138,9 @@ public interface MemoryAddress extends Addressable {
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     @NativeAccess
-    default MemorySegment asSegmentRestricted(long bytesSize, ResourceScope scope) {
-        return asSegmentRestricted(bytesSize, null, scope);
-    }
+    MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
      * Returns a new native memory segment with given size and resource scope, and whose base address is this address. This method
@@ -177,11 +165,9 @@ public interface MemoryAddress extends Addressable {
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     @NativeAccess
-    MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, ResourceScope scope);
+    MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**
      * Returns the raw long value associated with this memory address.

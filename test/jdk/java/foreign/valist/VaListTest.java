@@ -186,7 +186,7 @@ public class VaListTest extends NativeTestHelper {
         Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
                 list -> {
                     MemoryAddress ma = list.vargAsAddress(layout);
-                    return MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), ma.toRawLongValue());
+                    return MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), ma.toRawLongValue());
                 };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
@@ -693,7 +693,7 @@ public class VaListTest extends NativeTestHelper {
                 })},
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
-                    MemorySegment ms = intPtr.asSegmentRestricted(C_INT.byteSize());
+                    MemorySegment ms = intPtr.asSegment(C_INT.byteSize());
                     int x = MemoryAccess.getInt(ms);
                     assertEquals(x, 10);
                 })},

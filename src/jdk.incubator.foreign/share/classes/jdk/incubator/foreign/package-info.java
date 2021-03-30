@@ -153,23 +153,23 @@ int x = MemoryAccess.getIntAtOffset(segment, addr.segmentOffset(segment));
  * }</pre>
  *
  * Secondly, if the client does <em>not</em> have a segment which contains a given memory address, it can create one <em>unsafely</em>,
- * using the {@link jdk.incubator.foreign.MemoryAddress#asSegmentRestricted(long)} factory. This allows the client to
+ * using the {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)} factory. This allows the client to
  * inject extra knowledge about spatial bounds which might, for instance, be available in the documentation of the foreign function
  * which produced the native address. Here is how an unsafe segment can be created from a native address:
  *
  * <pre>{@code
 MemoryAddress addr = ... //obtain address from native code
-MemorySegment segment = addr.asSegmentRestricted(4); // segment is 4 bytes long
+MemorySegment segment = addr.asSegment(4); // segment is 4 bytes long
 int x = MemoryAccess.getInt(segment);
  * }</pre>
  *
  * Alternatively, the client can fall back to use the so called <em>everything</em> segment - that is, a primordial segment
- * which covers the entire native heap. This segment can be obtained by calling the {@link jdk.incubator.foreign.MemorySegment#ofNativeRestricted()}
+ * which covers the entire native heap. This segment can be obtained by calling the {@link jdk.incubator.foreign.MemorySegment#ofNative()}
  * method, so that dereference can happen without the need of creating any additional segment instances:
  *
  * <pre>{@code
 MemoryAddress addr = ... //obtain address from native code
-int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr.toRawLongValue());
+int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr.toRawLongValue());
  * }</pre>
  *
  * <h3>Upcalls</h3>
@@ -181,8 +181,8 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr.toR
  * <pre>{@code
 class IntComparator {
     static int intCompare(MemoryAddress addr1, MemoryAddress addr2) {
-        return MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr1.toRawLongValue()) -
-               MemoryAccess.getIntAtOffset(MemorySegment.ofNativeRestricted(), addr2.toRawLongValue());
+        return MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr1.toRawLongValue()) -
+               MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr2.toRawLongValue());
     }
 }
  * }</pre>
@@ -214,22 +214,16 @@ MemorySegment comparFunc = CLinker.getInstance().upcallStub(
  * <h2>Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by client. For instance
- * the restricted method {@link jdk.incubator.foreign.MemoryAddress#asSegmentRestricted(long)} can be used to create
+ * the restricted method {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)} can be used to create
  * a fresh segment with given spatial bounds out of a native address.
  * <p>
  * Binding foreign data and/or functions is generally unsafe and, if done incorrectly, can result in VM crashes, or memory corruption when the bound Java API element is accessed.
- * For instance, in the case of {@link jdk.incubator.foreign.MemoryAddress#asSegmentRestricted(long)}, if the provided
+ * For instance, in the case of {@link jdk.incubator.foreign.MemoryAddress#asSegment(long)}, if the provided
  * spatial bounds are incorrect, a client of the segment returned by that method might crash the VM, or corrupt
  * memory when attempting to dereference said segment. For these reasons, it is crucial for code that calls a restricted method
  * to never pass arguments that might cause incorrect binding of foreign data and/or functions to a Java API.
  * <p>
- * Access to restricted methods is <em>disabled</em> by default; to enable restricted methods, the JDK property
- * {@code foreign.restricted} must be set to a value other than {@code deny}. The possible values for this property are:
- * <ul>
- * <li>{@code deny}: issues a runtime exception on each restricted call. This is the default value;</li>
- * <li>{@code permit}: allows restricted calls;</li>
- * <li>{@code warn}: like permit, but also prints a one-line warning on each restricted call;</li>
- * <li>{@code debug}: like permit, but also dumps the stack corresponding to any given restricted call.</li>
- * </ul>
+ * Access to restricted methods is <em>disabled</em> by default; to enable restricted methods, the JVM command line option
+ * {@code --enable-native-access} must mention the name of the caller's module.
  */
 package jdk.incubator.foreign;

@@ -152,8 +152,6 @@ public interface MemorySegment extends Addressable {
      * is associated with a resource scope featuring <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>,
      * the scope won't be closed as long as the returned address is <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
      * @return The base memory address.
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment
      */
     @Override
     MemoryAddress address();
@@ -769,7 +767,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * The returned segment is associated with the <em>global</em> resource scope (see {@link ResourceScope#globalScope()}).
      * Equivalent to (but likely more efficient than) the following code:
      * <pre>{@code
-    MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE)
+    MemoryAddress.NULL.asSegment(Long.MAX_VALUE)
      * }</pre>
      * <p>
      * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
@@ -777,12 +775,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @return a memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
     @CallerSensitive
     @NativeAccess
-    static MemorySegment ofNativeRestricted() {
+    static MemorySegment ofNative() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return NativeMemorySegmentImpl.EVERYTHING;
     }

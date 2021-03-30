@@ -129,7 +129,7 @@ public class SysVVaList implements VaList {
 
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
-        MemorySegment base = MemoryAddress.ofLong(ptr).asSegmentRestricted(
+        MemorySegment base = MemoryAddress.ofLong(ptr).asSegment(
                 LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
         cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
@@ -172,7 +172,7 @@ public class SysVVaList implements VaList {
     }
 
     private static MemorySegment getRegSaveArea(MemorySegment segment) {
-        return ((MemoryAddress)VH_reg_save_area.get(segment)).asSegmentRestricted(
+        return ((MemoryAddress)VH_reg_save_area.get(segment)).asSegment(
                 LAYOUT_REG_SAVE_AREA.byteSize(), segment.scope());
     }
 
@@ -235,7 +235,7 @@ public class SysVVaList implements VaList {
             preAlignStack(layout);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
-                    MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), scope());
+                    MemorySegment slice = stackPtr().asSegment(layout.byteSize(), scope());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
                     postAlignStack(layout);
@@ -244,7 +244,7 @@ public class SysVVaList implements VaList {
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
                     try (ResourceScope localScope = ResourceScope.ofConfined()) {
-                        MemorySegment slice = stackPtr().asSegmentRestricted(layout.byteSize(), localScope);
+                        MemorySegment slice = stackPtr().asSegment(layout.byteSize(), localScope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
                         yield res;
@@ -309,7 +309,7 @@ public class SysVVaList implements VaList {
     }
 
     public static VaList ofAddress(MemoryAddress ma, ResourceScope scope) {
-        return readFromSegment(ma.asSegmentRestricted(LAYOUT.byteSize(), scope));
+        return readFromSegment(ma.asSegment(LAYOUT.byteSize(), scope));
     }
 
     @Override
