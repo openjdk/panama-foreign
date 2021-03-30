@@ -102,10 +102,8 @@ public class SharedUtils {
         }
     }
 
-    // workaround for https://bugs.openjdk.java.net/browse/JDK-8239083
-    private static MemorySegment allocateNative(MemoryLayout layout) {
-        return MemorySegment.allocateNative(layout);
-    }
+    // this allocator should be used when no allocation is expected
+    public final static SegmentAllocator THROWING_ALLOCATOR = (size, align) -> { throw new IllegalStateException("Cannot get here"); };
 
     /**
      * Align the specified type from a given address
@@ -562,11 +560,6 @@ public class SharedUtils {
 
         @Override
         public MemoryAddress vargAsAddress(MemoryLayout layout) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout) {
             throw uoe();
         }
 

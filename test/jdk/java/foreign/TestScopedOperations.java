@@ -113,7 +113,7 @@ public class TestScopedOperations {
             ScopedOperation.ofVaList(list -> list.vargAsLong(MemoryLayouts.JAVA_LONG), "VaList::vargAsLong");
             ScopedOperation.ofVaList(list -> list.vargAsDouble(MemoryLayouts.JAVA_DOUBLE), "VaList::vargAsDouble");
             ScopedOperation.ofVaList(CLinker.VaList::skip, "VaList::skip");
-            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT)), "VaList::vargAsSegment/1");
+            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), ResourceScope.ofImplicit()), "VaList::vargAsSegment/1");
             ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), SegmentAllocator.malloc(list::scope)), "VaList::vargAsSegment/2");
             // allocator operations
             ScopedOperation.ofAllocator(a -> a.allocate(1), "NativeAllocator::allocate/size");

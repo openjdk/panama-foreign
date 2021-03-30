@@ -88,7 +88,7 @@ public class TestSpliterator {
         SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment, (long) i, i);
         }

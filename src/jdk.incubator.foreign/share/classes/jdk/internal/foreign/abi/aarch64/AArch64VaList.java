@@ -41,6 +41,7 @@ import static jdk.internal.foreign.PlatformLayouts.AArch64;
 import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
+import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMENTS;
@@ -229,11 +230,6 @@ public class AArch64VaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout) {
-        return (MemorySegment) read(MemorySegment.class, layout);
-    }
-
-    @Override
     public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
@@ -245,7 +241,7 @@ public class AArch64VaList implements VaList {
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
-        return read(carrier, layout, MemorySegment::allocateNative);
+        return read(carrier, layout, THROWING_ALLOCATOR);
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {

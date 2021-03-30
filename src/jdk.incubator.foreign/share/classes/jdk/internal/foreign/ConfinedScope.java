@@ -42,8 +42,8 @@ final class ConfinedScope extends MemoryScope {
     private int lockCount = 0;
     private final Thread owner;
 
-    public ConfinedScope(Thread owner, Object ref, Cleaner cleaner) {
-        super(ref, cleaner, new ConfinedResourceList());
+    public ConfinedScope(Thread owner, Cleaner cleaner) {
+        super(cleaner, new ConfinedResourceList());
         this.owner = owner;
     }
 

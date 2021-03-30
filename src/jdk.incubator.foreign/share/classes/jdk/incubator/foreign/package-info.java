@@ -126,7 +126,7 @@ try (var cString = CLinker.toCString("Hello")) {
  * the method handle invocation (here performed using {@link java.lang.invoke.MethodHandle#invokeExact(java.lang.Object...)})
  * into a foreign function call, according to the rules specified by the platform C ABI. The {@link jdk.incubator.foreign.CLinker}
  * class also provides many useful methods for interacting with native code, such as converting Java strings into
- * native strings and viceversa (see {@link jdk.incubator.foreign.CLinker#toCString(java.lang.String)} and
+ * native strings and viceversa (see {@link jdk.incubator.foreign.CLinker#toCString(java.lang.String, ResourceScope)} and
  * {@link jdk.incubator.foreign.CLinker#toJavaString(jdk.incubator.foreign.MemorySegment)}, respectively), as
  * demonstrated in the above example.
  *

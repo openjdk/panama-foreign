@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  * must implement the {@link #allocate(long, long)} method. This interface defines several default methods
  * which can be useful to create segments from several kinds of Java values such as primitives and arrays.
  * This interface can be seen as a thin wrapper around the basic capabilities for creating native segments
- * (e.g. {@link MemorySegment#allocateNative(long, long)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
+ * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
  * This interface provides a factory, namely {@link SegmentAllocator#scoped(ResourceScope)} which can be used to obtain
@@ -53,7 +53,7 @@ import java.util.stream.Stream;
  *
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.ofConfined()) {
-   SegmentAllocator allocator = SegmentAllocator.of(scope);
+   SegmentAllocator allocator = SegmentAllocator.scoped(scope);
    ...
 }
  * }</pre></blockquote>
@@ -458,15 +458,14 @@ public interface SegmentAllocator {
     }
 
     /**
-     * Returns the default native allocator which creates segments using the default
-     * {@link MemorySegment#allocateNative(long, long) native segment factory}. This code is equivalent
+     * Returns a native allocator which creates segments associated with fresh implicit scopes. This code is equivalent
      * (but likely more efficient) to the following:
      * <blockquote><pre>{@code
-    SegmentAllocator defaultAllocator = (size, align) -> MemorySegment.allocateNative(size, align);
+    SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
      * }</pre></blockquote>
-     * @return the default native allocator.
+     * @return the implicit native allocator.
      */
-    static SegmentAllocator ofDefault() {
-        return NativeMemorySegmentImpl.DEFAULT_ALLOCATOR;
+    static SegmentAllocator implicit() {
+        return NativeMemorySegmentImpl.IMPLICIT_ALLOCATOR;
     }
 }

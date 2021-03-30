@@ -101,7 +101,7 @@ public class TestArrays {
 
     @Test(dataProvider = "arrays")
     public void testArrays(Consumer<MemorySegment> init, Consumer<MemorySegment> checker, MemoryLayout layout) {
-        MemorySegment segment = MemorySegment.allocateNative(layout);
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
         init.accept(segment);
         assertFalse(segment.isReadOnly());
         checker.accept(segment);
@@ -112,7 +112,7 @@ public class TestArrays {
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
-        MemorySegment segment = MemoryAddress.NULL.asSegment(seq.byteSize());
+        MemorySegment segment = MemoryAddress.NULL.asSegment(seq.byteSize(), ResourceScope.globalScope());
         arrayFactory.apply(segment);
     }
 
