@@ -24,15 +24,19 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.internal.foreign.AbstractCLinker;
 import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.abi.Binding;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
+import jdk.internal.reflect.CallerSensitive;
+import jdk.internal.reflect.Reflection;
+import jdk.internal.vm.annotation.NativeAccess;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -43,7 +47,7 @@ import java.util.function.Consumer;
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
-public class SysVx64Linker implements CLinker {
+public class SysVx64Linker extends AbstractCLinker {
     public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
     public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
     public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
@@ -83,7 +87,9 @@ public class SysVx64Linker implements CLinker {
     }
 
     @Override
+    @CallerSensitive
     public MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         MethodType llMt = SharedUtils.convertVaListCarriers(type, SysVVaList.CARRIER);
@@ -97,7 +103,9 @@ public class SysVx64Linker implements CLinker {
     }
 
     @Override
+    @CallerSensitive
     public MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);

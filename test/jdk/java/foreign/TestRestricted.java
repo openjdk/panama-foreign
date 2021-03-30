@@ -37,37 +37,37 @@ import java.lang.reflect.InvocationTargetException;
 public class TestRestricted {
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection() throws Throwable {
-        Method method = MemorySegment.class.getDeclaredMethod("ofNativeRestricted");
+        Method method = MemorySegment.class.getDeclaredMethod("ofNative");
         method.invoke(null);
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke() throws Throwable {
         var mh = MethodHandles.lookup().findStatic(MemorySegment.class,
-            "ofNativeRestricted", MethodType.methodType(MemorySegment.class));
+            "ofNative", MethodType.methodType(MemorySegment.class));
         var seg = (MemorySegment)mh.invokeExact();
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess() throws Throwable {
-        MemorySegment.ofNativeRestricted();
+        MemorySegment.ofNative();
     }
 
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection2() throws Throwable {
-        Method method = MemoryAddress.class.getDeclaredMethod("asSegmentRestricted", long.class);
+        Method method = MemoryAddress.class.getDeclaredMethod("asSegment", long.class);
         method.invoke(MemoryAddress.NULL, 4000L);
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke2() throws Throwable {
-        var mh = MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegmentRestricted",
+        var mh = MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegment",
             MethodType.methodType(MemorySegment.class, long.class));
         var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L);
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess2() throws Throwable {
-        MemoryAddress.NULL.asSegmentRestricted(4000L);
+        MemoryAddress.NULL.asSegment(4000L);
     }
 }

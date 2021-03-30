@@ -111,11 +111,13 @@ public final class LibrariesHelper {
 
         LibraryLookupImpl(NativeLibrary library, ResourceScope scope) {
             this.library = library;
-            this.librarySegment = MemoryAddress.NULL.asSegmentRestricted(Long.MAX_VALUE, scope);
+            this.librarySegment = MemoryAddress.NULL.asSegment(Long.MAX_VALUE, scope);
         }
 
         @Override
+        @CallerSensitive
         public Optional<MemoryAddress> lookup(String name) {
+            Reflection.ensureNativeAccess(Reflection.getCallerClass());
             try {
                 Objects.requireNonNull(name);
                 MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));
