@@ -291,13 +291,13 @@ public abstract class Binding {
         }
 
         /**
-         * Dummy binding context. Throws exceptions when attempting to access allocator/scope, and its
-         * {@link #close()} is idempotent.
+         * Dummy binding context. Throws exceptions when attempting to access scope, return a throwing allocator, and has
+         * an idempotent {@link #close()}.
          */
         public static Context DUMMY = new Context(null, null) {
             @Override
             public SegmentAllocator allocator() {
-                throw new UnsupportedOperationException();
+                return SharedUtils.THROWING_ALLOCATOR;
             }
 
             @Override
@@ -310,12 +310,6 @@ public abstract class Binding {
                 // do nothing
             }
         };
-
-        /**
-         * Default binding context. Does not provide a resource scope, but provides a default {@link SegmentAllocator}
-         * which uses {@link MemorySegment#allocateNative(long, long)}.
-         */
-        public static Context DEFAULT = ofAllocator(MemorySegment::allocateNative);
     }
 
     enum Tag {

@@ -23,6 +23,7 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandles;
@@ -55,19 +56,19 @@ public class TestRestricted {
 
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection2() throws Throwable {
-        Method method = MemoryAddress.class.getDeclaredMethod("asSegment", long.class);
-        method.invoke(MemoryAddress.NULL, 4000L);
+        Method method = MemoryAddress.class.getDeclaredMethod("asSegment", long.class, ResourceScope.class);
+        method.invoke(MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke2() throws Throwable {
         var mh = MethodHandles.lookup().findVirtual(MemoryAddress.class, "asSegment",
-            MethodType.methodType(MemorySegment.class, long.class));
-        var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L);
+            MethodType.methodType(MemorySegment.class, long.class, ResourceScope.class));
+        var seg = (MemorySegment)mh.invokeExact(MemoryAddress.NULL, 4000L, ResourceScope.globalScope());
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess2() throws Throwable {
-        MemoryAddress.NULL.asSegment(4000L);
+        MemoryAddress.NULL.asSegment(4000L, ResourceScope.globalScope());
     }
 }

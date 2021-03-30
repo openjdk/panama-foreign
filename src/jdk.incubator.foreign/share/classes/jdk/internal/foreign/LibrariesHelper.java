@@ -90,7 +90,7 @@ public final class LibrariesHelper {
         ResourceScope[] holder = new ResourceScope[1];
         try {
             WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
-                MemoryScope s = MemoryScope.createDefault();
+                MemoryScope s = MemoryScope.createImplicitScope();
                 holder[0] = s; // keep the scope alive at least until the outer method returns
                 s.addOrCleanupIfFail(MemoryScope.ResourceList.ResourceCleanup.ofRunnable(() -> {
                     nativeLibraries.unload(library);

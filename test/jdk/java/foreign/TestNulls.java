@@ -106,11 +106,7 @@ public class TestNulls {
             "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
-            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/0/0",
-            "jdk.incubator.foreign.ResourceScope/ofConfined(java.lang.Object,java.lang.ref.Cleaner)/1/0",
-            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/0/0",
-            "jdk.incubator.foreign.ResourceScope/ofShared(java.lang.Object,java.lang.ref.Cleaner)/1/0"
+            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
@@ -163,7 +159,7 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
         addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
-        addDefaultMapping(SegmentAllocator.class, MemorySegment::allocateNative);
+        addDefaultMapping(SegmentAllocator.class, SegmentAllocator.implicit());
         addDefaultMapping(Supplier.class, () -> null);
     }
 
@@ -176,7 +172,7 @@ public class TestNulls {
             vaList = CLinker.VaList.make(b -> {
                 builderRef.set(b);
                 b.vargFromLong(CLinker.C_LONG_LONG, 42L);
-            });
+            }, ResourceScope.ofImplicit());
             vaListBuilder = builderRef.get();
         }
     }

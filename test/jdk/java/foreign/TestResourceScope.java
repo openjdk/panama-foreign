@@ -52,7 +52,9 @@ public class TestResourceScope {
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofConfined(null, cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.ofConfined(cleaner) :
+                ResourceScope.ofConfined();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addOnClose(() -> acc.addAndGet(delta));
@@ -75,7 +77,9 @@ public class TestResourceScope {
     public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofShared(null, cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.ofShared(cleaner) :
+                ResourceScope.ofShared();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addOnClose(() -> acc.addAndGet(delta));
@@ -99,7 +103,9 @@ public class TestResourceScope {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
-        ResourceScope scope = ResourceScope.ofShared(null, cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.ofShared(cleaner) :
+                ResourceScope.ofShared();
         AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -147,7 +153,9 @@ public class TestResourceScope {
     @Test(dataProvider = "cleaners")
     public void testLockSingleThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofConfined(null, cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.ofConfined(cleaner) :
+                ResourceScope.ofConfined();
         List<ResourceScope.Handle> handles = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
             handles.add(scope.acquire());
@@ -171,7 +179,9 @@ public class TestResourceScope {
     @Test(dataProvider = "cleaners")
     public void testLockSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = ResourceScope.ofShared(null, cleaner);
+        ResourceScope scope = cleaner != null ?
+                ResourceScope.ofShared(cleaner) :
+                ResourceScope.ofShared();
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
                 try {

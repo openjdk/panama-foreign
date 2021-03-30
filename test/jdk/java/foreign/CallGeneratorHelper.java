@@ -26,6 +26,7 @@ import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.VarHandle;
@@ -360,15 +361,15 @@ public class CallGeneratorHelper extends NativeTestHelper {
     @SuppressWarnings("unchecked")
     static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
-            MemorySegment segment = MemorySegment.allocateNative(layout);
+            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
-            MemorySegment segment = MemorySegment.allocateNative(1);
+            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.ofImplicit());
             if (check) {
                 checks.add(o -> {
                     try {
-                        assertEquals((MemoryAddress)o, segment.address());
+                        assertEquals(o, segment.address());
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);
                     }

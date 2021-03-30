@@ -62,8 +62,8 @@ import java.util.Spliterator;
  * <h2>Constructing memory segments</h2>
  *
  * There are multiple ways to obtain a memory segment. First, memory segments backed by off-heap memory can
- * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout)},
- * {@link MemorySegment#allocateNative(long)} and {@link MemorySegment#allocateNative(long, long)}). Memory segments obtained
+ * be allocated using one of the many factory methods provided (see {@link MemorySegment#allocateNative(MemoryLayout, ResourceScope)},
+ * {@link MemorySegment#allocateNative(long, ResourceScope)} and {@link MemorySegment#allocateNative(long, long, ResourceScope)}). Memory segments obtained
  * in this way are called <em>native memory segments</em>.
  * <p>
  * It is also possible to obtain a memory segment backed by an existing heap-allocated Java array,
@@ -79,7 +79,7 @@ import java.util.Spliterator;
  * by native memory.
  * <p>
  * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode)}. Such memory segments are called <em>mapped memory segments</em>;
+ * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such memory segments are called <em>mapped memory segments</em>;
  * mapped memory segments are associated with an underlying file descriptor. For more operations on mapped memory segments, please refer to the
  * {@link MappedMemorySegments} class.
  *
@@ -286,7 +286,7 @@ public interface MemorySegment extends Addressable {
 
     /**
      * Is this a mapped segment? Returns true if this segment is a mapped memory segment,
-     * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode)} factory, or a buffer segment
+     * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
      * @return {@code true} if this segment is a mapped segment.
      */
@@ -554,26 +554,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout.
-     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
-     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    allocateNative(layout.bytesSize(), layout.bytesAlignment());
-     * }</pre></blockquote>
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     *
-     * @param layout the layout of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
-     */
-    static MemorySegment allocateNative(MemoryLayout layout) {
-        return allocateNative(layout, MemoryScope.createDefault());
-    }
-
-    /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout
      * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
@@ -597,26 +577,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes).
-     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
-     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    allocateNative(bytesSize, 1);
-     * }</pre></blockquote>
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize <= 0}.
-     */
-    static MemorySegment allocateNative(long bytesSize) {
-        return allocateNative(bytesSize, 1);
-    }
-
-    /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
      * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
@@ -635,24 +595,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      */
     static MemorySegment allocateNative(long bytesSize, ResourceScope scope) {
         return allocateNative(bytesSize, 1, scope);
-    }
-
-    /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
-     * and alignment constraints (in bytes). The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}.
-     * Resources associated with this segment will be automatically released when the returned segment
-     * (or any slices and views derived from it) is no longer in use.
-     * <p>
-     * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
-     *
-     * @param bytesSize the size (in bytes) of the off-heap memory block backing the native memory segment.
-     * @param alignmentBytes the alignment constraint (in bytes) of the off-heap memory block backing the native memory segment.
-     * @return a new native memory segment.
-     * @throws IllegalArgumentException if {@code bytesSize <= 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
-     * is not a power of 2.
-     */
-    static MemorySegment allocateNative(long bytesSize, long alignmentBytes) {
-        return allocateNative(bytesSize, alignmentBytes, MemoryScope.createDefault());
     }
 
     /**
@@ -682,39 +624,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
         }
 
         return NativeMemorySegmentImpl.makeNativeSegment(bytesSize, alignmentBytes, (MemoryScope) scope);
-    }
-
-    /**
-     * Creates a new mapped memory segment that models a memory-mapped region of a file from a given path.
-     * The returned segment is associated with a fresh {@link ResourceScope#ofDefault() default scope}. Resources associated with this
-     * segment will be automatically released when the returned segment (or any slices and views derived from it) is no longer in use.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    mapFile(path, bytesOffset, bytesSize, mapMode, ResourceScope.ofShared(Cleaner.create()));
-     * }</pre></blockquote>
-     *
-     * @implNote When obtaining a mapped segment from a newly created file, the initialization state of the contents of the block
-     * of mapped memory associated with the returned mapped memory segment is unspecified and should not be relied upon.
-     *
-     * @param path the path to the file to memory map.
-     * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
-     * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
-     * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
-     * @return a new mapped memory segment.
-     * @throws IllegalArgumentException if {@code bytesOffset < 0}.
-     * @throws IllegalArgumentException if {@code bytesSize < 0}.
-     * @throws UnsupportedOperationException if an unsupported map mode is specified, or if the {@code path} is associated
-     * with a provider that does not support creating file channels.
-     * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
-     * @throws  SecurityException If a security manager is installed and it denies an unspecified permission required by the implementation.
-     * In the case of the default provider, the {@link SecurityManager#checkRead(String)} method is invoked to check
-     * read access if the file is opened for reading. The {@link SecurityManager#checkWrite(String)} method is invoked to check
-     * write access if the file is opened for writing.
-     */
-    static MemorySegment mapFile(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode) throws IOException {
-        return mapFile(path, bytesOffset, bytesSize, mapMode, MemoryScope.createDefault());
     }
 
     /**

@@ -214,7 +214,7 @@ public class TestNative {
     public void testBadResize() {
         try (ResourceScope scope = ResourceScope.ofConfined()) {
             MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
-            segment.address().asSegment(0);
+            segment.address().asSegment(0, ResourceScope.globalScope());
         }
     }
 

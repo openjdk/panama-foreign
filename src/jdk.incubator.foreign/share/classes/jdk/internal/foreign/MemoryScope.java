@@ -53,12 +53,16 @@ import java.util.Objects;
 public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
     final ResourceList resourceList;
-    protected final Object ref;
 
     @Override
     public void addOnClose(Runnable runnable) {
         Objects.requireNonNull(runnable);
         addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
+    }
+
+    @Override
+    public boolean isImplicit() {
+        return false;
     }
 
     /**
@@ -88,39 +92,36 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    protected MemoryScope(Object ref, Cleaner cleaner, ResourceList resourceList) {
-        this.ref = ref;
+    protected MemoryScope(Cleaner cleaner, ResourceList resourceList) {
         this.resourceList = resourceList;
         if (cleaner != null) {
             cleaner.register(this, resourceList);
         }
     }
 
-    public static MemoryScope createDefault() {
-        return new NonCloseableSharedScope(null, CleanerFactory.cleaner());
+    public static MemoryScope createImplicitScope() {
+        return new NonCloseableSharedScope(CleanerFactory.cleaner());
     }
 
-    public static MemoryScope createConfined(Thread thread, Object ref, Cleaner cleaner) {
-        return new ConfinedScope(thread, ref, cleaner);
+    public static MemoryScope createConfined(Thread thread, Cleaner cleaner) {
+        return new ConfinedScope(thread, cleaner);
     }
 
     /**
      * Creates a confined memory scope with given attachment and cleanup action. The returned scope
      * is assumed to be confined on the current thread.
-     * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a confined memory scope
      */
-    public static MemoryScope createConfined(Object ref, Cleaner cleaner) {
-        return new ConfinedScope(Thread.currentThread(), ref, cleaner);
+    public static MemoryScope createConfined(Cleaner cleaner) {
+        return new ConfinedScope(Thread.currentThread(), cleaner);
     }
 
     /**
      * Creates a shared memory scope with given attachment and cleanup action.
-     * @param ref           an optional reference to an instance that needs to be kept reachable
      * @return a shared memory scope
      */
-    public static MemoryScope createShared(Object ref, Cleaner cleaner) {
-        return new SharedScope(ref, cleaner);
+    public static MemoryScope createShared(Cleaner cleaner) {
+        return new SharedScope(cleaner);
     }
 
     /**
@@ -197,8 +198,8 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         @Stable
         private Handle handle;
 
-        public NonCloseableSharedScope(Object ref, Cleaner cleaner) {
-            super(ref, cleaner);
+        public NonCloseableSharedScope(Cleaner cleaner) {
+            super(cleaner);
         }
 
         @Override
@@ -208,6 +209,11 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
                 handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
             }
             return handle;
+        }
+
+        @Override
+        public boolean isImplicit() {
+            return true;
         }
 
         @Override
@@ -221,7 +227,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * except that the operation which adds new resources to the global scope does nothing: as the scope can never
      * become not-alive, there is nothing to track.
      */
-    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null, null) {
+    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing

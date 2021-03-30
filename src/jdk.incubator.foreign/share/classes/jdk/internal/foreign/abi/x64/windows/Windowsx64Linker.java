@@ -35,7 +35,6 @@ import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
-import jdk.internal.vm.annotation.NativeAccess;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -96,8 +95,8 @@ public final class Windowsx64Linker extends AbstractCLinker {
         MethodType llMt = SharedUtils.convertVaListCarriers(type, WinVaList.CARRIER);
         MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
         if (!type.returnType().equals(MemorySegment.class)) {
-            // not returning segment, just insert default allocator
-            handle = MethodHandles.insertArguments(handle, 1, Binding.Context.DEFAULT.allocator());
+            // not returning segment, just insert a throwing allocator
+            handle = MethodHandles.insertArguments(handle, 1, SharedUtils.THROWING_ALLOCATOR);
         }
         handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;

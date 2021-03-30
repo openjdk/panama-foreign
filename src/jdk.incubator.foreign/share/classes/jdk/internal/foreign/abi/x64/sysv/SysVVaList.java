@@ -41,6 +41,7 @@ import static jdk.internal.foreign.PlatformLayouts.SysV;
 import static jdk.incubator.foreign.CLinker.VaList;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
+import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
 import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 
@@ -207,11 +208,6 @@ public class SysVVaList implements VaList {
     }
 
     @Override
-    public MemorySegment vargAsSegment(MemoryLayout layout) {
-        return (MemorySegment) read(MemorySegment.class, layout);
-    }
-
-    @Override
     public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
         Objects.requireNonNull(allocator);
         return (MemorySegment) read(MemorySegment.class, layout, allocator);
@@ -223,7 +219,7 @@ public class SysVVaList implements VaList {
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
-        return read(carrier, layout, MemorySegment::allocateNative);
+        return read(carrier, layout, THROWING_ALLOCATOR);
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout, SegmentAllocator allocator) {

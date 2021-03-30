@@ -33,12 +33,14 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+
 import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
 
 public class TestFree {
     private static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return addr.asSegment(numElements * layout.byteSize());
+        return addr.asSegment(numElements * layout.byteSize(), ResourceScope.globalScope());
     }
 
     public void test() throws Throwable {

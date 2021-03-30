@@ -66,6 +66,10 @@ import java.util.Spliterator;
  * deterministic resource deallocation, while still prevent accidental native memory leaks. In case a managed resource
  * scope is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
  * (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
+ * <p>
+ * Some managed resource scopes are implicitly managed (see {@link #ofImplicit()}, {@link #globalScope()}, and are said to be <em>implicit scopes</em>.
+ * An implicit resource scope only features implicit closure, and always throws an {@link UnsupportedOperationException}
+ * when the {@link #close()} method is called directly.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
@@ -141,6 +145,14 @@ public interface ResourceScope extends AutoCloseable {
     Thread ownerThread();
 
     /**
+     * Is this resource scope an <em>implicit scope</em>?
+     * @return true if this scope is an <em>implicit scope</em>.
+     * @see #ofImplicit()
+     * @see #globalScope()
+     */
+    boolean isImplicit();
+
+    /**
      * Closes this resource scope. As a side-effect, if this operation completes without exceptions, this scope will be marked
      * as <em>not alive</em>, and subsequent operations on resources associated with this scope will fail with {@link IllegalStateException}.
      * Additionally, upon successful closure, all native resources associated with this resource scope will be released.
@@ -157,9 +169,7 @@ public interface ResourceScope extends AutoCloseable {
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
      *     <li>one or more handles (see {@link #acquire()}) associated with this resource scope have not been closed</li>
      * </ul>
-     * @throws UnsupportedOperationException if the {@code close} operation is not supported by this resource scope. This
-     * is the case for the resource scope returned by {@link #globalScope()}, or the resource scopes associated to
-     * memory segments created using certain factories (such as {@link MemorySegment#allocateNative(long)}).
+     * @throws UnsupportedOperationException if this resource scope is {@link #isImplicit() implicit}.
      */
     void close();
 
@@ -200,7 +210,7 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new confined scope.
      */
     static ResourceScope ofConfined() {
-        return ofConfined(null, null);
+        return MemoryScope.createConfined( null);
     }
 
     /**
@@ -211,18 +221,7 @@ public interface ResourceScope extends AutoCloseable {
      */
     static ResourceScope ofConfined(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return ofConfined(null, cleaner);
-    }
-
-    /**
-     * Create a new confined scope. The resulting scope might be managed by a {@link Cleaner} (where provided).
-     * An optional attachment can be associated with the resulting scope.
-     * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
-     * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @return a new confined scope, managed by {@code cleaner} (where provided).
-     */
-    static ResourceScope ofConfined(Object attachment, Cleaner cleaner) {
-        return MemoryScope.createConfined(attachment, cleaner);
+        return MemoryScope.createConfined( cleaner);
     }
 
     /**
@@ -230,7 +229,7 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new shared scope.
      */
     static ResourceScope ofShared() {
-        return ofShared(null, null);
+        return MemoryScope.createShared(null);
     }
 
     /**
@@ -241,40 +240,24 @@ public interface ResourceScope extends AutoCloseable {
      */
     static ResourceScope ofShared(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return ofShared(null, cleaner);
+        return MemoryScope.createShared(cleaner);
     }
 
     /**
-     * Create a new shared scope. The resulting scope might be managed by a {@link Cleaner} (where provided).
-     * An optional attachment can be associated with the resulting scope.
-     * @param attachment an attachment object which is kept alive by the returned resource scope (can be {@code null}).
-     * @param cleaner the cleaner to be associated with the returned scope. Can be {@code null}.
-     * @return a new shared scope, managed by {@code cleaner} (where provided).
-     */
-    static ResourceScope ofShared(Object attachment, Cleaner cleaner) {
-        return MemoryScope.createShared(attachment, cleaner);
-    }
-
-    /**
-     * Create a new <em>default scope</em>. The default scope is a shared and non-closeable scope which only features
+     * Create a new <em>implicit scope</em>. The implicit scope is a managed, shared, and non-closeable scope which only features
      * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>.
-     * This resource scope is used as a valid default where no resource scope is provided by the user. For instance, this code:
-     * <blockquote><pre>{@code
-    MemorySegment.allocateNative(10);
-     * }</pre></blockquote>
-     * is equivalent to the following code:
-     * <blockquote><pre>{@code
-    MemorySegment.allocateNative(10, ResourceScope.ofDefault());
-     * }</pre></blockquote>
+     * Since implicit scopes can only be closed implicitly by the garbage collector, it is recommended that implicit
+     * scopes are only used in cases where deallocation performance is not a critical concern, to avoid unnecessary
+     * memory pressure.
      *
-     * @return a new default scope.
+     * @return a new implicit scope.
      */
-    static ResourceScope ofDefault() {
-        return MemoryScope.createDefault();
+    static ResourceScope ofImplicit() {
+        return MemoryScope.createImplicitScope();
     }
 
     /**
-     * A non-closeable, shared, global scope which is assumed to be always alive.
+     * Returns an implicit scope which is assumed to be always alive.
      * @return the global scope.
      */
     static ResourceScope globalScope() {

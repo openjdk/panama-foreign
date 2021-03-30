@@ -63,8 +63,8 @@ class SharedScope extends MemoryScope {
         }
     }
 
-    SharedScope(Object ref, Cleaner cleaner) {
-        super(ref, cleaner, new SharedResourceList());
+    SharedScope(Cleaner cleaner) {
+        super(cleaner, new SharedResourceList());
     }
 
     @Override
