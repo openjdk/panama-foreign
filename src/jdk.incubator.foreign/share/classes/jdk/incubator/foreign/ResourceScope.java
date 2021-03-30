@@ -67,7 +67,7 @@ import java.util.Spliterator;
  * scope is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
  * (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
  * <p>
- * Some resource scopes (see {@link #ofImplicit()}, {@link #globalScope()} are said to be <em>implicit scopes</em>.
+ * Some managed resource scopes are implicitly managed (see {@link #ofImplicit()}, {@link #globalScope()}, and are said to be <em>implicit scopes</em>.
  * An implicit resource scope only features implicit closure, and always throws an {@link UnsupportedOperationException}
  * when the {@link #close()} method is called directly.
  *
