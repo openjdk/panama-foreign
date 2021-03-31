@@ -103,7 +103,7 @@ public class SharedUtils {
     }
 
     // this allocator should be used when no allocation is expected
-    public final static SegmentAllocator THROWING_ALLOCATOR = (size, align) -> { throw new IllegalStateException("Cannot get here"); };
+    public static final SegmentAllocator THROWING_ALLOCATOR = (size, align) -> { throw new IllegalStateException("Cannot get here"); };
 
     /**
      * Align the specified type from a given address
@@ -415,13 +415,13 @@ public class SharedUtils {
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
-        final static LibraryLookup LOOKUP = LibraryLookup.ofDefault();
+        static final LibraryLookup LOOKUP = LibraryLookup.ofDefault();
 
-        final static MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
+        static final MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
                         MethodType.methodType(MemoryAddress.class, long.class),
                 FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
 
-        final static MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
+        static final MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
                         MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(C_POINTER));
     }

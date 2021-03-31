@@ -48,10 +48,10 @@ import java.util.function.Supplier;
 public final class LibrariesHelper {
     private LibrariesHelper() {}
 
-    private final static NativeLibraries nativeLibraries =
+    private static final NativeLibraries nativeLibraries =
             NativeLibraries.rawNativeLibraries(LibrariesHelper.class, true);
 
-    private final static Map<NativeLibrary, WeakReference<ResourceScope>> loadedLibraries = new ConcurrentHashMap<>();
+    private static final Map<NativeLibrary, WeakReference<ResourceScope>> loadedLibraries = new ConcurrentHashMap<>();
 
     /**
      * Load the specified shared library.

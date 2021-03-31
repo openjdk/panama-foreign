@@ -264,7 +264,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
 
             public abstract void cleanup();
 
-            final static ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
+            static final ResourceCleanup CLOSED_LIST = new ResourceCleanup() {
                 @Override
                 public void cleanup() {
                     throw new IllegalStateException("This resource list has already been closed!");
