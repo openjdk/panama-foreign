@@ -46,10 +46,10 @@ class SharedScope extends ResourceScopeImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    private final static int ALIVE = 0;
-    private final static int CLOSING = -1;
-    private final static int CLOSED = -2;
-    private final static int MAX_FORKS = Integer.MAX_VALUE;
+    private static final int ALIVE = 0;
+    private static final int CLOSING = -1;
+    private static final int CLOSED = -2;
+    private static final int MAX_FORKS = Integer.MAX_VALUE;
 
     private int state = ALIVE;
 
