@@ -59,10 +59,10 @@ import static jdk.incubator.foreign.CLinker.*;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class StrLenTest {
 
-    ResourceScope scope = ResourceScope.ofConfined();
+    ResourceScope scope = ResourceScope.newConfinedScope();
 
     SegmentAllocator segmentAllocator;
-    SegmentAllocator arenaAllocator = SegmentAllocator.arenaUnbounded(scope);
+    SegmentAllocator arenaAllocator = SegmentAllocator.arenaAllocator(scope);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -98,7 +98,7 @@ public class StrLenTest {
     @Setup
     public void setup() {
         str = makeString(size);
-        segmentAllocator = SegmentAllocator.prefix(MemorySegment.allocateNative(size + 1));
+        segmentAllocator = SegmentAllocator.ofSegment(MemorySegment.allocateNative(size + 1, ResourceScope.newImplicitScope()));
     }
 
     @TearDown
@@ -113,7 +113,7 @@ public class StrLenTest {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = CLinker.toCString(str, scope);
             return (int)STRLEN.invokeExact(segment.address());
         }
@@ -133,7 +133,7 @@ public class StrLenTest {
     public int panama_strlen_unsafe() throws Throwable {
         MemoryAddress address = makeStringUnsafe(str);
         int res = (int) STRLEN.invokeExact(address);
-        CLinker.freeMemoryRestricted(address);
+        CLinker.freeMemory(address);
         return res;
     }
 
@@ -148,8 +148,8 @@ public class StrLenTest {
     static MemoryAddress makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
-        MemoryAddress address = CLinker.allocateMemoryRestricted(len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
+        MemoryAddress address = CLinker.allocateMemory(len + 1);
+        MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
@@ -159,7 +159,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1, ResourceScope.globalScope());
+        MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;

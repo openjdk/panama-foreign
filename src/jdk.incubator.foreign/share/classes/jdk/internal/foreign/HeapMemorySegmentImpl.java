@@ -52,7 +52,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
 
     @ForceInline
     HeapMemorySegmentImpl(long offset, H base, long length, int mask) {
-        super(length, mask, MemoryScope.GLOBAL);
+        super(length, mask, ResourceScopeImpl.GLOBAL);
         this.offset = offset;
         this.base = base;
     }
@@ -66,7 +66,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
     }
 
     @Override
-    abstract HeapMemorySegmentImpl<H> dup(long offset, long size, int mask, MemoryScope scope);
+    abstract HeapMemorySegmentImpl<H> dup(long offset, long size, int mask, ResourceScopeImpl scope);
 
     @Override
     ByteBuffer makeByteBuffer() {
@@ -86,7 +86,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfByte dup(long offset, long size, int mask, MemoryScope scope) {
+        OfByte dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfByte(this.offset + offset, base, size, mask);
         }
 
@@ -109,7 +109,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfChar dup(long offset, long size, int mask, MemoryScope scope) {
+        OfChar dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfChar(this.offset + offset, base, size, mask);
         }
 
@@ -132,7 +132,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfShort dup(long offset, long size, int mask, MemoryScope scope) {
+        OfShort dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfShort(this.offset + offset, base, size, mask);
         }
 
@@ -155,7 +155,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfInt dup(long offset, long size, int mask, MemoryScope scope) {
+        OfInt dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfInt(this.offset + offset, base, size, mask);
         }
 
@@ -178,7 +178,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfLong dup(long offset, long size, int mask, MemoryScope scope) {
+        OfLong dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfLong(this.offset + offset, base, size, mask);
         }
 
@@ -201,7 +201,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfFloat dup(long offset, long size, int mask, MemoryScope scope) {
+        OfFloat dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfFloat(this.offset + offset, base, size, mask);
         }
 
@@ -224,7 +224,7 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
 
         @Override
-        OfDouble dup(long offset, long size, int mask, MemoryScope scope) {
+        OfDouble dup(long offset, long size, int mask, ResourceScopeImpl scope) {
             return new OfDouble(this.offset + offset, base, size, mask);
         }
 

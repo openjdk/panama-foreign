@@ -63,7 +63,7 @@ public class LoopOverNonConstantHeap {
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
     static final int UNSAFE_BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
 
-    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
     byte[] base;
 
@@ -79,7 +79,7 @@ public class LoopOverNonConstantHeap {
             MemorySegment intI = MemorySegment.ofArray(new int[ALLOC_SIZE]);
             MemorySegment intD = MemorySegment.ofArray(new double[ALLOC_SIZE]);
             MemorySegment intF = MemorySegment.ofArray(new float[ALLOC_SIZE]);
-            MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.ofConfined(Cleaner.create()));
+            MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.newConfinedScope(Cleaner.create()));
             for (int i = 0; i < ALLOC_SIZE; i++) {
                 MemoryAccess.setByteAtOffset(intB, i, (byte)i);
                 MemoryAccess.setIntAtIndex(intI, i, i);

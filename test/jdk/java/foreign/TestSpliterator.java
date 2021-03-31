@@ -35,33 +35,30 @@ import jdk.incubator.foreign.SequenceLayout;
 import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
 import org.testng.annotations.*;
-import static jdk.incubator.foreign.MemorySegment.*;
+
 import static org.testng.Assert.*;
 
 public class TestSpliterator {
 
-    static final VarHandle INT_HANDLE = MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT)
+    static final VarHandle INT_HANDLE = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_INT)
             .varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
 
     final static int CARRIER_SIZE = 4;
 
     @Test(dataProvider = "splits")
     public void testSum(int size, int threshold) {
-        SequenceLayout layout = MemoryLayout.ofSequence(size, MemoryLayouts.JAVA_INT);
+        SequenceLayout layout = MemoryLayout.sequenceLayout(size, MemoryLayouts.JAVA_INT);
 
         //setup
-        try (ResourceScope scope = ResourceScope.ofShared()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
                 INT_HANDLE.set(segment, (long) i, i);
@@ -85,10 +82,10 @@ public class TestSpliterator {
 
     @Test
     public void testSumSameThread() {
-        SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+        SequenceLayout layout = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
 
         //setup
-        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
         for (int i = 0; i < layout.elementCount().getAsLong(); i++) {
             INT_HANDLE.set(segment, (long) i, i);
         }

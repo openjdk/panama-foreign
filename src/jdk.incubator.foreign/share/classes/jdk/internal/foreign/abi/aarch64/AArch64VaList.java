@@ -62,7 +62,7 @@ public class AArch64VaList implements VaList {
     //     int __vr_offs;   // offset from __vr_top to next FP/SIMD register arg
     // } va_list;
 
-    static final GroupLayout LAYOUT = MemoryLayout.ofStruct(
+    static final GroupLayout LAYOUT = MemoryLayout.structLayout(
         AArch64.C_POINTER.withName("__stack"),
         AArch64.C_POINTER.withName("__gr_top"),
         AArch64.C_POINTER.withName("__vr_top"),
@@ -71,14 +71,14 @@ public class AArch64VaList implements VaList {
     ).withName("__va_list");
 
     private static final MemoryLayout GP_REG
-        = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
+        = MemoryLayout.valueLayout(64, ByteOrder.nativeOrder());
     private static final MemoryLayout FP_REG
-        = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder());
+        = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder());
 
     private static final MemoryLayout LAYOUT_GP_REGS
-        = MemoryLayout.ofSequence(MAX_REGISTER_ARGUMENTS, GP_REG);
+        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, GP_REG);
     private static final MemoryLayout LAYOUT_FP_REGS
-        = MemoryLayout.ofSequence(MAX_REGISTER_ARGUMENTS, FP_REG);
+        = MemoryLayout.sequenceLayout(MAX_REGISTER_ARGUMENTS, FP_REG);
 
     private static final int GP_SLOT_SIZE = (int) GP_REG.byteSize();
     private static final int FP_SLOT_SIZE = (int) FP_REG.byteSize();
@@ -123,7 +123,7 @@ public class AArch64VaList implements VaList {
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment ms = MemoryAddress.ofLong(ptr).asSegment(
-                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.newSharedScope());
         cleaner.register(AArch64VaList.class, () -> ms.scope().close());
         VH_stack.set(ms, MemoryAddress.NULL);
         VH_gr_top.set(ms, MemoryAddress.NULL);
@@ -237,7 +237,7 @@ public class AArch64VaList implements VaList {
 
     @Override
     public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
-        return vargAsSegment(layout, SegmentAllocator.scoped(scope));
+        return vargAsSegment(layout, SegmentAllocator.ofScope(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
@@ -508,7 +508,7 @@ public class AArch64VaList implements VaList {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaAllocator(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

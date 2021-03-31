@@ -65,8 +65,8 @@ public class TestSegmentAllocators {
             List<MemorySegment> addressList = new ArrayList<>();
             int elems = ELEMS / ((int)alignedLayout.byteAlignment() / (int)layout.byteAlignment());
             ResourceScope[] scopes = {
-                    ResourceScope.ofConfined(),
-                    ResourceScope.ofShared()
+                    ResourceScope.newConfinedScope(),
+                    ResourceScope.newSharedScope()
             };
             for (ResourceScope scope : scopes) {
                 try (scope) {
@@ -99,8 +99,8 @@ public class TestSegmentAllocators {
 
     @Test
     public void testBigAllocationInUnboundedScope() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.arenaAllocator(scope);
             for (int i = 8 ; i < SIZE_256M ; i *= 8) {
                 MemorySegment address = allocator.allocate(i, i);
                 //check size
@@ -115,8 +115,8 @@ public class TestSegmentAllocators {
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object> allocationFunction, ToArrayHelper<Z> arrayHelper) {
         Z arr = arrayHelper.array();
         ResourceScope[] scopes = {
-                ResourceScope.ofConfined(),
-                ResourceScope.ofShared()
+                ResourceScope.newConfinedScope(),
+                ResourceScope.newSharedScope()
         };
         for (ResourceScope scope : scopes) {
             try (scope) {
@@ -357,8 +357,8 @@ public class TestSegmentAllocators {
             return isBound;
         }
 
-        static AllocationFactory BOUNDED = new AllocationFactory(true, SegmentAllocator::arenaBounded);
-        static AllocationFactory UNBOUNDED = new AllocationFactory(false, (size, scope) -> SegmentAllocator.arenaUnbounded(scope));
+        static AllocationFactory BOUNDED = new AllocationFactory(true, SegmentAllocator::arenaAllocator);
+        static AllocationFactory UNBOUNDED = new AllocationFactory(false, (size, scope) -> SegmentAllocator.arenaAllocator(scope));
     }
 
     interface ToArrayHelper<T> {

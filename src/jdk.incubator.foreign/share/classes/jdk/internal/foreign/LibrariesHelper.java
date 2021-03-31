@@ -90,9 +90,9 @@ public final class LibrariesHelper {
         ResourceScope[] holder = new ResourceScope[1];
         try {
             WeakReference<ResourceScope> scopeRef = loadedLibraries.computeIfAbsent(library, lib -> {
-                MemoryScope s = MemoryScope.createImplicitScope();
+                ResourceScopeImpl s = ResourceScopeImpl.createImplicitScope();
                 holder[0] = s; // keep the scope alive at least until the outer method returns
-                s.addOrCleanupIfFail(MemoryScope.ResourceList.ResourceCleanup.ofRunnable(() -> {
+                s.addOrCleanupIfFail(ResourceScopeImpl.ResourceList.ResourceCleanup.ofRunnable(() -> {
                     nativeLibraries.unload(library);
                     loadedLibraries.remove(library);
                 }));
@@ -144,7 +144,7 @@ public final class LibrariesHelper {
             }
         }
 
-        static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary, MemoryScope.GLOBAL);
+        static LibraryLookup DEFAULT_LOOKUP = new LibraryLookupImpl(NativeLibraries.defaultLibrary, ResourceScopeImpl.GLOBAL);
     }
 
     /* used for testing */

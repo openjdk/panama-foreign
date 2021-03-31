@@ -26,6 +26,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -134,7 +135,7 @@ public class Upcalls {
     static MemoryAddress makeCB(String name, MethodType mt, FunctionDescriptor fd) throws ReflectiveOperationException {
         return abi.upcallStub(
             lookup().findStatic(Upcalls.class, name, mt),
-            fd
+            fd, ResourceScope.globalScope()
         ).address();
     }
 

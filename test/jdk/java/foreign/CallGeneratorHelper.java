@@ -27,6 +27,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.VarHandle;
@@ -43,6 +44,8 @@ import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
+
+    static SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
 
     static final int MAX_FIELDS = 3;
     static final int MAX_PARAMS = 3;
@@ -138,13 +141,13 @@ public class CallGeneratorHelper extends NativeTestHelper {
                     MemoryLayout l = field.layout();
                     long padding = offset % l.bitSize();
                     if (padding != 0) {
-                        layouts.add(MemoryLayout.ofPaddingBits(padding));
+                        layouts.add(MemoryLayout.paddingLayout(padding));
                         offset += padding;
                     }
                     layouts.add(l.withName("field" + offset));
                     offset += l.bitSize();
                 }
-                return MemoryLayout.ofStruct(layouts.toArray(new MemoryLayout[0]));
+                return MemoryLayout.structLayout(layouts.toArray(new MemoryLayout[0]));
             } else {
                 return layout;
             }
@@ -361,11 +364,11 @@ public class CallGeneratorHelper extends NativeTestHelper {
     @SuppressWarnings("unchecked")
     static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
+            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
-            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.ofImplicit());
+            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.newImplicitScope());
             if (check) {
                 checks.add(o -> {
                     try {

@@ -87,7 +87,7 @@ public class TestStackWalk {
     static boolean armed;
 
     public static void main(String[] args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment stub = linker.upcallStub(MH_m, FunctionDescriptor.ofVoid(), scope);
             MemoryAddress stubAddress = stub.address();
             armed = false;

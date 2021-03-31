@@ -64,7 +64,7 @@ public class TestHandshake {
     @Test(dataProvider = "accessors")
     public void testHandshake(String testName, AccessorFactory accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            ResourceScope scope = ResourceScope.ofShared();
+            ResourceScope scope = ResourceScope.newSharedScope();
             MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE, 1, scope);
             System.out.println("ITERATION " + it);
             ExecutorService accessExecutor = Executors.newCachedThreadPool();

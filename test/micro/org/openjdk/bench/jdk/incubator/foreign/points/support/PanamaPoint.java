@@ -39,7 +39,7 @@ import static jdk.incubator.foreign.CLinker.*;
 
 public class PanamaPoint implements AutoCloseable {
 
-    public static final MemoryLayout LAYOUT = MemoryLayout.ofStruct(
+    public static final MemoryLayout LAYOUT = MemoryLayout.structLayout(
         C_INT.withName("x"),
         C_INT.withName("y")
     );
@@ -67,7 +67,7 @@ public class PanamaPoint implements AutoCloseable {
     private final MemorySegment segment;
 
     public PanamaPoint(int x, int y) {
-        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.ofConfined()), x, y);
+        this(MemorySegment.allocateNative(LAYOUT, ResourceScope.newConfinedScope()), x, y);
     }
 
     public PanamaPoint(MemorySegment segment, int x, int y) {

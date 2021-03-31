@@ -62,7 +62,7 @@ public class LoopOverPollutedSegments {
     byte[] arr;
     long addr;
 
-    static final VarHandle intHandle = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
+    static final VarHandle intHandle = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, MemoryLayout.PathElement.sequenceElement());
 
 
     @Setup
@@ -72,7 +72,7 @@ public class LoopOverPollutedSegments {
             unsafe.putInt(addr + (i * 4), i);
         }
         arr = new byte[ALLOC_SIZE];
-        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.ofConfined());
+        nativeSegment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
         heapSegmentBytes = MemorySegment.ofArray(new byte[ALLOC_SIZE]);
         heapSegmentFloats = MemorySegment.ofArray(new float[ELEM_SIZE]);
 

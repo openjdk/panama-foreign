@@ -49,11 +49,9 @@ import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodHandles.collectArguments;
 import static java.lang.invoke.MethodHandles.dropArguments;
-import static java.lang.invoke.MethodHandles.empty;
 import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
@@ -264,7 +262,7 @@ public class ProgrammableInvoker {
      */
     Object invokeMoves(long addr, Object[] args, Binding.VMStore[] argBindings, Binding.VMLoad[] returnBindings) {
         MemorySegment stackArgsSeg = null;
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment argBuffer = MemorySegment.allocateNative(layout.size, 64, scope);
             if (stackArgsBytes > 0) {
                 stackArgsSeg = MemorySegment.allocateNative(stackArgsBytes, 8, scope);

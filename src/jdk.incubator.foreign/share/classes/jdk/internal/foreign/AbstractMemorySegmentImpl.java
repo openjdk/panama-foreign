@@ -46,7 +46,7 @@ import java.util.function.IntFunction;
  * about the segment's spatial and temporal bounds; each memory segment implementation is associated with an owner thread which is set at creation time.
  * Access to certain sensitive operations on the memory segment will fail with {@code IllegalStateException} if the
  * segment is either in an invalid state (e.g. it has already been closed) or if access occurs from a thread other
- * than the owner thread. See {@link MemoryScope} for more details on management of temporal bounds. Subclasses
+ * than the owner thread. See {@link ResourceScopeImpl} for more details on management of temporal bounds. Subclasses
  * are defined for each memory segment kind, see {@link NativeMemorySegmentImpl}, {@link HeapMemorySegmentImpl} and
  * {@link MappedMemorySegmentImpl}.
  */
@@ -65,10 +65,10 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     final long length;
     final int mask;
-    final MemoryScope scope;
+    final ResourceScopeImpl scope;
 
     @ForceInline
-    AbstractMemorySegmentImpl(long length, int mask, MemoryScope scope) {
+    AbstractMemorySegmentImpl(long length, int mask, ResourceScopeImpl scope) {
         this.length = length;
         this.mask = mask;
         this.scope = scope;
@@ -78,7 +78,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
 
     abstract Object base();
 
-    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope);
+    abstract AbstractMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope);
 
     abstract ByteBuffer makeByteBuffer();
 
@@ -191,10 +191,10 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     /**
      * Mismatch over long lengths.
      */
-    private static long vectorizedMismatchLargeForBytes(MemoryScope aScope, MemoryScope bScope,
-                                                       Object a, long aOffset,
-                                                       Object b, long bOffset,
-                                                       long length) {
+    private static long vectorizedMismatchLargeForBytes(ResourceScopeImpl aScope, ResourceScopeImpl bScope,
+                                                        Object a, long aOffset,
+                                                        Object b, long bOffset,
+                                                        long length) {
         long off = 0;
         long remaining = length;
         int i, size;
@@ -360,7 +360,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     }
 
     @Override
-    public MemoryScope scope() {
+    public ResourceScopeImpl scope() {
         return scope;
     }
 
@@ -483,13 +483,13 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         int size = limit - pos;
 
         AbstractMemorySegmentImpl bufferSegment = (AbstractMemorySegmentImpl)nioAccess.bufferSegment(bb);
-        final MemoryScope bufferScope;
+        final ResourceScopeImpl bufferScope;
         int modes;
         if (bufferSegment != null) {
             bufferScope = bufferSegment.scope;
             modes = bufferSegment.mask;
         } else {
-            bufferScope = MemoryScope.GLOBAL;
+            bufferScope = ResourceScopeImpl.GLOBAL;
             modes = defaultAccessModes(size);
         }
         if (bb.isReadOnly()) {

@@ -55,36 +55,36 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import static jdk.incubator.foreign.MemorySegment.*;
+
 import static org.testng.Assert.*;
 
 public class TestNative {
 
-    static SequenceLayout bytes = MemoryLayout.ofSequence(100,
+    static SequenceLayout bytes = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_BYTE.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout chars = MemoryLayout.ofSequence(100,
+    static SequenceLayout chars = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_CHAR.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout shorts = MemoryLayout.ofSequence(100,
+    static SequenceLayout shorts = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_SHORT.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout ints = MemoryLayout.ofSequence(100,
+    static SequenceLayout ints = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_INT.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout floats = MemoryLayout.ofSequence(100,
+    static SequenceLayout floats = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_FLOAT.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout longs = MemoryLayout.ofSequence(100,
+    static SequenceLayout longs = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_LONG.withOrder(ByteOrder.nativeOrder())
     );
 
-    static SequenceLayout doubles = MemoryLayout.ofSequence(100,
+    static SequenceLayout doubles = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_DOUBLE.withOrder(ByteOrder.nativeOrder())
     );
 
@@ -154,7 +154,7 @@ public class TestNative {
 
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(seq, scope);
             initializer.accept(segment);
             checker.accept(segment);
@@ -164,7 +164,7 @@ public class TestNative {
     @Test(dataProvider="buffers")
     public void testNativeCapacity(Function<ByteBuffer, Buffer> bufferFunction, int elemSize) {
         int capacity = (int)doubles.byteSize();
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(doubles, scope);
             ByteBuffer bb = segment.asByteBuffer();
             Buffer buf = bufferFunction.apply(bb);
@@ -177,7 +177,7 @@ public class TestNative {
     @Test
     public void testDefaultAccessModes() {
         MemoryAddress addr = allocate(12);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment mallocSegment = addr.asSegment(12, () -> free(addr), scope);
             assertFalse(mallocSegment.isReadOnly());
         }
@@ -193,7 +193,7 @@ public class TestNative {
     public void testMallocSegment() {
         MemoryAddress addr = allocate(12);
         MemorySegment mallocSegment = null;
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             mallocSegment = addr.asSegment(12, () -> free(addr), scope);
             assertEquals(mallocSegment.byteSize(), 12);
             //free here
@@ -212,7 +212,7 @@ public class TestNative {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadResize() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(4, 1, scope);
             segment.address().asSegment(0, ResourceScope.globalScope());
         }

@@ -122,18 +122,18 @@ public final class MemoryAddressImpl implements MemoryAddress {
         }
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(this, bytesSize,
                 cleanupAction,
-                (MemoryScope) scope);
+                (ResourceScopeImpl) scope);
     }
 
     public static MemorySegment ofLongUnchecked(long value) {
         return ofLongUnchecked(value, Long.MAX_VALUE);
     }
 
-    public static MemorySegment ofLongUnchecked(long value, long byteSize, MemoryScope memoryScope) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, memoryScope);
+    public static MemorySegment ofLongUnchecked(long value, long byteSize, ResourceScopeImpl resourceScope) {
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, resourceScope);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemoryScope.GLOBAL);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, ResourceScopeImpl.GLOBAL);
     }
 }

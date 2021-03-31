@@ -22,16 +22,13 @@
  *
  */
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -61,7 +58,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, intValue);
             int expectedIntValue = Byte.toUnsignedInt(byteValue);
@@ -84,7 +81,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle byteHandle = layout.varHandle(byte.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(byteHandle, long.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Byte.toUnsignedLong(byteValue);
@@ -107,7 +104,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle intHandle = MemoryHandles.asUnsigned(shortHandle, int.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, intValue);
             int expectedIntValue = Short.toUnsignedInt(shortValue);
@@ -130,7 +127,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle shortHandle = layout.varHandle(short.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(shortHandle, long.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Short.toUnsignedLong(shortValue);
@@ -157,7 +154,7 @@ public class TestMemoryHandleAsUnsigned {
         VarHandle intHandle = layout.varHandle(int.class);
         VarHandle longHandle = MemoryHandles.asUnsigned(intHandle, long.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             longHandle.set(segment, longValue);
             long expectedLongValue = Integer.toUnsignedLong(intValue);
@@ -168,11 +165,11 @@ public class TestMemoryHandleAsUnsigned {
 
     @Test
     public void testCoordinatesSequenceLayout() {
-        MemoryLayout layout = MemoryLayout.ofSequence(2, MemoryLayouts.BITS_8_BE);
+        MemoryLayout layout = MemoryLayout.sequenceLayout(2, MemoryLayouts.BITS_8_BE);
         VarHandle byteHandle = layout.varHandle(byte.class, PathElement.sequenceElement());
         VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
 
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout, scope);
             intHandle.set(segment, 0L, (int) -1);
             assertEquals((int) intHandle.get(segment, 0L), 255);
@@ -187,13 +184,13 @@ public class TestMemoryHandleAsUnsigned {
         MemorySegment segment = MemorySegment.ofArray(arr);
 
         {
-            VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+            VarHandle byteHandle = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_BYTE)
                     .varHandle(byte.class, PathElement.sequenceElement());
             VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
             assertEquals((int) intHandle.get(segment, 2L), 129);
         }
         {
-            VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+            VarHandle byteHandle = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_BYTE)
                     .varHandle(byte.class, PathElement.sequenceElement());
             VarHandle intHandle = MemoryHandles.asUnsigned(byteHandle, int.class);
             assertEquals((int) intHandle.get(segment, 2L), 129);

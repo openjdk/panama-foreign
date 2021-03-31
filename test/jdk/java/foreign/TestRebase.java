@@ -29,13 +29,11 @@
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -82,7 +80,7 @@ public class TestRebase {
     static class SegmentSlice {
 
         enum Kind {
-            NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.ofImplicit())),
+            NATIVE(i -> MemorySegment.allocateNative(i, ResourceScope.newImplicitScope())),
             ARRAY(i -> MemorySegment.ofArray(new byte[i]));
 
             final IntFunction<MemorySegment> segmentFactory;

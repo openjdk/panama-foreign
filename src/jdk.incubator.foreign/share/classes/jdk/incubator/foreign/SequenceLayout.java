@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.stream.LongStream;
 
 /**
  * A sequence layout. A sequence layout is used to denote a repetition of a given layout, also called the sequence layout's <em>element layout</em>.
@@ -187,7 +186,7 @@ public final class SequenceLayout extends AbstractLayout {
 
         MemoryLayout res = flat.elementLayout();
         for (int i = elementCounts.length - 1 ; i >= 0 ; i--) {
-            res = MemoryLayout.ofSequence(elementCounts[i], res);
+            res = MemoryLayout.sequenceLayout(elementCounts[i], res);
         }
         return (SequenceLayout)res;
     }
@@ -221,7 +220,7 @@ public final class SequenceLayout extends AbstractLayout {
             count = count * elemSeq.elementCount().orElseThrow(this::badUnboundSequenceLayout);
             elemLayout = elemSeq.elementLayout();
         }
-        return MemoryLayout.ofSequence(count, elemLayout);
+        return MemoryLayout.sequenceLayout(count, elemLayout);
     }
 
     private UnsupportedOperationException badUnboundSequenceLayout() {

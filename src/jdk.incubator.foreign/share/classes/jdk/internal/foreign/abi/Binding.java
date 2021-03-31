@@ -31,7 +31,7 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.ResourceScopeImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -261,8 +261,8 @@ public abstract class Binding {
          * Create a binding context from given native scope.
          */
         public static Context ofBoundedAllocator(long size) {
-            ResourceScope scope = ResourceScope.ofConfined();
-            return new Context(SegmentAllocator.arenaBounded(size, scope), scope);
+            ResourceScope scope = ResourceScope.newConfinedScope();
+            return new Context(SegmentAllocator.arenaAllocator(size, scope), scope);
         }
 
         /**
@@ -283,7 +283,7 @@ public abstract class Binding {
          * the context's allocator is accessed.
          */
         public static Context ofScope() {
-            ResourceScope scope = ResourceScope.ofConfined();
+            ResourceScope scope = ResourceScope.newConfinedScope();
             return new Context(null, scope) {
                 @Override
                 public SegmentAllocator allocator() { throw new UnsupportedOperationException(); }
@@ -989,7 +989,7 @@ public abstract class Binding {
         }
 
         private static MemorySegment toSegment(MemoryAddress operand, long size, Context context) {
-            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (MemoryScope) context.scope);
+            return MemoryAddressImpl.ofLongUnchecked(operand.toRawLongValue(), size, (ResourceScopeImpl) context.scope);
         }
 
         @Override

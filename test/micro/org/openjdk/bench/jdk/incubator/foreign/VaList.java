@@ -76,7 +76,7 @@ public class VaList {
 
     @Benchmark
     public void vaList() throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             CLinker.VaList vaList = CLinker.VaList.make(b ->
                     b.vargFromInt(C_INT, 1)
                             .vargFromDouble(C_DOUBLE, 2D)

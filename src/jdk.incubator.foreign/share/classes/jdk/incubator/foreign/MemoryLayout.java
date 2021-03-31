@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
- * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPaddingBits(long)}).
+ * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#paddingLayout(long)}).
  * Some common value layout constants are defined in the {@link MemoryLayouts} class.
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
@@ -218,7 +218,7 @@ public interface MemoryLayout extends Constable {
      * Does this layout have a specified size? A layout does not have a specified size if it is (or contains) a sequence layout whose
      * size is unspecified (see {@link SequenceLayout#elementCount()}).
      *
-     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#ofPaddingBits(long)})
+     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#paddingLayout(long)})
      * <em>always</em> have a specified size, therefore this method always returns {@code true} in these cases.
      *
      * @return {@code true}, if this layout has a specified size.
@@ -586,7 +586,7 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Is this a padding layout (e.g. a layout created from {@link #ofPaddingBits(long)}) ?
+     * Is this a padding layout (e.g. a layout created from {@link #paddingLayout(long)}) ?
      * @return true, if this layout is a padding layout.
      */
     boolean isPadding();
@@ -730,7 +730,7 @@ E * (S + I * F)
      * @return the new selector layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static MemoryLayout ofPaddingBits(long size) {
+    static MemoryLayout paddingLayout(long size) {
         AbstractLayout.checkSize(size);
         return new PaddingLayout(size);
     }
@@ -743,7 +743,7 @@ E * (S + I * F)
      * @return a new value layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static ValueLayout ofValueBits(long size, ByteOrder order) {
+    static ValueLayout valueLayout(long size, ByteOrder order) {
         Objects.requireNonNull(order);
         AbstractLayout.checkSize(size);
         return new ValueLayout(order, size);
@@ -757,7 +757,7 @@ E * (S + I * F)
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
-    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) {
+    static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
         OptionalLong size = OptionalLong.of(elementCount);
         return new SequenceLayout(size, Objects.requireNonNull(elementLayout));
@@ -769,7 +769,7 @@ E * (S + I * F)
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
-    static SequenceLayout ofSequence(MemoryLayout elementLayout) {
+    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
         return new SequenceLayout(OptionalLong.empty(), Objects.requireNonNull(elementLayout));
     }
 
@@ -779,7 +779,7 @@ E * (S + I * F)
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
      */
-    static GroupLayout ofStruct(MemoryLayout... elements) {
+    static GroupLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return new GroupLayout(GroupLayout.Kind.STRUCT,
                 Stream.of(elements)
@@ -793,7 +793,7 @@ E * (S + I * F)
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
      */
-    static GroupLayout ofUnion(MemoryLayout... elements) {
+    static GroupLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return new GroupLayout(GroupLayout.Kind.UNION,
                 Stream.of(elements)
