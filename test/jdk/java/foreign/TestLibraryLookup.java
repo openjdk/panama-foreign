@@ -100,10 +100,20 @@ public class TestLibraryLookup {
         waitUnload();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBarVariableSymbolLookup() throws Throwable {
+    @Test
+    public void testBadVariableSymbolLookup() {
         LibraryLookup lookup = LibraryLookup.ofLibrary("LookupTest");
-        lookup.lookup("c", MemoryLayouts.JAVA_INT.withBitAlignment(1 << 16)).get();
+        try {
+            MemoryLayout layout = MemoryLayouts.JAVA_INT.withBitAlignment(1 << 16);
+            MemorySegment segment = lookup.lookup("c", layout).get();
+            // no exception, check that address is aligned
+            if ((segment.address().toRawLongValue() % layout.byteAlignment()) != 0) {
+                fail("Unaligned address");
+            }
+        } catch (IllegalArgumentException ex) {
+            // ok, means address was not aligned
+        }
+
     }
 
     @Test
