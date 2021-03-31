@@ -57,11 +57,11 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     private static final boolean enableSmallSegments =
             Boolean.parseBoolean(GetPropertyAction.privilegedGetProperty("jdk.incubator.foreign.SmallSegments", "true"));
 
-    final static int READ_ONLY = 1;
-    final static int SMALL = READ_ONLY << 1;
-    final static long NONCE = new Random().nextLong();
+    static final int READ_ONLY = 1;
+    static final int SMALL = READ_ONLY << 1;
+    static final long NONCE = new Random().nextLong();
 
-    final static JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
+    static final JavaNioAccess nioAccess = SharedSecrets.getJavaNioAccess();
 
     final long length;
     final int mask;
