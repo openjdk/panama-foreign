@@ -38,7 +38,6 @@ import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.Assert.*;
 
@@ -48,8 +47,8 @@ public class TestSharedAccess {
 
     @Test
     public void testShared() throws Throwable {
-        SequenceLayout layout = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-        try (ResourceScope scope = ResourceScope.ofShared()) {
+        SequenceLayout layout = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
             MemorySegment s = MemorySegment.allocateNative(layout, scope);
             for (int i = 0 ; i < layout.elementCount().getAsLong() ; i++) {
                 setInt(s.asSlice(i * 4), 42);
@@ -94,7 +93,7 @@ public class TestSharedAccess {
 
     @Test
     public void testSharedUnsafe() throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofShared()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope()) {
             MemorySegment s = MemorySegment.allocateNative(4, 1, scope);
             setInt(s, 42);
             assertEquals(getInt(s), 42);
@@ -121,8 +120,8 @@ public class TestSharedAccess {
         CountDownLatch a = new CountDownLatch(1);
         CountDownLatch b = new CountDownLatch(1);
         CompletableFuture<?> r;
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
-            MemorySegment s1 = MemorySegment.allocateNative(MemoryLayout.ofSequence(2, MemoryLayouts.JAVA_INT), scope);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment s1 = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(2, MemoryLayouts.JAVA_INT), scope);
             r = CompletableFuture.runAsync(() -> {
                 try {
                     ByteBuffer bb = s1.asByteBuffer();

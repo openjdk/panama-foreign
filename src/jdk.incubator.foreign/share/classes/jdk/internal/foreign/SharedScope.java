@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
  * checking the liveness bit upon access can be performed in plain mode, as in the confined case.
  */
-class SharedScope extends MemoryScope {
+class SharedScope extends ResourceScopeImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 

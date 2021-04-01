@@ -43,11 +43,11 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null, MemoryScope.GLOBAL);
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null, ResourceScopeImpl.GLOBAL);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
-    public static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
+    public static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
 
     // The maximum alignment supported by malloc - typically 16 on
     // 64-bit platforms and 8 on 32-bit platforms.
@@ -58,20 +58,20 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, int mask, MemoryScope scope) {
+    NativeMemorySegmentImpl(long min, long length, int mask, ResourceScopeImpl scope) {
         super(length, mask, scope);
         this.min = min;
     }
 
     @Override
-    NativeMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
+    NativeMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
         return new NativeMemorySegmentImpl(min + offset, size, mask, scope);
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newDirectByteBuffer(min(), (int) this.length, null,
-                scope == MemoryScope.GLOBAL ? null : this);
+                scope == ResourceScopeImpl.GLOBAL ? null : this);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemoryScope scope) {
+    public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, ResourceScopeImpl scope) {
         scope.checkValidStateSlow();
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
@@ -104,7 +104,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
                 defaultAccessModes(alignedSize), scope);
-        scope.addOrCleanupIfFail(new MemoryScope.ResourceList.ResourceCleanup() {
+        scope.addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
@@ -118,7 +118,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, MemoryScope scope) {
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, ResourceScopeImpl scope) {
         scope.checkValidStateSlow();
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
         if (cleanupAction != null) {

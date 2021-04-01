@@ -50,7 +50,7 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
+public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
     final ResourceList resourceList;
 
@@ -92,18 +92,18 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
         }
     }
 
-    protected MemoryScope(Cleaner cleaner, ResourceList resourceList) {
+    protected ResourceScopeImpl(Cleaner cleaner, ResourceList resourceList) {
         this.resourceList = resourceList;
         if (cleaner != null) {
             cleaner.register(this, resourceList);
         }
     }
 
-    public static MemoryScope createImplicitScope() {
+    public static ResourceScopeImpl createImplicitScope() {
         return new NonCloseableSharedScope(CleanerFactory.cleaner());
     }
 
-    public static MemoryScope createConfined(Thread thread, Cleaner cleaner) {
+    public static ResourceScopeImpl createConfined(Thread thread, Cleaner cleaner) {
         return new ConfinedScope(thread, cleaner);
     }
 
@@ -112,7 +112,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * is assumed to be confined on the current thread.
      * @return a confined memory scope
      */
-    public static MemoryScope createConfined(Cleaner cleaner) {
+    public static ResourceScopeImpl createConfined(Cleaner cleaner) {
         return new ConfinedScope(Thread.currentThread(), cleaner);
     }
 
@@ -120,7 +120,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * Creates a shared memory scope with given attachment and cleanup action.
      * @return a shared memory scope
      */
-    public static MemoryScope createShared(Cleaner cleaner) {
+    public static ResourceScopeImpl createShared(Cleaner cleaner) {
         return new SharedScope(cleaner);
     }
 
@@ -180,7 +180,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
     }
 
     /**
-     * Allocates a segment using this scope. Used by {@link SegmentAllocator#scoped(ResourceScope)}.
+     * Allocates a segment using this scope. Used by {@link SegmentAllocator#ofScope(ResourceScope)}.
      */
     @Override
     public MemorySegment allocate(long bytesSize, long bytesAlignment) {
@@ -227,7 +227,7 @@ public abstract class MemoryScope implements ResourceScope, ScopedMemoryAccess.S
      * except that the operation which adds new resources to the global scope does nothing: as the scope can never
      * become not-alive, there is nothing to track.
      */
-    public static MemoryScope GLOBAL = new NonCloseableSharedScope( null) {
+    public static ResourceScopeImpl GLOBAL = new NonCloseableSharedScope( null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing

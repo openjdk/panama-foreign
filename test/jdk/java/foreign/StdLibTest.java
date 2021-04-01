@@ -207,7 +207,7 @@ public class StdLibTest {
         }
 
         String strcat(String s1, String s2) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment buf = MemorySegment.allocateNative(s1.length() + s2.length() + 1, scope);
                 MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
@@ -220,7 +220,7 @@ public class StdLibTest {
         }
 
         int strcmp(String s1, String s2) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment ns1 = toCString(s1, scope);
                 MemorySegment ns2 = toCString(s2, scope);
                 return (int)strcmp.invokeExact(ns1.address(), ns2.address());
@@ -228,21 +228,21 @@ public class StdLibTest {
         }
 
         int puts(String msg) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)puts.invokeExact(s.address());
             }
         }
 
         int strlen(String msg) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment s = toCString(msg, scope);
                 return (int)strlen.invokeExact(s.address());
             }
         }
 
         Tm gmtime(long arg) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment time = MemorySegment.allocateNative(8, scope);
                 setLong(time, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
@@ -292,8 +292,8 @@ public class StdLibTest {
 
         int[] qsort(int[] arr) throws Throwable {
             //init native array
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
-                SegmentAllocator allocator = SegmentAllocator.scoped(scope);
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
                 MemorySegment nativeArr = allocator.allocateArray(C_INT, arr);
 
                 //call qsort
@@ -316,7 +316,7 @@ public class StdLibTest {
         }
 
         int printf(String format, List<PrintfArg> args) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment formatStr = toCString(format, scope);
                 return (int)specializedPrintf(args).invokeExact(formatStr.address(),
                         args.stream().map(a -> a.nativeValue(scope)).toArray());
@@ -324,7 +324,7 @@ public class StdLibTest {
         }
 
         int vprintf(String format, List<PrintfArg> args) throws Throwable {
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment formatStr = toCString(format, scope);
                 VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
                 return (int)vprintf.invokeExact(formatStr.address(), vaList);

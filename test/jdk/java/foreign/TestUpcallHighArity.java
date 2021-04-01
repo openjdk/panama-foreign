@@ -46,7 +46,6 @@ import org.testng.annotations.Test;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -59,7 +58,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     static final CLinker LINKER = CLinker.getInstance();
 
     // struct S_PDI { void* p0; double p1; int p2; };
-    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.ofStruct(
+    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.structLayout(
         C_POINTER.withName("p0"),
         C_DOUBLE.withName("p1"),
         C_INT.withName("p2")
@@ -92,7 +91,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.ofImplicit());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }
@@ -107,7 +106,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
         MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub.address();

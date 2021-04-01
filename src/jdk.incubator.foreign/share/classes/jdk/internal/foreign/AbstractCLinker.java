@@ -30,7 +30,6 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SegmentAllocator;
-import jdk.internal.foreign.MemoryScope;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 

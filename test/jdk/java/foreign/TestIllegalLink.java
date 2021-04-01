@@ -73,7 +73,7 @@ public class TestIllegalLink {
             },
             {
                 MethodType.methodType(void.class, int.class),
-                FunctionDescriptor.ofVoid(MemoryLayout.ofPaddingBits(32)),
+                FunctionDescriptor.ofVoid(MemoryLayout.paddingLayout(32)),
                 "Expected a ValueLayout"
             },
             {
@@ -88,7 +88,7 @@ public class TestIllegalLink {
             },
             {
                 MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(MemoryLayout.ofPaddingBits(64)),
+                FunctionDescriptor.ofVoid(MemoryLayout.paddingLayout(64)),
                 "Expected a ValueLayout"
             },
             {

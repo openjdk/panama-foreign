@@ -47,31 +47,31 @@ import static org.testng.Assert.*;
 
 public class TestArrays {
 
-    static SequenceLayout bytes = MemoryLayout.ofSequence(100,
+    static SequenceLayout bytes = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_BYTE
     );
 
-    static SequenceLayout chars = MemoryLayout.ofSequence(100,
+    static SequenceLayout chars = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_CHAR
     );
 
-    static SequenceLayout shorts = MemoryLayout.ofSequence(100,
+    static SequenceLayout shorts = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_SHORT
     );
 
-    static SequenceLayout ints = MemoryLayout.ofSequence(100,
+    static SequenceLayout ints = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_INT
     );
 
-    static SequenceLayout floats = MemoryLayout.ofSequence(100,
+    static SequenceLayout floats = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_FLOAT
     );
 
-    static SequenceLayout longs = MemoryLayout.ofSequence(100,
+    static SequenceLayout longs = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_LONG
     );
 
-    static SequenceLayout doubles = MemoryLayout.ofSequence(100,
+    static SequenceLayout doubles = MemoryLayout.sequenceLayout(100,
             MemoryLayouts.JAVA_DOUBLE
     );
 
@@ -101,7 +101,7 @@ public class TestArrays {
 
     @Test(dataProvider = "arrays")
     public void testArrays(Consumer<MemorySegment> init, Consumer<MemorySegment> checker, MemoryLayout layout) {
-        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
         init.accept(segment);
         assertFalse(segment.isReadOnly());
         checker.accept(segment);
@@ -110,7 +110,7 @@ public class TestArrays {
     @Test(dataProvider = "elemLayouts",
             expectedExceptions = IllegalStateException.class)
     public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemoryLayout seq = MemoryLayout.ofSequence((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
+        MemoryLayout seq = MemoryLayout.sequenceLayout((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
         //do not really allocate here, as it's way too much memory
         MemorySegment segment = MemoryAddress.NULL.asSegment(seq.byteSize(), ResourceScope.globalScope());
         arrayFactory.apply(segment);
@@ -120,7 +120,7 @@ public class TestArrays {
             expectedExceptions = IllegalStateException.class)
     public void testBadSize(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
         if (layout.byteSize() == 1) throw new IllegalStateException(); //make it fail
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1, layout.byteSize(), scope);
             arrayFactory.apply(segment);
         }
@@ -129,7 +129,7 @@ public class TestArrays {
     @Test(dataProvider = "elemLayouts",
             expectedExceptions = IllegalStateException.class)
     public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.ofConfined());
+        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newConfinedScope());
         segment.scope().close();
         arrayFactory.apply(segment);
     }

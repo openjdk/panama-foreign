@@ -62,7 +62,7 @@ public class TestAddressHandle {
     @Test(dataProvider = "addressHandles")
     public void testAddressHandle(VarHandle addrHandle, int byteSize) {
         VarHandle longHandle = MemoryLayouts.JAVA_LONG.varHandle(long.class);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(8, scope);
             MemorySegment target = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
                     segment.asSlice(8 - byteSize) :
@@ -79,7 +79,7 @@ public class TestAddressHandle {
     @Test(dataProvider = "addressHandles")
     public void testNull(VarHandle addrHandle, int byteSize) {
         VarHandle longHandle = MemoryLayouts.JAVA_LONG.varHandle(long.class);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(8, scope);
             longHandle.set(segment, 0L);
             MemoryAddress address = (MemoryAddress)addrHandle.get(segment);

@@ -60,7 +60,7 @@ public class LoopOverNonConstantShared {
     static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
 
-    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
     MemorySegment segment;
     long unsafe_addr;
 
@@ -72,7 +72,7 @@ public class LoopOverNonConstantShared {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(unsafe_addr + (i * CARRIER_SIZE) , i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.ofShared());
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.newSharedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

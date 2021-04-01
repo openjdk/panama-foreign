@@ -66,9 +66,9 @@ public class ParallelSum {
     final static int CARRIER_SIZE = 4;
     final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
-    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
 
-    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
+    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(ELEM_SIZE, MemoryLayouts.JAVA_INT);
     final static int BULK_FACTOR = 512;
     final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
 
@@ -83,7 +83,7 @@ public class ParallelSum {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.ofShared());
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.newSharedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

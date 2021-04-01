@@ -60,17 +60,17 @@ public class SysVVaList implements VaList {
 //        /* size: 24, cachelines: 1, members: 4 */
 //        /* last cacheline: 24 bytes */
 //    };
-    static final GroupLayout LAYOUT = MemoryLayout.ofStruct(
+    static final GroupLayout LAYOUT = MemoryLayout.structLayout(
         SysV.C_INT.withName("gp_offset"),
         SysV.C_INT.withName("fp_offset"),
         SysV.C_POINTER.withName("overflow_arg_area"),
         SysV.C_POINTER.withName("reg_save_area")
     ).withName("__va_list_tag");
 
-    private static final MemoryLayout GP_REG = MemoryLayout.ofValueBits(64, ByteOrder.nativeOrder());
-    private static final MemoryLayout FP_REG = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder());
+    private static final MemoryLayout GP_REG = MemoryLayout.valueLayout(64, ByteOrder.nativeOrder());
+    private static final MemoryLayout FP_REG = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder());
 
-    private static final GroupLayout LAYOUT_REG_SAVE_AREA = MemoryLayout.ofStruct(
+    private static final GroupLayout LAYOUT_REG_SAVE_AREA = MemoryLayout.structLayout(
         GP_REG.withName("%rdi"),
         GP_REG.withName("%rsi"),
         GP_REG.withName("%rdx"),
@@ -131,7 +131,7 @@ public class SysVVaList implements VaList {
     private static MemoryAddress emptyListAddress() {
         long ptr = U.allocateMemory(LAYOUT.byteSize());
         MemorySegment base = MemoryAddress.ofLong(ptr).asSegment(
-                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.ofShared());
+                LAYOUT.byteSize(), () -> U.freeMemory(ptr), ResourceScope.newSharedScope());
         cleaner.register(SysVVaList.class, () -> base.scope().close());
         VH_gp_offset.set(base, MAX_GP_OFFSET);
         VH_fp_offset.set(base, MAX_FP_OFFSET);
@@ -215,7 +215,7 @@ public class SysVVaList implements VaList {
 
     @Override
     public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
-        return vargAsSegment(layout, SegmentAllocator.scoped(scope));
+        return vargAsSegment(layout, SegmentAllocator.ofScope(scope));
     }
 
     private Object read(Class<?> carrier, MemoryLayout layout) {
@@ -239,7 +239,7 @@ public class SysVVaList implements VaList {
                 }
                 case POINTER, INTEGER, FLOAT -> {
                     VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
-                    try (ResourceScope localScope = ResourceScope.ofConfined()) {
+                    try (ResourceScope localScope = ResourceScope.newConfinedScope()) {
                         MemorySegment slice = stackPtr().asSegment(layout.byteSize(), localScope);
                         Object res = reader.get(slice);
                         postAlignStack(layout);
@@ -430,7 +430,7 @@ public class SysVVaList implements VaList {
                 return EMPTY;
             }
 
-            SegmentAllocator allocator = SegmentAllocator.arenaUnbounded(scope);
+            SegmentAllocator allocator = SegmentAllocator.arenaAllocator(scope);
             MemorySegment vaListSegment = allocator.allocate(LAYOUT);
             MemoryAddress stackArgsPtr = MemoryAddress.NULL;
             if (!stackArgs.isEmpty()) {

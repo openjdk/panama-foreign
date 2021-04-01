@@ -150,16 +150,16 @@ public class TestNulls {
         addDefaultMapping(Addressable.class, MemoryAddress.NULL);
         addDefaultMapping(MemoryLayout.class, MemoryLayouts.JAVA_INT);
         addDefaultMapping(ValueLayout.class, MemoryLayouts.JAVA_INT);
-        addDefaultMapping(GroupLayout.class, MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT));
-        addDefaultMapping(SequenceLayout.class, MemoryLayout.ofSequence(MemoryLayouts.JAVA_INT));
+        addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(MemoryLayouts.JAVA_INT));
+        addDefaultMapping(SequenceLayout.class, MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_INT));
         addDefaultMapping(MemorySegment.class, MemorySegment.ofArray(new byte[10]));
         addDefaultMapping(FunctionDescriptor.class, FunctionDescriptor.ofVoid());
         addDefaultMapping(CLinker.class, CLinker.getInstance());
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
-        addDefaultMapping(ResourceScope.class, ResourceScope.ofConfined());
-        addDefaultMapping(SegmentAllocator.class, SegmentAllocator.implicit());
+        addDefaultMapping(ResourceScope.class, ResourceScope.newConfinedScope());
+        addDefaultMapping(SegmentAllocator.class, (size, align) -> null);
         addDefaultMapping(Supplier.class, () -> null);
     }
 
@@ -172,7 +172,7 @@ public class TestNulls {
             vaList = CLinker.VaList.make(b -> {
                 builderRef.set(b);
                 b.vargFromLong(CLinker.C_LONG_LONG, 42L);
-            }, ResourceScope.ofImplicit());
+            }, ResourceScope.newImplicitScope());
             vaListBuilder = builderRef.get();
         }
     }

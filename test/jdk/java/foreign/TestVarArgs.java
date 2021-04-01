@@ -51,14 +51,14 @@ import static org.testng.Assert.assertEquals;
 
 public class TestVarArgs {
 
-    static final MemoryLayout ML_CallInfo = MemoryLayout.ofStruct(
+    static final MemoryLayout ML_CallInfo = MemoryLayout.structLayout(
             C_POINTER.withName("writeback"), // writeback
             C_POINTER.withName("argIDs")); // arg ids
 
     static final VarHandle VH_CallInfo_writeback = ML_CallInfo.varHandle(long.class, groupElement("writeback"));
     static final VarHandle VH_CallInfo_argIDs = ML_CallInfo.varHandle(long.class, groupElement("argIDs"));
 
-    static final VarHandle VH_IntArray = MemoryLayout.ofSequence(C_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_IntArray = MemoryLayout.sequenceLayout(C_INT).varHandle(int.class, sequenceElement());
 
     static final CLinker abi = CLinker.getInstance();
     static final MemoryAddress varargsAddr = LibraryLookup.ofLibrary("VarArgs")
@@ -68,10 +68,10 @@ public class TestVarArgs {
 
     @Test(dataProvider = "args")
     public void testVarArgs(List<VarArg> args) throws Throwable {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment writeBack = MemorySegment.allocateNative(args.size() * WRITEBACK_BYTES_PER_ARG, WRITEBACK_BYTES_PER_ARG, scope);
             MemorySegment callInfo = MemorySegment.allocateNative(ML_CallInfo, scope);
-            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.ofSequence(args.size(), C_INT), scope);
+            MemorySegment argIDs = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(args.size(), C_INT), scope);
 
             MemoryAddress callInfoPtr = callInfo.address();
 

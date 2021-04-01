@@ -35,50 +35,44 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.VarHandle;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
-import static jdk.incubator.foreign.MemorySegment.*;
+
 import static org.testng.Assert.*;
 
 public class TestSegments {
 
     @Test(dataProvider = "badSizeAndAlignments", expectedExceptions = IllegalArgumentException.class)
     public void testBadAllocateAlign(long size, long align) {
-        MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
+        MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
     }
 
     @Test(dataProvider = "badLayouts", expectedExceptions = UnsupportedOperationException.class)
     public void testBadAllocateLayout(MemoryLayout layout) {
-        MemorySegment.allocateNative(layout, ResourceScope.ofImplicit());
+        MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
     }
 
     @Test(expectedExceptions = { OutOfMemoryError.class,
                                  IllegalArgumentException.class })
     public void testAllocateTooBig() {
-        MemorySegment.allocateNative(Long.MAX_VALUE, ResourceScope.ofImplicit());
+        MemorySegment.allocateNative(Long.MAX_VALUE, ResourceScope.newImplicitScope());
     }
 
     @Test(expectedExceptions = OutOfMemoryError.class)
     public void testNativeAllocationTooBig() {
-        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, ResourceScope.ofImplicit()); // 2M
+        MemorySegment segment = MemorySegment.allocateNative(1024 * 1024 * 8 * 2, ResourceScope.newImplicitScope()); // 2M
     }
 
     @Test
     public void testNativeSegmentIsZeroed() {
-        VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+        VarHandle byteHandle = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_BYTE)
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(1000, 1, scope);
             for (long i = 0 ; i < segment.byteSize() ; i++) {
                 assertEquals(0, (byte)byteHandle.get(segment, i));
@@ -88,9 +82,9 @@ public class TestSegments {
 
     @Test
     public void testSlices() {
-        VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+        VarHandle byteHandle = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_BYTE)
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(10, 1, scope);
             //init
             for (byte i = 0 ; i < segment.byteSize() ; i++) {
@@ -131,12 +125,12 @@ public class TestSegments {
                 () -> MemorySegment.ofArray(new int[] { 1, 2, 3, 4 }),
                 () -> MemorySegment.ofArray(new long[] { 1l, 2l, 3l, 4l } ),
                 () -> MemorySegment.ofArray(new short[] { 1, 2, 3, 4 } ),
-                () -> MemorySegment.allocateNative(4, ResourceScope.ofImplicit()),
-                () -> MemorySegment.allocateNative(4, 8, ResourceScope.ofImplicit()),
-                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()), ResourceScope.ofImplicit()),
-                () -> MemorySegment.allocateNative(4, ResourceScope.ofConfined()),
-                () -> MemorySegment.allocateNative(4, 8, ResourceScope.ofConfined()),
-                () -> MemorySegment.allocateNative(MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()), ResourceScope.ofConfined())
+                () -> MemorySegment.allocateNative(4, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(MemoryLayout.valueLayout(32, ByteOrder.nativeOrder()), ResourceScope.newImplicitScope()),
+                () -> MemorySegment.allocateNative(4, ResourceScope.newConfinedScope()),
+                () -> MemorySegment.allocateNative(4, 8, ResourceScope.newConfinedScope()),
+                () -> MemorySegment.allocateNative(MemoryLayout.valueLayout(32, ByteOrder.nativeOrder()), ResourceScope.newConfinedScope())
 
         );
         return l.stream().map(s -> new Object[] { s }).toArray(Object[][]::new);
@@ -144,7 +138,7 @@ public class TestSegments {
 
     @Test(dataProvider = "segmentFactories")
     public void testFill(Supplier<MemorySegment> memorySegmentSupplier) {
-        VarHandle byteHandle = MemoryLayout.ofSequence(MemoryLayouts.JAVA_BYTE)
+        VarHandle byteHandle = MemoryLayout.sequenceLayout(MemoryLayouts.JAVA_BYTE)
                 .varHandle(byte.class, MemoryLayout.PathElement.sequenceElement());
 
         for (byte value : new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x45}) {
@@ -244,16 +238,16 @@ public class TestSegments {
         SizedLayoutFactory[] layoutFactories = SizedLayoutFactory.values();
         Object[][] values = new Object[layoutFactories.length * 2][2];
         for (int i = 0; i < layoutFactories.length ; i++) {
-            values[i * 2] = new Object[] { MemoryLayout.ofStruct(layoutFactories[i].make(7), MemoryLayout.ofPaddingBits(9)) }; // good size, bad align
+            values[i * 2] = new Object[] { MemoryLayout.structLayout(layoutFactories[i].make(7), MemoryLayout.paddingLayout(9)) }; // good size, bad align
             values[(i * 2) + 1] = new Object[] { layoutFactories[i].make(15).withBitAlignment(16) }; // bad size, good align
         }
         return values;
     }
 
     enum SizedLayoutFactory {
-        VALUE_BE(size -> MemoryLayout.ofValueBits(size, ByteOrder.BIG_ENDIAN)),
-        VALUE_LE(size -> MemoryLayout.ofValueBits(size, ByteOrder.LITTLE_ENDIAN)),
-        PADDING(MemoryLayout::ofPaddingBits);
+        VALUE_BE(size -> MemoryLayout.valueLayout(size, ByteOrder.BIG_ENDIAN)),
+        VALUE_LE(size -> MemoryLayout.valueLayout(size, ByteOrder.LITTLE_ENDIAN)),
+        PADDING(MemoryLayout::paddingLayout);
 
         private final LongFunction<MemoryLayout> factory;
 
