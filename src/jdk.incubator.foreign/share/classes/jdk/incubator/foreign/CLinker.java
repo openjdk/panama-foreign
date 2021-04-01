@@ -25,7 +25,6 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.MemoryScope;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -35,7 +34,6 @@ import jdk.internal.reflect.Reflection;
 
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -285,7 +283,7 @@ public interface CLinker {
      * @return a new native memory segment containing the converted C string.
      */
     static MemorySegment toCString(String str, ResourceScope scope) {
-        return toCString(str, SegmentAllocator.scoped(scope));
+        return toCString(str, SegmentAllocator.ofScope(scope));
     }
 
     /**
@@ -324,7 +322,7 @@ public interface CLinker {
      * @return a new native memory segment containing the converted C string.
      */
     static MemorySegment toCString(String str, Charset charset, ResourceScope scope) {
-        return toCString(str, charset, SegmentAllocator.scoped(scope));
+        return toCString(str, charset, SegmentAllocator.ofScope(scope));
     }
 
     /**

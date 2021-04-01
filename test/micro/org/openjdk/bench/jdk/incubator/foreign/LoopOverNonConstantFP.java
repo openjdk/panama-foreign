@@ -72,8 +72,8 @@ public class LoopOverNonConstantFP {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putDouble(unsafe_addrOut + (i * CARRIER_SIZE), i);
         }
-        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.ofConfined());
-        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.ofConfined());
+        segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
+        segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             MemoryAccess.setDoubleAtIndex(segmentIn, i, i);
         }

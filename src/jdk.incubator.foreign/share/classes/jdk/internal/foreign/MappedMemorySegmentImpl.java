@@ -52,7 +52,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemoryScope scope) {
+    MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, ResourceScopeImpl scope) {
         super(min, length, mask, scope);
         this.unmapper = unmapper;
     }
@@ -60,11 +60,11 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     @Override
     ByteBuffer makeByteBuffer() {
         return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null,
-                scope == MemoryScope.GLOBAL ? null : this);
+                scope == ResourceScopeImpl.GLOBAL ? null : this);
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, int mask, MemoryScope scope) {
+    MappedMemorySegmentImpl dup(long offset, long size, int mask, ResourceScopeImpl scope) {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, scope);
     }
 
@@ -105,7 +105,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     // factories
 
-    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, MemoryScope scope) throws IOException {
+    public static MemorySegment makeMappedSegment(Path path, long bytesOffset, long bytesSize, FileChannel.MapMode mapMode, ResourceScopeImpl scope) throws IOException {
         Objects.requireNonNull(path);
         Objects.requireNonNull(mapMode);
         scope.checkValidStateSlow();
@@ -125,7 +125,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
             if (unmapperProxy != null) {
                 AbstractMemorySegmentImpl segment = new MappedMemorySegmentImpl(unmapperProxy.address(), unmapperProxy, bytesSize,
                         modes, scope);
-                scope.addOrCleanupIfFail(new MemoryScope.ResourceList.ResourceCleanup() {
+                scope.addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
                     @Override
                     public void cleanup() {
                         unmapperProxy.unmap();
@@ -150,7 +150,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes, MemoryScope scope) {
+        public EmptyMappedMemorySegmentImpl(int modes, ResourceScopeImpl scope) {
             super(0, null, 0, modes, scope);
         }
 

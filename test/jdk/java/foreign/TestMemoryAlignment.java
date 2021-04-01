@@ -50,7 +50,7 @@ public class TestMemoryAlignment {
         ValueLayout aligned = layout.withBitAlignment(align);
         assertEquals(aligned.bitAlignment(), align); //unreasonable alignment here, to make sure access throws
         VarHandle vh = aligned.varHandle(int.class);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(aligned, scope);
             vh.set(segment, -42);
             int val = (int)vh.get(segment);
@@ -63,10 +63,10 @@ public class TestMemoryAlignment {
         ValueLayout layout = MemoryLayouts.BITS_32_BE;
         assertEquals(layout.bitAlignment(), 32);
         ValueLayout aligned = layout.withBitAlignment(align);
-        MemoryLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, aligned);
+        MemoryLayout alignedGroup = MemoryLayout.structLayout(MemoryLayouts.PAD_8, aligned);
         assertEquals(alignedGroup.bitAlignment(), align);
         VarHandle vh = aligned.varHandle(int.class);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(alignedGroup, scope);
             vh.set(segment.asSlice(1L), -42);
             assertEquals(align, 8); //this is the only case where access is aligned
@@ -79,7 +79,7 @@ public class TestMemoryAlignment {
     public void testUnalignedPath(long align) {
         MemoryLayout layout = MemoryLayouts.BITS_32_BE;
         MemoryLayout aligned = layout.withBitAlignment(align).withName("value");
-        GroupLayout alignedGroup = MemoryLayout.ofStruct(MemoryLayouts.PAD_8, aligned);
+        GroupLayout alignedGroup = MemoryLayout.structLayout(MemoryLayouts.PAD_8, aligned);
         try {
             alignedGroup.varHandle(int.class, PathElement.groupElement("value"));
             assertEquals(align, 8); //this is the only case where path is aligned
@@ -90,10 +90,10 @@ public class TestMemoryAlignment {
 
     @Test(dataProvider = "alignments")
     public void testUnalignedSequence(long align) {
-        SequenceLayout layout = MemoryLayout.ofSequence(5, MemoryLayouts.BITS_32_BE.withBitAlignment(align));
+        SequenceLayout layout = MemoryLayout.sequenceLayout(5, MemoryLayouts.BITS_32_BE.withBitAlignment(align));
         try {
             VarHandle vh = layout.varHandle(int.class, PathElement.sequenceElement());
-            try (ResourceScope scope = ResourceScope.ofConfined()) {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment segment = MemorySegment.allocateNative(layout, scope);
                 for (long i = 0 ; i < 5 ; i++) {
                     vh.set(segment, i, -42);
@@ -110,14 +110,14 @@ public class TestMemoryAlignment {
         ValueLayout vShort = MemoryLayouts.BITS_16_BE;
         ValueLayout vInt = MemoryLayouts.BITS_32_BE;
         //mimic pragma pack(1)
-        GroupLayout g = MemoryLayout.ofStruct(vChar.withBitAlignment(8).withName("a"),
+        GroupLayout g = MemoryLayout.structLayout(vChar.withBitAlignment(8).withName("a"),
                                vShort.withBitAlignment(8).withName("b"),
                                vInt.withBitAlignment(8).withName("c"));
         assertEquals(g.bitAlignment(), 8);
         VarHandle vh_c = g.varHandle(byte.class, PathElement.groupElement("a"));
         VarHandle vh_s = g.varHandle(short.class, PathElement.groupElement("b"));
         VarHandle vh_i = g.varHandle(int.class, PathElement.groupElement("c"));
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.allocateNative(g, scope);
             vh_c.set(segment, Byte.MIN_VALUE);
             assertEquals(vh_c.get(segment), Byte.MIN_VALUE);

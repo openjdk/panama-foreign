@@ -39,7 +39,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.lang.ref.Cleaner;
 
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
 import static org.testng.Assert.assertFalse;
@@ -59,7 +58,7 @@ public class TestUpcallStubs {
     }
 
     private static MemorySegment getStub() {
-        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid(), ResourceScope.ofConfined());
+        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid(), ResourceScope.newConfinedScope());
     }
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)

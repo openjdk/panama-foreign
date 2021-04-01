@@ -81,7 +81,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.ofImplicit());
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
@@ -108,8 +108,8 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = lib.lookup(fName).get();
         MethodType mtype = methodType(ret, paramTypes, fields);
-        MethodHandle mh = abi.downcallHandle(addr, SegmentAllocator.implicit(), mtype, function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ResourceScope.ofImplicit(), ret, paramTypes, fields, returnChecks, argChecks);
+        MethodHandle mh = abi.downcallHandle(addr, IMPLICIT_ALLOCATOR, mtype, function(ret, paramTypes, fields));
+        Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
         Object[] callArgs = args;
         if (count % 100 == 0) {
             System.gc();
@@ -197,7 +197,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.ofImplicit());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }

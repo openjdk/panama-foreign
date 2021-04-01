@@ -25,7 +25,7 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.ResourceScopeImpl;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.ref.Cleaner;
@@ -49,7 +49,7 @@ import java.util.Spliterator;
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
  *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
- *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#arenaUnbounded(ResourceScope)})</li>
+ *     (see {@link MemorySegment#allocateNative(long, ResourceScope)}, or {@link SegmentAllocator#arenaAllocator(ResourceScope)})</li>
  *     <li>closing the scope associated with a mapped memory segment results in the backing memory-mapped file to be unmapped
  *     (see {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)})</li>
  *     <li>closing the scope associated with an upcall stub results in releasing the stub
@@ -58,7 +58,7 @@ import java.util.Spliterator;
  *
  * <h2><a id = "implicit-closure">Implicit closure</a></h2>
  *
- * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #ofConfined(Cleaner)}) - we call these
+ * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #newConfinedScope(Cleaner)}) - we call these
  * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
  * becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * <p>
@@ -67,7 +67,7 @@ import java.util.Spliterator;
  * scope is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
  * (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
  * <p>
- * Some managed resource scopes are implicitly managed (see {@link #ofImplicit()}, {@link #globalScope()}, and are said to be <em>implicit scopes</em>.
+ * Some managed resource scopes are implicitly managed (see {@link #newImplicitScope()}, {@link #globalScope()}, and are said to be <em>implicit scopes</em>.
  * An implicit resource scope only features implicit closure, and always throws an {@link UnsupportedOperationException}
  * when the {@link #close()} method is called directly.
  *
@@ -76,13 +76,13 @@ import java.util.Spliterator;
  * Resource scopes can be further divided into two categories: <em>thread-confined</em> resource scopes, and <em>shared</em>
  * resource scopes.
  * <p>
- * Confined resource scopes (see {@link #ofConfined()}), support strong thread-confinement guarantees. Upon creation,
+ * Confined resource scopes (see {@link #newConfinedScope()}), support strong thread-confinement guarantees. Upon creation,
  * they are assigned an <em>owner thread</em>, typically the thread which initiated the creation operation (see {@link #ownerThread()}).
  * After creating a confined resource scope, only the owner thread will be allowed to directly manipulate the resources
  * associated with this resource scope. Any attempt to perform resource access from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Shared resource scopes (see {@link #ofShared()}), on the other hand, have no owner thread; as such resources associated
+ * Shared resource scopes (see {@link #newSharedScope()}), on the other hand, have no owner thread; as such resources associated
  * with this shared resource scopes can be accessed by multiple threads. This might be useful when multiple threads need
  * to access the same resource concurrently (e.g. in the case of parallel processing). For instance, a client
  * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
@@ -147,7 +147,7 @@ public interface ResourceScope extends AutoCloseable {
     /**
      * Is this resource scope an <em>implicit scope</em>?
      * @return true if this scope is an <em>implicit scope</em>.
-     * @see #ofImplicit()
+     * @see #newImplicitScope()
      * @see #globalScope()
      */
     boolean isImplicit();
@@ -209,8 +209,8 @@ public interface ResourceScope extends AutoCloseable {
      * Create a new confined scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.
      * @return a new confined scope.
      */
-    static ResourceScope ofConfined() {
-        return MemoryScope.createConfined( null);
+    static ResourceScope newConfinedScope() {
+        return ResourceScopeImpl.createConfined( null);
     }
 
     /**
@@ -219,17 +219,17 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new confined scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
-    static ResourceScope ofConfined(Cleaner cleaner) {
+    static ResourceScope newConfinedScope(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return MemoryScope.createConfined( cleaner);
+        return ResourceScopeImpl.createConfined( cleaner);
     }
 
     /**
      * Create a new shared scope. The resulting scope is closeable, and is not managed by a {@link Cleaner}.
      * @return a new shared scope.
      */
-    static ResourceScope ofShared() {
-        return MemoryScope.createShared(null);
+    static ResourceScope newSharedScope() {
+        return ResourceScopeImpl.createShared(null);
     }
 
     /**
@@ -238,9 +238,9 @@ public interface ResourceScope extends AutoCloseable {
      * @return a new shared scope, managed by {@code cleaner}.
      * @throws NullPointerException if {@code cleaner == null}.
      */
-    static ResourceScope ofShared(Cleaner cleaner) {
+    static ResourceScope newSharedScope(Cleaner cleaner) {
         Objects.requireNonNull(cleaner);
-        return MemoryScope.createShared(cleaner);
+        return ResourceScopeImpl.createShared(cleaner);
     }
 
     /**
@@ -252,8 +252,8 @@ public interface ResourceScope extends AutoCloseable {
      *
      * @return a new implicit scope.
      */
-    static ResourceScope ofImplicit() {
-        return MemoryScope.createImplicitScope();
+    static ResourceScope newImplicitScope() {
+        return ResourceScopeImpl.createImplicitScope();
     }
 
     /**
@@ -261,6 +261,6 @@ public interface ResourceScope extends AutoCloseable {
      * @return the global scope.
      */
     static ResourceScope globalScope() {
-        return MemoryScope.GLOBAL;
+        return ResourceScopeImpl.GLOBAL;
     }
 }

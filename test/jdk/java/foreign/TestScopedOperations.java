@@ -55,7 +55,7 @@ public class TestScopedOperations {
 
     @Test(dataProvider = "scopedOperations")
     public void testOpAfterClose(String name, ScopedOperation scopedOperation) {
-        ResourceScope scope = ResourceScope.ofConfined();
+        ResourceScope scope = ResourceScope.newConfinedScope();
         scope.close();
         try {
             scopedOperation.accept(scope);
@@ -67,7 +67,7 @@ public class TestScopedOperations {
 
     @Test(dataProvider = "scopedOperations")
     public void testOpOutsideConfinement(String name, ScopedOperation scopedOperation) {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             AtomicReference<Throwable> failed = new AtomicReference<>();
             Thread t = new Thread(() -> {
                 try {
@@ -101,7 +101,7 @@ public class TestScopedOperations {
             ScopedOperation.ofSegment(MemorySegment::toLongArray, "MemorySegment::toLongArray");
             ScopedOperation.ofSegment(MemorySegment::toDoubleArray, "MemorySegment::toDoubleArray");
             ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
-            ScopedOperation.ofSegment(s -> MemoryLayout.ofSequence(s.byteSize(), MemoryLayouts.JAVA_BYTE), "MemorySegment::spliterator");
+            ScopedOperation.ofSegment(s -> MemoryLayout.sequenceLayout(s.byteSize(), MemoryLayouts.JAVA_BYTE), "MemorySegment::spliterator");
             ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
             ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
             ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
@@ -113,8 +113,7 @@ public class TestScopedOperations {
             ScopedOperation.ofVaList(list -> list.vargAsLong(MemoryLayouts.JAVA_LONG), "VaList::vargAsLong");
             ScopedOperation.ofVaList(list -> list.vargAsDouble(MemoryLayouts.JAVA_DOUBLE), "VaList::vargAsDouble");
             ScopedOperation.ofVaList(CLinker.VaList::skip, "VaList::skip");
-            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), ResourceScope.ofImplicit()), "VaList::vargAsSegment/1");
-            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.ofStruct(MemoryLayouts.JAVA_INT), SegmentAllocator.malloc(list::scope)), "VaList::vargAsSegment/2");
+            ScopedOperation.ofVaList(list -> list.vargAsSegment(MemoryLayout.structLayout(MemoryLayouts.JAVA_INT), ResourceScope.newImplicitScope()), "VaList::vargAsSegment/1");
             // allocator operations
             ScopedOperation.ofAllocator(a -> a.allocate(1), "NativeAllocator::allocate/size");
             ScopedOperation.ofAllocator(a -> a.allocate(1, 1), "NativeAllocator::allocate/size/align");
@@ -215,14 +214,13 @@ public class TestScopedOperations {
         }
 
         enum AllocatorFactory {
-            MALLOC(scope -> SegmentAllocator.malloc(() -> scope)),
-            ARENA_BOUNDED(scope -> SegmentAllocator.arenaBounded(1000, scope)),
-            ARENA_UNBOUNDED(SegmentAllocator::arenaUnbounded),
+            ARENA_BOUNDED(scope -> SegmentAllocator.arenaAllocator(1000, scope)),
+            ARENA_UNBOUNDED(SegmentAllocator::arenaAllocator),
             FROM_SEGMENT(scope -> {
                 MemorySegment segment = MemorySegment.allocateNative(10, scope);
-                return SegmentAllocator.prefix(segment);
+                return SegmentAllocator.ofSegment(segment);
             }),
-            FROM_SCOPED(SegmentAllocator::scoped);
+            FROM_SCOPE(SegmentAllocator::ofScope);
 
             final Function<ResourceScope, SegmentAllocator> allocatorFactory;
 

@@ -29,6 +29,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 
 import java.lang.invoke.MethodHandle;
@@ -79,13 +80,13 @@ public class CallOverheadHelper {
     static final MethodHandle identity_trivial;
     static final MethodHandle identity_trivial_v;
 
-    static final MemoryLayout POINT_LAYOUT = MemoryLayout.ofStruct(
+    static final MemoryLayout POINT_LAYOUT = MemoryLayout.structLayout(
             C_LONG_LONG, C_LONG_LONG
     );
 
-    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT);
+    static final MemorySegment point = MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope());
 
-    static final SegmentAllocator recycling_allocator = SegmentAllocator.prefix(MemorySegment.allocateNative(POINT_LAYOUT));
+    static final SegmentAllocator recycling_allocator = SegmentAllocator.ofSegment(MemorySegment.allocateNative(POINT_LAYOUT, ResourceScope.newImplicitScope()));
 
     static {
         System.loadLibrary("CallOverheadJNI");

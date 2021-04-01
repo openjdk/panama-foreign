@@ -45,7 +45,7 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * <pre>{@code
-MemorySegment segment = MemorySegment.allocateNative(10 * 4);
+MemorySegment segment = MemorySegment.allocateNative(10 * 4, newImplicitScope());
 for (int i = 0 ; i < 10 ; i++) {
    MemoryAccess.setIntAtIndex(segment, i);
 }
@@ -146,7 +146,7 @@ try (var cString = CLinker.toCString("Hello")) {
  * the original segment accordingly, as follows:
  *
  * <pre>{@code
-MemorySegment segment = MemorySegment.allocateNative(100);
+MemorySegment segment = MemorySegment.allocateNative(100, scope);
 ...
 MemoryAddress addr = ... //obtain address from native code
 int x = MemoryAccess.getIntAtOffset(segment, addr.segmentOffset(segment));

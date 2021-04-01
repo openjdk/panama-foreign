@@ -62,7 +62,7 @@ public class VarHandleExact {
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT, ResourceScope.ofConfined());
+        data = MemorySegment.allocateNative(JAVA_INT, ResourceScope.newConfinedScope());
     }
 
     @TearDown

@@ -254,7 +254,7 @@ public final class MemoryHandles {
      * Java {@code int} to avoid dealing with negative values, which would be
      * the case if modeled as a Java {@code short}. This is illustrated in the following example:
      * <blockquote><pre>{@code
-    MemorySegment segment = MemorySegment.allocateNative(2);
+    MemorySegment segment = MemorySegment.allocateNative(2, newImplicitScope());
     VarHandle SHORT_VH = MemoryLayouts.JAVA_SHORT.varHandle(short.class);
     VarHandle INT_VH = MemoryHandles.asUnsigned(SHORT_VH, int.class);
     SHORT_VH.set(segment, (short)-1);

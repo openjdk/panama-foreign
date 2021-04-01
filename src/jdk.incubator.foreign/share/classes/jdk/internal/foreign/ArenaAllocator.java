@@ -21,7 +21,7 @@ public class ArenaAllocator implements SegmentAllocator {
     }
 
     ArenaAllocator(long initialSize, ResourceScope scope) {
-        this.allocator = SegmentAllocator.malloc(() -> scope);
+        this.allocator = (size, align) -> MemorySegment.allocateNative(size, align, scope);
         this.segment = allocator.allocate(initialSize, 1);
     }
 

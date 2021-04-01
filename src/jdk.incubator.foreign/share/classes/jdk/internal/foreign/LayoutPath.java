@@ -35,7 +35,6 @@ import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
-import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -230,9 +229,9 @@ public class LayoutPath {
         } else if (enclosing.layout instanceof SequenceLayout) {
             SequenceLayout seq = (SequenceLayout)enclosing.layout;
             if (seq.elementCount().isPresent()) {
-                return enclosing.map(l -> dup(l, MemoryLayout.ofSequence(seq.elementCount().getAsLong(), newLayout)));
+                return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(seq.elementCount().getAsLong(), newLayout)));
             } else {
-                return enclosing.map(l -> dup(l, MemoryLayout.ofSequence(newLayout)));
+                return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(newLayout)));
             }
         } else if (enclosing.layout instanceof GroupLayout) {
             GroupLayout g = (GroupLayout)enclosing.layout;
@@ -240,9 +239,9 @@ public class LayoutPath {
             //if we selected a layout in a group we must have a valid index
             newElements.set((int)elementIndex, newLayout);
             if (g.isUnion()) {
-                return enclosing.map(l -> dup(l, MemoryLayout.ofUnion(newElements.toArray(new MemoryLayout[0]))));
+                return enclosing.map(l -> dup(l, MemoryLayout.unionLayout(newElements.toArray(new MemoryLayout[0]))));
             } else {
-                return enclosing.map(l -> dup(l, MemoryLayout.ofStruct(newElements.toArray(new MemoryLayout[0]))));
+                return enclosing.map(l -> dup(l, MemoryLayout.structLayout(newElements.toArray(new MemoryLayout[0]))));
             }
         } else {
             return newLayout;

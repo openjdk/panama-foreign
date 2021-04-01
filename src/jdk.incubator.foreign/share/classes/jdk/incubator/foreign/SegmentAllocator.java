@@ -27,8 +27,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.MemoryScope;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
 import java.lang.invoke.VarHandle;
@@ -36,7 +35,6 @@ import java.lang.reflect.Array;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -47,20 +45,19 @@ import java.util.stream.Stream;
  * (e.g. {@link MemorySegment#allocateNative(long, long, ResourceScope)}); since {@link SegmentAllocator} is a <em>functional interface</em>,
  * clients can easily obtain a native allocator by using either a lambda expression or a method reference.
  * <p>
- * This interface provides a factory, namely {@link SegmentAllocator#scoped(ResourceScope)} which can be used to obtain
+ * This interface provides a factory, namely {@link SegmentAllocator#ofScope(ResourceScope)} which can be used to obtain
  * a <em>scoped</em> allocator, that is, an allocator which creates segment bound by a given scope. This can be useful
  * when working inside a <em>try-with-resources</em> construct:
  *
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.ofConfined()) {
-   SegmentAllocator allocator = SegmentAllocator.scoped(scope);
+   SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
    ...
 }
  * }</pre></blockquote>
  *
- * In addition, this interface also defines factories for commonly used allocators; for instance, {@link #malloc(Supplier)} returns a
- * native allocator which returns segments backed by separate resources scopes, while {@link #arenaUnbounded(ResourceScope)}
- * and {@link #arenaBounded(long, ResourceScope)} are arena-style native allocators. Finally {@link #prefix(MemorySegment)}
+ * In addition, this interface also defines factories for commonly used allocators; for instance {@link #arenaAllocator(ResourceScope)}
+ * and {@link #arenaAllocator(long, ResourceScope)} are arena-style native allocators. Finally {@link #ofSegment(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
  * <p>
  * Unless otherwise specified, whenever an allocator is associated with a <em>shared</em> resource scope, then allocation is
@@ -305,7 +302,7 @@ public interface SegmentAllocator {
         Objects.requireNonNull(array);
         Objects.requireNonNull(elementLayout);
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
-        MemorySegment addr = allocate(MemoryLayout.ofSequence(Array.getLength(array), elementLayout));
+        MemorySegment addr = allocate(MemoryLayout.sequenceLayout(Array.getLength(array), elementLayout));
         if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
             addr.copyFrom(heapSegmentFactory.apply(array));
         } else {
@@ -332,7 +329,7 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateArray(MemoryLayout elementLayout, long count) {
         Objects.requireNonNull(elementLayout);
-        return allocate(MemoryLayout.ofSequence(count, elementLayout));
+        return allocate(MemoryLayout.sequenceLayout(count, elementLayout));
     }
 
     /**
@@ -353,24 +350,6 @@ public interface SegmentAllocator {
     MemorySegment allocate(long bytesSize, long bytesAlignment);
 
     /**
-     * Returns a native allocator which allocates memory segments using the {@code malloc} allocation primitive,
-     * each backed by a resource scope that is obtained using the provided supplier. For instance, to create an allocator which
-     * returns independent, confined segments, clients can use the following code:
-     *
-     * <blockquote><pre>{@code
-    SegmentAllocator confinedAllocator = malloc(ResourceScope::ofConfined);
-    SegmentAllocator sharedAllocator = malloc(ResourceScope::ofShared);
-     * }</pre></blockquote>
-     *
-     * @param scopeFactory the factory used to generate the resource scope attached to each newly allocated segment.
-     * @return a native allocator using the {@code malloc} allocation primitive.
-     */
-    static SegmentAllocator malloc(Supplier<ResourceScope> scopeFactory) {
-        Objects.requireNonNull(scopeFactory);
-        return (size, align) -> MemorySegment.allocateNative(size, align, scopeFactory.get());
-    }
-
-    /**
      * Returns a native arena-based allocator which allocates a single memory segment, of given size (using malloc),
      * and then responds to allocation request by returning different slices of that same segment
      * (until no further allocation is possible).
@@ -384,7 +363,7 @@ public interface SegmentAllocator {
      * @param scope the scope associated with the segments returned by this allocator.
      * @return a new bounded arena-based allocator
      */
-    static SegmentAllocator arenaBounded(long size, ResourceScope scope) {
+    static SegmentAllocator arenaAllocator(long size, ResourceScope scope) {
         Objects.requireNonNull(scope);
         return scope.ownerThread() == null ?
                 new ArenaAllocator.BoundedSharedArenaAllocator(scope, size) :
@@ -415,7 +394,7 @@ public interface SegmentAllocator {
      * @param scope the scope associated with the segments returned by this allocator.
      * @return a new unbounded arena-based allocator
      */
-    static SegmentAllocator arenaUnbounded(ResourceScope scope) {
+    static SegmentAllocator arenaAllocator(ResourceScope scope) {
         Objects.requireNonNull(scope);
         return scope.ownerThread() == null ?
                 new ArenaAllocator.UnboundedSharedArenaAllocator(scope) :
@@ -435,7 +414,7 @@ public interface SegmentAllocator {
      * @param segment the memory segment to be recycled by the returned allocator.
      * @return an allocator which recycles an existing segment upon each new allocation request.
      */
-    static SegmentAllocator prefix(MemorySegment segment) {
+    static SegmentAllocator ofSegment(MemorySegment segment) {
         Objects.requireNonNull(segment);
         return (size, align) -> segment.asSlice(0, size);
     }
@@ -452,20 +431,8 @@ public interface SegmentAllocator {
      * @param scope the resource scope associated to the segments created by the returned allocator.
      * @return an allocator which allocates new memory segment bound by the provided resource scope.
      */
-    static SegmentAllocator scoped(ResourceScope scope) {
+    static SegmentAllocator ofScope(ResourceScope scope) {
         Objects.requireNonNull(scope);
-        return (MemoryScope)scope;
-    }
-
-    /**
-     * Returns a native allocator which creates segments associated with fresh implicit scopes. This code is equivalent
-     * (but likely more efficient) to the following:
-     * <blockquote><pre>{@code
-    SegmentAllocator implicitAllocator = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.ofImplicit());
-     * }</pre></blockquote>
-     * @return the implicit native allocator.
-     */
-    static SegmentAllocator implicit() {
-        return NativeMemorySegmentImpl.IMPLICIT_ALLOCATOR;
+        return (ResourceScopeImpl)scope;
     }
 }

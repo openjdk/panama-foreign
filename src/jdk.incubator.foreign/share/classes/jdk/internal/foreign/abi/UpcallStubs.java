@@ -26,12 +26,12 @@ package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.foreign.MemoryScope;
+import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
 
-    public static MemorySegment upcallAddress(UpcallHandler handler, MemoryScope scope) {
+    public static MemorySegment upcallAddress(UpcallHandler handler, ResourceScopeImpl scope) {
         long stubAddress = handler.entryPoint();
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0,
                 () -> freeUpcallStub(stubAddress), scope);

@@ -51,9 +51,9 @@ public class NativeTestHelper {
         long allocatedBytes = 0;
 
         public NativeScope() {
-            this.resourceScope = ResourceScope.ofConfined();
+            this.resourceScope = ResourceScope.newConfinedScope();
             this.scopeHandle = resourceScope.acquire();
-            this.allocator = SegmentAllocator.arenaUnbounded(resourceScope);
+            this.allocator = SegmentAllocator.arenaAllocator(resourceScope);
         }
 
         @Override

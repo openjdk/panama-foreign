@@ -93,7 +93,7 @@ public class TestDowncall extends CallGeneratorHelper {
         if (count % 100 == 0) {
             System.gc();
         }
-        Object res = doCall(addr, SegmentAllocator.implicit(), mt, descriptor, args);
+        Object res = doCall(addr, IMPLICIT_ALLOCATOR, mt, descriptor, args);
         if (ret == Ret.NON_VOID) {
             checks.forEach(c -> c.accept(res));
             if (needsScope) {
