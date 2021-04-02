@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import sun.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -38,18 +39,15 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Spliterator;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.StreamSupport;
@@ -68,9 +66,9 @@ public class ParallelSum {
     final static int CARRIER_SIZE = 4;
     final static int ALLOC_SIZE = CARRIER_SIZE * 1024 * 1024 * 256;
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
-    static final VarHandle VH_int = MemoryLayout.ofSequence(JAVA_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
 
-    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(ELEM_SIZE, MemoryLayouts.JAVA_INT);
+    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(ELEM_SIZE, MemoryLayouts.JAVA_INT);
     final static int BULK_FACTOR = 512;
     final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
 
@@ -85,7 +83,7 @@ public class ParallelSum {
         for (int i = 0; i < ELEM_SIZE; i++) {
             unsafe.putInt(address + (i * CARRIER_SIZE), i);
         }
-        segment = MemorySegment.allocateNative(ALLOC_SIZE).share();
+        segment = MemorySegment.allocateNative(ALLOC_SIZE, CARRIER_SIZE, ResourceScope.newSharedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }
@@ -94,7 +92,7 @@ public class ParallelSum {
     @TearDown
     public void tearDown() throws Throwable {
         unsafe.freeMemory(address);
-        segment.close();
+        segment.scope().close();
     }
 
     @Benchmark
