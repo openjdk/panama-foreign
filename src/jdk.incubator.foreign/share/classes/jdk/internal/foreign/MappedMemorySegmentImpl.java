@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.ExtendedMapMode;
 import jdk.internal.misc.ScopedMemoryAccess;
 import sun.nio.ch.FileChannelImpl;
 
@@ -139,9 +140,12 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     private static OpenOption[] openOptions(FileChannel.MapMode mapMode) {
-        if (mapMode == FileChannel.MapMode.READ_ONLY) {
+        if (mapMode == FileChannel.MapMode.READ_ONLY ||
+            mapMode == ExtendedMapMode.READ_ONLY_SYNC) {
             return new OpenOption[] { StandardOpenOption.READ };
-        } else if (mapMode == FileChannel.MapMode.READ_WRITE || mapMode == FileChannel.MapMode.PRIVATE) {
+        } else if (mapMode == FileChannel.MapMode.READ_WRITE ||
+                   mapMode == FileChannel.MapMode.PRIVATE ||
+                   mapMode == ExtendedMapMode.READ_WRITE_SYNC) {
             return new OpenOption[] { StandardOpenOption.READ, StandardOpenOption.WRITE };
         } else {
             throw new UnsupportedOperationException("Unsupported map mode: " + mapMode);

@@ -23,7 +23,8 @@
 
 /*
  * @test
- * @modules java.base/sun.nio.ch
+ * @modules java.base/jdk.internal.misc
+ *          java.base/sun.nio.ch
  *          jdk.incubator.foreign/jdk.internal.foreign
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
@@ -77,6 +78,7 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.misc.ExtendedMapMode;
 import org.testng.SkipException;
 import org.testng.annotations.*;
 import sun.nio.ch.DirectBuffer;
