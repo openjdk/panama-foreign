@@ -39,7 +39,7 @@ import static org.testng.Assert.assertTrue;
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Dforeign.restricted=permit RepeatedDeclsTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED RepeatedDeclsTest
  */
 public class RepeatedDeclsTest extends JextractToolRunner {
     @Test

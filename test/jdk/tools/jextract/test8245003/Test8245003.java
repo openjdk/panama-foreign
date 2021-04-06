@@ -36,7 +36,7 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8245003 -t test.jextract.test8245003 -- test8245003.h
- * @run testng/othervm -Dforeign.restricted=permit Test8245003
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8245003
  */
 /*
  * @test id=sources
@@ -45,7 +45,7 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8245003 -t test.jextract.test8245003 -- test8245003.h
- * @run testng/othervm -Dforeign.restricted=permit Test8245003
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8245003
  */
 public class Test8245003 {
     @Test

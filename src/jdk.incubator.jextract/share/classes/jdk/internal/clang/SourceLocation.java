@@ -53,7 +53,7 @@ public class SourceLocation {
 
     @SuppressWarnings("unchecked")
     private Location getLocation(LocationFactory fn) {
-        try (var scope = ResourceScope.ofConfined()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
              MemorySegment file = MemorySegment.allocateNative(CLinker.C_POINTER, scope);
              MemorySegment line = MemorySegment.allocateNative(CLinker.C_INT, scope);
              MemorySegment col = MemorySegment.allocateNative(CLinker.C_INT, scope);

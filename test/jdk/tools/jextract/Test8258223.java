@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8258223
  * @summary jextract throws exception when unsupport type is used in anonymous struct
- * @run testng/othervm -Dforeign.restricted=permit Test8258223
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8258223
  */
 public class Test8258223 extends JextractToolRunner {
     @Test

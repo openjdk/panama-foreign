@@ -26,6 +26,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import test.jextract.unsupported.unsupported_h;
@@ -38,7 +39,7 @@ import static test.jextract.unsupported.unsupported_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Unsupported -t test.jextract.unsupported -- unsupported.h
- * @run testng/othervm -Dforeign.restricted=permit LibUnsupportedTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibUnsupportedTest
  */
 
 /*
@@ -47,26 +48,30 @@ import static test.jextract.unsupported.unsupported_h.*;
  * @modules jdk.incubator.jextract
  *
  * @run driver JtregJextractSources -l Unsupported -t test.jextract.unsupported -- unsupported.h
- * @run testng/othervm -Dforeign.restricted=permit LibUnsupportedTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibUnsupportedTest
  */
 
 public class LibUnsupportedTest {
     @Test
     public void testAllocateFoo() {
-        var seg = Foo.allocate();
-        Foo.i$set(seg, 32);
-        Foo.c$set(seg, (byte)'z');
-        assertEquals(Foo.i$get(seg), 32);
-        assertEquals(Foo.c$get(seg), (byte)'z');
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var seg = Foo.allocate(scope);
+            Foo.i$set(seg, 32);
+            Foo.c$set(seg, (byte)'z');
+            assertEquals(Foo.i$get(seg), 32);
+            assertEquals(Foo.c$get(seg), (byte)'z');
+        }
     }
 
     @Test
     public void testGetFoo() {
-        var seg = getFoo().asSegmentRestricted(Foo.sizeof());
-        Foo.i$set(seg, 42);
-        Foo.c$set(seg, (byte)'j');
-        assertEquals(Foo.i$get(seg), 42);
-        assertEquals(Foo.c$get(seg), (byte)'j');
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var seg = getFoo().asSegment(Foo.sizeof(), scope);
+            Foo.i$set(seg, 42);
+            Foo.c$set(seg, (byte)'j');
+            assertEquals(Foo.i$get(seg), 42);
+            assertEquals(Foo.c$get(seg), (byte)'j');
+        }
     }
 
     private static void checkField(GroupLayout group, String fieldName, MemoryLayout expected) {

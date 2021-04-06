@@ -111,7 +111,7 @@ public final class Type {
 
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment cfname = CLinker.toCString(fieldName, scope);
             return Index_h.clang_Type_getOffsetOf(type, cfname);
         }

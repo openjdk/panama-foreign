@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @build JextractToolRunner
  * @bug 8248415
  * @summary jextract does not generate getter and setter for pointer typed fields in structs
- * @run testng/othervm -Dforeign.restricted=permit Test8248415
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8248415
  */
 public class Test8248415 extends JextractToolRunner {
 

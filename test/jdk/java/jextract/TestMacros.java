@@ -25,7 +25,7 @@
  * @test
  * @bug 8239128
  * @build JextractApiTestBase
- * @run testng/othervm -Dforeign.restricted=permit TestMacros
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestMacros
  */
 
 import java.nio.file.Path;

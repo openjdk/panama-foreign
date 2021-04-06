@@ -32,7 +32,7 @@ import static test.jextract.test8239918.test8239918_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8239918 -t test.jextract.test8239918 -- test8239918.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8239918Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8239918Test
  */
 /*
  * @test id=sources
@@ -41,7 +41,7 @@ import static test.jextract.test8239918.test8239918_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8239918 -t test.jextract.test8239918 -- test8239918.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8239918Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8239918Test
  */
 public class LibTest8239918Test {
     @Test

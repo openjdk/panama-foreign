@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @build JextractApiTestBase
  * @bug 8249536
  * @summary jextract throw IllegalStateException for bitfields in nested anonymous structs
- * @run testng/othervm -Dforeign.restricted=permit TestNestedBitfields
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestNestedBitfields
  */
 public class TestNestedBitfields extends JextractApiTestBase {
 

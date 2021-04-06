@@ -91,7 +91,7 @@ public class EvalResult implements AutoCloseable {
 
     private String getAsString0() {
         MemoryAddress value = Index_h.clang_EvalResult_getAsStr(ptr);
-        return CLinker.toJavaStringRestricted(value);
+        return CLinker.toJavaString(value);
     }
 
     public String getAsString() {

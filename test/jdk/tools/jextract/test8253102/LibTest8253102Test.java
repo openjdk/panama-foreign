@@ -36,7 +36,7 @@ import static test.jextract.test8253102.test8253102_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8253102 -t test.jextract.test8253102 -- test8253102.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253102Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8253102Test
  */
 /*
  * @test id=sources
@@ -45,16 +45,16 @@ import static test.jextract.test8253102.test8253102_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8253102 -t test.jextract.test8253102 -- test8253102.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253102Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8253102Test
  */
 public class LibTest8253102Test {
     @Test
     public void test() {
         MemoryAddress addr = make(14, 99);
-        MemorySegment seg = Point.ofAddressRestricted(addr);
+        MemorySegment seg = Point.ofAddress(addr);
         assertEquals(Point.x$get(seg), 14);
         assertEquals(Point.y$get(seg), 99);
-        CLinker.freeMemoryRestricted(addr);
+        CLinker.freeMemory(addr);
         boolean caughtException = false;
         try {
             seg.scope().close();

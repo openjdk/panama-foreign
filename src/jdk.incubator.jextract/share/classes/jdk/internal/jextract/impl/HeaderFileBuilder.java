@@ -94,7 +94,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
             if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
                 // emit scoped overload
-                emitFunctionWrapperNoAllocatorOverload(javaName, functionInfo);
+                // emitFunctionWrapperNoAllocatorOverload(javaName, functionInfo);
                 emitFunctionWrapperScopedOverload(javaName, functionInfo);
             }
         });
@@ -231,7 +231,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
                 functionInfo.isVarargs(),
                 paramNames);
         String param = pExprs.remove(0);
-        pExprs.add(0, "SegmentAllocator.scoped(" + param + ")");
+        pExprs.add(0, "SegmentAllocator.ofScope(" + param + ")");
         append(" {\n");
         incrAlign();
         indent();
@@ -252,7 +252,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         append(fiName + " " + javaName + " () {\n");
         incrAlign();
         indent();
-        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get());\n");
+        append("return " + fiName + ".ofAddress(" + javaName + "$get());\n");
         decrAlign();
         indent();
         append("}\n");

@@ -26,7 +26,7 @@
  * @library .. /test/lib
  * @modules jdk.incubator.jextract
  *
- * @run testng/othervm -Dforeign.restricted=permit IncompleteArrayTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED IncompleteArrayTest
  */
 
 import jdk.incubator.foreign.MemoryLayout;
@@ -54,10 +54,10 @@ public class IncompleteArrayTest extends JextractToolRunner {
             assertNotNull(cls);
 
             MemoryLayout actualLayout = findLayout(cls);
-            MemoryLayout expectedLayout = MemoryLayout.ofStruct(
+            MemoryLayout expectedLayout = MemoryLayout.structLayout(
                 C_INT.withName("size"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(C_POINTER).withName("data")
             ).withName("Foo");
             assertEquals(actualLayout, expectedLayout);
         } finally {

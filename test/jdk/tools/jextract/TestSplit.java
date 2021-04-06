@@ -32,7 +32,7 @@ import static org.testng.Assert.*;
  * @build JextractToolRunner
  * @bug 8244512
  * @summary jextract throws NPE for a nested struct declaration
- * @run testng/othervm -Djextract.decls.per.header=1 -Dforeign.restricted=permit TestSplit
+ * @run testng/othervm -Djextract.decls.per.header=1 --enable-native-access=jdk.incubator.jextract TestSplit
  */
 public class TestSplit extends JextractToolRunner {
     @Test

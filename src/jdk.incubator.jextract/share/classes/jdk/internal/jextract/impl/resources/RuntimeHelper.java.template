@@ -34,7 +34,7 @@ final class RuntimeHelper {
         return obj;
     }
 
-    static SegmentAllocator DEFAULT_ALLOCATOR = MemorySegment::allocateNative;
+    private final static SegmentAllocator DEFAULT_ALLOCATOR = (x, y) -> MemorySegment.allocateNative(x, y, ResourceScope.newImplicitScope());
 
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
@@ -53,7 +53,7 @@ final class RuntimeHelper {
     }
 
     static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-        return lookup(LIBRARIES, name).map(s -> s.address().asSegmentRestricted(layout.byteSize())).orElse(null);
+        return lookup(LIBRARIES, name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
     }
 
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
@@ -75,37 +75,34 @@ final class RuntimeHelper {
     }
 
     static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
+        return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newImplicitScope());
+    }
+
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, NativeScope scope) {
+        return upcallStub(fi, z, fdesc, mtypeDesc, scope.scope());
+    }
+
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
                     MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
             handle = handle.bindTo(z);
-            return LINKER.upcallStub(handle, fdesc);
+            return LINKER.upcallStub(handle, fdesc, scope);
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
     }
 
-    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
-            try {
-                MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
-                        MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
-                handle = handle.bindTo(z);
-                return LINKER.upcallStub(handle, fdesc, scope);
-            } catch (Throwable ex) {
-                throw new AssertionError(ex);
-            }
-        }
-
-    static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return addr.asSegmentRestricted(numElements * layout.byteSize());
+    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
+        return addr.asSegment(numElements * layout.byteSize(), ResourceScope.newImplicitScope());
     }
 
-    static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements, ResourceScope scope) {
-         return addr.asSegmentRestricted(numElements * layout.byteSize(), scope);
+    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements, ResourceScope scope) {
+         return addr.asSegment(numElements * layout.byteSize(), scope);
     }
 
     // Internals only below this point
-    private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
+    private static final Optional<MemoryAddress> lookup(LibraryLookup[] LIBRARIES, String sym) {
         return Stream.of(LIBRARIES)
                 .flatMap(l -> l.lookup(sym).stream())
                 .findFirst();

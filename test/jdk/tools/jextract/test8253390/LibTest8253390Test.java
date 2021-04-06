@@ -33,7 +33,7 @@ import static test.jextract.test8253390.test8253390_h.*;
  * @bug 8253390
  * @summary jextract should quote string literals
  * @run driver JtregJextract -t test.jextract.test8253390 -- test8253390.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253390Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8253390Test
  */
 /*
  * @test id=sources
@@ -42,7 +42,7 @@ import static test.jextract.test8253390.test8253390_h.*;
  * @bug 8253390
  * @summary jextract should quote string literals
  * @run driver JtregJextractSources -t test.jextract.test8253390 -- test8253390.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8253390Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8253390Test
  */
 public class LibTest8253390Test {
     @Test

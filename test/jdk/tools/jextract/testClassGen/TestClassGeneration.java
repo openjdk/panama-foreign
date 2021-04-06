@@ -30,7 +30,7 @@
  *          java.base/sun.security.action
  * @library .. /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en TestClassGeneration
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED -Duser.language=en TestClassGeneration
  */
 
 import jdk.incubator.foreign.MemoryAddress;
@@ -62,7 +62,7 @@ import static org.testng.Assert.assertNotNull;
 
 public class TestClassGeneration extends JextractToolRunner {
 
-    private static final VarHandle VH_bytes = MemoryLayout.ofSequence(C_CHAR).varHandle(byte.class, sequenceElement());
+    private static final VarHandle VH_bytes = MemoryLayout.sequenceLayout(C_CHAR).varHandle(byte.class, sequenceElement());
 
     private Path outputDir;
     private Loader loader;
@@ -198,7 +198,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> structCls = loader.loadClass("com.acme.examples_h$" + structName);
         Method layout_getter = checkMethod(structCls, "$LAYOUT", MemoryLayout.class);
         MemoryLayout structLayout = (MemoryLayout) layout_getter.invoke(null);
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment struct = MemorySegment.allocateNative(structLayout, scope);
             Method vh_getter = checkMethod(structCls, memberName + "$VH", VarHandle.class);
             VarHandle vh = (VarHandle) vh_getter.invoke(null);

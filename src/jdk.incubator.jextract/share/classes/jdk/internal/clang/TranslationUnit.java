@@ -65,7 +65,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public final void save(Path path) throws TranslationUnitSaveException {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment pathStr = CLinker.toCString(path.toAbsolutePath().toString(), scope);
             SaveError res = SaveError.valueOf(Index_h.clang_saveTranslationUnit(tu, pathStr, 0));
             if (res != SaveError.None) {
@@ -123,11 +123,13 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Tokens tokenize(SourceRange range) {
-        MemorySegment p = MemorySegment.allocateNative(CLinker.C_POINTER);
-        MemorySegment pCnt = MemorySegment.allocateNative(CLinker.C_INT);
-        Index_h.clang_tokenize(tu, range.range, p, pCnt);
-        Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
-        return rv;
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment p = MemorySegment.allocateNative(CLinker.C_POINTER, scope);
+            MemorySegment pCnt = MemorySegment.allocateNative(CLinker.C_INT, scope);
+            Index_h.clang_tokenize(tu, range.range, p, pCnt);
+            Tokens rv = new Tokens(MemoryAccess.getAddress(p), MemoryAccess.getInt(pCnt));
+            return rv;
+        }
     }
 
     @Override
@@ -161,7 +163,7 @@ public class TranslationUnit implements AutoCloseable {
 
         public MemorySegment getTokenSegment(int idx) {
             MemoryAddress p = ar.addOffset(idx * Index_h.CXToken.$LAYOUT().byteSize());
-            return p.asSegmentRestricted(Index_h.CXToken.$LAYOUT().byteSize());
+            return p.asSegment(Index_h.CXToken.$LAYOUT().byteSize(), ResourceScope.newImplicitScope());
         }
 
         public Token getToken(int index) {

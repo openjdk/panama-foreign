@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @build JextractToolRunner
  * @bug 8260717
  * @summary jextract crashes with 'Crossing storage unit boundaries' for libcoap's block.h
- * @run testng/othervm -Dforeign.restricted=permit Test8260717
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8260717
  */
 public class Test8260717 extends JextractToolRunner {
     @Test
