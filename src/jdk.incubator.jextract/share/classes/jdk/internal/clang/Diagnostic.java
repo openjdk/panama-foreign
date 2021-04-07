@@ -73,9 +73,7 @@ public class Diagnostic {
     }
 
     public SourceLocation location() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            return new SourceLocation(Index_h.clang_getDiagnosticLocation(scope, ptr));
-        }
+        return new SourceLocation(Index_h.clang_getDiagnosticLocation(ResourceScope.newImplicitScope(), ptr));
     }
 
     public String spelling() {
