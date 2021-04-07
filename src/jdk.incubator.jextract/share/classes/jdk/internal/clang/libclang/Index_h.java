@@ -59,10 +59,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXString {
 
-        static final MemoryLayout CXString$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXString$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXString.CXString$struct$LAYOUT;
@@ -100,28 +100,22 @@ public class Index_h extends Index_h_1 {
             CXString.private_flags$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXStringSet {
 
-        static final MemoryLayout CXStringSet$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXStringSet$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("Strings"),
             C_INT.withName("Count"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXStringSet.CXStringSet$struct$LAYOUT;
@@ -159,20 +153,14 @@ public class Index_h extends Index_h_1 {
             CXStringSet.Count$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getCString$MH() {
@@ -210,7 +198,7 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXUnsavedFile {
 
-        static final MemoryLayout CXUnsavedFile$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXUnsavedFile$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("Filename"),
             C_POINTER.withName("Contents"),
             C_LONG_LONG.withName("Length")
@@ -267,20 +255,14 @@ public class Index_h extends Index_h_1 {
             CXUnsavedFile.Length$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static int CXAvailability_Available() {
@@ -297,7 +279,7 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXVersion {
 
-        static final MemoryLayout CXVersion$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXVersion$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("Major"),
             C_INT.withName("Minor"),
             C_INT.withName("Subminor")
@@ -354,20 +336,14 @@ public class Index_h extends Index_h_1 {
             CXVersion.Subminor$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static int CXCursor_ExceptionSpecificationKind_None() {
@@ -448,10 +424,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$0 {
 
         static final FunctionDescriptor clang_getCString$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_getCString$MH = RuntimeHelper.downcallHandle(
@@ -460,10 +436,10 @@ public class Index_h extends Index_h_1 {
             constants$0.clang_getCString$FUNC, false
         );
         static final FunctionDescriptor clang_disposeString$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_disposeString$MH = RuntimeHelper.downcallHandle(
@@ -553,8 +529,8 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXFileUniqueID {
 
-        static final MemoryLayout CXFileUniqueID$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(3, C_LONG_LONG).withName("data")
+        static final MemoryLayout CXFileUniqueID$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(3, C_LONG_LONG).withName("data")
         );
         public static MemoryLayout $LAYOUT() {
             return CXFileUniqueID.CXFileUniqueID$struct$LAYOUT;
@@ -563,20 +539,14 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getFileUniqueID$MH() {
@@ -620,10 +590,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$1.clang_CXIndex_setInvocationEmissionPathOption$FUNC, false
         );
-        static final FunctionDescriptor clang_getFileName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getFileName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -706,10 +676,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXSourceLocation {
 
-        static final MemoryLayout CXSourceLocation$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final MemoryLayout CXSourceLocation$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXSourceLocation.CXSourceLocation$struct$LAYOUT;
@@ -734,26 +704,20 @@ public class Index_h extends Index_h_1 {
             CXSourceLocation.int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXSourceRange {
 
-        static final MemoryLayout CXSourceRange$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final MemoryLayout CXSourceRange$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         );
@@ -796,20 +760,14 @@ public class Index_h extends Index_h_1 {
             CXSourceRange.end_int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getNullLocation$MH() {
@@ -864,10 +822,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$2.clang_File_isEqual$FUNC, false
         );
-        static final FunctionDescriptor clang_File_tryGetRealPathName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_File_tryGetRealPathName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -876,10 +834,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$2.clang_File_tryGetRealPathName$FUNC, false
         );
-        static final FunctionDescriptor clang_getNullLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getNullLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ));
         static final MethodHandle clang_getNullLocation$MH = RuntimeHelper.downcallHandle(
             LIBRARIES, "clang_getNullLocation",
@@ -887,15 +845,15 @@ public class Index_h extends Index_h_1 {
             constants$2.clang_getNullLocation$FUNC, false
         );
         static final FunctionDescriptor clang_equalLocations$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_equalLocations$MH = RuntimeHelper.downcallHandle(
@@ -973,10 +931,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$3 {
 
-        static final FunctionDescriptor clang_getLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_POINTER,
@@ -988,10 +946,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getLocation$FUNC, false
         );
-        static final FunctionDescriptor clang_getLocationForOffset$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getLocationForOffset$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_POINTER,
@@ -1003,10 +961,10 @@ public class Index_h extends Index_h_1 {
             constants$3.clang_getLocationForOffset$FUNC, false
         );
         static final FunctionDescriptor clang_Location_isInSystemHeader$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_Location_isInSystemHeader$MH = RuntimeHelper.downcallHandle(
@@ -1015,10 +973,10 @@ public class Index_h extends Index_h_1 {
             constants$3.clang_Location_isInSystemHeader$FUNC, false
         );
         static final FunctionDescriptor clang_Location_isFromMainFile$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_Location_isFromMainFile$MH = RuntimeHelper.downcallHandle(
@@ -1026,8 +984,8 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$3.clang_Location_isFromMainFile$FUNC, false
         );
-        static final FunctionDescriptor clang_getNullRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getNullRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ));
@@ -1036,20 +994,20 @@ public class Index_h extends Index_h_1 {
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getNullRange$FUNC, false
         );
-        static final FunctionDescriptor clang_getRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_getRange$MH = RuntimeHelper.downcallHandle(
@@ -1128,13 +1086,13 @@ public class Index_h extends Index_h_1 {
     public static class constants$4 {
 
         static final FunctionDescriptor clang_equalRanges$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
@@ -1145,8 +1103,8 @@ public class Index_h extends Index_h_1 {
             constants$4.clang_equalRanges$FUNC, false
         );
         static final FunctionDescriptor clang_Range_isNull$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
@@ -1157,10 +1115,10 @@ public class Index_h extends Index_h_1 {
             constants$4.clang_Range_isNull$FUNC, false
         );
         static final FunctionDescriptor clang_getExpansionLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -1173,10 +1131,10 @@ public class Index_h extends Index_h_1 {
             constants$4.clang_getExpansionLocation$FUNC, false
         );
         static final FunctionDescriptor clang_getPresumedLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -1188,10 +1146,10 @@ public class Index_h extends Index_h_1 {
             constants$4.clang_getPresumedLocation$FUNC, false
         );
         static final FunctionDescriptor clang_getInstantiationLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -1204,10 +1162,10 @@ public class Index_h extends Index_h_1 {
             constants$4.clang_getInstantiationLocation$FUNC, false
         );
         static final FunctionDescriptor clang_getSpellingLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -1256,9 +1214,9 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXSourceRangeList {
 
-        static final MemoryLayout CXSourceRangeList$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXSourceRangeList$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("count"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("ranges")
         );
         public static MemoryLayout $LAYOUT() {
@@ -1297,20 +1255,14 @@ public class Index_h extends Index_h_1 {
             CXSourceRangeList.ranges$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getSkippedRanges$MH() {
@@ -1364,10 +1316,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$5 {
 
         static final FunctionDescriptor clang_getFileLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -1379,13 +1331,13 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$5.clang_getFileLocation$FUNC, false
         );
-        static final FunctionDescriptor clang_getRangeStart$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getRangeStart$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
@@ -1395,13 +1347,13 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$5.clang_getRangeStart$FUNC, false
         );
-        static final FunctionDescriptor clang_getRangeEnd$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getRangeEnd$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
@@ -1682,10 +1634,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$7.clang_disposeDiagnostic$FUNC, false
         );
-        static final FunctionDescriptor clang_formatDiagnostic$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_formatDiagnostic$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT
@@ -1779,10 +1731,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$8 {
 
-        static final FunctionDescriptor clang_getDiagnosticLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getDiagnosticLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -1791,10 +1743,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticLocation$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDiagnosticSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -1803,10 +1755,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticSpelling$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticOption$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDiagnosticOption$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_POINTER
@@ -1824,10 +1776,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$8.clang_getDiagnosticCategory$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticCategoryName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDiagnosticCategoryName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_INT
         );
@@ -1836,10 +1788,10 @@ public class Index_h extends Index_h_1 {
             "(I)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticCategoryName$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticCategoryText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDiagnosticCategoryText$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -1926,8 +1878,8 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$9.clang_getDiagnosticNumRanges$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getDiagnosticRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
@@ -1947,10 +1899,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$9.clang_getDiagnosticNumFixIts$FUNC, false
         );
-        static final FunctionDescriptor clang_getDiagnosticFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDiagnosticFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT,
@@ -1961,10 +1913,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$9.clang_getDiagnosticFixIt$FUNC, false
         );
-        static final FunctionDescriptor clang_getTranslationUnitSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTranslationUnitSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -2386,9 +2338,9 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXTUResourceUsageEntry {
 
-        static final MemoryLayout CXTUResourceUsageEntry$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXTUResourceUsageEntry$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_LONG_LONG.withName("amount")
         ).withName("CXTUResourceUsageEntry");
         public static MemoryLayout $LAYOUT() {
@@ -2427,28 +2379,22 @@ public class Index_h extends Index_h_1 {
             CXTUResourceUsageEntry.amount$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXTUResourceUsage {
 
-        static final MemoryLayout CXTUResourceUsage$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXTUResourceUsage$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("numEntries"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("entries")
         ).withName("CXTUResourceUsage");
         public static MemoryLayout $LAYOUT() {
@@ -2503,20 +2449,14 @@ public class Index_h extends Index_h_1 {
             CXTUResourceUsage.entries$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getCXTUResourceUsage$MH() {
@@ -2584,10 +2524,10 @@ public class Index_h extends Index_h_1 {
             "(I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$12.clang_getTUResourceUsageName$FUNC, false
         );
-        static final FunctionDescriptor clang_getCXTUResourceUsage$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCXTUResourceUsage$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("numEntries"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("entries")
         ).withName("CXTUResourceUsage"),
             C_POINTER
@@ -2598,10 +2538,10 @@ public class Index_h extends Index_h_1 {
             constants$12.clang_getCXTUResourceUsage$FUNC, false
         );
         static final FunctionDescriptor clang_disposeCXTUResourceUsage$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("numEntries"),
-                MemoryLayout.ofPaddingBits(32),
+                MemoryLayout.paddingLayout(32),
                 C_POINTER.withName("entries")
             ).withName("CXTUResourceUsage")
         );
@@ -2626,10 +2566,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$12.clang_TargetInfo_dispose$FUNC, false
         );
-        static final FunctionDescriptor clang_TargetInfo_getTriple$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_TargetInfo_getTriple$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -3445,10 +3385,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXCursor {
 
-        static final MemoryLayout CXCursor$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXCursor$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         );
         public static MemoryLayout $LAYOUT() {
             return CXCursor.CXCursor$struct$LAYOUT;
@@ -3489,20 +3429,14 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getNullCursor$MH() {
@@ -3570,20 +3504,20 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$13.clang_TargetInfo_getPointerWidth$FUNC, false
         );
-        static final FunctionDescriptor clang_getNullCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getNullCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ));
         static final MethodHandle clang_getNullCursor$MH = RuntimeHelper.downcallHandle(
             LIBRARIES, "clang_getNullCursor",
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$13.clang_getNullCursor$FUNC, false
         );
-        static final FunctionDescriptor clang_getTranslationUnitCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTranslationUnitCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
             C_POINTER
         );
@@ -3593,15 +3527,15 @@ public class Index_h extends Index_h_1 {
             constants$13.clang_getTranslationUnitCursor$FUNC, false
         );
         static final FunctionDescriptor clang_equalCursors$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_equalCursors$MH = RuntimeHelper.downcallHandle(
@@ -3610,10 +3544,10 @@ public class Index_h extends Index_h_1 {
             constants$13.clang_equalCursors$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isNull$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isNull$MH = RuntimeHelper.downcallHandle(
@@ -3622,10 +3556,10 @@ public class Index_h extends Index_h_1 {
             constants$13.clang_Cursor_isNull$FUNC, false
         );
         static final FunctionDescriptor clang_hashCursor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_hashCursor$MH = RuntimeHelper.downcallHandle(
@@ -3704,10 +3638,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$14 {
 
         static final FunctionDescriptor clang_getCursorKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorKind$MH = RuntimeHelper.downcallHandle(
@@ -3724,10 +3658,10 @@ public class Index_h extends Index_h_1 {
             constants$14.clang_isDeclaration$FUNC, false
         );
         static final FunctionDescriptor clang_isInvalidDeclaration$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isInvalidDeclaration$MH = RuntimeHelper.downcallHandle(
@@ -3853,10 +3787,10 @@ public class Index_h extends Index_h_1 {
             constants$15.clang_isAttribute$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_hasAttrs$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_hasAttrs$MH = RuntimeHelper.downcallHandle(
@@ -3945,32 +3879,32 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXPlatformAvailability {
 
-        static final MemoryLayout CXPlatformAvailability$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofStruct(
+        static final MemoryLayout CXPlatformAvailability$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("Platform"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("Major"),
                 C_INT.withName("Minor"),
                 C_INT.withName("Subminor")
             ).withName("Introduced"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("Major"),
                 C_INT.withName("Minor"),
                 C_INT.withName("Subminor")
             ).withName("Deprecated"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("Major"),
                 C_INT.withName("Minor"),
                 C_INT.withName("Subminor")
             ).withName("Obsoleted"),
             C_INT.withName("Unavailable"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("Message")
         ).withName("CXPlatformAvailability");
         public static MemoryLayout $LAYOUT() {
@@ -4008,20 +3942,14 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(56, 16));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getCursorPlatformAvailability$MH() {
@@ -4081,10 +4009,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$16 {
 
         static final FunctionDescriptor clang_getCursorLinkage$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorLinkage$MH = RuntimeHelper.downcallHandle(
@@ -4093,10 +4021,10 @@ public class Index_h extends Index_h_1 {
             constants$16.clang_getCursorLinkage$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorVisibility$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorVisibility$MH = RuntimeHelper.downcallHandle(
@@ -4105,10 +4033,10 @@ public class Index_h extends Index_h_1 {
             constants$16.clang_getCursorVisibility$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorAvailability$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorAvailability$MH = RuntimeHelper.downcallHandle(
@@ -4117,10 +4045,10 @@ public class Index_h extends Index_h_1 {
             constants$16.clang_getCursorAvailability$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorPlatformAvailability$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER,
@@ -4143,10 +4071,10 @@ public class Index_h extends Index_h_1 {
             constants$16.clang_disposeCXPlatformAvailability$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorLanguage$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorLanguage$MH = RuntimeHelper.downcallHandle(
@@ -4225,10 +4153,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$17 {
 
         static final FunctionDescriptor clang_getCursorTLSKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorTLSKind$MH = RuntimeHelper.downcallHandle(
@@ -4237,10 +4165,10 @@ public class Index_h extends Index_h_1 {
             constants$17.clang_getCursorTLSKind$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getTranslationUnit$MH = RuntimeHelper.downcallHandle(
@@ -4264,10 +4192,10 @@ public class Index_h extends Index_h_1 {
         );
         static final FunctionDescriptor clang_CXCursorSet_contains$FUNC = FunctionDescriptor.of(C_INT,
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXCursorSet_contains$MH = RuntimeHelper.downcallHandle(
@@ -4277,10 +4205,10 @@ public class Index_h extends Index_h_1 {
         );
         static final FunctionDescriptor clang_CXCursorSet_insert$FUNC = FunctionDescriptor.of(C_INT,
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXCursorSet_insert$MH = RuntimeHelper.downcallHandle(
@@ -4358,15 +4286,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$18 {
 
-        static final FunctionDescriptor clang_getCursorSemanticParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorSemanticParent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorSemanticParent$MH = RuntimeHelper.downcallHandle(
@@ -4374,15 +4302,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$18.clang_getCursorSemanticParent$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorLexicalParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorLexicalParent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorLexicalParent$MH = RuntimeHelper.downcallHandle(
@@ -4391,10 +4319,10 @@ public class Index_h extends Index_h_1 {
             constants$18.clang_getCursorLexicalParent$FUNC, false
         );
         static final FunctionDescriptor clang_getOverriddenCursors$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -4413,10 +4341,10 @@ public class Index_h extends Index_h_1 {
             constants$18.clang_disposeOverriddenCursors$FUNC, false
         );
         static final FunctionDescriptor clang_getIncludedFile$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getIncludedFile$MH = RuntimeHelper.downcallHandle(
@@ -4424,16 +4352,16 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$18.clang_getIncludedFile$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_getCursor$MH = RuntimeHelper.downcallHandle(
@@ -4881,10 +4809,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXType {
 
-        static final MemoryLayout CXType$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXType$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         );
         public static MemoryLayout $LAYOUT() {
             return CXType.CXType$struct$LAYOUT;
@@ -4909,20 +4837,14 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(8, 16));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getCursorType$MH() {
@@ -4971,15 +4893,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$19 {
 
-        static final FunctionDescriptor clang_getCursorLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getCursorLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorLocation$MH = RuntimeHelper.downcallHandle(
@@ -4987,15 +4909,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorLocation$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorExtent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getCursorExtent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorExtent$MH = RuntimeHelper.downcallHandle(
@@ -5003,15 +4925,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorExtent$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorType$MH = RuntimeHelper.downcallHandle(
@@ -5019,15 +4941,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorType$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypeSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypeSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTypeSpelling$MH = RuntimeHelper.downcallHandle(
@@ -5035,15 +4957,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getTypeSpelling$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypedefDeclUnderlyingType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypedefDeclUnderlyingType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTypedefDeclUnderlyingType$MH = RuntimeHelper.downcallHandle(
@@ -5051,15 +4973,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getTypedefDeclUnderlyingType$FUNC, false
         );
-        static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
@@ -5168,10 +5090,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$20 {
 
         static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getEnumConstantDeclValue$MH = RuntimeHelper.downcallHandle(
@@ -5180,10 +5102,10 @@ public class Index_h extends Index_h_1 {
             constants$20.clang_getEnumConstantDeclValue$FUNC, false
         );
         static final FunctionDescriptor clang_getEnumConstantDeclUnsignedValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getEnumConstantDeclUnsignedValue$MH = RuntimeHelper.downcallHandle(
@@ -5192,10 +5114,10 @@ public class Index_h extends Index_h_1 {
             constants$20.clang_getEnumConstantDeclUnsignedValue$FUNC, false
         );
         static final FunctionDescriptor clang_getFieldDeclBitWidth$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getFieldDeclBitWidth$MH = RuntimeHelper.downcallHandle(
@@ -5204,10 +5126,10 @@ public class Index_h extends Index_h_1 {
             constants$20.clang_getFieldDeclBitWidth$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getNumArguments$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getNumArguments$MH = RuntimeHelper.downcallHandle(
@@ -5215,15 +5137,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$20.clang_Cursor_getNumArguments$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getArgument$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getArgument$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5233,10 +5155,10 @@ public class Index_h extends Index_h_1 {
             constants$20.clang_Cursor_getArgument$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getNumTemplateArguments$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
@@ -5315,10 +5237,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$21 {
 
         static final FunctionDescriptor clang_Cursor_getTemplateArgumentKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5327,15 +5249,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;I)I",
             constants$21.clang_Cursor_getTemplateArgumentKind$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getTemplateArgumentType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getTemplateArgumentType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5345,10 +5267,10 @@ public class Index_h extends Index_h_1 {
             constants$21.clang_Cursor_getTemplateArgumentType$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getTemplateArgumentValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5358,10 +5280,10 @@ public class Index_h extends Index_h_1 {
             constants$21.clang_Cursor_getTemplateArgumentValue$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getTemplateArgumentUnsignedValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5371,15 +5293,15 @@ public class Index_h extends Index_h_1 {
             constants$21.clang_Cursor_getTemplateArgumentUnsignedValue$FUNC, false
         );
         static final FunctionDescriptor clang_equalTypes$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_equalTypes$MH = RuntimeHelper.downcallHandle(
@@ -5387,15 +5309,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$21.clang_equalTypes$FUNC, false
         );
-        static final FunctionDescriptor clang_getCanonicalType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCanonicalType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCanonicalType$MH = RuntimeHelper.downcallHandle(
@@ -5473,15 +5395,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$22 {
 
-        static final FunctionDescriptor clang_getLocalUnqualifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getLocalUnqualifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getLocalUnqualifiedType$MH = RuntimeHelper.downcallHandle(
@@ -5490,10 +5412,10 @@ public class Index_h extends Index_h_1 {
             constants$22.clang_getLocalUnqualifiedType$FUNC, false
         );
         static final FunctionDescriptor clang_isConstQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isConstQualifiedType$MH = RuntimeHelper.downcallHandle(
@@ -5502,10 +5424,10 @@ public class Index_h extends Index_h_1 {
             constants$22.clang_isConstQualifiedType$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isMacroFunctionLike$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isMacroFunctionLike$MH = RuntimeHelper.downcallHandle(
@@ -5514,10 +5436,10 @@ public class Index_h extends Index_h_1 {
             constants$22.clang_Cursor_isMacroFunctionLike$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isMacroBuiltin$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isMacroBuiltin$MH = RuntimeHelper.downcallHandle(
@@ -5526,10 +5448,10 @@ public class Index_h extends Index_h_1 {
             constants$22.clang_Cursor_isMacroBuiltin$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isFunctionInlined$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isFunctionInlined$MH = RuntimeHelper.downcallHandle(
@@ -5538,10 +5460,10 @@ public class Index_h extends Index_h_1 {
             constants$22.clang_Cursor_isFunctionInlined$FUNC, false
         );
         static final FunctionDescriptor clang_isVolatileQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isVolatileQualifiedType$MH = RuntimeHelper.downcallHandle(
@@ -5620,10 +5542,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$23 {
 
         static final FunctionDescriptor clang_isRestrictQualifiedType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isRestrictQualifiedType$MH = RuntimeHelper.downcallHandle(
@@ -5632,10 +5554,10 @@ public class Index_h extends Index_h_1 {
             constants$23.clang_isRestrictQualifiedType$FUNC, false
         );
         static final FunctionDescriptor clang_getAddressSpace$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getAddressSpace$MH = RuntimeHelper.downcallHandle(
@@ -5643,15 +5565,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$23.clang_getAddressSpace$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypedefName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypedefName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTypedefName$MH = RuntimeHelper.downcallHandle(
@@ -5659,15 +5581,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getTypedefName$FUNC, false
         );
-        static final FunctionDescriptor clang_getPointeeType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getPointeeType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getPointeeType$MH = RuntimeHelper.downcallHandle(
@@ -5675,15 +5597,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getPointeeType$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypeDeclaration$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypeDeclaration$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTypeDeclaration$MH = RuntimeHelper.downcallHandle(
@@ -5691,15 +5613,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getTypeDeclaration$FUNC, false
         );
-        static final FunctionDescriptor clang_getDeclObjCTypeEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getDeclObjCTypeEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getDeclObjCTypeEncoding$MH = RuntimeHelper.downcallHandle(
@@ -5777,15 +5699,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$24 {
 
-        static final FunctionDescriptor clang_Type_getObjCEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getObjCEncoding$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getObjCEncoding$MH = RuntimeHelper.downcallHandle(
@@ -5793,10 +5715,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$24.clang_Type_getObjCEncoding$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypeKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypeKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_INT
         );
@@ -5806,10 +5728,10 @@ public class Index_h extends Index_h_1 {
             constants$24.clang_getTypeKindSpelling$FUNC, false
         );
         static final FunctionDescriptor clang_getFunctionTypeCallingConv$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getFunctionTypeCallingConv$MH = RuntimeHelper.downcallHandle(
@@ -5817,15 +5739,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$24.clang_getFunctionTypeCallingConv$FUNC, false
         );
-        static final FunctionDescriptor clang_getResultType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getResultType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getResultType$MH = RuntimeHelper.downcallHandle(
@@ -5834,10 +5756,10 @@ public class Index_h extends Index_h_1 {
             constants$24.clang_getResultType$FUNC, false
         );
         static final FunctionDescriptor clang_getExceptionSpecificationType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
@@ -5846,10 +5768,10 @@ public class Index_h extends Index_h_1 {
             constants$24.clang_getExceptionSpecificationType$FUNC, false
         );
         static final FunctionDescriptor clang_getNumArgTypes$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getNumArgTypes$MH = RuntimeHelper.downcallHandle(
@@ -5927,15 +5849,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$25 {
 
-        static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5944,15 +5866,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$25.clang_getArgType$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getObjCObjectBaseType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getObjCObjectBaseType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getObjCObjectBaseType$MH = RuntimeHelper.downcallHandle(
@@ -5961,10 +5883,10 @@ public class Index_h extends Index_h_1 {
             constants$25.clang_Type_getObjCObjectBaseType$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getNumObjCProtocolRefs$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getNumObjCProtocolRefs$MH = RuntimeHelper.downcallHandle(
@@ -5972,15 +5894,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$25.clang_Type_getNumObjCProtocolRefs$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getObjCProtocolDecl$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getObjCProtocolDecl$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -5990,10 +5912,10 @@ public class Index_h extends Index_h_1 {
             constants$25.clang_Type_getObjCProtocolDecl$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getNumObjCTypeArgs$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getNumObjCTypeArgs$MH = RuntimeHelper.downcallHandle(
@@ -6001,15 +5923,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$25.clang_Type_getNumObjCTypeArgs$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getObjCTypeArg$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getObjCTypeArg$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -6089,10 +6011,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$26 {
 
         static final FunctionDescriptor clang_isFunctionTypeVariadic$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isFunctionTypeVariadic$MH = RuntimeHelper.downcallHandle(
@@ -6100,15 +6022,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$26.clang_isFunctionTypeVariadic$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorResultType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorResultType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorResultType$MH = RuntimeHelper.downcallHandle(
@@ -6117,10 +6039,10 @@ public class Index_h extends Index_h_1 {
             constants$26.clang_getCursorResultType$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorExceptionSpecificationType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
@@ -6129,10 +6051,10 @@ public class Index_h extends Index_h_1 {
             constants$26.clang_getCursorExceptionSpecificationType$FUNC, false
         );
         static final FunctionDescriptor clang_isPODType$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isPODType$MH = RuntimeHelper.downcallHandle(
@@ -6140,15 +6062,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$26.clang_isPODType$FUNC, false
         );
-        static final FunctionDescriptor clang_getElementType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getElementType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getElementType$MH = RuntimeHelper.downcallHandle(
@@ -6157,10 +6079,10 @@ public class Index_h extends Index_h_1 {
             constants$26.clang_getElementType$FUNC, false
         );
         static final FunctionDescriptor clang_getNumElements$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getNumElements$MH = RuntimeHelper.downcallHandle(
@@ -6268,15 +6190,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$27 {
 
-        static final FunctionDescriptor clang_getArrayElementType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getArrayElementType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getArrayElementType$MH = RuntimeHelper.downcallHandle(
@@ -6285,10 +6207,10 @@ public class Index_h extends Index_h_1 {
             constants$27.clang_getArrayElementType$FUNC, false
         );
         static final FunctionDescriptor clang_getArraySize$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getArraySize$MH = RuntimeHelper.downcallHandle(
@@ -6296,15 +6218,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$27.clang_getArraySize$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getNamedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getNamedType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getNamedType$MH = RuntimeHelper.downcallHandle(
@@ -6313,10 +6235,10 @@ public class Index_h extends Index_h_1 {
             constants$27.clang_Type_getNamedType$FUNC, false
         );
         static final FunctionDescriptor clang_Type_isTransparentTagTypedef$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_isTransparentTagTypedef$MH = RuntimeHelper.downcallHandle(
@@ -6325,10 +6247,10 @@ public class Index_h extends Index_h_1 {
             constants$27.clang_Type_isTransparentTagTypedef$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getNullability$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getNullability$MH = RuntimeHelper.downcallHandle(
@@ -6337,10 +6259,10 @@ public class Index_h extends Index_h_1 {
             constants$27.clang_Type_getNullability$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getAlignOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getAlignOf$MH = RuntimeHelper.downcallHandle(
@@ -6418,15 +6340,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$28 {
 
-        static final FunctionDescriptor clang_Type_getClassType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getClassType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getClassType$MH = RuntimeHelper.downcallHandle(
@@ -6435,10 +6357,10 @@ public class Index_h extends Index_h_1 {
             constants$28.clang_Type_getClassType$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getSizeOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getSizeOf$MH = RuntimeHelper.downcallHandle(
@@ -6447,10 +6369,10 @@ public class Index_h extends Index_h_1 {
             constants$28.clang_Type_getSizeOf$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getOffsetOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_POINTER
         );
@@ -6459,15 +6381,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$28.clang_Type_getOffsetOf$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getModifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getModifiedType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getModifiedType$MH = RuntimeHelper.downcallHandle(
@@ -6476,10 +6398,10 @@ public class Index_h extends Index_h_1 {
             constants$28.clang_Type_getModifiedType$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getOffsetOfField$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getOffsetOfField$MH = RuntimeHelper.downcallHandle(
@@ -6488,10 +6410,10 @@ public class Index_h extends Index_h_1 {
             constants$28.clang_Cursor_getOffsetOfField$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isAnonymous$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isAnonymous$MH = RuntimeHelper.downcallHandle(
@@ -6579,10 +6501,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$29 {
 
         static final FunctionDescriptor clang_Cursor_isAnonymousRecordDecl$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isAnonymousRecordDecl$MH = RuntimeHelper.downcallHandle(
@@ -6591,10 +6513,10 @@ public class Index_h extends Index_h_1 {
             constants$29.clang_Cursor_isAnonymousRecordDecl$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isInlineNamespace$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isInlineNamespace$MH = RuntimeHelper.downcallHandle(
@@ -6603,10 +6525,10 @@ public class Index_h extends Index_h_1 {
             constants$29.clang_Cursor_isInlineNamespace$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getNumTemplateArguments$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
@@ -6614,15 +6536,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Type_getNumTemplateArguments$FUNC, false
         );
-        static final FunctionDescriptor clang_Type_getTemplateArgumentAsType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Type_getTemplateArgumentAsType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -6632,10 +6554,10 @@ public class Index_h extends Index_h_1 {
             constants$29.clang_Type_getTemplateArgumentAsType$FUNC, false
         );
         static final FunctionDescriptor clang_Type_getCXXRefQualifier$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Type_getCXXRefQualifier$MH = RuntimeHelper.downcallHandle(
@@ -6644,10 +6566,10 @@ public class Index_h extends Index_h_1 {
             constants$29.clang_Type_getCXXRefQualifier$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isBitField$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isBitField$MH = RuntimeHelper.downcallHandle(
@@ -6771,10 +6693,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$30 {
 
         static final FunctionDescriptor clang_isVirtualBase$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isVirtualBase$MH = RuntimeHelper.downcallHandle(
@@ -6783,10 +6705,10 @@ public class Index_h extends Index_h_1 {
             constants$30.clang_isVirtualBase$FUNC, false
         );
         static final FunctionDescriptor clang_getCXXAccessSpecifier$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCXXAccessSpecifier$MH = RuntimeHelper.downcallHandle(
@@ -6795,10 +6717,10 @@ public class Index_h extends Index_h_1 {
             constants$30.clang_getCXXAccessSpecifier$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getStorageClass$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getStorageClass$MH = RuntimeHelper.downcallHandle(
@@ -6807,10 +6729,10 @@ public class Index_h extends Index_h_1 {
             constants$30.clang_Cursor_getStorageClass$FUNC, false
         );
         static final FunctionDescriptor clang_getNumOverloadedDecls$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getNumOverloadedDecls$MH = RuntimeHelper.downcallHandle(
@@ -6818,15 +6740,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$30.clang_getNumOverloadedDecls$FUNC, false
         );
-        static final FunctionDescriptor clang_getOverloadedDecl$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getOverloadedDecl$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -6835,15 +6757,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$30.clang_getOverloadedDecl$FUNC, false
         );
-        static final FunctionDescriptor clang_getIBOutletCollectionType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getIBOutletCollectionType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getIBOutletCollectionType$MH = RuntimeHelper.downcallHandle(
@@ -6922,23 +6844,23 @@ public class Index_h extends Index_h_1 {
     public static class constants$31 {
 
         static final FunctionDescriptor CXCursorVisitor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER
         );
         static final FunctionDescriptor clang_visitChildren$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -6949,10 +6871,10 @@ public class Index_h extends Index_h_1 {
             constants$31.clang_visitChildren$FUNC, false
         );
         static final FunctionDescriptor clang_visitTemplateSpecializations$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -6963,10 +6885,10 @@ public class Index_h extends Index_h_1 {
             constants$31.clang_visitTemplateSpecializations$FUNC, false
         );
         static final FunctionDescriptor clang_visitTemplateSpecializationChildren$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -6977,22 +6899,22 @@ public class Index_h extends Index_h_1 {
             constants$31.clang_visitTemplateSpecializationChildren$FUNC, false
         );
         static final FunctionDescriptor CXCursorVisitorBlock$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final FunctionDescriptor clang_visitChildrenWithBlock$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER
         );
@@ -7071,15 +6993,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$32 {
 
-        static final FunctionDescriptor clang_getCursorUSR$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorUSR$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorUSR$MH = RuntimeHelper.downcallHandle(
@@ -7087,10 +7009,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_getCursorUSR$FUNC, false
         );
-        static final FunctionDescriptor clang_constructUSR_ObjCClass$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCClass$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -7099,10 +7021,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCClass$FUNC, false
         );
-        static final FunctionDescriptor clang_constructUSR_ObjCCategory$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCCategory$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_POINTER
@@ -7112,10 +7034,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCCategory$FUNC, false
         );
-        static final FunctionDescriptor clang_constructUSR_ObjCProtocol$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCProtocol$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -7124,16 +7046,16 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCProtocol$FUNC, false
         );
-        static final FunctionDescriptor clang_constructUSR_ObjCIvar$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCIvar$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_constructUSR_ObjCIvar$MH = RuntimeHelper.downcallHandle(
@@ -7141,17 +7063,17 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCIvar$FUNC, false
         );
-        static final FunctionDescriptor clang_constructUSR_ObjCMethod$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCMethod$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_constructUSR_ObjCMethod$MH = RuntimeHelper.downcallHandle(
@@ -7310,16 +7232,16 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$33 {
 
-        static final FunctionDescriptor clang_constructUSR_ObjCProperty$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_constructUSR_ObjCProperty$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("data"),
                 C_INT.withName("private_flags"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_constructUSR_ObjCProperty$MH = RuntimeHelper.downcallHandle(
@@ -7327,15 +7249,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_constructUSR_ObjCProperty$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorSpelling$MH = RuntimeHelper.downcallHandle(
@@ -7343,15 +7265,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_getCursorSpelling$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getSpellingNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_Cursor_getSpellingNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT,
             C_INT
@@ -7381,10 +7303,10 @@ public class Index_h extends Index_h_1 {
             constants$33.clang_PrintingPolicy_setProperty$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorPrintingPolicy$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorPrintingPolicy$MH = RuntimeHelper.downcallHandle(
@@ -7470,15 +7392,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$34.clang_PrintingPolicy_dispose$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorPrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorPrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER
         );
@@ -7488,10 +7410,10 @@ public class Index_h extends Index_h_1 {
             constants$34.clang_getCursorPrettyPrinted$FUNC, false
         );
         static final FunctionDescriptor clang_getTypePrintingPolicy$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTypePrintingPolicy$MH = RuntimeHelper.downcallHandle(
@@ -7499,15 +7421,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$34.clang_getTypePrintingPolicy$FUNC, false
         );
-        static final FunctionDescriptor clang_getTypePrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTypePrettyPrinted$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_POINTER
         );
@@ -7516,15 +7438,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$34.clang_getTypePrettyPrinted$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorDisplayName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorDisplayName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorDisplayName$MH = RuntimeHelper.downcallHandle(
@@ -7532,15 +7454,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$34.clang_getCursorDisplayName$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorReferenced$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorReferenced$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorReferenced$MH = RuntimeHelper.downcallHandle(
@@ -7660,15 +7582,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$35 {
 
-        static final FunctionDescriptor clang_getCursorDefinition$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorDefinition$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorDefinition$MH = RuntimeHelper.downcallHandle(
@@ -7677,10 +7599,10 @@ public class Index_h extends Index_h_1 {
             constants$35.clang_getCursorDefinition$FUNC, false
         );
         static final FunctionDescriptor clang_isCursorDefinition$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_isCursorDefinition$MH = RuntimeHelper.downcallHandle(
@@ -7688,15 +7610,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$35.clang_isCursorDefinition$FUNC, false
         );
-        static final FunctionDescriptor clang_getCanonicalCursor$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCanonicalCursor$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCanonicalCursor$MH = RuntimeHelper.downcallHandle(
@@ -7705,10 +7627,10 @@ public class Index_h extends Index_h_1 {
             constants$35.clang_getCanonicalCursor$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getObjCSelectorIndex$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getObjCSelectorIndex$MH = RuntimeHelper.downcallHandle(
@@ -7717,10 +7639,10 @@ public class Index_h extends Index_h_1 {
             constants$35.clang_Cursor_getObjCSelectorIndex$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isDynamicCall$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isDynamicCall$MH = RuntimeHelper.downcallHandle(
@@ -7728,15 +7650,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$35.clang_Cursor_isDynamicCall$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getReceiverType$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getReceiverType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getReceiverType$MH = RuntimeHelper.downcallHandle(
@@ -7836,10 +7758,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$36 {
 
         static final FunctionDescriptor clang_Cursor_getObjCPropertyAttributes$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT
         );
@@ -7848,15 +7770,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;I)I",
             constants$36.clang_Cursor_getObjCPropertyAttributes$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getObjCPropertyGetterName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getObjCPropertyGetterName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getObjCPropertyGetterName$MH = RuntimeHelper.downcallHandle(
@@ -7864,15 +7786,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$36.clang_Cursor_getObjCPropertyGetterName$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getObjCPropertySetterName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getObjCPropertySetterName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getObjCPropertySetterName$MH = RuntimeHelper.downcallHandle(
@@ -7881,10 +7803,10 @@ public class Index_h extends Index_h_1 {
             constants$36.clang_Cursor_getObjCPropertySetterName$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getObjCDeclQualifiers$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getObjCDeclQualifiers$MH = RuntimeHelper.downcallHandle(
@@ -7893,10 +7815,10 @@ public class Index_h extends Index_h_1 {
             constants$36.clang_Cursor_getObjCDeclQualifiers$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isObjCOptional$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isObjCOptional$MH = RuntimeHelper.downcallHandle(
@@ -7905,10 +7827,10 @@ public class Index_h extends Index_h_1 {
             constants$36.clang_Cursor_isObjCOptional$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_isVariadic$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_isVariadic$MH = RuntimeHelper.downcallHandle(
@@ -7987,10 +7909,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$37 {
 
         static final FunctionDescriptor clang_Cursor_isExternalSymbol$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER,
@@ -8001,15 +7923,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$37.clang_Cursor_isExternalSymbol$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getCommentRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_Cursor_getCommentRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getCommentRange$MH = RuntimeHelper.downcallHandle(
@@ -8017,15 +7939,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getCommentRange$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getRawCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getRawCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getRawCommentText$MH = RuntimeHelper.downcallHandle(
@@ -8033,15 +7955,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getRawCommentText$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getBriefCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getBriefCommentText$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getBriefCommentText$MH = RuntimeHelper.downcallHandle(
@@ -8049,15 +7971,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getBriefCommentText$FUNC, false
         );
-        static final FunctionDescriptor clang_Cursor_getMangling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Cursor_getMangling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getMangling$MH = RuntimeHelper.downcallHandle(
@@ -8066,10 +7988,10 @@ public class Index_h extends Index_h_1 {
             constants$37.clang_Cursor_getMangling$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getCXXManglings$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getCXXManglings$MH = RuntimeHelper.downcallHandle(
@@ -8148,10 +8070,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$38 {
 
         static final FunctionDescriptor clang_Cursor_getObjCManglings$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getObjCManglings$MH = RuntimeHelper.downcallHandle(
@@ -8160,10 +8082,10 @@ public class Index_h extends Index_h_1 {
             constants$38.clang_Cursor_getObjCManglings$FUNC, false
         );
         static final FunctionDescriptor clang_Cursor_getModule$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_getModule$MH = RuntimeHelper.downcallHandle(
@@ -8196,10 +8118,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_Module_getParent$FUNC, false
         );
-        static final FunctionDescriptor clang_Module_getName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Module_getName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -8278,10 +8200,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$39 {
 
-        static final FunctionDescriptor clang_Module_getFullName$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_Module_getFullName$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -8318,10 +8240,10 @@ public class Index_h extends Index_h_1 {
             constants$39.clang_Module_getTopLevelHeader$FUNC, false
         );
         static final FunctionDescriptor clang_CXXConstructor_isConvertingConstructor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXConstructor_isConvertingConstructor$MH = RuntimeHelper.downcallHandle(
@@ -8330,10 +8252,10 @@ public class Index_h extends Index_h_1 {
             constants$39.clang_CXXConstructor_isConvertingConstructor$FUNC, false
         );
         static final FunctionDescriptor clang_CXXConstructor_isCopyConstructor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXConstructor_isCopyConstructor$MH = RuntimeHelper.downcallHandle(
@@ -8412,10 +8334,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$40 {
 
         static final FunctionDescriptor clang_CXXConstructor_isDefaultConstructor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXConstructor_isDefaultConstructor$MH = RuntimeHelper.downcallHandle(
@@ -8424,10 +8346,10 @@ public class Index_h extends Index_h_1 {
             constants$40.clang_CXXConstructor_isDefaultConstructor$FUNC, false
         );
         static final FunctionDescriptor clang_CXXConstructor_isMoveConstructor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXConstructor_isMoveConstructor$MH = RuntimeHelper.downcallHandle(
@@ -8436,10 +8358,10 @@ public class Index_h extends Index_h_1 {
             constants$40.clang_CXXConstructor_isMoveConstructor$FUNC, false
         );
         static final FunctionDescriptor clang_CXXField_isMutable$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXField_isMutable$MH = RuntimeHelper.downcallHandle(
@@ -8448,10 +8370,10 @@ public class Index_h extends Index_h_1 {
             constants$40.clang_CXXField_isMutable$FUNC, false
         );
         static final FunctionDescriptor clang_CXXMethod_isDefaulted$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXMethod_isDefaulted$MH = RuntimeHelper.downcallHandle(
@@ -8460,10 +8382,10 @@ public class Index_h extends Index_h_1 {
             constants$40.clang_CXXMethod_isDefaulted$FUNC, false
         );
         static final FunctionDescriptor clang_CXXMethod_isPureVirtual$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXMethod_isPureVirtual$MH = RuntimeHelper.downcallHandle(
@@ -8472,10 +8394,10 @@ public class Index_h extends Index_h_1 {
             constants$40.clang_CXXMethod_isPureVirtual$FUNC, false
         );
         static final FunctionDescriptor clang_CXXMethod_isStatic$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXMethod_isStatic$MH = RuntimeHelper.downcallHandle(
@@ -8554,10 +8476,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$41 {
 
         static final FunctionDescriptor clang_CXXMethod_isVirtual$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXMethod_isVirtual$MH = RuntimeHelper.downcallHandle(
@@ -8566,10 +8488,10 @@ public class Index_h extends Index_h_1 {
             constants$41.clang_CXXMethod_isVirtual$FUNC, false
         );
         static final FunctionDescriptor clang_CXXRecord_isAbstract$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXRecord_isAbstract$MH = RuntimeHelper.downcallHandle(
@@ -8578,10 +8500,10 @@ public class Index_h extends Index_h_1 {
             constants$41.clang_CXXRecord_isAbstract$FUNC, false
         );
         static final FunctionDescriptor clang_EnumDecl_isScoped$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_EnumDecl_isScoped$MH = RuntimeHelper.downcallHandle(
@@ -8590,10 +8512,10 @@ public class Index_h extends Index_h_1 {
             constants$41.clang_EnumDecl_isScoped$FUNC, false
         );
         static final FunctionDescriptor clang_CXXMethod_isConst$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_CXXMethod_isConst$MH = RuntimeHelper.downcallHandle(
@@ -8602,10 +8524,10 @@ public class Index_h extends Index_h_1 {
             constants$41.clang_CXXMethod_isConst$FUNC, false
         );
         static final FunctionDescriptor clang_getTemplateCursorKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTemplateCursorKind$MH = RuntimeHelper.downcallHandle(
@@ -8614,10 +8536,10 @@ public class Index_h extends Index_h_1 {
             constants$41.clang_getTemplateCursorKind$FUNC, false
         );
         static final FunctionDescriptor clang_getTemplateSpecializationKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getTemplateSpecializationKind$MH = RuntimeHelper.downcallHandle(
@@ -8675,8 +8597,8 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXToken {
 
-        static final MemoryLayout CXToken$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+        static final MemoryLayout CXToken$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
             C_POINTER.withName("ptr_data")
         );
         public static MemoryLayout $LAYOUT() {
@@ -8702,20 +8624,14 @@ public class Index_h extends Index_h_1 {
             CXToken.ptr_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getToken$MH() {
@@ -8764,15 +8680,15 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$42 {
 
-        static final FunctionDescriptor clang_getSpecializedCursorTemplate$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getSpecializedCursorTemplate$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
-            MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getSpecializedCursorTemplate$MH = RuntimeHelper.downcallHandle(
@@ -8780,15 +8696,15 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$42.clang_getSpecializedCursorTemplate$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorReferenceNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getCursorReferenceNameRange$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_INT,
             C_INT
@@ -8800,10 +8716,10 @@ public class Index_h extends Index_h_1 {
         );
         static final FunctionDescriptor clang_getToken$FUNC = FunctionDescriptor.of(C_POINTER,
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_getToken$MH = RuntimeHelper.downcallHandle(
@@ -8812,8 +8728,8 @@ public class Index_h extends Index_h_1 {
             constants$42.clang_getToken$FUNC, false
         );
         static final FunctionDescriptor clang_getTokenKind$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
                 C_POINTER.withName("ptr_data")
             )
         );
@@ -8822,14 +8738,14 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$42.clang_getTokenKind$FUNC, false
         );
-        static final FunctionDescriptor clang_getTokenSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getTokenSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
                 C_POINTER.withName("ptr_data")
             )
         );
@@ -8838,14 +8754,14 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$42.clang_getTokenSpelling$FUNC, false
         );
-        static final FunctionDescriptor clang_getTokenLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getTokenLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
                 C_POINTER.withName("ptr_data")
             )
         );
@@ -8924,14 +8840,14 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$43 {
 
-        static final FunctionDescriptor clang_getTokenExtent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_getTokenExtent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("begin_int_data"),
             C_INT.withName("end_int_data")
         ),
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(4, C_INT).withName("int_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
                 C_POINTER.withName("ptr_data")
             )
         );
@@ -8942,8 +8858,8 @@ public class Index_h extends Index_h_1 {
         );
         static final FunctionDescriptor clang_tokenize$FUNC = FunctionDescriptor.ofVoid(
             C_POINTER,
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             ),
@@ -8976,10 +8892,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
             constants$43.clang_disposeTokens$FUNC, false
         );
-        static final FunctionDescriptor clang_getCursorKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCursorKindSpelling$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_INT
         );
@@ -8989,10 +8905,10 @@ public class Index_h extends Index_h_1 {
             constants$43.clang_getCursorKindSpelling$FUNC, false
         );
         static final FunctionDescriptor clang_getDefinitionSpellingAndExtent$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER,
@@ -9043,9 +8959,9 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXCompletionResult {
 
-        static final MemoryLayout CXCompletionResult$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXCompletionResult$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("CursorKind"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("CompletionString")
         );
         public static MemoryLayout $LAYOUT() {
@@ -9084,20 +9000,14 @@ public class Index_h extends Index_h_1 {
             CXCompletionResult.CompletionString$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static int CXCompletionChunk_Optional() {
@@ -9226,10 +9136,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$44.clang_getCompletionChunkKind$FUNC, false
         );
-        static final FunctionDescriptor clang_getCompletionChunkText$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCompletionChunkText$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT
@@ -9350,10 +9260,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$45.clang_getCompletionNumAnnotations$FUNC, false
         );
-        static final FunctionDescriptor clang_getCompletionAnnotation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCompletionAnnotation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT
@@ -9363,10 +9273,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$45.clang_getCompletionAnnotation$FUNC, false
         );
-        static final FunctionDescriptor clang_getCompletionParent$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCompletionParent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_POINTER
@@ -9402,10 +9312,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXCodeCompleteResults {
 
-        static final MemoryLayout CXCodeCompleteResults$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXCodeCompleteResults$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("Results"),
             C_INT.withName("NumResults"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXCodeCompleteResults.CXCodeCompleteResults$struct$LAYOUT;
@@ -9443,20 +9353,14 @@ public class Index_h extends Index_h_1 {
             CXCodeCompleteResults.NumResults$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static MethodHandle clang_getCompletionNumFixIts$MH() {
@@ -9595,10 +9499,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$46 {
 
-        static final FunctionDescriptor clang_getCompletionBriefComment$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCompletionBriefComment$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -9608,10 +9512,10 @@ public class Index_h extends Index_h_1 {
             constants$46.clang_getCompletionBriefComment$FUNC, false
         );
         static final FunctionDescriptor clang_getCursorCompletionString$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_getCursorCompletionString$MH = RuntimeHelper.downcallHandle(
@@ -9628,10 +9532,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$46.clang_getCompletionNumFixIts$FUNC, false
         );
-        static final FunctionDescriptor clang_getCompletionFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getCompletionFixIt$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER,
             C_INT,
@@ -9875,10 +9779,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class constants$48 {
 
-        static final FunctionDescriptor clang_codeCompleteGetContainerUSR$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_codeCompleteGetContainerUSR$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -9887,10 +9791,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$48.clang_codeCompleteGetContainerUSR$FUNC, false
         );
-        static final FunctionDescriptor clang_codeCompleteGetObjCSelector$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_codeCompleteGetObjCSelector$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
             C_POINTER
         );
@@ -9899,10 +9803,10 @@ public class Index_h extends Index_h_1 {
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$48.clang_codeCompleteGetObjCSelector$FUNC, false
         );
-        static final FunctionDescriptor clang_getClangVersion$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
+        static final FunctionDescriptor clang_getClangVersion$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
             C_POINTER.withName("data"),
             C_INT.withName("private_flags"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ));
         static final MethodHandle clang_getClangVersion$MH = RuntimeHelper.downcallHandle(
             LIBRARIES, "clang_getClangVersion",
@@ -10004,10 +9908,10 @@ public class Index_h extends Index_h_1 {
     public static class constants$49 {
 
         static final FunctionDescriptor clang_Cursor_Evaluate$FUNC = FunctionDescriptor.of(C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             )
         );
         static final MethodHandle clang_Cursor_Evaluate$MH = RuntimeHelper.downcallHandle(
@@ -10206,7 +10110,7 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXCursorAndRangeVisitor {
 
-        static final MemoryLayout CXCursorAndRangeVisitor$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXCursorAndRangeVisitor$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("context"),
             C_POINTER.withName("visit")
         ).withName("CXCursorAndRangeVisitor");
@@ -10257,20 +10161,14 @@ public class Index_h extends Index_h_1 {
             CXCursorAndRangeVisitor.visit$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static int CXResult_Success() {
@@ -10338,25 +10236,25 @@ public class Index_h extends Index_h_1 {
         );
         static final FunctionDescriptor visit$FUNC = FunctionDescriptor.of(C_INT,
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
         );
         static final FunctionDescriptor clang_findReferencesInFile$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("context"),
                 C_POINTER.withName("visit")
             ).withName("CXCursorAndRangeVisitor")
@@ -10369,7 +10267,7 @@ public class Index_h extends Index_h_1 {
         static final FunctionDescriptor clang_findIncludesInFile$FUNC = FunctionDescriptor.of(C_INT,
             C_POINTER,
             C_POINTER,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_POINTER.withName("context"),
                 C_POINTER.withName("visit")
             ).withName("CXCursorAndRangeVisitor")
@@ -10380,13 +10278,13 @@ public class Index_h extends Index_h_1 {
             constants$51.clang_findIncludesInFile$FUNC, false
         );
         static final FunctionDescriptor CXCursorAndRangeVisitorBlock$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("begin_int_data"),
                 C_INT.withName("end_int_data")
             )
@@ -10417,10 +10315,10 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXIdxLoc {
 
-        static final MemoryLayout CXIdxLoc$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final MemoryLayout CXIdxLoc$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxLoc.CXIdxLoc$struct$LAYOUT;
@@ -10445,36 +10343,30 @@ public class Index_h extends Index_h_1 {
             CXIdxLoc.int_data$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxIncludedFileInfo {
 
-        static final MemoryLayout CXIdxIncludedFileInfo$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final MemoryLayout CXIdxIncludedFileInfo$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("hashLoc"),
             C_POINTER.withName("filename"),
             C_POINTER.withName("file"),
             C_INT.withName("isImport"),
             C_INT.withName("isAngled"),
             C_INT.withName("isModuleImport"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxIncludedFileInfo.CXIdxIncludedFileInfo$struct$LAYOUT;
@@ -10563,34 +10455,28 @@ public class Index_h extends Index_h_1 {
             CXIdxIncludedFileInfo.isModuleImport$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxImportedASTFileInfo {
 
-        static final MemoryLayout CXIdxImportedASTFileInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxImportedASTFileInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("file"),
             C_POINTER.withName("module"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc"),
             C_INT.withName("isImplicit"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxImportedASTFileInfo.CXIdxImportedASTFileInfo$struct$LAYOUT;
@@ -10647,20 +10533,14 @@ public class Index_h extends Index_h_1 {
             CXIdxImportedASTFileInfo.isImplicit$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static int CXIdxEntity_Unexposed() {
@@ -10770,18 +10650,18 @@ public class Index_h extends Index_h_1 {
     }
     public static class CXIdxAttrInfo {
 
-        static final MemoryLayout CXIdxAttrInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxAttrInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofStruct(
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc")
         );
         public static MemoryLayout $LAYOUT() {
@@ -10810,39 +10690,33 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxEntityInfo {
 
-        static final MemoryLayout CXIdxEntityInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxEntityInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("templateKind"),
             C_INT.withName("lang"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("name"),
             C_POINTER.withName("USR"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
             C_POINTER.withName("attributes"),
             C_INT.withName("numAttributes"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxEntityInfo.CXIdxEntityInfo$struct$LAYOUT;
@@ -10963,29 +10837,23 @@ public class Index_h extends Index_h_1 {
             CXIdxEntityInfo.numAttributes$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxContainerInfo {
 
-        static final MemoryLayout CXIdxContainerInfo$struct$LAYOUT = MemoryLayout.ofStruct(
-            MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxContainerInfo$struct$LAYOUT = MemoryLayout.structLayout(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor")
         );
         public static MemoryLayout $LAYOUT() {
@@ -10995,36 +10863,30 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(0, 32));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxIBOutletCollectionAttrInfo {
 
-        static final MemoryLayout CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxIBOutletCollectionAttrInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("attrInfo"),
             C_POINTER.withName("objcClass"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("classCursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("classLoc")
         );
         public static MemoryLayout $LAYOUT() {
@@ -11069,45 +10931,39 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(48, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxDeclInfo {
 
-        static final MemoryLayout CXIdxDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("entityInfo"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc"),
             C_POINTER.withName("semanticContainer"),
             C_POINTER.withName("lexicalContainer"),
             C_INT.withName("isRedeclaration"),
             C_INT.withName("isDefinition"),
             C_INT.withName("isContainer"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("declAsContainer"),
             C_INT.withName("isImplicit"),
-            MemoryLayout.ofPaddingBits(32),
+            MemoryLayout.paddingLayout(32),
             C_POINTER.withName("attributes"),
             C_INT.withName("numAttributes"),
             C_INT.withName("flags")
@@ -11298,28 +11154,22 @@ public class Index_h extends Index_h_1 {
             CXIdxDeclInfo.flags$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCContainerDeclInfo {
 
-        static final MemoryLayout CXIdxObjCContainerDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCContainerDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("declInfo"),
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxObjCContainerDeclInfo.CXIdxObjCContainerDeclInfo$struct$LAYOUT;
@@ -11357,35 +11207,29 @@ public class Index_h extends Index_h_1 {
             CXIdxObjCContainerDeclInfo.kind$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxBaseClassInfo {
 
-        static final MemoryLayout CXIdxBaseClassInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxBaseClassInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("base"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc")
         );
         public static MemoryLayout $LAYOUT() {
@@ -11414,35 +11258,29 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCProtocolRefInfo {
 
-        static final MemoryLayout CXIdxObjCProtocolRefInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCProtocolRefInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("protocol"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc")
         );
         public static MemoryLayout $LAYOUT() {
@@ -11471,28 +11309,22 @@ public class Index_h extends Index_h_1 {
             return RuntimeHelper.nonCloseableNonTransferableSegment(seg.asSlice(40, 24));
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCProtocolRefListInfo {
 
-        static final MemoryLayout CXIdxObjCProtocolRefListInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCProtocolRefListInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("protocols"),
             C_INT.withName("numProtocols"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxObjCProtocolRefListInfo.CXIdxObjCProtocolRefListInfo$struct$LAYOUT;
@@ -11530,25 +11362,19 @@ public class Index_h extends Index_h_1 {
             CXIdxObjCProtocolRefListInfo.numProtocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCInterfaceDeclInfo {
 
-        static final MemoryLayout CXIdxObjCInterfaceDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCInterfaceDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("containerInfo"),
             C_POINTER.withName("superInfo"),
             C_POINTER.withName("protocols")
@@ -11605,36 +11431,30 @@ public class Index_h extends Index_h_1 {
             CXIdxObjCInterfaceDeclInfo.protocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCCategoryDeclInfo {
 
-        static final MemoryLayout CXIdxObjCCategoryDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCCategoryDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("containerInfo"),
             C_POINTER.withName("objcClass"),
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("classCursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("classLoc"),
             C_POINTER.withName("protocols")
         );
@@ -11696,25 +11516,19 @@ public class Index_h extends Index_h_1 {
             CXIdxObjCCategoryDeclInfo.protocols$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxObjCPropertyDeclInfo {
 
-        static final MemoryLayout CXIdxObjCPropertyDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxObjCPropertyDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("declInfo"),
             C_POINTER.withName("getter"),
             C_POINTER.withName("setter")
@@ -11771,29 +11585,23 @@ public class Index_h extends Index_h_1 {
             CXIdxObjCPropertyDeclInfo.setter$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxCXXClassDeclInfo {
 
-        static final MemoryLayout CXIdxCXXClassDeclInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxCXXClassDeclInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("declInfo"),
             C_POINTER.withName("bases"),
             C_INT.withName("numBases"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxCXXClassDeclInfo.CXIdxCXXClassDeclInfo$struct$LAYOUT;
@@ -11847,42 +11655,36 @@ public class Index_h extends Index_h_1 {
             CXIdxCXXClassDeclInfo.numBases$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class CXIdxEntityRefInfo {
 
-        static final MemoryLayout CXIdxEntityRefInfo$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout CXIdxEntityRefInfo$struct$LAYOUT = MemoryLayout.structLayout(
             C_INT.withName("kind"),
-            MemoryLayout.ofPaddingBits(32),
-            MemoryLayout.ofStruct(
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ).withName("cursor"),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ).withName("loc"),
             C_POINTER.withName("referencedEntity"),
             C_POINTER.withName("parentEntity"),
             C_POINTER.withName("container"),
             C_INT.withName("role"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         );
         public static MemoryLayout $LAYOUT() {
             return CXIdxEntityRefInfo.CXIdxEntityRefInfo$struct$LAYOUT;
@@ -11974,29 +11776,23 @@ public class Index_h extends Index_h_1 {
             CXIdxEntityRefInfo.role$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public static class constants$52 {
 
         static final FunctionDescriptor clang_findReferencesInFileWithBlock$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -12038,7 +11834,7 @@ public class Index_h extends Index_h_1 {
 
     public static class IndexerCallbacks {
 
-        static final MemoryLayout IndexerCallbacks$struct$LAYOUT = MemoryLayout.ofStruct(
+        static final MemoryLayout IndexerCallbacks$struct$LAYOUT = MemoryLayout.structLayout(
             C_POINTER.withName("abortQuery"),
             C_POINTER.withName("diagnostic"),
             C_POINTER.withName("enteredMainFile"),
@@ -12268,20 +12064,14 @@ public class Index_h extends Index_h_1 {
             IndexerCallbacks.indexEntityReference$VH.set(seg.asSlice(index*sizeof()), x);
         }
         public static long sizeof() { return $LAYOUT().byteSize(); }
-        public static MemorySegment allocate() { return MemorySegment.allocateNative($LAYOUT()); }
         public static MemorySegment allocate(NativeScope scope) { return scope.allocate($LAYOUT()); }
-        public static MemorySegment allocateArray(int len) {
-            return MemorySegment.allocateNative(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }        public static MemorySegment allocateArray(int len, NativeScope scope) {
-            return scope.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));
-        }
-        public static MemorySegment allocatePointer() {
-            return MemorySegment.allocateNative(C_POINTER);
+        public static MemorySegment allocateArray(int len, NativeScope scope) {
+            return scope.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
         }
         public static MemorySegment allocatePointer(NativeScope scope) {
             return scope.allocate(C_POINTER);
         }
-        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }
+        public static MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }
     }
 
     public interface CXFieldVisitor {
@@ -12314,10 +12104,10 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final FunctionDescriptor CXFieldVisitor$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
                 C_INT.withName("xdata"),
-                MemoryLayout.ofSequence(3, C_POINTER).withName("data")
+                MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
             ),
             C_POINTER
         );

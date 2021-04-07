@@ -22,6 +22,7 @@
  */
 
 import org.testng.annotations.Test;
+import jdk.incubator.foreign.ResourceScope;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8244938.test8244938_h.*;
 
@@ -32,7 +33,7 @@ import static test.jextract.test8244938.test8244938_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8244938 -t test.jextract.test8244938 -- test8244938.h
- * @run testng/othervm -Dforeign.restricted=permit Test8244938
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8244938
  */
 
 /*
@@ -42,16 +43,18 @@ import static test.jextract.test8244938.test8244938_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8244938 -t test.jextract.test8244938 -- test8244938.h
- * @run testng/othervm -Dforeign.restricted=permit Test8244938
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8244938
  */
 public class Test8244938 {
     @Test
     public void testNestedStructReturn() {
-         var seg = func();
-         assertEquals(seg.byteSize(), Point.sizeof());
-         assertEquals(Point.k$get(seg), 44);
-         var point2dSeg = Point.point2d$slice(seg);
-         assertEquals(Point2D.i$get(point2dSeg), 567);
-         assertEquals(Point2D.j$get(point2dSeg), 33);
+         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+             var seg = func(scope);
+             assertEquals(seg.byteSize(), Point.sizeof());
+             assertEquals(Point.k$get(seg), 44);
+             var point2dSeg = Point.point2d$slice(seg);
+             assertEquals(Point2D.i$get(point2dSeg), 567);
+             assertEquals(Point2D.j$get(point2dSeg), 33);
+         }
     }
 }

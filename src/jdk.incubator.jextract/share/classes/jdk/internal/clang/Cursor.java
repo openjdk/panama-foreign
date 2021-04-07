@@ -28,6 +28,7 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.util.ArrayList;
@@ -338,7 +339,7 @@ public final class Cursor {
     private static class CursorChildren {
         private static final ArrayList<Cursor> children = new ArrayList<>();
         private static final MemorySegment callback = Index_h.CXCursorVisitor.allocate((c, p, d) -> {
-            MemorySegment copy = MemorySegment.allocateNative(c.byteSize());
+            MemorySegment copy = MemorySegment.allocateNative(c.byteSize(), ResourceScope.newImplicitScope());
             copy.copyFrom(c);
             Cursor cursor = new Cursor(copy);
             children.add(cursor);

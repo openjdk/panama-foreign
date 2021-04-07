@@ -22,6 +22,7 @@
  */
 
 import org.testng.annotations.Test;
+import jdk.incubator.foreign.ResourceScope;
 import test.jextract.test8261511.*;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8261511.test8261511_h.*;
@@ -33,7 +34,7 @@ import static test.jextract.test8261511.test8261511_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8261511 -t test.jextract.test8261511 -- test8261511.h
- * @run testng/othervm -Dforeign.restricted=permit Test8261511
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8261511
  */
 /*
  * @test id=sources
@@ -42,14 +43,16 @@ import static test.jextract.test8261511.test8261511_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8261511 -t test.jextract.test8261511 -- test8261511.h
- * @run testng/othervm -Dforeign.restricted=permit Test8261511
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8261511
  */
 public class Test8261511 {
     @Test
     public void test() {
-        var funcPtr = Foo.sum$get(get_foo());
-        var sumIface = Foo.sum.ofAddressRestricted(funcPtr);
-        assertEquals(sumIface.apply(15,20), 35);
-        assertEquals(sum(1.2, 4.5), 5.7, 0.001);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var funcPtr = Foo.sum$get(get_foo(scope));
+            var sumIface = Foo.sum.ofAddress(funcPtr);
+            assertEquals(sumIface.apply(15,20), 35);
+            assertEquals(sum(1.2, 4.5), 5.7, 0.001);
+        }
     }
 }

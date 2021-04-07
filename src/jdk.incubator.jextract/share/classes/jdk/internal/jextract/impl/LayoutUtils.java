@@ -97,11 +97,11 @@ public final class LayoutUtils {
             case Record:
                 return getRecordLayout(t);
             case Vector:
-                return MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType()));
+                return MemoryLayout.sequenceLayout(t.getNumberOfElements(), getLayout(t.getElementType()));
             case ConstantArray:
-                return MemoryLayout.ofSequence(t.getNumberOfElements(), getLayout(t.getElementType()));
+                return MemoryLayout.sequenceLayout(t.getNumberOfElements(), getLayout(t.getElementType()));
             case IncompleteArray:
-                return MemoryLayout.ofSequence(getLayout(t.getElementType()));
+                return MemoryLayout.sequenceLayout(getLayout(t.getElementType()));
             case Unexposed:
                 Type canonical = t.canonicalType();
                 if (canonical.equalType(t)) {
@@ -166,9 +166,9 @@ public final class LayoutUtils {
         public MemoryLayout visitArray(jdk.incubator.jextract.Type.Array t, Void _ignored) {
             MemoryLayout elem = t.elementType().accept(this, null);
             if (t.elementCount().isPresent()) {
-                return MemoryLayout.ofSequence(t.elementCount().getAsLong(), elem);
+                return MemoryLayout.sequenceLayout(t.elementCount().getAsLong(), elem);
             } else {
-                return MemoryLayout.ofSequence(elem);
+                return MemoryLayout.sequenceLayout(elem);
             }
         }
 

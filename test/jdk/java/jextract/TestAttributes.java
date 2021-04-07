@@ -25,7 +25,7 @@
  * @test
  * @bug 8239808
  * @build JextractApiTestBase
- * @run testng/othervm -Dforeign.restricted=permit TestAttributes
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestAttributes
  */
 
 import java.lang.constant.Constable;

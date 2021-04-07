@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @build JextractToolRunner
  * @bug 8249290
  * @summary jextract does not handle void typedef in function pointer argument
- * @run testng/othervm -Dforeign.restricted=permit Test8249290
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8249290
  */
 public class Test8249290 extends JextractToolRunner {
     @Test

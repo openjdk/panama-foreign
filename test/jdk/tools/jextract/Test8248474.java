@@ -33,7 +33,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8248474
  * @summary jextract uses header file name as part of identifier
- * @run testng/othervm -Dforeign.restricted=permit Test8248474
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8248474
  */
 public class Test8248474 extends JextractToolRunner {
     @Test

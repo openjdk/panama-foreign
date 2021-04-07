@@ -37,7 +37,7 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.printf -l Printf -- printf.h
- * @run testng/othervm -Dforeign.restricted=permit Test8244959
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8244959
  */
 /*
  * @test id=sources
@@ -46,12 +46,12 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -t test.jextract.printf -l Printf -- printf.h
- * @run testng/othervm -Dforeign.restricted=permit Test8244959
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8244959
  */
 public class Test8244959 {
     @Test
     public void testsPrintf() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment s = MemorySegment.allocateNative(1024, scope);
             my_sprintf(s,
                     toCString("%hhd %c %.2f %.2f %lld %lld %d %hd %d %d %lld %c", scope), 12,

@@ -35,7 +35,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8251943
  * @summary jextract should not generate MemorySegment typed fields for variables, struct fields if layout size info is not available
- * @run testng/othervm -Dforeign.restricted=permit Test8251943
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8251943
  */
 public class Test8251943 extends JextractToolRunner {
 

@@ -36,7 +36,7 @@ import static org.testng.Assert.assertTrue;
  * @build JextractToolRunner
  * @bug 8240752
  * @summary jextract generates non-compilable code for special floating point values
- * @run testng/othervm -Dforeign.restricted=permit Test8240752
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8240752
  */
 public class Test8240752 extends JextractToolRunner {
     private float getFloatConstant(Class<?> cls, String name) {

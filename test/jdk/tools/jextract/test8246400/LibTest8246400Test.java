@@ -37,7 +37,7 @@ import static test.jextract.test8246400.test8246400_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED  LibTest8246400Test
  */
 /*
  * @test id=sources
@@ -46,14 +46,14 @@ import static test.jextract.test8246400.test8246400_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8246400Test
  */
 public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
         MemorySegment sum = null;
         MemorySegment callback = null;
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var v1 = Vector.allocate(scope);
             Vector.x$set(v1, 1.0);
             Vector.y$set(v1, 0.0);

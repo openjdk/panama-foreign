@@ -64,7 +64,7 @@ abstract class RecordLayoutComputer {
     static MemoryLayout compute(long offsetInParent, Type parent, Type type) {
         Cursor cursor = type.getDeclarationCursor().getDefinition();
         if (cursor.isInvalid()) {
-            return MemoryLayout.ofPaddingBits(64);
+            return MemoryLayout.paddingLayout(64);
         }
 
         final boolean isUnion = cursor.kind() == CursorKind.UnionDecl;
@@ -121,7 +121,7 @@ abstract class RecordLayoutComputer {
         MemoryLayout l = LayoutUtils.getLayout(c.type());
         String name = LayoutUtils.getName(c);
         if (c.isBitField()) {
-            MemoryLayout sublayout = MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder());
+            MemoryLayout sublayout = MemoryLayout.valueLayout(c.getBitFieldWidth(), ByteOrder.nativeOrder());
             return sublayout.withName(name);
         } else {
             return l.withName(name);
@@ -136,7 +136,7 @@ abstract class RecordLayoutComputer {
     }
 
     MemoryLayout bitfield(List<MemoryLayout> sublayouts) {
-        return LayoutUtils.setBitfields(MemoryLayout.ofStruct(sublayouts.toArray(new MemoryLayout[0])));
+        return LayoutUtils.setBitfields(MemoryLayout.structLayout(sublayouts.toArray(new MemoryLayout[0])));
     }
 
     long offsetOf(Type parent, Cursor c) {

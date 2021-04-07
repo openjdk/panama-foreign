@@ -90,13 +90,13 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
             // emit an extra padding of expected size to make sure union layout size is computed correctly
-            addFieldLayout(MemoryLayout.ofPaddingBits(expectedSize));
+            addFieldLayout(MemoryLayout.paddingLayout(expectedSize));
         } else if (actualSize > expectedSize) {
             throw new AssertionError("Invalid union size - expected: " + expectedSize + "; found: " + actualSize);
         }
 
         MemoryLayout[] fields = fieldLayouts.toArray(new MemoryLayout[0]);
-        GroupLayout g = MemoryLayout.ofUnion(fields);
+        GroupLayout g = MemoryLayout.unionLayout(fields);
         String name = LayoutUtils.getName(cursor);
         return name.isEmpty() ?
                 g : g.withName(name);

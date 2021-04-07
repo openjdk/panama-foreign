@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
  * @build JextractToolRunner
  * @bug 8262117
  * @summary jextract crashes with javac compilation error "class u is already defined"
- * @run testng/othervm -Dforeign.restricted=permit Test8262117
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8262117
  */
 public class Test8262117 extends JextractToolRunner {
     @Test

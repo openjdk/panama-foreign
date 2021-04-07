@@ -25,6 +25,7 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -35,7 +36,7 @@ import static test.jextract.struct.struct_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Struct -t test.jextract.struct -- struct.h
- * @run testng/othervm -Dforeign.restricted=permit LibStructTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibStructTest
  */
 
 /*
@@ -44,36 +45,42 @@ import static test.jextract.struct.struct_h.*;
  * @modules jdk.incubator.jextract
  *
  * @run driver JtregJextractSources -l Struct -t test.jextract.struct -- struct.h
- * @run testng/othervm -Dforeign.restricted=permit LibStructTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibStructTest
  */
 
 public class LibStructTest {
     @Test
     public void testMakePoint() {
-        var seg = makePoint(42, -39);
-        assertEquals(Point.x$get(seg), 42);
-        assertEquals(Point.y$get(seg), -39);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var seg = makePoint(scope, 42, -39);
+            assertEquals(Point.x$get(seg), 42);
+            assertEquals(Point.y$get(seg), -39);
+        }
     }
 
     @Test
     public void testAllocate() {
-        var seg = Point.allocate();
-        Point.x$set(seg, 56);
-        Point.y$set(seg, 65);
-        assertEquals(Point.x$get(seg), 56);
-        assertEquals(Point.y$get(seg), 65);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var seg = Point.allocate(scope);
+            Point.x$set(seg, 56);
+            Point.y$set(seg, 65);
+            assertEquals(Point.x$get(seg), 56);
+            assertEquals(Point.y$get(seg), 65);
+        }
     }
 
     @Test
     public void testAllocateArray() {
-        var seg = Point.allocateArray(3);
-        for (int i = 0; i < 3; i++) {
-            Point.x$set(seg, i, 56 + i);
-            Point.y$set(seg, i, 65 + i);
-        }
-        for (int i = 0; i < 3; i++) {
-            assertEquals(Point.x$get(seg, i), 56 + i);
-            assertEquals(Point.y$get(seg, i), 65 + i);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            var seg = Point.allocateArray(3, scope);
+            for (int i = 0; i < 3; i++) {
+                Point.x$set(seg, i, 56 + i);
+                Point.y$set(seg, i, 65 + i);
+            }
+            for (int i = 0; i < 3; i++) {
+                assertEquals(Point.x$get(seg, i), 56 + i);
+                assertEquals(Point.y$get(seg, i), 65 + i);
+            }
         }
     }
 

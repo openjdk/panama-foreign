@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8262851
  * @summary jextract crashes with "Cannot compute size of a layout which is, or depends on a sequence layout with unspecified size"
- * @run testng/othervm -Dforeign.restricted=permit Test8262851
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8262851
  */
 public class Test8262851 extends JextractToolRunner {
     @Test

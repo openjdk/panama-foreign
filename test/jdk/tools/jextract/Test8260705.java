@@ -36,7 +36,7 @@ import static org.testng.Assert.assertTrue;
  * @build JextractToolRunner
  * @bug 8260705
  * @summary jextract crash with libbart's types.h
- * @run testng/othervm -Dforeign.restricted=permit Test8260705
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8260705
  */
 public class Test8260705 extends JextractToolRunner {
     @Test

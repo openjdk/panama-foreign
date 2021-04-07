@@ -37,15 +37,15 @@ public class NativeScope implements SegmentAllocator, AutoCloseable {
     long allocatedBytes = 0;
 
     private NativeScope() {
-        this.resourceScope = ResourceScope.ofConfined();
+        this.resourceScope = ResourceScope.newConfinedScope();
         this.scopeHandle = resourceScope.acquire();
-        this.allocator = SegmentAllocator.arenaUnbounded(resourceScope);
+        this.allocator = SegmentAllocator.arenaAllocator(resourceScope);
     }
 
     private NativeScope(long size) {
-        this.resourceScope = ResourceScope.ofConfined();
+        this.resourceScope = ResourceScope.newConfinedScope();
         this.scopeHandle = resourceScope.acquire();
-        this.allocator = SegmentAllocator.arenaBounded(size, resourceScope);
+        this.allocator = SegmentAllocator.arenaAllocator(size, resourceScope);
     }
 
     @Override

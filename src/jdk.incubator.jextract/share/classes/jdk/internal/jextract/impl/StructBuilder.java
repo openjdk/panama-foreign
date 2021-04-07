@@ -88,13 +88,10 @@ class StructBuilder extends ConstantBuilder {
         if (!inAnonymousNested()) {
             emitSizeof();
             emitAllocatorAllocate();
-            emitAllocate();
             emitScopeAllocate();
             emitAllocatorAllocateArray();
-            emitAllocateArray();
             emitScopeAllocateArray();
-            emitAsRestricted();
-            emitAsRestrictedScoped();
+            emitOfAddressScoped();
             return super.classEnd();
         } else {
             // we're in an anonymous struct which got merged into this one, return this very builder and keep it open
@@ -166,7 +163,7 @@ class StructBuilder extends ConstantBuilder {
         append(fiName + " " + javaName + " (MemorySegment segment) {\n");
         incrAlign();
         indent();
-        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get(segment));\n");
+        append("return " + fiName + ".ofAddress(" + javaName + "$get(segment));\n");
         decrAlign();
         indent();
         append("}\n");
@@ -241,19 +238,11 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private void emitAllocate() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocate() { return allocate(RuntimeHelper.DEFAULT_ALLOCATOR); }\n");
-        decrAlign();
-    }
-
     private void emitScopeAllocate() {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.scoped(scope)); }\n");
+        append(" MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.ofScope(scope)); }\n");
         decrAlign();
     }
 
@@ -265,20 +254,6 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private void emitAllocateArray() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocateArray(int len) {\n");
-        incrAlign();
-        indent();
-        append("return allocateArray(len, RuntimeHelper.DEFAULT_ALLOCATOR);\n");
-        decrAlign();
-        indent();
-        append('}');
-        decrAlign();
-    }
-
     private void emitScopeAllocateArray() {
         incrAlign();
         indent();
@@ -286,7 +261,7 @@ class StructBuilder extends ConstantBuilder {
         append(" MemorySegment allocateArray(int len, ResourceScope scope) {\n");
         incrAlign();
         indent();
-        append("return allocateArray(len, SegmentAllocator.scoped(scope));\n");
+        append("return allocateArray(len, SegmentAllocator.ofScope(scope));\n");
         decrAlign();
         indent();
         append("}\n");
@@ -300,26 +275,18 @@ class StructBuilder extends ConstantBuilder {
         append(" MemorySegment allocateArray(int len, SegmentAllocator allocator) {\n");
         incrAlign();
         indent();
-        append("return allocator.allocate(MemoryLayout.ofSequence(len, $LAYOUT()));\n");
+        append("return allocator.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));\n");
         decrAlign();
         indent();
         append("}\n");
         decrAlign();
     }
 
-    private void emitAsRestricted() {
+    private void emitOfAddressScoped() {
         incrAlign();
         indent();
         append(MEMBER_MODS);
-        append(" MemorySegment ofAddressRestricted(MemoryAddress addr) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1); }\n");
-        decrAlign();
-    }
-
-    private void emitAsRestrictedScoped() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment ofAddressRestricted(MemoryAddress addr, ResourceScope scope) { return RuntimeHelper.asArrayRestricted(addr, $LAYOUT(), 1, scope); }\n");
+        append(" MemorySegment ofAddress(MemoryAddress addr, ResourceScope scope) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1, scope); }\n");
         decrAlign();
     }
 

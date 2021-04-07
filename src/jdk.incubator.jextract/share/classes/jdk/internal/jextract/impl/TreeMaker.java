@@ -257,7 +257,7 @@ class TreeMaker {
         checkCursorAny(c, CursorKind.VarDecl, CursorKind.FieldDecl, CursorKind.ParmDecl);
         if (c.isBitField()) {
             return Declaration.bitfield(toPos(c), c.spelling(), toType(c),
-                    MemoryLayout.ofValueBits(c.getBitFieldWidth(), ByteOrder.nativeOrder()));
+                    MemoryLayout.valueLayout(c.getBitFieldWidth(), ByteOrder.nativeOrder()));
         } else {
             Type type = null;
             try {

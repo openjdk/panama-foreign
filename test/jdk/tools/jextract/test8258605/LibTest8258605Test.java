@@ -36,7 +36,7 @@ import static test.jextract.test8258605.funcParam_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l FuncParam -t test.jextract.test8258605 -- funcParam.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8258605Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8258605Test
  */
 /*
  * @test id=sources
@@ -45,12 +45,12 @@ import static test.jextract.test8258605.funcParam_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l FuncParam -t test.jextract.test8258605 -- funcParam.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8258605Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8258605Test
  */
 public class LibTest8258605Test {
     @Test
     public void testFunctionCallback() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
              boolean[] callbackReached = new boolean[1];
              f(CB.allocate(i -> {
                  assertTrue(i == 10);
@@ -62,11 +62,11 @@ public class LibTest8258605Test {
 
     @Test
     public void testStructFunctionPointerCallback() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
              boolean[] callbackReached = new boolean[1];
 
              // get struct Foo instance
-             var foo = getFoo();
+             var foo = getFoo(scope);
              // make sure that foo.bar is not NULL
              assertFalse(Foo.bar$get(foo).equals(NULL));
 

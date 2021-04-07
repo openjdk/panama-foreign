@@ -35,7 +35,7 @@ import static org.testng.Assert.assertTrue;
  * @build JextractToolRunner
  * @bug 8245767
  * @summary jextract crashes with typedef on a opaque struct or union
- * @run testng/othervm -Dforeign.restricted=permit Test8245767
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8245767
  */
 public class Test8245767 extends JextractToolRunner {
     @Test

@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @build JextractToolRunner
  * @bug 8249300
  * @summary jextract does not handle empty parameter list of a function pointer parameters
- * @run testng/othervm -Dforeign.restricted=permit Test8249300
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8249300
  */
 public class Test8249300 extends JextractToolRunner {
     @Test

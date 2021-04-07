@@ -32,19 +32,19 @@ import static test.jextract.fp.funcPtr_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l FuncPtr -t test.jextract.fp -- funcPtr.h
- * @run testng/othervm -Dforeign.restricted=permit LibFuncPtrTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibFuncPtrTest
  */
 /*
  * @test id=sources
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l FuncPtr -t test.jextract.fp -- funcPtr.h
- * @run testng/othervm -Dforeign.restricted=permit LibFuncPtrTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibFuncPtrTest
  */
 public class LibFuncPtrTest {
     @Test
     public void test() {
-        try (ResourceScope scope = ResourceScope.ofConfined()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var handle = func$f.allocate(x -> x * x, scope);
             assertEquals(func(handle, 35), 35 * 35 + 35);
         }

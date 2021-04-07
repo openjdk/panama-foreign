@@ -94,7 +94,6 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
             if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
                 // emit scoped overload
-                emitFunctionWrapperNoAllocatorOverload(javaName, functionInfo);
                 emitFunctionWrapperScopedOverload(javaName, functionInfo);
             }
         });
@@ -201,25 +200,6 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         return pExprs;
     }
 
-    private void emitFunctionWrapperNoAllocatorOverload(String javaName, FunctionInfo functionInfo) {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS + " ");
-        List<String> pExprs = emitFunctionWrapperDecl(javaName, functionInfo.methodType(), functionInfo.isVarargs(), functionInfo.parameterNames().get());
-        pExprs.add(0, "RuntimeHelper.DEFAULT_ALLOCATOR");
-        append(" {\n");
-        incrAlign();
-        indent();
-        if (!functionInfo.methodType().returnType().equals(void.class)) {
-            append("return (" + functionInfo.methodType().returnType().getName() + ")");
-        }
-        append(javaName + "(" + String.join(", ", pExprs) + ");\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-    }
-
     private void emitFunctionWrapperScopedOverload(String javaName, FunctionInfo functionInfo) {
         incrAlign();
         indent();
@@ -231,7 +211,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
                 functionInfo.isVarargs(),
                 paramNames);
         String param = pExprs.remove(0);
-        pExprs.add(0, "SegmentAllocator.scoped(" + param + ")");
+        pExprs.add(0, "SegmentAllocator.ofScope(" + param + ")");
         append(" {\n");
         incrAlign();
         indent();
@@ -252,7 +232,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         append(fiName + " " + javaName + " () {\n");
         incrAlign();
         indent();
-        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get());\n");
+        append("return " + fiName + ".ofAddress(" + javaName + "$get());\n");
         decrAlign();
         indent();
         append("}\n");

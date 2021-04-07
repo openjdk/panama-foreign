@@ -32,7 +32,7 @@ import java.nio.file.Path;
  * @build JextractToolRunner
  * @bug 8249301
  * @summary jextract fails with CCE when encountering a typedefdecl whose type is FunctionProto
- * @run testng/othervm -Dforeign.restricted=permit TestTypedefIsFunctionProto
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestTypedefIsFunctionProto
  */
 public class TestTypedefIsFunctionProto extends JextractToolRunner {
     @Test
