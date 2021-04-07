@@ -36,7 +36,6 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -62,6 +61,8 @@ final class RuntimeHelper {
         return obj;
     }
 
+    private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
+
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
             return new LibraryLookup[] { LibraryLookup.ofDefault() };
@@ -79,50 +80,25 @@ final class RuntimeHelper {
     }
 
     static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-        return lookup(LIBRARIES, name).map(s ->
-            s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
+        return lookup(LIBRARIES, name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
     }
-
-    final static SegmentAllocator DEFAULT_ALLOCATOR = (x, y) -> MemorySegment.allocateNative(x, y, ResourceScope.newImplicitScope());
-
-    // This class can be used to debug usages of functions requiring allocation - disabled by default
-    final static class DumpAllocator implements SegmentAllocator {
-
-        boolean reported = false;
-
-        @Override
-        public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-            if (!reported) {
-                new AssertionError("allocator required?").printStackTrace();
-            }
-            reported = true;
-            return DEFAULT_ALLOCATOR.allocate(bytesSize, bytesAlignment);
-        }
-    }
-
-    // switch this to "true" to enable verbose analysis of function requiring allocation
-    static boolean DEBUG_ALLOCATOR = false;
 
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
         return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    SegmentAllocator allocator = mt.returnType().equals(MemorySegment.class) && DEBUG_ALLOCATOR ?
-                            new DumpAllocator() : DEFAULT_ALLOCATOR;
                     return variadic ?
                         VarargsInvoker.make(addr, mt, fdesc) :
-                        LINKER.downcallHandle(addr, allocator, mt, fdesc);
+                        LINKER.downcallHandle(addr, mt, fdesc);
                 }).orElse(null);
     }
 
-    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic, SegmentAllocator allocator) {
-        return lookup(LIBRARIES, name).map(
-                addr -> {
-                    MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
-                    return variadic ?
-                            VarargsInvoker.make(addr, mt, fdesc) :
-                            LINKER.downcallHandle(addr, allocator, mt, fdesc);
-                }).orElse(null);
+    static final MethodHandle downcallHandle(String desc, FunctionDescriptor fdesc, boolean variadic) {
+        if (variadic) {
+            throw new AssertionError("Cannot get here!");
+        }
+        MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+        return LINKER.downcallHandle(mt, fdesc);
     }
 
     static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
@@ -133,7 +109,7 @@ final class RuntimeHelper {
         return upcallStub(fi, z, fdesc, mtypeDesc, scope.scope());
     }
 
-    private static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
                     MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
@@ -144,12 +120,8 @@ final class RuntimeHelper {
         }
     }
 
-    static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
-        return seg;
-    }
-
-    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return addr.asSegment(numElements * layout.byteSize(), ResourceScope.newImplicitScope());
+    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements, ResourceScope scope) {
+         return addr.asSegment(numElements * layout.byteSize(), scope);
     }
 
     // Internals only below this point
@@ -173,7 +145,7 @@ final class RuntimeHelper {
 
         static {
             try {
-                INVOKE_MH = MethodHandles.lookup().findVirtual(VarargsInvoker.class, "invoke", MethodType.methodType(Object.class, Object[].class));
+                INVOKE_MH = MethodHandles.lookup().findVirtual(VarargsInvoker.class, "invoke", MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class));
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
@@ -181,11 +153,16 @@ final class RuntimeHelper {
 
         static MethodHandle make(Addressable symbol, MethodType type, FunctionDescriptor function) {
             VarargsInvoker invoker = new VarargsInvoker(symbol, type, function);
-            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount())
-                    .asType(type);
+            MethodHandle handle = INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount());
+            if (type.returnType().equals(MemorySegment.class)) {
+                type = type.insertParameterTypes(0, SegmentAllocator.class);
+            } else {
+                handle = MethodHandles.insertArguments(handle, 0, THROWING_ALLOCATOR);
+            }
+            return handle.asType(type);
         }
 
-        private Object invoke(Object[] args) throws Throwable {
+        private Object invoke(SegmentAllocator allocator, Object[] args) throws Throwable {
             // one trailing Object[]
             int nNamedArgs = function.argumentLayouts().size();
             assert(args.length == nNamedArgs + 1);
@@ -214,7 +191,7 @@ final class RuntimeHelper {
             FunctionDescriptor f = (function.returnLayout().isEmpty()) ?
                     FunctionDescriptor.ofVoid(argLayouts) :
                     FunctionDescriptor.of(function.returnLayout().get(), argLayouts);
-            MethodHandle mh = LINKER.downcallHandle(symbol, mt, f);
+            MethodHandle mh = LINKER.downcallHandle(symbol, allocator, mt, f);
             // flatten argument list so that it can be passed to an asSpreader MH
             Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
             System.arraycopy(args, 0, allArgs, 0, nNamedArgs);

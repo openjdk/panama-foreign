@@ -216,7 +216,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         incrAlign();
         indent();
         if (!functionInfo.methodType().returnType().equals(void.class)) {
-            append("return (" + functionInfo.methodType().returnType().getName() + ")");
+            append("return ");
         }
         append(javaName + "(" + String.join(", ", pExprs) + ");\n");
         decrAlign();
