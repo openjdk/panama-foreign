@@ -34,7 +34,7 @@ final class RuntimeHelper {
         return obj;
     }
 
-    private final static SegmentAllocator DEFAULT_ALLOCATOR = (x, y) -> MemorySegment.allocateNative(x, y, ResourceScope.newImplicitScope());
+    private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
@@ -93,10 +93,6 @@ final class RuntimeHelper {
         }
     }
 
-    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return addr.asSegment(numElements * layout.byteSize(), ResourceScope.newImplicitScope());
-    }
-
     static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements, ResourceScope scope) {
          return addr.asSegment(numElements * layout.byteSize(), scope);
     }
@@ -134,7 +130,7 @@ final class RuntimeHelper {
             if (type.returnType().equals(MemorySegment.class)) {
                 type = type.insertParameterTypes(0, SegmentAllocator.class);
             } else {
-                handle = MethodHandles.insertArguments(handle, 0, DEFAULT_ALLOCATOR);
+                handle = MethodHandles.insertArguments(handle, 0, THROWING_ALLOCATOR);
             }
             return handle.asType(type);
         }

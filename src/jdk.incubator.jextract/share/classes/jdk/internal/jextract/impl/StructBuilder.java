@@ -91,7 +91,6 @@ class StructBuilder extends ConstantBuilder {
             emitScopeAllocate();
             emitAllocatorAllocateArray();
             emitScopeAllocateArray();
-            emitOfAddress();
             emitOfAddressScoped();
             return super.classEnd();
         } else {
@@ -280,14 +279,6 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
         indent();
         append("}\n");
-        decrAlign();
-    }
-
-    private void emitOfAddress() {
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment ofAddress(MemoryAddress addr) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1); }\n");
         decrAlign();
     }
 

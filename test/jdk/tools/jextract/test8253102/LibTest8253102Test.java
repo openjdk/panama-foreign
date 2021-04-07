@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static test.jextract.test8253102.test8253102_h.*;
@@ -50,18 +51,12 @@ import static test.jextract.test8253102.test8253102_h.*;
 public class LibTest8253102Test {
     @Test
     public void test() {
-        MemoryAddress addr = make(14, 99);
-        MemorySegment seg = Point.ofAddress(addr);
-        assertEquals(Point.x$get(seg), 14);
-        assertEquals(Point.y$get(seg), 99);
-        CLinker.freeMemory(addr);
-        boolean caughtException = false;
-        try {
-            seg.scope().close();
-        } catch (UnsupportedOperationException uoe) {
-            System.err.println(uoe);
-            caughtException = true;
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemoryAddress addr = make(14, 99);
+            MemorySegment seg = Point.ofAddress(addr, scope);
+            assertEquals(Point.x$get(seg), 14);
+            assertEquals(Point.y$get(seg), 99);
+            CLinker.freeMemory(addr);
         }
-        assertTrue(caughtException);
     }
 }
