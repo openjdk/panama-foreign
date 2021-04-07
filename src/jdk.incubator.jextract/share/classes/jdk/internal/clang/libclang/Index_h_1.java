@@ -511,13 +511,16 @@ import static jdk.incubator.foreign.CLinker.*;
     public static MethodHandle clang_indexLoc_getCXSourceLocation$MH() {
         return RuntimeHelper.requireNonNull(constants$3.clang_indexLoc_getCXSourceLocation$MH,"clang_indexLoc_getCXSourceLocation");
     }
-    public static MemorySegment clang_indexLoc_getCXSourceLocation ( MemorySegment loc) {
+    public static MemorySegment clang_indexLoc_getCXSourceLocation ( SegmentAllocator allocator,  MemorySegment loc) {
         var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_indexLoc_getCXSourceLocation$MH, "clang_indexLoc_getCXSourceLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(loc);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, loc);
         } catch (Throwable ex$) {
             throw new AssertionError("should not reach here", ex$);
         }
+    }
+    public static MemorySegment clang_indexLoc_getCXSourceLocation ( ResourceScope scope,  MemorySegment loc) {
+        return clang_indexLoc_getCXSourceLocation(SegmentAllocator.ofScope(scope), loc);
     }
     public static MethodHandle clang_Type_visitFields$MH() {
         return RuntimeHelper.requireNonNull(constants$3.clang_Type_visitFields$MH,"clang_Type_visitFields");

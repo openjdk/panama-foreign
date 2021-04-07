@@ -26,6 +26,7 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
 
 public class Diagnostic {
@@ -72,12 +73,14 @@ public class Diagnostic {
     }
 
     public SourceLocation location() {
-        return new SourceLocation(Index_h.clang_getDiagnosticLocation(ptr));
+        return new SourceLocation(Index_h.clang_getDiagnosticLocation(ResourceScope.newImplicitScope(), ptr));
     }
 
     public String spelling() {
-        return LibClang.CXStrToString(
-                Index_h.clang_getDiagnosticSpelling(ptr));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+           return LibClang.CXStrToString(
+                Index_h.clang_getDiagnosticSpelling(scope, ptr));
+        }
     }
 
     public void dispose() {
@@ -86,8 +89,10 @@ public class Diagnostic {
 
     @Override
     public String toString() {
-        return LibClang.CXStrToString(
-                Index_h.clang_formatDiagnostic(ptr,
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_formatDiagnostic(scope, ptr,
                     Index_h.clang_defaultDiagnosticDisplayOptions()));
+        }
     }
 }

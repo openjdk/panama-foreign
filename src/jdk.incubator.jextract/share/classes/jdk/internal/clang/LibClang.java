@@ -77,6 +77,8 @@ public class LibClang {
     }
 
     public static String version() {
-        return CXStrToString(Index_h.clang_getClangVersion());
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return CXStrToString(Index_h.clang_getClangVersion(scope));
+        }
     }
 }

@@ -71,18 +71,24 @@ public final class Cursor {
     }
 
     public String spelling() {
-        return LibClang.CXStrToString(
-                Index_h.clang_getCursorSpelling(cursor));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_getCursorSpelling(scope, cursor));
+        }
     }
 
     public String USR() {
-        return LibClang.CXStrToString(
-                Index_h.clang_getCursorUSR(cursor));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_getCursorUSR(scope, cursor));
+        }
     }
 
     public String prettyPrinted(PrintingPolicy policy) {
-        return LibClang.CXStrToString(
-                Index_h.clang_getCursorPrettyPrinted(cursor, policy.ptr()));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_getCursorPrettyPrinted(scope, cursor, policy.ptr()));
+        }
     }
 
     public String prettyPrinted() {
@@ -92,8 +98,10 @@ public final class Cursor {
     }
 
     public String displayName() {
-        return LibClang.CXStrToString(
-                Index_h.clang_getCursorDisplayName(cursor));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_getCursorDisplayName(scope, cursor));
+        }
     }
 
     public boolean equalCursor(Cursor other) {
@@ -101,11 +109,11 @@ public final class Cursor {
     }
 
     public Type type() {
-        return new Type(Index_h.clang_getCursorType(cursor));
+        return new Type(Index_h.clang_getCursorType(ResourceScope.newImplicitScope(), cursor));
     }
 
     public Type getEnumDeclIntegerType() {
-        return new Type(Index_h.clang_getEnumDeclIntegerType(cursor));
+        return new Type(Index_h.clang_getEnumDeclIntegerType(ResourceScope.newImplicitScope(), cursor));
     }
 
     public boolean isEnumDeclScoped() {
@@ -113,19 +121,21 @@ public final class Cursor {
     }
 
     public Cursor getDefinition() {
-        return new Cursor(Index_h.clang_getCursorDefinition(cursor));
+        return new Cursor(Index_h.clang_getCursorDefinition(ResourceScope.newImplicitScope(), cursor));
     }
 
     public SourceLocation getSourceLocation() {
-        MemorySegment loc = Index_h.clang_getCursorLocation(cursor);
-        if (Index_h.clang_equalLocations(loc, Index_h.clang_getNullLocation()) != 0) {
-            return null;
+        MemorySegment loc = Index_h.clang_getCursorLocation(ResourceScope.newImplicitScope(), cursor);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            if (Index_h.clang_equalLocations(loc, Index_h.clang_getNullLocation(scope)) != 0) {
+                return null;
+            }
         }
         return new SourceLocation(loc);
     }
 
     public SourceRange getExtent() {
-        MemorySegment range = Index_h.clang_getCursorExtent(cursor);
+        MemorySegment range = Index_h.clang_getCursorExtent(ResourceScope.newImplicitScope(), cursor);
         if (Index_h.clang_Range_isNull(range) != 0) {
             return null;
         }
@@ -137,7 +147,7 @@ public final class Cursor {
     }
 
     public Cursor getArgument(int idx) {
-        return new Cursor(Index_h.clang_Cursor_getArgument(cursor, idx));
+        return new Cursor(Index_h.clang_Cursor_getArgument(ResourceScope.newImplicitScope(), cursor, idx));
     }
 
     public int numberOfTemplateArgs() {
@@ -150,7 +160,7 @@ public final class Cursor {
     }
 
     public Type getTemplateArgumentType(int idx) {
-        return new Type(Index_h.clang_Cursor_getTemplateArgumentType(cursor, idx));
+        return new Type(Index_h.clang_Cursor_getTemplateArgumentType(ResourceScope.newImplicitScope(), cursor, idx));
     }
 
     public long getTemplateArgumentValue(int idx) {
@@ -317,14 +327,14 @@ public final class Cursor {
      * returns \c clang_getNullCursor();
      */
     public Cursor getOverloadedDecl(int index) {
-        return new Cursor(Index_h.clang_getOverloadedDecl(cursor, index));
+        return new Cursor(Index_h.clang_getOverloadedDecl(ResourceScope.newImplicitScope(), cursor, index));
     }
 
     /**
      * For a cursor that is a reference, retrieve a cursor representing the entity that it references.
      */
     public Cursor getCursorReferenced() {
-        return new Cursor(Index_h.clang_getCursorReferenced(cursor));
+        return new Cursor(Index_h.clang_getCursorReferenced(ResourceScope.newImplicitScope(), cursor));
     }
 
     /**
@@ -333,7 +343,7 @@ public final class Cursor {
      * it was instantiated.
      */
     public Cursor getSpecializedCursorTemplate() {
-        return new Cursor(Index_h.clang_getSpecializedCursorTemplate(cursor));
+        return new Cursor(Index_h.clang_getSpecializedCursorTemplate(ResourceScope.newImplicitScope(), cursor));
     }
 
     private static class CursorChildren {
@@ -365,8 +375,10 @@ public final class Cursor {
     }
 
     public String getMangling() {
-        return LibClang.CXStrToString(
-                Index_h.clang_Cursor_getMangling(cursor));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(
+                Index_h.clang_Cursor_getMangling(scope, cursor));
+        }
     }
 
     public TranslationUnit getTranslationUnit() {

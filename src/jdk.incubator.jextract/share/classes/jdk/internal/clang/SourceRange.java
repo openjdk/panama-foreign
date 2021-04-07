@@ -26,6 +26,7 @@
 package jdk.internal.clang;
 
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
 
 public class SourceRange {
@@ -36,12 +37,12 @@ public class SourceRange {
     }
 
     public SourceLocation getBegin() {
-        MemorySegment loc = Index_h.clang_getRangeStart(range);
+        MemorySegment loc = Index_h.clang_getRangeStart(ResourceScope.newImplicitScope(), range);
         return new SourceLocation(loc);
     }
 
     public SourceLocation getEnd() {
-        MemorySegment loc = Index_h.clang_getRangeEnd(range);
+        MemorySegment loc = Index_h.clang_getRangeEnd(ResourceScope.newImplicitScope(), range);
         return new SourceLocation(loc);
     }
 }

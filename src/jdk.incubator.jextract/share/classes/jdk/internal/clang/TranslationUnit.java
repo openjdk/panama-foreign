@@ -50,7 +50,7 @@ public class TranslationUnit implements AutoCloseable {
     }
 
     public Cursor getCursor() {
-        return new Cursor(Index_h.clang_getTranslationUnitCursor(tu));
+        return new Cursor(Index_h.clang_getTranslationUnitCursor(ResourceScope.newImplicitScope(), tu));
     }
 
     public Diagnostic[] getDiagnostics() {
@@ -174,12 +174,14 @@ public class TranslationUnit implements AutoCloseable {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < size; i++) {
-                MemorySegment s = Index_h.clang_getTokenSpelling(tu, getTokenSegment(i));
-                sb.append("Token[");
-                sb.append(i);
-                sb.append("]=");
-                sb.append(LibClang.CXStrToString(s));
-                sb.append("\n");
+                try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                    MemorySegment s = Index_h.clang_getTokenSpelling(scope, tu, getTokenSegment(i));
+                    sb.append("Token[");
+                    sb.append(i);
+                    sb.append("]=");
+                    sb.append(LibClang.CXStrToString(s));
+                    sb.append("\n");
+                }
             }
             return sb.toString();
         }
@@ -197,19 +199,25 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public String spelling() {
-            MemorySegment s = Index_h.clang_getTokenSpelling(
-                    tu, token);
-            return LibClang.CXStrToString(s);
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                MemorySegment s = Index_h.clang_getTokenSpelling(
+                    scope, tu, token);
+                return LibClang.CXStrToString(s);
+            }
         }
 
         public SourceLocation getLocation() {
-            return new SourceLocation(Index_h.clang_getTokenLocation(
-                    tu, token));
+            try (ResourceScope scope = ResourceScope.newImplicitScope()) {
+                return new SourceLocation(Index_h.clang_getTokenLocation(
+                    scope, tu, token));
+            }
         }
 
         public SourceRange getExtent() {
-            return new SourceRange(Index_h.clang_getTokenExtent(
+            try (ResourceScope scope = ResourceScope.newImplicitScope()) {
+                return new SourceRange(Index_h.clang_getTokenExtent(scope,
                     tu, token));
+            }
         }
     }
 

@@ -61,14 +61,16 @@ public class SourceLocation {
 
             fn.get(loc, file, line, col, offset);
             MemoryAddress fname = MemoryAccess.getAddress(file);
-
-
-            String str = fname == MemoryAddress.NULL ?
-                    null :
-                    LibClang.CXStrToString(Index_h.clang_getFileName(fname));
+            String str = fname == MemoryAddress.NULL ?  null : getFileName(fname);
 
             return new Location(str, MemoryAccess.getInt(line),
                 MemoryAccess.getInt(col), MemoryAccess.getInt(offset));
+        }
+    }
+
+    private static String getFileName(MemoryAddress fname) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(Index_h.clang_getFileName(scope, fname));
         }
     }
 
