@@ -207,17 +207,13 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public SourceLocation getLocation() {
-            try (ResourceScope scope = ResourceScope.newImplicitScope()) {
-                return new SourceLocation(Index_h.clang_getTokenLocation(
-                    scope, tu, token));
-            }
+            return new SourceLocation(Index_h.clang_getTokenLocation(
+                ResourceScope.newImplicitScope(), tu, token));
         }
 
         public SourceRange getExtent() {
-            try (ResourceScope scope = ResourceScope.newImplicitScope()) {
-                return new SourceRange(Index_h.clang_getTokenExtent(scope,
+            return new SourceRange(Index_h.clang_getTokenExtent(ResourceScope.newImplicitScope(),
                     tu, token));
-            }
         }
     }
 
