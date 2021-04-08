@@ -26,7 +26,7 @@
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract TestFilters
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract -Duser.language=en --add-modules jdk.incubator.jextract TestFilters
  */
 
 import org.testng.annotations.Test;
