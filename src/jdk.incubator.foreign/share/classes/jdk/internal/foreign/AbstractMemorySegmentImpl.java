@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
@@ -114,14 +116,23 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     }
 
     @Override
-    public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
-        Objects.requireNonNull(sequenceLayout);
-        checkValidState();
-        if (sequenceLayout.byteSize() != byteSize()) {
-            throw new IllegalArgumentException();
+    public Spliterator<MemorySegment> spliterator(MemoryLayout elementLayout) {
+        Objects.requireNonNull(elementLayout);
+        if (byteSize() % elementLayout.byteSize() != 0) {
+            throw new IllegalArgumentException("Segment size is no a multiple of layout size");
         }
-        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
+        return new SegmentSplitter(elementLayout.byteSize(), byteSize() / elementLayout.byteSize(),
                 this);
+    }
+
+    @Override
+    public Stream<MemorySegment> stream(MemoryLayout elementLayout) {
+        return StreamSupport.stream(spliterator(elementLayout), false);
+    }
+
+    @Override
+    public Stream<MemorySegment> parallelStream(MemoryLayout elementLayout) {
+        return StreamSupport.stream(spliterator(elementLayout), true);
     }
 
     @Override
