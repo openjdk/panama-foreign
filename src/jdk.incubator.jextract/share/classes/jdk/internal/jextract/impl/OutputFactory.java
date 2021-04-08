@@ -72,6 +72,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Map<Declaration, String> structClassNames = new HashMap<>();
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
     private final Map<Type, String> functionTypeDefNames = new HashMap<>();
+    private final IncludeHelper includeHelper;
 
     private void addStructDefinition(Declaration decl, String name) {
         structClassNames.put(decl, name);
@@ -108,16 +109,17 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     }
 
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
-                String pkgName, List<String> libraryNames) {
+                String pkgName, IncludeHelper includeHelper, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
         ToplevelBuilder toplevelBuilder = new ToplevelBuilder(ClassDesc.of(pkgName, clsName), libraryNames.toArray(new String[0]));
-        return new OutputFactory(pkgName, toplevelBuilder).generate(decl);
+        return new OutputFactory(pkgName, toplevelBuilder, includeHelper).generate(decl);
     }
 
-    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder) {
+    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, IncludeHelper includeHelper) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
+        this.includeHelper = includeHelper;
     }
 
     static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
@@ -172,7 +174,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitConstant(Declaration.Constant constant, Declaration parent) {
-        if (!constants.add(constant.name())) {
+        if (!constants.add(constant.name()) || !includeHelper.isIncluded(constant)) {
             //skip
             return null;
         }
@@ -198,8 +200,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             case STRUCT, UNION -> true;
             default -> false;
         };
+
         if (isStructKind) {
             String className = d.name();
+            if (!className.isEmpty() && !includeHelper.isIncluded(d)) {
+                return null;
+            }
             GroupLayout layout = (GroupLayout) layoutFor(d);
             currentBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
             currentBuilder.classBegin();
@@ -262,7 +268,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitFunction(Declaration.Function funcTree, Declaration parent) {
-        if (functionSeen(funcTree)) {
+        if (functionSeen(funcTree) ||
+                !includeHelper.isIncluded(funcTree)) {
             return null;
         }
 
@@ -326,6 +333,9 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitTypedef(Declaration.Typedef tree, Declaration parent) {
+        if (!includeHelper.isIncluded(tree)) {
+            return null;
+        }
         Type type = tree.type();
         if (type instanceof Type.Declared) {
             Declaration.Scoped s = ((Type.Declared) type).tree();
@@ -376,7 +386,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     @Override
     public Void visitVariable(Declaration.Variable tree, Declaration parent) {
-        if (parent == null && variableSeen(tree)) {
+        if (parent == null && (variableSeen(tree) || !includeHelper.isIncluded(tree))) {
             return null;
         }
 
