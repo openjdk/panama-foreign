@@ -182,7 +182,7 @@ public interface MemorySegment extends Addressable {
      * Returns a sequential {@code Stream} over disjoint slices (whose size matches that of the specified layout)
      * in this segment. Calling this method is equivalent to the following code:
      * <blockquote><pre>{@code
-    StreamSupport.spliterator(segment.spliterator(), false);
+    StreamSupport.stream(segment.spliterator(), false);
      * }</pre></blockquote>
      *
      * @param elementLayout the layout to be used for splitting.
@@ -195,7 +195,7 @@ public interface MemorySegment extends Addressable {
      * Returns a parallel {@code Stream} over disjoint slices (whose size matches that of the specified layout)
      * in this segment. Calling this method is equivalent to the following code:
      * <blockquote><pre>{@code
-    StreamSupport.spliterator(segment.spliterator(), true);
+    StreamSupport.stream(segment.spliterator(), true);
      * }</pre></blockquote>
      *
      * @param elementLayout the layout to be used for splitting.
