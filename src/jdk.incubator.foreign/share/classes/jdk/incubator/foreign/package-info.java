@@ -164,7 +164,7 @@ int x = MemoryAccess.getInt(segment);
  * }</pre>
  *
  * Alternatively, the client can fall back to use the so called <em>everything</em> segment - that is, a primordial segment
- * which covers the entire native heap. This segment can be obtained by calling the {@link jdk.incubator.foreign.MemorySegment#ofNative()}
+ * which covers the entire native heap. This segment can be obtained by calling the {@link jdk.incubator.foreign.MemorySegment#globalNativeSegment()}
  * method, so that dereference can happen without the need of creating any additional segment instances:
  *
  * <pre>{@code
