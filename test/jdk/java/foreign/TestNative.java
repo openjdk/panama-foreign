@@ -185,7 +185,7 @@ public class TestNative {
 
     @Test
     public void testDefaultAccessModesEverthing() {
-        MemorySegment everything = MemorySegment.ofNative();
+        MemorySegment everything = MemorySegment.globalNativeSegment();
         assertFalse(everything.isReadOnly());
     }
 
@@ -204,7 +204,7 @@ public class TestNative {
     @Test
     public void testEverythingSegment() {
         MemoryAddress addr = allocate(4);
-        MemorySegment everything = MemorySegment.ofNative();
+        MemorySegment everything = MemorySegment.globalNativeSegment();
         MemoryAccess.setIntAtOffset(everything, addr.toRawLongValue(), 42);
         assertEquals(MemoryAccess.getIntAtOffset(everything, addr.toRawLongValue()), 42);
         free(addr);

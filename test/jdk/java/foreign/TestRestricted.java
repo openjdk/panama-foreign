@@ -38,20 +38,20 @@ import java.lang.reflect.InvocationTargetException;
 public class TestRestricted {
     @Test(expectedExceptions = InvocationTargetException.class)
     public void testReflection() throws Throwable {
-        Method method = MemorySegment.class.getDeclaredMethod("ofNative");
+        Method method = MemorySegment.class.getDeclaredMethod("globalNativeSegment");
         method.invoke(null);
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testInvoke() throws Throwable {
         var mh = MethodHandles.lookup().findStatic(MemorySegment.class,
-            "ofNative", MethodType.methodType(MemorySegment.class));
+                "globalNativeSegment", MethodType.methodType(MemorySegment.class));
         var seg = (MemorySegment)mh.invokeExact();
     }
 
     @Test(expectedExceptions = IllegalCallerException.class)
     public void testDirectAccess() throws Throwable {
-        MemorySegment.ofNative();
+        MemorySegment.globalNativeSegment();
     }
 
     @Test(expectedExceptions = InvocationTargetException.class)
