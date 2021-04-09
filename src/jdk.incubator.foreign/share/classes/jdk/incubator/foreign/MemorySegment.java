@@ -687,7 +687,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      */
     @CallerSensitive
     @NativeAccess
-    static MemorySegment ofNative() {
+    static MemorySegment globalNativeSegment() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return NativeMemorySegmentImpl.EVERYTHING;
     }
