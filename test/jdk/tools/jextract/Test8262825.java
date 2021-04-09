@@ -31,8 +31,8 @@ import static org.testng.Assert.assertNotNull;
  * @library /test/lib
  * @build JextractToolRunner
  * @bug 8262825
- * @summary jextract crashes when Java type names like String are used as identifiers in C heade
- * @run testng/othervm -Dforeign.restricted=permit Test8262825
+ * @summary jextract crashes when Java type names like String are used as identifiers in C header
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8262825
  */
 public class Test8262825 extends JextractToolRunner {
     @Test

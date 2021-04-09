@@ -26,8 +26,9 @@ import org.testng.annotations.Test;
 import java.util.stream.IntStream;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import static org.testng.Assert.assertEquals;
+
+import test.jextract.arrayparam.*;
 import static test.jextract.arrayparam.arrayparam_h.*;
 
 /*
@@ -37,7 +38,7 @@ import static test.jextract.arrayparam.arrayparam_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.arrayparam -l Arrayparam -- arrayparam.h
- * @run testng/othervm -Dforeign.restricted=permit Test8252121
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8252121
  */
 /*
  * @test id=sources
@@ -46,7 +47,7 @@ import static test.jextract.arrayparam.arrayparam_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -t test.jextract.arrayparam -l Arrayparam -- arrayparam.h
- * @run testng/othervm -Dforeign.restricted=permit Test8252121
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8252121
  */
 public class Test8252121 {
     @Test

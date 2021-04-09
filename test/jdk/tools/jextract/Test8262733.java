@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8262733
  * @summary jextract generates clashing names which results in compilation error with javac
- * @run testng/othervm -Dforeign.restricted=permit Test8262733
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8262733
  */
 public class Test8262733 extends JextractToolRunner {
     @Test

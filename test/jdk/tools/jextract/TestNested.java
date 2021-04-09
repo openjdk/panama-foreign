@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
@@ -42,7 +43,7 @@ import static org.testng.Assert.fail;
  * @build JextractToolRunner
  * @bug 8244512 8252759
  * @summary test nested structs and unions
- * @run testng/othervm -Dforeign.restricted=permit TestNested
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract TestNested
  */
 public class TestNested extends JextractToolRunner {
     @Test
@@ -159,7 +160,8 @@ public class TestNested extends JextractToolRunner {
             if (type == MemorySegment.class) {
                 Method slicer = cls.getMethod(fieldName + "$slice", MemorySegment.class);
                 assertEquals(slicer.getReturnType(), MemorySegment.class);
-                try (MemorySegment struct = MemorySegment.allocateNative(layout)) {
+                try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                    MemorySegment struct = MemorySegment.allocateNative(layout, scope);
                     MemorySegment slice = (MemorySegment) slicer.invoke(null, struct);
                     assertEquals(slice.byteSize(), fieldLayout.byteSize());
                 }
@@ -170,7 +172,8 @@ public class TestNested extends JextractToolRunner {
                 assertEquals(setter.getReturnType(), void.class);
 
                 Object zero = MethodHandles.zero(type).invoke();
-                try (MemorySegment struct = MemorySegment.allocateNative(layout)) {
+                try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                    MemorySegment struct = MemorySegment.allocateNative(layout, scope);
                     setter.invoke(null, struct, zero);
                     Object actual = getter.invoke(null, struct);
                     assertEquals(actual, zero);

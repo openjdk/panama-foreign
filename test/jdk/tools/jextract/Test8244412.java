@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8244412
  * @summary jextract should generate static utils class for primitive typedefs
- * @run testng/othervm -Dforeign.restricted=permit Test8244412
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8244412
  */
 public class Test8244412 extends JextractToolRunner {
     @Test

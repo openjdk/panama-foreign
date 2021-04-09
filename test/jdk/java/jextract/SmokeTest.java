@@ -24,7 +24,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng/othervm -Dforeign.restricted=permit SmokeTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract SmokeTest
  */
 
 import jdk.incubator.jextract.Declaration;

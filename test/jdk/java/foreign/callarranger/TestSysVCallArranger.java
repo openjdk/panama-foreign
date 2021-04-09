@@ -75,9 +75,9 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testNestedStructs() {
-        MemoryLayout POINT = MemoryLayout.ofStruct(
+        MemoryLayout POINT = MemoryLayout.structLayout(
                 C_INT,
-                MemoryLayout.ofStruct(
+                MemoryLayout.structLayout(
                         C_INT,
                         C_INT
                 )
@@ -104,11 +104,11 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testNestedUnion() {
-        MemoryLayout POINT = MemoryLayout.ofStruct(
+        MemoryLayout POINT = MemoryLayout.structLayout(
                 C_INT,
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofUnion(
-                        MemoryLayout.ofStruct(C_INT, C_INT),
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.unionLayout(
+                        MemoryLayout.structLayout(C_INT, C_INT),
                         C_LONG
                 )
         );
@@ -134,9 +134,9 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testNestedStructsUnaligned() {
-        MemoryLayout POINT = MemoryLayout.ofStruct(
+        MemoryLayout POINT = MemoryLayout.structLayout(
                 C_INT,
-                MemoryLayout.ofStruct(
+                MemoryLayout.structLayout(
                         C_LONG,
                         C_INT
                 )
@@ -163,10 +163,10 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testNestedUnionUnaligned() {
-        MemoryLayout POINT = MemoryLayout.ofStruct(
+        MemoryLayout POINT = MemoryLayout.structLayout(
                 C_INT,
-                MemoryLayout.ofUnion(
-                        MemoryLayout.ofStruct(C_INT, C_INT),
+                MemoryLayout.unionLayout(
+                        MemoryLayout.structLayout(C_INT, C_INT),
                         C_LONG
                 )
         );
@@ -309,7 +309,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
      */
     @Test
     public void testAbiExample() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_INT, C_INT, C_DOUBLE);
+        MemoryLayout struct = MemoryLayout.structLayout(C_INT, C_INT, C_DOUBLE);
 
         MethodType mt = MethodType.methodType(void.class,
                 int.class, int.class, MemorySegment.class, int.class, int.class,
@@ -400,17 +400,17 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
     @DataProvider
     public static Object[][] structs() {
         return new Object[][]{
-            { MemoryLayout.ofStruct(C_LONG), new Binding[]{
+            { MemoryLayout.structLayout(C_LONG), new Binding[]{
                     bufferLoad(0, long.class), vmStore(rdi, long.class)
                 }
             },
-            { MemoryLayout.ofStruct(C_LONG, C_LONG), new Binding[]{
+            { MemoryLayout.structLayout(C_LONG, C_LONG), new Binding[]{
                     dup(),
                     bufferLoad(0, long.class), vmStore(rdi, long.class),
                     bufferLoad(8, long.class), vmStore(rsi, long.class)
                 }
             },
-            { MemoryLayout.ofStruct(C_LONG, C_LONG, C_LONG), new Binding[]{
+            { MemoryLayout.structLayout(C_LONG, C_LONG, C_LONG), new Binding[]{
                     dup(),
                     bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
                     dup(),
@@ -418,7 +418,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
                     bufferLoad(16, long.class), vmStore(stackStorage(2), long.class)
                 }
             },
-            { MemoryLayout.ofStruct(C_LONG, C_LONG, C_LONG, C_LONG), new Binding[]{
+            { MemoryLayout.structLayout(C_LONG, C_LONG, C_LONG, C_LONG), new Binding[]{
                     dup(),
                     bufferLoad(0, long.class), vmStore(stackStorage(0), long.class),
                     dup(),
@@ -433,7 +433,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testReturnRegisterStruct() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_LONG, C_LONG);
+        MemoryLayout struct = MemoryLayout.structLayout(C_LONG, C_LONG);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.of(struct);
@@ -463,7 +463,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testIMR() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_LONG, C_LONG, C_LONG);
+        MemoryLayout struct = MemoryLayout.structLayout(C_LONG, C_LONG, C_LONG);
 
         MethodType mt = MethodType.methodType(MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.of(struct);
@@ -486,7 +486,7 @@ public class TestSysVCallArranger extends CallArrangerTestBase {
 
     @Test
     public void testFloatStructsUpcall() {
-        MemoryLayout struct = MemoryLayout.ofStruct(C_FLOAT); // should be passed in float regs
+        MemoryLayout struct = MemoryLayout.structLayout(C_FLOAT); // should be passed in float regs
 
         MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class);
         FunctionDescriptor fd = FunctionDescriptor.of(struct, struct);

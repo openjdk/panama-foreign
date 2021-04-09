@@ -23,7 +23,6 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8259473.*;
 import static org.testng.Assert.assertEquals;
@@ -37,7 +36,7 @@ import static test.jextract.test8259473.test8259473_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.test8259473 -- test8259473.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8259473Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8259473Test
  */
 /*
  * @test id=sources
@@ -46,7 +45,7 @@ import static test.jextract.test8259473.test8259473_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -t test.jextract.test8259473 -- test8259473.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8259473Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8259473Test
  */
 public class LibTest8259473Test {
     @Test

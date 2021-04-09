@@ -31,8 +31,8 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
 import jdk.internal.clang.libclang.Index_h;
+import jdk.internal.clang.libclang.NativeScope;
 
 import java.lang.invoke.VarHandle;
 import java.nio.file.Path;

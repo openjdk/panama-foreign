@@ -262,7 +262,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         if (l instanceof ValueLayout val) {
             append(typeToLayoutName(val, inBitfield));
         } else if (l instanceof SequenceLayout seq) {
-            append("MemoryLayout.ofSequence(");
+            append("MemoryLayout.sequenceLayout(");
             if (seq.elementCount().isPresent()) {
                 append(seq.elementCount().getAsLong() + ", ");
             }
@@ -270,9 +270,9 @@ public class ConstantBuilder extends ClassSourceBuilder {
             append(")");
         } else if (l instanceof GroupLayout group) {
             if (group.isStruct()) {
-                append("MemoryLayout.ofStruct(\n");
+                append("MemoryLayout.structLayout(\n");
             } else {
-                append("MemoryLayout.ofUnion(\n");
+                append("MemoryLayout.unionLayout(\n");
             }
             incrAlign();
             String delim = "";
@@ -289,7 +289,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
             append(")");
         } else {
             // padding
-            append("MemoryLayout.ofPaddingBits(" + l.bitSize() + ")");
+            append("MemoryLayout.paddingLayout(" + l.bitSize() + ")");
         }
         if (l.name().isPresent()) {
             append(".withName(\"" +  l.name().get() + "\")");
@@ -342,7 +342,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append(fieldName);
         append(" = CLinker.toCString(\"");
         append(Utils.quote(Objects.toString(value)));
-        append("\");\n");
+        append("\", ResourceScope.newImplicitScope());\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.SEGMENT);
     }
@@ -363,9 +363,9 @@ public class ConstantBuilder extends ClassSourceBuilder {
 
     private static String typeToLayoutName(ValueLayout vl, boolean inBitfields) {
         if (UnsupportedLayouts.isUnsupported(vl)) {
-            return "MemoryLayout.ofPaddingBits(" + vl.bitSize() + ")";
+            return "MemoryLayout.paddingLayout(" + vl.bitSize() + ")";
         } else if (inBitfields) {
-            return "MemoryLayout.ofValueBits(" + vl.bitSize() + ", ByteOrder.nativeOrder())";
+            return "MemoryLayout.valueLayout(" + vl.bitSize() + ", ByteOrder.nativeOrder())";
         } else {
             CLinker.TypeKind kind = (CLinker.TypeKind) vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
                     () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));

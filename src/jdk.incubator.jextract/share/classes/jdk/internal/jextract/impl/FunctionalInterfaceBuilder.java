@@ -52,7 +52,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
     JavaSourceBuilder classEnd() {
         emitFunctionalInterfaceMethod();
         emitFunctionalFactories();
-        emitFunctionalRestrictedFactory();
+        emitFunctionalFactoryForPointer();
         return super.classEnd();
     }
 
@@ -85,10 +85,11 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             indent();
             append("}\n");
             indent();
-            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, NativeScope scope) {\n");
+            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, ResourceScope scope) {\n");
             incrAlign();
             indent();
-            append("return allocate(fi).handoff(scope);\n");
+            append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
+                    "\"" + fiType.toMethodDescriptorString() + "\", scope);\n");
             decrAlign();
             indent();
             append("}\n");
@@ -96,24 +97,21 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
         });
     }
 
-    private void emitFunctionalRestrictedFactory() {
+    private void emitFunctionalFactoryForPointer() {
         emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
             incrAlign();
             indent();
-            append(MEMBER_MODS + " " + className() + " ofAddressRestricted(MemoryAddress addr) {\n");
+            append(MEMBER_MODS + " " + className() + " ofAddress(MemoryAddress addr) {\n");
             incrAlign();
             indent();
-            append("return new " + className() + "() {\n");
-            incrAlign();
-            indent();
-            append("public " + fiType.returnType().getName() + " apply(");
+            append("return (");
             String delim = "";
             for (int i = 0 ; i < fiType.parameterCount(); i++) {
                 append(delim + fiType.parameterType(i).getName() + " x" + i);
                 delim = ", ";
             }
-            append(") {\n");
+            append(") -> {\n");
             incrAlign();
             indent();
             append("try {\n");
@@ -136,9 +134,6 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             incrAlign();
             indent();
             append("throw new AssertionError(\"should not reach here\", ex$);\n");
-            decrAlign();
-            indent();
-            append("}\n");
             decrAlign();
             indent();
             append("}\n");

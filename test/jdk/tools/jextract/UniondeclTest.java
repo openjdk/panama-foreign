@@ -34,7 +34,7 @@ import static org.testng.Assert.assertTrue;
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build JextractToolRunner
- * @run testng/othervm -Dforeign.restricted=permit UniondeclTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract UniondeclTest
  */
 public class UniondeclTest extends JextractToolRunner {
     @Test

@@ -28,6 +28,8 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.clang.libclang.Index_h;
 
 
@@ -46,13 +48,13 @@ public final class Type {
         return Index_h.clang_isFunctionTypeVariadic(type) != 0;
     }
     public Type resultType() {
-        return new Type(Index_h.clang_getResultType(type));
+        return new Type(Index_h.clang_getResultType(ResourceScope.newImplicitScope(), type));
     }
     public int numberOfArgs() {
         return Index_h.clang_getNumArgTypes(type);
     }
     public Type argType(int idx) {
-        return new Type(Index_h.clang_getArgType(type, idx));
+        return new Type(Index_h.clang_getArgType(ResourceScope.newImplicitScope(), type, idx));
     }
     private int getCallingConvention0() {
         return Index_h.clang_getFunctionTypeCallingConv(type);
@@ -95,12 +97,12 @@ public final class Type {
 
     // Pointer type
     public Type getPointeeType() {
-        return new Type(Index_h.clang_getPointeeType(type));
+        return new Type(Index_h.clang_getPointeeType(ResourceScope.newImplicitScope(), type));
     }
 
     // array/vector type
     public Type getElementType() {
-        return new Type(Index_h.clang_getElementType(type));
+        return new Type(Index_h.clang_getElementType(ResourceScope.newImplicitScope(), type));
     }
 
     public long getNumberOfElements() {
@@ -109,7 +111,8 @@ public final class Type {
 
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
-        try (MemorySegment cfname = CLinker.toCString(fieldName)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment cfname = CLinker.toCString(fieldName, scope);
             return Index_h.clang_Type_getOffsetOf(type, cfname);
         }
     }
@@ -132,7 +135,7 @@ public final class Type {
      * for 'int', the canonical type for 'T' would be 'int'.
      */
     public Type canonicalType() {
-        return new Type(Index_h.clang_getCanonicalType(type));
+        return new Type(Index_h.clang_getCanonicalType(ResourceScope.newImplicitScope(), type));
     }
 
     /**
@@ -178,11 +181,13 @@ public final class Type {
      * template template arguments or variadic packs.
      */
     public Type templateArgAsType(int idx) {
-        return new Type(Index_h.clang_Type_getTemplateArgumentAsType(type, idx));
+        return new Type(Index_h.clang_Type_getTemplateArgumentAsType(ResourceScope.newImplicitScope(), type, idx));
     }
 
     public String spelling() {
-        return LibClang.CXStrToString(Index_h.clang_getTypeSpelling(type));
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return LibClang.CXStrToString(Index_h.clang_getTypeSpelling(scope, type));
+        }
     }
 
     public int kind0() {
@@ -209,7 +214,7 @@ public final class Type {
     }
 
     public Cursor getDeclarationCursor() {
-        return new Cursor(Index_h.clang_getTypeDeclaration(type));
+        return new Cursor(Index_h.clang_getTypeDeclaration(ResourceScope.newImplicitScope(), type));
     }
 
     public boolean equalType(Type other) {

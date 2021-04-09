@@ -26,7 +26,7 @@
  * @modules jdk.incubator.jextract
  * @library /test/lib
  * @build BadBitfieldTest
- * @run testng/othervm -Dforeign.restricted=permit BadBitfieldTest
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract BadBitfieldTest
  */
 
 /*

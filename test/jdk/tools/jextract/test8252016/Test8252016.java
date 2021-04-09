@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import jdk.incubator.foreign.MemorySegment;
@@ -36,7 +37,7 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -t test.jextract.vsprintf -l VSPrintf -- vsprintf.h
- * @run testng/othervm -Dforeign.restricted=permit Test8252016
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8252016
  */
 /*
  * @test id=sources
@@ -45,22 +46,22 @@ import static jdk.incubator.foreign.CLinker.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -t test.jextract.vsprintf -l VSPrintf -- vsprintf.h
- * @run testng/othervm -Dforeign.restricted=permit Test8252016
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8252016
  */
 public class Test8252016 {
     @Test
     public void testsVsprintf() {
-        try (MemorySegment s = MemorySegment.allocateNative(1024)) {
-            try (VaList vaList = VaList.make(b -> {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment s = MemorySegment.allocateNative(1024, scope);
+            VaList vaList = VaList.make(b -> {
                 b.vargFromInt(C_INT, 12);
                 b.vargFromDouble(C_DOUBLE, 5.5d);
                 b.vargFromLong(C_LONG_LONG, -200L);
                 b.vargFromLong(C_LONG_LONG, Long.MAX_VALUE);
-            })) {
-                my_vsprintf(s, toCString("%hhd %.2f %lld %lld"), vaList);
-                String str = toJavaString(s);
-                assertEquals(str, "12 5.50 -200 " + Long.MAX_VALUE);
-            }
+            }, scope);
+            my_vsprintf(s, toCString("%hhd %.2f %lld %lld", scope), vaList);
+            String str = toJavaString(s);
+            assertEquals(str, "12 5.50 -200 " + Long.MAX_VALUE);
        }
     }
 }

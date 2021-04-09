@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8258405
  * @summary functional interfaces are not generated for struct fields/global variables with function pointers
- * @run testng/othervm -Dforeign.restricted=permit Test8258405
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8258405
  */
 public class Test8258405 extends JextractToolRunner {
     @Test

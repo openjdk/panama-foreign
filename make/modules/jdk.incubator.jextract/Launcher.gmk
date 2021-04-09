@@ -27,6 +27,6 @@ include LauncherCommon.gmk
 
 $(eval $(call SetupBuildLauncher, jextract,\
     CFLAGS := -DENABLE_ARG_FILES, \
-    JAVA_ARGS := -Dforeign.restricted=permit, \
+    JAVA_ARGS := --enable-native-access=jdk.incubator.jextract, \
     MAIN_CLASS := jdk.incubator.jextract.JextractTool, \
 ))

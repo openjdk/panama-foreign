@@ -32,7 +32,7 @@ import static test.jextract.test8249757.test8249757_h.*;
  * @bug 8249757
  * @summary jextract should expose a way to load library from a given absolute path
  * @run driver JtregJextract -libpath Test8249757 -t test.jextract.test8249757 -- test8249757.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8249757Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8249757Test
  */
 /*
  * @test id=sources
@@ -41,7 +41,7 @@ import static test.jextract.test8249757.test8249757_h.*;
  * @bug 8249757
  * @summary jextract should expose a way to load library from a given absolute path
  * @run driver JtregJextractSources -libpath Test8249757 -t test.jextract.test8249757 -- test8249757.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8249757Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8249757Test
  */
 public class LibTest8249757Test {
     @Test

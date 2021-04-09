@@ -25,13 +25,14 @@
 /*
  * @test
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @run testng/othervm -Dforeign.restricted=permit TestUpcallStubs
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestUpcallStubs
  */
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.*;
 
 import java.lang.invoke.MethodHandle;
@@ -57,29 +58,30 @@ public class TestUpcallStubs {
     }
 
     private static MemorySegment getStub() {
-        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid());
+        return abi.upcallStub(MH_dummy, FunctionDescriptor.ofVoid(), ResourceScope.newConfinedScope());
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
+    @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testNoAccess() {
-        try (MemorySegment stub = getStub()) {
-            VarHandle vh = JAVA_INT.varHandle(int.class);
-            vh.set(stub, 10);
-        }
+        MemorySegment stub = getStub();
+        VarHandle vh = JAVA_INT.varHandle(int.class);
+        vh.set(stub, 10);
+        stub.scope().close();
     }
 
     @Test
     public void testFree() {
         MemorySegment stub = getStub();
-        stub.close();
-        assertFalse(stub.isAlive());
+        stub.scope().close();
+        assertFalse(stub.scope().isAlive());
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testAlreadyFreed() {
         MemorySegment stub = getStub();
-        stub.close();
-        stub.close(); // should fail
+        stub.scope().close();
+        // should fail
+        stub.scope().close();
     }
 
     @DataProvider

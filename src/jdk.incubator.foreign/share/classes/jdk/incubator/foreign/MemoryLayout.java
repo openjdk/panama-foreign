@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
- * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#ofPaddingBits(long)}).
+ * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#paddingLayout(long)}).
  * Some common value layout constants are defined in the {@link MemoryLayouts} class.
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
@@ -218,7 +218,7 @@ public interface MemoryLayout extends Constable {
      * Does this layout have a specified size? A layout does not have a specified size if it is (or contains) a sequence layout whose
      * size is unspecified (see {@link SequenceLayout#elementCount()}).
      *
-     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#ofPaddingBits(long)})
+     * Value layouts (see {@link ValueLayout}) and padding layouts (see {@link MemoryLayout#paddingLayout(long)})
      * <em>always</em> have a specified size, therefore this method always returns {@code true} in these cases.
      *
      * @return {@code true}, if this layout has a specified size.
@@ -382,8 +382,9 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * @param elements the layout path elements.
      * @return a method handle that can be used to compute the bit offset of the layout element
@@ -433,8 +434,9 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
-     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
      * offset in bits is not a multiple of 8.
@@ -470,9 +472,10 @@ public interface MemoryLayout extends Constable {
     offset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
      * }</pre></blockquote>
      *
-     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as optional {@code long}
-     * access coordinates, whereas {@code c_1}, {@code c_2}, ... {@code c_m} and {@code s_0}, {@code s_1}, ... {@code s_n} are
-     * <em>static</em> stride constants which are derived from the layout path.
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
      *
      * @apiNote the resulting var handle will feature an additional {@code long} access coordinate for every
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
@@ -492,6 +495,50 @@ public interface MemoryLayout extends Constable {
         return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), path -> path.dereferenceHandle(carrier),
                 Set.of(), elements);
     }
+
+    /**
+     * Creates a method handle which, given a memory segment, returns a {@link MemorySegment#asSlice(long,long) slice}
+     * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
+     *
+     * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
+     * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()},
+     * where the order of the parameters corresponds to the order of the path elements.
+     * The returned method handle can be used to create a slice similar to using {@link MemorySegment#asSlice(long, long)},
+     * but where the offset argument is dynamically compute based on indices specified when invoking the method handle.
+     *
+     * <p>The offset of the returned segment is computed as follows:
+     *
+     * <blockquote><pre>{@code
+    bitOffset = c_1 + c_2 + ... + c_m + (x_1 * s_1) + (x_2 * s_2) + ... + (x_n * s_n)
+    offset = bitOffset / 8
+     * }</pre></blockquote>
+     *
+     * where {@code x_1}, {@code x_2}, ... {@code x_n} are <em>dynamic</em> values provided as {@code long}
+     * arguments, whereas {@code c_1}, {@code c_2}, ... {@code c_m} are <em>static</em> offset constants
+     * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
+     * the layout path.
+     *
+     * <p>After the offset is computed, the returned segment is create as if by calling:
+     * <blockquote><pre>{@code
+    segment.asSlice(offset, layout.byteSize());
+     * }</pre></blockquote>
+     *
+     * where {@code segment} is the segment to be sliced, and where {@code layout} is the layout selected by the given
+     * layout path, as per {@link MemoryLayout#select(PathElement...)}.
+     *
+     * <p>The method handle will throw an {@link UnsupportedOperationException} if the computed
+     * offset in bits is not a multiple of 8.
+     *
+     * @param elements the layout path elements.
+     * @return a method handle which can be used to create a slice of the selected layout element, given a segment.
+     * @throws UnsupportedOperationException if the size of the selected layout in bits is not a multiple of 8.
+     */
+    default MethodHandle sliceHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), LayoutPath::sliceHandle,
+                Set.of(), elements);
+    }
+
 
     /**
      * Selects the layout from a path rooted in this layout.
@@ -539,7 +586,7 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Is this a padding layout (e.g. a layout created from {@link #ofPaddingBits(long)}) ?
+     * Is this a padding layout (e.g. a layout created from {@link #paddingLayout(long)}) ?
      * @return true, if this layout is a padding layout.
      */
     boolean isPadding();
@@ -683,7 +730,7 @@ E * (S + I * F)
      * @return the new selector layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static MemoryLayout ofPaddingBits(long size) {
+    static MemoryLayout paddingLayout(long size) {
         AbstractLayout.checkSize(size);
         return new PaddingLayout(size);
     }
@@ -696,7 +743,7 @@ E * (S + I * F)
      * @return a new value layout.
      * @throws IllegalArgumentException if {@code size <= 0}.
      */
-    static ValueLayout ofValueBits(long size, ByteOrder order) {
+    static ValueLayout valueLayout(long size, ByteOrder order) {
         Objects.requireNonNull(order);
         AbstractLayout.checkSize(size);
         return new ValueLayout(order, size);
@@ -710,7 +757,7 @@ E * (S + I * F)
      * @return the new sequence layout with given element layout and size.
      * @throws IllegalArgumentException if {@code elementCount < 0}.
      */
-    static SequenceLayout ofSequence(long elementCount, MemoryLayout elementLayout) {
+    static SequenceLayout sequenceLayout(long elementCount, MemoryLayout elementLayout) {
         AbstractLayout.checkSize(elementCount, true);
         OptionalLong size = OptionalLong.of(elementCount);
         return new SequenceLayout(size, Objects.requireNonNull(elementLayout));
@@ -722,7 +769,7 @@ E * (S + I * F)
      * @param elementLayout the element layout of the sequence layout.
      * @return the new sequence layout with given element layout.
      */
-    static SequenceLayout ofSequence(MemoryLayout elementLayout) {
+    static SequenceLayout sequenceLayout(MemoryLayout elementLayout) {
         return new SequenceLayout(OptionalLong.empty(), Objects.requireNonNull(elementLayout));
     }
 
@@ -732,7 +779,7 @@ E * (S + I * F)
      * @param elements The member layouts of the <em>struct</em> group layout.
      * @return a new <em>struct</em> group layout with given member layouts.
      */
-    static GroupLayout ofStruct(MemoryLayout... elements) {
+    static GroupLayout structLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return new GroupLayout(GroupLayout.Kind.STRUCT,
                 Stream.of(elements)
@@ -746,7 +793,7 @@ E * (S + I * F)
      * @param elements The member layouts of the <em>union</em> layout.
      * @return a new <em>union</em> group layout with given member layouts.
      */
-    static GroupLayout ofUnion(MemoryLayout... elements) {
+    static GroupLayout unionLayout(MemoryLayout... elements) {
         Objects.requireNonNull(elements);
         return new GroupLayout(GroupLayout.Kind.UNION,
                 Stream.of(elements)

@@ -26,7 +26,7 @@
 package jdk.incubator.jextract;
 
 import jdk.internal.jextract.impl.ClangException;
-import jdk.internal.jextract.impl.Filter;
+import jdk.internal.jextract.impl.IncludeHelper;
 import jdk.internal.jextract.impl.OutputFactory;
 import jdk.internal.jextract.impl.Parser;
 import jdk.internal.jextract.impl.Options;
@@ -46,7 +46,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
@@ -112,13 +111,14 @@ public final class JextractTool {
         return new Parser().parse(source, Stream.of(parserOptions).collect(Collectors.toList()));
     }
 
-    public static Declaration.Scoped filter(Declaration.Scoped decl, String... includedNames) {
-        return Filter.filter(decl, includedNames);
-    }
-
     public static List<JavaFileObject> generate(Declaration.Scoped decl, String headerName,
                                                 String targetPkg, List<String> libNames) {
-        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, libNames));
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, new IncludeHelper(), libNames));
+    }
+
+    private static List<JavaFileObject> generateInternal(Declaration.Scoped decl, String headerName,
+                                                String targetPkg, IncludeHelper includeHelper, List<String> libNames) {
+        return List.of(OutputFactory.generateWrapped(decl, headerName, targetPkg, includeHelper, libNames));
     }
 
     /**
@@ -162,7 +162,10 @@ public final class JextractTool {
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("I", format("help.I")).withRequiredArg();
         parser.accepts("d", format("help.d")).withRequiredArg();
-        parser.accepts("filter", format("help.filter")).withRequiredArg();
+        parser.accepts("dump-includes", format("help.dump-includes")).withRequiredArg();
+        for (IncludeHelper.IncludeKind includeKind : IncludeHelper.IncludeKind.values()) {
+            parser.accepts(includeKind.optionName(), format("help." + includeKind.optionName())).withRequiredArg();
+        }
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("source", format("help.source"));
         parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
@@ -198,6 +201,16 @@ public final class JextractTool {
 
         if (optionSet.has("filter")) {
             optionSet.valuesOf("filter").forEach(p -> builder.addFilter((String) p));
+        }
+
+        for (IncludeHelper.IncludeKind includeKind : IncludeHelper.IncludeKind.values()) {
+            if (optionSet.has(includeKind.optionName())) {
+                optionSet.valuesOf(includeKind.optionName()).forEach(p -> builder.addIncludeSymbol(includeKind, (String)p));
+            }
+        }
+
+        if (optionSet.has("dump-includes")) {
+            builder.setDumpIncludeFile(optionSet.valueOf("dump-includes").toString());
         }
 
         if (optionSet.has("d")) {
@@ -244,18 +257,13 @@ public final class JextractTool {
         try {
             Declaration.Scoped toplevel = parse(List.of(header), options.clangArgs.toArray(new String[0]));
 
-            //filter
-            if (!options.filters.isEmpty()) {
-                toplevel = filter(toplevel, options.filters.toArray(new String[0]));
-            }
-
             if (JextractTool.DEBUG) {
                 System.out.println(toplevel);
             }
 
-            files = generate(
+            files = generateInternal(
                 toplevel, header.getFileName().toString(),
-                options.targetPackage, options.libraryNames);
+                options.targetPackage, options.includeHelper, options.libraryNames);
         } catch (ClangException ce) {
             err.println(ce.getMessage());
             if (JextractTool.DEBUG) {
@@ -271,8 +279,12 @@ public final class JextractTool {
         }
 
         try {
-            Path output = Path.of(options.outputDir);
-            write(output, !options.source, files);
+            if (options.includeHelper.dumpIncludesFile != null) {
+                options.includeHelper.dumpIncludes();
+            } else {
+                Path output = Path.of(options.outputDir);
+                write(output, !options.source, files);
+            }
         } catch (UncheckedIOException uioe) {
             err.println(uioe.getMessage());
             if (JextractTool.DEBUG) {

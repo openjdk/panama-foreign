@@ -77,7 +77,7 @@ public class CallOverheadConstant {
 
     @Benchmark
     public MemorySegment panama_identity_struct() throws Throwable {
-        return (MemorySegment) identity_struct.invokeExact(point);
+        return (MemorySegment) identity_struct.invokeExact(recycling_allocator, point);
     }
 
     @Benchmark

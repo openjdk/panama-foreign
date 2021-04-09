@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @build JextractToolRunner
  * @bug 8260344
  * @summary jextract crashes with exception for log.h from libdebian-installer4-dev
- * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8260344
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract -Duser.language=en --add-modules jdk.incubator.jextract Test8260344
  */
 public class Test8260344 extends JextractToolRunner {
     @Test

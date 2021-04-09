@@ -29,7 +29,7 @@
  * @build NativeTestHelper CallGeneratorHelper TestUpcallHighArity
  *
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   TestUpcallHighArity
  */
 
@@ -39,16 +39,15 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static jdk.incubator.foreign.CLinker.*;
 import static org.testng.Assert.assertEquals;
@@ -59,7 +58,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     static final CLinker LINKER = CLinker.getInstance();
 
     // struct S_PDI { void* p0; double p1; int p2; };
-    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.ofStruct(
+    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.structLayout(
         C_POINTER.withName("p0"),
         C_DOUBLE.withName("p1"),
         C_INT.withName("p2")
@@ -82,20 +81,19 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     S_PDI_LAYOUT, C_INT, C_DOUBLE, C_POINTER)
             );
             MH_passAndSave = MethodHandles.lookup().findStatic(TestUpcallHighArity.class, "passAndSave",
-                    MethodType.methodType(void.class, Object[].class, AtomicReference.class, List.class));
+                    MethodType.methodType(void.class, Object[].class, AtomicReference.class));
         } catch (ReflectiveOperationException e) {
             throw new InternalError(e);
         }
     }
 
-    static void passAndSave(Object[] o, AtomicReference<Object[]> ref, List<MemorySegment> copies) {
+    static void passAndSave(Object[] o, AtomicReference<Object[]> ref) {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
-                copies.add(copy);
             }
         }
         ref.set(o);
@@ -104,17 +102,17 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     @Test(dataProvider = "args")
     public void testUpcall(MethodHandle downcall, MethodType upcallType,
                            FunctionDescriptor upcallDescriptor) throws Throwable {
-        List<MemorySegment> segments = new ArrayList<>();
         AtomicReference<Object[]> capturedArgs = new AtomicReference<>();
-        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs, segments)
+        MethodHandle target = MethodHandles.insertArguments(MH_passAndSave, 1, capturedArgs)
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
-        try (MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub.address();
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();
             for (int i = 1; i < args.length; i++) {
-                args[i] = makeArg(argLayouts.get(i - 1), null, false, segments);
+                args[i] = makeArg(argLayouts.get(i - 1), null, false);
             }
 
             downcall.invokeWithArguments(args);
@@ -127,7 +125,6 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                     assertEquals(capturedArgsArr[i], args[i + 1]);
                 }
             }
-            segments.forEach(MemorySegment::close);
         }
     }
 

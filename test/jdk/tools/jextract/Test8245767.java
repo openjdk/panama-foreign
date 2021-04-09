@@ -23,7 +23,6 @@
 
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertNotNull;
@@ -36,7 +35,7 @@ import static org.testng.Assert.assertTrue;
  * @build JextractToolRunner
  * @bug 8245767
  * @summary jextract crashes with typedef on a opaque struct or union
- * @run testng/othervm -Dforeign.restricted=permit Test8245767
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8245767
  */
 public class Test8245767 extends JextractToolRunner {
     @Test
@@ -51,10 +50,6 @@ public class Test8245767 extends JextractToolRunner {
             // class should be generated for typedef on opaque struct
             Class<?> fooCls = loader.loadClass("Foo");
             assertNotNull(fooCls);
-            Method alloc = findMethod(fooCls, "allocatePointer");
-            assertNotNull(alloc);
-            alloc = findMethod(fooCls, "allocatePointer", NativeScope.class);
-            assertNotNull(alloc);
 
             // check Point_t
             Class<?> point_tCls = loader.loadClass("Point_t");

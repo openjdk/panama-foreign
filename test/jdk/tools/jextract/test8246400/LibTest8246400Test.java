@@ -23,7 +23,7 @@
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import test.jextract.test8246400.*;
 import static org.testng.Assert.assertEquals;
@@ -37,7 +37,7 @@ import static test.jextract.test8246400.test8246400_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextract -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED  LibTest8246400Test
  */
 /*
  * @test id=sources
@@ -46,14 +46,14 @@ import static test.jextract.test8246400.test8246400_h.*;
  * @library ..
  * @modules jdk.incubator.jextract
  * @run driver JtregJextractSources -l Test8246400 -t test.jextract.test8246400 -- test8246400.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8246400Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8246400Test
  */
 public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
         MemorySegment sum = null;
         MemorySegment callback = null;
-        try (var scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var v1 = Vector.allocate(scope);
             Vector.x$set(v1, 1.0);
             Vector.y$set(v1, 0.0);
@@ -62,8 +62,7 @@ public class LibTest8246400Test {
             Vector.x$set(v2, 0.0);
             Vector.y$set(v2, 1.0);
 
-            sum = add(v1, v2);
-            sum = sum.handoff(scope);
+            sum = add(scope, v1, v2);
 
             assertEquals(Vector.x$get(sum), 1.0, 0.1);
             assertEquals(Vector.y$get(sum), 1.0, 0.1);
@@ -79,7 +78,7 @@ public class LibTest8246400Test {
             value = cosine_similarity(v1, v1, callback);
             assertEquals(value, 1.0, 0.1);
         }
-        assertTrue(!sum.isAlive());
-        assertTrue(!callback.isAlive());
+        assertTrue(!sum.scope().isAlive());
+        assertTrue(!callback.scope().isAlive());
     }
 }

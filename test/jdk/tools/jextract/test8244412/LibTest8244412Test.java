@@ -24,11 +24,12 @@
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.NativeScope;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+
+import test.jextract.test8244412.*;
 import static test.jextract.test8244412.test8244412_h.*;
 
 /*
@@ -38,7 +39,7 @@ import static test.jextract.test8244412.test8244412_h.*;
  * @bug 8244412
  * @summary jextract should generate static utils class for primitive typedefs
  * @run driver JtregJextract -t test.jextract.test8244412 -- test8244412.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8244412Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8244412Test
  */
 /*
  * @test id=sources
@@ -47,7 +48,7 @@ import static test.jextract.test8244412.test8244412_h.*;
  * @bug 8244412
  * @summary jextract should generate static utils class for primitive typedefs
  * @run driver JtregJextractSources -t test.jextract.test8244412 -- test8244412.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8244412Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8244412Test
  */
 public class LibTest8244412Test {
     @Test

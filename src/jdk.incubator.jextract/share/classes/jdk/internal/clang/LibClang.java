@@ -30,6 +30,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
 
 import java.lang.invoke.MethodHandle;
@@ -41,8 +42,7 @@ public class LibClang {
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     private final static MemorySegment disableCrashRecovery =
-            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY)
-                .withAccessModes(MemorySegment.READ);
+            CLinker.toCString("LIBCLANG_DISABLE_CRASH_RECOVERY=" + CRASH_RECOVERY, ResourceScope.newImplicitScope());
 
     static {
         if (!CRASH_RECOVERY) {
@@ -71,12 +71,14 @@ public class LibClang {
 
     public static String CXStrToString(MemorySegment cxstr) {
         MemoryAddress buf = Index_h.clang_getCString(cxstr);
-        String str = CLinker.toJavaStringRestricted(buf);
+        String str = CLinker.toJavaString(buf);
         Index_h.clang_disposeString(cxstr);
         return str;
     }
 
     public static String version() {
-        return CXStrToString(Index_h.clang_getClangVersion());
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            return CXStrToString(Index_h.clang_getClangVersion(scope));
+        }
     }
 }

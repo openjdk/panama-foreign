@@ -33,7 +33,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8260929
  * @summary jextract crashes with libdnet's rabdef.h
- * @run testng/othervm -Dforeign.restricted=permit Test8260929
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8260929
  */
 public class Test8260929 extends JextractToolRunner {
     @Test

@@ -44,6 +44,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -63,7 +64,8 @@ public class TestHandshake {
     @Test(dataProvider = "accessors")
     public void testHandshake(String testName, AccessorFactory accessorFactory) throws InterruptedException {
         for (int it = 0 ; it < ITERATIONS ; it++) {
-            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE).share();
+            ResourceScope scope = ResourceScope.newSharedScope();
+            MemorySegment segment = MemorySegment.allocateNative(SEGMENT_SIZE, 1, scope);
             System.out.println("ITERATION " + it);
             ExecutorService accessExecutor = Executors.newCachedThreadPool();
             start.set(System.currentTimeMillis());
@@ -73,10 +75,10 @@ public class TestHandshake {
             int delay = ThreadLocalRandom.current().nextInt(MAX_DELAY_MILLIS);
             System.out.println("Starting handshaker with delay set to " + delay + " millis");
             Thread.sleep(delay);
-            accessExecutor.execute(new Handshaker(segment));
+            accessExecutor.execute(new Handshaker(scope));
             accessExecutor.shutdown();
             assertTrue(accessExecutor.awaitTermination(MAX_EXECUTOR_WAIT_SECONDS, TimeUnit.SECONDS));
-            assertTrue(!segment.isAlive());
+            assertTrue(!segment.scope().isAlive());
         }
     }
 
@@ -91,7 +93,7 @@ public class TestHandshake {
 
         @Override
         public final void run() {
-            outer: while (segment.isAlive()) {
+            outer: while (segment.scope().isAlive()) {
                 try {
                     doAccess();
                 } catch (IllegalStateException ex) {
@@ -105,12 +107,9 @@ public class TestHandshake {
             }
             long delay = System.currentTimeMillis() - start.get();
             System.out.println("Accessor #" + id + " terminated - delay (ms): " + delay);
-            cleanup();
         }
 
         abstract void doAccess();
-
-        void cleanup() {}
 
         private void backoff() {
             try {
@@ -181,7 +180,7 @@ public class TestHandshake {
 
         SegmentMismatchAccessor(int id, MemorySegment segment) {
             super(id, segment);
-            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE).share();
+            this.copy = MemorySegment.allocateNative(SEGMENT_SIZE, 1, segment.scope());
             copy.copyFrom(segment);
             MemoryAccess.setByteAtOffset(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
@@ -189,11 +188,6 @@ public class TestHandshake {
         @Override
         public void doAccess() {
             segment.mismatch(copy);
-        }
-
-        @Override
-        void cleanup() {
-            copy.close();
         }
     }
 
@@ -231,17 +225,17 @@ public class TestHandshake {
 
     static class Handshaker implements Runnable {
 
-        final MemorySegment segment;
+        final ResourceScope scope;
 
-        Handshaker(MemorySegment segment) {
-            this.segment = segment;
+        Handshaker(ResourceScope scope) {
+            this.scope = scope;
         }
 
         @Override
         public void run() {
             while (true) {
                 try {
-                    segment.close();
+                    scope.close();
                     break;
                 } catch (IllegalStateException ex) {
                     Thread.onSpinWait();

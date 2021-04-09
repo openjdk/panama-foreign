@@ -33,7 +33,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8260929
  * @summary jextract crashes with Crossing storage unit boundaries
- * @run testng/othervm -Dforeign.restricted=permit Test8261578
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED Test8261578
  */
 public class Test8261578 extends JextractToolRunner {
     @Test

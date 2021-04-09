@@ -27,11 +27,11 @@
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  *
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=false
  *   TestUpcallStructScope
  * @run testng/othervm/native
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   -Djdk.internal.foreign.ProgrammableInvoker.USE_SPEC=true
  *   TestUpcallStructScope
  */
@@ -42,6 +42,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
@@ -61,7 +62,7 @@ public class TestUpcallStructScope {
     static final MethodHandle MH_Consumer_accept;
 
     // struct S_PDI { void* p0; double p1; int p2; };
-    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.ofStruct(
+    static final MemoryLayout S_PDI_LAYOUT = MemoryLayout.structLayout(
         C_POINTER.withName("p0"),
         C_DOUBLE.withName("p1"),
         C_INT.withName("p2")
@@ -92,14 +93,14 @@ public class TestUpcallStructScope {
         AtomicReference<MemorySegment> capturedSegment = new AtomicReference<>();
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
-        try (MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc);
-             MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT)) {
-
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
+            MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, scope);
             MH_do_upcall.invokeExact(upcallStub.address(), argSegment);
         }
 
         MemorySegment captured = capturedSegment.get();
-        assertFalse(captured.isAlive());
+        assertFalse(captured.scope().isAlive());
     }
 
 }

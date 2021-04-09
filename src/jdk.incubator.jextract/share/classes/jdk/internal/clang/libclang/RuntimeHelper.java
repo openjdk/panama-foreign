@@ -34,7 +34,8 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -60,6 +61,8 @@ final class RuntimeHelper {
         return obj;
     }
 
+    private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
+
     static final LibraryLookup[] libraries(String... libNames) {
         if (libNames.length == 0) {
             return new LibraryLookup[] { LibraryLookup.ofDefault() };
@@ -77,9 +80,7 @@ final class RuntimeHelper {
     }
 
     static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
-        return lookup(LIBRARIES, name).map(s ->
-            nonCloseableNonTransferableSegment(s.address().asSegmentRestricted(layout.byteSize())
-                    .share())).orElse(null);
+        return lookup(LIBRARIES, name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
     }
 
     static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
@@ -92,31 +93,39 @@ final class RuntimeHelper {
                 }).orElse(null);
     }
 
+    static final MethodHandle downcallHandle(String desc, FunctionDescriptor fdesc, boolean variadic) {
+        if (variadic) {
+            throw new AssertionError("Cannot get here!");
+        }
+        MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
+        return LINKER.downcallHandle(mt, fdesc);
+    }
+
     static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
+        return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newImplicitScope());
+    }
+
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, NativeScope scope) {
+        return upcallStub(fi, z, fdesc, mtypeDesc, scope.scope());
+    }
+
+    static final <Z> MemorySegment upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",
                     MethodType.fromMethodDescriptorString(mtypeDesc, LOADER));
             handle = handle.bindTo(z);
-            return LINKER.upcallStub(handle, fdesc);
+            return LINKER.upcallStub(handle, fdesc, scope);
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
     }
 
-    static final MemorySegment nonCloseableNonTransferableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE & ~MemorySegment.HANDOFF);
-    }
-
-    static MemorySegment asArrayRestricted(MemoryAddress addr, MemoryLayout layout, int numElements) {
-        return nonCloseableSegment(addr.asSegmentRestricted(numElements * layout.byteSize()));
+    static MemorySegment asArray(MemoryAddress addr, MemoryLayout layout, int numElements, ResourceScope scope) {
+         return addr.asSegment(numElements * layout.byteSize(), scope);
     }
 
     // Internals only below this point
-    private static final MemorySegment nonCloseableSegment(MemorySegment seg) {
-        return seg.withAccessModes(seg.accessModes() &  ~MemorySegment.CLOSE);
-    }
-
-    private static final Optional<LibraryLookup.Symbol> lookup(LibraryLookup[] LIBRARIES, String sym) {
+    private static final Optional<MemoryAddress> lookup(LibraryLookup[] LIBRARIES, String sym) {
         return Stream.of(LIBRARIES)
                 .flatMap(l -> l.lookup(sym).stream())
                 .findFirst();
@@ -136,7 +145,7 @@ final class RuntimeHelper {
 
         static {
             try {
-                INVOKE_MH = MethodHandles.lookup().findVirtual(VarargsInvoker.class, "invoke", MethodType.methodType(Object.class, Object[].class));
+                INVOKE_MH = MethodHandles.lookup().findVirtual(VarargsInvoker.class, "invoke", MethodType.methodType(Object.class, SegmentAllocator.class, Object[].class));
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException(e);
             }
@@ -144,11 +153,16 @@ final class RuntimeHelper {
 
         static MethodHandle make(Addressable symbol, MethodType type, FunctionDescriptor function) {
             VarargsInvoker invoker = new VarargsInvoker(symbol, type, function);
-            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount())
-                    .asType(type);
+            MethodHandle handle = INVOKE_MH.bindTo(invoker).asCollector(Object[].class, type.parameterCount());
+            if (type.returnType().equals(MemorySegment.class)) {
+                type = type.insertParameterTypes(0, SegmentAllocator.class);
+            } else {
+                handle = MethodHandles.insertArguments(handle, 0, THROWING_ALLOCATOR);
+            }
+            return handle.asType(type);
         }
 
-        private Object invoke(Object[] args) throws Throwable {
+        private Object invoke(SegmentAllocator allocator, Object[] args) throws Throwable {
             // one trailing Object[]
             int nNamedArgs = function.argumentLayouts().size();
             assert(args.length == nNamedArgs + 1);
@@ -177,7 +191,7 @@ final class RuntimeHelper {
             FunctionDescriptor f = (function.returnLayout().isEmpty()) ?
                     FunctionDescriptor.ofVoid(argLayouts) :
                     FunctionDescriptor.of(function.returnLayout().get(), argLayouts);
-            MethodHandle mh = LINKER.downcallHandle(symbol, mt, f);
+            MethodHandle mh = LINKER.downcallHandle(symbol, allocator, mt, f);
             // flatten argument list so that it can be passed to an asSpreader MH
             Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
             System.arraycopy(args, 0, allArgs, 0, nNamedArgs);

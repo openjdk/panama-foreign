@@ -24,7 +24,6 @@
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.NativeScope;
 import org.testng.annotations.Test;
 import test.jextract.test8241925.*;
 import static org.testng.Assert.assertEquals;
@@ -38,7 +37,7 @@ import static jdk.incubator.foreign.CLinker.*;
  * @bug 8241925
  * @summary jextract should generate simple allocation, access API for C primitive types
  * @run driver JtregJextract -l Test8241925 -t test.jextract.test8241925 -- test8241925.h
- * @run testng/othervm -Dforeign.restricted=permit LibTest8241925Test
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract,ALL-UNNAMED LibTest8241925Test
  */
 public class LibTest8241925Test {
     @Test
@@ -70,12 +69,12 @@ public class LibTest8241925Test {
                 assertEquals(dblArray[i], convertedDblArray[i], 0.1);
             }
 
-            assertEquals(toJavaStringRestricted(name()), "java");
+            assertEquals(toJavaString(name()), "java");
 
             var dest = scope.allocateArray(C_CHAR, 12);
-            dest.copyFrom(toCString("hello "));
+            dest.copyFrom(toCString("hello ", scope));
             var src = toCString("world", scope);
-            assertEquals(toJavaStringRestricted(concatenate(dest, src)), "hello world");
+            assertEquals(toJavaString(concatenate(dest, src)), "hello world");
         }
     }
 }

@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8240657
  * @summary when Java keywords are used as identifiers in C header, jextract generates non-compilable java code
- * @run testng/othervm -Dforeign.restricted=permit Test8240657
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract Test8240657
  */
 public class Test8240657 extends JextractToolRunner {
     @Test

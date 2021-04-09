@@ -27,12 +27,16 @@ package jdk.internal.jextract.impl;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.jextract.Type;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A helper class to generate header interface class in source form.
@@ -85,6 +89,10 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
+            if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
+                // emit scoped overload
+                emitFunctionWrapperScopedOverload(javaName, functionInfo);
+            }
         });
     }
 
@@ -106,37 +114,16 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         append(MEMBER_MODS + " ");
-        append(functionInfo.methodType().returnType().getSimpleName() + " " + javaName + " (");
-        String delim = "";
-        List<String> pExprs = new ArrayList<>();
+        MethodType declType = functionInfo.methodType();
         List<String> paramNames = functionInfo.parameterNames().get();
-        final int numParams = paramNames.size();
-        for (int i = 0 ; i < numParams; i++) {
-            String pName = paramNames.get(i);
-            if (pName.isEmpty()) {
-                pName = "x" + i;
-            }
-            if (functionInfo.methodType().parameterType(i).equals(MemoryAddress.class)) {
-                pExprs.add(pName + ".address()");
-            } else {
-                pExprs.add(pName);
-            }
-            Class<?> pType = functionInfo.methodType().parameterType(i);
-            if (pType.equals(MemoryAddress.class)) {
-                pType = Addressable.class;
-            }
-            append(delim + " " + pType.getSimpleName() + " " + pName);
-            delim = ", ";
+        if (functionInfo.methodType().returnType().equals(MemorySegment.class)) {
+            // needs allocator parameter
+            declType = declType.insertParameterTypes(0, SegmentAllocator.class);
+            paramNames = new ArrayList<>(paramNames);
+            paramNames.add(0, "allocator");
         }
-        if (functionInfo.isVarargs()) {
-            String lastArg = "x" + numParams;
-            if (numParams > 0) {
-                append(", ");
-            }
-            append("Object... " + lastArg);
-            pExprs.add(lastArg);
-        }
-        append(") {\n");
+        List<String> pExprs = emitFunctionWrapperDecl(javaName, declType, functionInfo.isVarargs(), paramNames);
+        append(" {\n");
         incrAlign();
         indent();
         append("var mh$ = RuntimeHelper.requireNonNull(");
@@ -167,6 +154,62 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         decrAlign();
     }
 
+    private List<String> emitFunctionWrapperDecl(String javaName, MethodType methodType, boolean isVarargs, List<String> paramNames) {
+        append(methodType.returnType().getSimpleName() + " " + javaName + " (");
+        String delim = "";
+        List<String> pExprs = new ArrayList<>();
+        final int numParams = paramNames.size();
+        for (int i = 0 ; i < numParams; i++) {
+            String pName = paramNames.get(i);
+            if (pName.isEmpty()) {
+                pName = "x" + i;
+            }
+            if (methodType.parameterType(i).equals(MemoryAddress.class)) {
+                pExprs.add(pName + ".address()");
+            } else {
+                pExprs.add(pName);
+            }
+            Class<?> pType = methodType.parameterType(i);
+            if (pType.equals(MemoryAddress.class)) {
+                pType = Addressable.class;
+            }
+            append(delim + " " + pType.getSimpleName() + " " + pName);
+            delim = ", ";
+        }
+        if (isVarargs) {
+            String lastArg = "x" + numParams;
+            append(delim + "Object... " + lastArg);
+            pExprs.add(lastArg);
+        }
+        append(")");
+        return pExprs;
+    }
+
+    private void emitFunctionWrapperScopedOverload(String javaName, FunctionInfo functionInfo) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS + " ");
+        List<String> paramNames = new ArrayList<>(functionInfo.parameterNames().get());
+        paramNames.add(0, "scope");
+        List<String> pExprs = emitFunctionWrapperDecl(javaName,
+                functionInfo.methodType().insertParameterTypes(0, ResourceScope.class),
+                functionInfo.isVarargs(),
+                paramNames);
+        String param = pExprs.remove(0);
+        pExprs.add(0, "SegmentAllocator.ofScope(" + param + ")");
+        append(" {\n");
+        incrAlign();
+        indent();
+        if (!functionInfo.methodType().returnType().equals(void.class)) {
+            append("return ");
+        }
+        append(javaName + "(" + String.join(", ", pExprs) + ");\n");
+        decrAlign();
+        indent();
+        append("}\n");
+        decrAlign();
+    }
+
     private void emitFunctionalInterfaceGetter(String fiName, String javaName) {
         incrAlign();
         indent();
@@ -174,7 +217,7 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         append(fiName + " " + javaName + " () {\n");
         incrAlign();
         indent();
-        append("return " + fiName + ".ofAddressRestricted(" + javaName + "$get());\n");
+        append("return " + fiName + ".ofAddress(" + javaName + "$get());\n");
         decrAlign();
         indent();
         append("}\n");

@@ -31,7 +31,8 @@ import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -58,7 +59,10 @@ import static jdk.incubator.foreign.CLinker.*;
 @Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
 public class StrLenTest {
 
-    NativeScope scope = NativeScope.unboundedScope();
+    ResourceScope scope = ResourceScope.newConfinedScope();
+
+    SegmentAllocator segmentAllocator;
+    SegmentAllocator arenaAllocator = SegmentAllocator.arenaAllocator(scope);
 
     @Param({"5", "20", "100"})
     public int size;
@@ -94,6 +98,7 @@ public class StrLenTest {
     @Setup
     public void setup() {
         str = makeString(size);
+        segmentAllocator = SegmentAllocator.ofSegment(MemorySegment.allocateNative(size + 1, ResourceScope.newImplicitScope()));
     }
 
     @TearDown
@@ -108,21 +113,27 @@ public class StrLenTest {
 
     @Benchmark
     public int panama_strlen() throws Throwable {
-        try (MemorySegment segment = CLinker.toCString(str)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = CLinker.toCString(str, scope);
             return (int)STRLEN.invokeExact(segment.address());
         }
     }
 
     @Benchmark
-    public int panama_strlen_scope() throws Throwable {
-        return (int)STRLEN.invokeExact(CLinker.toCString(str, scope).address());
+    public int panama_strlen_arena() throws Throwable {
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, arenaAllocator).address());
+    }
+
+    @Benchmark
+    public int panama_strlen_prefix() throws Throwable {
+        return (int)STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
     }
 
     @Benchmark
     public int panama_strlen_unsafe() throws Throwable {
         MemoryAddress address = makeStringUnsafe(str);
         int res = (int) STRLEN.invokeExact(address);
-        CLinker.freeMemoryRestricted(address);
+        CLinker.freeMemory(address);
         return res;
     }
 
@@ -137,8 +148,8 @@ public class StrLenTest {
     static MemoryAddress makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
-        MemoryAddress address = CLinker.allocateMemoryRestricted(len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemoryAddress address = CLinker.allocateMemory(len + 1);
+        MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;
@@ -148,7 +159,7 @@ public class StrLenTest {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
-        MemorySegment str = address.asSegmentRestricted(len + 1);
+        MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         MemoryAccess.setByteAtOffset(str, len, (byte)0);
         return address;

@@ -85,8 +85,6 @@ bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
 bool   Arguments::_UseOnStackReplacement        = UseOnStackReplacement;
 bool   Arguments::_BackgroundCompilation        = BackgroundCompilation;
 bool   Arguments::_ClipInlining                 = ClipInlining;
-intx   Arguments::_Tier3InvokeNotifyFreqLog     = Tier3InvokeNotifyFreqLog;
-intx   Arguments::_Tier4InvocationThreshold     = Tier4InvocationThreshold;
 size_t Arguments::_default_SharedBaseAddress    = SharedBaseAddress;
 
 bool   Arguments::_enable_preview               = false;
@@ -310,6 +308,8 @@ bool needs_module_property_warning = false;
 #define PATH_LEN 4
 #define UPGRADE_PATH "upgrade.path"
 #define UPGRADE_PATH_LEN 12
+#define ENABLE_NATIVE_ACCESS "enable.native.access"
+#define ENABLE_NATIVE_ACCESS_LEN 20
 
 void Arguments::add_init_library(const char* name, char* options) {
   _libraryList.add(new AgentLibrary(name, options, false, NULL));
@@ -348,7 +348,8 @@ bool Arguments::is_internal_module_property(const char* property) {
         matches_property_suffix(property_suffix, ADDMODS, ADDMODS_LEN) ||
         matches_property_suffix(property_suffix, LIMITMODS, LIMITMODS_LEN) ||
         matches_property_suffix(property_suffix, PATH, PATH_LEN) ||
-        matches_property_suffix(property_suffix, UPGRADE_PATH, UPGRADE_PATH_LEN)) {
+        matches_property_suffix(property_suffix, UPGRADE_PATH, UPGRADE_PATH_LEN) ||
+        matches_property_suffix(property_suffix, ENABLE_NATIVE_ACCESS, ENABLE_NATIVE_ACCESS_LEN)) {
       return true;
     }
   }
@@ -1458,12 +1459,6 @@ void Arguments::set_mode_flags(Mode mode) {
   AlwaysCompileLoopMethods   = Arguments::_AlwaysCompileLoopMethods;
   UseOnStackReplacement      = Arguments::_UseOnStackReplacement;
   BackgroundCompilation      = Arguments::_BackgroundCompilation;
-  if (FLAG_IS_DEFAULT(Tier3InvokeNotifyFreqLog)) {
-    Tier3InvokeNotifyFreqLog = Arguments::_Tier3InvokeNotifyFreqLog;
-  }
-  if (FLAG_IS_DEFAULT(Tier4InvocationThreshold)) {
-    Tier4InvocationThreshold = Arguments::_Tier4InvocationThreshold;
-  }
 
   // Change from defaults based on mode
   switch (mode) {
@@ -1483,13 +1478,6 @@ void Arguments::set_mode_flags(Mode mode) {
     UseInterpreter           = false;
     BackgroundCompilation    = false;
     ClipInlining             = false;
-    // Be much more aggressive in tiered mode with -Xcomp and exercise C2 more.
-    // We will first compile a level 3 version (C1 with full profiling), then do one invocation of it and
-    // compile a level 4 (C2) and then continue executing it.
-    if (CompilerConfig::is_c2_or_jvmci_compiler_enabled()) {
-      Tier3InvokeNotifyFreqLog = 0;
-      Tier4InvocationThreshold = 0;
-    }
     break;
   }
 }
@@ -1975,6 +1963,7 @@ unsigned int addexports_count = 0;
 unsigned int addopens_count = 0;
 unsigned int addmods_count = 0;
 unsigned int patch_mod_count = 0;
+unsigned int enable_native_access_count = 0;
 
 // Check the consistency of vm_init_args
 bool Arguments::check_vm_args_consistency() {
@@ -2136,8 +2125,6 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs *vm_options_args,
   Arguments::_UseOnStackReplacement    = UseOnStackReplacement;
   Arguments::_ClipInlining             = ClipInlining;
   Arguments::_BackgroundCompilation    = BackgroundCompilation;
-  Arguments::_Tier3InvokeNotifyFreqLog = Tier3InvokeNotifyFreqLog;
-  Arguments::_Tier4InvocationThreshold = Tier4InvocationThreshold;
 
   // Remember the default value of SharedBaseAddress.
   Arguments::_default_SharedBaseAddress = SharedBaseAddress;
@@ -2418,6 +2405,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     } else if (match_option(option, "--add-modules=", &tail)) {
       if (!create_numbered_module_property("jdk.module.addmods", tail, addmods_count++)) {
+        return JNI_ENOMEM;
+      }
+    } else if (match_option(option, "--enable-native-access=", &tail)) {
+      if (!create_numbered_module_property("jdk.module.enable.native.access", tail, enable_native_access_count++)) {
         return JNI_ENOMEM;
       }
     } else if (match_option(option, "--limit-modules=", &tail)) {
@@ -3455,7 +3446,7 @@ char* Arguments::get_default_shared_archive_path() {
   const size_t len = jvm_path_len + file_sep_len + 20;
   default_archive_path = NEW_C_HEAP_ARRAY(char, len, mtArguments);
   jio_snprintf(default_archive_path, len,
-               UseCompressedOops ? "%s%sclasses.jsa": "%s%sclasses_nocoops.jsa",
+               LP64_ONLY(!UseCompressedOops ? "%s%sclasses_nocoops.jsa":) "%s%sclasses.jsa",
                jvm_path, os::file_separator());
   return default_archive_path;
 }

@@ -25,7 +25,7 @@
  * @test
  * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
  * @run testng/othervm
- *   -Dforeign.restricted=permit
+ *   --enable-native-access=ALL-UNNAMED
  *   TestVirtualCalls
  */
 
@@ -37,6 +37,7 @@ import jdk.incubator.foreign.LibraryLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
+import jdk.incubator.foreign.MemoryAddress;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.CLinker.*;
@@ -48,9 +49,9 @@ public class TestVirtualCalls {
     static final LibraryLookup lookup = LibraryLookup.ofLibrary("Virtual");
 
     static final MethodHandle func;
-    static final LibraryLookup.Symbol funcA;
-    static final LibraryLookup.Symbol funcB;
-    static final LibraryLookup.Symbol funcC;
+    static final MemoryAddress funcA;
+    static final MemoryAddress funcB;
+    static final MemoryAddress funcC;
 
     static {
         func = abi.downcallHandle(

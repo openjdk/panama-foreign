@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 
+import java.io.UncheckedIOException;
 import java.nio.MappedByteBuffer;
 import java.util.Objects;
 
@@ -41,7 +42,7 @@ import java.util.Objects;
  * Clients requiring sophisticated, low-level control over mapped memory segments, should consider writing
  * custom mapped memory segment factories; using JNI, e.g. on Linux, it is possible to call {@code mmap}
  * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
- * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegmentRestricted(long, Runnable, Object)}.
+ * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegment(long, Runnable, ResourceScope)}.
  *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
@@ -149,6 +150,7 @@ public final class MappedMemorySegments {
      * and this method is called from a thread other than the segment's owner thread.
      * @throws UnsupportedOperationException if the given segment is not a mapped memory segment, e.g. if
      * {@code segment.isMapped() == false}.
+     * @throws UncheckedIOException if there is an I/O error writing the contents of the segment to the associated storage device
      */
     public static void force(MemorySegment segment) {
         toMappedSegment(segment).force();

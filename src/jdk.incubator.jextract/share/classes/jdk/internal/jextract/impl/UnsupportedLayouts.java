@@ -36,22 +36,22 @@ public final class UnsupportedLayouts {
 
     private static final String ATTR_LAYOUT_KIND = "jextract.abi.unsupported.layout.kind";
 
-    public static final ValueLayout __INT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
+    public static final ValueLayout __INT128 = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "__int128");
 
-    public static final ValueLayout LONG_DOUBLE = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
+    public static final ValueLayout LONG_DOUBLE = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "long double");
 
-    public static final ValueLayout _FLOAT128 = MemoryLayout.ofValueBits(128, ByteOrder.nativeOrder()).
+    public static final ValueLayout _FLOAT128 = MemoryLayout.valueLayout(128, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "_float128");
 
-    public static final ValueLayout __FP16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
+    public static final ValueLayout __FP16 = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "__fp16");
 
-    public static final ValueLayout CHAR16 = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
+    public static final ValueLayout CHAR16 = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "char16");
 
-    public static final ValueLayout WCHAR_T = MemoryLayout.ofValueBits(16, ByteOrder.nativeOrder()).
+    public static final ValueLayout WCHAR_T = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder()).
             withAttribute(ATTR_LAYOUT_KIND, "wchar_t");
 
     static boolean isUnsupported(MemoryLayout vl) {

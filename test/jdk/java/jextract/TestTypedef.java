@@ -24,7 +24,7 @@
 /*
  * @test
  * @build JextractApiTestBase
- * @run testng/othervm -ea -Dforeign.restricted=permit TestTypedef
+ * @run testng/othervm -ea --enable-native-access=jdk.incubator.jextract TestTypedef
  */
 
 import java.util.Set;

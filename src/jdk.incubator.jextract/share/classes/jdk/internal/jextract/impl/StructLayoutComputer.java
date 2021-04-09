@@ -75,7 +75,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         boolean isBitfield = c.isBitField();
         long expectedOffset = offsetOf(parent, c);
         if (expectedOffset > offset) {
-            addFieldLayout(MemoryLayout.ofPaddingBits(expectedOffset - offset));
+            addFieldLayout(MemoryLayout.paddingLayout(expectedOffset - offset));
             actualSize += (expectedOffset - offset);
             offset = expectedOffset;
         }
@@ -107,7 +107,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         // pad at the end, if any
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
-            addFieldLayout(MemoryLayout.ofPaddingBits(expectedSize - actualSize));
+            addFieldLayout(MemoryLayout.paddingLayout(expectedSize - actualSize));
         }
 
         /*
@@ -122,7 +122,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         handleBitfields();
 
         MemoryLayout[] fields = fieldLayouts.toArray(new MemoryLayout[0]);
-        GroupLayout g = MemoryLayout.ofStruct(fields);
+        GroupLayout g = MemoryLayout.structLayout(fields);
         String name = LayoutUtils.getName(cursor);
         return name.isEmpty() ?
                 g : g.withName(name);

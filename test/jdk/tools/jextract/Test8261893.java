@@ -32,7 +32,7 @@ import static org.testng.Assert.assertNotNull;
  * @build JextractToolRunner
  * @bug 8261893
  * @summary jextract generates class names that are restricted type names
- * @run testng/othervm -Dforeign.restricted=permit -Duser.language=en --add-modules jdk.incubator.jextract Test8261893
+ * @run testng/othervm --enable-native-access=jdk.incubator.jextract -Duser.language=en --add-modules jdk.incubator.jextract Test8261893
  */
 public class Test8261893 extends JextractToolRunner {
     @Test

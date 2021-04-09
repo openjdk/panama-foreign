@@ -27,8 +27,6 @@ package jdk.internal.jextract.impl;
 
 public class TypedefBuilder extends ClassSourceBuilder {
 
-    private static String MEMBER_MODS = "public static ";
-
     private final String superClass;
 
     public TypedefBuilder(JavaSourceBuilder enclosing, String name, String superClass) {
@@ -43,37 +41,6 @@ public class TypedefBuilder extends ClassSourceBuilder {
 
     @Override
     JavaSourceBuilder classEnd() {
-        if (superClass == null) {
-            emitAllocatePointerMethods();
-        }
         return super.classEnd();
-    }
-
-    void emitAllocatePointerMethods() {
-        // allocatePointer
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocatePointer() {\n");
-        incrAlign();
-        indent();
-        append("return MemorySegment.allocateNative(C_POINTER);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-
-        // allocatePointer (scope version)
-        incrAlign();
-        indent();
-        append(MEMBER_MODS);
-        append(" MemorySegment allocatePointer(NativeScope scope) {\n");
-        incrAlign();
-        indent();
-        append("return scope.allocate(C_POINTER);\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
     }
 }

@@ -490,10 +490,10 @@ import static jdk.incubator.foreign.CLinker.*;
             constants$2.clang_indexTranslationUnit$FUNC, false
         );
         static final FunctionDescriptor clang_indexLoc_getFileLocation$FUNC = FunctionDescriptor.ofVoid(
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             ),
             C_POINTER,
             C_POINTER,
@@ -511,13 +511,16 @@ import static jdk.incubator.foreign.CLinker.*;
     public static MethodHandle clang_indexLoc_getCXSourceLocation$MH() {
         return RuntimeHelper.requireNonNull(constants$3.clang_indexLoc_getCXSourceLocation$MH,"clang_indexLoc_getCXSourceLocation");
     }
-    public static MemorySegment clang_indexLoc_getCXSourceLocation ( MemorySegment loc) {
+    public static MemorySegment clang_indexLoc_getCXSourceLocation ( SegmentAllocator allocator,  MemorySegment loc) {
         var mh$ = RuntimeHelper.requireNonNull(constants$3.clang_indexLoc_getCXSourceLocation$MH, "clang_indexLoc_getCXSourceLocation");
         try {
-            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(loc);
+            return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, loc);
         } catch (Throwable ex$) {
             throw new AssertionError("should not reach here", ex$);
         }
+    }
+    public static MemorySegment clang_indexLoc_getCXSourceLocation ( ResourceScope scope,  MemorySegment loc) {
+        return clang_indexLoc_getCXSourceLocation(SegmentAllocator.ofScope(scope), loc);
     }
     public static MethodHandle clang_Type_visitFields$MH() {
         return RuntimeHelper.requireNonNull(constants$3.clang_Type_visitFields$MH,"clang_Type_visitFields");
@@ -551,15 +554,15 @@ import static jdk.incubator.foreign.CLinker.*;
 
     public static class constants$3 {
 
-        static final FunctionDescriptor clang_indexLoc_getCXSourceLocation$FUNC = FunctionDescriptor.of(MemoryLayout.ofStruct(
-            MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+        static final FunctionDescriptor clang_indexLoc_getCXSourceLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
             C_INT.withName("int_data"),
-            MemoryLayout.ofPaddingBits(32)
+            MemoryLayout.paddingLayout(32)
         ),
-            MemoryLayout.ofStruct(
-                MemoryLayout.ofSequence(2, C_POINTER).withName("ptr_data"),
+            MemoryLayout.structLayout(
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
                 C_INT.withName("int_data"),
-                MemoryLayout.ofPaddingBits(32)
+                MemoryLayout.paddingLayout(32)
             )
         );
         static final MethodHandle clang_indexLoc_getCXSourceLocation$MH = RuntimeHelper.downcallHandle(
@@ -568,10 +571,10 @@ import static jdk.incubator.foreign.CLinker.*;
             constants$3.clang_indexLoc_getCXSourceLocation$FUNC, false
         );
         static final FunctionDescriptor clang_Type_visitFields$FUNC = FunctionDescriptor.of(C_INT,
-            MemoryLayout.ofStruct(
+            MemoryLayout.structLayout(
                 C_INT.withName("kind"),
-                MemoryLayout.ofPaddingBits(32),
-                MemoryLayout.ofSequence(2, C_POINTER).withName("data")
+                MemoryLayout.paddingLayout(32),
+                MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
             ),
             C_POINTER,
             C_POINTER
@@ -581,7 +584,7 @@ import static jdk.incubator.foreign.CLinker.*;
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$3.clang_Type_visitFields$FUNC, false
         );
-        static final MemorySegment CINDEX_VERSION_STRING$SEGMENT = CLinker.toCString("0.59");
+        static final MemorySegment CINDEX_VERSION_STRING$SEGMENT = CLinker.toCString("0.59", ResourceScope.newImplicitScope());
     }
 
 }

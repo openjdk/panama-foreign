@@ -21,12 +21,8 @@
  * questions.
  */
 #include <jni.h>
-
-void func() {}
-
-int identity(int x) {
-  return x;
-}
+#include <stdlib.h>
+#include "libCallOverhead.c"
 
 JNIEXPORT void JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_CallOverheadHelper_blank
   (JNIEnv *env, jclass cls) {
