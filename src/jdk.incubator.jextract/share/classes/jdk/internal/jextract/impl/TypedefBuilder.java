@@ -25,12 +25,12 @@
 
 package jdk.internal.jextract.impl;
 
-public class TypedefBuilder extends NestedClassBuilder {
+public class TypedefBuilder extends ClassSourceBuilder {
 
     private final String superClass;
 
-    public TypedefBuilder(JavaSourceBuilder prev, String className, String superClass) {
-        super(prev, Kind.CLASS, className);
+    public TypedefBuilder(JavaSourceBuilder enclosing, String name, String superClass) {
+        super(enclosing, Kind.CLASS, name);
         this.superClass = superClass;
     }
 

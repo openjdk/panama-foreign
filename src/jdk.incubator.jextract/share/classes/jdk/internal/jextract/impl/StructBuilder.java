@@ -49,8 +49,8 @@ class StructBuilder extends ConstantBuilder {
     private final Type structType;
     private final Deque<String> prefixElementNames;
 
-    StructBuilder(JavaSourceBuilder enclosing, String className, GroupLayout structLayout, Type structType) {
-        super(enclosing, Kind.CLASS, className);
+    StructBuilder(JavaSourceBuilder enclosing, String name, GroupLayout structLayout, Type structType) {
+        super(enclosing, name);
         this.structLayout = structLayout;
         this.structType = structType;
         prefixElementNames = new ArrayDeque<>();
@@ -113,8 +113,16 @@ class StructBuilder extends ConstantBuilder {
             pushPrefixElement(anonName);
             return this;
         } else {
-            return super.addStruct(name, parent, layout, type);
+            return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
         }
+    }
+
+    @Override
+    public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name, functionInfo.methodType(), functionInfo.descriptor());
+        builder.classBegin();
+        builder.classEnd();
+        return builder.className();
     }
 
     private String findAnonymousStructName(GroupLayout parentLayout, GroupLayout layout) {
@@ -337,13 +345,12 @@ class StructBuilder extends ConstantBuilder {
         decrAlign();
     }
 
-    private String qualifiedName(JavaSourceBuilder builder) {
-        if (builder instanceof NestedClassBuilder) {
-            NestedClassBuilder nestedClassBuilder = (NestedClassBuilder)builder;
-            String prefix = qualifiedName(nestedClassBuilder.enclosing);
+    private String qualifiedName(ClassSourceBuilder builder) {
+        if (builder.isNested()) {
+            String prefix = qualifiedName((ClassSourceBuilder)builder.enclosing);
             return prefix.isEmpty() ?
-                    nestedClassBuilder.className() :
-                    prefix + "$" + nestedClassBuilder.className();
+                    builder.className() :
+                    prefix + "$" + builder.className();
         } else {
             return "";
         }

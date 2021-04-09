@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static test.jextract.struct.struct_h.*;
+import test.jextract.struct.*;
 
 /*
  * @test id=classes

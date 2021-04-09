@@ -111,7 +111,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
                 String pkgName, IncludeHelper includeHelper, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(ClassDesc.of(pkgName, clsName), libraryNames.toArray(new String[0]));
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(pkgName, clsName, libraryNames.toArray(new String[0]));
         return new OutputFactory(pkgName, toplevelBuilder, includeHelper).generate(decl);
     }
 
@@ -200,24 +200,24 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             case STRUCT, UNION -> true;
             default -> false;
         };
-
+        StructBuilder structBuilder = null;
         if (isStructKind) {
             String className = d.name();
             if (!className.isEmpty() && !includeHelper.isIncluded(d)) {
                 return null;
             }
             GroupLayout layout = (GroupLayout) layoutFor(d);
-            currentBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
-            currentBuilder.classBegin();
+            currentBuilder = structBuilder = currentBuilder.addStruct(className, parent, layout, Type.declared(d));
+            structBuilder.classBegin();
             if (!className.isEmpty()) {
-                addStructDefinition(d, currentBuilder.fullName());
+                addStructDefinition(d, structBuilder.fullName());
             }
         }
         try {
             d.members().forEach(fieldTree -> fieldTree.accept(this, d));
         } finally {
             if (isStructKind) {
-                currentBuilder = currentBuilder.classEnd();
+                currentBuilder = structBuilder.classEnd();
             }
         }
         return null;

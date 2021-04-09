@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import jdk.incubator.foreign.ResourceScope;
 import static org.testng.Assert.assertEquals;
 import static test.jextract.test8244938.test8244938_h.*;
+import test.jextract.test8244938.*;
 
 /*
  * @test id=classes

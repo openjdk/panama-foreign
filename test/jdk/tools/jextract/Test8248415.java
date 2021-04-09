@@ -43,7 +43,7 @@ public class Test8248415 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8248415.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> nodeClass = loader.loadClass("test8248415_h$Node");
+            Class<?> nodeClass = loader.loadClass("Node");
 
             // Check if getters for pointer fields were generated
             checkMethod(nodeClass, "next$get", MemoryAddress.class, MemorySegment.class);

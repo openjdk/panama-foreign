@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.FunctionDescriptor;
@@ -31,93 +32,16 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
-import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-/**
- * Superclass for .java source generator classes.
- */
-abstract class JavaSourceBuilder {
-
-    enum Kind {
-        CLASS("class"),
-        INTERFACE("interface");
-
-        final String kindName;
-
-        Kind(String kindName) {
-            this.kindName = kindName;
-        }
-    }
-
-    final Kind kind;
-    final ClassDesc desc;
-
-    Set<String> nestedClassNames = new HashSet<>();
-    int nestedClassNameCount = 0;
-
-    // code buffer
-    private StringBuilder sb = new StringBuilder();
-    // current line alignment (number of 4-spaces)
-    private int align;
-
-    JavaSourceBuilder(int align, Kind kind, ClassDesc desc) {
-        this.align = align;
-        this.kind = kind;
-        this.desc = desc;
-    }
-
-    JavaSourceBuilder(Kind kind, ClassDesc desc) {
-        this(0, kind, desc);
-    }
-
-    String className() {
-        return desc.displayName();
-    }
-
-    String fullName() {
-        return className();
-    }
-
-    final String packageName() {
-        return desc.packageName();
-    }
-
-    String superClass() {
-        return null;
-    }
-
-    String mods() {
-        return "public ";
-    }
-
-    void classBegin() {
-        emitPackagePrefix();
-        emitImportSection();
-
-        indent();
-        append(mods());
-        append(kind.kindName + " " + className());
-        if (superClass() != null) {
-            append(" extends ");
-            append(superClass());
-        }
-        append(" {\n\n");
-    }
-
-    JavaSourceBuilder classEnd() {
-        if (constantBuilder != null) {
-            constantBuilder.classEnd();
-        }
-        indent();
-        append("}\n\n");
-        return this;
-    }
+public abstract class JavaSourceBuilder {
 
     // public API (used by OutputFactory)
 
@@ -150,11 +74,11 @@ abstract class JavaSourceBuilder {
         }
     }
 
-    public void addVar(String javaName, String nativeName, VarInfo varInfo) {
+    public void addVar(String javaName, String nativeName, ClassSourceBuilder.VarInfo varInfo) {
         throw new UnsupportedOperationException();
     }
 
-    public void addFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
+    public void addFunction(String javaName, String nativeName, ClassSourceBuilder.FunctionInfo functionInfo) {
         throw new UnsupportedOperationException();
     }
 
@@ -167,64 +91,19 @@ abstract class JavaSourceBuilder {
     }
 
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
-        return new StructBuilder(this, name.isEmpty() ? parent.name() : name, layout, type);
+        throw new UnsupportedOperationException();
     }
 
-    public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
-        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this, name,
-                functionInfo.methodType(), functionInfo.descriptor());
-        builder.classBegin();
-        builder.classEnd();
-        return builder.fullName();
+    public String addFunctionalInterface(String name, ClassSourceBuilder.FunctionInfo fInfo) {
+        throw new UnsupportedOperationException();
     }
 
-    public List<JavaFileObject> toFiles() {
-        classEnd();
-        String res = build();
-        return List.of(Utils.fileFromString(packageName(), className(), res));
-    }
+    abstract public List<JavaFileObject> toFiles();
 
-    // Internal generation helpers (used by other builders)
+    public abstract String packageName();
 
-    int align() {
-        return align;
-    }
-
-    void append(String s) {
-        sb.append(s);
-    }
-
-    void append(char c) {
-        sb.append(c);
-    }
-
-    void append(boolean b) {
-        sb.append(b);
-    }
-
-    void append(long l) {
-        sb.append(l);
-    }
-
-    void indent() {
-        for (int i = 0; i < align; i++) {
-            append("    ");
-        }
-    }
-
-    void incrAlign() {
-        align++;
-    }
-
-    void decrAlign() {
-        align--;
-    }
-
-    String build() {
-        String s = sb.toString();
-        sb = null;
-        return s;
-    }
+    Set<String> nestedClassNames = new HashSet<>();
+    int nestedClassNameCount = 0;
 
     /*
      * We may have case-insensitive name collision! A C program may have
@@ -242,74 +121,7 @@ abstract class JavaSourceBuilder {
         return notSeen && notEnclosed? name : (name + "$" + nestedClassNameCount++);
     }
 
-    // is the name enclosed enclosed by a class of the same name?
-    boolean isEnclosedBySameName(String name) {
-        return className().equals(name);
-    }
+    abstract boolean isEnclosedBySameName(String name);
 
-    protected void emitPackagePrefix() {
-        assert packageName().indexOf('/') == -1 : "package name invalid: " + packageName();
-        append("// Generated by jextract\n\n");
-        if (!packageName().isEmpty()) {
-            append("package ");
-            append(packageName());
-            append(";\n\n");
-        }
-    }
-
-    protected void emitImportSection() {
-        append("import java.lang.invoke.MethodHandle;\n");
-        append("import java.lang.invoke.VarHandle;\n");
-        append("import java.nio.ByteOrder;\n");
-        append("import jdk.incubator.foreign.*;\n");
-        append("import static ");
-        append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
-        append(".*;\n");
-    }
-
-    protected void emitGetter(String mods, Class<?> type, String name, String access, boolean nullCheck, String symbolName) {
-        incrAlign();
-        indent();
-        append(mods + " " + type.getSimpleName() + " " +name + "() {\n");
-        incrAlign();
-        indent();
-        append("return ");
-        if (nullCheck) {
-            append("RuntimeHelper.requireNonNull(");
-        }
-        append(access);
-        if (nullCheck) {
-            append(",\"");
-            append(symbolName);
-            append("\")");
-        }
-        append(";\n");
-        decrAlign();
-        indent();
-        append("}\n");
-        decrAlign();
-    }
-
-    protected void emitGetter(String mods, Class<?> type, String name, String access) {
-        emitGetter(mods, type, name, access, false, null);
-    }
-
-    int constant_counter = 0;
-    int constant_class_index = 0;
-
-    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
-    ConstantBuilder constantBuilder;
-
-    protected void emitWithConstantClass(String javaName, Consumer<ConstantBuilder> constantConsumer) {
-        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
-            if (constantBuilder != null) {
-                constantBuilder.classEnd();
-            }
-            constant_counter = 0;
-            constantBuilder = new ConstantBuilder(this, Kind.CLASS, "constants$" + constant_class_index++);
-            constantBuilder.classBegin();
-        }
-        constantConsumer.accept(constantBuilder);
-        constant_counter++;
-    }
+    abstract protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer);
 }

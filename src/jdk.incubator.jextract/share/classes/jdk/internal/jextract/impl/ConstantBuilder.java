@@ -35,27 +35,27 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.ValueLayout;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ConstantBuilder extends NestedClassBuilder {
+public class ConstantBuilder extends ClassSourceBuilder {
 
     // set of names generates already
     private final Map<String, Constant> namesGenerated = new HashMap<>();
 
-    public ConstantBuilder(JavaSourceBuilder enclosing, Kind kind, String className) {
-        super(enclosing, kind, className);
+    public ConstantBuilder(JavaSourceBuilder enclosing, String className) {
+        super(enclosing, Kind.CLASS, className);
     }
 
     String memberMods() {
-        return kind == JavaSourceBuilder.Kind.CLASS ?
+        return kind == ClassSourceBuilder.Kind.CLASS ?
                 "static final " : "";
     }
 
@@ -149,12 +149,12 @@ public class ConstantBuilder extends NestedClassBuilder {
             return className + "." + kind.fieldName(javaName);
         }
 
-        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
+        Constant emitGetter(ClassSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression());
             return this;
         }
 
-        Constant emitGetter(JavaSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
+        Constant emitGetter(ClassSourceBuilder builder, String mods, Function<List<String>, String> getterNameFunc, String symbolName) {
             builder.emitGetter(mods, kind.type, getterNameFunc.apply(getterNameParts()), accessExpression(), true, symbolName);
             return this;
         }
@@ -195,7 +195,7 @@ public class ConstantBuilder extends NestedClassBuilder {
         incrAlign();
         indent();
         if (!virtual) {
-            append("LIBRARIES, \"" + nativeName + "\"");
+            append(toplevel().headerClassName() + ".LIBRARIES, \"" + nativeName + "\"");
             append(",\n");
             indent();
         }
@@ -392,12 +392,17 @@ public class ConstantBuilder extends NestedClassBuilder {
         append(fieldName);
         append(" = ");
         append("RuntimeHelper.lookupGlobalVariable(");
-        append("LIBRARIES, \"");
+        append(toplevel().headerClassName() + ".LIBRARIES, \"");
         append(nativeName);
         append("\", ");
         append(layoutConstant.accessExpression());
         append(");\n");
         decrAlign();
         return new Constant(className(), javaName, Constant.Kind.SEGMENT);
+    }
+
+    @Override
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        constantConsumer.accept(this);
     }
 }

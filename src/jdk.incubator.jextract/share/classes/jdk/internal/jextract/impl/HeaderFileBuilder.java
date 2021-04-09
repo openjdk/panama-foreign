@@ -25,9 +25,7 @@
 package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
@@ -35,7 +33,6 @@ import jdk.incubator.jextract.Type;
 
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
-import java.lang.constant.ClassDesc;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,14 +43,14 @@ import java.util.Optional;
  * After aggregating various constituents of a .java source, build
  * method is called to get overall generated source string.
  */
-abstract class HeaderFileBuilder extends JavaSourceBuilder {
+abstract class HeaderFileBuilder extends ClassSourceBuilder {
 
     private static final String MEMBER_MODS = "public static";
 
     private final String superclass;
 
-    HeaderFileBuilder(ClassDesc desc, String superclass) {
-        super(Kind.CLASS, desc);
+    HeaderFileBuilder(ToplevelBuilder enclosing, String name, String superclass) {
+        super(enclosing, Kind.CLASS, name);
         this.superclass = superclass;
     }
 
@@ -65,12 +62,12 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addVar(String javaName, String nativeName, VarInfo varInfo) {
         if (varInfo.carrier().equals(MemorySegment.class)) {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addSegment(javaName, nativeName, varInfo.layout())
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             });
         } else {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addLayout(javaName, varInfo.layout())
                         .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME);
                 Constant vhConstant = constantBuilder.addGlobalVarHandle(javaName, nativeName, varInfo)
@@ -88,7 +85,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
 
     @Override
     public void addFunction(String javaName, String nativeName, FunctionInfo functionInfo) {
-        emitWithConstantClass(javaName, constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(javaName, nativeName, functionInfo, false)
                     .emitGetter(this, MEMBER_MODS, Constant.QUALIFIED_NAME, nativeName);
             emitFunctionWrapper(mhConstant, javaName, nativeName, functionInfo);
@@ -102,24 +99,12 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
     @Override
     public void addConstant(String javaName, Class<?> type, Object value) {
         if (type.equals(MemorySegment.class) || type.equals(MemoryAddress.class)) {
-            emitWithConstantClass(javaName, constantBuilder -> {
+            emitWithConstantClass(constantBuilder -> {
                 constantBuilder.addConstantDesc(javaName, type, value)
                         .emitGetter(this, MEMBER_MODS, Constant.JAVA_NAME);
             });
         } else {
             emitGetter(MEMBER_MODS, type, javaName, getConstantString(type, value));
-        }
-    }
-
-    @Override
-    public void addTypedef(String name, String superClass, Type type) {
-        if (type instanceof Type.Primitive) {
-            // primitive
-            emitPrimitiveTypedef((Type.Primitive)type, name);
-        } else {
-            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
-            builder.classBegin();
-            builder.classEnd();
         }
     }
 
@@ -239,7 +224,7 @@ abstract class HeaderFileBuilder extends JavaSourceBuilder {
         decrAlign();
     }
 
-    private void emitPrimitiveTypedef(Type.Primitive primType, String name) {
+    void emitPrimitiveTypedef(Type.Primitive primType, String name) {
         Type.Primitive.Kind kind = primType.kind();
         if (primitiveKindSupported(kind) && !kind.layout().isEmpty()) {
             incrAlign();

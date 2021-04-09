@@ -42,8 +42,8 @@ public class Test8260929 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8260929.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            assertNotNull(loader.loadClass("test8260929_h$rab"));
-            Class<?> rab2Class = loader.loadClass("test8260929_h$rab2");
+            assertNotNull(loader.loadClass("rab"));
+            Class<?> rab2Class = loader.loadClass("rab2");
             assertNotNull(rab2Class);
 
             checkMethod(rab2Class, "y$get", int.class, MemorySegment.class);

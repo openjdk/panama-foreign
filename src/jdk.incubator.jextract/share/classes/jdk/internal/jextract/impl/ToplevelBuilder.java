@@ -24,15 +24,12 @@
  */
 package jdk.internal.jextract.impl;
 
-import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
 import java.lang.constant.ClassDesc;
-import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -45,37 +42,47 @@ import java.util.stream.Collectors;
 class ToplevelBuilder extends JavaSourceBuilder {
 
     private int declCount;
+    private final List<JavaSourceBuilder> builders = new ArrayList<>();
+    private SplitHeader lastHeader;
+    private int headersCount;
+    private final ClassDesc headerDesc;
     private final String[] libraryNames;
-    private final List<SplitHeader> headers = new ArrayList<>();
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
-    ToplevelBuilder(ClassDesc desc, String[] libraryNames) {
-        super(Kind.CLASS, desc);
+    ToplevelBuilder(String packageName, String headerClassName, String[] libraryNames) {
         this.libraryNames = libraryNames;
-        SplitHeader first = new FirstHeader(ClassDesc.of(packageName(), className()));
+        this.headerDesc = ClassDesc.of(packageName, headerClassName);
+        SplitHeader first = lastHeader = new FirstHeader(headerClassName);
         first.classBegin();
-        headers.add(first);
-    }
-
-    @Override
-    void classBegin() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    JavaSourceBuilder classEnd() {
-        throw new UnsupportedOperationException();
+        builders.add(first);
     }
 
     public List<JavaFileObject> toFiles() {
-        headers.stream().skip(1).findFirst()
-                .orElse(lastHeader()).emitLibraries(libraryNames);
+        if (constantBuilder != null) {
+            constantBuilder.classEnd();
+        }
+        lastHeader.classEnd();
+        builders.addAll(constantBuilders);
         List<JavaFileObject> files = new ArrayList<>();
-        files.addAll(headers.stream()
-                .flatMap(hf -> hf.toFiles().stream())
+        files.addAll(builders.stream()
+                .flatMap(b -> b.toFiles().stream())
                 .collect(Collectors.toList()));
         return files;
+    }
+
+    public String headerClassName() {
+        return headerDesc.displayName();
+    }
+
+    @Override
+    boolean isEnclosedBySameName(String name) {
+        return false;
+    }
+
+    @Override
+    public String packageName() {
+        return headerDesc.packageName();
     }
 
     @Override
@@ -95,46 +102,96 @@ class ToplevelBuilder extends JavaSourceBuilder {
 
     @Override
     public void addTypedef(String name, String superClass, Type type) {
-        nextHeader().addTypedef(name, superClass, type);
+        if (type instanceof Type.Primitive) {
+            // primitive
+            nextHeader().emitPrimitiveTypedef((Type.Primitive)type, name);
+        } else {
+            TypedefBuilder builder = new TypedefBuilder(this, name, superClass);
+            builders.add(builder);
+            builder.classBegin();
+            builder.classEnd();
+        }
     }
 
     @Override
     public StructBuilder addStruct(String name, Declaration parent, GroupLayout layout, Type type) {
-        return nextHeader().addStruct(name, parent, layout, type);
+        String structName = name.isEmpty() ? parent.name() : name;
+        StructBuilder structBuilder = new StructBuilder(this, structName, layout, type);
+        builders.add(structBuilder);
+        return structBuilder;
     }
 
     @Override
     public String addFunctionalInterface(String name, FunctionInfo functionInfo) {
-        return nextHeader().addFunctionalInterface(name, functionInfo);
-    }
-
-    private SplitHeader lastHeader() {
-        return headers.get(headers.size() - 1);
+        FunctionalInterfaceBuilder builder = new FunctionalInterfaceBuilder(this,
+                name, functionInfo.methodType(), functionInfo.descriptor());
+        builders.add(builder);
+        builder.classBegin();
+        builder.classEnd();
+        return builder.className();
     }
 
     private SplitHeader nextHeader() {
         if (declCount == DECLS_PER_HEADER_CLASS) {
-            boolean hasSuper = !(lastHeader() instanceof FirstHeader);
-            SplitHeader headerFileBuilder = new SplitHeader(ClassDesc.of(packageName(), className() + "_" + headers.size()),
-                    hasSuper ? lastHeader().className() : null);
+            boolean hasSuper = !(lastHeader instanceof FirstHeader);
+            SplitHeader headerFileBuilder = new SplitHeader(headerDesc.displayName() + "_" + ++headersCount,
+                    hasSuper ? lastHeader.className() : null);
+            lastHeader.classEnd();
             headerFileBuilder.classBegin();
-            headers.add(headerFileBuilder);
+            builders.add(headerFileBuilder);
+            lastHeader = headerFileBuilder;
             declCount = 1;
             return headerFileBuilder;
         } else {
             declCount++;
-            return lastHeader();
+            return lastHeader;
         }
     }
 
-    static class SplitHeader extends HeaderFileBuilder {
-        SplitHeader(ClassDesc desc, String superclass) {
-            super(desc, superclass);
+    class SplitHeader extends HeaderFileBuilder {
+        SplitHeader(String name, String superclass) {
+            super(ToplevelBuilder.this, name, superclass);
         }
 
         @Override
         String mods() {
             return " ";
+        }
+    }
+
+    class FirstHeader extends SplitHeader {
+
+        FirstHeader(String name) {
+            super(name, "#{SUPER}");
+        }
+
+        @Override
+        String mods() {
+            return "public ";
+        }
+
+        @Override
+        void classBegin() {
+            super.classBegin();
+            emitLibraries(libraryNames);
+            emitConstructor();
+        }
+
+        void emitConstructor() {
+            incrAlign();
+            indent();
+            append("/* package-private */ ");
+            append(className());
+            append("() {}");
+            append('\n');
+            decrAlign();
+        }
+
+        @Override
+        String build() {
+            HeaderFileBuilder last = lastHeader;
+            return super.build().replace("extends #{SUPER}",
+                    last != this ? "extends " + last.className() : "");
         }
 
         private void emitLibraries(String[] libraryNames) {
@@ -155,43 +212,36 @@ class ToplevelBuilder extends JavaSourceBuilder {
             decrAlign();
         }
 
-        private static String quoteLibraryName(String lib) {
+        private String quoteLibraryName(String lib) {
             return lib.replace("\\", "\\\\"); // double up slashes
         }
     }
 
-    class FirstHeader extends SplitHeader {
+    // constant support
 
-        FirstHeader(ClassDesc desc) {
-            super(desc, "#{SUPER}");
-        }
+    int constant_counter = 0;
+    int constant_class_index = 0;
+    List<ConstantBuilder> constantBuilders = new ArrayList<>();
 
-        @Override
-        String mods() {
-            return "public ";
-        }
+    static final int CONSTANTS_PER_CLASS = Integer.getInteger("jextract.constants.per.class", 5);
+    ConstantBuilder constantBuilder;
 
-        @Override
-        void classBegin() {
-            super.classBegin();
-            emitConstructor();
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        if (constant_counter > CONSTANTS_PER_CLASS || constantBuilder == null) {
+            if (constantBuilder != null) {
+                constantBuilder.classEnd();
+            }
+            constant_counter = 0;
+            constantBuilder = new ConstantBuilder(this, "constants$" + constant_class_index++) {
+                @Override
+                String mods() {
+                    return ""; // constants package-private!
+                }
+            };
+            constantBuilders.add(constantBuilder);
+            constantBuilder.classBegin();
         }
-
-        void emitConstructor() {
-            incrAlign();
-            indent();
-            append("/* package-private */ ");
-            append(className());
-            append("() {}");
-            append('\n');
-            decrAlign();
-        }
-
-        @Override
-        String build() {
-            HeaderFileBuilder last = lastHeader();
-            return super.build().replace("extends #{SUPER}",
-                    last != this ? "extends " + last.className() : "");
-        }
+        constantConsumer.accept(constantBuilder);
+        constant_counter++;
     }
 }

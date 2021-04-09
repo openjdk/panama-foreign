@@ -48,15 +48,15 @@ public class Test8245767 extends JextractToolRunner {
             assertNotNull(cls);
 
             // class should be generated for typedef on opaque struct
-            Class<?> fooCls = loader.loadClass("test8245767_h$Foo");
+            Class<?> fooCls = loader.loadClass("Foo");
             assertNotNull(fooCls);
 
             // check Point_t
-            Class<?> point_tCls = loader.loadClass("test8245767_h$Point_t");
+            Class<?> point_tCls = loader.loadClass("Point_t");
             assertNotNull(point_tCls);
 
             // check Point
-            Class<?> pointCls = loader.loadClass("test8245767_h$Point");
+            Class<?> pointCls = loader.loadClass("Point");
             assertNotNull(pointCls);
             assertTrue(pointCls.isAssignableFrom(point_tCls));
         } finally {

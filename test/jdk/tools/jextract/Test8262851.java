@@ -42,9 +42,9 @@ public class Test8262851 extends JextractToolRunner {
         run("-d", output.toString(), outputH.toString()).checkSuccess();
         try(Loader loader = classLoader(output)) {
             assertNotNull(loader.loadClass("test8262851_h"));
-            assertNotNull(loader.loadClass("test8262851_h$Odd"));
-            assertNotNull(loader.loadClass("test8262851_h$Odd$before"));
-            assertNotNull(loader.loadClass("test8262851_h$Odd$after"));
+            assertNotNull(loader.loadClass("Odd"));
+            assertNotNull(loader.loadClass("Odd$before"));
+            assertNotNull(loader.loadClass("Odd$after"));
         } finally {
             deleteDir(output);
         }

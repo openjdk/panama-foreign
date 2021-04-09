@@ -30,18 +30,19 @@ import jdk.incubator.foreign.*;
 import jdk.internal.jextract.impl.ConstantBuilder.Constant;
 
 import java.lang.invoke.MethodType;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class FunctionalInterfaceBuilder extends NestedClassBuilder {
+public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
 
     private static final String MEMBER_MODS = "static";
 
     private final MethodType fiType;
     private final FunctionDescriptor fiDesc;
 
-    FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className, MethodType fiType,
-                               FunctionDescriptor fiDesc) {
+    FunctionalInterfaceBuilder(JavaSourceBuilder enclosing, String className,
+                               MethodType fiType, FunctionDescriptor fiDesc) {
         super(enclosing, Kind.INTERFACE, className);
         this.fiType = fiType;
         this.fiDesc = fiDesc;
@@ -71,7 +72,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     }
 
     private void emitFunctionalFactories() {
-        emitWithConstantClass(className(), constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();
@@ -97,7 +98,7 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
     }
 
     private void emitFunctionalFactoryForPointer() {
-        emitWithConstantClass(className(), constantBuilder -> {
+        emitWithConstantClass(constantBuilder -> {
             Constant mhConstant = constantBuilder.addMethodHandle(className(), className(), FunctionInfo.ofFunctionPointer(fiType, fiDesc), true);
             incrAlign();
             indent();
@@ -144,5 +145,10 @@ public class FunctionalInterfaceBuilder extends NestedClassBuilder {
             append("}\n");
             decrAlign();
         });
+    }
+
+    @Override
+    protected void emitWithConstantClass(Consumer<ConstantBuilder> constantConsumer) {
+        enclosing.emitWithConstantClass(constantConsumer);
     }
 }

@@ -50,7 +50,7 @@ public class IncompleteArrayTest extends JextractToolRunner {
             "--",
             input).checkSuccess();
         try (Loader loader = classLoader(output)) {
-            Class<?> cls = loader.loadClass("org.jextract.incompleteArray_h$Foo");
+            Class<?> cls = loader.loadClass("org.jextract.Foo");
             assertNotNull(cls);
 
             MemoryLayout actualLayout = findLayout(cls);

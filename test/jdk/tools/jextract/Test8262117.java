@@ -47,10 +47,10 @@ public class Test8262117 extends JextractToolRunner {
             Class<?> cls = loader.loadClass("test8262117_h");
             assertNotNull(cls);
 
-            assertNotNull(loader.loadClass("test8262117_h$u"));
-            assertNotNull(loader.loadClass("test8262117_h$u$outer$u$0"));
-            assertNotNull(loader.loadClass("test8262117_h$v"));
-            assertNotNull(loader.loadClass("test8262117_h$v$v$0"));
+            assertNotNull(loader.loadClass("u"));
+            assertNotNull(loader.loadClass("u$outer$u$0"));
+            assertNotNull(loader.loadClass("v"));
+            assertNotNull(loader.loadClass("v$v$0"));
         } finally {
             deleteDir(test8262117Output);
         }

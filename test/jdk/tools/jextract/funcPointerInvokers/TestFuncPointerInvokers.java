@@ -31,6 +31,7 @@ import static org.testng.Assert.*;
 
 import test.jextract.funcpointers.NativeScope;
 import static test.jextract.funcpointers.func_h.*;
+import test.jextract.funcpointers.*;
 
 /*
  * @test id=classes

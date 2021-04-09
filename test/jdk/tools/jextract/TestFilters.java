@@ -106,12 +106,18 @@ public class TestFilters extends JextractToolRunner {
             this.filterOption = filterOption;
         }
 
-        Object get(Class<?> clazz) {
+        Object get(Class<?> headerClass) {
             return switch (this) {
-                case FUNCTION, CONSTANT -> findMethod(clazz, symbolName);
-                case VAR -> findMethod(clazz, symbolName + "$get");
-                case TYPEDEF -> findField(clazz, symbolName);
-                case STRUCT, UNION -> findNestedClass(clazz, symbolName);
+                case FUNCTION, CONSTANT -> findMethod(headerClass, symbolName);
+                case VAR -> findMethod(headerClass, symbolName + "$get");
+                case TYPEDEF -> findField(headerClass, symbolName);
+                case STRUCT, UNION -> {
+                    try {
+                        yield headerClass.getClassLoader().loadClass(symbolName);
+                    } catch (ReflectiveOperationException ex) {
+                        yield null;
+                    }
+                }
             };
         }
     }

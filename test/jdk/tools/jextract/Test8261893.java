@@ -41,11 +41,11 @@ public class Test8261893 extends JextractToolRunner {
         Path test8261893H = getInputFilePath("test8261893.h");
         run("-d", test8261893Output.toString(), test8261893H.toString()).checkSuccess();
         try(Loader loader = classLoader(test8261893Output)) {
-            assertNotNull(loader.loadClass("test8261893_h$permits_"));
-            assertNotNull(loader.loadClass("test8261893_h$record_"));
-            assertNotNull(loader.loadClass("test8261893_h$sealed_"));
-            assertNotNull(loader.loadClass("test8261893_h$var_"));
-            assertNotNull(loader.loadClass("test8261893_h$yield_"));
+            assertNotNull(loader.loadClass("permits_"));
+            assertNotNull(loader.loadClass("record_"));
+            assertNotNull(loader.loadClass("sealed_"));
+            assertNotNull(loader.loadClass("var_"));
+            assertNotNull(loader.loadClass("yield_"));
         } finally {
             deleteDir(test8261893Output);
         }

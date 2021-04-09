@@ -45,13 +45,13 @@ public class Test8260705 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8260705.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> FooClass = loader.loadClass("test8260705_h$Foo");
+            Class<?> FooClass = loader.loadClass("Foo");
             checkMethod(FooClass, "c$get", byte.class, MemorySegment.class);
             checkMethod(FooClass, "c$get", byte.class, MemorySegment.class, long.class);
             checkMethod(FooClass, "c$set", void.class, MemorySegment.class, byte.class);
             checkMethod(FooClass, "c$set", void.class, MemorySegment.class, long.class, byte.class);
 
-            Class<?> Foo2Class = loader.loadClass("test8260705_h$Foo2");
+            Class<?> Foo2Class = loader.loadClass("Foo2");
             checkMethod(Foo2Class, "z$get", int.class, MemorySegment.class);
             checkMethod(Foo2Class, "z$get", int.class, MemorySegment.class, long.class);
             checkMethod(Foo2Class, "z$set", void.class, MemorySegment.class, int.class);
@@ -61,12 +61,12 @@ public class Test8260705 extends JextractToolRunner {
             checkMethod(Foo2Class, "w$set", void.class, MemorySegment.class, int.class);
             checkMethod(Foo2Class, "w$set", void.class, MemorySegment.class, long.class, int.class);
 
-            assertNotNull(loader.loadClass("test8260705_h$Foo3"));
+            assertNotNull(loader.loadClass("Foo3"));
 
-            Class<?> Foo4Class = loader.loadClass("test8260705_h$Foo4");
+            Class<?> Foo4Class = loader.loadClass("Foo4");
             assertTrue(sizeof(Foo4Class) == 8L);
 
-            Class<?> Foo5Class = loader.loadClass("test8260705_h$Foo5");
+            Class<?> Foo5Class = loader.loadClass("Foo5");
             assertTrue(sizeof(Foo5Class) == 4L);
 
         } finally {

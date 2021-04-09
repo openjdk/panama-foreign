@@ -132,7 +132,7 @@ public class TestNested extends JextractToolRunner {
 
     @SafeVarargs
     private static void checkClass(Loader loader, String name, BiConsumer<Class<?>, MemoryLayout>... checks) {
-        Class<?> cls = loader.loadClass("nested_h$" + name);
+        Class<?> cls = loader.loadClass(name);
         assertNotNull(cls);
         MemoryLayout layout = findLayout(cls);
         for (var check : checks) {

@@ -42,7 +42,7 @@ public class Test8261578 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8261578_1.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> ndpi_class = loader.loadClass("test8261578_1_h$ndpi_flow_tcp_struct");
+            Class<?> ndpi_class = loader.loadClass("ndpi_flow_tcp_struct");
             assertNotNull(ndpi_class);
 
             checkMethod(ndpi_class, "gnutella_msg_id$slice", MemorySegment.class, MemorySegment.class);
@@ -57,7 +57,7 @@ public class Test8261578 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8261578_2.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> foo_class = loader.loadClass("test8261578_2_h$foo");
+            Class<?> foo_class = loader.loadClass("foo");
             assertNotNull(foo_class);
 
             checkMethod(foo_class, "clear_color$slice", MemorySegment.class, MemorySegment.class);
@@ -76,7 +76,7 @@ public class Test8261578 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8261578_3.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> plugin_class = loader.loadClass("test8261578_3_h$PluginCodec_H323AudioG7231AnnexC");
+            Class<?> plugin_class = loader.loadClass("PluginCodec_H323AudioG7231AnnexC");
             assertNotNull(plugin_class);
 
             checkMethod(plugin_class, "maxAl_sduAudioFrames$get", byte.class, MemorySegment.class);

@@ -42,7 +42,7 @@ public class Test8260717 extends JextractToolRunner {
         Path headerFile = getInputFilePath("test8260717.h");
         run("-d", outputPath.toString(), headerFile.toString()).checkSuccess();
         try(Loader loader = classLoader(outputPath)) {
-            Class<?> FooClass = loader.loadClass("test8260717_h$foo_t");
+            Class<?> FooClass = loader.loadClass("foo_t");
             checkMethod(FooClass, "s$get", short.class, MemorySegment.class);
             checkMethod(FooClass, "s$get", short.class, MemorySegment.class, long.class);
             checkMethod(FooClass, "s$set", void.class, MemorySegment.class, short.class);
