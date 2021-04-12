@@ -94,7 +94,7 @@ public class TestUpcallStructScope {
         MethodHandle target = methodHandle(capturedSegment::set);
         FunctionDescriptor upcallDesc = FunctionDescriptor.ofVoid(S_PDI_LAYOUT);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
+            MemoryAddress upcallStub = LINKER.upcallStub(target, upcallDesc, scope);
             MemorySegment argSegment = MemorySegment.allocateNative(S_PDI_LAYOUT, scope);
             MH_do_upcall.invokeExact(upcallStub.address(), argSegment);
         }
