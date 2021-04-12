@@ -28,7 +28,6 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.vm.annotation.NativeAccess;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -114,13 +113,14 @@ public interface CLinker {
     /**
      * Returns the C linker for the current platform.
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @return a linker for this system.
      */
     @CallerSensitive
-    @NativeAccess
     static CLinker getInstance() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return SharedUtils.getSystemLinker();
@@ -131,8 +131,13 @@ public interface CLinker {
      * which can be used to call a target foreign function at the given address.
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
-     * an additional prefix parameter, of type {@link SegmentAllocator}), which will be used by the linker runtime
+     * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
      * to allocate structs returned by-value.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -142,7 +147,6 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    @NativeAccess
     MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function);
 
     /**
@@ -151,6 +155,11 @@ public interface CLinker {
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the provided allocator will be used by
      * the linker runtime to allocate structs returned by-value.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @see LibraryLookup#lookup(String)
      *
@@ -161,7 +170,6 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    @NativeAccess
     MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
     /**
@@ -173,7 +181,12 @@ public interface CLinker {
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
-     *
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     **
      * @see LibraryLookup#lookup(String)
      *
      * @param type     the method type.
@@ -181,7 +194,6 @@ public interface CLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
      */
-    @NativeAccess
     MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
@@ -192,6 +204,11 @@ public interface CLinker {
      * the corresponding native stub will be deallocated. The returned memory address maintain a strong reference
      * to the resource scope parameter; this helps keeping the native stub alive if, for instance,
      * an {@link ResourceScope#isImplicit() implicit} resource scope is used.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
@@ -199,7 +216,6 @@ public interface CLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
-    @NativeAccess
     MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
@@ -335,15 +351,16 @@ public interface CLinker {
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      */
     @CallerSensitive
-    @NativeAccess
     static String toJavaString(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
@@ -358,16 +375,17 @@ public interface CLinker {
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @param addr the address at which the string is stored.
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the Java string.
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
      */
     @CallerSensitive
-    @NativeAccess
     static String toJavaString(MemoryAddress addr, Charset charset) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
@@ -428,7 +446,8 @@ public interface CLinker {
     /**
      * Allocates memory of given size using malloc.
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
@@ -437,7 +456,6 @@ public interface CLinker {
      * @throws OutOfMemoryError if malloc could not allocate the required amount of native memory.
      */
     @CallerSensitive
-    @NativeAccess
     static MemoryAddress allocateMemory(long size) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         MemoryAddress addr = SharedUtils.allocateMemoryInternal(size);
@@ -451,14 +469,14 @@ public interface CLinker {
     /**
      * Frees the memory pointed by the given memory address.
      * <p>
-     * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param addr memory address of the native memory to be freed
      */
     @CallerSensitive
-    @NativeAccess
     static void freeMemory(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(addr);
@@ -606,7 +624,8 @@ public interface CLinker {
          * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
          * backed by the {@link ResourceScope#globalScope() global} resource scope.
          * <p>
-         * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+         * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+         * Restricted method are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
          * restricted methods, and use safe and supported functionalities, where possible.
          *
@@ -614,7 +633,6 @@ public interface CLinker {
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
         @CallerSensitive
-        @NativeAccess
         static VaList ofAddress(MemoryAddress address) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             return SharedUtils.newVaListOfAddress(address, ResourceScope.globalScope());
@@ -624,7 +642,8 @@ public interface CLinker {
          * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
          * with given resource scope.
          * <p>
-         * This method is <em>restricted</em>. Restricted method are unsafe, and, if used incorrectly, their use might crash
+         * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+         * Restricted method are unsafe, and, if used incorrectly, their use might crash
          * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
          * restricted methods, and use safe and supported functionalities, where possible.
          *
@@ -633,7 +652,6 @@ public interface CLinker {
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
          */
         @CallerSensitive
-        @NativeAccess
         static VaList ofAddress(MemoryAddress address, ResourceScope scope) {
             Reflection.ensureNativeAccess(Reflection.getCallerClass());
             Objects.requireNonNull(address);

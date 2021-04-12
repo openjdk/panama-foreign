@@ -33,7 +33,6 @@ import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.vm.annotation.NativeAccess;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -679,14 +678,14 @@ for (long l = 0; l < segment.byteSize(); l++) {
     MemoryAddress.NULL.asSegment(Long.MAX_VALUE)
      * }</pre>
      * <p>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @return a memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
      */
     @CallerSensitive
-    @NativeAccess
     static MemorySegment globalNativeSegment() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return NativeMemorySegmentImpl.EVERYTHING;

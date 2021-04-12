@@ -215,6 +215,7 @@ MemoryAddress comparFunc = CLinker.getInstance().upcallStub(
  * {@link jdk.incubator.foreign.CLinker#upcallStub(java.lang.invoke.MethodHandle, jdk.incubator.foreign.FunctionDescriptor, jdk.incubator.foreign.ResourceScope)}
  * is tied to the {@link jdk.incubator.foreign.ResourceScope resource scope} parameter passed to that method.
  *
+ * <a id="restricted"></a>
  * <h2>Restricted methods</h2>
  * Some methods in this package are considered <em>restricted</em>. Restricted methods are typically used to bind native
  * foreign data and/or functions to first-class Java API elements which can then be used directly by client. For instance
