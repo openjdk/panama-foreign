@@ -170,6 +170,7 @@ public final class JextractTool {
         parser.accepts("source", format("help.source"));
         parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
         parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
+        parser.accepts("header-class-name", format("help.header-class-name")).withRequiredArg();
         parser.nonOptions(format("help.non.option"));
 
         OptionSet optionSet;
@@ -261,8 +262,12 @@ public final class JextractTool {
                 System.out.println(toplevel);
             }
 
+            String headerName = optionSet.has("header-class-name") ?
+                (String) optionSet.valueOf("header-class-name") :
+                header.getFileName().toString();
+
             files = generateInternal(
-                toplevel, header.getFileName().toString(),
+                toplevel, headerName,
                 options.targetPackage, options.includeHelper, options.libraryNames);
         } catch (ClangException ce) {
             err.println(ce.getMessage());
