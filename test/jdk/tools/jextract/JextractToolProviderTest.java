@@ -124,4 +124,21 @@ public class JextractToolProviderTest extends JextractToolRunner {
     public void testTargetPackageLongOption() {
         testTargetPackage("--target-package");
     }
+
+    @Test
+    public void testHeaderClassName() {
+        Path helloOutput = getOutputFilePath("hellogen");
+        Path helloH = getInputFilePath("hello.h");
+        run("--header-class-name", "MyHello", "-t", "com.acme", "-d",
+            helloOutput.toString(), helloH.toString()).checkSuccess();
+        try(Loader loader = classLoader(helloOutput)) {
+            Class<?> cls = loader.loadClass("com.acme.MyHello");
+            // check a method for "void func(int)"
+            assertNotNull(findMethod(cls, "func", int.class));
+            // check a method for "int printf(MemoryAddress, Object[])"
+            assertNotNull(findMethod(cls, "printf", Addressable.class, Object[].class));
+        } finally {
+            deleteDir(helloOutput);
+        }
+    }
 }
