@@ -174,7 +174,7 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr.toRawLongValu
  *
  * <h3>Upcalls</h3>
  * The {@link jdk.incubator.foreign.CLinker} interface also allows to turn an existing method handle (which might point
- * to a Java method) into a native memory segment (see {@link jdk.incubator.foreign.MemorySegment}), so that Java code
+ * to a Java method) into a native memory address (see {@link jdk.incubator.foreign.MemoryAddress}), so that Java code
  * can effectively be passed to other foreign functions. For instance, we can write a method that compares two
  * integer values, as follows:
  *
@@ -197,19 +197,23 @@ MethodHandle intCompareHandle = MethodHandles.lookup().findStatic(IntComparator.
                                                    MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class));
  * }</pre>
  *
- * Now that we have a method handle instance, we can link it into a fresh native memory segment, using the {@link jdk.incubator.foreign.CLinker} interface, as follows:
+ * Now that we have a method handle instance, we can link it into a fresh native memory address, using the {@link jdk.incubator.foreign.CLinker} interface, as follows:
  *
  * <pre>{@code
-MemorySegment comparFunc = CLinker.getInstance().upcallStub(
+ResourceScope scope = ...
+MemoryAddress comparFunc = CLinker.getInstance().upcallStub(
      intCompareHandle,
-     FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER)
+     FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER),
+     scope
 );
  * }</pre>
  *
  * As before, we need to provide a {@link jdk.incubator.foreign.FunctionDescriptor} instance describing the signature
  * of the function pointer we want to create; as before, this, coupled with the method handle type, uniquely determines the
  * sequence of steps which will allow foreign code to call {@code intCompareHandle} according to the rules specified
- * by the platform C ABI.
+ * by the platform C ABI. The lifecycle of the memory address returned by
+ * {@link jdk.incubator.foreign.CLinker#upcallStub(java.lang.invoke.MethodHandle, jdk.incubator.foreign.FunctionDescriptor, jdk.incubator.foreign.ResourceScope)}
+ * is tied to the {@link jdk.incubator.foreign.ResourceScope resource scope} parameter passed to that method.
  *
  * <a id="restricted"></a>
  * <h2>Restricted methods</h2>

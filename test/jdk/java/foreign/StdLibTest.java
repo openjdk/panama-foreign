@@ -297,9 +297,9 @@ public class StdLibTest {
                 MemorySegment nativeArr = allocator.allocateArray(C_INT, arr);
 
                 //call qsort
-                MemorySegment qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope);
+                MemoryAddress qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope);
 
-                qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub.address());
+                qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub);
 
                 //convert back to Java array
                 return nativeArr.toIntArray();
