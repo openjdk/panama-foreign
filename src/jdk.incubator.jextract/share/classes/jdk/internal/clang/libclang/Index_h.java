@@ -6956,10 +6956,10 @@ public class Index_h extends Index_h_1 {
     public interface CXCursorVisitor {
 
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-        static MemorySegment allocate(CXCursorVisitor fi) {
+        static MemoryAddress allocate(CXCursorVisitor fi) {
             return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$31.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
-        static MemorySegment allocate(CXCursorVisitor fi, ResourceScope scope) {
+        static MemoryAddress allocate(CXCursorVisitor fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$31.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
         }
         static CXCursorVisitor ofAddress(MemoryAddress addr) {
@@ -7084,10 +7084,10 @@ public class Index_h extends Index_h_1 {
     public interface CXCursorVisitorBlock {
 
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1);
-        static MemorySegment allocate(CXCursorVisitorBlock fi) {
+        static MemoryAddress allocate(CXCursorVisitorBlock fi) {
             return RuntimeHelper.upcallStub(CXCursorVisitorBlock.class, fi, constants$31.CXCursorVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
-        static MemorySegment allocate(CXCursorVisitorBlock fi, ResourceScope scope) {
+        static MemoryAddress allocate(CXCursorVisitorBlock fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(CXCursorVisitorBlock.class, fi, constants$31.CXCursorVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
         }
         static CXCursorVisitorBlock ofAddress(MemoryAddress addr) {
@@ -9215,10 +9215,10 @@ public class Index_h extends Index_h_1 {
     public interface clang_executeOnThread$fn {
 
         void apply(jdk.incubator.foreign.MemoryAddress x0);
-        static MemorySegment allocate(clang_executeOnThread$fn fi) {
+        static MemoryAddress allocate(clang_executeOnThread$fn fi) {
             return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, constants$44.clang_executeOnThread$fn$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;)V");
         }
-        static MemorySegment allocate(clang_executeOnThread$fn fi, ResourceScope scope) {
+        static MemoryAddress allocate(clang_executeOnThread$fn fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(clang_executeOnThread$fn.class, fi, constants$44.clang_executeOnThread$fn$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;)V", scope);
         }
         static clang_executeOnThread$fn ofAddress(MemoryAddress addr) {
@@ -10121,10 +10121,10 @@ public class Index_h extends Index_h_1 {
     public interface CXInclusionVisitor {
 
         void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, int x2, jdk.incubator.foreign.MemoryAddress x3);
-        static MemorySegment allocate(CXInclusionVisitor fi) {
+        static MemoryAddress allocate(CXInclusionVisitor fi) {
             return RuntimeHelper.upcallStub(CXInclusionVisitor.class, fi, constants$49.CXInclusionVisitor$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V");
         }
-        static MemorySegment allocate(CXInclusionVisitor fi, ResourceScope scope) {
+        static MemoryAddress allocate(CXInclusionVisitor fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(CXInclusionVisitor.class, fi, constants$49.CXInclusionVisitor$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V", scope);
         }
         static CXInclusionVisitor ofAddress(MemoryAddress addr) {
@@ -10479,10 +10479,10 @@ public class Index_h extends Index_h_1 {
         public interface visit {
 
             int apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemorySegment x2);
-            static MemorySegment allocate(visit fi) {
+            static MemoryAddress allocate(visit fi) {
                 return RuntimeHelper.upcallStub(visit.class, fi, CXCursorAndRangeVisitor.visit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
             }
-            static MemorySegment allocate(visit fi, ResourceScope scope) {
+            static MemoryAddress allocate(visit fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(visit.class, fi, CXCursorAndRangeVisitor.visit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
             }
             static visit ofAddress(MemoryAddress addr) {
@@ -10617,10 +10617,10 @@ public class Index_h extends Index_h_1 {
     public interface CXCursorAndRangeVisitorBlock {
 
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1);
-        static MemorySegment allocate(CXCursorAndRangeVisitorBlock fi) {
+        static MemoryAddress allocate(CXCursorAndRangeVisitorBlock fi) {
             return RuntimeHelper.upcallStub(CXCursorAndRangeVisitorBlock.class, fi, constants$52.CXCursorAndRangeVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I");
         }
-        static MemorySegment allocate(CXCursorAndRangeVisitorBlock fi, ResourceScope scope) {
+        static MemoryAddress allocate(CXCursorAndRangeVisitorBlock fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(CXCursorAndRangeVisitorBlock.class, fi, constants$52.CXCursorAndRangeVisitorBlock$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I", scope);
         }
         static CXCursorAndRangeVisitorBlock ofAddress(MemoryAddress addr) {
@@ -12172,10 +12172,10 @@ public class Index_h extends Index_h_1 {
         public interface abortQuery {
 
             int apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(abortQuery fi) {
+            static MemoryAddress allocate(abortQuery fi) {
                 return RuntimeHelper.upcallStub(abortQuery.class, fi, IndexerCallbacks.abortQuery$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I");
             }
-            static MemorySegment allocate(abortQuery fi, ResourceScope scope) {
+            static MemoryAddress allocate(abortQuery fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(abortQuery.class, fi, IndexerCallbacks.abortQuery$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
             }
             static abortQuery ofAddress(MemoryAddress addr) {
@@ -12220,10 +12220,10 @@ public class Index_h extends Index_h_1 {
         public interface diagnostic {
 
             void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, jdk.incubator.foreign.MemoryAddress x2);
-            static MemorySegment allocate(diagnostic fi) {
+            static MemoryAddress allocate(diagnostic fi) {
                 return RuntimeHelper.upcallStub(diagnostic.class, fi, IndexerCallbacks.diagnostic$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
-            static MemorySegment allocate(diagnostic fi, ResourceScope scope) {
+            static MemoryAddress allocate(diagnostic fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(diagnostic.class, fi, IndexerCallbacks.diagnostic$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
             static diagnostic ofAddress(MemoryAddress addr) {
@@ -12268,10 +12268,10 @@ public class Index_h extends Index_h_1 {
         public interface enteredMainFile {
 
             jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1, jdk.incubator.foreign.MemoryAddress x2);
-            static MemorySegment allocate(enteredMainFile fi) {
+            static MemoryAddress allocate(enteredMainFile fi) {
                 return RuntimeHelper.upcallStub(enteredMainFile.class, fi, IndexerCallbacks.enteredMainFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
-            static MemorySegment allocate(enteredMainFile fi, ResourceScope scope) {
+            static MemoryAddress allocate(enteredMainFile fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(enteredMainFile.class, fi, IndexerCallbacks.enteredMainFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
             static enteredMainFile ofAddress(MemoryAddress addr) {
@@ -12315,10 +12315,10 @@ public class Index_h extends Index_h_1 {
         public interface ppIncludedFile {
 
             jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(ppIncludedFile fi) {
+            static MemoryAddress allocate(ppIncludedFile fi) {
                 return RuntimeHelper.upcallStub(ppIncludedFile.class, fi, IndexerCallbacks.ppIncludedFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
-            static MemorySegment allocate(ppIncludedFile fi, ResourceScope scope) {
+            static MemoryAddress allocate(ppIncludedFile fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(ppIncludedFile.class, fi, IndexerCallbacks.ppIncludedFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
             static ppIncludedFile ofAddress(MemoryAddress addr) {
@@ -12362,10 +12362,10 @@ public class Index_h extends Index_h_1 {
         public interface importedASTFile {
 
             jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(importedASTFile fi) {
+            static MemoryAddress allocate(importedASTFile fi) {
                 return RuntimeHelper.upcallStub(importedASTFile.class, fi, IndexerCallbacks.importedASTFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
-            static MemorySegment allocate(importedASTFile fi, ResourceScope scope) {
+            static MemoryAddress allocate(importedASTFile fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(importedASTFile.class, fi, IndexerCallbacks.importedASTFile$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
             static importedASTFile ofAddress(MemoryAddress addr) {
@@ -12409,10 +12409,10 @@ public class Index_h extends Index_h_1 {
         public interface startedTranslationUnit {
 
             jdk.incubator.foreign.MemoryAddress apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(startedTranslationUnit fi) {
+            static MemoryAddress allocate(startedTranslationUnit fi) {
                 return RuntimeHelper.upcallStub(startedTranslationUnit.class, fi, IndexerCallbacks.startedTranslationUnit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;");
             }
-            static MemorySegment allocate(startedTranslationUnit fi, ResourceScope scope) {
+            static MemoryAddress allocate(startedTranslationUnit fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(startedTranslationUnit.class, fi, IndexerCallbacks.startedTranslationUnit$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;", scope);
             }
             static startedTranslationUnit ofAddress(MemoryAddress addr) {
@@ -12456,10 +12456,10 @@ public class Index_h extends Index_h_1 {
         public interface indexDeclaration {
 
             void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(indexDeclaration fi) {
+            static MemoryAddress allocate(indexDeclaration fi) {
                 return RuntimeHelper.upcallStub(indexDeclaration.class, fi, IndexerCallbacks.indexDeclaration$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
-            static MemorySegment allocate(indexDeclaration fi, ResourceScope scope) {
+            static MemoryAddress allocate(indexDeclaration fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(indexDeclaration.class, fi, IndexerCallbacks.indexDeclaration$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
             static indexDeclaration ofAddress(MemoryAddress addr) {
@@ -12503,10 +12503,10 @@ public class Index_h extends Index_h_1 {
         public interface indexEntityReference {
 
             void apply(jdk.incubator.foreign.MemoryAddress x0, jdk.incubator.foreign.MemoryAddress x1);
-            static MemorySegment allocate(indexEntityReference fi) {
+            static MemoryAddress allocate(indexEntityReference fi) {
                 return RuntimeHelper.upcallStub(indexEntityReference.class, fi, IndexerCallbacks.indexEntityReference$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V");
             }
-            static MemorySegment allocate(indexEntityReference fi, ResourceScope scope) {
+            static MemoryAddress allocate(indexEntityReference fi, ResourceScope scope) {
                 return RuntimeHelper.upcallStub(indexEntityReference.class, fi, IndexerCallbacks.indexEntityReference$FUNC, "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V", scope);
             }
             static indexEntityReference ofAddress(MemoryAddress addr) {
@@ -12628,10 +12628,10 @@ public class Index_h extends Index_h_1 {
     public interface CXFieldVisitor {
 
         int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemoryAddress x1);
-        static MemorySegment allocate(CXFieldVisitor fi) {
+        static MemoryAddress allocate(CXFieldVisitor fi) {
             return RuntimeHelper.upcallStub(CXFieldVisitor.class, fi, constants$53.CXFieldVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
         }
-        static MemorySegment allocate(CXFieldVisitor fi, ResourceScope scope) {
+        static MemoryAddress allocate(CXFieldVisitor fi, ResourceScope scope) {
             return RuntimeHelper.upcallStub(CXFieldVisitor.class, fi, constants$53.CXFieldVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
         }
         static CXFieldVisitor ofAddress(MemoryAddress addr) {
