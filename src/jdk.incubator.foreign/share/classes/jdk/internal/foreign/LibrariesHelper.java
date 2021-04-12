@@ -115,9 +115,7 @@ public final class LibrariesHelper {
         }
 
         @Override
-        @CallerSensitive
         public final Optional<MemoryAddress> lookup(String name) {
-            Reflection.ensureNativeAccess(Reflection.getCallerClass());
             try {
                 Objects.requireNonNull(name);
                 MemoryAddress addr = MemoryAddress.ofLong(library.lookup(name));

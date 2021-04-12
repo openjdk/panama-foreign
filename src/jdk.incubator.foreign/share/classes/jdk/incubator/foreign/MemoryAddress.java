@@ -29,7 +29,6 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.ref.CleanerFactory;
 import java.lang.ref.Cleaner;
-import jdk.internal.vm.annotation.NativeAccess;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
@@ -103,7 +102,9 @@ public interface MemoryAddress extends Addressable {
      * <pre>{@code
     asSegment(byteSize, null, scope);
      * }</pre>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
@@ -113,7 +114,6 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
      */
-    @NativeAccess
     MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
@@ -129,7 +129,8 @@ public interface MemoryAddress extends Addressable {
      * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will result in calling
      * the provided cleanup action (if any).
      * <p>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
@@ -140,7 +141,6 @@ public interface MemoryAddress extends Addressable {
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
      */
-    @NativeAccess
     MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**
