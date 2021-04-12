@@ -507,7 +507,7 @@ public class VaListTest extends NativeTestHelper {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_VA_LIST);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment stub = abi.upcallStub(callback, desc, scope);
+            MemoryAddress stub = abi.upcallStub(callback, desc, scope);
             target.invokeExact(stub.address());
         }
     }

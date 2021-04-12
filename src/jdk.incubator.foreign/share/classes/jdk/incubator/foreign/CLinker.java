@@ -185,11 +185,13 @@ public interface CLinker {
     MethodHandle downcallHandle(MethodType type, FunctionDescriptor function);
 
     /**
-     * Allocates a native segment with given scope which can be passed to other foreign functions (as a function pointer);
+     * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
      * <p>The returned segment is associated with the provided scope. When such scope is closed,
-     * the corresponding native stub will be deallocated.</p>
+     * the corresponding native stub will be deallocated. The returned memory address maintain a strong reference
+     * to the resource scope parameter; this helps keeping the native stub alive if, for instance,
+     * an {@link ResourceScope#isImplicit() implicit} resource scope is used.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
@@ -198,7 +200,7 @@ public interface CLinker {
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
      */
     @NativeAccess
-    MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
+    MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
      * The layout for the {@code char} C type

@@ -107,7 +107,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                                          .asCollector(Object[].class, upcallType.parameterCount())
                                          .asType(upcallType);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
+            MemoryAddress upcallStub = LINKER.upcallStub(target, upcallDescriptor, scope);
             Object[] args = new Object[upcallType.parameterCount() + 1];
             args[0] = upcallStub.address();
             List<MemoryLayout> argLayouts = upcallDescriptor.argumentLayouts();

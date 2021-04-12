@@ -31,10 +31,10 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 
 public class UpcallStubs {
 
-    public static MemorySegment upcallAddress(UpcallHandler handler, ResourceScopeImpl scope) {
+    public static MemoryAddress upcallAddress(UpcallHandler handler, ResourceScopeImpl scope) {
         long stubAddress = handler.entryPoint();
         return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0,
-                () -> freeUpcallStub(stubAddress), scope);
+                () -> freeUpcallStub(stubAddress), scope).address();
     }
 
     private static void freeUpcallStub(long stubAddress) {
