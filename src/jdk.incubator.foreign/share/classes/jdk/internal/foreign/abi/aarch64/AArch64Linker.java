@@ -91,7 +91,7 @@ public final class AArch64Linker extends AbstractCLinker {
 
     @Override
     @CallerSensitive
-    public final MemorySegment upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
+    public final MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);

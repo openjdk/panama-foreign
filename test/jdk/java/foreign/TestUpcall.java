@@ -77,7 +77,7 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static MemorySegment dummyStub;
+    static MemoryAddress dummyStub;
 
     @BeforeClass
     void setup() {
@@ -189,8 +189,7 @@ public class TestUpcall extends CallGeneratorHelper {
         FunctionDescriptor func = ret != Ret.VOID
                 ? FunctionDescriptor.of(firstlayout, paramLayouts)
                 : FunctionDescriptor.ofVoid(paramLayouts);
-        MemorySegment stub = abi.upcallStub(mh, func, scope);
-        return stub.address();
+        return abi.upcallStub(mh, func, scope);
     }
 
     static Object passAndSave(Object[] o, AtomicReference<Object[]> ref) {
