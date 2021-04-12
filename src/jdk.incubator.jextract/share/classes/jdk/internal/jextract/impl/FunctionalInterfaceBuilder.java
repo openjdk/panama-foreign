@@ -76,7 +76,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             Constant functionDesc = constantBuilder.addFunctionDesc(className(), fiDesc);
             incrAlign();
             indent();
-            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi) {\n");
+            append(MEMBER_MODS + " MemoryAddress allocate(" + className() + " fi) {\n");
             incrAlign();
             indent();
             append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +
@@ -85,7 +85,7 @@ public class FunctionalInterfaceBuilder extends ClassSourceBuilder {
             indent();
             append("}\n");
             indent();
-            append(MEMBER_MODS + " MemorySegment allocate(" + className() + " fi, ResourceScope scope) {\n");
+            append(MEMBER_MODS + " MemoryAddress allocate(" + className() + " fi, ResourceScope scope) {\n");
             incrAlign();
             indent();
             append("return RuntimeHelper.upcallStub(" + className() + ".class, fi, " + functionDesc.accessExpression() + ", " +

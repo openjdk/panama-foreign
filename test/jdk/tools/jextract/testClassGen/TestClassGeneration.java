@@ -217,7 +217,7 @@ public class TestClassGeneration extends JextractToolRunner {
         Class<?> fiClass = loader.loadClass("com.acme." + name);
         assertNotNull(fiClass);
         checkMethod(fiClass, "apply", type);
-        checkMethod(fiClass, "allocate", MemorySegment.class, fiClass);
+        checkMethod(fiClass, "allocate", MemoryAddress.class, fiClass);
     }
 
     @BeforeClass

@@ -52,7 +52,6 @@ public class LibTest8246400Test {
     @Test
     public void testSegmentRegister() {
         MemorySegment sum = null;
-        MemorySegment callback = null;
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             var v1 = Vector.allocate(scope);
             Vector.x$set(v1, 1.0);
@@ -67,7 +66,7 @@ public class LibTest8246400Test {
             assertEquals(Vector.x$get(sum), 1.0, 0.1);
             assertEquals(Vector.y$get(sum), 1.0, 0.1);
 
-            callback = cosine_similarity$dot.allocate((a, b) -> {
+            MemoryAddress callback = cosine_similarity$dot.allocate((a, b) -> {
                 return (Vector.x$get(a) * Vector.x$get(b)) +
                     (Vector.y$get(a) * Vector.y$get(b));
             }, scope);
@@ -79,6 +78,5 @@ public class LibTest8246400Test {
             assertEquals(value, 1.0, 0.1);
         }
         assertTrue(!sum.scope().isAlive());
-        assertTrue(!callback.scope().isAlive());
     }
 }
