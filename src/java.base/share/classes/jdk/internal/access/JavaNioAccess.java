@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,14 @@ public interface JavaNioAccess {
      * Used by {@code jdk.internal.foreign.AbstractMemorySegmentImpl} and byte buffer var handle views.
      */
     MemorySegmentProxy bufferSegment(Buffer buffer);
+
+    /**
+     * Used by I/O operations to make a buffer's resource scope non-closeable
+     * (for the duration of the I/O operation) by acquiring a new resource
+     * scope handle. Null is returned if the buffer has no scope, or
+     * acquiring is not required to guarantee safety.
+     */
+    Object acquireScope(Buffer targetBuffer, boolean async);
 
     /**
      * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.

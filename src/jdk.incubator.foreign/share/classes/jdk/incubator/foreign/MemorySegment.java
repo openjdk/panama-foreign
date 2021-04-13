@@ -382,7 +382,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * If this segment is associated with a shared scope, calling certain I/O operations on the resulting buffer might result in
      * an unspecified exception being thrown. Examples of such problematic operations are {@link FileChannel#read(ByteBuffer)},
      * {@link FileChannel#write(ByteBuffer)}, {@link java.nio.channels.SocketChannel#read(ByteBuffer)} and
-     * {@link java.nio.channels.SocketChannel#write(ByteBuffer)}.
+     * {@link java.nio.channels.SocketChannel#write(ByteBuffer)}.  TODO HERE Fix this comment
      * <p>
      * Finally, the resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
      * {@link ByteBuffer#order(java.nio.ByteOrder)}.

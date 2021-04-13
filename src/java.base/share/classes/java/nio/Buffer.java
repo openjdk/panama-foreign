@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -819,6 +819,23 @@ public abstract class Buffer {
                 @Override
                 public MemorySegmentProxy bufferSegment(Buffer buffer) {
                     return buffer.segment;
+                }
+
+                @Override
+                public Object acquireScope(Buffer targetBuffer, boolean async) {
+                    var targetScope = targetBuffer.scope();
+                    if (targetScope == null || targetScope.isImplicit()) {
+                        return null;
+                    }
+                    if (async && targetScope.ownerThread() != null) {
+                        throw new IllegalStateException("Confined scope not supported");
+                    }
+                    try {
+                        targetScope.checkValidState();
+                    } catch (ScopedMemoryAccess.Scope.ScopedAccessError e) {   // ####: recheck thrown exs
+                        throw new IllegalStateException("Already closed");
+                    }
+                    return targetScope.acquire();
                 }
 
                 @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,9 +97,14 @@ public class ScopedMemoryAccess {
      * which embodies the temporal checks associated with a given memory region.
      */
     public interface Scope {
+
         void checkValidState();
 
         Thread ownerThread();
+
+        boolean isImplicit();
+
+        Object acquire();
 
         /**
          * Error thrown when memory access fails because the memory has already been released.
