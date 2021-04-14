@@ -239,6 +239,29 @@ public class TestResourceScope {
         }
     }
 
+    @Test(dataProvider = "scopes")
+    public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
+        ResourceScope scope = scopeFactory.get();
+        acquireRecursive(scope, 5);
+        if (!scope.isImplicit()) {
+            scope.close();
+        }
+    }
+
+    private void acquireRecursive(ResourceScope scope, int acquireCount) {
+        ResourceScope.Handle handle = scope.acquire();
+        if (acquireCount > 0) {
+            // recursive acquire
+            acquireRecursive(scope, acquireCount - 1);
+        }
+        if (!scope.isImplicit()) {
+            assertThrows(IllegalStateException.class, scope::close);
+        }
+        handle.close();
+        handle.close(); // make sure it's idempotent
+        handle.close(); // make sure it's idempotent
+    }
+
     private void waitSomeTime() {
         try {
             Thread.sleep(10);
@@ -261,6 +284,16 @@ public class TestResourceScope {
                 { (Supplier<Cleaner>)() -> null },
                 { (Supplier<Cleaner>)Cleaner::create },
                 { (Supplier<Cleaner>)CleanerFactory::cleaner }
+        };
+    }
+
+    @DataProvider
+    static Object[][] scopes() {
+        return new Object[][] {
+                { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
+                { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }
 }
