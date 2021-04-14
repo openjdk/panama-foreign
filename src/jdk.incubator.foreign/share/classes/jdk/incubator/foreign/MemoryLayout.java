@@ -68,11 +68,11 @@ import java.util.stream.Stream;
  * The above declaration can be modelled using a layout object, as follows:
  *
  * <blockquote><pre>{@code
-SequenceLayout taggedValues = MemoryLayout.ofSequence(5,
-    MemoryLayout.ofStruct(
-        MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder()).withName("kind"),
-        MemoryLayout.ofPaddingBits(24),
-        MemoryLayout.ofValueBits(32, ByteOrder.nativeOrder()).withName("value")
+SequenceLayout taggedValues = MemoryLayout.sequenceLayout(5,
+    MemoryLayout.structLayout(
+        MemoryLayout.valueLayout(8, ByteOrder.nativeOrder()).withName("kind"),
+        MemoryLayout.paddingLayout(24),
+        MemoryLayout.valueLayout(32, ByteOrder.nativeOrder()).withName("value")
     )
 ).withName("TaggedValues");
  * }</pre></blockquote>
@@ -144,17 +144,17 @@ MemoryLayout value = taggedValues.select(PathElement.sequenceElement(),
  *
  * And, we can also replace the layout named {@code value} with another layout, as follows:
  * <blockquote><pre>{@code
-MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.ofPadding(32),
+MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.paddingLayout(32),
                                             PathElement.sequenceElement(), PathElement.groupElement("value"));
  * }</pre></blockquote>
  *
  * That is, the above declaration is identical to the following, more verbose one:
  * <blockquote><pre>{@code
-MemoryLayout taggedValuesWithHole = MemoryLayout.ofSequence(5,
-    MemoryLayout.ofStruct(
-        MemoryLayout.ofValueBits(8, ByteOrder.nativeOrder()).withName("kind").
-        MemoryLayout.ofPaddingBits(32),
-        MemoryLayout.ofPaddingBits(32)
+MemoryLayout taggedValuesWithHole = MemoryLayout.sequenceLayout(5,
+    MemoryLayout.structLayout(
+        MemoryLayout.valueLayout(8, ByteOrder.nativeOrder()).withName("kind"),
+        MemoryLayout.paddingLayout(32),
+        MemoryLayout.paddingLayout(32)
 ));
  * }</pre></blockquote>
  *

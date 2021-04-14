@@ -45,9 +45,9 @@
  * ranging from {@code 0} to {@code 9}, we can use the following code:
  *
  * <pre>{@code
-MemorySegment segment = MemorySegment.allocateNative(10 * 4, newImplicitScope());
+MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newImplicitScope());
 for (int i = 0 ; i < 10 ; i++) {
-   MemoryAccess.setIntAtIndex(segment, i);
+   MemoryAccess.setIntAtIndex(segment, i, 42);
 }
  * }</pre>
  *
@@ -72,7 +72,7 @@ for (int i = 0 ; i < 10 ; i++) {
 try (ResourceScope scope = ResourceScope.ofConfined()) {
     MemorySegment segment = MemorySegment.allocateNative(10 * 4, scope);
     for (int i = 0 ; i < 10 ; i++) {
-        MemoryAccess.setIntAtIndex(segment, i);
+        MemoryAccess.setIntAtIndex(segment, i, 42);
     }
 }
  * }</pre>
@@ -106,15 +106,16 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
  * we can use the following code:
  *
  * <pre>{@code
-MethodHandle strlen = CLinker.getInstance().downcallHandle(
+      MethodHandle strlen = CLinker.getInstance().downcallHandle(
         LibraryLookup.ofDefault().lookup("strlen").get(),
         MethodType.methodType(long.class, MemoryAddress.class),
         FunctionDescriptor.of(CLinker.C_LONG, CLinker.C_POINTER)
-);
+      );
 
-try (var cString = CLinker.toCString("Hello")) {
-    long len = strlen.invokeExact(cString.address()) // 5
-}
+      try (var scope = ResourceScope.newConfinedScope()) {
+         var cString = CLinker.toCString("Hello", scope);
+         long len = (long)strlen.invokeExact(cString.address()); // 5
+      }
  * }</pre>
  *
  * Here, we lookup the {@code strlen} symbol in the <em>default</em> library lookup (see {@link jdk.incubator.foreign.LibraryLookup#ofDefault()}).
@@ -158,8 +159,9 @@ int x = MemoryAccess.getIntAtOffset(segment, addr.segmentOffset(segment));
  * which produced the native address. Here is how an unsafe segment can be created from a native address:
  *
  * <pre>{@code
+ResourceScope scope = ... // initialize a resource scope object
 MemoryAddress addr = ... //obtain address from native code
-MemorySegment segment = addr.asSegment(4); // segment is 4 bytes long
+MemorySegment segment = addr.asSegment(4, scope); // segment is 4 bytes long
 int x = MemoryAccess.getInt(segment);
  * }</pre>
  *
@@ -168,8 +170,9 @@ int x = MemoryAccess.getInt(segment);
  * method, so that dereference can happen without the need of creating any additional segment instances:
  *
  * <pre>{@code
+ResourceScope scope = ... // initialize a resource scope object
 MemoryAddress addr = ... //obtain address from native code
-int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr.toRawLongValue());
+int x = MemoryAccess.getIntAtOffset(MemorySegment.allocateNative(scope), addr.toRawLongValue());
  * }</pre>
  *
  * <h3>Upcalls</h3>
@@ -181,8 +184,8 @@ int x = MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr.toRawLongValu
  * <pre>{@code
 class IntComparator {
     static int intCompare(MemoryAddress addr1, MemoryAddress addr2) {
-        return MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr1.toRawLongValue()) -
-               MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), addr2.toRawLongValue());
+        return MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), addr1.toRawLongValue()) -
+               MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), addr2.toRawLongValue());
     }
 }
  * }</pre>
