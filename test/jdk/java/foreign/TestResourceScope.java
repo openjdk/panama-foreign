@@ -239,6 +239,24 @@ public class TestResourceScope {
         }
     }
 
+    @Test(dataProvider = "scopes")
+    public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
+        ResourceScope scope = scopeFactory.get();
+        ResourceScope.Handle handle = scope.acquire();
+        try {
+            if (!scope.isImplicit()) {
+                scope.close();
+                fail();
+            }
+        } catch (IllegalStateException ex) {
+            // ok
+        }
+        handle.close();
+        if (!scope.isImplicit()) {
+            scope.close();
+        }
+    }
+
     private void waitSomeTime() {
         try {
             Thread.sleep(10);
@@ -261,6 +279,16 @@ public class TestResourceScope {
                 { (Supplier<Cleaner>)() -> null },
                 { (Supplier<Cleaner>)Cleaner::create },
                 { (Supplier<Cleaner>)CleanerFactory::cleaner }
+        };
+    }
+
+    @DataProvider
+    static Object[][] scopes() {
+        return new Object[][] {
+                { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
+                { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }
 }
