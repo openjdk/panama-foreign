@@ -204,7 +204,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
 
         @Override
         public Handle acquire() {
-            if (handle != null) {
+            if (handle == null) {
                 // capture 'this'
                 handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
             }
