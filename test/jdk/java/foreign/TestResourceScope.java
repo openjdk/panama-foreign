@@ -250,17 +250,12 @@ public class TestResourceScope {
 
     private void acquireRecursive(ResourceScope scope, int acquireCount) {
         ResourceScope.Handle handle = scope.acquire();
-        try {
-            if (acquireCount > 0) {
-                // recursive acquire
-                acquireRecursive(scope, acquireCount - 1);
-            }
-            if (!scope.isImplicit()) {
-                scope.close();
-                fail();
-            }
-        } catch (IllegalStateException ex) {
-            // ok
+        if (acquireCount > 0) {
+            // recursive acquire
+            acquireRecursive(scope, acquireCount - 1);
+        }
+        if (!scope.isImplicit()) {
+            assertThrows(IllegalStateException.class, scope::close);
         }
         handle.close();
         handle.close(); // make sure it's idempotent
