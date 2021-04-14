@@ -242,8 +242,19 @@ public class TestResourceScope {
     @Test(dataProvider = "scopes")
     public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
         ResourceScope scope = scopeFactory.get();
+        acquireRecursive(scope, 5);
+        if (!scope.isImplicit()) {
+            scope.close();
+        }
+    }
+
+    private void acquireRecursive(ResourceScope scope, int acquireCount) {
         ResourceScope.Handle handle = scope.acquire();
         try {
+            if (acquireCount > 0) {
+                // recursive acquire
+                acquireRecursive(scope, acquireCount - 1);
+            }
             if (!scope.isImplicit()) {
                 scope.close();
                 fail();
@@ -252,9 +263,8 @@ public class TestResourceScope {
             // ok
         }
         handle.close();
-        if (!scope.isImplicit()) {
-            scope.close();
-        }
+        handle.close(); // make sure it's idempotent
+        handle.close(); // make sure it's idempotent
     }
 
     private void waitSomeTime() {
