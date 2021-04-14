@@ -142,6 +142,17 @@ public final class JextractTool {
         return exitCode;
     }
 
+    private void printOptionError(Throwable throwable) {
+        printOptionError(throwable.getMessage());
+        if (DEBUG) {
+            throwable.printStackTrace(err);
+        }
+    }
+
+    private void printOptionError(String message) {
+        err.println("OPTION ERROR: " + message);
+    }
+
     /**
      * Main entry point to run the JextractTool
      *
@@ -176,7 +187,8 @@ public final class JextractTool {
         try {
             optionSet = parser.parse(args);
         } catch (OptionException oe) {
-            return printHelp(parser, OPTION_ERROR);
+            printOptionError(oe);
+            return OPTION_ERROR;
         }
 
         if (optionSet.has("h")) {
@@ -184,7 +196,8 @@ public final class JextractTool {
         }
 
         if (optionSet.nonOptionArguments().size() != 1) {
-            return printHelp(parser, OPTION_ERROR);
+            printOptionError("Expected 1 header file, not " + optionSet.nonOptionArguments().size());
+            return OPTION_ERROR;
         }
 
         Options.Builder builder = Options.builder();
