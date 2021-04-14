@@ -170,9 +170,8 @@ int x = MemoryAccess.getInt(segment);
  * method, so that dereference can happen without the need of creating any additional segment instances:
  *
  * <pre>{@code
-ResourceScope scope = ... // initialize a resource scope object
 MemoryAddress addr = ... //obtain address from native code
-int x = MemoryAccess.getIntAtOffset(MemorySegment.allocateNative(scope), addr.toRawLongValue());
+int x = MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
  * }</pre>
  *
  * <h3>Upcalls</h3>
