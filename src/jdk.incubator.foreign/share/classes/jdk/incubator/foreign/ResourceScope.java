@@ -89,8 +89,8 @@ import java.util.Spliterator;
  * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
-SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
-try (ResourceScope scope = ResourceScope.ofShared()) {
+SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
+try (ResourceScope scope = ResourceScope.newSharedScope()) {
     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
