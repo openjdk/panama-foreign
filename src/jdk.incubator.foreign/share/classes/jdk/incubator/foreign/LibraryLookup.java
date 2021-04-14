@@ -43,7 +43,7 @@ import java.util.Optional;
  * therefore preventing library unloading. For {@link #lookup(String, MemoryLayout) memory segments} obtained from a library lookup object,
  * this means that clients can safely dereference memory associated with lookup symbols, as follows:
  * <pre>{@code
- * LibraryLookup defaultLookup = LibraryLookup.defaultLookup();
+ * LibraryLookup defaultLookup = LibraryLookup.ofDefault();
  * MemorySegment errnoSegment = defaultLookup.lookup("errno", MemoryLayouts.JAVA_INT).get();
  * int errno = MemoryAccess.getInt(errnoSegment);
  * }</pre>
