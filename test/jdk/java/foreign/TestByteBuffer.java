@@ -314,7 +314,8 @@ public class TestByteBuffer {
         f.createNewFile();
         f.deleteOnExit();
 
-        try (MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, LARGE_SIZE, FileChannel.MapMode.READ_WRITE)) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, LARGE_SIZE, FileChannel.MapMode.READ_WRITE, scope);
             MappedMemorySegments.isLoaded(segment);
             MappedMemorySegments.load(segment);
             MappedMemorySegments.isLoaded(segment);
