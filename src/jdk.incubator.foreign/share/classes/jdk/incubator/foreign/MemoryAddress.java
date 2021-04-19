@@ -26,11 +26,8 @@
 
 package jdk.incubator.foreign;
 
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.foreign.Utils;
-
+import jdk.internal.ref.CleanerFactory;
 import java.lang.ref.Cleaner;
 
 /**
@@ -91,72 +88,60 @@ public interface MemoryAddress extends Addressable {
     long segmentOffset(MemorySegment segment);
 
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address; the returned segment has its own temporal
-     * bounds, and can therefore be closed. This method can be useful when interacting with custom native memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * <p>
-     * The returned segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link MemorySegment#ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
+     * Returns a native memory segment with given size and resource scope, and whose base address is this address. This method
+     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
+     * provided resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
-     * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
-     * memory resources which might implicitly be associated with the segment. This method is equivalent to the following code:
+     * This method is equivalent to the following code:
      * <pre>{@code
-    asSegmentRestricted(byteSize, null, null);
+    asSegment(byteSize, null, scope);
      * }</pre>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param bytesSize the desired size.
-     * @return a new confined native memory segment with given base address and size.
+     * @param scope the native segment scope.
+     * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    default MemorySegment asSegmentRestricted(long bytesSize) {
-        return asSegmentRestricted(bytesSize, null, null);
-    }
+    MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
-     * Returns a new confined native memory segment with given size, and whose base address is this address; the returned segment has its own temporal
-     * bounds, and can therefore be closed. This method can be useful when interacting with custom native memory sources (e.g. custom allocators),
-     * where an address to some underlying memory region is typically obtained from native code (often as a plain {@code long} value).
-     * <p>
-     * The returned segment will feature all <a href="#access-modes">access modes</a>
-     * (see {@link MemorySegment#ALL_ACCESS}), and its confinement thread is the current thread (see {@link Thread#currentThread()}).
-     * Moreover, the returned segment will keep a strong reference to the supplied attachment object (if any), which can
-     * be useful in cases where the lifecycle of the segment is dependent on that of some other external resource.
+     * Returns a new native memory segment with given size and resource scope, and whose base address is this address. This method
+     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
+     * The returned segment is associated with the provided resource scope.
      * <p>
      * Clients should ensure that the address and bounds refers to a valid region of memory that is accessible for reading and,
      * if appropriate, writing; an attempt to access an invalid memory location from Java code will either return an arbitrary value,
      * have no visible effect, or cause an unspecified exception to be thrown.
      * <p>
-     * Calling {@link MemorySegment#close()} on the returned segment will <em>not</em> result in releasing any
-     * memory resources which might implicitly be associated with the segment, but will result in calling the
-     * provided cleanup action (if any).
+     * Calling {@link ResourceScope#close()} on the scope associated with the returned segment will result in calling
+     * the provided cleanup action (if any).
      * <p>
-     * Both the cleanup action and the attachment object (if any) will be preserved under terminal operations such as
-     * {@link MemorySegment#handoff(Thread)}, {@link MemorySegment#share()} and {@link MemorySegment#registerCleaner(Cleaner)}.
-     * <p>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param bytesSize the desired size.
      * @param cleanupAction the cleanup action; can be {@code null}.
-     * @param attachment an attachment object that will be kept strongly reachable by the returned segment; can be {@code null}.
-     * @return a new confined native memory segment with given base address and size.
+     * @param scope the native segment scope.
+     * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
      * @throws UnsupportedOperationException if this address is an heap address.
-     * @throws IllegalAccessError if the runtime property {@code foreign.restricted} is not set to either
-     * {@code permit}, {@code warn} or {@code debug} (the default value is set to {@code deny}).
      */
-    MemorySegment asSegmentRestricted(long bytesSize, Runnable cleanupAction, Object attachment);
+    MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**
      * Returns the raw long value associated with this memory address.
@@ -191,7 +176,7 @@ public interface MemoryAddress extends Addressable {
     /**
      * The off-heap memory address instance modelling the {@code NULL} address.
      */
-    MemoryAddress NULL = new MemoryAddressImpl(null,  0L);
+    MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
 
     /**
      * Obtain an off-heap memory address instance from given long address.
