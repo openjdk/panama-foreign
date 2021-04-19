@@ -25,44 +25,49 @@
 
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.util.concurrent.TimeUnit;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegmentPool;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-import java.util.concurrent.TimeUnit;
-
-import static jdk.incubator.foreign.CLinker.*;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit",
+"--enable-native-access", "ALL-UNNAMED"})
 public class StrLenTest {
 
     ResourceScope scope = ResourceScope.newConfinedScope();
 
     SegmentAllocator segmentAllocator;
     SegmentAllocator arenaAllocator = SegmentAllocator.arenaAllocator(scope);
+
+    MemorySegmentPool memorySegmentPool = new MemorySegmentPool(ResourceScope.globalScope());
 
     @Param({"5", "20", "100"})
     public int size;
@@ -143,6 +148,29 @@ public class StrLenTest {
         int res = (int) STRLEN_TRIVIAL.invokeExact(address);
         FREE_TRIVIAL.invokeExact(address);
         return res;
+    }
+
+    @Benchmark
+    public int panama_strlen_memsegmentpool_allocator() throws Throwable {
+        try(ResourceScope scope = ResourceScope.newConfinedScope()) {
+            final var allocator = memorySegmentPool.allocatorForScope(scope);
+            return (int)STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
+        }
+    }
+
+    @Benchmark
+    public int panama_strlen_memsegmentpool_direct() throws Throwable {
+        final var memoryPool = this.memorySegmentPool;
+        final byte[] bytes = str.getBytes();
+        final int len = bytes.length;
+        final var stringSegmentEntry = memoryPool.getSegmentEntryBySize(len + 1, 1);
+        final var stringSegment = stringSegmentEntry.value;
+        stringSegment.copyFrom(MemorySegment.ofArray(bytes));
+        try {
+            return (int) STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
+        } finally {
+            memoryPool.putSegmentEntry(stringSegmentEntry);
+        }
     }
 
     static MemoryAddress makeStringUnsafe(String s) {
