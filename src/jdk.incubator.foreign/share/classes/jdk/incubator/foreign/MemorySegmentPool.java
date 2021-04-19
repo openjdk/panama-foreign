@@ -153,7 +153,6 @@ public class MemorySegmentPool {
     return segmentEntry.value;
   }
 
-
   /**
    * Returns entry back to pool. After this operation entry should not be used.
    *
@@ -162,7 +161,7 @@ public class MemorySegmentPool {
   public void putSegmentEntry(Entry<MemorySegment> entry) {
     // The size already should be aligned, in case of putting wrong entry queue will
     // throw exception
-    final var bitBound= 64 - Long.numberOfLeadingZeros(entry.value.byteSize()) - 1;
+    final var bitBound = 64 - Long.numberOfLeadingZeros(entry.value.byteSize()) - 1;
 
     final var segmentsQueue = segmentsDequeue[bitBound];
     if (!segmentsQueue.putEntryIfSize(entry, maxSizes[bitBound])) {
@@ -177,11 +176,9 @@ public class MemorySegmentPool {
   }
 
   private static int bitBound(long alignedSize) {
-    var logSize = 64- Long.numberOfLeadingZeros(alignedSize) - 1;
-    if (alignedSize <= 1L << logSize)
-      return logSize;
-    else
-      return logSize + 1;
+    // If 100.., than 100... - 1 -> 01111
+    // If 101 -> than 101 - 1 -> 1....
+    return 64- Long.numberOfLeadingZeros(alignedSize - 1);
   }
 
   private Entry<MemorySegment> allocateNewEntry(SpinLockQueue<MemorySegment> queue, int bitBound) {
