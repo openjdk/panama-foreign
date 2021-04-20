@@ -126,11 +126,15 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
 
     @Override
     public void release(Handle handle) {
-        Objects.requireNonNull(handle);
-        if (!isImplicit() && handle.scope() != this) {
-            throw new IllegalArgumentException("Cannot release an handle acquired from another scope");
+        try {
+            Objects.requireNonNull(handle);
+            if (!isImplicit() && handle.scope() != this) {
+                throw new IllegalArgumentException("Cannot release an handle acquired from another scope");
+            }
+            ((HandleImpl) handle).close();
+        } finally {
+            Reference.reachabilityFence(this);
         }
-        ((HandleImpl)handle).close();
     }
 
     /**
