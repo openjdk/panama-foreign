@@ -43,6 +43,7 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -159,17 +160,15 @@ public class StrLenTest {
     }
 
     @Benchmark
+//    @CompilerControl(CompilerControl.Mode.PRINT)
     public int panama_strlen_memsegmentpool_direct() throws Throwable {
-        final var memoryPool = this.memorySegmentPool;
+        final var memoryPool = memorySegmentPool;
         final byte[] bytes = str.getBytes();
         final int len = bytes.length;
-        final var stringSegmentEntry = memoryPool.getSegmentEntryBySize(len + 1, 1);
-        final var stringSegment = stringSegmentEntry.value;
-        stringSegment.copyFrom(MemorySegment.ofArray(bytes));
-        try {
-            return (int) STRLEN.invokeExact(CLinker.toCString(str, segmentAllocator).address());
-        } finally {
-            memoryPool.putSegmentEntry(stringSegmentEntry);
+        try (var stringSegmentEntry = memoryPool.getSegmentEntryBySize(len + 1, 1)) {
+            final var stringSegment = stringSegmentEntry.memorySegment();
+            stringSegment.copyFrom(MemorySegment.ofArray(bytes));
+            return (int) STRLEN.invokeExact(stringSegment.address());
         }
     }
 

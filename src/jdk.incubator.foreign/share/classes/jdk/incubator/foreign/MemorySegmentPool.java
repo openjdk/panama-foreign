@@ -1,7 +1,8 @@
 package jdk.incubator.foreign;
 
 import java.util.Arrays;
-import jdk.incubator.foreign.SpinLockQueue.Entry;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.vm.annotation.ForceInline;
 
 /**
  * Memory segments pool, maintaining pools of segments of size equal to power of 2 with ability to
@@ -68,10 +69,10 @@ import jdk.incubator.foreign.SpinLockQueue.Entry;
  */
 public class MemorySegmentPool {
   private static final int[] DEFAULT_MAX_SIZES = new int[Long.SIZE];
+  private static final ResourceScope GLOBAL = ResourceScope.globalScope();
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private final SpinLockQueue<MemorySegment> segmentsDequeue[] = new SpinLockQueue[Long.SIZE];
-  private final int maxSizes[] = new int[Long.SIZE];
+  private final SpinLockQueue<MemoryPoolSegment> segmentsDequeue[] = new SpinLockQueue[Long.SIZE];
 
   private final ResourceScope scope;
 
@@ -104,11 +105,10 @@ public class MemorySegmentPool {
   public MemorySegmentPool(int maxSizes[], ResourceScope scope) {
     this.scope = scope;
 
+    validateMaxSizes(maxSizes);
     for (int i=0; i < segmentsDequeue.length; i++) {
-      segmentsDequeue[i] = new SpinLockQueue<>();
+      segmentsDequeue[i] = new SpinLockQueue<>(maxSizes[i]);
     }
-    System.arraycopy(maxSizes, 0, this.maxSizes, 0, Math.min(maxSizes.length, this.maxSizes.length));
-    validateMaxSizes();
   }
 
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
@@ -118,7 +118,7 @@ public class MemorySegmentPool {
     return (bytesSize, bytesAlignment) -> getSegmentForScope(resourceScope, bytesSize, bytesAlignment);
   }
 
-  public Entry<MemorySegment> getSegmentEntryByLayout(MemoryLayout layout) {
+  public MemoryPoolSegment getSegmentEntryByLayout(MemoryLayout layout) {
     return getSegmentEntryBySize(layout.byteSize(), layout.byteAlignment());
   }
 
@@ -130,18 +130,20 @@ public class MemorySegmentPool {
    *
    * @return segment of size at least `size`
    */
-  public Entry<MemorySegment> getSegmentEntryBySize(long size, long alignment) {
+  @ForceInline
+  public MemoryPoolSegment getSegmentEntryBySize(long size, long alignment) {
     if (!scope.isAlive()) {
       throw new IllegalStateException("Associated resource scope is closed");
     }
 
     final var alignedSize = (size + alignment - 1) & -alignment;
     final var bitBound = bitBound(alignedSize);
-
     final var segmentDequeue = segmentsDequeue[bitBound];
+
     var segment = segmentDequeue.pollEntry();
     if (segment == null) {
-      segment = allocateNewEntry(segmentDequeue, bitBound);
+      final var bitBoundedSize = 1L << bitBound;
+      segment = allocateNewEntry(segmentDequeue, bitBoundedSize);
     }
 
     return segment;
@@ -149,48 +151,51 @@ public class MemorySegmentPool {
 
   private MemorySegment getSegmentForScope(ResourceScope resourceScope, long size, long alignment) {
     final var segmentEntry = getSegmentEntryBySize(size, alignment);
-    resourceScope.addOnClose(() -> putSegmentEntry(segmentEntry));
-    return segmentEntry.value;
+    resourceScope.addOnClose(() -> segmentEntry.close());
+    return segmentEntry.memorySegment;
   }
 
-  /**
-   * Returns entry back to pool. After this operation entry should not be used.
-   *
-   * @param entry - the entry to put back
-   */
-  public void putSegmentEntry(Entry<MemorySegment> entry) {
-    // The size already should be aligned, in case of putting wrong entry queue will
-    // throw exception
-    final var bitBound = 64 - Long.numberOfLeadingZeros(entry.value.byteSize()) - 1;
-
-    final var segmentsQueue = segmentsDequeue[bitBound];
-    if (!segmentsQueue.putEntryIfSize(entry, maxSizes[bitBound])) {
-      if (segmentsQueue.isAssociated(entry)) {
-        CLinker.freeMemory(entry.value.address());
-      } else {
-        // Queue checks for ownership only during add, someone can accidentally release not intended
-        // segment.
-        throw new IllegalStateException("This entry is not associated with given queue and this pool");
-      }
-    }
-  }
-
+  @ForceInline
   private static int bitBound(long alignedSize) {
     // If 100.., than 100... - 1 -> 01111
     // If 101 -> than 101 - 1 -> 1....
     return 64- Long.numberOfLeadingZeros(alignedSize - 1);
   }
 
-  private Entry<MemorySegment> allocateNewEntry(SpinLockQueue<MemorySegment> queue, int bitBound) {
-    final var allocationSize = 1 << bitBound;
+  private MemoryPoolSegment allocateNewEntry(SpinLockQueue<MemoryPoolSegment> queue, long allocationSize) {
     final var memoryAddress = CLinker.allocateMemory(allocationSize);
-    return queue.allocateEntry(memoryAddress.asSegment(allocationSize, scope));
+    return new MemoryPoolSegment(queue,
+        (NativeMemorySegmentImpl) memoryAddress.asSegment(allocationSize, scope));
   }
 
-  private void validateMaxSizes() {
-    Arrays.stream(this.maxSizes).filter(i -> i < 0).findAny()
+  private static void validateMaxSizes(int maxSizes[]) {
+    Arrays.stream(maxSizes).filter(i -> i < 0).findAny()
         .ifPresent(i -> {
           throw new IllegalStateException("Invalid max size " + i);
         });
   }
+
+  public static class MemoryPoolSegment extends SpinLockQueue.Entry<MemoryPoolSegment> implements AutoCloseable {
+    private final NativeMemorySegmentImpl memorySegment;
+
+    @ForceInline
+    private MemoryPoolSegment(SpinLockQueue<MemoryPoolSegment> queue, NativeMemorySegmentImpl segment) {
+      super(queue);
+      this.memorySegment = segment;
+    }
+
+    @ForceInline
+    public MemorySegment memorySegment() {
+      return memorySegment;
+    }
+
+    @Override
+    @ForceInline
+    public void close() {
+      if (!this.owner.putEntry(this)) {
+        CLinker.freeMemory(this.memorySegment.address());
+      }
+    }
+  }
+
 }

@@ -1,6 +1,10 @@
 package jdk.incubator.foreign;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.concurrent.atomic.AtomicInteger;
+import jdk.incubator.foreign.SpinLockQueue.Entry;
+import jdk.internal.vm.annotation.ForceInline;
 
 /**
  * Fast, concurrent LIFO queue (stack), based on operating on entries.
@@ -10,69 +14,81 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @param <T> the type of value used in queue
  */
-public final class SpinLockQueue<T> {
+public final class SpinLockQueue<T extends Entry<T>> {
 
-  private final AtomicInteger lock = new AtomicInteger();
+  private int lock = 0;
+  private final int maxSize;
+
   private volatile int size;
 
-  private volatile Entry<T> head;
+  private T head;
 
-  public SpinLockQueue() {
+  private static final VarHandle HEAD;
+  private static final VarHandle SIZE;
+  private static final VarHandle LOCK;
 
+  static {
+    try {
+      HEAD = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "head", Entry.class);
+      SIZE = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "size", int.class);
+      LOCK = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "lock", int.class);
+    } catch (Exception e) {
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
-  public Entry<T> pollEntry() {
-    while (!lock.compareAndSet(0, 1)) { }
+  public SpinLockQueue(int maxSize) {
+    this.maxSize = maxSize;
+  }
+
+  @ForceInline
+  final public T pollEntry() {
+    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) { }
     try {
-      final var current = head;
+      final var current = (T) HEAD.getAcquire(this);
       if (current != null) {
-        head = current.next;
-        size--;
+        HEAD.setRelease(this, current.next);
+        SIZE.setRelease(this, (int) SIZE.getAcquire(this) - 1);
       }
       return current;
     } finally {
-      lock.set(0);
+      LOCK.setRelease(this, 0);
     }
   }
 
-  public void putEntry(Entry<T> entry) {
-    if (entry.owner != this) {
-      throw new IllegalStateException("This entry does not belong to this queue");
-    }
-    while (!lock.compareAndSet(0, 1)) { }
-    try {
-      entry.next = head;
-      head = entry;
-      size++;
-    } finally {
-      lock.set(0);
-    }
-  }
+//  final public void putEntryNoSizeCheck(T entry) {
+//    while (!lock.compareAndSet(0, 1)) { }
+//    try {
+//      entry.next = head;
+//      head = entry;
+//      size++;
+//    } finally {
+//      lock.set(0);
+//    }
+//  }
 
   /**
    * Puts entry only if queue size is less then given size.
    *
    * @param entry - entry to put
-   * @param size - the maximum expected queue size
    *
    * @return {@code true} if elements has been put.
    */
-  public boolean putEntryIfSize(Entry<T> entry, long size) {
-    if (entry.owner != this) {
-      throw new IllegalStateException("This entry does not belong to this queue");
-    }
-    while (!lock.compareAndSet(0, 1)) { }
+  @ForceInline
+  final public boolean putEntry(T entry) {
+    while ((int) LOCK.compareAndExchangeAcquire(this, 0, 1) != 1) { }
     try {
-      if (this.size <= size) {
-        entry.next = head;
-        head = entry;
-        size++;
+      final var size = (int) SIZE.getAcquire(this);
+      if (size <= this.maxSize) {
+        entry.next = (T) HEAD.getAcquire(this);
+        HEAD.setRelease(this, entry);
+        SIZE.setRelease(this, size + 1);
         return true;
       } else {
         return false;
       }
     } finally {
-      lock.set(0);
+      LOCK.setRelease(this, 0);
     }
   }
 
@@ -95,22 +111,15 @@ public final class SpinLockQueue<T> {
     return this.size;
   }
 
-  /**
-   * Allocates, but not adds entry to the queue.
-   */
-  public Entry<T> allocateEntry(T value) {
-    return new Entry<T>(this, value);
-  }
+  public static class Entry<T extends Entry<T>> {
+    // Should we keep generic
+    // If exposing spinlock queue, the entry should be in module internal package, to prevent
+    // tampering owner and next with reflect
+    final SpinLockQueue<T> owner;
+    volatile T next;
 
-  public static class Entry<T> {
-    public final T value;
-
-    private final SpinLockQueue<T> owner;
-    private volatile Entry<T> next;
-
-    private Entry(SpinLockQueue<T> owner, T value) {
+    protected Entry(SpinLockQueue<T> owner) {
       this.owner = owner;
-      this.value = value;
     }
   }
 }
