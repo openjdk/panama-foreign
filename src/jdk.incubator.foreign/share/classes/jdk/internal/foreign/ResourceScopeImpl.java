@@ -124,6 +124,23 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         return new SharedScope(cleaner);
     }
 
+    @Override
+    public void release(Handle handle) {
+        Objects.requireNonNull(handle);
+        if (!isImplicit() && handle.scope() != this) {
+            throw new IllegalArgumentException("Cannot release an handle acquired from another scope");
+        }
+        ((HandleImpl)handle).close();
+    }
+
+    /**
+     * Internal interface used to implement resource scope handles.
+     */
+    interface HandleImpl extends Handle, AutoCloseable {
+        @Override
+        void close();
+    }
+
     /**
      * Closes this scope, executing any cleanup action (where provided).
      * @throws IllegalStateException if this scope is already closed or if this is
@@ -195,20 +212,13 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
      */
     static class NonCloseableSharedScope extends SharedScope {
 
-        @Stable
-        private Handle handle;
-
         public NonCloseableSharedScope(Cleaner cleaner) {
             super(cleaner);
         }
 
         @Override
         public Handle acquire() {
-            if (handle == null) {
-                // capture 'this'
-                handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
-            }
-            return handle;
+            return implicitHandle;
         }
 
         @Override
@@ -220,6 +230,18 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         public void close() {
             throw new UnsupportedOperationException("Scope cannot be closed");
         }
+
+        private final static HandleImpl implicitHandle = new HandleImpl() {
+            @Override
+            public void close() {
+                // do nothing
+            }
+
+            @Override
+            public ResourceScope scope() {
+                return GLOBAL;
+            }
+        };
     }
 
     /**
