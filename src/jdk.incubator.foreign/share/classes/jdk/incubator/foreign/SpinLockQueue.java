@@ -26,12 +26,14 @@ public final class SpinLockQueue<T extends Entry<T>> {
   private static final VarHandle HEAD;
   private static final VarHandle SIZE;
   private static final VarHandle LOCK;
-
+  private static final VarHandle ENTRY_NEXT;
   static {
     try {
       HEAD = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "head", Entry.class);
       SIZE = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "size", int.class);
       LOCK = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "lock", int.class);
+
+      ENTRY_NEXT = MethodHandles.lookup().findVarHandle(Entry.class, "next", Entry.class);
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
@@ -43,11 +45,12 @@ public final class SpinLockQueue<T extends Entry<T>> {
 
   @ForceInline
   final public T pollEntry() {
-    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) { }
+//    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) {};
+    while (!LOCK.compareAndSet(this, 0, 1)) {}
     try {
       final var current = (T) HEAD.getAcquire(this);
       if (current != null) {
-        HEAD.setRelease(this, current.next);
+        HEAD.setRelease(this, ENTRY_NEXT.getAcquire(current));
         SIZE.setRelease(this, (int) SIZE.getAcquire(this) - 1);
       }
       return current;
@@ -76,13 +79,15 @@ public final class SpinLockQueue<T extends Entry<T>> {
    */
   @ForceInline
   final public boolean putEntry(T entry) {
-    while ((int) LOCK.compareAndExchangeAcquire(this, 0, 1) != 1) { }
+//    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) { }
+    while (!LOCK.compareAndSet(this, 0, 1)) { }
     try {
       final var size = (int) SIZE.getAcquire(this);
       if (size <= this.maxSize) {
-        entry.next = (T) HEAD.getAcquire(this);
+        ENTRY_NEXT.setRelease(entry, HEAD.getAcquire(this));
         HEAD.setRelease(this, entry);
         SIZE.setRelease(this, size + 1);
+        LOCK.setRelease(this, 0);
         return true;
       } else {
         return false;
