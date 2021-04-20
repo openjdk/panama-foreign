@@ -151,6 +151,8 @@ public final class JextractTool {
 
     private void printOptionError(String message) {
         err.println("OPTION ERROR: " + message);
+        err.println("Usage: jextract <options> [--] <header file>");
+        err.println("Use --help for a list of possible options");
     }
 
     /**
