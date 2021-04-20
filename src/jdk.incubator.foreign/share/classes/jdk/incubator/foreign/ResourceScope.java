@@ -43,7 +43,7 @@ import java.util.Spliterator;
  *
  * Resource scopes obtained from {@link #newConfinedScope()}, {@link #newSharedScope()} support <em>deterministic deallocation</em>;
  * We call these resource scopes <em>explicit scopes</em>. Explicit resource scopes can be closed explicitly (see {@link ResourceScope#close()}).
- * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operation on
+ * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operations on
  * resources associated with that scope (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
  * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addOnClose(Runnable)}) to be called.
@@ -75,7 +75,8 @@ import java.util.Spliterator;
  * <p>
  * An important implicit resource scope is the so called {@link #globalScope() global scope}; the global scope is
  * an implicit scope that is guaranteed to never become <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
- * As a results, resources associated to the global scope are never cleaned up.
+ * As a results, the global scope will never attempt to release resources associated with it. Such resources must, where
+ * needed, be managed independently by clients.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
