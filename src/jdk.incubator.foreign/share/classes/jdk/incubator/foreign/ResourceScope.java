@@ -115,7 +115,7 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
  * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
  * accessing/closing the resources associated with the shared resource scope.
  *
- * <h2>Scope handles</h2>
+ * <h2>Resource scope handles</h2>
  *
  * Resource scopes can be made <em>non-closeable</em> by acquiring one or more resource scope <em>handles</em> (see
  * {@link #acquire()}. A resource scope handle can be used to make sure that resources associated with a given resource scope
@@ -127,10 +127,18 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
  *
  * <blockquote><pre>{@code
 MemorySegment segment = ...
-try (ResourceScope.Handle segmentHandle = segment.scope().acquire()) {
+ResourceScope.Handle segmentHandle = segment.scope().acquire()
+try {
    <critical operation on segment>
-} // release scope handle
+} finally {
+   segment.scope().release(segmentHandle);
+}
  * }</pre></blockquote>
+ *
+ * Acquiring implicit resource scopes is also possible, but it is often unnecessary: since resources associated with
+ * an implicit scope will only be released when the scope becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>,
+ * clients can use e.g. {@link java.lang.ref.Reference#reachabilityFence(Object)} to make sure that resources associated
+ * with implicit scopes are not released prematurely. That said, the above code snippet works (trivially) for implicit scopes too.
  *
  * @apiNote In the future, if the Java language permits, {@link ResourceScope}
  * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
@@ -189,27 +197,40 @@ public interface ResourceScope extends AutoCloseable {
     void addOnClose(Runnable runnable);
 
     /**
-     * Make this resource scope non-closeable by acquiring a new resource scope handle. This scope cannot be closed unless all its
-     * acquired handles have been closed first. Additionally, a resource scope handle maintains a strong reference
-     * to its resource scope; in other words, resources associated with an implicit resource scopes cannot be released
-     * until <em>all</em> the handles acquired from the implicit scope become <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+     * If this resource scope is explicit, this method acquires a new resource scope handle, associated with this
+     * resource scope; an explicit resource scope cannot be {@link #close() closed}
+     * until all the resource scope handles acquired from it have been {@link #release(Handle)} released}.
+     * <p>
+     * If this scope is an {@link #isImplicit()} implicit} scope, calling this method will always return the
+     * <em>implicit</em> resource scope handle. The implicit resource scope handle is associated with the
+     * {@link ResourceScope#globalScope() global scope}.
      * @return a resource scope handle.
      */
     Handle acquire();
 
     /**
-     * An abstraction modelling resource scope handle. A resource scope handle is typically acquired by clients (see
-     * {@link #acquire()} in order to prevent the resource scope from being closed while executing a certain operation.
-     * A resource scope handle features a method (see {@link #close()}) which can be used by clients to release the handle.
+     * Release the provided resource scope handle. This method is idempotent, that is, releasing the same handle
+     * multiple times has no effect.
+     * @throws IllegalArgumentException if this resource scope is explicit and the provided handle is not associated
+     * with this scope.
      */
-    interface Handle extends AutoCloseable {
+    void release(Handle handle);
+
+    /**
+     * An abstraction modelling a resource scope handle. A resource scope handle is typically {@link #acquire() acquired} by clients
+     * in order to prevent an explicit resource scope from being closed while executing a certain operation.
+     * Once obtained, resource scope handles can be {@link #release(Handle)} released}; an explicit resource scope can
+     * be closed only <em>after</em> all the resource scope handles acquired from it have been released.
+     */
+    interface Handle {
 
         /**
-         * Release this handle on the resource scope associated with this instance. This method is idempotent,
-         * that is, closing an already closed handle has no effect.
+         * Returns the resource scope associated with this handle, or the {@link ResourceScope#globalScope()}
+         * if this handle is the implicit resource scope handle.
+         * @return the resource scope associated with this handle, or the {@link ResourceScope#globalScope()}
+         * if this handle is the implicit resource scope handle.
          */
-        @Override
-        void close();
+        ResourceScope scope();
     }
 
     /**
@@ -251,9 +272,11 @@ public interface ResourceScope extends AutoCloseable {
     }
 
     /**
-     * Create a new implicit, shared resource scope. Since implicit scopes can only be closed implicitly by the garbage collector,
-     * it is recommended that implicit scopes are only used in cases where deallocation performance is not a critical concern,
-     * to avoid unnecessary memory pressure.
+     * Create a new <em>implicit scope</em>. The implicit scope is a managed, shared, and non-closeable scope which only features
+     * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>.
+     * Since implicit scopes can only be closed implicitly by the garbage collector, it is recommended that implicit
+     * scopes are only used in cases where deallocation performance is not a critical concern, to avoid unnecessary
+     * memory pressure.
      *
      * @return a new implicit scope.
      */

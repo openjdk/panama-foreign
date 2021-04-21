@@ -138,7 +138,7 @@ public class BulkMismatchAcquire {
         try {
             return mismatchSegmentLarge1.mismatch(mismatchSegmentLarge2);
         } finally {
-            handle.close();
+            mismatchSegmentLarge1.scope().release(handle);
         }
     }
 
@@ -161,7 +161,7 @@ public class BulkMismatchAcquire {
         try {
             return mismatchSegmentSmall1.mismatch(mismatchSegmentSmall2);
         } finally {
-            handle.close();
+            mismatchSegmentLarge1.scope().release(handle);
         }
     }
 
