@@ -76,8 +76,11 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     @Override
     public long toRawLongValue() {
-        if (base() != null) {
-            throw new UnsupportedOperationException("Not a native address");
+        if (segment != null) {
+            if (segment.base() != null) {
+                throw new UnsupportedOperationException("Not a native address");
+            }
+            segment.checkValidState();
         }
         return offset();
     }

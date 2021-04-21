@@ -223,7 +223,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     @Override
     @ForceInline
     public final MemoryAddress address() {
-        checkValidState();
         return new MemoryAddressImpl(this, 0L);
     }
 
@@ -312,7 +311,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         checkBounds(offset, length);
     }
 
-    private void checkValidState() {
+    void checkValidState() {
         try {
             scope.checkValidState();
         } catch (ScopedMemoryAccess.Scope.ScopedAccessError ex) {
