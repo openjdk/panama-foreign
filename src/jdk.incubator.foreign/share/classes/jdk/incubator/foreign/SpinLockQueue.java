@@ -2,7 +2,6 @@ package jdk.incubator.foreign;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.concurrent.atomic.AtomicInteger;
 import jdk.incubator.foreign.SpinLockQueue.Entry;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -10,7 +9,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * Fast, concurrent LIFO queue (stack), based on operating on entries.
  *
  * This queue is designed for fast push / pop operations. Synchronization is
- * provided by spin lock.
+ * provided by classic spin lock.
  *
  * @param <T> the type of value used in queue
  */
@@ -21,7 +20,7 @@ public final class SpinLockQueue<T extends Entry<T>> {
 
   private volatile int size;
 
-  private T head;
+  private volatile T head;
 
   private static final VarHandle HEAD;
   private static final VarHandle SIZE;
@@ -79,15 +78,13 @@ public final class SpinLockQueue<T extends Entry<T>> {
    */
   @ForceInline
   final public boolean putEntry(T entry) {
-//    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) { }
     while (!LOCK.compareAndSet(this, 0, 1)) { }
     try {
       final var size = (int) SIZE.getAcquire(this);
-      if (size <= this.maxSize) {
+      if (size < this.maxSize) {
         ENTRY_NEXT.setRelease(entry, HEAD.getAcquire(this));
         HEAD.setRelease(this, entry);
         SIZE.setRelease(this, size + 1);
-        LOCK.setRelease(this, 0);
         return true;
       } else {
         return false;
