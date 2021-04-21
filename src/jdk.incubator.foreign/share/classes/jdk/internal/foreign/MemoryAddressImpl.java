@@ -58,6 +58,11 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     // MemoryAddress methods
 
+    @Override
+    public ResourceScope scope() {
+        return segment != null ?
+                segment.scope() : ResourceScope.globalScope();
+    }
 
     @Override
     public MemoryAddress addOffset(long offset) {

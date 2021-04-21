@@ -147,9 +147,7 @@ public interface MemorySegment extends Addressable {
 
     /**
      * The base memory address associated with this memory segment.
-     * The returned memory address contains a strong reference to this segment; this means that if this segment
-     * is associated with a resource scope featuring <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>,
-     * the scope won't be closed as long as the returned address is <a href="../../../java/lang/ref/package.html#reachability">reachable</a>.
+     * The returned memory address is associated with same resource scope as that associated with this segment.
      * @return The base memory address.
      */
     @Override
@@ -171,8 +169,8 @@ public interface MemorySegment extends Addressable {
      *
      * @param layout the layout to be used for splitting.
      * @return the element spliterator for this segment
-     * @throws IllegalStateException if the segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
      */
     Spliterator<MemorySegment> spliterator(SequenceLayout layout);
 
@@ -312,8 +310,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      *
      * @param value the value to fill into this segment
      * @return this memory segment
-     * @throws IllegalStateException if this segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope,
      * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
     MemorySegment fill(byte value);
@@ -333,8 +331,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      *
      * @param src the source segment.
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
-     * @throws IllegalStateException if either the source segment or this segment have been already closed,
-     * or if access occurs from a thread other than the thread owning either segment.
+     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
+     * with this segment have been already closed, or if access occurs from a thread other than the thread owning either
+     * scopes.
      * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
     void copyFrom(MemorySegment src);
@@ -357,9 +356,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param other the segment to be tested for a mismatch with this segment
      * @return the relative offset, in bytes, of the first mismatch between this
      * and the given other segment, otherwise -1 if no mismatch
-     * @throws IllegalStateException if either this segment of the other segment
-     * have been already closed, or if access occurs from a thread other than the
-     * thread owning either segment
+     * @throws IllegalStateException if either the scope associated with this segment or the scope associated
+     * with the {@code other} segment have been already closed, or if access occurs from a thread other than the thread
+     * owning either scopes.
      */
     long mismatch(MemorySegment other);
 
@@ -396,8 +395,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh byte array.
      * @return a fresh byte array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link byte[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link byte[]} instance,
      * e.g. its size is greater than {@link Integer#MAX_VALUE}.
      */
     byte[] toByteArray();
@@ -405,8 +404,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link short[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link short[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
      */
     short[] toShortArray();
@@ -414,8 +413,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh char array.
      * @return a fresh char array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link char[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link char[]} instance,
      * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
      */
     char[] toCharArray();
@@ -423,8 +422,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh int array.
      * @return a fresh int array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link int[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link int[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     int[] toIntArray();
@@ -432,8 +431,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh float array.
      * @return a fresh float array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link float[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link float[]} instance,
      * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
      */
     float[] toFloatArray();
@@ -441,8 +440,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh long array.
      * @return a fresh long array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link long[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link long[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     long[] toLongArray();
@@ -450,8 +449,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copy the contents of this memory segment into a fresh double array.
      * @return a fresh double array copy of this memory segment.
-     * @throws IllegalStateException if this segment has been closed, or if access occurs from a thread other than the
-     * thread owning this segment, or if this segment's contents cannot be copied into a {@link double[]} instance,
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link double[]} instance,
      * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
      */
     double[] toDoubleArray();

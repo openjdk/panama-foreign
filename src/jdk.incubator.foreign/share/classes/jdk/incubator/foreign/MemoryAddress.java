@@ -36,6 +36,12 @@ import java.lang.ref.Cleaner;
  * Given an address, it is possible to compute its offset relative to a given segment, which can be useful
  * when performing memory dereference operations using a memory access var handle (see {@link MemoryHandles}).
  * <p>
+ * A memory address is associated with a {@link ResourceScope resource scope}; the resource scope determines the
+ * lifecycle of the memory address, and whether the address can be used from multiple threads. Memory addresses
+ * obtained from {@link #ofLong(long) numeric values}, or from native code, are associated with the
+ * {@link ResourceScope#globalScope() global resource scope}. Memory addresses obtained from segments
+ * are associated with the same scope as the segment from which they have been obtained.
+ * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
  * programmers should treat instances that are {@linkplain #equals(Object) equal} as interchangeable and should not
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
@@ -68,6 +74,12 @@ public interface MemoryAddress extends Addressable {
     MemoryAddress addOffset(long offset);
 
     /**
+     * Returns the resource scope associated with this memory address.
+     * @return the resource scope associated with this memory address.
+     */
+    ResourceScope scope();
+
+    /**
      * Returns the offset of this memory address into the given segment. More specifically, if both the segment's
      * base address and this address are off-heap addresses, the result is computed as
      * {@code this.toRawLongValue() - segment.address().toRawLongValue()}. Otherwise, if both addresses in the form
@@ -88,8 +100,9 @@ public interface MemoryAddress extends Addressable {
     long segmentOffset(MemorySegment segment);
 
     /**
-     * Returns a native memory segment with given size and resource scope, and whose base address is this address. This method
-     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     Returns a new native memory segment with given size and resource scope (possibly overriding the scope already associated
+     * with this address), and whose base address is this address. This method can be useful when interacting with custom
+     * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
      * provided resource scope.
@@ -117,8 +130,9 @@ public interface MemoryAddress extends Addressable {
     MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
-     * Returns a new native memory segment with given size and resource scope, and whose base address is this address. This method
-     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * Returns a new native memory segment with given size and resource scope (possibly overriding the scope already associated
+     * with this address), and whose base address is this address. This method can be useful when interacting with custom
+     * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is associated with the provided resource scope.
      * <p>
@@ -147,6 +161,8 @@ public interface MemoryAddress extends Addressable {
      * Returns the raw long value associated with this memory address.
      * @return The raw long value associated with this memory address.
      * @throws UnsupportedOperationException if this memory address is an heap address.
+     * @throws IllegalStateException if the scope associated with this segment has been already closed,
+     * or if access occurs from a thread other than the thread owning either segment.
      */
     long toRawLongValue();
 

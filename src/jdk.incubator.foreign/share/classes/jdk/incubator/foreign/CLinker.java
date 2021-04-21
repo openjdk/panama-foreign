@@ -200,10 +200,8 @@ public interface CLinker {
      * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned segment is associated with the provided scope. When such scope is closed,
-     * the corresponding native stub will be deallocated. The returned memory address maintain a strong reference
-     * to the resource scope parameter; this helps keeping the native stub alive if, for instance,
-     * an {@link ResourceScope#isImplicit() implicit} resource scope is used.
+     * <p>The returned memory address is associated with the provided scope. When such scope is closed,
+     * the corresponding native stub will be deallocated.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash
@@ -614,6 +612,7 @@ public interface CLinker {
 
         /**
          * Returns the memory address of the C {@code va_list} associated with this instance.
+         * The returned memory address is associated with same resource scope as that associated with this instance.
          *
          * @return the memory address of the C {@code va_list} associated with this instance.
          */
