@@ -2,6 +2,7 @@ package jdk.incubator.foreign;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.util.Iterator;
 import jdk.incubator.foreign.SpinLockQueue.Entry;
 import jdk.internal.vm.annotation.ForceInline;
 
@@ -16,7 +17,7 @@ import jdk.internal.vm.annotation.ForceInline;
 public final class SpinLockQueue<T extends Entry<T>> {
 
   private int lock = 0;
-  private final int maxSize;
+  private int maxSize;
 
   private volatile int size;
 
@@ -113,6 +114,25 @@ public final class SpinLockQueue<T extends Entry<T>> {
     return this.size;
   }
 
+  /**
+   * Polls all entries and sets max size to 0 so no new entries can be added.
+   * This operation is atomic.
+   *
+   * @return iterator will all entries, iterator is not synchronized, nor thread-safe
+   */
+  public Iterator<T> retrieveAndLock() {
+    while (!LOCK.compareAndSet(this, 0, 1)) { }
+    try {
+      final var currentHead = (T) HEAD.getAcquire(this);
+      final var result = new FastEntryIterator<T>(currentHead);
+      SIZE.set(this, 0);
+      HEAD.set(this, null);
+      maxSize = 0;
+      return result;
+    } finally {
+      LOCK.setRelease(this, 0);
+    }
+  }
   public static class Entry<T extends Entry<T>> {
     // Should we keep generic
     // If exposing spinlock queue, the entry should be in module internal package, to prevent
@@ -122,6 +142,29 @@ public final class SpinLockQueue<T extends Entry<T>> {
 
     protected Entry(SpinLockQueue<T> owner) {
       this.owner = owner;
+    }
+  }
+
+  /**
+   * Goes through entries chain but don't use spinlock.
+   */
+  private static class FastEntryIterator<T extends Entry<T>> implements Iterator<T> {
+    private T next;
+
+    public FastEntryIterator(T next) {
+      this.next = next;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return next != null;
+    }
+
+    @Override
+    public T next() {
+      var result = next;
+      next = next.next;
+      return result;
     }
   }
 }

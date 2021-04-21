@@ -1,7 +1,10 @@
 package jdk.incubator.foreign;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.Arrays;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
+import jdk.internal.foreign.ResourceScopeImpl;
+import jdk.internal.foreign.ResourceScopeImpl.ResourceList.ResourceCleanup;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -31,8 +34,16 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <br />
  *
- * In order to mitigate overhead related to managing segments by the {@link @ResourceScope} high
- * performant applications can use fast entry methods.
+ * In order to mitigate overhead related to managing segments by the {@link @ResourceScope} and
+ * {@link SegmentAllocator} high performant applications can use fast entry methods. The
+ * caller can get, directly, entry which contains memory segment bound to pool's scope. Entry should
+ * be returned to pool witch
+ * <pre>
+ *   try (final var entry = memoryPool.getSegmentEntryBySize(len, 8)) {
+ *     final var segment = entry.memorySegment();
+ *     // do something with segment
+ *   }
+ * </pre>
  *
  * <h1>Memory allocation strategy</h1>
  * This pool allocates and manages set of segments of size being power of 2. If the request
@@ -45,7 +56,7 @@ import jdk.internal.vm.annotation.ForceInline;
  *
  * <br />
  *
- * Segments are kept in buckets of size log(2^n). For each bucket the maximum number of elements
+ * Segments are kept in buckets of size 2^n. For each bucket the maximum number of elements
  * can be set.
  *
  * <br />
@@ -56,9 +67,8 @@ import jdk.internal.vm.annotation.ForceInline;
  * <br />
  *
  * When the segment is returned back to pool, pool checks if the bucket size is less than maximum.
- * In such a case segment entry is put back, otherwise it is deallocated. This check is not atomic
- * with put (due to performance reasons), however low probable queue finally can contain
- * more elements than max.
+ * In such a case segment entry is put back, otherwise it is deallocated. This check is may not
+ * be atomic with put.
  *
  * <br />
  * Please note: that this pool can allocate segments of larger size than requested
@@ -68,11 +78,14 @@ import jdk.internal.vm.annotation.ForceInline;
  * 1GB + 1, pool will allocate 2GB of memory.
  */
 public class MemorySegmentPool {
-  private static final int[] DEFAULT_MAX_SIZES = new int[Long.SIZE];
+  private static final int[] DEFAULT_MAX_SIZES = new int[Long.SIZE + 1];
   private static final ResourceScope GLOBAL = ResourceScope.globalScope();
 
+  /**
+   * Last element to hold 0 size and negative sizes (fallback)
+   */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private final SpinLockQueue<MemoryPoolSegment> segmentsDequeue[] = new SpinLockQueue[Long.SIZE];
+  private final SpinLockQueue<MemoryPoolSegment> segmentsDequeue[] = new SpinLockQueue[Long.SIZE + 1];
 
   private final ResourceScope scope;
 
@@ -80,6 +93,7 @@ public class MemorySegmentPool {
     int idx = 0;
     int cores = Runtime.getRuntime().availableProcessors();
 
+    // Up to 1kb
     for (; idx <= 10; idx++) {
       DEFAULT_MAX_SIZES[idx] = 256;
     }
@@ -102,22 +116,36 @@ public class MemorySegmentPool {
   public MemorySegmentPool(ResourceScope scope) {
     this(DEFAULT_MAX_SIZES, scope);
   }
+
+  /**
+   * Constructs new pool with specified maximum number of elements per bucket.
+   *
+   * There's {@link Long#SIZE} + 1 buckets, while last bucket is not used,
+   * as allocations with size 0 or with highest bit set to 1 goes there.
+   *
+   * @param maxSizes the array of maximum sizes per segment bucket
+   * @param scope the scope to which this allocator should be bound
+   */
   public MemorySegmentPool(int maxSizes[], ResourceScope scope) {
     this.scope = scope;
 
     validateMaxSizes(maxSizes);
     for (int i=0; i < segmentsDequeue.length; i++) {
-      segmentsDequeue[i] = new SpinLockQueue<>(maxSizes[i]);
+      var segmentsBucketMaxSize = i < maxSizes.length ? maxSizes[i] : 0;
+      segmentsDequeue[i] = new SpinLockQueue<>(segmentsBucketMaxSize);
     }
+
+    scope.addOnClose(this::freePool);
   }
 
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
     // Prevent scope managing this pool to go away, when dependant allocator is alive
     final var handle = scope.acquire();
     resourceScope.addOnClose(handle::close);
-    return (bytesSize, bytesAlignment) -> getSegmentForScope(resourceScope, bytesSize, bytesAlignment);
+    return (bytesSize, bytesAlignment) -> getAsNewSegmentWithScope(resourceScope, bytesSize, bytesAlignment);
   }
 
+  @ForceInline
   public MemoryPoolSegment getSegmentEntryByLayout(MemoryLayout layout) {
     return getSegmentEntryBySize(layout.byteSize(), layout.byteAlignment());
   }
@@ -130,42 +158,83 @@ public class MemorySegmentPool {
    *
    * @return segment of size at least `size`
    */
-  @ForceInline
+//  @ForceInline
   public MemoryPoolSegment getSegmentEntryBySize(long size, long alignment) {
-    if (!scope.isAlive()) {
-      throw new IllegalStateException("Associated resource scope is closed");
-    }
+//    if (!scope.isAlive()) {
+//      throw new IllegalStateException("Associated resource scope is closed");
+//    }
 
-    final var alignedSize = (size + alignment - 1) & -alignment;
-    final var bitBound = bitBound(alignedSize);
+    final var bitBound = bitBound(size, alignment);
+    MemoryPoolSegment segment = getMemoryPoolSegment(bitBound);
+
+    return segment;
+  }
+
+  @ForceInline
+  private MemoryPoolSegment getMemoryPoolSegment(int bitBound) {
     final var segmentDequeue = segmentsDequeue[bitBound];
 
     var segment = segmentDequeue.pollEntry();
     if (segment == null) {
       final var bitBoundedSize = 1L << bitBound;
       segment = allocateNewEntry(segmentDequeue, bitBoundedSize);
+//      segment.memorySegment = (NativeMemorySegmentImpl) segment.memoryAddress.asSegment(bitBoundedSize, scope);
+//      segment.size = bitBoundedSize;
     }
-
     return segment;
   }
 
-  private MemorySegment getSegmentForScope(ResourceScope resourceScope, long size, long alignment) {
-    final var segmentEntry = getSegmentEntryBySize(size, alignment);
-    resourceScope.addOnClose(() -> segmentEntry.close());
-    return segmentEntry.memorySegment;
+  @ForceInline
+  private MemorySegment getAsNewSegmentWithScope(ResourceScope resourceScope, long size, long alignment) {
+    final var bitBound = bitBound(size, alignment);
+    final var segmentEntry = getMemoryPoolSegment(bitBound);
+
+    ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
+      @Override
+      public void cleanup() {
+        segmentEntry.close();
+      }
+    });
+
+    return segmentEntry.memoryAddress.asSegment(1L << bitBound, resourceScope);
   }
+
+
 
   @ForceInline
   private static int bitBound(long alignedSize) {
     // If 100.., than 100... - 1 -> 01111
     // If 101 -> than 101 - 1 -> 1....
-    return 64- Long.numberOfLeadingZeros(alignedSize - 1);
+
+    // 0 -> 64
+    // This equation does not allow to allocate more than 2^63, however such memory may require
+    // 5 level page cache, so skippable for now
+    return 64 - Long.numberOfLeadingZeros(alignedSize - 1);
   }
 
+  @ForceInline
+  private static int bitBound(long size, long alignment) {
+    final var alignedSize = (size + alignment - 1) & -alignment;
+
+    return bitBound(alignedSize);
+  }
+
+  @ForceInline
   private MemoryPoolSegment allocateNewEntry(SpinLockQueue<MemoryPoolSegment> queue, long allocationSize) {
     final var memoryAddress = CLinker.allocateMemory(allocationSize);
-    return new MemoryPoolSegment(queue,
-        (NativeMemorySegmentImpl) memoryAddress.asSegment(allocationSize, scope));
+    return new MemoryPoolSegment(queue, memoryAddress, allocationSize, scope);
+  }
+
+  /**
+   * Free all elements associated with pool
+   */
+  private void freePool() {
+    // This method is called from pool's scope close method
+    for (int i = 0; i < segmentsDequeue.length; i++) {
+      // After calling this method maxSize is zero, and no new entries can be put back
+      // Entries are released using cleaner attached to pool's scope
+      segmentsDequeue[i].retrieveAndLock();
+    }
   }
 
   private static void validateMaxSizes(int maxSizes[]) {
@@ -176,12 +245,32 @@ public class MemorySegmentPool {
   }
 
   public static class MemoryPoolSegment extends SpinLockQueue.Entry<MemoryPoolSegment> implements AutoCloseable {
-    private final NativeMemorySegmentImpl memorySegment;
+    private final MemoryAddress memoryAddress;
+    private final MemorySegment memorySegment;
+    private volatile boolean released;
+    long size;
 
+    private final static VarHandle RELEASED;
+
+    static {
+      try {
+        RELEASED = MethodHandles.lookup().findVarHandle(MemoryPoolSegment.class, "released", boolean.class);
+      } catch (Exception e) {
+        throw new ExceptionInInitializerError(e);
+      }
+    }
     @ForceInline
-    private MemoryPoolSegment(SpinLockQueue<MemoryPoolSegment> queue, NativeMemorySegmentImpl segment) {
+    private MemoryPoolSegment(SpinLockQueue<MemoryPoolSegment> queue, MemoryAddress memoryAddress, long size, ResourceScope scope) {
       super(queue);
-      this.memorySegment = segment;
+      this.memoryAddress = memoryAddress;
+      this.memorySegment = memoryAddress.asSegment(size, scope);
+
+      ((ResourceScopeImpl) scope).addOrCleanupIfFail(new ResourceCleanup() {
+        @Override
+        public void cleanup() {
+          release();
+        }
+      });
     }
 
     @ForceInline
@@ -190,10 +279,18 @@ public class MemorySegmentPool {
     }
 
     @Override
-    @ForceInline
+//    @ForceInline
     public void close() {
       if (!this.owner.putEntry(this)) {
-        CLinker.freeMemory(this.memorySegment.address());
+        this.release();
+      }
+    }
+
+    @ForceInline
+    private void release() {
+      if (RELEASED.compareAndSet(this, false, true)) {
+        // Don't use segment here, if scope closed will produce exception
+        CLinker.freeMemory(this.memoryAddress);
       }
     }
   }
