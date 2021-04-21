@@ -181,27 +181,14 @@ public interface MemorySegment extends Addressable {
      * Returns a sequential {@code Stream} over disjoint slices (whose size matches that of the specified layout)
      * in this segment. Calling this method is equivalent to the following code:
      * <blockquote><pre>{@code
-    StreamSupport.stream(segment.spliterator(), false);
+    StreamSupport.stream(segment.spliterator(elementLayout), false);
      * }</pre></blockquote>
      *
      * @param elementLayout the layout to be used for splitting.
      * @return a sequential {@code Stream} over disjoint slices in this segment.
      * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
      */
-    Stream<MemorySegment> stream(MemoryLayout elementLayout);
-
-    /**
-     * Returns a parallel {@code Stream} over disjoint slices (whose size matches that of the specified layout)
-     * in this segment. Calling this method is equivalent to the following code:
-     * <blockquote><pre>{@code
-    StreamSupport.stream(segment.spliterator(), true);
-     * }</pre></blockquote>
-     *
-     * @param elementLayout the layout to be used for splitting.
-     * @return a parallel {@code Stream} over disjoint slices in this segment.
-     * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
-     */
-    Stream<MemorySegment> parallelStream(MemoryLayout elementLayout);
+    Stream<MemorySegment> elements(MemoryLayout elementLayout);
 
     /**
      * Returns the resource scope associated with this memory segment.

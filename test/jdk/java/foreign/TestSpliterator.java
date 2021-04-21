@@ -74,7 +74,7 @@ public class TestSpliterator {
             long parallelRecursive = new SumSegmentRecursive(segment.spliterator(layout.elementLayout()), threshold).invoke();
             assertEquals(parallelRecursive, expected);
             //parallel stream
-            long streamParallel = segment.parallelStream(layout.elementLayout())
+            long streamParallel = segment.elements(layout.elementLayout()).parallel()
                     .reduce(0L, TestSpliterator::sumSingle, Long::sum);
             assertEquals(streamParallel, expected);
         }

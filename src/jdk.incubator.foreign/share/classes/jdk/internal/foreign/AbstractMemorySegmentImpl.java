@@ -126,13 +126,8 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     }
 
     @Override
-    public Stream<MemorySegment> stream(MemoryLayout elementLayout) {
+    public Stream<MemorySegment> elements(MemoryLayout elementLayout) {
         return StreamSupport.stream(spliterator(elementLayout), false);
-    }
-
-    @Override
-    public Stream<MemorySegment> parallelStream(MemoryLayout elementLayout) {
-        return StreamSupport.stream(spliterator(elementLayout), true);
     }
 
     @Override

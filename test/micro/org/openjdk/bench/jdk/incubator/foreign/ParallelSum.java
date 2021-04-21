@@ -50,7 +50,6 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
-import java.util.stream.StreamSupport;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -125,12 +124,12 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_stream_parallel() {
-        return segment.parallelStream(ELEM_LAYOUT).mapToInt(SEGMENT_TO_INT).sum();
+        return segment.elements(ELEM_LAYOUT).parallel().mapToInt(SEGMENT_TO_INT).sum();
     }
 
     @Benchmark
     public int segment_stream_parallel_bulk() {
-        return segment.parallelStream(ELEM_LAYOUT_BULK).mapToInt(SEGMENT_TO_INT_BULK).sum();
+        return segment.elements(ELEM_LAYOUT_BULK).parallel().mapToInt(SEGMENT_TO_INT_BULK).sum();
     }
 
     final static ToIntFunction<MemorySegment> SEGMENT_TO_INT = slice ->
@@ -146,28 +145,28 @@ public class ParallelSum {
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_serial() {
-        return segment.stream(ELEM_LAYOUT)
+        return segment.elements(ELEM_LAYOUT)
                 .filter(FIND_SINGLE)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_parallel() {
-        return segment.parallelStream(ELEM_LAYOUT)
+        return segment.elements(ELEM_LAYOUT).parallel()
                 .filter(FIND_SINGLE)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_serial_bulk() {
-        return segment.stream(ELEM_LAYOUT_BULK)
+        return segment.elements(ELEM_LAYOUT_BULK)
                 .filter(FIND_BULK)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_parallel_bulk() {
-        return segment.parallelStream(ELEM_LAYOUT_BULK)
+        return segment.elements(ELEM_LAYOUT_BULK).parallel()
                 .filter(FIND_BULK)
                 .findAny();
     }
