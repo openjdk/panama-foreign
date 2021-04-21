@@ -31,7 +31,6 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.ref.CleanerFactory;
-import jdk.internal.vm.annotation.Stable;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Reference;
@@ -100,7 +99,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     }
 
     public static ResourceScopeImpl createImplicitScope() {
-        return new NonCloseableSharedScope(CleanerFactory.cleaner());
+        return new ImplicitScopeImpl(CleanerFactory.cleaner());
     }
 
     public static ResourceScopeImpl createConfined(Thread thread, Cleaner cleaner) {
@@ -122,6 +121,31 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
      */
     public static ResourceScopeImpl createShared(Cleaner cleaner) {
         return new SharedScope(cleaner);
+    }
+
+    @Override
+    public final void release(Handle handle) {
+        try {
+            Objects.requireNonNull(handle);
+            if (!checkHandle(handle)) {
+                throw new IllegalArgumentException("Cannot release an handle acquired from another scope");
+            }
+            ((HandleImpl) handle).close();
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+    }
+
+    boolean checkHandle(Handle handle) {
+        return handle.scope() == this;
+    }
+
+    /**
+     * Internal interface used to implement resource scope handles.
+     */
+    interface HandleImpl extends Handle, AutoCloseable {
+        @Override
+        void close();
     }
 
     /**
@@ -193,22 +217,15 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
      * the same per-scope handle is shared across multiple calls to {@link #acquire()}. In fact, for non-closeable
      * scopes, it is sufficient for resource scope handles to keep a strong reference to their scopes, to prevent closure.
      */
-    static class NonCloseableSharedScope extends SharedScope {
+    static class ImplicitScopeImpl extends SharedScope {
 
-        @Stable
-        private Handle handle;
-
-        public NonCloseableSharedScope(Cleaner cleaner) {
+        public ImplicitScopeImpl(Cleaner cleaner) {
             super(cleaner);
         }
 
         @Override
         public Handle acquire() {
-            if (handle == null) {
-                // capture 'this'
-                handle = () -> Reference.reachabilityFence(NonCloseableSharedScope.this);
-            }
-            return handle;
+            return implicitHandle;
         }
 
         @Override
@@ -220,14 +237,31 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         public void close() {
             throw new UnsupportedOperationException("Scope cannot be closed");
         }
+
+        @Override
+        boolean checkHandle(Handle handle) {
+            return handle == implicitHandle;
+        }
+
+        private final static HandleImpl implicitHandle = new HandleImpl() {
+            @Override
+            public void close() {
+                // do nothing
+            }
+
+            @Override
+            public ResourceScope scope() {
+                return GLOBAL;
+            }
+        };
     }
 
     /**
-     * The global, always alive, non-closeable, shared scope. This is like a {@link NonCloseableSharedScope non-closeable scope},
+     * The global, always alive, non-closeable, shared scope. This is like a {@link ImplicitScopeImpl non-closeable scope},
      * except that the operation which adds new resources to the global scope does nothing: as the scope can never
      * become not-alive, there is nothing to track.
      */
-    public static ResourceScopeImpl GLOBAL = new NonCloseableSharedScope( null) {
+    public static ResourceScopeImpl GLOBAL = new ImplicitScopeImpl( null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing

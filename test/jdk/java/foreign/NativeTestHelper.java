@@ -72,7 +72,7 @@ public class NativeTestHelper {
 
         @Override
         public void close() {
-            scopeHandle.close();
+            resourceScope.release(scopeHandle);
             resourceScope.close();
         }
     }
