@@ -33,7 +33,6 @@ import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
-import jdk.internal.vm.annotation.NativeAccess;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -92,7 +91,7 @@ import java.util.stream.Stream;
  * exception:
  * <blockquote><pre>{@code
 MemorySegment segment = null;
-try (ResourceScope scope = ResourceScope.ofConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     segment = MemorySegment.allocateNative(8, 1, scope);
 }
 MemoryAccess.getLong(segment); // already closed!
@@ -130,8 +129,8 @@ MemorySegment roSegment = segment.asReadOnly();
  * values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
-try (ResourceScope scope = ResourceScope.ofShared()) {
-    SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.ofSequence(1024, MemoryLayouts.JAVA_INT);
+try (ResourceScope scope = ResourceScope.newSharedScope()) {
+    SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
     int sum = segment.parallelStream(MemoryLayouts.JAVA_INT)
@@ -706,15 +705,15 @@ for (long l = 0; l < segment.byteSize(); l++) {
     MemoryAddress.NULL.asSegment(Long.MAX_VALUE)
      * }</pre>
      * <p>
-     * This method is <em>restricted</em>. Restricted methods are unsafe, and, if used incorrectly, their use might crash
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @return a memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
      */
     @CallerSensitive
-    @NativeAccess
-    static MemorySegment ofNative() {
+    static MemorySegment globalNativeSegment() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return NativeMemorySegmentImpl.EVERYTHING;
     }

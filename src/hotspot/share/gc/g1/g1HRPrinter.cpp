@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,17 @@
  *
  */
 
-#ifndef SHARE_RUNTIME_MEMPROFILER_HPP
-#define SHARE_RUNTIME_MEMPROFILER_HPP
+#include "precompiled.hpp"
 
-// Prints periodic memory usage trace of HotSpot VM
+#include "gc/g1/g1HRPrinter.hpp"
+#include "gc/g1/heapRegionSet.hpp"
 
-class MemProfilerTask;
-
-class MemProfiler : AllStatic {
- friend class MemProfilerTask;
- private:
-  static MemProfilerTask* _task;
-  static FILE* _log_fp;
-  // Do trace (callback from MemProfilerTask and from disengage)
-  static void do_trace()      PRODUCT_RETURN;
- public:
-  // Start/stop the profiler
-  static void engage()        PRODUCT_RETURN;
-  static void disengage()     PRODUCT_RETURN;
-  // Tester
-  static bool is_active()     PRODUCT_RETURN0;
-};
-
-#endif // SHARE_RUNTIME_MEMPROFILER_HPP
+void G1HRPrinter::cleanup(FreeRegionList* cleanup_list) {
+  if (is_active()) {
+    FreeRegionListIterator iter(cleanup_list);
+    while (iter.more_available()) {
+      HeapRegion* hr = iter.get_next();
+      cleanup(hr);
+    }
+  }
+}

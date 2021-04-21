@@ -185,7 +185,7 @@ public class VaListTest extends NativeTestHelper {
         Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
                 list -> {
                     MemoryAddress ma = list.vargAsAddress(layout);
-                    return MemoryAccess.getIntAtOffset(MemorySegment.ofNative(), ma.toRawLongValue());
+                    return MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), ma.toRawLongValue());
                 };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
@@ -507,7 +507,7 @@ public class VaListTest extends NativeTestHelper {
     public void testUpcall(MethodHandle target, MethodHandle callback) throws Throwable {
         FunctionDescriptor desc = FunctionDescriptor.ofVoid(C_VA_LIST);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment stub = abi.upcallStub(callback, desc, scope);
+            MemoryAddress stub = abi.upcallStub(callback, desc, scope);
             target.invokeExact(stub.address());
         }
     }
