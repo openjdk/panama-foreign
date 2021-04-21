@@ -830,11 +830,6 @@ public abstract class Buffer {
                     if (async && targetScope.ownerThread() != null) {
                         throw new IllegalStateException("Confined scope not supported");
                     }
-                    try {
-                        targetScope.checkValidState();
-                    } catch (ScopedMemoryAccess.Scope.ScopedAccessError e) {   // ####: recheck thrown exs
-                        throw new IllegalStateException("Already closed");
-                    }
                     return targetScope.acquire();
                 }
 
