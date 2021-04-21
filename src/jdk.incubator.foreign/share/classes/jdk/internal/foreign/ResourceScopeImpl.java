@@ -52,9 +52,6 @@ import java.util.Objects;
  */
 public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
-    @Override
-    public abstract Handle acquire();
-
     final ResourceList resourceList;
 
     @Override
