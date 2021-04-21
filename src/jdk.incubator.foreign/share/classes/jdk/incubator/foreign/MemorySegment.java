@@ -133,7 +133,7 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
-    int sum = segment.parallelStream(MemoryLayouts.JAVA_INT)
+    int sum = segment.elements(MemoryLayouts.JAVA_INT).parallel()
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
