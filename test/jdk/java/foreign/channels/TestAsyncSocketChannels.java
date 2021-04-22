@@ -321,7 +321,7 @@ public class TestAsyncSocketChannels extends AbstractChannelsTest {
         }
         @Override
         public void failed(Throwable exc, Void att){
-            this.throwable = exc;
+            this.throwable = tolerateIOEOnWindows(exc);
             latch.countDown();
         }
 
@@ -360,6 +360,16 @@ public class TestAsyncSocketChannels extends AbstractChannelsTest {
         assc.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
         asc.connect(assc.getLocalAddress()).get();
         return assc.accept().get();
+    }
+
+    /** Tolerate the additional level of IOException wrapping of unchecked exceptions
+     * On Windows, when completing the completion handler with a failure. */
+    static Throwable tolerateIOEOnWindows(Throwable t) {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            if (t instanceof IOException)
+                return t.getCause();
+        }
+        return t;
     }
 
     static void readNBytes(AsynchronousSocketChannel channel, long len)
