@@ -825,7 +825,7 @@ public abstract class Buffer {
                 @Override
                 public Scope.Handle acquireScope(Buffer buffer, boolean async) {
                     var scope = buffer.scope();
-                    if (scope == null || scope.isImplicit()) {
+                    if (scope == null) {
                         return null;
                     }
                     if (async && scope.ownerThread() != null) {
