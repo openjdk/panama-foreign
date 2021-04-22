@@ -95,7 +95,9 @@ public interface MemoryAddress extends Addressable {
      * @return the offset of this memory address into the given segment.
      * @param segment the segment relative to which this address offset should be computed
      * @throws IllegalArgumentException if {@code segment} is not compatible with this address; this can happen, for instance,
-     * when {@code segment} models an heap memory region, while this address models an off-heap memory address.
+     * when {@code segment} models an heap memory region, while this address models an off-heap memory address, or
+     * if the resource scope associated with this memory address is not the {@link ResourceScope#globalScope() global scope}
+     * and if that scope is not the same as the one associated with {@code segment}.
      */
     long segmentOffset(MemorySegment segment);
 
