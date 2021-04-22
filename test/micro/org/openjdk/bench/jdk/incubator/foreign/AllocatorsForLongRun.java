@@ -2,7 +2,9 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import jdk.incubator.foreign.CLinker;
@@ -45,98 +47,107 @@ public class AllocatorsForLongRun {
 
   private static final VarHandle BYTE = MemoryHandles.varHandle(byte.class, 1, ByteOrder.nativeOrder());
 
+  private static final int[] POOL_MAX_SIZE;
+
   static {
     final var rand = new Random(0L);
     final var passes = 1024;
-    final var sizeClasses = 3;
+    final var sizeClasses = new int[] {
+        24,
+        128,
+        4096,
+        1024*16,
+        1024 * 1024 * 2
+    };
     // Generate pseudo random sizes
-    sizes = new long[passes * sizeClasses];
+    sizes = new long[passes * sizeClasses.length];
 
     for (int i = 0; i < passes; i++) {
-      sizes[sizeClasses * i + 0] = Math.max(1, (long) (rand.nextGaussian() * 24));
-      sizes[sizeClasses * i + 1] = Math.max(1, (long) (rand.nextGaussian() * 128));
-      sizes[sizeClasses * i + 2] = Math.max(1, (long) (rand.nextGaussian() * 4096));
-//      sizes[sizeClasses * i + 3] = Math.max(1, (long) (rand.nextGaussian() * 1024 * 16));
-//      sizes[sizeClasses * i + 4] = Math.max(1, (long) (rand.nextGaussian() * 1024 * 1024 * 2));
+      for (int j=0; j < sizeClasses.length; j++) {
+        sizes[sizeClasses.length * i + j] = Math.max(1, (long) ((rand.nextGaussian() + 1.0) * sizeClasses[j]));
+      }
     }
+
+    POOL_MAX_SIZE = new int[Long.SIZE + 1];
+    // Use larger sizes for pool, so it will not get exhausted
+    Arrays.fill(POOL_MAX_SIZE, 256);
   }
 
   @Param({"1", "16", "200"})
   public int allocations;
 
-  private MemorySegmentPool pool = new MemorySegmentPool(ResourceScope.globalScope());
+  private MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope());
   private MemorySegmentPool poolEmpty = new MemorySegmentPool(new int[Long.SIZE], ResourceScope.globalScope());
 
+  private int i;
   @Setup
   public void setup() {
-
+    i = 0;
+    // Preallocate pool
+    for (int j = 0; j <= 24; j++) {
+      pool.getSegmentEntryBySize(1L << j, 1).close();
+    }
   }
 
   @Benchmark
   public void arena() {
-    int i = 0;
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = SegmentAllocator.arenaAllocator(scope);
       for (int j = 0; j < allocations; j++) {
         final var segment = allocator.allocate(sizes[i]);
         readSegment(segment);
-        i = next(i);
+        next();
       }
     }
   }
 
   @Benchmark
   public void pool_allocator() {
-    int i = 0;
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = pool.allocatorForScope(scope);
       for (int j = 0; j < allocations; j++) {
         final var segment = allocator.allocate(sizes[i]);
         readSegment(segment);
-        i = next(i);
+        next();
       }
     }
   }
 
   @Benchmark
   public void pool_allocator_exhausted() {
-    int i = 0;
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = poolEmpty.allocatorForScope(scope);
       for (int j = 0; j < allocations; j++) {
         final var segment = allocator.allocate(sizes[i]);
         readSegment(segment);
-        i = next(i);
+        next();
       }
     }
   }
 
   @Benchmark
+//  @CompilerControl(CompilerControl.Mode.PRINT)
   public void pool_direct() {
-    int i = 0;
-    // If I would develop with direct segments I would do something like this
-    LinkedList<MemoryPoolSegment> pooledSegments = new LinkedList<>();
+    List<MemoryPoolSegment> pooledSegments = new ArrayList<>(allocations);
     for (int j = 0; j < allocations; j++) {
       var s = pool.getSegmentEntryBySize(sizes[i], 1);
       pooledSegments.add(s);
       readSegment(s.memorySegment());
-      i = next(i);
+      next();
     }
     pooledSegments.forEach(MemoryPoolSegment::close);
   }
-
   @Benchmark
+//  @CompilerControl(CompilerControl.Mode.PRINT)
   public void malloc_free() {
-    int i = 0;
-    // If I would develop with direct segments I would do something like this
-    LinkedList<MemoryAddress> allocatedAddresses = new LinkedList<>();
+    List<MemoryAddress> allocatedAddresses = new ArrayList<>(allocations);
     for (int j = 0; j < allocations; j++) {
       var size = sizes[i];
       var a = CLinker.allocateMemory(size);
       var s = a.asSegment(size, ResourceScope.globalScope());
       allocatedAddresses.add(a);
       readSegment(s);
-      i = next(i);
+      next();
     }
     allocatedAddresses.forEach(CLinker::freeMemory);
   }
@@ -145,12 +156,14 @@ public class AllocatorsForLongRun {
    * Do read to avoid situation allocator will allocate not mapped memory.
    */
   private void readSegment(MemorySegment s) {
-    final var size = s.byteSize();
-    for (long l = 0; l <  size; l += 256) {
-      BYTE.set(s, l, (byte) 1);
+    final var size = (int) s.byteSize();
+    for (int idx = 0; idx <  size; idx += 1024) {
+//      MemoryAccess.setByteAtOffset(s, l, (byte)0);
+      BYTE.set(s, 0, (byte) 1);
     }
   }
-  private static int next(int i) {
-    return ++i == sizes.length ? 0 : i;
+
+  private void next() {
+    i = (++i == sizes.length ? 0 : i);
   }
 }
