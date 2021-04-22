@@ -30,6 +30,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.misc.ScopedMemoryAccess.Scope;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM.BufferPool;
 import jdk.internal.vm.annotation.ForceInline;
@@ -822,15 +823,15 @@ public abstract class Buffer {
                 }
 
                 @Override
-                public Object acquireScope(Buffer targetBuffer, boolean async) {
-                    var targetScope = targetBuffer.scope();
-                    if (targetScope == null || targetScope.isImplicit()) {
+                public Scope.Handle acquireScope(Buffer buffer, boolean async) {
+                    var scope = buffer.scope();
+                    if (scope == null || scope.isImplicit()) {
                         return null;
                     }
-                    if (async && targetScope.ownerThread() != null) {
+                    if (async && scope.ownerThread() != null) {
                         throw new IllegalStateException("Confined scope not supported");
                     }
-                    return targetScope.acquire();
+                    return scope.acquire();
                 }
 
                 @Override

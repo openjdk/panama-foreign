@@ -31,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.ScopedMemoryAccess.Scope;
 
 /**
  * File-descriptor based I/O utilities that are shared by NIO classes.
@@ -464,15 +465,15 @@ public class IOUtil {
 
     private static final JavaNioAccess NIO_ACCESS = SharedSecrets.getJavaNioAccess();
 
-    static Object acquireScope(ByteBuffer bb, boolean async) {
+    static Scope.Handle acquireScope(ByteBuffer bb, boolean async) {
         return NIO_ACCESS.acquireScope(bb, async);
     }
 
-    private static void releaseScope(Object handle) {
+    private static void releaseScope(Scope.Handle handle) {
         if (handle == null)
             return;
         try {
-            ((AutoCloseable)handle).close();
+            handle.scope().release(handle);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -524,11 +525,11 @@ public class IOUtil {
         }
     }
 
-    static record Releaser(Object handle) implements Runnable {
+    static record Releaser(Scope.Handle handle) implements Runnable {
         Releaser { Objects.requireNonNull(handle) ; }
         @Override public void run() { releaseScope(handle); }
-        static Runnable of(Object handle) { return new Releaser(handle); }
-        static Runnable ofNullable(Object handle) {
+        static Runnable of(Scope.Handle handle) { return new Releaser(handle); }
+        static Runnable ofNullable(Scope.Handle handle) {
             if (handle == null)
                 return () -> { };
             return new Releaser(handle);

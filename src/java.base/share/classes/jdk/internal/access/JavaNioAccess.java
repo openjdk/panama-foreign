@@ -27,6 +27,7 @@ package jdk.internal.access;
 
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.misc.ScopedMemoryAccess.Scope;
 import jdk.internal.misc.VM.BufferPool;
 
 import java.io.FileDescriptor;
@@ -91,7 +92,7 @@ public interface JavaNioAccess {
      * scope handle. Null is returned if the buffer has no scope, or
      * acquiring is not required to guarantee safety.
      */
-    Object acquireScope(Buffer targetBuffer, boolean async);
+    Scope.Handle acquireScope(Buffer buffer, boolean async);
 
     /**
      * Used by {@code jdk.internal.foreign.MappedMemorySegmentImpl} and byte buffer var handle views.

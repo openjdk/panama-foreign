@@ -98,13 +98,19 @@ public class ScopedMemoryAccess {
      */
     public interface Scope {
 
+       interface Handle {
+            Scope scope();
+        }
+
         void checkValidState();
 
         Thread ownerThread();
 
         boolean isImplicit();
 
-        Object acquire();
+        Handle acquire();
+
+        void release(Handle handle);
 
         /**
          * Error thrown when memory access fails because the memory has already been released.
