@@ -64,7 +64,7 @@ final class ConfinedScope extends ResourceScopeImpl {
     }
 
     @Override
-    public Handle acquire() {
+    public HandleImpl acquire() {
         checkValidState();
         lockCount++;
         return new ConfinedHandle();
@@ -117,7 +117,7 @@ final class ConfinedScope extends ResourceScopeImpl {
         boolean released = false;
 
         @Override
-        public ResourceScope scope() {
+        public ResourceScopeImpl scope() {
             return ConfinedScope.this;
         }
 

@@ -378,10 +378,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * The life-cycle of the returned buffer will be tied to that of this segment. That is, accessing the returned buffer
      * after the scope associated with this segment has been closed (see {@link ResourceScope#close()}, will throw an {@link IllegalStateException}.
      * <p>
-     * If this segment is associated with a shared scope, calling certain I/O operations on the resulting buffer might result in
-     * an unspecified exception being thrown. Examples of such problematic operations are {@link FileChannel#read(ByteBuffer)},
-     * {@link FileChannel#write(ByteBuffer)}, {@link java.nio.channels.SocketChannel#read(ByteBuffer)} and
-     * {@link java.nio.channels.SocketChannel#write(ByteBuffer)}.
+     * If this segment is associated with a confined scope, calling read/write I/O operations on the resulting buffer
+     * might result in an unspecified exception being thrown. Examples of such problematic operations are
+     * {@link java.nio.channels.AsynchronousSocketChannel#read(ByteBuffer)} and
+     * {@link java.nio.channels.AsynchronousSocketChannel#write(ByteBuffer)}.
      * <p>
      * Finally, the resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
      * {@link ByteBuffer#order(java.nio.ByteOrder)}.
