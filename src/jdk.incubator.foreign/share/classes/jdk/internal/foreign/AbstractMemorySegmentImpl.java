@@ -257,6 +257,31 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     }
 
     @Override
+    public boolean isNative() {
+        return false;
+    }
+
+    @Override
+    public void load() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public void unload() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public boolean isLoaded() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public void force() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
     public final byte[] toByteArray() {
         return toArray(byte[].class, 1, byte[]::new, MemorySegment::ofArray);
     }

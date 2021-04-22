@@ -28,7 +28,6 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
 
-import jdk.incubator.foreign.MappedMemorySegments;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
@@ -252,7 +251,7 @@ public class TestByteBuffer {
             //write to channel
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
             initTuples(segment, tuples.elementCount().getAsLong());
-            MappedMemorySegments.force(segment);
+            segment.force();
         }
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -288,7 +287,7 @@ public class TestByteBuffer {
                 //write to channel
                 MemorySegment segment = MemorySegment.mapFile(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
                 initTuples(segment, 1);
-                MappedMemorySegments.force(segment);
+                segment.force();
             }
         }
 
@@ -488,7 +487,7 @@ public class TestByteBuffer {
             for (byte offset = 0; offset < SIZE; offset++) {
                 MemoryAccess.setByteAtOffset(segment, offset, offset);
             }
-            MappedMemorySegments.force(segment);
+            segment.force();
         }
 
         for (int offset = 0 ; offset < SIZE ; offset++) {
@@ -510,10 +509,10 @@ public class TestByteBuffer {
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertFalse(segment.isReadOnly());
-            MappedMemorySegments.force(segment);
-            MappedMemorySegments.load(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.unload(segment);
+            segment.force();
+            segment.load();
+            segment.isLoaded();
+            segment.unload();
         }
         //RO
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -521,10 +520,10 @@ public class TestByteBuffer {
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertTrue(segment.isReadOnly());
-            MappedMemorySegments.force(segment);
-            MappedMemorySegments.load(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.unload(segment);
+            segment.force();
+            segment.load();
+            segment.isLoaded();
+            segment.unload();
         }
     }
 
@@ -885,10 +884,10 @@ public class TestByteBuffer {
     }
 
     enum MappedSegmentOp {
-        LOAD(MappedMemorySegments::load),
-        UNLOAD(MappedMemorySegments::unload),
-        IS_LOADED(MappedMemorySegments::isLoaded),
-        FORCE(MappedMemorySegments::force),
+        LOAD(MemorySegment::load),
+        UNLOAD(MemorySegment::unload),
+        IS_LOADED(MemorySegment::isLoaded),
+        FORCE(MemorySegment::force),
         BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
         BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());

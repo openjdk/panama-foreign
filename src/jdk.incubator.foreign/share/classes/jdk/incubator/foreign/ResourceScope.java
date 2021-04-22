@@ -211,6 +211,7 @@ public interface ResourceScope extends AutoCloseable {
     /**
      * Release the provided resource scope handle. This method is idempotent, that is, releasing the same handle
      * multiple times has no effect.
+     * @param handle the resource scope handle to be released.
      * @throws IllegalArgumentException if this resource scope is explicit and the provided handle is not associated
      * with this scope.
      */

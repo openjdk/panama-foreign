@@ -32,7 +32,11 @@ import java.lang.ref.Cleaner;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained using the
- * {@link MemorySegment#address()} method, and can refer to either off-heap or on-heap memory.
+ * {@link MemorySegment#address()} method, and can refer to either off-heap or on-heap memory. Off-heap memory
+ * addresses are referred to as <em>native</em> memory addresses (see {@link #isNative()}). Native memory addresses
+ * allow clients to obtain a raw memory address (expressed as a long value) which can then be used e.g. when interacting
+ * with native code.
+ * <p>
  * Given an address, it is possible to compute its offset relative to a given segment, which can be useful
  * when performing memory dereference operations using a memory access var handle (see {@link MemoryHandles}).
  * <p>
@@ -69,7 +73,7 @@ public interface MemoryAddress extends Addressable {
 
     /**
      * Returns the offset of this memory address into the given segment. More specifically, if both the segment's
-     * base address and this address are off-heap addresses, the result is computed as
+     * base address and this address are native addresses, the result is computed as
      * {@code this.toRawLongValue() - segment.address().toRawLongValue()}. Otherwise, if both addresses in the form
      * {@code (B, O1)}, {@code (B, O2)}, where {@code B} is the same base heap object and {@code O1}, {@code O2}
      * are byte offsets (relative to the base object) associated with this address and the segment's base address,
@@ -112,7 +116,7 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
-     * @throws UnsupportedOperationException if this address is an heap address.
+     * @throws UnsupportedOperationException if this address is not a {@link #isNative() native} address.
      */
     MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
@@ -139,14 +143,20 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
-     * @throws UnsupportedOperationException if this address is an heap address.
+     * @throws UnsupportedOperationException if this address is not a {@link #isNative() native} address.
      */
     MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);
 
     /**
-     * Returns the raw long value associated with this memory address.
-     * @return The raw long value associated with this memory address.
-     * @throws UnsupportedOperationException if this memory address is an heap address.
+     * Is this an off-heap memory address?
+     * @return true, if this is an off-heap memory address.
+     */
+    boolean isNative();
+
+    /**
+     * Returns the raw long value associated with this native memory address.
+     * @return The raw long value associated with this native memory address.
+     * @throws UnsupportedOperationException if this memory address is not a {@link #isNative() native} address.
      */
     long toRawLongValue();
 
@@ -174,12 +184,12 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The off-heap memory address instance modelling the {@code NULL} address.
+     * The native memory address instance modelling the {@code NULL} address.
      */
     MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
 
     /**
-     * Obtain an off-heap memory address instance from given long address.
+     * Obtain a native memory address instance from given long address.
      * @param value the long address.
      * @return the new memory address instance.
      */
