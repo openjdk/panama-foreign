@@ -172,11 +172,10 @@ public interface MemoryAddress extends Addressable {
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
      * object is also an address, and it refers to the same memory location as this address.
      *
-     * @apiNote two addresses might be considered equal despite their associated segments differ. This
-     * can happen, for instance, if the segment associated with one address is a <em>slice</em>
-     * (see {@link MemorySegment#asSlice(long, long)}) of the segment associated with the other address. Moreover,
-     * two addresses might be considered equals despite differences in the temporal bounds associated with their
-     * corresponding segments.
+     * @apiNote two addresses might be considered equal despite their associated resource scopes differ. This
+     * can happen, for instance, if the same memory address is used to create memory segments with different
+     * scopes (using {@link #asSegment(long, ResourceScope)}), and the base address of the resulting segments is
+     * then compared.
      *
      * @param that the object to be compared for equality with this address.
      * @return {@code true} if the specified object is equal to this address.
