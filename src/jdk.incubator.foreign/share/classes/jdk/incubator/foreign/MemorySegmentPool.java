@@ -5,6 +5,7 @@ import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.ResourceScopeImpl.ResourceList.ResourceCleanup;
+import jdk.internal.vm.annotation.DontInline;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -136,13 +137,27 @@ public class MemorySegmentPool {
     }
 
     scope.addOnClose(this::freePool);
+
   }
 
+  @ForceInline
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
     // Prevent scope managing this pool to go away, when dependant allocator is alive
     final var handle = scope.acquire();
     resourceScope.addOnClose(handle::close);
-    return (bytesSize, bytesAlignment) -> getAsNewSegmentWithScope(resourceScope, bytesSize, bytesAlignment);
+    return new SegmentAllocator() {
+
+      @ForceInline // strongly recommended
+      @Override
+      public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+        final var alignedSize = (bytesSize + bytesAlignment - 1) & -bytesAlignment;
+
+        final var segmentEntry = getSegmentForAllocator(resourceScope, alignedSize);
+        // We want next line to be inlined, and pass aligned size, as VM better optimizes this
+        // than 1 << bitBound
+        return segmentEntry.memoryAddress.asSegment(alignedSize, resourceScope);
+      }
+    };
   }
 
   @ForceInline
@@ -158,7 +173,7 @@ public class MemorySegmentPool {
    *
    * @return segment of size at least `size`
    */
-//  @ForceInline
+  @DontInline
   public MemoryPoolSegment getSegmentEntryBySize(long size, long alignment) {
 //    if (!scope.isAlive()) {
 //      throw new IllegalStateException("Associated resource scope is closed");
@@ -170,6 +185,9 @@ public class MemorySegmentPool {
     return segment;
   }
 
+  /**
+   * Search and maybe allocate segment bounded by given bit bound
+   */
   @ForceInline
   private MemoryPoolSegment getMemoryPoolSegment(int bitBound) {
     final var segmentDequeue = segmentsDequeue[bitBound];
@@ -178,25 +196,27 @@ public class MemorySegmentPool {
     if (segment == null) {
       final var bitBoundedSize = 1L << bitBound;
       segment = allocateNewEntry(segmentDequeue, bitBoundedSize);
-//      segment.memorySegment = (NativeMemorySegmentImpl) segment.memoryAddress.asSegment(bitBoundedSize, scope);
-//      segment.size = bitBoundedSize;
     }
     return segment;
   }
 
-  @ForceInline
-  private MemorySegment getAsNewSegmentWithScope(ResourceScope resourceScope, long size, long alignment) {
-    final var bitBound = bitBound(size, alignment);
-    final var segmentEntry = getMemoryPoolSegment(bitBound);
+  /**
+   * Prepares pooled segment to be returned by allocator from allocatorForScope
+   */
+  @DontInline
+  private MemoryPoolSegment getSegmentForAllocator(ResourceScope resourceScope, long alignedSize) {
+    int bound = bitBound(alignedSize);
+    final var segmentEntry = getMemoryPoolSegment(bound);
 
     ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
       @Override
+      @ForceInline
       public void cleanup() {
         segmentEntry.close();
       }
     });
 
-    return segmentEntry.memoryAddress.asSegment(1L << bitBound, resourceScope);
+    return segmentEntry;
   }
 
 
@@ -247,8 +267,8 @@ public class MemorySegmentPool {
   public static class MemoryPoolSegment extends SpinLockQueue.Entry<MemoryPoolSegment> implements AutoCloseable {
     private final MemoryAddress memoryAddress;
     private final MemorySegment memorySegment;
+
     private volatile boolean released;
-    long size;
 
     private final static VarHandle RELEASED;
 
@@ -278,15 +298,20 @@ public class MemorySegmentPool {
       return memorySegment;
     }
 
+    @ForceInline
+    public MemoryAddress memoryAddress() {
+      return memoryAddress;
+    }
+
     @Override
 //    @ForceInline
+    @DontInline
     public void close() {
       if (!this.owner.putEntry(this)) {
         this.release();
       }
     }
 
-    @ForceInline
     private void release() {
       if (RELEASED.compareAndSet(this, false, true)) {
         // Don't use segment here, if scope closed will produce exception

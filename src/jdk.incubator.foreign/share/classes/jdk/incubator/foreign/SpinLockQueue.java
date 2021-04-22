@@ -27,6 +27,8 @@ public final class SpinLockQueue<T extends Entry<T>> {
   private static final VarHandle SIZE;
   private static final VarHandle LOCK;
   private static final VarHandle ENTRY_NEXT;
+  private static final VarHandle ENTRY_IN_POOL;
+
   static {
     try {
       HEAD = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "head", Entry.class);
@@ -34,6 +36,8 @@ public final class SpinLockQueue<T extends Entry<T>> {
       LOCK = MethodHandles.lookup().findVarHandle(SpinLockQueue.class, "lock", int.class);
 
       ENTRY_NEXT = MethodHandles.lookup().findVarHandle(Entry.class, "next", Entry.class);
+      ENTRY_IN_POOL = MethodHandles.lookup().findVarHandle(Entry.class, "inPool", boolean.class);
+
     } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
@@ -52,6 +56,7 @@ public final class SpinLockQueue<T extends Entry<T>> {
       if (current != null) {
         HEAD.setRelease(this, ENTRY_NEXT.getAcquire(current));
         SIZE.setRelease(this, (int) SIZE.getAcquire(this) - 1);
+        ENTRY_IN_POOL.set(current, false);
       }
       return current;
     } finally {
@@ -82,7 +87,14 @@ public final class SpinLockQueue<T extends Entry<T>> {
     while (!LOCK.compareAndSet(this, 0, 1)) { }
     try {
       final var size = (int) SIZE.getAcquire(this);
+
+      if ((boolean) ENTRY_IN_POOL.get(entry)) {
+        throw new IllegalStateException("Entry already in pool, can't be added twice");
+      }
+
       if (size < this.maxSize) {
+        ENTRY_IN_POOL.set(entry, true);
+
         ENTRY_NEXT.setRelease(entry, HEAD.getAcquire(this));
         HEAD.setRelease(this, entry);
         SIZE.setRelease(this, size + 1);
@@ -133,12 +145,26 @@ public final class SpinLockQueue<T extends Entry<T>> {
       LOCK.setRelease(this, 0);
     }
   }
+
+  /**
+   * Checks if entry is not in pool (or throw exception) and change flags inPool.
+   * Prevent double addition.
+   * To be called after lock
+   */
+  @ForceInline
+  private static void checkMarkEntryInPool(Entry<?> entry) {
+    if (!ENTRY_IN_POOL.weakCompareAndSet(entry, false, true)) {
+      throw new IllegalStateException("Entry " + entry + " already in pool, can't be added twice");
+    }
+  }
+
   public static class Entry<T extends Entry<T>> {
     // Should we keep generic
     // If exposing spinlock queue, the entry should be in module internal package, to prevent
     // tampering owner and next with reflect
     final SpinLockQueue<T> owner;
-    volatile T next;
+    private volatile T next;
+    private volatile boolean inPool;
 
     protected Entry(SpinLockQueue<T> owner) {
       this.owner = owner;
@@ -163,7 +189,8 @@ public final class SpinLockQueue<T extends Entry<T>> {
     @Override
     public T next() {
       var result = next;
-      next = next.next;
+      ENTRY_IN_POOL.setVolatile(result, false);
+      next = (T) ENTRY_NEXT.get(next);
       return result;
     }
   }

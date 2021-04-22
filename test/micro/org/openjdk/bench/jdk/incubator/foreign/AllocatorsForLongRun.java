@@ -17,14 +17,18 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
+import sun.misc.Unsafe;
 
 /**
  * Allocators performance tests for long running applications.
@@ -49,6 +53,9 @@ public class AllocatorsForLongRun {
 
   private static final int[] POOL_MAX_SIZE;
 
+  static final Unsafe unsafe = Utils.unsafe;
+
+  private static final byte[] buff = new byte[1028*1024*4];
   static {
     final var rand = new Random(0L);
     final var passes = 1024;
@@ -76,8 +83,15 @@ public class AllocatorsForLongRun {
   @Param({"1", "16", "200"})
   public int allocations;
 
-  private MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope());
+//  @Param({"true", "false"})
+//  private boolean doSegmentWrite = true;
+
+  private static final boolean doSegmentWrite = true;
+
+  private static final MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope());
   private MemorySegmentPool poolEmpty = new MemorySegmentPool(new int[Long.SIZE], ResourceScope.globalScope());
+
+  private volatile ResourceScope scope;
 
   private int i;
   @Setup
@@ -87,7 +101,30 @@ public class AllocatorsForLongRun {
     for (int j = 0; j <= 24; j++) {
       pool.getSegmentEntryBySize(1L << j, 1).close();
     }
+
+    scope = ResourceScope.globalScope();
   }
+
+  private ResourceScope iterationScope;
+  private SegmentAllocator iterationArenaAllocator;
+
+  @Setup(Level.Iteration)
+  public void setupIteration() {
+    i = 0;
+  }
+
+//  @Setup(Level.Invocation)
+//  public void setupInvocation() {
+//    iterationScope = ResourceScope.newConfinedScope();
+//    iterationArenaAllocator = SegmentAllocator.arenaAllocator(iterationScope);
+//  }
+//
+//  @TearDown(Level.Invocation)
+//  public void tearDownInvocation() {
+//    iterationArenaAllocator = null;
+//    iterationScope.close();
+//    iterationScope = null;
+//  }
 
   @Benchmark
   public void arena() {
@@ -100,6 +137,17 @@ public class AllocatorsForLongRun {
       }
     }
   }
+
+//  @Benchmark
+//  public void iteration_arena_no_dealloc() {
+//    // May be OOM, arena is deallocated after iteration
+//    // Depends on setup / tearDown invocation
+//    for (int j = 0; j < allocations; j++) {
+//      final var segment = iterationArenaAllocator.allocate(sizes[i]);
+//      readSegment(segment);
+//      next();
+//    }
+//  }
 
   @Benchmark
   public void pool_allocator() {
@@ -130,9 +178,12 @@ public class AllocatorsForLongRun {
   public void pool_direct() {
     List<MemoryPoolSegment> pooledSegments = new ArrayList<>(allocations);
     for (int j = 0; j < allocations; j++) {
-      var s = pool.getSegmentEntryBySize(sizes[i], 1);
+      var size = sizes[i];
+      var s = pool.getSegmentEntryBySize(size, 2);
       pooledSegments.add(s);
+
       readSegment(s.memorySegment());
+//      readSegment(s.memoryAddress.asSegment(size, scope));
       next();
     }
     pooledSegments.forEach(MemoryPoolSegment::close);
@@ -155,11 +206,15 @@ public class AllocatorsForLongRun {
   /**
    * Do read to avoid situation allocator will allocate not mapped memory.
    */
+  @CompilerControl(CompilerControl.Mode.INLINE)
   private void readSegment(MemorySegment s) {
-    final var size = (int) s.byteSize();
-    for (int idx = 0; idx <  size; idx += 1024) {
-//      MemoryAccess.setByteAtOffset(s, l, (byte)0);
-      BYTE.set(s, 0, (byte) 1);
+    if (doSegmentWrite) {
+      final var size = (int) s.byteSize();
+      BYTE.set(s, (long) 0, (byte) 1);
+      for (int idx = 1024; idx < size; idx += 1024) {
+        //      MemoryAccess.setByteAtOffset(s, l, (byte)0);
+        BYTE.set(s, (long) idx, (byte) 1);
+      }
     }
   }
 
