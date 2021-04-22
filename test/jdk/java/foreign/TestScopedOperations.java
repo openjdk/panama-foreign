@@ -90,7 +90,7 @@ public class TestScopedOperations {
 
     static {
             // scope operations
-            ScopedOperation.ofScope(scope -> scope.addOnClose(() -> {}), "ResourceScope::addOnClose");
+            ScopedOperation.ofScope(scope -> scope.addCloseAction(() -> {}), "ResourceScope::addOnClose");
             ScopedOperation.ofScope(scope -> {
                 ResourceScope.Handle handle = scope.acquire();
                 scope.release(handle);
