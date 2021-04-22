@@ -57,7 +57,7 @@ public class TestResourceScope {
                 ResourceScope.newConfinedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addOnClose(() -> acc.addAndGet(delta));
+            scope.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -82,7 +82,7 @@ public class TestResourceScope {
                 ResourceScope.newSharedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addOnClose(() -> acc.addAndGet(delta));
+            scope.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -111,7 +111,7 @@ public class TestResourceScope {
             int delta = i;
             Thread thread = new Thread(() -> {
                 try {
-                    scopeRef.get().addOnClose(() -> {
+                    scopeRef.get().addCloseAction(() -> {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {

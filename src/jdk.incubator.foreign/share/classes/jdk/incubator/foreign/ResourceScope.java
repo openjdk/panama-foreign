@@ -46,7 +46,7 @@ import java.util.Spliterator;
  * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operations on
  * resources associated with that scope (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
- * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addOnClose(Runnable)}) to be called.
+ * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addCloseAction(Runnable)}) to be called.
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
  *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
@@ -63,7 +63,7 @@ import java.util.Spliterator;
  * <p>
  * Managed scopes can be useful to allow for predictable, deterministic resource deallocation, while still prevent accidental native memory leaks.
  * In case a managed resource scope is closed explicitly, no further action will be taken when the scope becomes unreachable;
- * that is, cleanup actions (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not,
+ * that is, cleanup actions (see {@link #addCloseAction(Runnable)}) associated with a resource scope, whether managed or not,
  * are called <em>exactly once</em>.
  *
  * <h2>Implicit resource scopes</h2>
@@ -108,12 +108,12 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
  * }</pre></blockquote>
  *
  * <p>
- * When using shared resource scopes, clients should make sure that no other thread is accessing the segment while
- * the segment is being closed. If one or more threads attempts to access a segment concurrently while the
- * segment is being closed, an exception might occur on both the accessing and the closing threads. Clients should
- * refrain from attempting to close a shared resource scope repeatedly (e.g. keep calling {@link #close()} until no exception is thrown);
- * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
- * accessing/closing the resources associated with the shared resource scope.
+ * Explicit shared resource scopes, while powerful, must be used with caution: if one or more threads accesses
+ * a resource associated with a shared scope while the scope is being closed from another thread, an exception might occur on both
+ * the accessing and the closing threads. Clients should refrain from attempting to close a shared resource scope repeatedly
+ * (e.g. keep calling {@link #close()} until no exception is thrown). Instead, clients of shared resource scopes
+ * should always ensure that proper synchronization mechanisms (e.g. using resource scope handles, see below) are put in place
+ * so that threads closing shared resource scopes can never race against threads accessing resources managed by same scopes.
  *
  * <h2>Resource scope handles</h2>
  *
@@ -191,10 +191,11 @@ public interface ResourceScope extends AutoCloseable {
 
     /**
      * Add a custom cleanup action which will be executed when the resource scope is closed.
+     * The order in which custom cleanup actions are invoked once the scope is closed is unspecified.
      * @param runnable the custom cleanup action to be associated with this scope.
      * @throws IllegalStateException if this scope has already been closed.
      */
-    void addOnClose(Runnable runnable);
+    void addCloseAction(Runnable runnable);
 
     /**
      * If this resource scope is explicit, this method acquires a new resource scope handle, associated with this
