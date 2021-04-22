@@ -169,9 +169,9 @@ public class TestResourceScope {
             } catch (IllegalStateException ex) {
                 assertTrue(handles.size() > 0);
                 ResourceScope.Handle handle = handles.remove(0);
-                handle.close();
-                handle.close(); // make sure it's idempotent
-                handle.close(); // make sure it's idempotent
+                scope.release(handle);
+                scope.release(handle); // make sure it's idempotent
+                scope.release(handle); // make sure it's idempotent
             }
         }
     }
@@ -187,9 +187,9 @@ public class TestResourceScope {
                 try {
                     ResourceScope.Handle handle = scope.acquire();
                     waitSomeTime();
-                    handle.close();
-                    handle.close(); // make sure it's idempotent
-                    handle.close(); // make sure it's idempotent
+                    scope.release(handle);
+                    scope.release(handle); // make sure it's idempotent
+                    scope.release(handle); // make sure it's idempotent
                 } catch (IllegalStateException ex) {
                     // might be already closed - do nothing
                 }
@@ -218,13 +218,14 @@ public class TestResourceScope {
 
     @Test
     public void testCloseConfinedLock() {
-        ResourceScope.Handle handle = ResourceScope.newConfinedScope().acquire();
+        ResourceScope scope = ResourceScope.newConfinedScope();
+        ResourceScope.Handle handle = scope.acquire();
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
-                handle.close();
-                handle.close(); // make sure it's idempotent
-                handle.close(); // make sure it's idempotent
+                scope.release(handle);
+                scope.release(handle); // make sure it's idempotent
+                scope.release(handle); // make sure it's idempotent
             } catch (Throwable ex) {
                 failure.set(ex);
             }
@@ -237,6 +238,29 @@ public class TestResourceScope {
         } catch (Throwable ex) {
             throw new AssertionError(ex);
         }
+    }
+
+    @Test(dataProvider = "scopes")
+    public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
+        ResourceScope scope = scopeFactory.get();
+        acquireRecursive(scope, 5);
+        if (!scope.isImplicit()) {
+            scope.close();
+        }
+    }
+
+    private void acquireRecursive(ResourceScope scope, int acquireCount) {
+        ResourceScope.Handle handle = scope.acquire();
+        if (acquireCount > 0) {
+            // recursive acquire
+            acquireRecursive(scope, acquireCount - 1);
+        }
+        if (!scope.isImplicit()) {
+            assertThrows(IllegalStateException.class, scope::close);
+        }
+        scope.release(handle);
+        scope.release(handle); // make sure it's idempotent
+        scope.release(handle); // make sure it's idempotent
     }
 
     private void waitSomeTime() {
@@ -261,6 +285,16 @@ public class TestResourceScope {
                 { (Supplier<Cleaner>)() -> null },
                 { (Supplier<Cleaner>)Cleaner::create },
                 { (Supplier<Cleaner>)CleanerFactory::cleaner }
+        };
+    }
+
+    @DataProvider
+    static Object[][] scopes() {
+        return new Object[][] {
+                { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
+                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
+                { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }
 }

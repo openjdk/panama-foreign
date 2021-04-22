@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * when working inside a <em>try-with-resources</em> construct:
  *
  * <blockquote><pre>{@code
-try (ResourceScope scope = ResourceScope.ofConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
    SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
    ...
 }

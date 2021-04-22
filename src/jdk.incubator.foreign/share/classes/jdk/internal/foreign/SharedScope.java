@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
 
 import java.lang.invoke.MethodHandles;
@@ -170,8 +171,13 @@ class SharedScope extends ResourceScopeImpl {
     /**
      * A shared resource scope handle; this implementation has to handle close vs. close races.
      */
-    class SharedHandle implements Handle {
+    class SharedHandle implements HandleImpl {
         final AtomicBoolean released = new AtomicBoolean(false);
+
+        @Override
+        public ResourceScope scope() {
+            return SharedScope.this;
+        }
 
         @Override
         public void close() {

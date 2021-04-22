@@ -26,7 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.LibrariesHelper;
-import jdk.internal.vm.annotation.NativeAccess;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -44,7 +43,7 @@ import java.util.Optional;
  * therefore preventing library unloading. For {@link #lookup(String, MemoryLayout) memory segments} obtained from a library lookup object,
  * this means that clients can safely dereference memory associated with lookup symbols, as follows:
  * <pre>{@code
- * LibraryLookup defaultLookup = LibraryLookup.defaultLookup();
+ * LibraryLookup defaultLookup = LibraryLookup.ofDefault();
  * MemorySegment errnoSegment = defaultLookup.lookup("errno", MemoryLayouts.JAVA_INT).get();
  * int errno = MemoryAccess.getInt(errnoSegment);
  * }</pre>
@@ -66,31 +65,41 @@ public interface LibraryLookup {
 
     /**
      * Looks up a symbol with given name in this library. The returned memory address maintains a strong reference to this lookup object.
+     *
      * @param name the symbol name.
      * @return the memory address associated with the library symbol (if any).
      */
-    @NativeAccess
     Optional<MemoryAddress> lookup(String name);
 
     /**
      * Looks up a symbol with given name in this library. The returned memory segment has a size that matches that of
      * the specified layout, and maintains a strong reference to this lookup object. This method can be useful
      * to lookup global variable symbols in a foreign library.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @param name the symbol name.
      * @param layout the layout to be associated with the library symbol.
      * @return the memory segment associated with the library symbol (if any).
      * @throws IllegalArgumentException if the address associated with the lookup symbol do not match the
      * {@link MemoryLayout#byteAlignment() alignment constraints} in {@code layout}.
      */
-    @NativeAccess
     Optional<MemorySegment> lookup(String name, MemoryLayout layout);
 
     /**
      * Obtain a default library lookup object.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @return the default library lookup object.
      */
     @CallerSensitive
-    @NativeAccess
     static LibraryLookup ofDefault() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         SecurityManager security = System.getSecurityManager();
@@ -102,13 +111,18 @@ public interface LibraryLookup {
 
     /**
      * Obtain a library lookup object corresponding to a library identified by given path.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @param path the library absolute path.
      * @return a library lookup object for given path.
      * @throws IllegalArgumentException if the specified path does not correspond to an absolute path,
      * e.g. if {@code !path.isAbsolute()}.
      */
     @CallerSensitive
-    @NativeAccess
     static LibraryLookup ofPath(Path path) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(path);
@@ -128,11 +142,16 @@ public interface LibraryLookup {
      * is decorated according to the platform conventions (e.g. on Linux, the {@code lib} prefix is added,
      * as well as the {@code .so} extension); the resulting name is then looked up in the standard native
      * library path (which can be overriden, by setting the <code>java.library.path</code> property).
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
      * @param libName the library name.
      * @return a library lookup object for given library name.
      */
     @CallerSensitive
-    @NativeAccess
     static LibraryLookup ofLibrary(String libName) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(libName);
