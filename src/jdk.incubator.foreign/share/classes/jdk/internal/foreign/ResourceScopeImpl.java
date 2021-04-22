@@ -54,7 +54,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     final ResourceList resourceList;
 
     @Override
-    public void addOnClose(Runnable runnable) {
+    public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);
         addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
