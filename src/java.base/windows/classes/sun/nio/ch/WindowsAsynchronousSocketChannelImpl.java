@@ -431,10 +431,10 @@ class WindowsAsynchronousSocketChannelImpl
                     // substitute with direct buffer
                     ByteBuffer bb = Util.getTemporaryDirectBuffer(rem);
                     shadow[i] = bb;
-                    a = ((DirectBuffer)bb).address();
+                    a = IOUtil.bufferAddress(bb);
                 } else {
                     shadow[i] = dst;
-                    a = ((DirectBuffer)dst).address() + pos;
+                    a = IOUtil.bufferAddress(dst) + pos;
                 }
                 unsafe.putAddress(address + OFFSETOF_BUF, a);
                 unsafe.putInt(address + OFFSETOF_LEN, rem);
@@ -708,10 +708,10 @@ class WindowsAsynchronousSocketChannelImpl
                     bb.flip();
                     src.position(pos);  // leave heap buffer untouched for now
                     shadow[i] = bb;
-                    a = ((DirectBuffer)bb).address();
+                    a = IOUtil.bufferAddress(bb);
                 } else {
                     shadow[i] = src;
-                    a = ((DirectBuffer)src).address() + pos;
+                    a = IOUtil.bufferAddress(src) + pos;
                 }
                 unsafe.putAddress(address + OFFSETOF_BUF, a);
                 unsafe.putInt(address + OFFSETOF_LEN, rem);

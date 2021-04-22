@@ -535,7 +535,7 @@ public class IOUtil {
         }
     }
 
-    private static long bufferAddress(ByteBuffer buf) {
+    static long bufferAddress(ByteBuffer buf) {
         return NIO_ACCESS.getBufferAddress(buf);
     }
 

@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -171,7 +170,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
             var writeBuffers = mixedBuffersOfSize(32, scope, 64);
             var readBuffers = mixedBuffersOfSize(32, scope, 64);
             long expectedCount = remaining(writeBuffers);
-            assertEquals(sc1.write(writeBuffers, 0, 32), expectedCount);
+            assertEquals(writeNBytes(sc1, writeBuffers, 0, 32, expectedCount), expectedCount);
             assertEquals(readNBytes(sc2, readBuffers, 0, 32, expectedCount), expectedCount);
             assertEquals(flip(readBuffers), clear(writeBuffers));
         }
@@ -194,7 +193,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
                                     .toArray(ByteBuffer[]::new);
 
             long expectedCount = remaining(writeBuffers);
-            assertEquals(sc1.write(writeBuffers, 0, 32), expectedCount);
+            assertEquals(writeNBytes(sc1, writeBuffers, 0, 32, expectedCount), expectedCount);
             assertEquals(readNBytes(sc2, readBuffers, 0, 32, expectedCount), expectedCount);
             assertEquals(flip(readBuffers), clear(writeBuffers));
         }
@@ -206,6 +205,20 @@ public class TestSocketChannels extends AbstractChannelsTest {
         ssc.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
         sc.connect(ssc.getLocalAddress());
         return ssc.accept();
+    }
+
+    static long writeNBytes(SocketChannel channel,
+                            ByteBuffer[] buffers, int offset, int len,
+                            long bytes)
+        throws Exception
+    {
+        long total = 0L;
+        do {
+            long n = channel.write(buffers, offset, len);
+            assertTrue(n > 0, "got:" + n);
+            total += n;
+        } while (total < bytes);
+        return total;
     }
 
     static long readNBytes(SocketChannel channel,
