@@ -81,7 +81,7 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     @Override
-    public Handle acquire() {
+    public HandleImpl acquire() {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
@@ -175,7 +175,7 @@ class SharedScope extends ResourceScopeImpl {
         final AtomicBoolean released = new AtomicBoolean(false);
 
         @Override
-        public ResourceScope scope() {
+        public ResourceScopeImpl scope() {
             return SharedScope.this;
         }
 

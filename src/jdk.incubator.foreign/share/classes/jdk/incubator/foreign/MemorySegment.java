@@ -26,6 +26,7 @@
 
 package jdk.incubator.foreign;
 
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -41,6 +42,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Spliterator;
+import java.util.stream.Stream;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -76,11 +78,23 @@ import java.util.Spliterator;
  * depending on the characteristics of the byte buffer instance the segment is associated with. For instance, a buffer memory
  * segment obtained from a byte buffer created with the {@link ByteBuffer#allocateDirect(int)} method will be backed
  * by native memory.
+ *
+ * <h2>Mapping memory segments from files</h2>
+ *
+ * It is also possible to obtain a native memory segment backed by a memory-mapped file using the factory method
+ * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such native memory segments are
+ * called <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
  * <p>
- * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such memory segments are called <em>mapped memory segments</em>;
- * mapped memory segments are associated with an underlying file descriptor. For more operations on mapped memory segments, please refer to the
- * {@link MappedMemorySegments} class.
+ * Contents of mapped memory segments can be {@link #force() persisted} and {@link #load() loaded} to and from the underlying file;
+ * these capabilities are suitable replacements for some of the functionality in the {@link java.nio.MappedByteBuffer} class.
+ * Note that, while it is possible to map a segment into a byte buffer (see {@link MemorySegment#asByteBuffer()}),
+ * and then call e.g. {@link java.nio.MappedByteBuffer#force()} that way, this can only be done when the source segment
+ * is small enough, due to the size limitation inherent to the ByteBuffer API.
+ * <p>
+ * Clients requiring sophisticated, low-level control over mapped memory segments, should consider writing
+ * custom mapped memory segment factories; using {@link CLinker}, e.g. on Linux, it is possible to call {@code mmap}
+ * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
+ * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegment(long, Runnable, ResourceScope)}.
  *
  * <h2>Lifecycle and confinement</h2>
  *
@@ -120,18 +134,19 @@ MemorySegment roSegment = segment.asReadOnly();
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
  *
- * <h2>Spliterator support</h2>
+ * <h2>Stream support</h2>
  *
- * A client might obtain a {@link Spliterator} from a segment, which can then be used to slice the segment and allow multiple
- * threads to work in parallel on disjoint segment slices (to do this, the segment has to be associated with a shared scope).
- * The following code can be used to sum all int values in a memory segment in parallel:
+ * A client might obtain a {@link Stream} from a segment, which can then be used to slice the segment (according to a given
+ * element layout) and even allow multiple threads to work in parallel on disjoint segment slices
+ * (to do this, the segment has to be associated with a shared scope). The following code can be used to sum all int
+ * values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
-    int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+    int sum = segment.elements(MemoryLayouts.JAVA_INT).parallel()
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
@@ -158,21 +173,33 @@ public interface MemorySegment extends Addressable {
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
      * <p>
-     * The returned spliterator splits this segment according to the specified sequence layout; that is,
-     * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
-     * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
-     * As such, splitting is possible as long as {@code N >= 2}. The spliterator returns segments that feature the same
-     * scope as the given segment.
+     * The returned spliterator splits this segment according to the specified element layout; that is,
+     * if the supplied layout has size N, then calling {@link Spliterator#trySplit()} will result in a spliterator serving
+     * approximately {@code S/N/2} elements (depending on whether N is even or not), where {@code S} is the size of
+     * this segment. As such, splitting is possible as long as {@code S/N >= 2}. The spliterator returns segments that feature the same
+     * scope as this given segment.
      * <p>
      * The returned spliterator effectively allows to slice this segment into disjoint sub-segments, which can then
      * be processed in parallel by multiple threads.
      *
-     * @param layout the layout to be used for splitting.
+     * @param elementLayout the layout to be used for splitting.
      * @return the element spliterator for this segment
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope.
+     * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
      */
-    Spliterator<MemorySegment> spliterator(SequenceLayout layout);
+    Spliterator<MemorySegment> spliterator(MemoryLayout elementLayout);
+
+    /**
+     * Returns a sequential {@code Stream} over disjoint slices (whose size matches that of the specified layout)
+     * in this segment. Calling this method is equivalent to the following code:
+     * <blockquote><pre>{@code
+    StreamSupport.stream(segment.spliterator(elementLayout), false);
+     * }</pre></blockquote>
+     *
+     * @param elementLayout the layout to be used for splitting.
+     * @return a sequential {@code Stream} over disjoint slices in this segment.
+     * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
+     */
+    Stream<MemorySegment> elements(MemoryLayout elementLayout);
 
     /**
      * Returns the resource scope associated with this memory segment.
@@ -282,6 +309,15 @@ public interface MemorySegment extends Addressable {
     MemorySegment asReadOnly();
 
     /**
+     * Is this a native segment? Returns true if this segment is a native memory segment,
+     * created using the {@link #allocateNative(long, ResourceScope)} (and related) factory, or a buffer segment
+     * derived from a direct {@link java.nio.ByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
+     * or if this is a {@link #isMapped() mapped} segment.
+     * @return {@code true} if this segment is native segment.
+     */
+    boolean isNative();
+
+    /**
      * Is this a mapped segment? Returns true if this segment is a mapped memory segment,
      * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
@@ -363,6 +399,89 @@ for (long l = 0; l < segment.byteSize(); l++) {
     long mismatch(MemorySegment other);
 
     /**
+     * Tells whether or not the contents of this mapped segment is resident in physical
+     * memory.
+     *
+     * <p> A return value of {@code true} implies that it is highly likely
+     * that all of the data in this segment is resident in physical memory and
+     * may therefore be accessed without incurring any virtual-memory page
+     * faults or I/O operations.  A return value of {@code false} does not
+     * necessarily imply that this segment's content is not resident in physical
+     * memory.
+     *
+     * <p> The returned value is a hint, rather than a guarantee, because the
+     * underlying operating system may have paged out some of this segment's data
+     * by the time that an invocation of this method returns.  </p>
+     *
+     * @return  {@code true} if it is likely that the contents of this segment
+     *          is resident in physical memory
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    boolean isLoaded();
+
+    /**
+     * Loads the contents of this mapped segment into physical memory.
+     *
+     * <p> This method makes a best effort to ensure that, when it returns,
+     * this contents of this segment is resident in physical memory.  Invoking this
+     * method may cause some number of page faults and I/O operations to
+     * occur. </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    void load();
+
+    /**
+     * Unloads the contents of this mapped segment from physical memory.
+     *
+     * <p> This method makes a best effort to ensure that the contents of this segment are
+     * are no longer resident in physical memory. Accessing this segment's contents
+     * after invoking this method may cause some number of page faults and I/O operations to
+     * occur (as this segment's contents might need to be paged back in). </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    void unload();
+
+    /**
+     * Forces any changes made to the contents of this mapped segment to be written to the
+     * storage device described by the mapped segment's file descriptor.
+     *
+     * <p> If the file descriptor associated with this mapped segment resides on a local storage
+     * device then when this method returns it is guaranteed that all changes
+     * made to this segment since it was created, or since this method was last
+     * invoked, will have been written to that device.
+     *
+     * <p> If the file descriptor associated with this mapped segment does not reside on a local device then
+     * no such guarantee is made.
+     *
+     * <p> If this segment was not mapped in read/write mode ({@link
+     * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
+     * invoking this method may have no effect. In particular, the
+     * method has no effect for segments mapped in read-only or private
+     * mapping modes. This method may or may not have an effect for
+     * implementation-specific mapping modes.
+     * </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     * @throws UncheckedIOException if there is an I/O error writing the contents of this segment to the associated storage device
+     */
+    void force();
+
+    /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
      * the properties of this segment. For instance, if this segment is <em>immutable</em>
      * (e.g. the segment is a read-only segment, see {@link #isReadOnly()}), then the resulting buffer is <em>read-only</em>
@@ -377,10 +496,10 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * The life-cycle of the returned buffer will be tied to that of this segment. That is, accessing the returned buffer
      * after the scope associated with this segment has been closed (see {@link ResourceScope#close()}, will throw an {@link IllegalStateException}.
      * <p>
-     * If this segment is associated with a shared scope, calling certain I/O operations on the resulting buffer might result in
-     * an unspecified exception being thrown. Examples of such problematic operations are {@link FileChannel#read(ByteBuffer)},
-     * {@link FileChannel#write(ByteBuffer)}, {@link java.nio.channels.SocketChannel#read(ByteBuffer)} and
-     * {@link java.nio.channels.SocketChannel#write(ByteBuffer)}.
+     * If this segment is associated with a confined scope, calling read/write I/O operations on the resulting buffer
+     * might result in an unspecified exception being thrown. Examples of such problematic operations are
+     * {@link java.nio.channels.AsynchronousSocketChannel#read(ByteBuffer)} and
+     * {@link java.nio.channels.AsynchronousSocketChannel#write(ByteBuffer)}.
      * <p>
      * Finally, the resulting buffer's byte order is {@link java.nio.ByteOrder#BIG_ENDIAN}; this can be changed using
      * {@link ByteBuffer#order(java.nio.ByteOrder)}.
@@ -651,7 +770,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
+     *                might affect the behavior of the returned memory mapped segment (see {@link #force()}).
      * @param scope the segment scope.
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}, {@code bytesSize < 0}, or if {@code path} is not associated

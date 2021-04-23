@@ -177,6 +177,20 @@ public class TestSegments {
         }
     }
 
+    @Test(dataProvider = "segmentFactories")
+    public void testNativeSegments(Supplier<MemorySegment> memorySegmentSupplier) throws Exception {
+        MemorySegment segment = memorySegmentSupplier.get();
+        try {
+            segment.address().toRawLongValue();
+            assertTrue(segment.isNative());
+            assertTrue(segment.address().isNative());
+        } catch (UnsupportedOperationException exception) {
+            assertFalse(segment.isNative());
+            assertFalse(segment.address().isNative());
+        }
+        tryClose(segment);
+    }
+
     @Test(dataProvider = "segmentFactories", expectedExceptions = UnsupportedOperationException.class)
     public void testFillIllegalAccessMode(Supplier<MemorySegment> memorySegmentSupplier) {
         MemorySegment segment = memorySegmentSupplier.get();

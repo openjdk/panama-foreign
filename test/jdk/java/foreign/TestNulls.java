@@ -85,7 +85,6 @@ public class TestNulls {
             GroupLayout.class,
             Addressable.class,
             MemoryAccess.class,
-            MappedMemorySegments.class,
             MemoryLayouts.class,
             MemoryHandles.class,
             CLinker.class,

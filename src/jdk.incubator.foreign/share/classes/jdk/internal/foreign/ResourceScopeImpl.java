@@ -54,7 +54,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     final ResourceList resourceList;
 
     @Override
-    public void addOnClose(Runnable runnable) {
+    public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);
         addInternal(ResourceList.ResourceCleanup.ofRunnable(runnable));
     }
@@ -123,28 +123,43 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         return new SharedScope(cleaner);
     }
 
-    @Override
-    public final void release(Handle handle) {
+    private final void release0(HandleImpl handle) {
         try {
             Objects.requireNonNull(handle);
             if (!checkHandle(handle)) {
                 throw new IllegalArgumentException("Cannot release an handle acquired from another scope");
             }
-            ((HandleImpl) handle).close();
+            handle.close();
         } finally {
             Reference.reachabilityFence(this);
         }
     }
 
-    boolean checkHandle(Handle handle) {
+    @Override
+    public final void release(ResourceScope.Handle handle) {
+        release0((HandleImpl)handle);
+    }
+
+    @Override
+    public final void release(ScopedMemoryAccess.Scope.Handle handle) {
+        release0((HandleImpl)handle);
+    }
+
+    @Override
+    public abstract HandleImpl acquire();
+
+    boolean checkHandle(ResourceScope.Handle handle) {
         return handle.scope() == this;
     }
 
     /**
      * Internal interface used to implement resource scope handles.
      */
-    interface HandleImpl extends Handle, AutoCloseable {
+    interface HandleImpl extends ResourceScope.Handle, ScopedMemoryAccess.Scope.Handle {
+
         @Override
+        ResourceScopeImpl scope();
+
         void close();
     }
 
@@ -224,7 +239,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         }
 
         @Override
-        public Handle acquire() {
+        public HandleImpl acquire() {
             return implicitHandle;
         }
 
@@ -239,7 +254,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
         }
 
         @Override
-        boolean checkHandle(Handle handle) {
+        boolean checkHandle(ResourceScope.Handle handle) {
             return handle == implicitHandle;
         }
 
@@ -250,7 +265,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
             }
 
             @Override
-            public ResourceScope scope() {
+            public ResourceScopeImpl scope() {
                 return GLOBAL;
             }
         };

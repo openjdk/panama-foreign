@@ -81,6 +81,11 @@ public final class MemoryAddressImpl implements MemoryAddress {
     }
 
     @Override
+    public boolean isNative() {
+        return base() == null;
+    }
+
+    @Override
     public long toRawLongValue() {
         if (segment != null) {
             if (segment.base() != null) {

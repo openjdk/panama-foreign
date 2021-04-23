@@ -75,6 +75,11 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
+    public boolean isNative() {
+        return true;
+    }
+
+    @Override
     long min() {
         return min;
     }
@@ -122,7 +127,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         scope.checkValidStateSlow();
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
         if (cleanupAction != null) {
-            scope.addOnClose(cleanupAction);
+            scope.addCloseAction(cleanupAction);
         }
         return segment;
     }
