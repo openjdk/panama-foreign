@@ -205,7 +205,7 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The native memory address instance modelling the {@code NULL} address. The returned address is associated
+     * The native memory address instance modelling the {@code NULL} address, associated
      * with the {@link ResourceScope#globalScope() global} resource scope.
      */
     MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
