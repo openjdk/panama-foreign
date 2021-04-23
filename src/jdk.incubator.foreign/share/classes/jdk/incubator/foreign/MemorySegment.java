@@ -26,6 +26,7 @@
 
 package jdk.incubator.foreign;
 
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
@@ -77,11 +78,23 @@ import java.util.stream.Stream;
  * depending on the characteristics of the byte buffer instance the segment is associated with. For instance, a buffer memory
  * segment obtained from a byte buffer created with the {@link ByteBuffer#allocateDirect(int)} method will be backed
  * by native memory.
+ *
+ * <h2>Mapping memory segments from files</h2>
+ *
+ * It is also possible to obtain a native memory segment backed by a memory-mapped file using the factory method
+ * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such native memory segments are
+ * called <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
  * <p>
- * Finally, it is also possible to obtain a memory segment backed by a memory-mapped file using the factory method
- * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such memory segments are called <em>mapped memory segments</em>;
- * mapped memory segments are associated with an underlying file descriptor. For more operations on mapped memory segments, please refer to the
- * {@link MappedMemorySegments} class.
+ * Contents of mapped memory segments can be {@link #force() persisted} and {@link #load() loaded} to and from the underlying file;
+ * these capabilities are suitable replacements for some of the functionality in the {@link java.nio.MappedByteBuffer} class.
+ * Note that, while it is possible to map a segment into a byte buffer (see {@link MemorySegment#asByteBuffer()}),
+ * and then call e.g. {@link java.nio.MappedByteBuffer#force()} that way, this can only be done when the source segment
+ * is small enough, due to the size limitation inherent to the ByteBuffer API.
+ * <p>
+ * Clients requiring sophisticated, low-level control over mapped memory segments, should consider writing
+ * custom mapped memory segment factories; using {@link CLinker}, e.g. on Linux, it is possible to call {@code mmap}
+ * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
+ * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegment(long, Runnable, ResourceScope)}.
  *
  * <h2>Lifecycle and confinement</h2>
  *
@@ -298,6 +311,15 @@ public interface MemorySegment extends Addressable {
     MemorySegment asReadOnly();
 
     /**
+     * Is this a native segment? Returns true if this segment is a native memory segment,
+     * created using the {@link #allocateNative(long, ResourceScope)} (and related) factory, or a buffer segment
+     * derived from a direct {@link java.nio.ByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
+     * or if this is a {@link #isMapped() mapped} segment.
+     * @return {@code true} if this segment is native segment.
+     */
+    boolean isNative();
+
+    /**
      * Is this a mapped segment? Returns true if this segment is a mapped memory segment,
      * created using the {@link #mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)} factory, or a buffer segment
      * derived from a {@link java.nio.MappedByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory.
@@ -376,6 +398,89 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * thread owning either segment
      */
     long mismatch(MemorySegment other);
+
+    /**
+     * Tells whether or not the contents of this mapped segment is resident in physical
+     * memory.
+     *
+     * <p> A return value of {@code true} implies that it is highly likely
+     * that all of the data in this segment is resident in physical memory and
+     * may therefore be accessed without incurring any virtual-memory page
+     * faults or I/O operations.  A return value of {@code false} does not
+     * necessarily imply that this segment's content is not resident in physical
+     * memory.
+     *
+     * <p> The returned value is a hint, rather than a guarantee, because the
+     * underlying operating system may have paged out some of this segment's data
+     * by the time that an invocation of this method returns.  </p>
+     *
+     * @return  {@code true} if it is likely that the contents of this segment
+     *          is resident in physical memory
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    boolean isLoaded();
+
+    /**
+     * Loads the contents of this mapped segment into physical memory.
+     *
+     * <p> This method makes a best effort to ensure that, when it returns,
+     * this contents of this segment is resident in physical memory.  Invoking this
+     * method may cause some number of page faults and I/O operations to
+     * occur. </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    void load();
+
+    /**
+     * Unloads the contents of this mapped segment from physical memory.
+     *
+     * <p> This method makes a best effort to ensure that the contents of this segment are
+     * are no longer resident in physical memory. Accessing this segment's contents
+     * after invoking this method may cause some number of page faults and I/O operations to
+     * occur (as this segment's contents might need to be paged back in). </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     */
+    void unload();
+
+    /**
+     * Forces any changes made to the contents of this mapped segment to be written to the
+     * storage device described by the mapped segment's file descriptor.
+     *
+     * <p> If the file descriptor associated with this mapped segment resides on a local storage
+     * device then when this method returns it is guaranteed that all changes
+     * made to this segment since it was created, or since this method was last
+     * invoked, will have been written to that device.
+     *
+     * <p> If the file descriptor associated with this mapped segment does not reside on a local device then
+     * no such guarantee is made.
+     *
+     * <p> If this segment was not mapped in read/write mode ({@link
+     * java.nio.channels.FileChannel.MapMode#READ_WRITE}) then
+     * invoking this method may have no effect. In particular, the
+     * method has no effect for segments mapped in read-only or private
+     * mapping modes. This method may or may not have an effect for
+     * implementation-specific mapping modes.
+     * </p>
+     *
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope.
+     * @throws UnsupportedOperationException if this segment is not a mapped memory segment, e.g. if
+     * {@code isMapped() == false}.
+     * @throws UncheckedIOException if there is an I/O error writing the contents of this segment to the associated storage device
+     */
+    void force();
 
     /**
      * Wraps this segment in a {@link ByteBuffer}. Some of the properties of the returned buffer are linked to
@@ -666,7 +771,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param bytesOffset the offset (expressed in bytes) within the file at which the mapped segment is to start.
      * @param bytesSize the size (in bytes) of the mapped memory backing the memory segment.
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the chosen mapping mode
-     *                might affect the behavior of the returned memory mapped segment (see {@link MappedMemorySegments#force(MemorySegment)}).
+     *                might affect the behavior of the returned memory mapped segment (see {@link #force()}).
      * @param scope the segment scope.
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}, {@code bytesSize < 0}, or if {@code path} is not associated
