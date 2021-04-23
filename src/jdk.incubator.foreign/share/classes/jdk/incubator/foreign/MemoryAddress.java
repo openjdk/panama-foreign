@@ -40,6 +40,12 @@ import java.lang.ref.Cleaner;
  * Given an address, it is possible to compute its offset relative to a given segment, which can be useful
  * when performing memory dereference operations using a memory access var handle (see {@link MemoryHandles}).
  * <p>
+ * A memory address is associated with a {@link ResourceScope resource scope}; the resource scope determines the
+ * lifecycle of the memory address, and whether the address can be used from multiple threads. Memory addresses
+ * obtained from {@link #ofLong(long) numeric values}, or from native code, are associated with the
+ * {@link ResourceScope#globalScope() global resource scope}. Memory addresses obtained from segments
+ * are associated with the same scope as the segment from which they have been obtained.
+ * <p>
  * All implementations of this interface must be <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>;
  * programmers should treat instances that are {@linkplain #equals(Object) equal} as interchangeable and should not
  * use instances for synchronization, or unpredictable behavior may occur. For example, in a future release,
@@ -72,6 +78,12 @@ public interface MemoryAddress extends Addressable {
     MemoryAddress addOffset(long offset);
 
     /**
+     * Returns the resource scope associated with this memory address.
+     * @return the resource scope associated with this memory address.
+     */
+    ResourceScope scope();
+
+    /**
      * Returns the offset of this memory address into the given segment. More specifically, if both the segment's
      * base address and this address are native addresses, the result is computed as
      * {@code this.toRawLongValue() - segment.address().toRawLongValue()}. Otherwise, if both addresses in the form
@@ -87,13 +99,14 @@ public interface MemoryAddress extends Addressable {
      * @return the offset of this memory address into the given segment.
      * @param segment the segment relative to which this address offset should be computed
      * @throws IllegalArgumentException if {@code segment} is not compatible with this address; this can happen, for instance,
-     * when {@code segment} models an heap memory region, while this address models an off-heap memory address.
+     * when {@code segment} models an heap memory region, while this address is a {@link #isNative() native} address.
      */
     long segmentOffset(MemorySegment segment);
 
     /**
-     * Returns a native memory segment with given size and resource scope, and whose base address is this address. This method
-     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     Returns a new native memory segment with given size and resource scope (replacing the scope already associated
+     * with this address), and whose base address is this address. This method can be useful when interacting with custom
+     * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is not read-only (see {@link MemorySegment#isReadOnly()}), and is associated with the
      * provided resource scope.
@@ -116,13 +129,17 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalStateException if either the scope associated with this address or the provided scope
+     * have been already closed, or if access occurs from a thread other than the thread owning either
+     * scopes.
      * @throws UnsupportedOperationException if this address is not a {@link #isNative() native} address.
      */
     MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
-     * Returns a new native memory segment with given size and resource scope, and whose base address is this address. This method
-     * can be useful when interacting with custom native memory sources (e.g. custom allocators), where an address to some
+     * Returns a new native memory segment with given size and resource scope (replacing the scope already associated
+     * with this address), and whose base address is this address. This method can be useful when interacting with custom
+     * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
      * The returned segment is associated with the provided resource scope.
      * <p>
@@ -143,6 +160,9 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalStateException if either the scope associated with this address or the provided scope
+     * have been already closed, or if access occurs from a thread other than the thread owning either
+     * scopes.
      * @throws UnsupportedOperationException if this address is not a {@link #isNative() native} address.
      */
     MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);
@@ -157,6 +177,8 @@ public interface MemoryAddress extends Addressable {
      * Returns the raw long value associated with this native memory address.
      * @return The raw long value associated with this native memory address.
      * @throws UnsupportedOperationException if this memory address is not a {@link #isNative() native} address.
+     * @throws IllegalStateException if the scope associated with this segment has been already closed,
+     * or if access occurs from a thread other than the thread owning either segment.
      */
     long toRawLongValue();
 
@@ -164,11 +186,10 @@ public interface MemoryAddress extends Addressable {
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
      * object is also an address, and it refers to the same memory location as this address.
      *
-     * @apiNote two addresses might be considered equal despite their associated segments differ. This
-     * can happen, for instance, if the segment associated with one address is a <em>slice</em>
-     * (see {@link MemorySegment#asSlice(long, long)}) of the segment associated with the other address. Moreover,
-     * two addresses might be considered equals despite differences in the temporal bounds associated with their
-     * corresponding segments.
+     * @apiNote two addresses might be considered equal despite their associated resource scopes differ. This
+     * can happen, for instance, if the same memory address is used to create memory segments with different
+     * scopes (using {@link #asSegment(long, ResourceScope)}), and the base address of the resulting segments is
+     * then compared.
      *
      * @param that the object to be compared for equality with this address.
      * @return {@code true} if the specified object is equal to this address.
@@ -184,12 +205,14 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The native memory address instance modelling the {@code NULL} address.
+     * The native memory address instance modelling the {@code NULL} address, associated
+     * with the {@link ResourceScope#globalScope() global} resource scope.
      */
     MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
 
     /**
-     * Obtain a native memory address instance from given long address.
+     * Obtain a native memory address instance from given long address. The returned address is associated
+     * with the {@link ResourceScope#globalScope() global} resource scope.
      * @param value the long address.
      * @return the new memory address instance.
      */

@@ -317,13 +317,13 @@ public class TestByteBuffer {
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, LARGE_SIZE, FileChannel.MapMode.READ_WRITE, scope);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.load(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.force(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.unload(segment);
-            MappedMemorySegments.isLoaded(segment);
+            segment.isLoaded();
+            segment.load();
+            segment.isLoaded();
+            segment.force();
+            segment.isLoaded();
+            segment.unload();
+            segment.isLoaded();
         }
     }
 
