@@ -50,7 +50,6 @@ import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
-import java.util.stream.StreamSupport;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -68,9 +67,9 @@ public class ParallelSum {
     final static int ELEM_SIZE = ALLOC_SIZE / CARRIER_SIZE;
     static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
 
-    final static SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(ELEM_SIZE, MemoryLayouts.JAVA_INT);
+    final static MemoryLayout ELEM_LAYOUT = MemoryLayouts.JAVA_INT;
     final static int BULK_FACTOR = 512;
-    final static SequenceLayout SEQUENCE_LAYOUT_BULK = SEQUENCE_LAYOUT.reshape(-1, BULK_FACTOR);
+    final static SequenceLayout ELEM_LAYOUT_BULK = MemoryLayout.sequenceLayout(BULK_FACTOR, ELEM_LAYOUT);
 
     static final Unsafe unsafe = Utils.unsafe;
 
@@ -115,24 +114,22 @@ public class ParallelSum {
 
     @Benchmark
     public int segment_parallel() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT), SEGMENT_TO_INT).invoke();
+        return new SumSegment(segment.spliterator(ELEM_LAYOUT), SEGMENT_TO_INT).invoke();
     }
 
     @Benchmark
     public int segment_parallel_bulk() {
-        return new SumSegment(segment.spliterator(SEQUENCE_LAYOUT_BULK), SEGMENT_TO_INT_BULK).invoke();
+        return new SumSegment(segment.spliterator(ELEM_LAYOUT_BULK), SEGMENT_TO_INT_BULK).invoke();
     }
 
     @Benchmark
     public int segment_stream_parallel() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
-                .mapToInt(SEGMENT_TO_INT).sum();
+        return segment.elements(ELEM_LAYOUT).parallel().mapToInt(SEGMENT_TO_INT).sum();
     }
 
     @Benchmark
     public int segment_stream_parallel_bulk() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
-                .mapToInt(SEGMENT_TO_INT_BULK).sum();
+        return segment.elements(ELEM_LAYOUT_BULK).parallel().mapToInt(SEGMENT_TO_INT_BULK).sum();
     }
 
     final static ToIntFunction<MemorySegment> SEGMENT_TO_INT = slice ->
@@ -148,28 +145,28 @@ public class ParallelSum {
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_serial() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), false)
+        return segment.elements(ELEM_LAYOUT)
                 .filter(FIND_SINGLE)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_parallel() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+        return segment.elements(ELEM_LAYOUT).parallel()
                 .filter(FIND_SINGLE)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_serial_bulk() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), false)
+        return segment.elements(ELEM_LAYOUT_BULK)
                 .filter(FIND_BULK)
                 .findAny();
     }
 
     @Benchmark
     public Optional<MemorySegment> segment_stream_findany_parallel_bulk() {
-        return StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT_BULK), true)
+        return segment.elements(ELEM_LAYOUT_BULK).parallel()
                 .filter(FIND_BULK)
                 .findAny();
     }

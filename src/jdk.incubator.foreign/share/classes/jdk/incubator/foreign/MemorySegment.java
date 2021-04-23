@@ -41,6 +41,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Spliterator;
+import java.util.stream.Stream;
 
 /**
  * A memory segment models a contiguous region of memory. A memory segment is associated with both spatial
@@ -120,18 +121,19 @@ MemorySegment roSegment = segment.asReadOnly();
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
  * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
  *
- * <h2>Spliterator support</h2>
+ * <h2>Stream support</h2>
  *
- * A client might obtain a {@link Spliterator} from a segment, which can then be used to slice the segment and allow multiple
- * threads to work in parallel on disjoint segment slices (to do this, the segment has to be associated with a shared scope).
- * The following code can be used to sum all int values in a memory segment in parallel:
+ * A client might obtain a {@link Stream} from a segment, which can then be used to slice the segment (according to a given
+ * element layout) and even allow multiple threads to work in parallel on disjoint segment slices
+ * (to do this, the segment has to be associated with a shared scope). The following code can be used to sum all int
+ * values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
     SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
     MemorySegment segment = MemorySegment.allocateNative(SEQUENCE_LAYOUT, scope);
     VarHandle VH_int = SEQUENCE_LAYOUT.elementLayout().varHandle(int.class);
-    int sum = StreamSupport.stream(segment.spliterator(SEQUENCE_LAYOUT), true)
+    int sum = segment.elements(MemoryLayouts.JAVA_INT).parallel()
                            .mapToInt(s -> (int)VH_int.get(s.address()))
                            .sum();
 }
@@ -160,21 +162,33 @@ public interface MemorySegment extends Addressable {
      * {@link Spliterator#SUBSIZED}, {@link Spliterator#IMMUTABLE}, {@link Spliterator#NONNULL} and {@link Spliterator#ORDERED}
      * characteristics.
      * <p>
-     * The returned spliterator splits this segment according to the specified sequence layout; that is,
-     * if the supplied layout is a sequence layout whose element count is {@code N}, then calling {@link Spliterator#trySplit()}
-     * will result in a spliterator serving approximatively {@code N/2} elements (depending on whether N is even or not).
-     * As such, splitting is possible as long as {@code N >= 2}. The spliterator returns segments that feature the same
-     * scope as the given segment.
+     * The returned spliterator splits this segment according to the specified element layout; that is,
+     * if the supplied layout has size N, then calling {@link Spliterator#trySplit()} will result in a spliterator serving
+     * approximately {@code S/N/2} elements (depending on whether N is even or not), where {@code S} is the size of
+     * this segment. As such, splitting is possible as long as {@code S/N >= 2}. The spliterator returns segments that feature the same
+     * scope as this given segment.
      * <p>
      * The returned spliterator effectively allows to slice this segment into disjoint sub-segments, which can then
      * be processed in parallel by multiple threads.
      *
-     * @param layout the layout to be used for splitting.
+     * @param elementLayout the layout to be used for splitting.
      * @return the element spliterator for this segment
-     * @throws IllegalStateException if the segment is not <em>alive</em>, or if access occurs from a thread other than the
-     * thread owning this segment
+     * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
      */
-    Spliterator<MemorySegment> spliterator(SequenceLayout layout);
+    Spliterator<MemorySegment> spliterator(MemoryLayout elementLayout);
+
+    /**
+     * Returns a sequential {@code Stream} over disjoint slices (whose size matches that of the specified layout)
+     * in this segment. Calling this method is equivalent to the following code:
+     * <blockquote><pre>{@code
+    StreamSupport.stream(segment.spliterator(elementLayout), false);
+     * }</pre></blockquote>
+     *
+     * @param elementLayout the layout to be used for splitting.
+     * @return a sequential {@code Stream} over disjoint slices in this segment.
+     * @throws IllegalArgumentException if this segment size is not a multiple of the size of {@code elementLayout}.
+     */
+    Stream<MemorySegment> elements(MemoryLayout elementLayout);
 
     /**
      * Returns the resource scope associated with this memory segment.
