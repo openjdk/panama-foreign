@@ -424,7 +424,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         "linux-x64": {
             target_os: "linux",
             target_cpu: "x64",
-            dependencies: ["devkit", "gtest", "build_devkit", "graphviz", "pandoc"],
+            dependencies: ["devkit", "gtest", "build_devkit", "graphviz", "pandoc", "libclang"],
             configure_args: concat(
                 (input.build_cpu == "x64" ? common.configure_args_64bit
                  : "--openjdk-target=x86_64-linux-gnu"),
@@ -445,7 +445,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         "macosx-x64": {
             target_os: "macosx",
             target_cpu: "x64",
-            dependencies: ["devkit", "gtest", "pandoc"],
+            dependencies: ["devkit", "gtest", "pandoc", "libclang"],
             configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
                 "--with-macosx-version-max=10.12.00",
                 "--enable-compatible-cds-alignment",
@@ -465,7 +465,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         "windows-x64": {
             target_os: "windows",
             target_cpu: "x64",
-            dependencies: ["devkit", "gtest", "pandoc"],
+            dependencies: ["devkit", "gtest", "pandoc", "libclang"],
             configure_args: concat(common.configure_args_64bit),
         },
 
@@ -738,7 +738,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             target_os: input.build_os,
             target_cpu: input.build_cpu,
             dependencies: [
-                "boot_jdk", "devkit", "graphviz", "pandoc", buildJdkDep,
+                "boot_jdk", "devkit", "graphviz", "pandoc", buildJdkDep, "libclang"
             ],
             configure_args: concat(
                 "--enable-full-docs",
@@ -1134,6 +1134,13 @@ var getJibProfilesDependencies = function (input, common) {
             organization: common.organization,
             ext: "tar.gz",
             revision: "1.0118+1.0"
+        },
+
+        libclang: {
+            organization: common.organization,
+            module: "libclang-" + input.build_platform,
+            ext: "tar.gz",
+            revision: "9.0.0+" + (input.build_platform == "macosx_x64" ? "2.0" : "1.0")
         },
 
         jtreg: {
