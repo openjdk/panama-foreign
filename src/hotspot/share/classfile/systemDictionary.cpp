@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "jvm.h"
 #include "aot/aotLoader.hpp"
+#include "cds/heapShared.hpp"
 #include "classfile/classFileParser.hpp"
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
@@ -51,7 +52,6 @@
 #include "jfr/jfrEvents.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
-#include "memory/heapShared.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -2428,11 +2428,6 @@ void SystemDictionary::invoke_bootstrap_method(BootstrapInfo& bootstrap_specifie
           bootstrap_specifier.resolved_method().not_null()), "bootstrap method call failed");
 }
 
-// Protection domain cache table handling
-
-ProtectionDomainCacheEntry* SystemDictionary::cache_get(Handle protection_domain) {
-  return _pd_cache_table->get(protection_domain);
-}
 
 ClassLoaderData* SystemDictionary::class_loader_data(Handle class_loader) {
   return ClassLoaderData::class_loader_data(class_loader());
