@@ -75,6 +75,11 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
+    public boolean isNative() {
+        return true;
+    }
+
+    @Override
     long min() {
         return min;
     }
