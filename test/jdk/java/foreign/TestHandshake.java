@@ -102,15 +102,15 @@ public class TestHandshake {
                     doAccess();
                 } catch (IllegalStateException ex) {
                     long delay = System.currentTimeMillis() - start.get();
-                    System.out.println("Accessor #" + id + " suspending - delay (ms): " + delay);
+                    System.out.println("Accessor #" + id + " suspending - elapsed (ms): " + delay);
                     backoff();
                     delay = System.currentTimeMillis() - start.get();
-                    System.out.println("Accessor #" + id + " resuming - delay (ms): " + delay);
+                    System.out.println("Accessor #" + id + " resuming - elapsed (ms): " + delay);
                     continue outer;
                 }
             }
             long delay = System.currentTimeMillis() - start.get();
-            System.out.println("Accessor #" + id + " terminated - delay (ms): " + delay);
+            System.out.println("Accessor #" + id + " terminated - elapsed (ms): " + delay);
         }
 
         abstract void doAccess();
@@ -127,7 +127,7 @@ public class TestHandshake {
     static void start(String name) {
         if (started.compareAndSet(false, true)) {
             long delay = System.currentTimeMillis() - start.get();
-            System.out.println("Started first thread: " + name + " ; delay (ms): " + delay);
+            System.out.println("Started first thread: " + name + " ; elapsed (ms): " + delay);
         }
     }
 
@@ -254,7 +254,7 @@ public class TestHandshake {
                 }
             }
             long delay = System.currentTimeMillis() - start.get();
-            System.out.println("Segment closed - delay (ms): " + delay);
+            System.out.println("Segment closed - elapsed (ms): " + delay);
         }
     }
 
