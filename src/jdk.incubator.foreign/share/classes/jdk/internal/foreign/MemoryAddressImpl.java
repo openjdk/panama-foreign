@@ -73,9 +73,8 @@ public final class MemoryAddressImpl implements MemoryAddress {
     public long segmentOffset(MemorySegment segment) {
         Objects.requireNonNull(segment);
         AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl)segment;
-        if (segmentImpl.base() != base() ||
-                (scope() != ResourceScope.globalScope() && segmentImpl.scope() != scope())) {
-            throw new IllegalArgumentException("Invalid segment: " + segment);
+        if (segmentImpl.base() != base()) {
+            throw new IllegalArgumentException("Incompatible segment: " + segment);
         }
         return offset() - segmentImpl.min();
     }
