@@ -12,7 +12,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.MemorySegmentPool;
-import jdk.incubator.foreign.MemorySegmentPool.MemoryPoolSegment;
+import jdk.incubator.foreign.MemorySegmentPool.MemoryPoolItem;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -26,7 +26,6 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import sun.misc.Unsafe;
 
@@ -35,7 +34,7 @@ import sun.misc.Unsafe;
  *
  * Tries to simulate library which has to allocate number of different size elements.
  *
- * Ofc... thre are some cavets
+ * Ofc... there are some cavets
  * - if pool of segments will be exhausted, pooled allocator will slow down
  * - arena allocator - for long running has to be freed at some point of time...
  */
@@ -86,7 +85,7 @@ public class AllocatorsForLongRun {
 //  @Param({"true", "false"})
 //  private boolean doSegmentWrite = true;
 
-  private static final boolean doSegmentWrite = true;
+  private static final boolean doSegmentWrite = false;
 
   private static final MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope());
   private MemorySegmentPool poolEmpty = new MemorySegmentPool(new int[Long.SIZE], ResourceScope.globalScope());
@@ -131,8 +130,9 @@ public class AllocatorsForLongRun {
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = SegmentAllocator.arenaAllocator(scope);
       for (int j = 0; j < allocations; j++) {
-        final var segment = allocator.allocate(sizes[i]);
-        readSegment(segment);
+        final long sz = sizes[i];
+        final var segment = allocator.allocate(sz);
+        readSegment(segment, sz);
         next();
       }
     }
@@ -154,8 +154,9 @@ public class AllocatorsForLongRun {
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = pool.allocatorForScope(scope);
       for (int j = 0; j < allocations; j++) {
-        final var segment = allocator.allocate(sizes[i]);
-        readSegment(segment);
+        final long sz = sizes[i];
+        final var segment = allocator.allocate(sz);
+        readSegment(segment, sz);
         next();
       }
     }
@@ -166,8 +167,9 @@ public class AllocatorsForLongRun {
     try (var scope = ResourceScope.newConfinedScope()) {
       final var allocator = poolEmpty.allocatorForScope(scope);
       for (int j = 0; j < allocations; j++) {
-        final var segment = allocator.allocate(sizes[i]);
-        readSegment(segment);
+        final long sz = sizes[i];
+        final var segment = allocator.allocate(sz);
+        readSegment(segment, sz );
         next();
       }
     }
@@ -176,17 +178,17 @@ public class AllocatorsForLongRun {
   @Benchmark
 //  @CompilerControl(CompilerControl.Mode.PRINT)
   public void pool_direct() {
-    List<MemoryPoolSegment> pooledSegments = new ArrayList<>(allocations);
+    List<MemoryPoolItem> pooledSegments = new ArrayList<>(allocations);
     for (int j = 0; j < allocations; j++) {
       var size = sizes[i];
-      var s = pool.getSegmentEntryBySize(size, 2);
+      var s = pool.getSegmentEntryBySize(size, 1);
       pooledSegments.add(s);
 
-      readSegment(s.memorySegment());
+      readSegment(s.memorySegment(), size);
 //      readSegment(s.memoryAddress.asSegment(size, scope));
       next();
     }
-    pooledSegments.forEach(MemoryPoolSegment::close);
+    pooledSegments.forEach(MemoryPoolItem::close);
   }
   @Benchmark
 //  @CompilerControl(CompilerControl.Mode.PRINT)
@@ -197,7 +199,7 @@ public class AllocatorsForLongRun {
       var a = CLinker.allocateMemory(size);
       var s = a.asSegment(size, ResourceScope.globalScope());
       allocatedAddresses.add(a);
-      readSegment(s);
+      readSegment(s, size);
       next();
     }
     allocatedAddresses.forEach(CLinker::freeMemory);
@@ -207,12 +209,12 @@ public class AllocatorsForLongRun {
    * Do read to avoid situation allocator will allocate not mapped memory.
    */
   @CompilerControl(CompilerControl.Mode.INLINE)
-  private void readSegment(MemorySegment s) {
+  private void readSegment(MemorySegment s, long sz) {
     if (doSegmentWrite) {
-      final var size = (int) s.byteSize();
+      final var size = (int) sz;//s.byteSize();
       BYTE.set(s, (long) 0, (byte) 1);
+
       for (int idx = 1024; idx < size; idx += 1024) {
-        //      MemoryAccess.setByteAtOffset(s, l, (byte)0);
         BYTE.set(s, (long) idx, (byte) 1);
       }
     }

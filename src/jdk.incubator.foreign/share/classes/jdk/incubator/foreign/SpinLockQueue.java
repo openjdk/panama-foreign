@@ -7,12 +7,12 @@ import jdk.incubator.foreign.SpinLockQueue.Entry;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * Fast, concurrent LIFO queue (stack), based on operating on entries.
+ * Fast, concurrent LIFO queue (stack).
  *
  * This queue is designed for fast push / pop operations. Synchronization is
  * provided by classic spin lock.
  *
- * @param <T> the type of value used in queue
+ * @param <T> the item type
  */
 public final class SpinLockQueue<T extends Entry<T>> {
 
@@ -43,19 +43,31 @@ public final class SpinLockQueue<T extends Entry<T>> {
     }
   }
 
+  /**
+   * Creates new instace with specified maximum capacity.
+   *
+   * @param maxSize maximum number of elements in queue.
+   */
   public SpinLockQueue(int maxSize) {
     this.maxSize = maxSize;
   }
 
+  /**
+   * Retrieve element form queue.
+   * <br />
+   * This operation is atomic.
+   *
+   * @return item or {@code null} if queue is empty.
+   */
   @ForceInline
   final public T pollEntry() {
-//    while ((int) LOCK.compareAndExchange(this, 0, 1) != 1) {};
     while (!LOCK.compareAndSet(this, 0, 1)) {}
+    // After volatile spin lock
     try {
-      final var current = (T) HEAD.getAcquire(this);
+      final var current = (T) HEAD.get(this);
       if (current != null) {
-        HEAD.setRelease(this, ENTRY_NEXT.getAcquire(current));
-        SIZE.setRelease(this, (int) SIZE.getAcquire(this) - 1);
+        HEAD.set(this, ENTRY_NEXT.get(current));
+        SIZE.set(this, (int) SIZE.get(this) - 1);
         ENTRY_IN_POOL.set(current, false);
       }
       return current;
@@ -64,29 +76,21 @@ public final class SpinLockQueue<T extends Entry<T>> {
     }
   }
 
-//  final public void putEntryNoSizeCheck(T entry) {
-//    while (!lock.compareAndSet(0, 1)) { }
-//    try {
-//      entry.next = head;
-//      head = entry;
-//      size++;
-//    } finally {
-//      lock.set(0);
-//    }
-//  }
-
   /**
-   * Puts entry only if queue size is less then given size.
+   * Puts entry into the queue, but only if queue has a capacity.
+   * <br />
+   * This operation is atomic.
    *
-   * @param entry - entry to put
+   * @param entry entry to put
    *
-   * @return {@code true} if elements has been put.
+   * @return {@code true} if elements has been successfully put.
    */
   @ForceInline
   final public boolean putEntry(T entry) {
     while (!LOCK.compareAndSet(this, 0, 1)) { }
+    // After volatile spin lock
     try {
-      final var size = (int) SIZE.getAcquire(this);
+      final var size = (int) SIZE.get(this);
 
       if ((boolean) ENTRY_IN_POOL.get(entry)) {
         throw new IllegalStateException("Entry already in pool, can't be added twice");
@@ -95,9 +99,9 @@ public final class SpinLockQueue<T extends Entry<T>> {
       if (size < this.maxSize) {
         ENTRY_IN_POOL.set(entry, true);
 
-        ENTRY_NEXT.setRelease(entry, HEAD.getAcquire(this));
-        HEAD.setRelease(this, entry);
-        SIZE.setRelease(this, size + 1);
+        ENTRY_NEXT.set(entry, HEAD.get(this));
+        HEAD.set(this, entry);
+        SIZE.set(this, size + 1);
         return true;
       } else {
         return false;
@@ -105,16 +109,6 @@ public final class SpinLockQueue<T extends Entry<T>> {
     } finally {
       LOCK.setRelease(this, 0);
     }
-  }
-
-  /**
-   * Checks if entry is associated with this queue.
-   *
-   * @param entry entry to check
-   * @return {@code true} if this entry is associated with this queue if it's not in it
-   */
-  public boolean isAssociated(Entry<T> entry) {
-    return entry.owner == this;
   }
 
   /**
@@ -127,10 +121,11 @@ public final class SpinLockQueue<T extends Entry<T>> {
   }
 
   /**
-   * Polls all entries and sets max size to 0 so no new entries can be added.
+   * Polls all entries and sets max size to 0, so no new entries can be added.
+   * <br />
    * This operation is atomic.
    *
-   * @return iterator will all entries, iterator is not synchronized, nor thread-safe
+   * @return iterator with all entries, iterator is not synchronized, nor thread-safe
    */
   public Iterator<T> retrieveAndLock() {
     while (!LOCK.compareAndSet(this, 0, 1)) { }
@@ -147,27 +142,18 @@ public final class SpinLockQueue<T extends Entry<T>> {
   }
 
   /**
-   * Checks if entry is not in pool (or throw exception) and change flags inPool.
-   * Prevent double addition.
-   * To be called after lock
+   * Represent a single item which can be added to the queue.
+   * <br />
+   * As the queue is intended for fast puts and gets, users should
+   * subclass this calls in order to add custom attributes.
+   *
+   * @param <T> the final exact type.
    */
-  @ForceInline
-  private static void checkMarkEntryInPool(Entry<?> entry) {
-    if (!ENTRY_IN_POOL.weakCompareAndSet(entry, false, true)) {
-      throw new IllegalStateException("Entry " + entry + " already in pool, can't be added twice");
-    }
-  }
-
-  public static class Entry<T extends Entry<T>> {
-    // Should we keep generic
-    // If exposing spinlock queue, the entry should be in module internal package, to prevent
-    // tampering owner and next with reflect
-    final SpinLockQueue<T> owner;
+  public abstract static class Entry<T extends Entry<T>> {
     private volatile T next;
     private volatile boolean inPool;
 
-    protected Entry(SpinLockQueue<T> owner) {
-      this.owner = owner;
+    protected Entry() {
     }
   }
 

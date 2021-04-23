@@ -86,7 +86,7 @@ public class MemorySegmentPool {
    * Last element to hold 0 size and negative sizes (fallback)
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private final SpinLockQueue<MemoryPoolSegment> segmentsDequeue[] = new SpinLockQueue[Long.SIZE + 1];
+  private final SpinLockQueue<MemoryPoolItem> segmentsDequeue[] = new SpinLockQueue[Long.SIZE + 1];
 
   private final ResourceScope scope;
 
@@ -137,31 +137,51 @@ public class MemorySegmentPool {
     }
 
     scope.addOnClose(this::freePool);
-
   }
 
+  /**
+   * Creates new allocator backed by this pool, and bound to given scope.
+   *
+   * <br />
+   *
+   * The returned allocator will allocate segment of requested size, firstly by
+   * searching for segment in the pool.
+   *
+   * <br />
+   *
+   * If the segment can't be found in the pool, a new one is allocated (so, this is unbounded
+   * allocator).
+   *
+   * <br />
+   *
+   * When associated scope is closed, all allocated entries are put back into pool. If
+   * during allocations more entries have been created than configured maximum number of
+   * elements of given size class, the allocated segment is freed.
+   *
+   * <br />
+   *
+   * There's no guarantee which allocated entries will be put back to pool, and which one
+   * freed.
+   *
+   * @param resourceScope the scope to which allocator should be bounded
+   *
+   * @return memory allocator backed by this pool and bound to given scope
+   */
   @ForceInline
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
     // Prevent scope managing this pool to go away, when dependant allocator is alive
     final var handle = scope.acquire();
     resourceScope.addOnClose(handle::close);
-    return new SegmentAllocator() {
-
-      @ForceInline // strongly recommended
-      @Override
-      public MemorySegment allocate(long bytesSize, long bytesAlignment) {
-        final var alignedSize = (bytesSize + bytesAlignment - 1) & -bytesAlignment;
-
-        final var segmentEntry = getSegmentForAllocator(resourceScope, alignedSize);
-        // We want next line to be inlined, and pass aligned size, as VM better optimizes this
-        // than 1 << bitBound
-        return segmentEntry.memoryAddress.asSegment(alignedSize, resourceScope);
-      }
-    };
+    return ((bytesSize, bytesAlignment) -> {
+      final var alignedSize = alignSize(bytesSize, bytesAlignment);
+      final var segmentEntry = findOrAllocateItemAndPrepareForAllocator(resourceScope, alignedSize);
+      // Slicing source segment can be faster than source Address as segment
+      return segmentEntry.sourceAddress.asSegment(alignedSize, null, resourceScope);
+    });
   }
 
   @ForceInline
-  public MemoryPoolSegment getSegmentEntryByLayout(MemoryLayout layout) {
+  public MemoryPoolItem getSegmentEntryByLayout(MemoryLayout layout) {
     return getSegmentEntryBySize(layout.byteSize(), layout.byteAlignment());
   }
 
@@ -169,33 +189,34 @@ public class MemorySegmentPool {
    * Gets segment from pool or allocates new one. Internally segments are cached.
    * The size of segment can be larger than requested.
    *
-   * @param size the size of segment.
+   * @param bytesSize the size of segment.
    *
    * @return segment of size at least `size`
    */
   @DontInline
-  public MemoryPoolSegment getSegmentEntryBySize(long size, long alignment) {
-//    if (!scope.isAlive()) {
-//      throw new IllegalStateException("Associated resource scope is closed");
-//    }
-
-    final var bitBound = bitBound(size, alignment);
-    MemoryPoolSegment segment = getMemoryPoolSegment(bitBound);
+  public MemoryPoolItem getSegmentEntryBySize(long bytesSize, long bytesAlignment) {
+    // Don't check scope aliveness here.
+    final var bitBound = calculateBucket(alignSize(bytesSize, bytesAlignment));
+    MemoryPoolItem segment = findOrAllocateItem(bitBound);
 
     return segment;
   }
 
+  ////////////////////////////
+  //// Internal methods
+  ////////////////////////////
+
   /**
-   * Search and maybe allocate segment bounded by given bit bound
+   * Search and maybe allocate segment bounded by given bucket
    */
   @ForceInline
-  private MemoryPoolSegment getMemoryPoolSegment(int bitBound) {
-    final var segmentDequeue = segmentsDequeue[bitBound];
+  private MemoryPoolItem findOrAllocateItem(int bucket) {
+    final var segmentDequeue = segmentsDequeue[bucket];
 
     var segment = segmentDequeue.pollEntry();
     if (segment == null) {
-      final var bitBoundedSize = 1L << bitBound;
-      segment = allocateNewEntry(segmentDequeue, bitBoundedSize);
+      final var bitBoundedSize = 1L << bucket;
+      segment = allocateNewPoolItem(segmentDequeue, bitBoundedSize);
     }
     return segment;
   }
@@ -203,10 +224,9 @@ public class MemorySegmentPool {
   /**
    * Prepares pooled segment to be returned by allocator from allocatorForScope
    */
-  @DontInline
-  private MemoryPoolSegment getSegmentForAllocator(ResourceScope resourceScope, long alignedSize) {
-    int bound = bitBound(alignedSize);
-    final var segmentEntry = getMemoryPoolSegment(bound);
+  private MemoryPoolItem findOrAllocateItemAndPrepareForAllocator(ResourceScope resourceScope, long alignedSize) {
+    int bound = calculateBucket(alignedSize);
+    final var segmentEntry = findOrAllocateItem(bound);
 
     ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
       @Override
@@ -219,10 +239,12 @@ public class MemorySegmentPool {
     return segmentEntry;
   }
 
-
-
+  /**
+   * Calculates bit bound, of size - in other words the bucket which should be used for item.
+   * @param alignedSize
+   */
   @ForceInline
-  private static int bitBound(long alignedSize) {
+  protected int calculateBucket(long alignedSize) {
     // If 100.., than 100... - 1 -> 01111
     // If 101 -> than 101 - 1 -> 1....
 
@@ -232,21 +254,17 @@ public class MemorySegmentPool {
     return 64 - Long.numberOfLeadingZeros(alignedSize - 1);
   }
 
+  /**
+   * Allocates and prepares a new item.
+   */
   @ForceInline
-  private static int bitBound(long size, long alignment) {
-    final var alignedSize = (size + alignment - 1) & -alignment;
-
-    return bitBound(alignedSize);
-  }
-
-  @ForceInline
-  private MemoryPoolSegment allocateNewEntry(SpinLockQueue<MemoryPoolSegment> queue, long allocationSize) {
+  private MemoryPoolItem allocateNewPoolItem(SpinLockQueue<MemoryPoolItem> queue, long allocationSize) {
     final var memoryAddress = CLinker.allocateMemory(allocationSize);
-    return new MemoryPoolSegment(queue, memoryAddress, allocationSize, scope);
+    return new MemoryPoolItem(queue, memoryAddress, allocationSize, scope);
   }
 
   /**
-   * Free all elements associated with pool
+   * Free all elements associated with pool. Called when pool's scope gets closed.
    */
   private void freePool() {
     // This method is called from pool's scope close method
@@ -264,26 +282,44 @@ public class MemorySegmentPool {
         });
   }
 
-  public static class MemoryPoolSegment extends SpinLockQueue.Entry<MemoryPoolSegment> implements AutoCloseable {
-    private final MemoryAddress memoryAddress;
-    private final MemorySegment memorySegment;
+  private static long alignSize(long bytesSize, long bytesAlignment) {
+    return (bytesSize + bytesAlignment - 1) & -bytesAlignment;
+  }
 
+  /**
+   * Represent single item in the pool with related data.
+   * <br />
+   * In order to return item back to pool close should be called (depending on context either
+   * implicite or explicite).
+   */
+  public static final class MemoryPoolItem extends SpinLockQueue.Entry<MemoryPoolItem> implements AutoCloseable {
+    /** The owning queue (bucket) to which this pool item belongs. */
+    private final SpinLockQueue<MemoryPoolItem> owner;
+
+    /** Source memory address, it's the start of sourceSegment. */
+    private final MemoryAddress sourceAddress;
+
+    /** Memory segment provided in request, updated when needed */
+    private MemorySegment clientsSegment;
+
+    /** Flag indicating if item has been released. */
     private volatile boolean released;
 
     private final static VarHandle RELEASED;
 
     static {
       try {
-        RELEASED = MethodHandles.lookup().findVarHandle(MemoryPoolSegment.class, "released", boolean.class);
+        RELEASED = MethodHandles.lookup().findVarHandle(MemoryPoolItem.class, "released", boolean.class);
       } catch (Exception e) {
         throw new ExceptionInInitializerError(e);
       }
     }
+
     @ForceInline
-    private MemoryPoolSegment(SpinLockQueue<MemoryPoolSegment> queue, MemoryAddress memoryAddress, long size, ResourceScope scope) {
-      super(queue);
-      this.memoryAddress = memoryAddress;
-      this.memorySegment = memoryAddress.asSegment(size, scope);
+    private MemoryPoolItem(SpinLockQueue<MemoryPoolItem> queue, MemoryAddress sourceAddress, long size, ResourceScope scope) {
+      super();
+      this.owner = queue;
+      this.sourceAddress = sourceAddress;
 
       ((ResourceScopeImpl) scope).addOrCleanupIfFail(new ResourceCleanup() {
         @Override
@@ -293,29 +329,44 @@ public class MemorySegmentPool {
       });
     }
 
-    @ForceInline
-    public MemorySegment memorySegment() {
-      return memorySegment;
-    }
-
+    /**
+     * The memory address representing beginning of this memory item.
+     *
+     * @return memory address representing beginning of this memory item.
+     */
     @ForceInline
     public MemoryAddress memoryAddress() {
-      return memoryAddress;
+      return sourceAddress;
+    }
+
+    /**
+     * The {@link MemorySegment} associated with this item.
+     *
+     * @return memory segment assoicated with this item.
+     */
+    @ForceInline
+    public MemorySegment memorySegment() {
+      return clientsSegment;
     }
 
     @Override
-//    @ForceInline
     @DontInline
     public void close() {
+      // Segment can have reference to scope, and this can prevent scope from closing
+      clientsSegment = null;
+
       if (!this.owner.putEntry(this)) {
         this.release();
       }
     }
 
+    /**
+     * Physically releases entry - free underlying memory.
+     */
     private void release() {
       if (RELEASED.compareAndSet(this, false, true)) {
         // Don't use segment here, if scope closed will produce exception
-        CLinker.freeMemory(this.memoryAddress);
+        CLinker.freeMemory(this.sourceAddress);
       }
     }
   }
