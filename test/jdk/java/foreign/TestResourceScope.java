@@ -57,7 +57,7 @@ public class TestResourceScope {
                 ResourceScope.newConfinedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addOnClose(() -> acc.addAndGet(delta));
+            scope.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -82,7 +82,7 @@ public class TestResourceScope {
                 ResourceScope.newSharedScope();
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
-            scope.addOnClose(() -> acc.addAndGet(delta));
+            scope.addCloseAction(() -> acc.addAndGet(delta));
         }
         assertEquals(acc.get(), 0);
 
@@ -111,7 +111,7 @@ public class TestResourceScope {
             int delta = i;
             Thread thread = new Thread(() -> {
                 try {
-                    scopeRef.get().addOnClose(() -> {
+                    scopeRef.get().addCloseAction(() -> {
                         acc.addAndGet(delta);
                     });
                 } catch (IllegalStateException ex) {
@@ -169,9 +169,9 @@ public class TestResourceScope {
             } catch (IllegalStateException ex) {
                 assertTrue(handles.size() > 0);
                 ResourceScope.Handle handle = handles.remove(0);
-                handle.close();
-                handle.close(); // make sure it's idempotent
-                handle.close(); // make sure it's idempotent
+                scope.release(handle);
+                scope.release(handle); // make sure it's idempotent
+                scope.release(handle); // make sure it's idempotent
             }
         }
     }
@@ -187,9 +187,9 @@ public class TestResourceScope {
                 try {
                     ResourceScope.Handle handle = scope.acquire();
                     waitSomeTime();
-                    handle.close();
-                    handle.close(); // make sure it's idempotent
-                    handle.close(); // make sure it's idempotent
+                    scope.release(handle);
+                    scope.release(handle); // make sure it's idempotent
+                    scope.release(handle); // make sure it's idempotent
                 } catch (IllegalStateException ex) {
                     // might be already closed - do nothing
                 }
@@ -218,13 +218,14 @@ public class TestResourceScope {
 
     @Test
     public void testCloseConfinedLock() {
-        ResourceScope.Handle handle = ResourceScope.newConfinedScope().acquire();
+        ResourceScope scope = ResourceScope.newConfinedScope();
+        ResourceScope.Handle handle = scope.acquire();
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
-                handle.close();
-                handle.close(); // make sure it's idempotent
-                handle.close(); // make sure it's idempotent
+                scope.release(handle);
+                scope.release(handle); // make sure it's idempotent
+                scope.release(handle); // make sure it's idempotent
             } catch (Throwable ex) {
                 failure.set(ex);
             }
@@ -257,9 +258,9 @@ public class TestResourceScope {
         if (!scope.isImplicit()) {
             assertThrows(IllegalStateException.class, scope::close);
         }
-        handle.close();
-        handle.close(); // make sure it's idempotent
-        handle.close(); // make sure it's idempotent
+        scope.release(handle);
+        scope.release(handle); // make sure it's idempotent
+        scope.release(handle); // make sure it's idempotent
     }
 
     private void waitSomeTime() {

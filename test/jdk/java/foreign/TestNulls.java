@@ -85,7 +85,6 @@ public class TestNulls {
             GroupLayout.class,
             Addressable.class,
             MemoryAccess.class,
-            MappedMemorySegments.class,
             MemoryLayouts.class,
             MemoryHandles.class,
             CLinker.class,
@@ -158,9 +157,10 @@ public class TestNulls {
         addDefaultMapping(CLinker.VaList.class, VaListHelper.vaList);
         addDefaultMapping(CLinker.VaList.Builder.class, VaListHelper.vaListBuilder);
         addDefaultMapping(LibraryLookup.class, LibraryLookup.ofDefault());
-        addDefaultMapping(ResourceScope.class, ResourceScope.newConfinedScope());
+        addDefaultMapping(ResourceScope.class, ResourceScope.newImplicitScope());
         addDefaultMapping(SegmentAllocator.class, (size, align) -> null);
         addDefaultMapping(Supplier.class, () -> null);
+        addDefaultMapping(ResourceScope.Handle.class, ResourceScope.globalScope().acquire());
     }
 
     static class VaListHelper {

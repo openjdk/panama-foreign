@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestByteBuffer
  */
 
-import jdk.incubator.foreign.MappedMemorySegments;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
@@ -43,6 +42,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.ref.Cleaner;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -63,6 +63,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -252,7 +253,7 @@ public class TestByteBuffer {
             //write to channel
             MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
             initTuples(segment, tuples.elementCount().getAsLong());
-            MappedMemorySegments.force(segment);
+            segment.force();
         }
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -288,7 +289,7 @@ public class TestByteBuffer {
                 //write to channel
                 MemorySegment segment = MemorySegment.mapFile(f.toPath(), i, tuples.byteSize(), FileChannel.MapMode.READ_WRITE, scope);
                 initTuples(segment, 1);
-                MappedMemorySegments.force(segment);
+                segment.force();
             }
         }
 
@@ -299,6 +300,30 @@ public class TestByteBuffer {
                 MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0L, tuples.byteSize(), FileChannel.MapMode.READ_ONLY, scope);
                 checkTuples(segment, segment.asByteBuffer(), 1);
             }
+        }
+    }
+
+    static final long LARGE_SIZE = 3L * 1024L * 1024L * 1024L; // 3GB
+
+    @Test
+    public void testLargeMappedSegment() throws Throwable {
+        if (System.getProperty("sun.arch.data.model").equals("32")) {
+            throw new SkipException("large mapped files not supported on 32-bit systems");
+        }
+
+        File f = new File("testLargeMappedSegment.out");
+        f.createNewFile();
+        f.deleteOnExit();
+
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemorySegment segment = MemorySegment.mapFile(f.toPath(), 0, LARGE_SIZE, FileChannel.MapMode.READ_WRITE, scope);
+            segment.isLoaded();
+            segment.load();
+            segment.isLoaded();
+            segment.force();
+            segment.isLoaded();
+            segment.unload();
+            segment.isLoaded();
         }
     }
 
@@ -488,7 +513,7 @@ public class TestByteBuffer {
             for (byte offset = 0; offset < SIZE; offset++) {
                 MemoryAccess.setByteAtOffset(segment, offset, offset);
             }
-            MappedMemorySegments.force(segment);
+            segment.force();
         }
 
         for (int offset = 0 ; offset < SIZE ; offset++) {
@@ -510,10 +535,10 @@ public class TestByteBuffer {
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertFalse(segment.isReadOnly());
-            MappedMemorySegments.force(segment);
-            MappedMemorySegments.load(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.unload(segment);
+            segment.force();
+            segment.load();
+            segment.isLoaded();
+            segment.unload();
         }
         //RO
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -521,10 +546,10 @@ public class TestByteBuffer {
             assertEquals(segment.byteSize(), 0);
             assertEquals(segment.isMapped(), true);
             assertTrue(segment.isReadOnly());
-            MappedMemorySegments.force(segment);
-            MappedMemorySegments.load(segment);
-            MappedMemorySegments.isLoaded(segment);
-            MappedMemorySegments.unload(segment);
+            segment.force();
+            segment.load();
+            segment.isLoaded();
+            segment.unload();
         }
     }
 
@@ -620,48 +645,45 @@ public class TestByteBuffer {
         MemoryAccess.setInt(s2, 10); // Dead access!
     }
 
-    @Test(expectedExceptions = UnsupportedOperationException.class)
-    public void testIOOnSharedSegmentBuffer() throws IOException {
+    @Test(dataProvider = "allScopes")
+    public void testIOOnSegmentBuffer(Supplier<ResourceScope> scopeSupplier) throws IOException {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
-        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE) ;
-             ResourceScope scope = ResourceScope.newSharedScope()) {
+        ResourceScope scope;
+        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE) ;
+             ResourceScope scp = closeableScopeOrNull(scope = scopeSupplier.get())) {
             MemorySegment segment = MemorySegment.allocateNative(10, 1, scope);
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
-            segment.scope().close();
-            channel.write(bb);
+            assertEquals(channel.write(bb), 10);
+            segment.fill((byte)0x00);
+            assertEquals(bb.clear(), ByteBuffer.wrap(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}));
+            assertEquals(channel.position(0).read(bb.clear()), 10);
+            assertEquals(bb.flip(), ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         }
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testIOOnClosedConfinedSegmentBuffer() throws IOException {
+    static final Class<IllegalStateException> ISE = IllegalStateException.class;
+
+    @Test(dataProvider = "closeableScopes")
+    public void testIOOnClosedSegmentBuffer(Supplier<ResourceScope> scopeSupplier) throws IOException {
         File tmp = File.createTempFile("tmp", "txt");
         tmp.deleteOnExit();
-        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.newConfinedScope());
+        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+            MemorySegment segment = MemorySegment.allocateNative(10, scopeSupplier.get());
             for (int i = 0; i < 10; i++) {
                 MemoryAccess.setByteAtOffset(segment, i, (byte) i);
             }
             ByteBuffer bb = segment.asByteBuffer();
             segment.scope().close();
-            channel.write(bb);
-        }
-    }
-
-    @Test
-    public void testIOOnConfinedSegment() throws IOException {
-        File tmp = File.createTempFile("tmp", "txt");
-        tmp.deleteOnExit();
-        try (FileChannel channel = FileChannel.open(tmp.toPath(), StandardOpenOption.WRITE)) {
-            MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.newConfinedScope());
-            for (int i = 0; i < 10; i++) {
-                MemoryAccess.setByteAtOffset(segment, i, (byte) i);
-            }
-            ByteBuffer bb = segment.asByteBuffer();
-            channel.write(bb);
+            assertThrows(ISE, () -> channel.read(bb));
+            assertThrows(ISE, () -> channel.read(new ByteBuffer[] {bb}));
+            assertThrows(ISE, () -> channel.read(new ByteBuffer[] {bb}, 0, 1));
+            assertThrows(ISE, () -> channel.write(bb));
+            assertThrows(ISE, () -> channel.write(new ByteBuffer[] {bb}));
+            assertThrows(ISE, () -> channel.write(new ByteBuffer[] {bb}, 0 ,1));
         }
     }
 
@@ -699,6 +721,37 @@ public class TestByteBuffer {
                 { (Supplier<MemorySegment>) () -> MemorySegment.allocateNative(16, ResourceScope.newImplicitScope()) },
                 { (Supplier<MemorySegment>) () -> MemorySegment.ofArray(new byte[16]) }
         };
+    }
+
+    @DataProvider(name = "closeableScopes")
+    public static Object[][] closeableScopes() {
+        return new Object[][] {
+                { (Supplier<ResourceScope>) () -> ResourceScope.newSharedScope()   },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newConfinedScope() },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newSharedScope(Cleaner.create())   },
+                { (Supplier<ResourceScope>) () -> ResourceScope.newConfinedScope(Cleaner.create()) }
+        };
+    }
+
+    @DataProvider(name = "implicitScopes")
+    public static Object[][] implicitScopes() {
+        return new Object[][] {
+                { (Supplier<ResourceScope>) ResourceScope::newImplicitScope },
+                { (Supplier<ResourceScope>) ResourceScope::globalScope      },
+        };
+    }
+
+    @DataProvider(name = "allScopes")
+    public static Object[][] allScopes() {
+        return Stream.of(implicitScopes(), closeableScopes())
+                .flatMap(Arrays::stream)
+                .toArray(Object[][]::new);
+    }
+
+    static ResourceScope closeableScopeOrNull(ResourceScope scope) {
+        if (scope.isImplicit())
+            return null;
+        return scope;
     }
 
     @DataProvider(name = "bufferOps")
@@ -885,10 +938,10 @@ public class TestByteBuffer {
     }
 
     enum MappedSegmentOp {
-        LOAD(MappedMemorySegments::load),
-        UNLOAD(MappedMemorySegments::unload),
-        IS_LOADED(MappedMemorySegments::isLoaded),
-        FORCE(MappedMemorySegments::force),
+        LOAD(MemorySegment::load),
+        UNLOAD(MemorySegment::unload),
+        IS_LOADED(MemorySegment::isLoaded),
+        FORCE(MemorySegment::force),
         BUFFER_LOAD(m -> ((MappedByteBuffer)m.asByteBuffer()).load()),
         BUFFER_IS_LOADED(m -> ((MappedByteBuffer)m.asByteBuffer()).isLoaded()),
         BUFFER_FORCE(m -> ((MappedByteBuffer)m.asByteBuffer()).force());

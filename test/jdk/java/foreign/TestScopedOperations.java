@@ -90,8 +90,11 @@ public class TestScopedOperations {
 
     static {
             // scope operations
-            ScopedOperation.ofScope(scope -> scope.addOnClose(() -> {}), "ResourceScope::addOnClose");
-            ScopedOperation.ofScope(scope -> scope.acquire().close(), "ResourceScope::lock");
+            ScopedOperation.ofScope(scope -> scope.addCloseAction(() -> {}), "ResourceScope::addOnClose");
+            ScopedOperation.ofScope(scope -> {
+                ResourceScope.Handle handle = scope.acquire();
+                scope.release(handle);
+            }, "ResourceScope::lock");
             // segment operations
             ScopedOperation.ofSegment(MemorySegment::toByteArray, "MemorySegment::toByteArray");
             ScopedOperation.ofSegment(MemorySegment::toCharArray, "MemorySegment::toCharArray");
@@ -105,6 +108,9 @@ public class TestScopedOperations {
             ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");
             ScopedOperation.ofSegment(s -> s.mismatch(s), "MemorySegment::mismatch");
             ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
+            // address operations
+            ScopedOperation.ofAddress(a -> a.toRawLongValue(), "MemoryAddress::toRawLongValue");
+            ScopedOperation.ofAddress(a -> a.asSegment(100, ResourceScope.globalScope()), "MemoryAddress::asSegment");
             // valist operations
             ScopedOperation.ofVaList(CLinker.VaList::address, "VaList::address");
             ScopedOperation.ofVaList(CLinker.VaList::copy, "VaList::copy");
@@ -171,6 +177,15 @@ public class TestScopedOperations {
                 scopedOperations.add(new ScopedOperation(scope -> {
                     MemorySegment segment = segmentFactory.segmentFactory.apply(scope);
                     segmentConsumer.accept(segment);
+                }, segmentFactory.name() + "/" + name));
+            }
+        }
+
+        static void ofAddress(Consumer<MemoryAddress> addressConsumer, String name) {
+            for (SegmentFactory segmentFactory : SegmentFactory.values()) {
+                scopedOperations.add(new ScopedOperation(scope -> {
+                    MemoryAddress segment = segmentFactory.segmentFactory.apply(scope).address();
+                    addressConsumer.accept(segment);
                 }, segmentFactory.name() + "/" + name));
             }
         }

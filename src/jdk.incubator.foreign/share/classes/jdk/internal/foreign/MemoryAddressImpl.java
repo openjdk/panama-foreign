@@ -58,6 +58,11 @@ public final class MemoryAddressImpl implements MemoryAddress {
 
     // MemoryAddress methods
 
+    @Override
+    public ResourceScope scope() {
+        return segment != null ?
+                segment.scope() : ResourceScope.globalScope();
+    }
 
     @Override
     public MemoryAddress addOffset(long offset) {
@@ -69,15 +74,23 @@ public final class MemoryAddressImpl implements MemoryAddress {
         Objects.requireNonNull(segment);
         AbstractMemorySegmentImpl segmentImpl = (AbstractMemorySegmentImpl)segment;
         if (segmentImpl.base() != base()) {
-            throw new IllegalArgumentException("Invalid segment: " + segment);
+            throw new IllegalArgumentException("Incompatible segment: " + segment);
         }
         return offset() - segmentImpl.min();
     }
 
     @Override
+    public boolean isNative() {
+        return base() == null;
+    }
+
+    @Override
     public long toRawLongValue() {
-        if (base() != null) {
-            throw new UnsupportedOperationException("Not a native address");
+        if (segment != null) {
+            if (segment.base() != null) {
+                throw new UnsupportedOperationException("Not a native address");
+            }
+            segment.checkValidState();
         }
         return offset();
     }

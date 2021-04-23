@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign;
 
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.ref.Cleaner;
@@ -63,7 +64,7 @@ final class ConfinedScope extends ResourceScopeImpl {
     }
 
     @Override
-    public Handle acquire() {
+    public HandleImpl acquire() {
         checkValidState();
         lockCount++;
         return new ConfinedHandle();
@@ -112,8 +113,13 @@ final class ConfinedScope extends ResourceScopeImpl {
     /**
      * A confined resource scope handle; no races are possible here.
      */
-    final class ConfinedHandle implements Handle {
+    final class ConfinedHandle implements HandleImpl {
         boolean released = false;
+
+        @Override
+        public ResourceScopeImpl scope() {
+            return ConfinedScope.this;
+        }
 
         @Override
         public void close() {

@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This abstract class provides an immutable implementation for the {@code MemorySegment} interface. This class contains information
@@ -114,14 +116,18 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     }
 
     @Override
-    public Spliterator<MemorySegment> spliterator(SequenceLayout sequenceLayout) {
-        Objects.requireNonNull(sequenceLayout);
-        checkValidState();
-        if (sequenceLayout.byteSize() != byteSize()) {
-            throw new IllegalArgumentException();
+    public Spliterator<MemorySegment> spliterator(MemoryLayout elementLayout) {
+        Objects.requireNonNull(elementLayout);
+        if (byteSize() % elementLayout.byteSize() != 0) {
+            throw new IllegalArgumentException("Segment size is no a multiple of layout size");
         }
-        return new SegmentSplitter(sequenceLayout.elementLayout().byteSize(), sequenceLayout.elementCount().getAsLong(),
+        return new SegmentSplitter(elementLayout.byteSize(), byteSize() / elementLayout.byteSize(),
                 this);
+    }
+
+    @Override
+    public Stream<MemorySegment> elements(MemoryLayout elementLayout) {
+        return StreamSupport.stream(spliterator(elementLayout), false);
     }
 
     @Override
@@ -223,7 +229,6 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     @Override
     @ForceInline
     public final MemoryAddress address() {
-        checkValidState();
         return new MemoryAddressImpl(this, 0L);
     }
 
@@ -254,6 +259,31 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
     @Override
     public boolean isMapped() {
         return false;
+    }
+
+    @Override
+    public boolean isNative() {
+        return false;
+    }
+
+    @Override
+    public void load() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public void unload() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public boolean isLoaded() {
+        throw new UnsupportedOperationException("Not a mapped segment");
+    }
+
+    @Override
+    public void force() {
+        throw new UnsupportedOperationException("Not a mapped segment");
     }
 
     @Override
@@ -312,7 +342,7 @@ public abstract class AbstractMemorySegmentImpl extends MemorySegmentProxy imple
         checkBounds(offset, length);
     }
 
-    private void checkValidState() {
+    void checkValidState() {
         try {
             scope.checkValidState();
         } catch (ScopedMemoryAccess.Scope.ScopedAccessError ex) {

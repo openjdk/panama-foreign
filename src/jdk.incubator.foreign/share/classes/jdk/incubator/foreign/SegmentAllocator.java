@@ -59,10 +59,6 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  * In addition, this interface also defines factories for commonly used allocators; for instance {@link #arenaAllocator(ResourceScope)}
  * and {@link #arenaAllocator(long, ResourceScope)} are arena-style native allocators. Finally {@link #ofSegment(MemorySegment)}
  * returns an allocator which wraps a segment (either on-heap or off-heap) and recycles its content upon each new allocation request.
- * <p>
- * Unless otherwise specified, whenever an allocator is associated with a <em>shared</em> resource scope, then allocation is
- * thread-safe and may be performed concurrently; conversely, if the allocator is associated with a <em>confined</em> resource scope
- * then allocation is confined to the owning thread of the allocator's resource scope.
  */
 @FunctionalInterface
 public interface SegmentAllocator {
@@ -356,6 +352,10 @@ public interface SegmentAllocator {
      * This can be useful when clients want to perform multiple allocation requests while avoiding the cost associated
      * with allocating a new off-heap memory region upon each allocation request.
      * <p>
+     * An allocator associated with a <em>shared</em> resource scope is thread-safe and allocation requests may be
+     * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
+     * allocation requests can only occur from the thread owning the allocator's resource scope.
+     * <p>
      * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
      * the allocator capacity.
      *
@@ -387,6 +387,10 @@ public interface SegmentAllocator {
      * <p>
      * This segment allocator can be useful when clients want to perform multiple allocation requests while avoiding the
      * cost associated with allocating a new off-heap memory region upon each allocation request.
+     * <p>
+     * An allocator associated with a <em>shared</em> resource scope is thread-safe and allocation requests may be
+     * performed concurrently; conversely, if the arena allocator is associated with a <em>confined</em> resource scope,
+     * allocation requests can only occur from the thread owning the allocator's resource scope.
      * <p>
      * The returned allocator might throw an {@link OutOfMemoryError} if an incoming allocation request exceeds
      * the system capacity.

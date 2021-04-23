@@ -39,13 +39,14 @@ import java.util.Spliterator;
  * with a resource scope can only be accessed while the resource scope is <em>alive</em> (see {@link #isAlive()}),
  * and by the thread associated with the resource scope (if any).
  *
- * <h2>Explicit closure</h2>
+ * <h2>Explicit resource scopes</h2>
  *
- * Resource scopes created using one of the factories in this class can be closed explicitly (see {@link ResourceScope#close()}).
- * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operation on
- * resources derived from that scope (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
+ * Resource scopes obtained from {@link #newConfinedScope()}, {@link #newSharedScope()} support <em>deterministic deallocation</em>;
+ * We call these resource scopes <em>explicit scopes</em>. Explicit resource scopes can be closed explicitly (see {@link ResourceScope#close()}).
+ * When a resource scope is closed, it is no longer <em>alive</em> (see {@link #isAlive()}, and subsequent operations on
+ * resources associated with that scope (e.g. attempting to access a {@link MemorySegment} instance) will fail with {@link IllegalStateException}.
  * <p>
- * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addOnClose(Runnable)}) to be called.
+ * Closing a resource scope will cause all the cleanup actions associated with that scope (see {@link #addCloseAction(Runnable)}) to be called.
  * Moreover, closing a resource scope might trigger the releasing of the underlying memory resources associated with said scope; for instance:
  * <ul>
  *     <li>closing the scope associated with a native memory segment results in <em>freeing</em> the native memory associated with it
@@ -55,21 +56,27 @@ import java.util.Spliterator;
  *     <li>closing the scope associated with an upcall stub results in releasing the stub
  *     (see {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}</li>
  * </ul>
- *
- * <h2><a id = "implicit-closure">Implicit closure</a></h2>
- *
- * Resource scopes can be associated with a {@link Cleaner} instance (see {@link #newConfinedScope(Cleaner)}) - we call these
- * resource scopes <em>managed</em> resource scopes. A managed resource scope is closed automatically once the scope instance
- * becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * <p>
- * Managed resource scopes can still be closed explicitly (see {@link #close()}); this can be useful to allow for predictable,
- * deterministic resource deallocation, while still prevent accidental native memory leaks. In case a managed resource
- * scope is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
- * (see {@link #addOnClose(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
+ * Sometimes, explicit scopes can be associated with a {@link Cleaner} instance (see {@link #newConfinedScope(Cleaner)} and
+ * {@link #newSharedScope(Cleaner)}). We call these resource scopes <em>managed</em> resource scopes. A managed resource scope
+ * is closed automatically once the scope instance becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * <p>
- * Some managed resource scopes are implicitly managed (see {@link #newImplicitScope()}, {@link #globalScope()}, and are said to be <em>implicit scopes</em>.
- * An implicit resource scope only features implicit closure, and always throws an {@link UnsupportedOperationException}
- * when the {@link #close()} method is called directly.
+ * Managed scopes can be useful to allow for predictable, deterministic resource deallocation, while still prevent accidental native memory leaks.
+ * In case a managed resource scope is closed explicitly, no further action will be taken when the scope becomes unreachable;
+ * that is, cleanup actions (see {@link #addCloseAction(Runnable)}) associated with a resource scope, whether managed or not,
+ * are called <em>exactly once</em>.
+ *
+ * <h2>Implicit resource scopes</h2>
+ *
+ * Resource scopes obtained from {@link #newImplicitScope()} cannot be closed explicitly. We call these resource scopes
+ * <em>implicit scopes</em>. Calling {@link #close()} on an implicit resource scope always results in an exception.
+ * Resources associated with implicit scopes are released once the scope instance becomes
+ * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+ * <p>
+ * An important implicit resource scope is the so called {@link #globalScope() global scope}; the global scope is
+ * an implicit scope that is guaranteed to never become <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+ * As a results, the global scope will never attempt to release resources associated with it. Such resources must, where
+ * needed, be managed independently by clients.
  *
  * <h2><a id = "thread-confinement">Thread confinement</a></h2>
  *
@@ -82,11 +89,12 @@ import java.util.Spliterator;
  * associated with this resource scope. Any attempt to perform resource access from a thread other than the
  * owner thread will result in a runtime failure.
  * <p>
- * Shared resource scopes (see {@link #newSharedScope()}), on the other hand, have no owner thread; as such resources associated
- * with this shared resource scopes can be accessed by multiple threads. This might be useful when multiple threads need
- * to access the same resource concurrently (e.g. in the case of parallel processing). For instance, a client
- * might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the segment and allow multiple
- * threads to work in parallel on disjoint segment slices. The following code can be used to sum all int values in a memory segment in parallel:
+ * Shared resource scopes (see {@link #newSharedScope()} and {@link #newImplicitScope()}), on the other hand, have no owner thread;
+ * as such resources associated with this shared resource scopes can be accessed by multiple threads.
+ * This might be useful when multiple threads need to access the same resource concurrently (e.g. in the case of parallel processing).
+ * For instance, a client might obtain a {@link Spliterator} from a shared segment, which can then be used to slice the
+ * segment and allow multiple threads to work in parallel on disjoint segment slices. The following code can be used to sum
+ * all int values in a memory segment in parallel:
  *
  * <blockquote><pre>{@code
 SequenceLayout SEQUENCE_LAYOUT = MemoryLayout.sequenceLayout(1024, MemoryLayouts.JAVA_INT);
@@ -100,29 +108,37 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
  * }</pre></blockquote>
  *
  * <p>
- * When using shared resource scopes, clients should make sure that no other thread is accessing the segment while
- * the segment is being closed. If one or more threads attempts to access a segment concurrently while the
- * segment is being closed, an exception might occur on both the accessing and the closing threads. Clients should
- * refrain from attempting to close a shared resource scope repeatedly (e.g. keep calling {@link #close()} until no exception is thrown);
- * such exceptions should instead be seen as an indication that the client code is lacking appropriate synchronization between the threads
- * accessing/closing the resources associated with the shared resource scope.
+ * Explicit shared resource scopes, while powerful, must be used with caution: if one or more threads accesses
+ * a resource associated with a shared scope while the scope is being closed from another thread, an exception might occur on both
+ * the accessing and the closing threads. Clients should refrain from attempting to close a shared resource scope repeatedly
+ * (e.g. keep calling {@link #close()} until no exception is thrown). Instead, clients of shared resource scopes
+ * should always ensure that proper synchronization mechanisms (e.g. using resource scope handles, see below) are put in place
+ * so that threads closing shared resource scopes can never race against threads accessing resources managed by same scopes.
  *
- * <h2>Scope handles</h2>
+ * <h2>Resource scope handles</h2>
  *
  * Resource scopes can be made <em>non-closeable</em> by acquiring one or more resource scope <em>handles</em> (see
- * {@link #acquire()}. A resource scope handle can be used to make sure that its corresponding scope cannot be closed
- * (either explicitly, or implicitly) for a certain period of time - e.g. when one or more resources associated with
- * the parent scope need to be accessed. A resource scope can be acquired multiple times; the resource scope can only be
- * closed <em>after</em> all the handles acquired against that scope have been closed (see {@link Handle#close()}).
+ * {@link #acquire()}. A resource scope handle can be used to make sure that resources associated with a given resource scope
+ * (either explicit or implicit) cannot be released for a certain period of time - e.g. during a critical region of code
+ * involving one or more resources associated with the scope. For instance, an explicit resource scope can only be closed
+ * <em>after</em> all the handles acquired against that scope have been closed (see {@link Handle#close()}).
  * This can be useful when clients need to perform a critical operation on a memory segment, during which they have
  * to ensure that the segment will not be released; this can be done as follows:
  *
  * <blockquote><pre>{@code
 MemorySegment segment = ...
-try (ResourceScope.Handle segmentHandle = segment.scope().acquire()) {
+ResourceScope.Handle segmentHandle = segment.scope().acquire()
+try {
    <critical operation on segment>
-} // release scope handle
+} finally {
+   segment.scope().release(segmentHandle);
+}
  * }</pre></blockquote>
+ *
+ * Acquiring implicit resource scopes is also possible, but it is often unnecessary: since resources associated with
+ * an implicit scope will only be released when the scope becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>,
+ * clients can use e.g. {@link java.lang.ref.Reference#reachabilityFence(Object)} to make sure that resources associated
+ * with implicit scopes are not released prematurely. That said, the above code snippet works (trivially) for implicit scopes too.
  *
  * @apiNote In the future, if the Java language permits, {@link ResourceScope}
  * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
@@ -175,34 +191,48 @@ public interface ResourceScope extends AutoCloseable {
 
     /**
      * Add a custom cleanup action which will be executed when the resource scope is closed.
+     * The order in which custom cleanup actions are invoked once the scope is closed is unspecified.
      * @param runnable the custom cleanup action to be associated with this scope.
      * @throws IllegalStateException if this scope has already been closed.
      */
-    void addOnClose(Runnable runnable);
+    void addCloseAction(Runnable runnable);
 
     /**
-     * Make this resource scope non-closeable by acquiring a new resource scope handle. This scope cannot be closed unless all its
-     * acquired handles have been closed first. Additionally, a resource scope handle maintains a strong reference
-     * to its resource scope; this means that if a resource scope features
-     * <a href="ResourceScope.html#implicit-closure"><em>implicit closure</em></a>, the scope cannot be implicitly closed
-     * until all its acquired handles becomes <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
+     * If this resource scope is explicit, this method acquires a new resource scope handle, associated with this
+     * resource scope; an explicit resource scope cannot be {@link #close() closed}
+     * until all the resource scope handles acquired from it have been {@link #release(Handle)} released}.
+     * <p>
+     * If this scope is an {@link #isImplicit()} implicit} scope, calling this method will always return the
+     * <em>implicit</em> resource scope handle. The implicit resource scope handle is associated with the
+     * {@link ResourceScope#globalScope() global scope}.
      * @return a resource scope handle.
      */
     Handle acquire();
 
     /**
-     * An abstraction modelling resource scope handle. A resource scope handle is typically acquired by clients (see
-     * {@link #acquire()} in order to prevent the resource scope from being closed while executing a certain operation.
-     * A resource scope handle features a method (see {@link #close()}) which can be used by clients to release the handle.
+     * Release the provided resource scope handle. This method is idempotent, that is, releasing the same handle
+     * multiple times has no effect.
+     * @param handle the resource scope handle to be released.
+     * @throws IllegalArgumentException if this resource scope is explicit and the provided handle is not associated
+     * with this scope.
      */
-    interface Handle extends AutoCloseable {
+    void release(Handle handle);
+
+    /**
+     * An abstraction modelling a resource scope handle. A resource scope handle is typically {@link #acquire() acquired} by clients
+     * in order to prevent an explicit resource scope from being closed while executing a certain operation.
+     * Once obtained, resource scope handles can be {@link #release(Handle)} released}; an explicit resource scope can
+     * be closed only <em>after</em> all the resource scope handles acquired from it have been released.
+     */
+    interface Handle {
 
         /**
-         * Release this handle on the resource scope associated with this instance. This method is idempotent,
-         * that is, closing an already closed handle has no effect.
+         * Returns the resource scope associated with this handle, or the {@link ResourceScope#globalScope()}
+         * if this handle is the implicit resource scope handle.
+         * @return the resource scope associated with this handle, or the {@link ResourceScope#globalScope()}
+         * if this handle is the implicit resource scope handle.
          */
-        @Override
-        void close();
+        ResourceScope scope();
     }
 
     /**
