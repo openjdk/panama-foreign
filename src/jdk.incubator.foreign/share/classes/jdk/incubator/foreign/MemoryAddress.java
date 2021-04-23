@@ -99,7 +99,7 @@ public interface MemoryAddress extends Addressable {
      * @return the offset of this memory address into the given segment.
      * @param segment the segment relative to which this address offset should be computed
      * @throws IllegalArgumentException if {@code segment} is not compatible with this address; this can happen, for instance,
-     * when {@code segment} models an heap memory region, while this address models an off-heap memory address.
+     * when {@code segment} models an heap memory region, while this address is a {@link #isNative() native} address.
      */
     long segmentOffset(MemorySegment segment);
 
@@ -205,12 +205,14 @@ public interface MemoryAddress extends Addressable {
     int hashCode();
 
     /**
-     * The native memory address instance modelling the {@code NULL} address.
+     * The native memory address instance modelling the {@code NULL} address. The returned address is associated
+     * with the {@link ResourceScope#globalScope() global} resource scope.
      */
     MemoryAddress NULL = new MemoryAddressImpl(null, 0L);
 
     /**
-     * Obtain a native memory address instance from given long address.
+     * Obtain a native memory address instance from given long address. The returned address is associated
+     * with the {@link ResourceScope#globalScope() global} resource scope.
      * @param value the long address.
      * @return the new memory address instance.
      */
