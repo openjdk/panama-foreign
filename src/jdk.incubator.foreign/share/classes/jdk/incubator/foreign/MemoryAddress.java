@@ -102,7 +102,7 @@ public interface MemoryAddress extends Addressable {
     long segmentOffset(MemorySegment segment);
 
     /**
-     Returns a new native memory segment with given size and resource scope (possibly overriding the scope already associated
+     Returns a new native memory segment with given size and resource scope (replacing the scope already associated
      * with this address), and whose base address is this address. This method can be useful when interacting with custom
      * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
@@ -127,12 +127,15 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalStateException if either the scope associated with this address or the provided scope
+     * have been already closed, or if access occurs from a thread other than the thread owning either
+     * scopes.
      * @throws UnsupportedOperationException if this address is an heap address.
      */
     MemorySegment asSegment(long bytesSize, ResourceScope scope);
 
     /**
-     * Returns a new native memory segment with given size and resource scope (possibly overriding the scope already associated
+     * Returns a new native memory segment with given size and resource scope (replacing the scope already associated
      * with this address), and whose base address is this address. This method can be useful when interacting with custom
      * native memory sources (e.g. custom allocators), where an address to some
      * underlying memory region is typically obtained from native code (often as a plain {@code long} value).
@@ -155,6 +158,9 @@ public interface MemoryAddress extends Addressable {
      * @param scope the native segment scope.
      * @return a new native memory segment with given base address, size and scope.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalStateException if either the scope associated with this address or the provided scope
+     * have been already closed, or if access occurs from a thread other than the thread owning either
+     * scopes.
      * @throws UnsupportedOperationException if this address is an heap address.
      */
     MemorySegment asSegment(long bytesSize, Runnable cleanupAction, ResourceScope scope);

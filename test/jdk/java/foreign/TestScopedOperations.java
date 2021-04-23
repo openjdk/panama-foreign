@@ -110,6 +110,7 @@ public class TestScopedOperations {
             ScopedOperation.ofSegment(s -> s.fill((byte) 0), "MemorySegment::fill");
             // address operations
             ScopedOperation.ofAddress(a -> a.toRawLongValue(), "MemoryAddress::toRawLongValue");
+            ScopedOperation.ofAddress(a -> a.asSegment(100, ResourceScope.globalScope()), "MemoryAddress::asSegment");
             // valist operations
             ScopedOperation.ofVaList(CLinker.VaList::address, "VaList::address");
             ScopedOperation.ofVaList(CLinker.VaList::copy, "VaList::copy");
