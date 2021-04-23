@@ -91,7 +91,7 @@ import java.util.Spliterator;
  * is small enough, due to the size limitation inherent to the ByteBuffer API.
  * <p>
  * Clients requiring sophisticated, low-level control over mapped memory segments, should consider writing
- * custom mapped memory segment factories; using JNI, e.g. on Linux, it is possible to call {@code mmap}
+ * custom mapped memory segment factories; using {@link CLinker}, e.g. on Linux, it is possible to call {@code mmap}
  * with the desired parameters; the returned address can be easily wrapped into a memory segment, using
  * {@link MemoryAddress#ofLong(long)} and {@link MemoryAddress#asSegment(long, Runnable, ResourceScope)}.
  *
