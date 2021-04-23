@@ -65,7 +65,7 @@ public class NativeScope implements SegmentAllocator, AutoCloseable {
 
     @Override
     public void close() {
-        scopeHandle.close();
+        resourceScope.release(scopeHandle);
         resourceScope.close();
     }
 
