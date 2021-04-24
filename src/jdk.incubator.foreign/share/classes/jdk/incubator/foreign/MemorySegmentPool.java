@@ -136,7 +136,7 @@ public class MemorySegmentPool {
       segmentsDequeue[i] = new SpinLockQueue<>(segmentsBucketMaxSize);
     }
 
-    scope.addOnClose(this::freePool);
+    scope.addCloseAction(new CleanRunnable(this.segmentsDequeue));
   }
 
   /**
@@ -171,7 +171,7 @@ public class MemorySegmentPool {
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
     // Prevent scope managing this pool to go away, when dependant allocator is alive
     final var handle = scope.acquire();
-    resourceScope.addOnClose(handle::close);
+    resourceScope.addCloseAction(() -> scope.release(handle));
     return ((bytesSize, bytesAlignment) -> {
       final var alignedSize = alignSize(bytesSize, bytesAlignment);
       final var segmentEntry = findOrAllocateItemAndPrepareForAllocator(resourceScope, alignedSize);
@@ -267,12 +267,7 @@ public class MemorySegmentPool {
    * Free all elements associated with pool. Called when pool's scope gets closed.
    */
   private void freePool() {
-    // This method is called from pool's scope close method
-    for (int i = 0; i < segmentsDequeue.length; i++) {
-      // After calling this method maxSize is zero, and no new entries can be put back
-      // Entries are released using cleaner attached to pool's scope
-      segmentsDequeue[i].retrieveAndLock();
-    }
+
   }
 
   private static void validateMaxSizes(int maxSizes[]) {
@@ -298,9 +293,6 @@ public class MemorySegmentPool {
 
     /** Source memory address, it's the start of sourceSegment. */
     private final MemoryAddress sourceAddress;
-
-    /** Memory segment provided in request, updated when needed */
-    private MemorySegment clientsSegment;
 
     /** Flag indicating if item has been released. */
     private volatile boolean released;
@@ -339,22 +331,9 @@ public class MemorySegmentPool {
       return sourceAddress;
     }
 
-    /**
-     * The {@link MemorySegment} associated with this item.
-     *
-     * @return memory segment assoicated with this item.
-     */
-    @ForceInline
-    public MemorySegment memorySegment() {
-      return clientsSegment;
-    }
-
     @Override
     @DontInline
     public void close() {
-      // Segment can have reference to scope, and this can prevent scope from closing
-      clientsSegment = null;
-
       if (!this.owner.putEntry(this)) {
         this.release();
       }
@@ -371,4 +350,26 @@ public class MemorySegmentPool {
     }
   }
 
+  /**
+   * Cleaner class has to separate pool class, from objects having strong reference
+   * to pool's scope, as in case of implicite scope, such scope may not be closed, due
+   * to strong reference trough cleaner method
+   */
+  private static class CleanRunnable implements Runnable {
+    private SpinLockQueue<?>[] queuesToClean;
+
+    CleanRunnable(SpinLockQueue<?>[] queuesToClean) {
+      this.queuesToClean = queuesToClean;
+    }
+    @Override
+    public void run() {
+      // This method is called from pool's scope close method
+      for (int i = 0; i < queuesToClean.length; i++) {
+        // After calling this method maxSize is zero, and no new entries can be put back
+        // Entries are released using cleaner attached to pool's scope
+        queuesToClean[i].retrieveAndLock();
+      }
+      queuesToClean = null;
+    }
+  }
 }

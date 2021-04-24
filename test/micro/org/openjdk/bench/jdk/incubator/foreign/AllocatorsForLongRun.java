@@ -176,22 +176,6 @@ public class AllocatorsForLongRun {
   }
 
   @Benchmark
-//  @CompilerControl(CompilerControl.Mode.PRINT)
-  public void pool_direct() {
-    List<MemoryPoolItem> pooledSegments = new ArrayList<>(allocations);
-    for (int j = 0; j < allocations; j++) {
-      var size = sizes[i];
-      var s = pool.getSegmentEntryBySize(size, 1);
-      pooledSegments.add(s);
-
-      readSegment(s.memorySegment(), size);
-//      readSegment(s.memoryAddress.asSegment(size, scope));
-      next();
-    }
-    pooledSegments.forEach(MemoryPoolItem::close);
-  }
-  @Benchmark
-//  @CompilerControl(CompilerControl.Mode.PRINT)
   public void malloc_free() {
     List<MemoryAddress> allocatedAddresses = new ArrayList<>(allocations);
     for (int j = 0; j < allocations; j++) {

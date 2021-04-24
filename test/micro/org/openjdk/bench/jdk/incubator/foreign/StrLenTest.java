@@ -152,6 +152,22 @@ public class StrLenTest {
     }
 
     @Benchmark
+    public int panama_strlen_memsegmentpool_allocator_copy() throws Throwable {
+        try(ResourceScope scope = ResourceScope.newConfinedScope()) {
+            final var allocator = memorySegmentPool.allocatorForScope(scope);
+
+            byte[] bytes = str.getBytes();
+            int len = bytes.length;
+
+            final var segment = allocator.allocate(len+1);
+            segment.copyFrom(MemorySegment.ofArray(bytes));
+            MemoryAccess.setByteAtOffset(segment, len, (byte)0);
+
+            return (int)STRLEN.invokeExact(CLinker.toCString(str, allocator).address());
+        }
+    }
+
+    @Benchmark
     public int panama_strlen_memsegmentpool_allocator() throws Throwable {
         try(ResourceScope scope = ResourceScope.newConfinedScope()) {
             final var allocator = memorySegmentPool.allocatorForScope(scope);
@@ -159,18 +175,6 @@ public class StrLenTest {
         }
     }
 
-    @Benchmark
-//    @CompilerControl(CompilerControl.Mode.PRINT)
-    public int panama_strlen_memsegmentpool_direct() throws Throwable {
-        final var memoryPool = memorySegmentPool;
-        final byte[] bytes = str.getBytes();
-        final int len = bytes.length;
-        try (var stringSegmentEntry = memoryPool.getSegmentEntryBySize(len + 1, 1)) {
-            final var stringSegment = stringSegmentEntry.memorySegment();
-            stringSegment.copyFrom(MemorySegment.ofArray(bytes));
-            return (int) STRLEN.invokeExact(stringSegment.address());
-        }
-    }
 
     static MemoryAddress makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
