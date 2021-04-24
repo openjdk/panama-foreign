@@ -135,7 +135,7 @@ class SharedScope extends ResourceScopeImpl {
             while (true) {
                 ResourceCleanup prev = (ResourceCleanup) FST.getAcquire(this);
                 if (prev == ResourceCleanup.CLOSED_LIST) {
-                    cleanup.next = null; // Release, as long as two threads can't add same cleanup it's ok
+                    cleanup.next = null; // Sanity, as long as two threads can't add same `cleanup` it's ok to release next
                     // too late
                     throw new IllegalStateException("Already closed");
                 }
@@ -152,15 +152,18 @@ class SharedScope extends ResourceScopeImpl {
             // (because MemoryScope::justClose ensured that this thread won the race to close the scope).
             // So, the only "bad" thing that could happen is that some other thread adds to this list
             // while we're closing it.
-            if (FST.getAcquire(this) != ResourceCleanup.CLOSED_LIST) {
+            //
+            // That's a speculative check
+            ResourceCleanup prev = (ResourceCleanup) FST.getAcquire(this);
+            if (prev != ResourceCleanup.CLOSED_LIST) {
                 //ok now we're really closing down
-                ResourceCleanup prev = null;
                 while (true) {
-                    prev = (ResourceCleanup) FST.getAcquire(this);
-                    // no need to check for DUMMY, since only one thread can get here!
-                    if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.CLOSED_LIST)) {
+                    // do atomic CAS (with full fence), to prevent races with add method
+                    if (FST.compareAndSet(this, prev, ResourceCleanup.CLOSED_LIST)) {
                         break;
                     }
+                    // Refresh prev
+                    prev = (ResourceCleanup) FST.getAcquire(this);
                 }
                 cleanup(prev);
             } else {
