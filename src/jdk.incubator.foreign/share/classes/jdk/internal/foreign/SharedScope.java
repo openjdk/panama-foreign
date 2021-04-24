@@ -134,14 +134,15 @@ class SharedScope extends ResourceScopeImpl {
         void add(ResourceCleanup cleanup) {
             while (true) {
                 ResourceCleanup prev = (ResourceCleanup) FST.getAcquire(this);
-                cleanup.next = prev;
-                ResourceCleanup newSegment = (ResourceCleanup) FST.compareAndExchangeRelease(this, prev, cleanup);
-                if (newSegment == ResourceCleanup.CLOSED_LIST) {
+                if (prev == ResourceCleanup.CLOSED_LIST) {
+                    cleanup.next = null; // Release, as long as two threads can't add same cleanup it's ok
                     // too late
                     throw new IllegalStateException("Already closed");
-                } else if (newSegment == prev) {
-                    return; //victory
                 }
+                cleanup.next = prev;
+                if (FST.compareAndSet(this, prev, cleanup)) {
+                    return; //victory
+                };
                 // keep trying
             }
         }
