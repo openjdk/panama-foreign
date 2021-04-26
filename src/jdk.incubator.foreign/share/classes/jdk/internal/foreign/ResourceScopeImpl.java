@@ -258,6 +258,16 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
             return handle == implicitHandle;
         }
 
+        @Override
+        public boolean isAlive() {
+            // This scope is alive when there are references to it.
+            return true;
+        }
+
+        @Override
+        public void checkValidState() {
+        }
+
         private final static HandleImpl implicitHandle = new HandleImpl() {
             @Override
             public void close() {
