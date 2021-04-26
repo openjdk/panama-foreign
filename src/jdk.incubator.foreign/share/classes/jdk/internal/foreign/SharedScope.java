@@ -25,7 +25,6 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
 
 import java.lang.invoke.MethodHandles;
@@ -118,7 +117,7 @@ class SharedScope extends ResourceScopeImpl {
     /**
      * A shared resource list; this implementation has to handle add vs. add races.
      */
-    static class SharedResourceList extends ConfinedScope.ConfinedResourceList {
+    static class SharedResourceList extends ResourceList {
 
         static final VarHandle FST;
 
@@ -143,15 +142,6 @@ class SharedScope extends ResourceScopeImpl {
                 }
                 // keep trying
             }
-        }
-
-        void cleanup() {
-            // We don't need to worry about add vs. close races here; adding a new cleanup action is done
-            // under acquire, which prevents scope from being closed. The only possible race here is
-            // add vs. add. Additionally, close vs. close races are impossible (because MemoryScope::justClose
-            // ensures that only one thread can win the race to close the scope). In other words, this is
-            // effectively single-threaded code.
-            super.cleanup();
         }
     }
 

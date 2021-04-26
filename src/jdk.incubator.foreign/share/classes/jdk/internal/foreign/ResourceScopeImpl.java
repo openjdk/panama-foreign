@@ -295,18 +295,25 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
 
         abstract void add(ResourceCleanup cleanup);
 
-        abstract void cleanup();
+        final void cleanup() {
+            // We don't need to worry about add vs. close races here; adding a new cleanup action is done
+            // under acquire, which prevents scope from being closed. Additionally, close vs. close races are impossible
+            // (because MemoryScope::justClose ensures that only one thread can win the race to close the scope).
+            // In other words, this is effectively single-threaded code.
+            if (fst != ResourceCleanup.CLOSED_LIST) {
+                ResourceCleanup current = fst;
+                fst = ResourceCleanup.CLOSED_LIST;
+                while (current != null) {
+                    current.cleanup();
+                    current = current.next;
+                }
+            } else {
+                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
+            }
+        }
 
         public final void run() {
             cleanup(); // cleaner interop
-        }
-
-        static void cleanup(ResourceCleanup first) {
-            ResourceCleanup current = first;
-            while (current != null) {
-                current.cleanup();
-                current = current.next;
-            }
         }
 
         public static abstract class ResourceCleanup {
@@ -330,6 +337,5 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
                 };
             }
         }
-
     }
 }

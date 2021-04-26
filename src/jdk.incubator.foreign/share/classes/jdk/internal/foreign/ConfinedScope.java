@@ -97,17 +97,6 @@ final class ConfinedScope extends ResourceScopeImpl {
                 throw new IllegalStateException("Already closed!");
             }
         }
-
-        @Override
-        void cleanup() {
-            if (fst != ResourceCleanup.CLOSED_LIST) {
-                ResourceCleanup prev = fst;
-                fst = ResourceCleanup.CLOSED_LIST;
-                cleanup(prev);
-            } else {
-                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
-            }
-        }
     }
 
     /**
