@@ -87,7 +87,7 @@ final class ConfinedScope extends ResourceScopeImpl {
     /**
      * A confined resource list; no races are possible here.
      */
-    static class ConfinedResourceList extends ResourceList {
+    static final class ConfinedResourceList extends ResourceList {
         @Override
         void add(ResourceCleanup cleanup) {
             if (fst != ResourceCleanup.CLOSED_LIST) {
