@@ -40,7 +40,6 @@ import static org.testng.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -104,7 +103,6 @@ public class TestResourceScope {
     public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        if (cleaner != null) return;
         List<Thread> threads = new ArrayList<>();
         ResourceScope scope = cleaner != null ?
                 ResourceScope.newSharedScope(cleaner) :
