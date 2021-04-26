@@ -19,9 +19,9 @@ public final class SpinLockQueue<T extends Entry<T>> {
   private int lock = 0;
   private int maxSize;
 
-  private volatile int size;
+  private int size;
 
-  private volatile T head;
+  private T head;
 
   private static final VarHandle HEAD;
   private static final VarHandle SIZE;
@@ -64,11 +64,12 @@ public final class SpinLockQueue<T extends Entry<T>> {
     while (!LOCK.compareAndSet(this, 0, 1)) {}
     // After volatile spin lock
     try {
-      final var current = (T) HEAD.get(this);
+      final var current = head;
+      final var currentTyped = (Entry<T>) current; // Just to get access to private fields
       if (current != null) {
-        HEAD.set(this, ENTRY_NEXT.get(current));
-        SIZE.set(this, (int) SIZE.get(this) - 1);
-        ENTRY_IN_POOL.set(current, false);
+        head = currentTyped.next;
+        currentTyped.inPool = false;
+        size--;
       }
       return current;
     } finally {
@@ -90,18 +91,18 @@ public final class SpinLockQueue<T extends Entry<T>> {
     while (!LOCK.compareAndSet(this, 0, 1)) { }
     // After volatile spin lock
     try {
-      final var size = (int) SIZE.get(this);
+      final var entryTyped = (Entry<T>) entry; // Like in c
+      final var size = this.size;
 
-      if ((boolean) ENTRY_IN_POOL.get(entry)) {
+      if (entryTyped.inPool) {
         throw new IllegalStateException("Entry already in pool, can't be added twice");
       }
 
       if (size < this.maxSize) {
-        ENTRY_IN_POOL.set(entry, true);
-
-        ENTRY_NEXT.set(entry, HEAD.get(this));
-        HEAD.set(this, entry);
-        SIZE.set(this, size + 1);
+        entryTyped.inPool = true;
+        entryTyped.next = head;
+        head = entry;
+        this.size++;
         return true;
       } else {
         return false;
@@ -150,8 +151,8 @@ public final class SpinLockQueue<T extends Entry<T>> {
    * @param <T> the final exact type.
    */
   public abstract static class Entry<T extends Entry<T>> {
-    private volatile T next;
-    private volatile boolean inPool;
+    private T next;
+    private boolean inPool;
 
     protected Entry() {
     }

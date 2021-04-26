@@ -1,7 +1,5 @@
 package jdk.incubator.foreign;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.ResourceScopeImpl.ResourceList.ResourceCleanup;
@@ -171,35 +169,19 @@ public class MemorySegmentPool {
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
     // Prevent scope managing this pool to go away, when dependant allocator is alive
     final var handle = scope.acquire();
-    resourceScope.addCloseAction(() -> scope.release(handle));
+//    resourceScope.addCloseAction(() -> scope.release(handle));
+    ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
+      @Override
+      public void cleanup() {
+        scope.release(handle);
+      }
+    });
     return ((bytesSize, bytesAlignment) -> {
       final var alignedSize = alignSize(bytesSize, bytesAlignment);
       final var segmentEntry = findOrAllocateItemAndPrepareForAllocator(resourceScope, alignedSize);
       // Slicing source segment can be faster than source Address as segment
       return segmentEntry.sourceAddress.asSegment(alignedSize, null, resourceScope);
     });
-  }
-
-  @ForceInline
-  public MemoryPoolItem getSegmentEntryByLayout(MemoryLayout layout) {
-    return getSegmentEntryBySize(layout.byteSize(), layout.byteAlignment());
-  }
-
-  /**
-   * Gets segment from pool or allocates new one. Internally segments are cached.
-   * The size of segment can be larger than requested.
-   *
-   * @param bytesSize the size of segment.
-   *
-   * @return segment of size at least `size`
-   */
-  @DontInline
-  public MemoryPoolItem getSegmentEntryBySize(long bytesSize, long bytesAlignment) {
-    // Don't check scope aliveness here.
-    final var bitBound = calculateBucket(alignSize(bytesSize, bytesAlignment));
-    MemoryPoolItem segment = findOrAllocateItem(bitBound);
-
-    return segment;
   }
 
   ////////////////////////////
@@ -263,13 +245,6 @@ public class MemorySegmentPool {
     return new MemoryPoolItem(queue, memoryAddress, allocationSize, scope);
   }
 
-  /**
-   * Free all elements associated with pool. Called when pool's scope gets closed.
-   */
-  private void freePool() {
-
-  }
-
   private static void validateMaxSizes(int maxSizes[]) {
     Arrays.stream(maxSizes).filter(i -> i < 0).findAny()
         .ifPresent(i -> {
@@ -294,31 +269,11 @@ public class MemorySegmentPool {
     /** Source memory address, it's the start of sourceSegment. */
     private final MemoryAddress sourceAddress;
 
-    /** Flag indicating if item has been released. */
-    private volatile boolean released;
-
-    private final static VarHandle RELEASED;
-
-    static {
-      try {
-        RELEASED = MethodHandles.lookup().findVarHandle(MemoryPoolItem.class, "released", boolean.class);
-      } catch (Exception e) {
-        throw new ExceptionInInitializerError(e);
-      }
-    }
-
     @ForceInline
     private MemoryPoolItem(SpinLockQueue<MemoryPoolItem> queue, MemoryAddress sourceAddress, long size, ResourceScope scope) {
       super();
       this.owner = queue;
       this.sourceAddress = sourceAddress;
-
-      ((ResourceScopeImpl) scope).addOrCleanupIfFail(new ResourceCleanup() {
-        @Override
-        public void cleanup() {
-          release();
-        }
-      });
     }
 
     /**
@@ -343,10 +298,11 @@ public class MemorySegmentPool {
      * Physically releases entry - free underlying memory.
      */
     private void release() {
-      if (RELEASED.compareAndSet(this, false, true)) {
+      // Can be called only once, from close
+//      if (RELEASED.compareAndSet(this, false, true)) {
         // Don't use segment here, if scope closed will produce exception
         CLinker.freeMemory(this.sourceAddress);
-      }
+//      }
     }
   }
 
@@ -366,8 +322,11 @@ public class MemorySegmentPool {
       // This method is called from pool's scope close method
       for (int i = 0; i < queuesToClean.length; i++) {
         // After calling this method maxSize is zero, and no new entries can be put back
-        // Entries are released using cleaner attached to pool's scope
-        queuesToClean[i].retrieveAndLock();
+        @SuppressWarnings("unchecked")
+        final var iterator = ((SpinLockQueue<MemoryPoolItem>) queuesToClean[i]).retrieveAndLock();
+        while (iterator.hasNext()) {
+          iterator.next().close();
+        }
       }
       queuesToClean = null;
     }

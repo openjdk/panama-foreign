@@ -163,7 +163,7 @@ public class StrLenTest {
             segment.copyFrom(MemorySegment.ofArray(bytes));
             MemoryAccess.setByteAtOffset(segment, len, (byte)0);
 
-            return (int)STRLEN.invokeExact(CLinker.toCString(str, allocator).address());
+            return (int)STRLEN.invokeExact(segment.address());
         }
     }
 

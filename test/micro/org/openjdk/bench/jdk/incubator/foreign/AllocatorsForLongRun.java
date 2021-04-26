@@ -98,7 +98,7 @@ public class AllocatorsForLongRun {
     i = 0;
     // Preallocate pool
     for (int j = 0; j <= 24; j++) {
-      pool.getSegmentEntryBySize(1L << j, 1).close();
+//      pool.getSegmentEntryBySize(1L << j, 1).close();
     }
 
     scope = ResourceScope.globalScope();
