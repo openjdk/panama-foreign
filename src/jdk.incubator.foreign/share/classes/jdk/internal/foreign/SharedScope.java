@@ -116,9 +116,9 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     /**
-     * A shared resource list; this implementation has to handle add vs. add races, as well as add vs. cleanup races.
+     * A shared resource list; this implementation has to handle add vs. add races.
      */
-    static class SharedResourceList extends ResourceList {
+    static class SharedResourceList extends ConfinedScope.ConfinedResourceList {
 
         static final VarHandle FST;
 
@@ -132,14 +132,13 @@ class SharedScope extends ResourceScopeImpl {
 
         @Override
         void add(ResourceCleanup cleanup) {
+            // We don't need to worry about add vs. close races here; adding a new cleanup action is done
+            // under acquire, which prevents scope from being closed. The only possible race here is
+            // add vs. add.
             while (true) {
                 ResourceCleanup prev = (ResourceCleanup) FST.getAcquire(this);
                 cleanup.next = prev;
-                ResourceCleanup newSegment = (ResourceCleanup) FST.compareAndExchangeRelease(this, prev, cleanup);
-                if (newSegment == ResourceCleanup.CLOSED_LIST) {
-                    // too late
-                    throw new IllegalStateException("Already closed");
-                } else if (newSegment == prev) {
+                if ((ResourceCleanup) FST.compareAndExchangeRelease(this, prev, cleanup) == prev) {
                     return; //victory
                 }
                 // keep trying
@@ -147,24 +146,12 @@ class SharedScope extends ResourceScopeImpl {
         }
 
         void cleanup() {
-            // At this point we are only interested about add vs. close races - not close vs. close
-            // (because MemoryScope::justClose ensured that this thread won the race to close the scope).
-            // So, the only "bad" thing that could happen is that some other thread adds to this list
-            // while we're closing it.
-            if (FST.getAcquire(this) != ResourceCleanup.CLOSED_LIST) {
-                //ok now we're really closing down
-                ResourceCleanup prev = null;
-                while (true) {
-                    prev = (ResourceCleanup) FST.getAcquire(this);
-                    // no need to check for DUMMY, since only one thread can get here!
-                    if (FST.weakCompareAndSetRelease(this, prev, ResourceCleanup.CLOSED_LIST)) {
-                        break;
-                    }
-                }
-                cleanup(prev);
-            } else {
-                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
-            }
+            // We don't need to worry about add vs. close races here; adding a new cleanup action is done
+            // under acquire, which prevents scope from being closed. The only possible race here is
+            // add vs. add. Additionally, close vs. close races are impossible (because MemoryScope::justClose
+            // ensures that only one thread can win the race to close the scope). In other words, this is
+            // effectively single-threaded code.
+            super.cleanup();
         }
     }
 

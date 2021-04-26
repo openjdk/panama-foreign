@@ -83,11 +83,12 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     }
 
     void addInternal(ResourceList.ResourceCleanup resource) {
+        ResourceScope.Handle handle = acquire();
         try {
-            checkValidStateSlow();
+            // avoid close vs. add races
             resourceList.add(resource);
-        } catch (ScopedMemoryAccess.Scope.ScopedAccessError err) {
-            throw new IllegalStateException("Already closed");
+        } finally {
+            release(handle);
         }
     }
 

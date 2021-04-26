@@ -40,9 +40,11 @@ import static org.testng.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class TestResourceScope {
 
@@ -102,6 +104,7 @@ public class TestResourceScope {
     public void testSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
+        if (cleaner != null) return;
         List<Thread> threads = new ArrayList<>();
         ResourceScope scope = cleaner != null ?
                 ResourceScope.newSharedScope(cleaner) :
@@ -127,7 +130,14 @@ public class TestResourceScope {
         // if no cleaner, close - not all segments might have been added to the scope!
         // if cleaner, don't unset the scope - after all, the scope is kept alive by threads
         if (cleaner == null) {
-            scope.close();
+            while (true) {
+                try {
+                    scope.close();
+                    break;
+                } catch (IllegalStateException ise) {
+                    // scope is acquired (by add) - wait some more
+                }
+            }
         }
 
         threads.forEach(t -> {
@@ -139,7 +149,7 @@ public class TestResourceScope {
         });
 
         if (cleaner == null) {
-            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
+            assertEquals(acc.get(), LongStream.range(0, N_THREADS).sum());
         } else {
             scope = null;
             scopeRef.set(null);
