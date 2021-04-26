@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 
 public class TestResourceScope {
 
@@ -147,7 +146,7 @@ public class TestResourceScope {
         });
 
         if (cleaner == null) {
-            assertEquals(acc.get(), LongStream.range(0, N_THREADS).sum());
+            assertEquals(acc.get(), IntStream.range(0, N_THREADS).sum());
         } else {
             scope = null;
             scopeRef.set(null);
