@@ -157,7 +157,7 @@ class SharedScope extends ResourceScopeImpl {
         }
 
         @Override
-        public void close() {
+        public void release() {
             if (released.compareAndSet(false, true)) {
                 int value;
                 do {
