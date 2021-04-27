@@ -118,6 +118,16 @@ public class TestSpliterator {
         MemorySegment.ofArray(new byte[7]).elements(MemoryLayouts.JAVA_INT);
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadSpliteratorElementSizeZero() {
+        MemorySegment.ofArray(new byte[7]).spliterator(MemoryLayout.sequenceLayout(0, MemoryLayouts.JAVA_INT));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testBadStreamElementSizeZero() {
+        MemorySegment.ofArray(new byte[7]).elements(MemoryLayout.sequenceLayout(0, MemoryLayouts.JAVA_INT));
+    }
+
     static long sumSingle(long acc, MemorySegment segment) {
         return acc + (int)INT_HANDLE.get(segment, 0L);
     }
