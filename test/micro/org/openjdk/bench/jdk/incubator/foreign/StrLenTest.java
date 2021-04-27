@@ -68,7 +68,7 @@ public class StrLenTest {
     SegmentAllocator segmentAllocator;
     SegmentAllocator arenaAllocator = SegmentAllocator.arenaAllocator(scope);
 
-    MemorySegmentPool memorySegmentPool = new MemorySegmentPool(ResourceScope.globalScope());
+    MemorySegmentPool memorySegmentPool = new MemorySegmentPool(ResourceScope.globalScope(), false);
 
     @Param({"5", "20", "100"})
     public int size;

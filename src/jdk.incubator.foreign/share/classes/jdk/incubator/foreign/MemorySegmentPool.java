@@ -88,6 +88,12 @@ public class MemorySegmentPool {
 
   private final ResourceScope scope;
 
+  /**
+   * Indicates if {@link #scope} should be acquired by the pool, with every allocator, or it's
+   * managed externally.
+   */
+  private final boolean manageScopeAcquire;
+
   static {
     int idx = 0;
     int cores = Runtime.getRuntime().availableProcessors();
@@ -112,8 +118,13 @@ public class MemorySegmentPool {
     // Rest 0
   }
 
-  public MemorySegmentPool(ResourceScope scope) {
-    this(DEFAULT_MAX_SIZES, scope);
+  /**
+   *
+   * @param scope
+   * @param manageScopeAcquire if the `scope` should be acquired with every allocator
+   */
+  public MemorySegmentPool(ResourceScope scope, boolean manageScopeAcquire) {
+    this(DEFAULT_MAX_SIZES, scope, manageScopeAcquire);
   }
 
   /**
@@ -122,10 +133,19 @@ public class MemorySegmentPool {
    * There's {@link Long#SIZE} + 1 buckets, while last bucket is not used,
    * as allocations with size 0 or with highest bit set to 1 goes there.
    *
+   * <br />
+   * If the parameter manageScopeAcquire is set to true, than the pool will acquire scope
+   * with every allocator created (@link {@link #allocatorForScope(ResourceScope)}, and preventing
+   * scope to be closed during.
+   * <br />
+   * If this value is set to `false`, than it's caller responsibility to manage scope lifetime
+   * as long as queue is used, however the pool can be slightly more performant.
+   *
    * @param maxSizes the array of maximum sizes per segment bucket
    * @param scope the scope to which this allocator should be bound
+   * @param manageScopeAcquire if the `scope` should be acquired with every allocator
    */
-  public MemorySegmentPool(int maxSizes[], ResourceScope scope) {
+  public MemorySegmentPool(int maxSizes[], ResourceScope scope, boolean manageScopeAcquire) {
     this.scope = scope;
 
     validateMaxSizes(maxSizes);
@@ -135,6 +155,7 @@ public class MemorySegmentPool {
     }
 
     scope.addCloseAction(new CleanRunnable(this.segmentsDequeue));
+    this.manageScopeAcquire = manageScopeAcquire;
   }
 
   /**
@@ -167,15 +188,18 @@ public class MemorySegmentPool {
    */
   @ForceInline
   public SegmentAllocator allocatorForScope(ResourceScope resourceScope) {
-    // Prevent scope managing this pool to go away, when dependant allocator is alive
-    final var handle = scope.acquire();
-//    resourceScope.addCloseAction(() -> scope.release(handle));
-    ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
-      @Override
-      public void cleanup() {
-        scope.release(handle);
-      }
-    });
+    if (this.manageScopeAcquire) {
+      // Prevent scope managing this pool to go away, when dependant allocator is alive
+      final var handle = scope.acquire();
+      //    resourceScope.addCloseAction(() -> scope.release(handle));
+      ((ResourceScopeImpl) resourceScope).addOrCleanupIfFail(new ResourceCleanup() {
+        @Override
+        public void cleanup() {
+          scope.release(handle);
+        }
+      });
+    }
+
     return ((bytesSize, bytesAlignment) -> {
       final var alignedSize = alignSize(bytesSize, bytesAlignment);
       final var segmentEntry = findOrAllocateItemAndPrepareForAllocator(resourceScope, alignedSize);

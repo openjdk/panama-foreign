@@ -87,8 +87,8 @@ public class AllocatorsForLongRun {
 
   private static final boolean doSegmentWrite = false;
 
-  private static final MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope());
-  private MemorySegmentPool poolEmpty = new MemorySegmentPool(new int[Long.SIZE], ResourceScope.globalScope());
+  private static MemorySegmentPool pool = new MemorySegmentPool(POOL_MAX_SIZE, ResourceScope.globalScope(), false);
+  private MemorySegmentPool poolEmpty = new MemorySegmentPool(new int[Long.SIZE], ResourceScope.globalScope(), false);
 
   private volatile ResourceScope scope;
 
