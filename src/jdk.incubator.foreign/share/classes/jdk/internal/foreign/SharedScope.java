@@ -167,7 +167,6 @@ class SharedScope extends ResourceScopeImpl {
                         throw new IllegalStateException("Already closed");
                     }
                 } while (!STATE.compareAndSet(jdk.internal.foreign.SharedScope.this, value, value - 1));
-                Reference.reachabilityFence(SharedScope.this);
             }
         }
     }

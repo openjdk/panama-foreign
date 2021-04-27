@@ -116,7 +116,6 @@ final class ConfinedScope extends ResourceScopeImpl {
             if (!released) {
                 released = true;
                 lockCount--;
-                Reference.reachabilityFence(ConfinedScope.this);
             }
         }
     }
