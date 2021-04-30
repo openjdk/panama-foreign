@@ -97,11 +97,6 @@ public class LoopOverNonConstantHeap {
         byteBuffer = ByteBuffer.wrap(base).order(ByteOrder.nativeOrder());
     }
 
-    @TearDown
-    public void tearDown() {
-        segment.scope().close();
-    }
-
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public int unsafe_get() {
