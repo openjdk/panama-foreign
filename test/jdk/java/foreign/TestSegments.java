@@ -27,6 +27,7 @@
  * @run testng/othervm -Xmx4G -XX:MaxDirectMemorySize=1M TestSegments
  */
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
@@ -100,6 +101,13 @@ public class TestSegments {
                 }
             }
         }
+    }
+
+    @Test(expectedExceptions = IndexOutOfBoundsException.class)
+    public void testSmallSegment() {
+        long offset = (long)Integer.MAX_VALUE + (long)Integer.MAX_VALUE + 2L + 6L; // overflows to 6 when casted to int
+        MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newImplicitScope());
+        MemoryAccess.getIntAtOffset(memorySegment, offset);
     }
 
     @Test(dataProvider = "segmentFactories")
