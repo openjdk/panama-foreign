@@ -78,10 +78,6 @@ final class RuntimeHelper {
         return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newImplicitScope());
     }
 
-    static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, NativeScope scope) {
-        return upcallStub(fi, z, fdesc, mtypeDesc, scope.scope());
-    }
-
     static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {
         try {
             MethodHandle handle = MH_LOOKUP.findVirtual(fi, "apply",

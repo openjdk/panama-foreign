@@ -24,6 +24,8 @@
 
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
@@ -53,8 +55,9 @@ import static test.jextract.test8244412.test8244412_h.*;
 public class LibTest8244412Test {
     @Test
     public void test() {
-        try (var scope = NativeScope.unboundedScope()) {
-            var addr = scope.allocate(mysize_t, 0L);
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
+            var addr = allocator.allocate(mysize_t, 0L);
             assertEquals(MemoryAccess.getLong(addr), 0L);
             MemoryAccess.setLong(addr, 13455566L);
             assertEquals(MemoryAccess.getLong(addr), 13455566L);

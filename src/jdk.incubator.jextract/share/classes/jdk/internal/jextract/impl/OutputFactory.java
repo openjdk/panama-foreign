@@ -136,7 +136,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         try {
             List<JavaFileObject> files = new ArrayList<>(toplevelBuilder.toFiles());
             files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
-            files.add(jfoFromString(pkgName,"NativeScope", getNativeScopeSource()));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -150,13 +149,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                         String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
                                 .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
-    }
-
-    private String getNativeScopeSource() throws URISyntaxException, IOException {
-        URL runtimeHelper = OutputFactory.class.getResource("resources/NativeScope.java.template");
-        return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
-                String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
-                        .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
     }
 
     private void generateDecl(Declaration tree) {
