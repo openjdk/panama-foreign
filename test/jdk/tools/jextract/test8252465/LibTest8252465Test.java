@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
@@ -49,7 +50,7 @@ import test.jextract.test8252465.*;
 public class LibTest8252465Test {
     @Test
     public void test() {
-        try (var scope = NativeScope.unboundedScope()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
             var foo = Foo.allocate(scope);
             Foo.x$set(foo, 3.14f);
             assertEquals(Foo.x$get(foo), 3.14f, 0.001f);
