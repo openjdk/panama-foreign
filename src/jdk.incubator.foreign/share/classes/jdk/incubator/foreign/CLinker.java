@@ -130,17 +130,17 @@ public interface CLinker {
     }
 
     @CallerSensitive
-    public default MemoryAddress lookup(String name) {
+    public static Optional<MemoryAddress> findNative(String name) {
          Reflection.ensureNativeAccess(Reflection.getCallerClass());
          ClassLoader loader = Reflection.getCallerClass().getClassLoader();
          SecurityManager security = System.getSecurityManager();
          if (security != null) {
-             security.checkPermission(new RuntimePermission("java.foreign.lookup"));
+             security.checkPermission(new RuntimePermission("java.foreign.findNative"));
          }
          Objects.requireNonNull(name);
          JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
-         long addr = javaLangAccess.findNative(loader, name);
-         return MemoryAddress.ofLong(addr);
+         MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
+         return addr == MemoryAddress.NULL? Optional.empty() : Optional.of(addr);
     }
 
     /**

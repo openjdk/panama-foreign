@@ -97,7 +97,7 @@ public class VaListTest extends NativeTestHelper {
             FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_VA_LIST));
 
     private static MethodHandle link(String symbol, MethodType mt, FunctionDescriptor fd) {
-        return abi.downcallHandle(abi.lookup(symbol), mt, fd);
+        return abi.downcallHandle(CLinker.findNative(symbol).get(), mt, fd);
     }
 
     private static MethodHandle linkVaListCB(String symbol) {

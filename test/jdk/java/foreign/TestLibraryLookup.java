@@ -45,25 +45,23 @@ import static org.testng.Assert.*;
 // where cygwin gets in the way and we accidentally pick up its
 // link.exe
 public class TestLibraryLookup {
-
-    private static CLinker abi = CLinker.getInstance();
     static {
         System.loadLibrary("LookupTest");
     }
 
     @Test
     public void testSimpleLookup() {
-        assertNotEquals(abi.lookup("f"), MemoryAddress.NULL);
+        assertFalse(CLinker.findNative("f").isEmpty());
     }
 
     @Test
     public void testInvalidSymbolLookup() {
-        assertEquals(abi.lookup("nonExistent"), MemoryAddress.NULL);
+        assertTrue(CLinker.findNative("nonExistent").isEmpty());
     }
 
     @Test
     public void testVariableSymbolLookup() throws Throwable {
-        MemorySegment segment = abi.lookup("c").asSegment(MemoryLayouts.JAVA_INT.byteSize(), ResourceScope.globalScope());
+        MemorySegment segment = CLinker.findNative("c").get().asSegment(MemoryLayouts.JAVA_INT.byteSize(), ResourceScope.globalScope());
         assertEquals(MemoryAccess.getInt(segment), 42);
     }
 }

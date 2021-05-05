@@ -74,7 +74,7 @@ public class TestStackWalk {
         try {
             System.loadLibrary("StackWalk");
             MH_foo = linker.downcallHandle(
-                    linker.lookup("foo"),
+                    CLinker.findNative("foo").get(),
                     MethodType.methodType(void.class, MemoryAddress.class),
                     FunctionDescriptor.ofVoid(C_POINTER));
             MH_m = lookup().findStatic(TestStackWalk.class, "m", MethodType.methodType(void.class));

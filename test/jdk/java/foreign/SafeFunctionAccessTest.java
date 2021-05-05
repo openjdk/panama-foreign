@@ -41,8 +41,6 @@ import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
 public class SafeFunctionAccessTest {
-
-    private static CLinker LINKER = CLinker.getInstance();
     static {
         System.loadLibrary("SafeAccess");
     }
@@ -59,7 +57,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                LINKER.lookup("struct_func"),
+                CLinker.findNative("struct_func").get(),
                 MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
@@ -74,7 +72,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(address.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                LINKER.lookup("addr_func"),
+                CLinker.findNative("addr_func").get(),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(CLinker.C_POINTER));
 

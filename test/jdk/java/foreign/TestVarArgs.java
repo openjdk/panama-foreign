@@ -63,7 +63,7 @@ public class TestVarArgs {
     static {
         System.loadLibrary("VarArgs");
     }
-    static final MemoryAddress varargsAddr = abi.lookup("varargs");
+    static final MemoryAddress varargsAddr = CLinker.findNative("varargs").get();
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

@@ -67,14 +67,6 @@ public class TestIntrinsics {
         }
     }
 
-    static MemoryAddress lookup(String name) {
-        var addr = abi.lookup(name);
-        if (addr.equals(MemoryAddress.NULL)) {
-            throw new NullPointerException(name);
-        }
-        return addr;
-    }
-
     @DataProvider
     public Object[][] tests() {
         List<RunnableX> testsList = new ArrayList<>();
@@ -93,7 +85,7 @@ public class TestIntrinsics {
         }
 
         AddIdentity addIdentity = (name, carrier, layout, arg) -> {
-            MemoryAddress ma = lookup(name);
+            MemoryAddress ma = CLinker.findNative(name).get();
             MethodType mt = methodType(carrier, carrier);
             FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
 
@@ -103,7 +95,7 @@ public class TestIntrinsics {
         };
 
         { // empty
-            MemoryAddress ma = lookup("empty");
+            MemoryAddress ma = CLinker.findNative("empty").get();
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, mt, fd), null);
@@ -118,7 +110,7 @@ public class TestIntrinsics {
         addIdentity.add("identity_double", double.class, C_DOUBLE,        10D);
 
         { // identity_va
-            MemoryAddress ma = lookup("identity_va");
+            MemoryAddress ma = CLinker.findNative("identity_va").get();
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
                     asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONG_LONG));
@@ -133,7 +125,7 @@ public class TestIntrinsics {
                     C_SHORT, C_SHORT);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                MemoryAddress ma = lookup("invoke_high_arity" + i);
+                MemoryAddress ma = CLinker.findNative("invoke_high_arity" + i).get();
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.withReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];
