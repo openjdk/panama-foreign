@@ -34,7 +34,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -53,7 +52,9 @@ import static org.testng.Assert.assertEquals;
 public class TestIntrinsics {
 
     static final CLinker abi = CLinker.getInstance();
-    static final LibraryLookup lookup = LibraryLookup.ofLibrary("Intrinsics");
+    static {
+        System.loadLibrary("Intrinsics");
+    }
 
     private interface RunnableX {
         void run() throws Throwable;
@@ -64,6 +65,14 @@ public class TestIntrinsics {
         for (int i = 0; i < 20_000; i++) {
             test.run();
         }
+    }
+
+    static MemoryAddress lookup(String name) {
+        var addr = abi.lookup(name);
+        if (addr.equals(MemoryAddress.NULL)) {
+            throw new NullPointerException(name);
+        }
+        return addr;
     }
 
     @DataProvider
@@ -84,7 +93,7 @@ public class TestIntrinsics {
         }
 
         AddIdentity addIdentity = (name, carrier, layout, arg) -> {
-            MemoryAddress ma = lookup.lookup(name).orElseThrow();
+            MemoryAddress ma = lookup(name);
             MethodType mt = methodType(carrier, carrier);
             FunctionDescriptor fd = FunctionDescriptor.of(layout, layout);
 
@@ -94,7 +103,7 @@ public class TestIntrinsics {
         };
 
         { // empty
-            MemoryAddress ma = lookup.lookup("empty").orElseThrow();
+            MemoryAddress ma = lookup("empty");
             MethodType mt = methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             tests.add(abi.downcallHandle(ma, mt, fd), null);
@@ -109,7 +118,7 @@ public class TestIntrinsics {
         addIdentity.add("identity_double", double.class, C_DOUBLE,        10D);
 
         { // identity_va
-            MemoryAddress ma = lookup.lookup("identity_va").orElseThrow();
+            MemoryAddress ma = lookup("identity_va");
             MethodType mt = methodType(int.class, int.class, double.class, int.class, float.class, long.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT, asVarArg(C_DOUBLE),
                     asVarArg(C_INT), asVarArg(C_FLOAT), asVarArg(C_LONG_LONG));
@@ -124,7 +133,7 @@ public class TestIntrinsics {
                     C_SHORT, C_SHORT);
             Object[] args = {1, 10D, 2L, 3F, (byte) 0, (short) 13, 'a'};
             for (int i = 0; i < args.length; i++) {
-                MemoryAddress ma = lookup.lookup("invoke_high_arity" + i).orElseThrow();
+                MemoryAddress ma = lookup("invoke_high_arity" + i);
                 MethodType mt = baseMT.changeReturnType(baseMT.parameterType(i));
                 FunctionDescriptor fd = baseFD.withReturnLayout(baseFD.argumentLayouts().get(i));
                 Object expected = args[i];

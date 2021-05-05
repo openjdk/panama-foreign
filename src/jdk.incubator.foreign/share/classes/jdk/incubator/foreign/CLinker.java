@@ -25,6 +25,8 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.abi.SharedUtils;
@@ -36,6 +38,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
@@ -124,6 +127,20 @@ public interface CLinker {
     static CLinker getInstance() {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         return SharedUtils.getSystemLinker();
+    }
+
+    @CallerSensitive
+    public default MemoryAddress lookup(String name) {
+         Reflection.ensureNativeAccess(Reflection.getCallerClass());
+         ClassLoader loader = Reflection.getCallerClass().getClassLoader();
+         SecurityManager security = System.getSecurityManager();
+         if (security != null) {
+             security.checkPermission(new RuntimePermission("java.foreign.lookup"));
+         }
+         Objects.requireNonNull(name);
+         JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
+         long addr = javaLangAccess.findNative(loader, name);
+         return MemoryAddress.ofLong(addr);
     }
 
     /**

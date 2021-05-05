@@ -35,7 +35,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -61,7 +60,9 @@ import static org.testng.Assert.assertEquals;
 
 public class TestUpcall extends CallGeneratorHelper {
 
-    static LibraryLookup lib = LibraryLookup.ofLibrary("TestUpcall");
+    static {
+        System.loadLibrary("TestUpcall");
+    }
     static CLinker abi = CLinker.getInstance();
 
     static MethodHandle DUMMY;
@@ -88,7 +89,7 @@ public class TestUpcall extends CallGeneratorHelper {
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = lib.lookup(fName).get();
+        MemoryAddress addr = abi.lookup(fName);
         MethodType mtype = methodType(ret, paramTypes, fields);
         try (NativeScope scope = new NativeScope()) {
             MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
@@ -106,7 +107,7 @@ public class TestUpcall extends CallGeneratorHelper {
     public void testUpcallsNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
-        MemoryAddress addr = lib.lookup(fName).get();
+        MemoryAddress addr = abi.lookup(fName);
         MethodType mtype = methodType(ret, paramTypes, fields);
         MethodHandle mh = abi.downcallHandle(addr, IMPLICIT_ALLOCATOR, mtype, function(ret, paramTypes, fields));
         Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);

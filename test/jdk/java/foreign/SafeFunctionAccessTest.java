@@ -29,7 +29,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -43,7 +42,10 @@ import static org.testng.Assert.*;
 
 public class SafeFunctionAccessTest {
 
-    LibraryLookup lookup = LibraryLookup.ofLibrary("SafeAccess");
+    private static CLinker LINKER = CLinker.getInstance();
+    static {
+        System.loadLibrary("SafeAccess");
+    }
 
     static MemoryLayout POINT = MemoryLayout.structLayout(
             CLinker.C_INT, CLinker.C_INT
@@ -57,7 +59,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                lookup.lookup("struct_func").get(),
+                LINKER.lookup("struct_func"),
                 MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
@@ -72,7 +74,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(address.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                lookup.lookup("addr_func").get(),
+                LINKER.lookup("addr_func"),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(CLinker.C_POINTER));
 

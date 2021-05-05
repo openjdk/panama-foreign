@@ -30,7 +30,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -61,8 +60,10 @@ public class TestVarArgs {
     static final VarHandle VH_IntArray = MemoryLayout.sequenceLayout(C_INT).varHandle(int.class, sequenceElement());
 
     static final CLinker abi = CLinker.getInstance();
-    static final MemoryAddress varargsAddr = LibraryLookup.ofLibrary("VarArgs")
-            .lookup("varargs").get();
+    static {
+        System.loadLibrary("VarArgs");
+    }
+    static final MemoryAddress varargsAddr = abi.lookup("varargs");
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

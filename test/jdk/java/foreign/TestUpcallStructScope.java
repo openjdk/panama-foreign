@@ -38,7 +38,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -68,10 +67,18 @@ public class TestUpcallStructScope {
         C_INT.withName("p2")
     );
 
+    static MemoryAddress lookup(String name) {
+        var addr = LINKER.lookup(name);
+        if (addr.equals(MemoryAddress.NULL)) {
+            throw new NullPointerException(name);
+        }
+        return addr;
+    }
+
     static {
-        LibraryLookup lookup = LibraryLookup.ofLibrary("TestUpcallStructScope");
+        System.loadLibrary("TestUpcallStructScope");
         MH_do_upcall = LINKER.downcallHandle(
-            lookup.lookup("do_upcall").orElseThrow(),
+            lookup("do_upcall"),
             MethodType.methodType(void.class, MemoryAddress.class, MemorySegment.class),
             FunctionDescriptor.ofVoid(C_POINTER, S_PDI_LAYOUT)
         );
