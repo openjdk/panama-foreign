@@ -117,7 +117,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
       }
  * }</pre>
  *
- * Here, we lookup the {@code strlen} symbol; this assumes that a library containing the `strlen` symbol has been loaded
+ * Here, we lookup the {@code strlen} symbol; this assumes that a library containing the {@code strlen} symbol has been loaded
  * earlier, e.g. using {@link System#loadLibrary(String)}.
  *
  * Then, we obtain a linker instance (see {@link jdk.incubator.foreign.CLinker#getInstance()}) and we use it to
