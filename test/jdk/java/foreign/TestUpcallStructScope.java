@@ -38,7 +38,6 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -69,9 +68,9 @@ public class TestUpcallStructScope {
     );
 
     static {
-        LibraryLookup lookup = LibraryLookup.ofLibrary("TestUpcallStructScope");
+        System.loadLibrary("TestUpcallStructScope");
         MH_do_upcall = LINKER.downcallHandle(
-            lookup.lookup("do_upcall").orElseThrow(),
+            CLinker.findNative("do_upcall").get(),
             MethodType.methodType(void.class, MemoryAddress.class, MemorySegment.class),
             FunctionDescriptor.ofVoid(C_POINTER, S_PDI_LAYOUT)
         );

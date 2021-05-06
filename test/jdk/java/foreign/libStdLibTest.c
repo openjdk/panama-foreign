@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,31 +21,47 @@
  * questions.
  */
 
-#include <jni.h>
-#include <stdlib.h>
-#include <string.h>
+#include "libStdLibTest.h"
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
-
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_StrLenTest_strlen(JNIEnv *const env, const jclass cls, const jstring text) {
-    const char *str = (*env)->GetStringUTFChars(env, text, NULL);
-    int len = (int)strlen(str);
-    (*env)->ReleaseStringUTFChars(env, text, str);
-    return len;
+EXPORT char *libc_strcat(char *str1, const char *str2) {
+    return strcat(str1, str2);
 }
 
-EXPORT int strlen_raw(const char *str) {
-    return (int)strlen(str);
+EXPORT int libc_strcmp(const char *str1, const char *str2) {
+    return strcmp(str1, str2);
 }
 
-EXPORT void* malloc_raw(size_t size) {
-    return malloc(size);
+EXPORT size_t libc_strlen(const char *str) {
+    return strlen(str);
 }
 
-EXPORT void free_raw(void* ptr) {
-    return free(ptr);
+EXPORT int libc_puts(const char *str) {
+    return puts(str);
+}
+
+EXPORT struct tm *libc_gmtime(const time_t* timer) {
+    return gmtime(timer);
+}
+
+EXPORT void libc_qsort(void *base, size_t nitems, size_t size, int (*compar)(const void *, const void*)) {
+    qsort(base, nitems, size, compar);
+}
+
+EXPORT int libc_rand(void) {
+    return rand();
+}
+
+EXPORT int libc_vprintf(const char *format, va_list arg) {
+    return vprintf(format, arg);
+}
+
+EXPORT int libc_printf(const char *format, ...) {
+   va_list arg;
+   int done;
+
+   va_start(arg, format);
+   done = vprintf(format, arg);
+   va_end(arg);
+
+   return done;
 }

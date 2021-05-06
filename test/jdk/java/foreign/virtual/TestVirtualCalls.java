@@ -32,7 +32,6 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -46,7 +45,6 @@ import static org.testng.Assert.assertEquals;
 public class TestVirtualCalls {
 
     static final CLinker abi = CLinker.getInstance();
-    static final LibraryLookup lookup = LibraryLookup.ofLibrary("Virtual");
 
     static final MethodHandle func;
     static final MemoryAddress funcA;
@@ -58,9 +56,10 @@ public class TestVirtualCalls {
             MethodType.methodType(int.class),
             FunctionDescriptor.of(C_INT));
 
-        funcA = lookup.lookup("funcA").orElseThrow();
-        funcB = lookup.lookup("funcB").orElseThrow();
-        funcC = lookup.lookup("funcC").orElseThrow();
+        System.loadLibrary("Virtual");
+        funcA = CLinker.findNative("funcA").get();
+        funcB = CLinker.findNative("funcB").get();
+        funcC = CLinker.findNative("funcC").get();
     }
 
     @Test
