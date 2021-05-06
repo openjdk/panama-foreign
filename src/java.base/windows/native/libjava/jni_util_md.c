@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
-#include <psapi.h>
 #include <locale.h>
 
 #include "jni.h"

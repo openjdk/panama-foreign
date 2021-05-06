@@ -129,14 +129,23 @@ public interface CLinker {
         return SharedUtils.getSystemLinker();
     }
 
+
+    /**
+     * Looks up a symbol with the given name in the native libraries loaded by the caller's classloader.
+     *
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     *
+     * @param name the symbol name.
+     * @return the memory address associated with the library symbol (if any).
+     */
     @CallerSensitive
     public static Optional<MemoryAddress> findNative(String name) {
          Reflection.ensureNativeAccess(Reflection.getCallerClass());
          ClassLoader loader = Reflection.getCallerClass().getClassLoader();
-         SecurityManager security = System.getSecurityManager();
-         if (security != null) {
-             security.checkPermission(new RuntimePermission("java.foreign.findNative"));
-         }
          Objects.requireNonNull(name);
          JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
          MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
@@ -156,7 +165,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @see LibraryLookup#lookup(String)
+     * @see CLinker#findNative(String)
      *
      * @param symbol   downcall symbol.
      * @param type     the method type.
@@ -178,7 +187,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @see LibraryLookup#lookup(String)
+     * @see CLinker#findNative(String)
      *
      * @param symbol    downcall symbol.
      * @param allocator the segment allocator.
@@ -204,7 +213,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      **
-     * @see LibraryLookup#lookup(String)
+     * @see CLinker#findNative(String)
      *
      * @param type     the method type.
      * @param function the function descriptor.
