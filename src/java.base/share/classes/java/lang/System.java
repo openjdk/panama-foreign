@@ -2344,6 +2344,11 @@ public final class System {
             public boolean isEnableNativeAccess(Module m) {
                 return m.isEnableNativeAccess();
             }
+
+            @Override
+            public long findNative(ClassLoader loader, String entry) {
+                return ClassLoader.findNative(loader, entry);
+            }
         });
     }
 }

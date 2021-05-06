@@ -27,7 +27,6 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
@@ -56,7 +55,7 @@ import static jdk.incubator.foreign.CLinker.*;
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "-Dforeign.restricted=permit" })
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign", "--enable-native-access=ALL-UNNAMED" })
 public class StrLenTest {
 
     ResourceScope scope = ResourceScope.newConfinedScope();
@@ -78,19 +77,18 @@ public class StrLenTest {
     static final MethodHandle FREE_TRIVIAL;
 
     static {
-        LibraryLookup lookup = LibraryLookup.ofDefault();
         CLinker abi = CLinker.getInstance();
-        STRLEN = abi.downcallHandle(lookup.lookup("strlen").get(),
+        STRLEN = abi.downcallHandle(CLinker.findNative("strlen_raw").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER));
-        STRLEN_TRIVIAL = abi.downcallHandle(lookup.lookup("strlen").get(),
+        STRLEN_TRIVIAL = abi.downcallHandle(CLinker.findNative("strlen_raw").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
-        MALLOC_TRIVIAL = abi.downcallHandle(lookup.lookup("malloc").get(),
+        MALLOC_TRIVIAL = abi.downcallHandle(CLinker.findNative("malloc_raw").get(),
                 MethodType.methodType(MemoryAddress.class, long.class),
                 FunctionDescriptor.of(C_POINTER, C_LONG_LONG).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
 
-        FREE_TRIVIAL = abi.downcallHandle(lookup.lookup("free").get(),
+        FREE_TRIVIAL = abi.downcallHandle(CLinker.findNative("free_raw").get(),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
     }
