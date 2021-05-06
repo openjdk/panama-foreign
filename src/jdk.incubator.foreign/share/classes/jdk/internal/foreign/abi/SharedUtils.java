@@ -50,7 +50,6 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -412,31 +411,9 @@ public class SharedUtils {
         return specializedHandle;
     }
 
-    // lazy init MH_ALLOC and MH_FREE handles
-    private static class AllocHolder {
-
-        private static final CLinker linker = getSystemLinker();
-
-        static {
-             // FIXME: This should go away. This is temporary hack to get testing on Windows going.
-             // After fix for 8266627, this whole section will be removed.
-             if (linker instanceof Windowsx64Linker) {
-                 System.load(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toAbsolutePath().toString());
-             }
-        }
-
-        static final MethodHandle MH_MALLOC = linker.downcallHandle(CLinker.findNative("malloc").get(),
-                        MethodType.methodType(MemoryAddress.class, long.class),
-                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
-
-        static final MethodHandle MH_FREE = linker.downcallHandle(CLinker.findNative("free").get(),
-                        MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(C_POINTER));
-    }
-
     public static MemoryAddress allocateMemoryInternal(long size) {
         try {
-            return (MemoryAddress) AllocHolder.MH_MALLOC.invokeExact(size);
+            return (MemoryAddress) VMFunctions.MH_MALLOC.invokeExact(size);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
@@ -444,7 +421,7 @@ public class SharedUtils {
 
     public static void freeMemoryInternal(MemoryAddress addr) {
         try {
-            AllocHolder.MH_FREE.invokeExact(addr);
+            VMFunctions.MH_FREE.invokeExact(addr);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
