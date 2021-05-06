@@ -131,7 +131,8 @@ public interface CLinker {
 
 
     /**
-     * Looks up a symbol with the given name in the native libraries loaded by the caller's classloader.
+     * Finds the address of a symbol with given name in one of the native libraries associated with the caller's
+     * classloader (that is, libraries loaded using {@link System#loadLibrary} or {@link System#load}).
      *
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -139,8 +140,9 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @param name the symbol name.
-     * @return the memory address associated with the library symbol (if any).
+     * @param name of the symbol to be searched.
+     * @return the address of a symbol with given name in one of the native libraries associated with the caller's
+     *         classloader (if any).
      */
     @CallerSensitive
     public static Optional<MemoryAddress> findNative(String name) {

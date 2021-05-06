@@ -416,10 +416,10 @@ public class SharedUtils {
     private static class AllocHolder {
 
         private static final CLinker linker = getSystemLinker();
-        // FIXME: This should go away. This is temporary hack to get testing on Windows going.
-        // After fix for 8266627, this whole section will be removed.
 
         static {
+             // FIXME: This should go away. This is temporary hack to get testing on Windows going.
+             // After fix for 8266627, this whole section will be removed.
              if (linker instanceof Windowsx64Linker) {
                  System.load(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toAbsolutePath().toString());
              }
