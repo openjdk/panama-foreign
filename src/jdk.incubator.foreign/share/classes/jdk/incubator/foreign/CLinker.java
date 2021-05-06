@@ -140,7 +140,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @param name of the symbol to be searched.
+     * @param name the name of the symbol to be searched.
      * @return the address of a symbol with given name in one of the native libraries associated with the caller's
      *         classloader (if any).
      */
