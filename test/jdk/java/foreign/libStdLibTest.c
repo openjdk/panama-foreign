@@ -21,7 +21,17 @@
  * questions.
  */
 
-#include "libStdLibTest.h"
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 EXPORT char *libc_strcat(char *str1, const char *str2) {
     return strcat(str1, str2);
