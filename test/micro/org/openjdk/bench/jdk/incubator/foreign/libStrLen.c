@@ -49,5 +49,5 @@ EXPORT void* malloc_raw(size_t size) {
 }
 
 EXPORT void free_raw(void* ptr) {
-    return free(ptr);
+    free(ptr);
 }

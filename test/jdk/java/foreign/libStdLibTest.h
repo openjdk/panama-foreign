@@ -40,5 +40,4 @@ EXPORT int libc_puts(const char *str);
 EXPORT struct tm *libc_gmtime(const time_t *timer);
 EXPORT void libc_qsort(void *base, size_t nitems, size_t size, int (*compar)(const void *, const void*));
 EXPORT int libc_rand(void);
-EXPORT int vprintf(const char *format, va_list arg);
 EXPORT int libc_printf(const char *format, ...);
