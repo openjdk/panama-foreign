@@ -39,14 +39,6 @@ final class RuntimeHelper {
 
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
-    static final void loadLibrary(String libName) {
-        if (libName.indexOf(File.separatorChar) != -1) {
-            System.load(libName);
-        } else {
-            System.loadLibrary(libName);
-        }
-    }
-
     static final MemorySegment lookupGlobalVariable(String name, MemoryLayout layout) {
         return lookup(name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
     }

@@ -33,6 +33,7 @@ import jdk.internal.jextract.impl.JavaSourceBuilder.VarInfo;
 import jdk.internal.jextract.impl.JavaSourceBuilder.FunctionInfo;
 
 import javax.tools.JavaFileObject;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.constant.ClassDesc;
@@ -155,9 +156,16 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private String generateLoadLibraries() {
         StringBuilder buf = new StringBuilder();
         for (String lib : libraryNames) {
-            buf.append("RuntimeHelper.loadLibrary(\"");
-            buf.append(quoteLibraryName(lib));
-            buf.append("\");\n");
+            String quotedName = quoteLibraryName(lib);
+            if (lib.indexOf(File.separatorChar) != -1) {
+                buf.append("System.load(\"");
+                buf.append(quotedName);
+                buf.append("\");\n");
+            } else {
+                buf.append("System.loadLibrary(\"");
+                buf.append(quotedName);
+                buf.append("\");\n");
+            }
         }
         return buf.toString();
     }
