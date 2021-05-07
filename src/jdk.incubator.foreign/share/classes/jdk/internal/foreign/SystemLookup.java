@@ -40,8 +40,8 @@ public class SystemLookup implements SymbolLookup {
 
     final static SystemLookup INSTANCE = new SystemLookup();
 
-    final NativeLibrary clib = switch (CABI.current()) {
-        case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("cstdlib");
+    final NativeLibrary syslookup = switch (CABI.current()) {
+        case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("syslookup");
         case Win64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
                 .loadLibrary(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toString());
     };
@@ -49,7 +49,7 @@ public class SystemLookup implements SymbolLookup {
     @Override
     public Optional<MemoryAddress> lookup(String name) {
         Objects.requireNonNull(name);
-        long addr = clib.find(name);
+        long addr = syslookup.find(name);
         return addr == 0 ?
                 Optional.empty() : Optional.of(MemoryAddress.ofLong(addr));
     }

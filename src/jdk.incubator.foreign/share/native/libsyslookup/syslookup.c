@@ -23,18 +23,33 @@
  * questions.
  */
 
+#include <assert.h>
+#include <complex.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fenv.h>
+#include <float.h>
+#include <inttypes.h>
+#include <iso646.h>
+#include <limits.h>
+#include <locale.h>
+#include <math.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdalign.h>
+#include <stdarg.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdnoreturn.h>
+#include <string.h>
+#include <tgmath.h>
+// #include <threads.h>
+#include <time.h>
+// #include <uchar.h>
+#include <wchar.h>
+#include <wctype.h>
 
-#include "jni.h"
-
-JNIEXPORT void JNICALL
-Java_jdk_internal_foreign_abi_VMFunctions_initVMFunctions(JNIEnv *env,
-                                        jclass cls,
-                                        jlong address)
-{
-   size_t* addresses = (size_t*)(void*)address;
-   // The order in which the function pointers are stored has to match the order of constants
-   // in the VMFunctions.FunctionName enum.
-   addresses[0] = (size_t)&malloc;
-   addresses[1] = (size_t)&free;
-}
