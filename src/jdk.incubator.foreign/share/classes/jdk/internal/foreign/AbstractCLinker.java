@@ -40,10 +40,18 @@ import java.lang.invoke.MethodType;
 import java.util.Objects;
 
 public abstract class AbstractCLinker implements CLinker {
+
+    private static void checkSymbol(Addressable symbol) {
+        MemoryAddress symbolAddr = symbol.address();
+        if (symbolAddr.equals(MemoryAddress.NULL))
+            throw new IllegalArgumentException("Symbol is NULL: " + symbolAddr);
+    }
+
     @CallerSensitive
     public final MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(symbol);
+        checkSymbol(symbol);
         return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
     }
 
@@ -51,8 +59,7 @@ public abstract class AbstractCLinker implements CLinker {
     public final MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(symbol);
-        if (symbol.address().equals(MemoryAddress.NULL))
-            throw new IllegalArgumentException("Symbol is NULL");
+        checkSymbol(symbol);
         Objects.requireNonNull(allocator);
         MethodHandle downcall = MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
         if (type.returnType().equals(MemorySegment.class)) {

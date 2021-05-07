@@ -175,7 +175,7 @@ public class ProgrammableInvoker {
     private static long unboxTargetAddress(Addressable addr) {
         MemoryAddress ma = addr.address();
         if (ma.equals(MemoryAddress.NULL)) {
-            throw new IllegalArgumentException("Target address is NULL");
+            throw new IllegalArgumentException("Target address is NULL: " + ma);
         }
         return ma.toRawLongValue();
     }
