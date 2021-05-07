@@ -435,7 +435,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCString$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCString",
+            "clang_getCString",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_getCString$FUNC, false
         );
@@ -447,7 +447,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_disposeString$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeString",
+            "clang_disposeString",
             "(Ljdk/incubator/foreign/MemorySegment;)V",
             constants$0.clang_disposeString$FUNC, false
         );
@@ -455,7 +455,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeStringSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeStringSet",
+            "clang_disposeStringSet",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$0.clang_disposeStringSet$FUNC, false
         );
@@ -464,7 +464,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_createIndex$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_createIndex",
+            "clang_createIndex",
             "(II)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_createIndex$FUNC, false
         );
@@ -472,7 +472,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeIndex$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeIndex",
+            "clang_disposeIndex",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$0.clang_disposeIndex$FUNC, false
         );
@@ -481,7 +481,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_CXIndex_setGlobalOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXIndex_setGlobalOptions",
+            "clang_CXIndex_setGlobalOptions",
             "(Ljdk/incubator/foreign/MemoryAddress;I)V",
             constants$0.clang_CXIndex_setGlobalOptions$FUNC, false
         );
@@ -585,7 +585,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_CXIndex_getGlobalOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXIndex_getGlobalOptions",
+            "clang_CXIndex_getGlobalOptions",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$1.clang_CXIndex_getGlobalOptions$FUNC, false
         );
@@ -594,7 +594,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_CXIndex_setInvocationEmissionPathOption$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXIndex_setInvocationEmissionPathOption",
+            "clang_CXIndex_setInvocationEmissionPathOption",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$1.clang_CXIndex_setInvocationEmissionPathOption$FUNC, false
         );
@@ -606,7 +606,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFileName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFileName",
+            "clang_getFileName",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$1.clang_getFileName$FUNC, false
         );
@@ -614,7 +614,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFileTime$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFileTime",
+            "clang_getFileTime",
             "(Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$1.clang_getFileTime$FUNC, false
         );
@@ -623,7 +623,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFileUniqueID$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFileUniqueID",
+            "clang_getFileUniqueID",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$1.clang_getFileUniqueID$FUNC, false
         );
@@ -632,7 +632,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_isFileMultipleIncludeGuarded$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isFileMultipleIncludeGuarded",
+            "clang_isFileMultipleIncludeGuarded",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$1.clang_isFileMultipleIncludeGuarded$FUNC, false
         );
@@ -815,7 +815,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFile",
+            "clang_getFile",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$2.clang_getFile$FUNC, false
         );
@@ -825,7 +825,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFileContents$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFileContents",
+            "clang_getFileContents",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$2.clang_getFileContents$FUNC, false
         );
@@ -834,7 +834,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_File_isEqual$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_File_isEqual",
+            "clang_File_isEqual",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$2.clang_File_isEqual$FUNC, false
         );
@@ -846,7 +846,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_File_tryGetRealPathName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_File_tryGetRealPathName",
+            "clang_File_tryGetRealPathName",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$2.clang_File_tryGetRealPathName$FUNC, false
         );
@@ -856,7 +856,7 @@ public class Index_h extends Index_h_1 {
             MemoryLayout.paddingLayout(32)
         ));
         static final MethodHandle clang_getNullLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNullLocation",
+            "clang_getNullLocation",
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$2.clang_getNullLocation$FUNC, false
         );
@@ -873,7 +873,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_equalLocations$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_equalLocations",
+            "clang_equalLocations",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$2.clang_equalLocations$FUNC, false
         );
@@ -970,7 +970,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getLocation",
+            "clang_getLocation",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getLocation$FUNC, false
         );
@@ -984,7 +984,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getLocationForOffset$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getLocationForOffset",
+            "clang_getLocationForOffset",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getLocationForOffset$FUNC, false
         );
@@ -996,7 +996,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Location_isInSystemHeader$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Location_isInSystemHeader",
+            "clang_Location_isInSystemHeader",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$3.clang_Location_isInSystemHeader$FUNC, false
         );
@@ -1008,7 +1008,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Location_isFromMainFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Location_isFromMainFile",
+            "clang_Location_isFromMainFile",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$3.clang_Location_isFromMainFile$FUNC, false
         );
@@ -1018,7 +1018,7 @@ public class Index_h extends Index_h_1 {
             C_INT.withName("end_int_data")
         ));
         static final MethodHandle clang_getNullRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNullRange",
+            "clang_getNullRange",
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getNullRange$FUNC, false
         );
@@ -1039,7 +1039,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getRange",
+            "clang_getRange",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_getRange$FUNC, false
         );
@@ -1126,7 +1126,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_equalRanges$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_equalRanges",
+            "clang_equalRanges",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$4.clang_equalRanges$FUNC, false
         );
@@ -1138,7 +1138,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Range_isNull$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Range_isNull",
+            "clang_Range_isNull",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$4.clang_Range_isNull$FUNC, false
         );
@@ -1154,7 +1154,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getExpansionLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getExpansionLocation",
+            "clang_getExpansionLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$4.clang_getExpansionLocation$FUNC, false
         );
@@ -1169,7 +1169,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getPresumedLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getPresumedLocation",
+            "clang_getPresumedLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$4.clang_getPresumedLocation$FUNC, false
         );
@@ -1185,7 +1185,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getInstantiationLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getInstantiationLocation",
+            "clang_getInstantiationLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$4.clang_getInstantiationLocation$FUNC, false
         );
@@ -1201,7 +1201,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getSpellingLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getSpellingLocation",
+            "clang_getSpellingLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$4.clang_getSpellingLocation$FUNC, false
         );
@@ -1362,7 +1362,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getFileLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFileLocation",
+            "clang_getFileLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$5.clang_getFileLocation$FUNC, false
         );
@@ -1378,7 +1378,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getRangeStart$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getRangeStart",
+            "clang_getRangeStart",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$5.clang_getRangeStart$FUNC, false
         );
@@ -1394,7 +1394,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getRangeEnd$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getRangeEnd",
+            "clang_getRangeEnd",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$5.clang_getRangeEnd$FUNC, false
         );
@@ -1403,7 +1403,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getSkippedRanges$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getSkippedRanges",
+            "clang_getSkippedRanges",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$5.clang_getSkippedRanges$FUNC, false
         );
@@ -1411,7 +1411,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getAllSkippedRanges$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getAllSkippedRanges",
+            "clang_getAllSkippedRanges",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$5.clang_getAllSkippedRanges$FUNC, false
         );
@@ -1419,7 +1419,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeSourceRangeList$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeSourceRangeList",
+            "clang_disposeSourceRangeList",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$5.clang_disposeSourceRangeList$FUNC, false
         );
@@ -1509,7 +1509,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getNumDiagnosticsInSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumDiagnosticsInSet",
+            "clang_getNumDiagnosticsInSet",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$6.clang_getNumDiagnosticsInSet$FUNC, false
         );
@@ -1518,7 +1518,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getDiagnosticInSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticInSet",
+            "clang_getDiagnosticInSet",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$6.clang_getDiagnosticInSet$FUNC, false
         );
@@ -1528,7 +1528,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_loadDiagnostics$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_loadDiagnostics",
+            "clang_loadDiagnostics",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$6.clang_loadDiagnostics$FUNC, false
         );
@@ -1536,7 +1536,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeDiagnosticSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeDiagnosticSet",
+            "clang_disposeDiagnosticSet",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$6.clang_disposeDiagnosticSet$FUNC, false
         );
@@ -1544,7 +1544,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getChildDiagnostics$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getChildDiagnostics",
+            "clang_getChildDiagnostics",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$6.clang_getChildDiagnostics$FUNC, false
         );
@@ -1552,7 +1552,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getNumDiagnostics$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumDiagnostics",
+            "clang_getNumDiagnostics",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$6.clang_getNumDiagnostics$FUNC, false
         );
@@ -1652,7 +1652,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getDiagnostic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnostic",
+            "clang_getDiagnostic",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$7.clang_getDiagnostic$FUNC, false
         );
@@ -1660,7 +1660,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticSetFromTU$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticSetFromTU",
+            "clang_getDiagnosticSetFromTU",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$7.clang_getDiagnosticSetFromTU$FUNC, false
         );
@@ -1668,7 +1668,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeDiagnostic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeDiagnostic",
+            "clang_disposeDiagnostic",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$7.clang_disposeDiagnostic$FUNC, false
         );
@@ -1681,13 +1681,13 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_formatDiagnostic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_formatDiagnostic",
+            "clang_formatDiagnostic",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$7.clang_formatDiagnostic$FUNC, false
         );
         static final FunctionDescriptor clang_defaultDiagnosticDisplayOptions$FUNC = FunctionDescriptor.of(C_INT);
         static final MethodHandle clang_defaultDiagnosticDisplayOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_defaultDiagnosticDisplayOptions",
+            "clang_defaultDiagnosticDisplayOptions",
             "()I",
             constants$7.clang_defaultDiagnosticDisplayOptions$FUNC, false
         );
@@ -1695,7 +1695,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticSeverity$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticSeverity",
+            "clang_getDiagnosticSeverity",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$7.clang_getDiagnosticSeverity$FUNC, false
         );
@@ -1792,7 +1792,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticLocation",
+            "clang_getDiagnosticLocation",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticLocation$FUNC, false
         );
@@ -1804,7 +1804,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticSpelling",
+            "clang_getDiagnosticSpelling",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticSpelling$FUNC, false
         );
@@ -1817,7 +1817,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticOption$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticOption",
+            "clang_getDiagnosticOption",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticOption$FUNC, false
         );
@@ -1825,7 +1825,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticCategory$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticCategory",
+            "clang_getDiagnosticCategory",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$8.clang_getDiagnosticCategory$FUNC, false
         );
@@ -1837,7 +1837,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getDiagnosticCategoryName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticCategoryName",
+            "clang_getDiagnosticCategoryName",
             "(I)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticCategoryName$FUNC, false
         );
@@ -1849,7 +1849,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticCategoryText$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticCategoryText",
+            "clang_getDiagnosticCategoryText",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$8.clang_getDiagnosticCategoryText$FUNC, false
         );
@@ -1936,7 +1936,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticNumRanges$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticNumRanges",
+            "clang_getDiagnosticNumRanges",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$9.clang_getDiagnosticNumRanges$FUNC, false
         );
@@ -1949,7 +1949,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getDiagnosticRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticRange",
+            "clang_getDiagnosticRange",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$9.clang_getDiagnosticRange$FUNC, false
         );
@@ -1957,7 +1957,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticNumFixIts$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticNumFixIts",
+            "clang_getDiagnosticNumFixIts",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$9.clang_getDiagnosticNumFixIts$FUNC, false
         );
@@ -1971,7 +1971,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDiagnosticFixIt$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDiagnosticFixIt",
+            "clang_getDiagnosticFixIt",
             "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$9.clang_getDiagnosticFixIt$FUNC, false
         );
@@ -1983,7 +1983,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getTranslationUnitSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTranslationUnitSpelling",
+            "clang_getTranslationUnitSpelling",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$9.clang_getTranslationUnitSpelling$FUNC, false
         );
@@ -1996,7 +1996,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_createTranslationUnitFromSourceFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_createTranslationUnitFromSourceFile",
+            "clang_createTranslationUnitFromSourceFile",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$9.clang_createTranslationUnitFromSourceFile$FUNC, false
         );
@@ -2129,7 +2129,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_createTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_createTranslationUnit",
+            "clang_createTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$10.clang_createTranslationUnit$FUNC, false
         );
@@ -2139,13 +2139,13 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_createTranslationUnit2$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_createTranslationUnit2",
+            "clang_createTranslationUnit2",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$10.clang_createTranslationUnit2$FUNC, false
         );
         static final FunctionDescriptor clang_defaultEditingTranslationUnitOptions$FUNC = FunctionDescriptor.of(C_INT);
         static final MethodHandle clang_defaultEditingTranslationUnitOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_defaultEditingTranslationUnitOptions",
+            "clang_defaultEditingTranslationUnitOptions",
             "()I",
             constants$10.clang_defaultEditingTranslationUnitOptions$FUNC, false
         );
@@ -2159,7 +2159,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_parseTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_parseTranslationUnit",
+            "clang_parseTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
             constants$10.clang_parseTranslationUnit$FUNC, false
         );
@@ -2174,7 +2174,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_parseTranslationUnit2$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_parseTranslationUnit2",
+            "clang_parseTranslationUnit2",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
             constants$10.clang_parseTranslationUnit2$FUNC, false
         );
@@ -2189,7 +2189,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_parseTranslationUnit2FullArgv$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_parseTranslationUnit2FullArgv",
+            "clang_parseTranslationUnit2FullArgv",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
             constants$10.clang_parseTranslationUnit2FullArgv$FUNC, false
         );
@@ -2336,7 +2336,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_defaultSaveOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_defaultSaveOptions",
+            "clang_defaultSaveOptions",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$11.clang_defaultSaveOptions$FUNC, false
         );
@@ -2346,7 +2346,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_saveTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_saveTranslationUnit",
+            "clang_saveTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$11.clang_saveTranslationUnit$FUNC, false
         );
@@ -2354,7 +2354,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_suspendTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_suspendTranslationUnit",
+            "clang_suspendTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$11.clang_suspendTranslationUnit$FUNC, false
         );
@@ -2362,7 +2362,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeTranslationUnit",
+            "clang_disposeTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$11.clang_disposeTranslationUnit$FUNC, false
         );
@@ -2370,7 +2370,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_defaultReparseOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_defaultReparseOptions",
+            "clang_defaultReparseOptions",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$11.clang_defaultReparseOptions$FUNC, false
         );
@@ -2381,7 +2381,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_reparseTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_reparseTranslationUnit",
+            "clang_reparseTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
             constants$11.clang_reparseTranslationUnit$FUNC, false
         );
@@ -2590,7 +2590,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getTUResourceUsageName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTUResourceUsageName",
+            "clang_getTUResourceUsageName",
             "(I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$12.clang_getTUResourceUsageName$FUNC, false
         );
@@ -2603,7 +2603,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCXTUResourceUsage$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCXTUResourceUsage",
+            "clang_getCXTUResourceUsage",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$12.clang_getCXTUResourceUsage$FUNC, false
         );
@@ -2616,7 +2616,7 @@ public class Index_h extends Index_h_1 {
             ).withName("CXTUResourceUsage")
         );
         static final MethodHandle clang_disposeCXTUResourceUsage$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeCXTUResourceUsage",
+            "clang_disposeCXTUResourceUsage",
             "(Ljdk/incubator/foreign/MemorySegment;)V",
             constants$12.clang_disposeCXTUResourceUsage$FUNC, false
         );
@@ -2624,7 +2624,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getTranslationUnitTargetInfo$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTranslationUnitTargetInfo",
+            "clang_getTranslationUnitTargetInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$12.clang_getTranslationUnitTargetInfo$FUNC, false
         );
@@ -2632,7 +2632,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_TargetInfo_dispose$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_TargetInfo_dispose",
+            "clang_TargetInfo_dispose",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$12.clang_TargetInfo_dispose$FUNC, false
         );
@@ -2644,7 +2644,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_TargetInfo_getTriple$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_TargetInfo_getTriple",
+            "clang_TargetInfo_getTriple",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$12.clang_TargetInfo_getTriple$FUNC, false
         );
@@ -3577,7 +3577,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_TargetInfo_getPointerWidth$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_TargetInfo_getPointerWidth",
+            "clang_TargetInfo_getPointerWidth",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$13.clang_TargetInfo_getPointerWidth$FUNC, false
         );
@@ -3587,7 +3587,7 @@ public class Index_h extends Index_h_1 {
             MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         ));
         static final MethodHandle clang_getNullCursor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNullCursor",
+            "clang_getNullCursor",
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$13.clang_getNullCursor$FUNC, false
         );
@@ -3599,7 +3599,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getTranslationUnitCursor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTranslationUnitCursor",
+            "clang_getTranslationUnitCursor",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$13.clang_getTranslationUnitCursor$FUNC, false
         );
@@ -3616,7 +3616,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_equalCursors$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_equalCursors",
+            "clang_equalCursors",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$13.clang_equalCursors$FUNC, false
         );
@@ -3628,7 +3628,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isNull$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isNull",
+            "clang_Cursor_isNull",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$13.clang_Cursor_isNull$FUNC, false
         );
@@ -3640,7 +3640,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_hashCursor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_hashCursor",
+            "clang_hashCursor",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$13.clang_hashCursor$FUNC, false
         );
@@ -3722,7 +3722,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorKind",
+            "clang_getCursorKind",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$14.clang_getCursorKind$FUNC, false
         );
@@ -3730,7 +3730,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isDeclaration$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isDeclaration",
+            "clang_isDeclaration",
             "(I)I",
             constants$14.clang_isDeclaration$FUNC, false
         );
@@ -3742,7 +3742,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isInvalidDeclaration$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isInvalidDeclaration",
+            "clang_isInvalidDeclaration",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$14.clang_isInvalidDeclaration$FUNC, false
         );
@@ -3750,7 +3750,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isReference$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isReference",
+            "clang_isReference",
             "(I)I",
             constants$14.clang_isReference$FUNC, false
         );
@@ -3758,7 +3758,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isExpression$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isExpression",
+            "clang_isExpression",
             "(I)I",
             constants$14.clang_isExpression$FUNC, false
         );
@@ -3766,7 +3766,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isStatement$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isStatement",
+            "clang_isStatement",
             "(I)I",
             constants$14.clang_isStatement$FUNC, false
         );
@@ -3859,7 +3859,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isAttribute$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isAttribute",
+            "clang_isAttribute",
             "(I)I",
             constants$15.clang_isAttribute$FUNC, false
         );
@@ -3871,7 +3871,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_hasAttrs$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_hasAttrs",
+            "clang_Cursor_hasAttrs",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$15.clang_Cursor_hasAttrs$FUNC, false
         );
@@ -3879,7 +3879,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isInvalid$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isInvalid",
+            "clang_isInvalid",
             "(I)I",
             constants$15.clang_isInvalid$FUNC, false
         );
@@ -3887,7 +3887,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isTranslationUnit",
+            "clang_isTranslationUnit",
             "(I)I",
             constants$15.clang_isTranslationUnit$FUNC, false
         );
@@ -3895,7 +3895,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isPreprocessing$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isPreprocessing",
+            "clang_isPreprocessing",
             "(I)I",
             constants$15.clang_isPreprocessing$FUNC, false
         );
@@ -3903,7 +3903,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_isUnexposed$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isUnexposed",
+            "clang_isUnexposed",
             "(I)I",
             constants$15.clang_isUnexposed$FUNC, false
         );
@@ -4094,7 +4094,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorLinkage$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorLinkage",
+            "clang_getCursorLinkage",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$16.clang_getCursorLinkage$FUNC, false
         );
@@ -4106,7 +4106,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorVisibility$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorVisibility",
+            "clang_getCursorVisibility",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$16.clang_getCursorVisibility$FUNC, false
         );
@@ -4118,7 +4118,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorAvailability$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorAvailability",
+            "clang_getCursorAvailability",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$16.clang_getCursorAvailability$FUNC, false
         );
@@ -4136,7 +4136,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCursorPlatformAvailability$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorPlatformAvailability",
+            "clang_getCursorPlatformAvailability",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$16.clang_getCursorPlatformAvailability$FUNC, false
         );
@@ -4144,7 +4144,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeCXPlatformAvailability$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeCXPlatformAvailability",
+            "clang_disposeCXPlatformAvailability",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$16.clang_disposeCXPlatformAvailability$FUNC, false
         );
@@ -4156,7 +4156,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorLanguage$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorLanguage",
+            "clang_getCursorLanguage",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$16.clang_getCursorLanguage$FUNC, false
         );
@@ -4238,7 +4238,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorTLSKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorTLSKind",
+            "clang_getCursorTLSKind",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$17.clang_getCursorTLSKind$FUNC, false
         );
@@ -4250,13 +4250,13 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getTranslationUnit",
+            "clang_Cursor_getTranslationUnit",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$17.clang_Cursor_getTranslationUnit$FUNC, false
         );
         static final FunctionDescriptor clang_createCXCursorSet$FUNC = FunctionDescriptor.of(C_POINTER);
         static final MethodHandle clang_createCXCursorSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_createCXCursorSet",
+            "clang_createCXCursorSet",
             "()Ljdk/incubator/foreign/MemoryAddress;",
             constants$17.clang_createCXCursorSet$FUNC, false
         );
@@ -4264,7 +4264,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeCXCursorSet$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeCXCursorSet",
+            "clang_disposeCXCursorSet",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$17.clang_disposeCXCursorSet$FUNC, false
         );
@@ -4277,7 +4277,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXCursorSet_contains$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXCursorSet_contains",
+            "clang_CXCursorSet_contains",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$17.clang_CXCursorSet_contains$FUNC, false
         );
@@ -4290,7 +4290,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXCursorSet_insert$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXCursorSet_insert",
+            "clang_CXCursorSet_insert",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$17.clang_CXCursorSet_insert$FUNC, false
         );
@@ -4385,7 +4385,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorSemanticParent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorSemanticParent",
+            "clang_getCursorSemanticParent",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$18.clang_getCursorSemanticParent$FUNC, false
         );
@@ -4401,7 +4401,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorLexicalParent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorLexicalParent",
+            "clang_getCursorLexicalParent",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$18.clang_getCursorLexicalParent$FUNC, false
         );
@@ -4415,7 +4415,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getOverriddenCursors$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getOverriddenCursors",
+            "clang_getOverriddenCursors",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$18.clang_getOverriddenCursors$FUNC, false
         );
@@ -4423,7 +4423,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeOverriddenCursors$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeOverriddenCursors",
+            "clang_disposeOverriddenCursors",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$18.clang_disposeOverriddenCursors$FUNC, false
         );
@@ -4435,7 +4435,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getIncludedFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getIncludedFile",
+            "clang_getIncludedFile",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$18.clang_getIncludedFile$FUNC, false
         );
@@ -4452,7 +4452,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursor",
+            "clang_getCursor",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$18.clang_getCursor$FUNC, false
         );
@@ -5011,7 +5011,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorLocation",
+            "clang_getCursorLocation",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorLocation$FUNC, false
         );
@@ -5027,7 +5027,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorExtent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorExtent",
+            "clang_getCursorExtent",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorExtent$FUNC, false
         );
@@ -5043,7 +5043,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorType",
+            "clang_getCursorType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getCursorType$FUNC, false
         );
@@ -5059,7 +5059,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTypeSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypeSpelling",
+            "clang_getTypeSpelling",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getTypeSpelling$FUNC, false
         );
@@ -5075,7 +5075,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTypedefDeclUnderlyingType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypedefDeclUnderlyingType",
+            "clang_getTypedefDeclUnderlyingType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getTypedefDeclUnderlyingType$FUNC, false
         );
@@ -5091,7 +5091,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getEnumDeclIntegerType",
+            "clang_getEnumDeclIntegerType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$19.clang_getEnumDeclIntegerType$FUNC, false
         );
@@ -5206,7 +5206,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getEnumConstantDeclValue$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getEnumConstantDeclValue",
+            "clang_getEnumConstantDeclValue",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$20.clang_getEnumConstantDeclValue$FUNC, false
         );
@@ -5218,7 +5218,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getEnumConstantDeclUnsignedValue$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getEnumConstantDeclUnsignedValue",
+            "clang_getEnumConstantDeclUnsignedValue",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$20.clang_getEnumConstantDeclUnsignedValue$FUNC, false
         );
@@ -5230,7 +5230,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getFieldDeclBitWidth$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFieldDeclBitWidth",
+            "clang_getFieldDeclBitWidth",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$20.clang_getFieldDeclBitWidth$FUNC, false
         );
@@ -5242,7 +5242,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getNumArguments$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getNumArguments",
+            "clang_Cursor_getNumArguments",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$20.clang_Cursor_getNumArguments$FUNC, false
         );
@@ -5259,7 +5259,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getArgument$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getArgument",
+            "clang_Cursor_getArgument",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$20.clang_Cursor_getArgument$FUNC, false
         );
@@ -5271,7 +5271,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getNumTemplateArguments",
+            "clang_Cursor_getNumTemplateArguments",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$20.clang_Cursor_getNumTemplateArguments$FUNC, false
         );
@@ -5360,7 +5360,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getTemplateArgumentKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getTemplateArgumentKind",
+            "clang_Cursor_getTemplateArgumentKind",
             "(Ljdk/incubator/foreign/MemorySegment;I)I",
             constants$21.clang_Cursor_getTemplateArgumentKind$FUNC, false
         );
@@ -5377,7 +5377,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getTemplateArgumentType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getTemplateArgumentType",
+            "clang_Cursor_getTemplateArgumentType",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$21.clang_Cursor_getTemplateArgumentType$FUNC, false
         );
@@ -5390,7 +5390,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getTemplateArgumentValue$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getTemplateArgumentValue",
+            "clang_Cursor_getTemplateArgumentValue",
             "(Ljdk/incubator/foreign/MemorySegment;I)J",
             constants$21.clang_Cursor_getTemplateArgumentValue$FUNC, false
         );
@@ -5403,7 +5403,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getTemplateArgumentUnsignedValue$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getTemplateArgumentUnsignedValue",
+            "clang_Cursor_getTemplateArgumentUnsignedValue",
             "(Ljdk/incubator/foreign/MemorySegment;I)J",
             constants$21.clang_Cursor_getTemplateArgumentUnsignedValue$FUNC, false
         );
@@ -5420,7 +5420,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_equalTypes$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_equalTypes",
+            "clang_equalTypes",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$21.clang_equalTypes$FUNC, false
         );
@@ -5436,7 +5436,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCanonicalType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCanonicalType",
+            "clang_getCanonicalType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$21.clang_getCanonicalType$FUNC, false
         );
@@ -5525,7 +5525,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getLocalUnqualifiedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getLocalUnqualifiedType",
+            "clang_getLocalUnqualifiedType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$22.clang_getLocalUnqualifiedType$FUNC, false
         );
@@ -5537,7 +5537,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isConstQualifiedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isConstQualifiedType",
+            "clang_isConstQualifiedType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$22.clang_isConstQualifiedType$FUNC, false
         );
@@ -5549,7 +5549,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isMacroFunctionLike$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isMacroFunctionLike",
+            "clang_Cursor_isMacroFunctionLike",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$22.clang_Cursor_isMacroFunctionLike$FUNC, false
         );
@@ -5561,7 +5561,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isMacroBuiltin$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isMacroBuiltin",
+            "clang_Cursor_isMacroBuiltin",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$22.clang_Cursor_isMacroBuiltin$FUNC, false
         );
@@ -5573,7 +5573,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isFunctionInlined$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isFunctionInlined",
+            "clang_Cursor_isFunctionInlined",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$22.clang_Cursor_isFunctionInlined$FUNC, false
         );
@@ -5585,7 +5585,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isVolatileQualifiedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isVolatileQualifiedType",
+            "clang_isVolatileQualifiedType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$22.clang_isVolatileQualifiedType$FUNC, false
         );
@@ -5679,7 +5679,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isRestrictQualifiedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isRestrictQualifiedType",
+            "clang_isRestrictQualifiedType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$23.clang_isRestrictQualifiedType$FUNC, false
         );
@@ -5691,7 +5691,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getAddressSpace$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getAddressSpace",
+            "clang_getAddressSpace",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$23.clang_getAddressSpace$FUNC, false
         );
@@ -5707,7 +5707,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTypedefName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypedefName",
+            "clang_getTypedefName",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getTypedefName$FUNC, false
         );
@@ -5723,7 +5723,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getPointeeType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getPointeeType",
+            "clang_getPointeeType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getPointeeType$FUNC, false
         );
@@ -5739,7 +5739,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTypeDeclaration$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypeDeclaration",
+            "clang_getTypeDeclaration",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getTypeDeclaration$FUNC, false
         );
@@ -5755,7 +5755,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getDeclObjCTypeEncoding$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDeclObjCTypeEncoding",
+            "clang_getDeclObjCTypeEncoding",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$23.clang_getDeclObjCTypeEncoding$FUNC, false
         );
@@ -5850,7 +5850,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getObjCEncoding$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getObjCEncoding",
+            "clang_Type_getObjCEncoding",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$24.clang_Type_getObjCEncoding$FUNC, false
         );
@@ -5862,7 +5862,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getTypeKindSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypeKindSpelling",
+            "clang_getTypeKindSpelling",
             "(I)Ljdk/incubator/foreign/MemorySegment;",
             constants$24.clang_getTypeKindSpelling$FUNC, false
         );
@@ -5874,7 +5874,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getFunctionTypeCallingConv$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getFunctionTypeCallingConv",
+            "clang_getFunctionTypeCallingConv",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$24.clang_getFunctionTypeCallingConv$FUNC, false
         );
@@ -5890,7 +5890,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getResultType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getResultType",
+            "clang_getResultType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$24.clang_getResultType$FUNC, false
         );
@@ -5902,7 +5902,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getExceptionSpecificationType",
+            "clang_getExceptionSpecificationType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$24.clang_getExceptionSpecificationType$FUNC, false
         );
@@ -5914,7 +5914,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getNumArgTypes$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumArgTypes",
+            "clang_getNumArgTypes",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$24.clang_getNumArgTypes$FUNC, false
         );
@@ -6013,7 +6013,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getArgType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getArgType",
+            "clang_getArgType",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$25.clang_getArgType$FUNC, false
         );
@@ -6029,7 +6029,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getObjCObjectBaseType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getObjCObjectBaseType",
+            "clang_Type_getObjCObjectBaseType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$25.clang_Type_getObjCObjectBaseType$FUNC, false
         );
@@ -6041,7 +6041,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getNumObjCProtocolRefs$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getNumObjCProtocolRefs",
+            "clang_Type_getNumObjCProtocolRefs",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$25.clang_Type_getNumObjCProtocolRefs$FUNC, false
         );
@@ -6058,7 +6058,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Type_getObjCProtocolDecl$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getObjCProtocolDecl",
+            "clang_Type_getObjCProtocolDecl",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$25.clang_Type_getObjCProtocolDecl$FUNC, false
         );
@@ -6070,7 +6070,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getNumObjCTypeArgs$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getNumObjCTypeArgs",
+            "clang_Type_getNumObjCTypeArgs",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$25.clang_Type_getNumObjCTypeArgs$FUNC, false
         );
@@ -6087,7 +6087,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Type_getObjCTypeArg$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getObjCTypeArg",
+            "clang_Type_getObjCTypeArg",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$25.clang_Type_getObjCTypeArg$FUNC, false
         );
@@ -6175,7 +6175,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isFunctionTypeVariadic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isFunctionTypeVariadic",
+            "clang_isFunctionTypeVariadic",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$26.clang_isFunctionTypeVariadic$FUNC, false
         );
@@ -6191,7 +6191,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorResultType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorResultType",
+            "clang_getCursorResultType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$26.clang_getCursorResultType$FUNC, false
         );
@@ -6203,7 +6203,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorExceptionSpecificationType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorExceptionSpecificationType",
+            "clang_getCursorExceptionSpecificationType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$26.clang_getCursorExceptionSpecificationType$FUNC, false
         );
@@ -6215,7 +6215,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isPODType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isPODType",
+            "clang_isPODType",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$26.clang_isPODType$FUNC, false
         );
@@ -6231,7 +6231,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getElementType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getElementType",
+            "clang_getElementType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$26.clang_getElementType$FUNC, false
         );
@@ -6243,7 +6243,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getNumElements$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumElements",
+            "clang_getNumElements",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$26.clang_getNumElements$FUNC, false
         );
@@ -6365,7 +6365,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getArrayElementType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getArrayElementType",
+            "clang_getArrayElementType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$27.clang_getArrayElementType$FUNC, false
         );
@@ -6377,7 +6377,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getArraySize$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getArraySize",
+            "clang_getArraySize",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$27.clang_getArraySize$FUNC, false
         );
@@ -6393,7 +6393,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getNamedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getNamedType",
+            "clang_Type_getNamedType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$27.clang_Type_getNamedType$FUNC, false
         );
@@ -6405,7 +6405,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_isTransparentTagTypedef$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_isTransparentTagTypedef",
+            "clang_Type_isTransparentTagTypedef",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$27.clang_Type_isTransparentTagTypedef$FUNC, false
         );
@@ -6417,7 +6417,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getNullability$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getNullability",
+            "clang_Type_getNullability",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$27.clang_Type_getNullability$FUNC, false
         );
@@ -6429,7 +6429,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getAlignOf$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getAlignOf",
+            "clang_Type_getAlignOf",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$27.clang_Type_getAlignOf$FUNC, false
         );
@@ -6521,7 +6521,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getClassType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getClassType",
+            "clang_Type_getClassType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$28.clang_Type_getClassType$FUNC, false
         );
@@ -6533,7 +6533,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getSizeOf$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getSizeOf",
+            "clang_Type_getSizeOf",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$28.clang_Type_getSizeOf$FUNC, false
         );
@@ -6546,7 +6546,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Type_getOffsetOf$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getOffsetOf",
+            "clang_Type_getOffsetOf",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$28.clang_Type_getOffsetOf$FUNC, false
         );
@@ -6562,7 +6562,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getModifiedType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getModifiedType",
+            "clang_Type_getModifiedType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$28.clang_Type_getModifiedType$FUNC, false
         );
@@ -6574,7 +6574,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getOffsetOfField$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getOffsetOfField",
+            "clang_Cursor_getOffsetOfField",
             "(Ljdk/incubator/foreign/MemorySegment;)J",
             constants$28.clang_Cursor_getOffsetOfField$FUNC, false
         );
@@ -6586,7 +6586,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isAnonymous$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isAnonymous",
+            "clang_Cursor_isAnonymous",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$28.clang_Cursor_isAnonymous$FUNC, false
         );
@@ -6680,7 +6680,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isAnonymousRecordDecl$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isAnonymousRecordDecl",
+            "clang_Cursor_isAnonymousRecordDecl",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Cursor_isAnonymousRecordDecl$FUNC, false
         );
@@ -6692,7 +6692,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isInlineNamespace$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isInlineNamespace",
+            "clang_Cursor_isInlineNamespace",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Cursor_isInlineNamespace$FUNC, false
         );
@@ -6704,7 +6704,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getNumTemplateArguments$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getNumTemplateArguments",
+            "clang_Type_getNumTemplateArguments",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Type_getNumTemplateArguments$FUNC, false
         );
@@ -6721,7 +6721,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Type_getTemplateArgumentAsType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getTemplateArgumentAsType",
+            "clang_Type_getTemplateArgumentAsType",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$29.clang_Type_getTemplateArgumentAsType$FUNC, false
         );
@@ -6733,7 +6733,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Type_getCXXRefQualifier$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Type_getCXXRefQualifier",
+            "clang_Type_getCXXRefQualifier",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Type_getCXXRefQualifier$FUNC, false
         );
@@ -6745,7 +6745,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isBitField$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isBitField",
+            "clang_Cursor_isBitField",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$29.clang_Cursor_isBitField$FUNC, false
         );
@@ -6878,7 +6878,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isVirtualBase$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isVirtualBase",
+            "clang_isVirtualBase",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$30.clang_isVirtualBase$FUNC, false
         );
@@ -6890,7 +6890,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCXXAccessSpecifier$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCXXAccessSpecifier",
+            "clang_getCXXAccessSpecifier",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$30.clang_getCXXAccessSpecifier$FUNC, false
         );
@@ -6902,7 +6902,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getStorageClass$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getStorageClass",
+            "clang_Cursor_getStorageClass",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$30.clang_Cursor_getStorageClass$FUNC, false
         );
@@ -6914,7 +6914,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getNumOverloadedDecls$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumOverloadedDecls",
+            "clang_getNumOverloadedDecls",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$30.clang_getNumOverloadedDecls$FUNC, false
         );
@@ -6931,7 +6931,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getOverloadedDecl$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getOverloadedDecl",
+            "clang_getOverloadedDecl",
             "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$30.clang_getOverloadedDecl$FUNC, false
         );
@@ -6947,7 +6947,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getIBOutletCollectionType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getIBOutletCollectionType",
+            "clang_getIBOutletCollectionType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$30.clang_getIBOutletCollectionType$FUNC, false
         );
@@ -7035,7 +7035,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_visitChildren$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_visitChildren",
+            "clang_visitChildren",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$31.clang_visitChildren$FUNC, false
         );
@@ -7049,7 +7049,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_visitTemplateSpecializations$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_visitTemplateSpecializations",
+            "clang_visitTemplateSpecializations",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$31.clang_visitTemplateSpecializations$FUNC, false
         );
@@ -7063,7 +7063,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_visitTemplateSpecializationChildren$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_visitTemplateSpecializationChildren",
+            "clang_visitTemplateSpecializationChildren",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$31.clang_visitTemplateSpecializationChildren$FUNC, false
         );
@@ -7195,7 +7195,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_visitChildrenWithBlock$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_visitChildrenWithBlock",
+            "clang_visitChildrenWithBlock",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$32.clang_visitChildrenWithBlock$FUNC, false
         );
@@ -7211,7 +7211,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorUSR$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorUSR",
+            "clang_getCursorUSR",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_getCursorUSR$FUNC, false
         );
@@ -7223,7 +7223,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_constructUSR_ObjCClass$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCClass",
+            "clang_constructUSR_ObjCClass",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCClass$FUNC, false
         );
@@ -7236,7 +7236,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_constructUSR_ObjCCategory$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCCategory",
+            "clang_constructUSR_ObjCCategory",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCCategory$FUNC, false
         );
@@ -7248,7 +7248,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_constructUSR_ObjCProtocol$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCProtocol",
+            "clang_constructUSR_ObjCProtocol",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$32.clang_constructUSR_ObjCProtocol$FUNC, false
         );
@@ -7431,7 +7431,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_constructUSR_ObjCIvar$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCIvar",
+            "clang_constructUSR_ObjCIvar",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_constructUSR_ObjCIvar$FUNC, false
         );
@@ -7449,7 +7449,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_constructUSR_ObjCMethod$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCMethod",
+            "clang_constructUSR_ObjCMethod",
             "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_constructUSR_ObjCMethod$FUNC, false
         );
@@ -7466,7 +7466,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_constructUSR_ObjCProperty$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_constructUSR_ObjCProperty",
+            "clang_constructUSR_ObjCProperty",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_constructUSR_ObjCProperty$FUNC, false
         );
@@ -7482,7 +7482,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorSpelling",
+            "clang_getCursorSpelling",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_getCursorSpelling$FUNC, false
         );
@@ -7500,7 +7500,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getSpellingNameRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getSpellingNameRange",
+            "clang_Cursor_getSpellingNameRange",
             "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
             constants$33.clang_Cursor_getSpellingNameRange$FUNC, false
         );
@@ -7509,7 +7509,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_PrintingPolicy_getProperty$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_PrintingPolicy_getProperty",
+            "clang_PrintingPolicy_getProperty",
             "(Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$33.clang_PrintingPolicy_getProperty$FUNC, false
         );
@@ -7595,7 +7595,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_PrintingPolicy_setProperty$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_PrintingPolicy_setProperty",
+            "clang_PrintingPolicy_setProperty",
             "(Ljdk/incubator/foreign/MemoryAddress;II)V",
             constants$34.clang_PrintingPolicy_setProperty$FUNC, false
         );
@@ -7607,7 +7607,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorPrintingPolicy$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorPrintingPolicy",
+            "clang_getCursorPrintingPolicy",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$34.clang_getCursorPrintingPolicy$FUNC, false
         );
@@ -7615,7 +7615,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_PrintingPolicy_dispose$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_PrintingPolicy_dispose",
+            "clang_PrintingPolicy_dispose",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$34.clang_PrintingPolicy_dispose$FUNC, false
         );
@@ -7632,7 +7632,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCursorPrettyPrinted$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorPrettyPrinted",
+            "clang_getCursorPrettyPrinted",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$34.clang_getCursorPrettyPrinted$FUNC, false
         );
@@ -7644,7 +7644,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTypePrintingPolicy$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypePrintingPolicy",
+            "clang_getTypePrintingPolicy",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$34.clang_getTypePrintingPolicy$FUNC, false
         );
@@ -7661,7 +7661,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getTypePrettyPrinted$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTypePrettyPrinted",
+            "clang_getTypePrettyPrinted",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$34.clang_getTypePrettyPrinted$FUNC, false
         );
@@ -7759,7 +7759,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorDisplayName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorDisplayName",
+            "clang_getCursorDisplayName",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$35.clang_getCursorDisplayName$FUNC, false
         );
@@ -7775,7 +7775,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorReferenced$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorReferenced",
+            "clang_getCursorReferenced",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$35.clang_getCursorReferenced$FUNC, false
         );
@@ -7791,7 +7791,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorDefinition$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorDefinition",
+            "clang_getCursorDefinition",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$35.clang_getCursorDefinition$FUNC, false
         );
@@ -7803,7 +7803,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_isCursorDefinition$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_isCursorDefinition",
+            "clang_isCursorDefinition",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$35.clang_isCursorDefinition$FUNC, false
         );
@@ -7819,7 +7819,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCanonicalCursor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCanonicalCursor",
+            "clang_getCanonicalCursor",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$35.clang_getCanonicalCursor$FUNC, false
         );
@@ -7831,7 +7831,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getObjCSelectorIndex$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCSelectorIndex",
+            "clang_Cursor_getObjCSelectorIndex",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$35.clang_Cursor_getObjCSelectorIndex$FUNC, false
         );
@@ -7985,7 +7985,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isDynamicCall$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isDynamicCall",
+            "clang_Cursor_isDynamicCall",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$36.clang_Cursor_isDynamicCall$FUNC, false
         );
@@ -8001,7 +8001,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getReceiverType$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getReceiverType",
+            "clang_Cursor_getReceiverType",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$36.clang_Cursor_getReceiverType$FUNC, false
         );
@@ -8014,7 +8014,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Cursor_getObjCPropertyAttributes$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCPropertyAttributes",
+            "clang_Cursor_getObjCPropertyAttributes",
             "(Ljdk/incubator/foreign/MemorySegment;I)I",
             constants$36.clang_Cursor_getObjCPropertyAttributes$FUNC, false
         );
@@ -8030,7 +8030,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getObjCPropertyGetterName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCPropertyGetterName",
+            "clang_Cursor_getObjCPropertyGetterName",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$36.clang_Cursor_getObjCPropertyGetterName$FUNC, false
         );
@@ -8046,7 +8046,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getObjCPropertySetterName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCPropertySetterName",
+            "clang_Cursor_getObjCPropertySetterName",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$36.clang_Cursor_getObjCPropertySetterName$FUNC, false
         );
@@ -8058,7 +8058,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getObjCDeclQualifiers$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCDeclQualifiers",
+            "clang_Cursor_getObjCDeclQualifiers",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$36.clang_Cursor_getObjCDeclQualifiers$FUNC, false
         );
@@ -8149,7 +8149,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isObjCOptional$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isObjCOptional",
+            "clang_Cursor_isObjCOptional",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$37.clang_Cursor_isObjCOptional$FUNC, false
         );
@@ -8161,7 +8161,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_isVariadic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isVariadic",
+            "clang_Cursor_isVariadic",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$37.clang_Cursor_isVariadic$FUNC, false
         );
@@ -8176,7 +8176,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Cursor_isExternalSymbol$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_isExternalSymbol",
+            "clang_Cursor_isExternalSymbol",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$37.clang_Cursor_isExternalSymbol$FUNC, false
         );
@@ -8192,7 +8192,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getCommentRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getCommentRange",
+            "clang_Cursor_getCommentRange",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getCommentRange$FUNC, false
         );
@@ -8208,7 +8208,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getRawCommentText$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getRawCommentText",
+            "clang_Cursor_getRawCommentText",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getRawCommentText$FUNC, false
         );
@@ -8224,7 +8224,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getBriefCommentText$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getBriefCommentText",
+            "clang_Cursor_getBriefCommentText",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$37.clang_Cursor_getBriefCommentText$FUNC, false
         );
@@ -8313,7 +8313,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getMangling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getMangling",
+            "clang_Cursor_getMangling",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$38.clang_Cursor_getMangling$FUNC, false
         );
@@ -8325,7 +8325,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getCXXManglings$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getCXXManglings",
+            "clang_Cursor_getCXXManglings",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_Cursor_getCXXManglings$FUNC, false
         );
@@ -8337,7 +8337,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getObjCManglings$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getObjCManglings",
+            "clang_Cursor_getObjCManglings",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_Cursor_getObjCManglings$FUNC, false
         );
@@ -8349,7 +8349,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_getModule$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_getModule",
+            "clang_Cursor_getModule",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_Cursor_getModule$FUNC, false
         );
@@ -8358,7 +8358,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getModuleForFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getModuleForFile",
+            "clang_getModuleForFile",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_getModuleForFile$FUNC, false
         );
@@ -8366,7 +8366,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_getASTFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getASTFile",
+            "clang_Module_getASTFile",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$38.clang_Module_getASTFile$FUNC, false
         );
@@ -8450,7 +8450,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_getParent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getParent",
+            "clang_Module_getParent",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$39.clang_Module_getParent$FUNC, false
         );
@@ -8462,7 +8462,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_getName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getName",
+            "clang_Module_getName",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$39.clang_Module_getName$FUNC, false
         );
@@ -8474,7 +8474,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_getFullName$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getFullName",
+            "clang_Module_getFullName",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$39.clang_Module_getFullName$FUNC, false
         );
@@ -8482,7 +8482,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_isSystem$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_isSystem",
+            "clang_Module_isSystem",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$39.clang_Module_isSystem$FUNC, false
         );
@@ -8491,7 +8491,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_Module_getNumTopLevelHeaders$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getNumTopLevelHeaders",
+            "clang_Module_getNumTopLevelHeaders",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$39.clang_Module_getNumTopLevelHeaders$FUNC, false
         );
@@ -8501,7 +8501,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_Module_getTopLevelHeader$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Module_getTopLevelHeader",
+            "clang_Module_getTopLevelHeader",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$39.clang_Module_getTopLevelHeader$FUNC, false
         );
@@ -8583,7 +8583,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXConstructor_isConvertingConstructor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXConstructor_isConvertingConstructor",
+            "clang_CXXConstructor_isConvertingConstructor",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXConstructor_isConvertingConstructor$FUNC, false
         );
@@ -8595,7 +8595,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXConstructor_isCopyConstructor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXConstructor_isCopyConstructor",
+            "clang_CXXConstructor_isCopyConstructor",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXConstructor_isCopyConstructor$FUNC, false
         );
@@ -8607,7 +8607,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXConstructor_isDefaultConstructor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXConstructor_isDefaultConstructor",
+            "clang_CXXConstructor_isDefaultConstructor",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXConstructor_isDefaultConstructor$FUNC, false
         );
@@ -8619,7 +8619,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXConstructor_isMoveConstructor$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXConstructor_isMoveConstructor",
+            "clang_CXXConstructor_isMoveConstructor",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXConstructor_isMoveConstructor$FUNC, false
         );
@@ -8631,7 +8631,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXField_isMutable$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXField_isMutable",
+            "clang_CXXField_isMutable",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXField_isMutable$FUNC, false
         );
@@ -8643,7 +8643,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXMethod_isDefaulted$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXMethod_isDefaulted",
+            "clang_CXXMethod_isDefaulted",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$40.clang_CXXMethod_isDefaulted$FUNC, false
         );
@@ -8725,7 +8725,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXMethod_isPureVirtual$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXMethod_isPureVirtual",
+            "clang_CXXMethod_isPureVirtual",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_CXXMethod_isPureVirtual$FUNC, false
         );
@@ -8737,7 +8737,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXMethod_isStatic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXMethod_isStatic",
+            "clang_CXXMethod_isStatic",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_CXXMethod_isStatic$FUNC, false
         );
@@ -8749,7 +8749,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXMethod_isVirtual$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXMethod_isVirtual",
+            "clang_CXXMethod_isVirtual",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_CXXMethod_isVirtual$FUNC, false
         );
@@ -8761,7 +8761,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXRecord_isAbstract$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXRecord_isAbstract",
+            "clang_CXXRecord_isAbstract",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_CXXRecord_isAbstract$FUNC, false
         );
@@ -8773,7 +8773,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_EnumDecl_isScoped$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EnumDecl_isScoped",
+            "clang_EnumDecl_isScoped",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_EnumDecl_isScoped$FUNC, false
         );
@@ -8785,7 +8785,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_CXXMethod_isConst$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_CXXMethod_isConst",
+            "clang_CXXMethod_isConst",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$41.clang_CXXMethod_isConst$FUNC, false
         );
@@ -8937,7 +8937,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTemplateCursorKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTemplateCursorKind",
+            "clang_getTemplateCursorKind",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$42.clang_getTemplateCursorKind$FUNC, false
         );
@@ -8949,7 +8949,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTemplateSpecializationKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTemplateSpecializationKind",
+            "clang_getTemplateSpecializationKind",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$42.clang_getTemplateSpecializationKind$FUNC, false
         );
@@ -8965,7 +8965,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getSpecializedCursorTemplate$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getSpecializedCursorTemplate",
+            "clang_getSpecializedCursorTemplate",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$42.clang_getSpecializedCursorTemplate$FUNC, false
         );
@@ -8983,7 +8983,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCursorReferenceNameRange$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorReferenceNameRange",
+            "clang_getCursorReferenceNameRange",
             "(Ljdk/incubator/foreign/MemorySegment;II)Ljdk/incubator/foreign/MemorySegment;",
             constants$42.clang_getCursorReferenceNameRange$FUNC, false
         );
@@ -8996,7 +8996,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getToken$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getToken",
+            "clang_getToken",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$42.clang_getToken$FUNC, false
         );
@@ -9007,7 +9007,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTokenKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTokenKind",
+            "clang_getTokenKind",
             "(Ljdk/incubator/foreign/MemorySegment;)I",
             constants$42.clang_getTokenKind$FUNC, false
         );
@@ -9102,7 +9102,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTokenSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTokenSpelling",
+            "clang_getTokenSpelling",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$43.clang_getTokenSpelling$FUNC, false
         );
@@ -9118,7 +9118,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTokenLocation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTokenLocation",
+            "clang_getTokenLocation",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$43.clang_getTokenLocation$FUNC, false
         );
@@ -9134,7 +9134,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getTokenExtent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getTokenExtent",
+            "clang_getTokenExtent",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$43.clang_getTokenExtent$FUNC, false
         );
@@ -9149,7 +9149,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_tokenize$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_tokenize",
+            "clang_tokenize",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$43.clang_tokenize$FUNC, false
         );
@@ -9160,7 +9160,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_annotateTokens$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_annotateTokens",
+            "clang_annotateTokens",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;)V",
             constants$43.clang_annotateTokens$FUNC, false
         );
@@ -9170,7 +9170,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_disposeTokens$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeTokens",
+            "clang_disposeTokens",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
             constants$43.clang_disposeTokens$FUNC, false
         );
@@ -9370,7 +9370,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCursorKindSpelling$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorKindSpelling",
+            "clang_getCursorKindSpelling",
             "(I)Ljdk/incubator/foreign/MemorySegment;",
             constants$44.clang_getCursorKindSpelling$FUNC, false
         );
@@ -9388,13 +9388,13 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getDefinitionSpellingAndExtent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getDefinitionSpellingAndExtent",
+            "clang_getDefinitionSpellingAndExtent",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$44.clang_getDefinitionSpellingAndExtent$FUNC, false
         );
         static final FunctionDescriptor clang_enableStackTraces$FUNC = FunctionDescriptor.ofVoid();
         static final MethodHandle clang_enableStackTraces$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_enableStackTraces",
+            "clang_enableStackTraces",
             "()V",
             constants$44.clang_enableStackTraces$FUNC, false
         );
@@ -9411,7 +9411,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_executeOnThread$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_executeOnThread",
+            "clang_executeOnThread",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;I)V",
             constants$44.clang_executeOnThread$FUNC, false
         );
@@ -9493,7 +9493,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCompletionChunkKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionChunkKind",
+            "clang_getCompletionChunkKind",
             "(Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$45.clang_getCompletionChunkKind$FUNC, false
         );
@@ -9506,7 +9506,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCompletionChunkText$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionChunkText",
+            "clang_getCompletionChunkText",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$45.clang_getCompletionChunkText$FUNC, false
         );
@@ -9515,7 +9515,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCompletionChunkCompletionString$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionChunkCompletionString",
+            "clang_getCompletionChunkCompletionString",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$45.clang_getCompletionChunkCompletionString$FUNC, false
         );
@@ -9523,7 +9523,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getNumCompletionChunks$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getNumCompletionChunks",
+            "clang_getNumCompletionChunks",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$45.clang_getNumCompletionChunks$FUNC, false
         );
@@ -9531,7 +9531,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionPriority$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionPriority",
+            "clang_getCompletionPriority",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$45.clang_getCompletionPriority$FUNC, false
         );
@@ -9539,7 +9539,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionAvailability$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionAvailability",
+            "clang_getCompletionAvailability",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$45.clang_getCompletionAvailability$FUNC, false
         );
@@ -9680,7 +9680,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionNumAnnotations$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionNumAnnotations",
+            "clang_getCompletionNumAnnotations",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$46.clang_getCompletionNumAnnotations$FUNC, false
         );
@@ -9693,7 +9693,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCompletionAnnotation$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionAnnotation",
+            "clang_getCompletionAnnotation",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemorySegment;",
             constants$46.clang_getCompletionAnnotation$FUNC, false
         );
@@ -9706,7 +9706,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionParent$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionParent",
+            "clang_getCompletionParent",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$46.clang_getCompletionParent$FUNC, false
         );
@@ -9718,7 +9718,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionBriefComment$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionBriefComment",
+            "clang_getCompletionBriefComment",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$46.clang_getCompletionBriefComment$FUNC, false
         );
@@ -9730,7 +9730,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_getCursorCompletionString$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCursorCompletionString",
+            "clang_getCursorCompletionString",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$46.clang_getCursorCompletionString$FUNC, false
         );
@@ -9739,7 +9739,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getCompletionNumFixIts$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionNumFixIts",
+            "clang_getCompletionNumFixIts",
             "(Ljdk/incubator/foreign/MemoryAddress;I)I",
             constants$46.clang_getCompletionNumFixIts$FUNC, false
         );
@@ -9917,13 +9917,13 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getCompletionFixIt$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getCompletionFixIt",
+            "clang_getCompletionFixIt",
             "(Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$47.clang_getCompletionFixIt$FUNC, false
         );
         static final FunctionDescriptor clang_defaultCodeCompleteOptions$FUNC = FunctionDescriptor.of(C_INT);
         static final MethodHandle clang_defaultCodeCompleteOptions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_defaultCodeCompleteOptions",
+            "clang_defaultCodeCompleteOptions",
             "()I",
             constants$47.clang_defaultCodeCompleteOptions$FUNC, false
         );
@@ -9937,7 +9937,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_codeCompleteAt$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteAt",
+            "clang_codeCompleteAt",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;II)Ljdk/incubator/foreign/MemoryAddress;",
             constants$47.clang_codeCompleteAt$FUNC, false
         );
@@ -9946,7 +9946,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_sortCodeCompletionResults$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_sortCodeCompletionResults",
+            "clang_sortCodeCompletionResults",
             "(Ljdk/incubator/foreign/MemoryAddress;I)V",
             constants$47.clang_sortCodeCompletionResults$FUNC, false
         );
@@ -9954,7 +9954,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_disposeCodeCompleteResults$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_disposeCodeCompleteResults",
+            "clang_disposeCodeCompleteResults",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$47.clang_disposeCodeCompleteResults$FUNC, false
         );
@@ -9962,7 +9962,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_codeCompleteGetNumDiagnostics$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetNumDiagnostics",
+            "clang_codeCompleteGetNumDiagnostics",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$47.clang_codeCompleteGetNumDiagnostics$FUNC, false
         );
@@ -10050,7 +10050,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_codeCompleteGetDiagnostic$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetDiagnostic",
+            "clang_codeCompleteGetDiagnostic",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$48.clang_codeCompleteGetDiagnostic$FUNC, false
         );
@@ -10058,7 +10058,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_codeCompleteGetContexts$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetContexts",
+            "clang_codeCompleteGetContexts",
             "(Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$48.clang_codeCompleteGetContexts$FUNC, false
         );
@@ -10067,7 +10067,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_codeCompleteGetContainerKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetContainerKind",
+            "clang_codeCompleteGetContainerKind",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$48.clang_codeCompleteGetContainerKind$FUNC, false
         );
@@ -10079,7 +10079,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_codeCompleteGetContainerUSR$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetContainerUSR",
+            "clang_codeCompleteGetContainerUSR",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$48.clang_codeCompleteGetContainerUSR$FUNC, false
         );
@@ -10091,7 +10091,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_codeCompleteGetObjCSelector$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_codeCompleteGetObjCSelector",
+            "clang_codeCompleteGetObjCSelector",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemorySegment;",
             constants$48.clang_codeCompleteGetObjCSelector$FUNC, false
         );
@@ -10101,7 +10101,7 @@ public class Index_h extends Index_h_1 {
             MemoryLayout.paddingLayout(32)
         ));
         static final MethodHandle clang_getClangVersion$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getClangVersion",
+            "clang_getClangVersion",
             "()Ljdk/incubator/foreign/MemorySegment;",
             constants$48.clang_getClangVersion$FUNC, false
         );
@@ -10198,7 +10198,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_toggleCrashRecovery$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_toggleCrashRecovery",
+            "clang_toggleCrashRecovery",
             "(I)V",
             constants$49.clang_toggleCrashRecovery$FUNC, false
         );
@@ -10218,7 +10218,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getInclusions$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getInclusions",
+            "clang_getInclusions",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$49.clang_getInclusions$FUNC, false
         );
@@ -10230,7 +10230,7 @@ public class Index_h extends Index_h_1 {
             )
         );
         static final MethodHandle clang_Cursor_Evaluate$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_Cursor_Evaluate",
+            "clang_Cursor_Evaluate",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$49.clang_Cursor_Evaluate$FUNC, false
         );
@@ -10238,7 +10238,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getKind$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getKind",
+            "clang_EvalResult_getKind",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$49.clang_EvalResult_getKind$FUNC, false
         );
@@ -10316,7 +10316,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getAsInt$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getAsInt",
+            "clang_EvalResult_getAsInt",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$50.clang_EvalResult_getAsInt$FUNC, false
         );
@@ -10324,7 +10324,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getAsLongLong$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getAsLongLong",
+            "clang_EvalResult_getAsLongLong",
             "(Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$50.clang_EvalResult_getAsLongLong$FUNC, false
         );
@@ -10332,7 +10332,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_isUnsignedInt$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_isUnsignedInt",
+            "clang_EvalResult_isUnsignedInt",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$50.clang_EvalResult_isUnsignedInt$FUNC, false
         );
@@ -10340,7 +10340,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getAsUnsigned$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getAsUnsigned",
+            "clang_EvalResult_getAsUnsigned",
             "(Ljdk/incubator/foreign/MemoryAddress;)J",
             constants$50.clang_EvalResult_getAsUnsigned$FUNC, false
         );
@@ -10348,7 +10348,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getAsDouble$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getAsDouble",
+            "clang_EvalResult_getAsDouble",
             "(Ljdk/incubator/foreign/MemoryAddress;)D",
             constants$50.clang_EvalResult_getAsDouble$FUNC, false
         );
@@ -10356,7 +10356,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_getAsStr$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_getAsStr",
+            "clang_EvalResult_getAsStr",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$50.clang_EvalResult_getAsStr$FUNC, false
         );
@@ -10542,7 +10542,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_EvalResult_dispose$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_EvalResult_dispose",
+            "clang_EvalResult_dispose",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$51.clang_EvalResult_dispose$FUNC, false
         );
@@ -10550,7 +10550,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_getRemappings$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getRemappings",
+            "clang_getRemappings",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$51.clang_getRemappings$FUNC, false
         );
@@ -10559,7 +10559,7 @@ public class Index_h extends Index_h_1 {
             C_INT
         );
         static final MethodHandle clang_getRemappingsFromFileList$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_getRemappingsFromFileList",
+            "clang_getRemappingsFromFileList",
             "(Ljdk/incubator/foreign/MemoryAddress;I)Ljdk/incubator/foreign/MemoryAddress;",
             constants$51.clang_getRemappingsFromFileList$FUNC, false
         );
@@ -10567,7 +10567,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_remap_getNumFiles$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_remap_getNumFiles",
+            "clang_remap_getNumFiles",
             "(Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$51.clang_remap_getNumFiles$FUNC, false
         );
@@ -10578,7 +10578,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_remap_getFilenames$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_remap_getFilenames",
+            "clang_remap_getFilenames",
             "(Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$51.clang_remap_getFilenames$FUNC, false
         );
@@ -10586,7 +10586,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_remap_dispose$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_remap_dispose",
+            "clang_remap_dispose",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$51.clang_remap_dispose$FUNC, false
         );
@@ -12566,7 +12566,7 @@ public class Index_h extends Index_h_1 {
             ).withName("CXCursorAndRangeVisitor")
         );
         static final MethodHandle clang_findReferencesInFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_findReferencesInFile",
+            "clang_findReferencesInFile",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$52.clang_findReferencesInFile$FUNC, false
         );
@@ -12579,7 +12579,7 @@ public class Index_h extends Index_h_1 {
             ).withName("CXCursorAndRangeVisitor")
         );
         static final MethodHandle clang_findIncludesInFile$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_findIncludesInFile",
+            "clang_findIncludesInFile",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)I",
             constants$52.clang_findIncludesInFile$FUNC, false
         );
@@ -12609,7 +12609,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_findReferencesInFileWithBlock$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_findReferencesInFileWithBlock",
+            "clang_findReferencesInFileWithBlock",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$52.clang_findReferencesInFileWithBlock$FUNC, false
         );
@@ -12619,7 +12619,7 @@ public class Index_h extends Index_h_1 {
             C_POINTER
         );
         static final MethodHandle clang_findIncludesInFileWithBlock$MH = RuntimeHelper.downcallHandle(
-            LIBRARIES, "clang_findIncludesInFileWithBlock",
+            "clang_findIncludesInFileWithBlock",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$52.clang_findIncludesInFileWithBlock$FUNC, false
         );

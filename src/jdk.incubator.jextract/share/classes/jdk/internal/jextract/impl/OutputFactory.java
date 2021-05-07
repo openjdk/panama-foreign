@@ -33,6 +33,7 @@ import jdk.internal.jextract.impl.JavaSourceBuilder.VarInfo;
 import jdk.internal.jextract.impl.JavaSourceBuilder.FunctionInfo;
 
 import javax.tools.JavaFileObject;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.constant.ClassDesc;
@@ -73,6 +74,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private final Set<Declaration.Typedef> unresolvedStructTypedefs = new HashSet<>();
     private final Map<Type, String> functionTypeDefNames = new HashMap<>();
     private final IncludeHelper includeHelper;
+    private final String[] libraryNames;
 
     private void addStructDefinition(Declaration decl, String name) {
         structClassNames.put(decl, name);
@@ -111,18 +113,18 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
                 String pkgName, IncludeHelper includeHelper, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(pkgName, clsName, libraryNames.toArray(new String[0]));
-        return new OutputFactory(pkgName, toplevelBuilder, includeHelper).generate(decl);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(pkgName, clsName);
+        return new OutputFactory(pkgName, toplevelBuilder, includeHelper, libraryNames.toArray(new String[0])).generate(decl);
     }
 
-    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, IncludeHelper includeHelper) {
+    private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, IncludeHelper includeHelper,
+            String[] libraryNames) {
         this.pkgName = pkgName;
         this.toplevelBuilder = toplevelBuilder;
         this.currentBuilder = toplevelBuilder;
         this.includeHelper = includeHelper;
+        this.libraryNames = libraryNames;
     }
-
-    static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
 
     JavaFileObject[] generate(Declaration.Scoped decl) {
         //generate all decls
@@ -148,7 +150,28 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         URL runtimeHelper = OutputFactory.class.getResource("resources/RuntimeHelper.java.template");
         return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                         String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
-                                .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
+                                .replace("${LOADLIBRARIES}", generateLoadLibraries());
+    }
+
+    private String generateLoadLibraries() {
+        StringBuilder buf = new StringBuilder();
+        for (String lib : libraryNames) {
+            String quotedName = quoteLibraryName(lib);
+            if (lib.indexOf(File.separatorChar) != -1) {
+                buf.append("System.load(\"");
+                buf.append(quotedName);
+                buf.append("\");\n");
+            } else {
+                buf.append("System.loadLibrary(\"");
+                buf.append(quotedName);
+                buf.append("\");\n");
+            }
+        }
+        return buf.toString();
+    }
+
+    private String quoteLibraryName(String lib) {
+        return lib.replace("\\", "\\\\"); // double up slashes
     }
 
     private void generateDecl(Declaration tree) {

@@ -46,12 +46,10 @@ class ToplevelBuilder extends JavaSourceBuilder {
     private SplitHeader lastHeader;
     private int headersCount;
     private final ClassDesc headerDesc;
-    private final String[] libraryNames;
 
     static final int DECLS_PER_HEADER_CLASS = Integer.getInteger("jextract.decls.per.header", 1000);
 
-    ToplevelBuilder(String packageName, String headerClassName, String[] libraryNames) {
-        this.libraryNames = libraryNames;
+    ToplevelBuilder(String packageName, String headerClassName) {
         this.headerDesc = ClassDesc.of(packageName, headerClassName);
         SplitHeader first = lastHeader = new FirstHeader(headerClassName);
         first.classBegin();
@@ -173,7 +171,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
         @Override
         void classBegin() {
             super.classBegin();
-            emitLibraries(libraryNames);
             emitConstructor();
         }
 
@@ -192,28 +189,6 @@ class ToplevelBuilder extends JavaSourceBuilder {
             HeaderFileBuilder last = lastHeader;
             return super.build().replace("extends #{SUPER}",
                     last != this ? "extends " + last.className() : "");
-        }
-
-        private void emitLibraries(String[] libraryNames) {
-            incrAlign();
-            indent();
-            append("static final ");
-            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
-            incrAlign();
-            for (String lib : libraryNames) {
-                indent();
-                append('\"');
-                append(quoteLibraryName(lib));
-                append("\",\n");
-            }
-            decrAlign();
-            indent();
-            append("});\n\n");
-            decrAlign();
-        }
-
-        private String quoteLibraryName(String lib) {
-            return lib.replace("\\", "\\\\"); // double up slashes
         }
     }
 
