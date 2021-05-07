@@ -108,6 +108,15 @@ public class ConstantBuilder extends ClassSourceBuilder {
         }
     }
 
+    void emitStaticInitializer() {
+        incrAlign();
+        indent();
+        append("static { ");
+        append(toplevel().headerClassName());
+        append(".init(); }\n");
+        decrAlign();
+    }
+
     static class Constant {
 
         enum Kind {
@@ -195,7 +204,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         if (!virtual) {
-            append(toplevel().headerClassName() + ".LIBRARIES, \"" + nativeName + "\"");
+            append("\"" + nativeName + "\"");
             append(",\n");
             indent();
         }
@@ -391,8 +400,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append("MemorySegment ");
         append(fieldName);
         append(" = ");
-        append("RuntimeHelper.lookupGlobalVariable(");
-        append(toplevel().headerClassName() + ".LIBRARIES, \"");
+        append("RuntimeHelper.lookupGlobalVariable(\"");
         append(nativeName);
         append("\", ");
         append(layoutConstant.accessExpression());

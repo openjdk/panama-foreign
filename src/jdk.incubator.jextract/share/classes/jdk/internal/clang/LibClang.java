@@ -27,7 +27,6 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -49,12 +48,14 @@ public class LibClang {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                CLinker linker = CLinker.getInstance();
-                String putenv = IS_WINDOWS ? "_putenv" : "putenv";
-                MethodHandle PUT_ENV = linker.downcallHandle(LibraryLookup.ofDefault().lookup(putenv).get(),
+                Index_h.init();
+                if (!IS_WINDOWS) {
+                    CLinker linker = CLinker.getInstance();
+                    MethodHandle PUT_ENV = linker.downcallHandle(CLinker.findNative("putenv").get(),
                                 MethodType.methodType(int.class, MemoryAddress.class),
                                 FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
-                int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
+                    int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
+                }
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);
             }

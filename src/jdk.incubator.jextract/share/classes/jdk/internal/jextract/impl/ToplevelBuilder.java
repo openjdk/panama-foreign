@@ -173,7 +173,10 @@ class ToplevelBuilder extends JavaSourceBuilder {
         @Override
         void classBegin() {
             super.classBegin();
-            emitLibraries(libraryNames);
+            if (libraryNames.length != 0) {
+                emitStaticInitializer(libraryNames);
+            }
+            emitInit();
             emitConstructor();
         }
 
@@ -194,11 +197,13 @@ class ToplevelBuilder extends JavaSourceBuilder {
                     last != this ? "extends " + last.className() : "");
         }
 
-        private void emitLibraries(String[] libraryNames) {
+        private void emitStaticInitializer(String[] libraryNames) {
             incrAlign();
             indent();
-            append("static final ");
-            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+            append("static {\n");
+            incrAlign();
+            indent();
+            append("RuntimeHelper.loadLibraries(new String[] {\n");
             incrAlign();
             for (String lib : libraryNames) {
                 indent();
@@ -208,7 +213,17 @@ class ToplevelBuilder extends JavaSourceBuilder {
             }
             decrAlign();
             indent();
-            append("});\n\n");
+            append("});\n");
+            decrAlign();
+            indent();
+            append("}\n\n");
+            decrAlign();
+        }
+
+        private void emitInit() {
+            incrAlign();
+            indent();
+            append("public static void init() {}\n\n");
             decrAlign();
         }
 
@@ -240,6 +255,9 @@ class ToplevelBuilder extends JavaSourceBuilder {
             };
             constantBuilders.add(constantBuilder);
             constantBuilder.classBegin();
+            if (constant_class_index == 1) {
+                constantBuilder.emitStaticInitializer();
+            }
         }
         constantConsumer.accept(constantBuilder);
         constant_counter++;
