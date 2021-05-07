@@ -36,6 +36,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import org.testng.annotations.*;
 
@@ -57,9 +58,10 @@ public class TestVirtualCalls {
             FunctionDescriptor.of(C_INT));
 
         System.loadLibrary("Virtual");
-        funcA = CLinker.findNative("funcA").get();
-        funcB = CLinker.findNative("funcB").get();
-        funcC = CLinker.findNative("funcC").get();
+        SymbolLookup lookup = SymbolLookup.loaderLookup(TestVirtualCalls.class.getClassLoader());
+        funcA = lookup.lookup("funcA").get();
+        funcB = lookup.lookup("funcB").get();
+        funcC = lookup.lookup("funcC").get();
     }
 
     @Test

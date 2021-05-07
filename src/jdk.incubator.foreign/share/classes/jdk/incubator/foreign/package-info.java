@@ -96,8 +96,9 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
  * operation either succeeds - and accesses a valid memory location - or fails.
  *
  * <h2>Foreign function access</h2>
- * The key abstractions introduced to support foreign function access is {@link jdk.incubator.foreign.CLinker}.
- * CLinker provides linking capabilities which allow to model foreign functions as {@link java.lang.invoke.MethodHandle} instances,
+ * The key abstractions introduced to support foreign function access are {@link jdk.incubator.foreign.SymbolLookup} and {@link jdk.incubator.foreign.CLinker}.
+ * The former is used to load foreign libraries, as well as to lookup symbols inside said libraries; the latter
+ * provides linking capabilities which allow to model foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as it's the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).
  * <p>
@@ -106,7 +107,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
  *
  * <pre>{@code
       MethodHandle strlen = CLinker.getInstance().downcallHandle(
-        CLinker.findNative("strlen").get(),
+        CLinker.systemLookup().lookup("strlen").get(),
         MethodType.methodType(long.class, MemoryAddress.class),
         FunctionDescriptor.of(CLinker.C_LONG, CLinker.C_POINTER)
       );
@@ -117,9 +118,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
       }
  * }</pre>
  *
- * Here, we lookup the {@code strlen} symbol; this assumes that a library containing the {@code strlen} symbol has been loaded
- * earlier, e.g. using {@link System#loadLibrary(String)}.
- *
+ * Here, we lookup the {@code strlen} symbol in the {@linkplain jdk.incubator.foreign.CLinker#systemLookup() system lookup}.
  * Then, we obtain a linker instance (see {@link jdk.incubator.foreign.CLinker#getInstance()}) and we use it to
  * obtain a method handle which targets the {@code strlen} library symbol. To complete the linking successfully,
  * we must provide (i) a {@link java.lang.invoke.MethodType} instance, describing the type of the resulting method handle

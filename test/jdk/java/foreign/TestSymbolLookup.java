@@ -25,13 +25,11 @@
  * @test
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @run testng/othervm --enable-native-access=ALL-UNNAMED TestLibraryLookup
+ * @run testng/othervm --enable-native-access=ALL-UNNAMED TestSymbolLookup
  */
 
-import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -44,24 +42,26 @@ import static org.testng.Assert.*;
 // is some fallback behaviour to use the 64-bit linker,
 // where cygwin gets in the way and we accidentally pick up its
 // link.exe
-public class TestLibraryLookup {
+public class TestSymbolLookup {
     static {
         System.loadLibrary("LookupTest");
     }
 
+    static SymbolLookup lookup = SymbolLookup.loaderLookup(TestSymbolLookup.class.getClassLoader());
+
     @Test
     public void testSimpleLookup() {
-        assertFalse(CLinker.findNative("f").isEmpty());
+        assertFalse(lookup.lookup("f").isEmpty());
     }
 
     @Test
     public void testInvalidSymbolLookup() {
-        assertTrue(CLinker.findNative("nonExistent").isEmpty());
+        assertTrue(lookup.lookup("nonExistent").isEmpty());
     }
 
     @Test
-    public void testVariableSymbolLookup() throws Throwable {
-        MemorySegment segment = CLinker.findNative("c").get().asSegment(MemoryLayouts.JAVA_INT.byteSize(), ResourceScope.globalScope());
+    public void testVariableSymbolLookup() {
+        MemorySegment segment = lookup.lookup("c").get().asSegment(MemoryLayouts.JAVA_INT.byteSize(), ResourceScope.globalScope());
         assertEquals(MemoryAccess.getInt(segment), 42);
     }
 }

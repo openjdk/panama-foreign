@@ -23,19 +23,38 @@
  * questions.
  */
 
-#include <jni.h>
-#include <stdlib.h>
-#include <string.h>
+package jdk.internal.foreign;
 
-#ifdef _WIN64
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
+import jdk.incubator.foreign.SymbolLookup;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
 
-JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_StrLenTest_strlen(JNIEnv *const env, const jclass cls, const jstring text) {
-    const char *str = (*env)->GetStringUTFChars(env, text, NULL);
-    int len = (int)strlen(str);
-    (*env)->ReleaseStringUTFChars(env, text, str);
-    return len;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+
+public class SystemLookup implements SymbolLookup {
+
+    private SystemLookup() { }
+
+    final static SystemLookup INSTANCE = new SystemLookup();
+
+    final NativeLibrary clib = switch (CABI.current()) {
+        case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("cstdlib");
+        case Win64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
+                .loadLibrary(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toString());
+    };
+
+    @Override
+    public Optional<MemoryAddress> lookup(String name) {
+        Objects.requireNonNull(name);
+        long addr = clib.find(name);
+        return addr == 0 ?
+                Optional.empty() : Optional.of(MemoryAddress.ofLong(addr));
+    }
+
+    public static SystemLookup getInstance() {
+        return INSTANCE;
+    }
 }

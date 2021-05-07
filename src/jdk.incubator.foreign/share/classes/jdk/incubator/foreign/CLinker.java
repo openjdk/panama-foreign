@@ -29,6 +29,7 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
+import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
@@ -129,29 +130,20 @@ public interface CLinker {
         return SharedUtils.getSystemLinker();
     }
 
-
     /**
-     * Finds the address of a symbol with given name in one of the native libraries associated with the caller's
-     * classloader (that is, libraries loaded using {@link System#loadLibrary} or {@link System#load}).
-     *
+     * Obtains a system lookup which is suitable to find symbols in the standard C libraries. The set of symbols
+     * available for lookup is unspecified, as it depends on the platform and on the operating system.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param name the name of the symbol to be searched.
-     * @return the address of a symbol with given name in one of the native libraries associated with the caller's
-     *         classloader (if any).
+     * @return a system-specific library lookup which is suitable to find symbols in the standard C libraries.
      */
     @CallerSensitive
-    public static Optional<MemoryAddress> findNative(String name) {
-         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-         ClassLoader loader = Reflection.getCallerClass().getClassLoader();
-         Objects.requireNonNull(name);
-         JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
-         MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
-         return addr == MemoryAddress.NULL? Optional.empty() : Optional.of(addr);
+    static SymbolLookup systemLookup() {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        return SystemLookup.getInstance();
     }
 
     /**
@@ -167,7 +159,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @see CLinker#findNative(String)
+     * @see SymbolLookup
      *
      * @param symbol   downcall symbol.
      * @param type     the method type.
@@ -189,7 +181,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @see CLinker#findNative(String)
+     * @see SymbolLookup
      *
      * @param symbol    downcall symbol.
      * @param allocator the segment allocator.
@@ -215,7 +207,7 @@ public interface CLinker {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      **
-     * @see CLinker#findNative(String)
+     * @see SymbolLookup
      *
      * @param type     the method type.
      * @param function the function descriptor.
