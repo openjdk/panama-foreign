@@ -23,18 +23,38 @@
  * questions.
  */
 
-#include <stdlib.h>
+package jdk.internal.foreign;
 
-#include "jni.h"
+import jdk.incubator.foreign.SymbolLookup;
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.internal.loader.NativeLibraries;
+import jdk.internal.loader.NativeLibrary;
 
-JNIEXPORT void JNICALL
-Java_jdk_internal_foreign_abi_VMFunctions_initVMFunctions(JNIEnv *env,
-                                        jclass cls,
-                                        jlong address)
-{
-   size_t* addresses = (size_t*)(void*)address;
-   // The order in which the function pointers are stored has to match the order of constants
-   // in the VMFunctions.FunctionName enum.
-   addresses[0] = (size_t)&malloc;
-   addresses[1] = (size_t)&free;
+import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
+
+public class SystemLookup implements SymbolLookup {
+
+    private SystemLookup() { }
+
+    final static SystemLookup INSTANCE = new SystemLookup();
+
+    final NativeLibrary syslookup = switch (CABI.current()) {
+        case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("syslookup");
+        case Win64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
+                .loadLibrary(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toString());
+    };
+
+    @Override
+    public Optional<MemoryAddress> lookup(String name) {
+        Objects.requireNonNull(name);
+        long addr = syslookup.find(name);
+        return addr == 0 ?
+                Optional.empty() : Optional.of(MemoryAddress.ofLong(addr));
+    }
+
+    public static SystemLookup getInstance() {
+        return INSTANCE;
+    }
 }

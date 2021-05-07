@@ -25,6 +25,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -91,8 +92,9 @@ public class CallOverheadHelper {
         System.loadLibrary("CallOverheadJNI");
 
         System.loadLibrary("CallOverhead");
+        SymbolLookup lookup = SymbolLookup.loaderLookup(CallOverheadHelper.class.getClassLoader());
         {
-            func_addr = CLinker.findNative("func").orElseThrow();
+            func_addr = lookup.lookup("func").orElseThrow();
             MethodType mt = MethodType.methodType(void.class);
             FunctionDescriptor fd = FunctionDescriptor.ofVoid();
             func_v = abi.downcallHandle(mt, fd);
@@ -101,7 +103,7 @@ public class CallOverheadHelper {
             func_trivial = insertArguments(func_trivial_v, 0, func_addr);
         }
         {
-            identity_addr = CLinker.findNative("identity").orElseThrow();
+            identity_addr = lookup.lookup("identity").orElseThrow();
             MethodType mt = MethodType.methodType(int.class, int.class);
             FunctionDescriptor fd = FunctionDescriptor.of(C_INT, C_INT);
             identity_v = abi.downcallHandle(mt, fd);
@@ -109,49 +111,49 @@ public class CallOverheadHelper {
             identity_trivial_v = abi.downcallHandle(mt, fd.withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
             identity_trivial = insertArguments(identity_trivial_v, 0, identity_addr);
         }
-        identity_struct_addr = CLinker.findNative("identity_struct").orElseThrow();
+        identity_struct_addr = lookup.lookup("identity_struct").orElseThrow();
         identity_struct_v = abi.downcallHandle(
                 MethodType.methodType(MemorySegment.class, MemorySegment.class),
                 FunctionDescriptor.of(POINT_LAYOUT, POINT_LAYOUT));
         identity_struct = insertArguments(identity_struct_v, 0, identity_struct_addr);
 
-        identity_memory_address_addr = CLinker.findNative("identity_memory_address").orElseThrow();
+        identity_memory_address_addr = lookup.lookup("identity_memory_address").orElseThrow();
         identity_memory_address_v = abi.downcallHandle(
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
         identity_memory_address = insertArguments(identity_memory_address_v, 0, identity_memory_address_addr);
 
-        args1_addr = CLinker.findNative("args1").orElseThrow();
+        args1_addr = lookup.lookup("args1").orElseThrow();
         args1_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG));
         args1 = insertArguments(args1_v, 0, args1_addr);
 
-        args2_addr = CLinker.findNative("args2").orElseThrow();
+        args2_addr = lookup.lookup("args2").orElseThrow();
         args2_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE));
         args2 = insertArguments(args2_v, 0, args2_addr);
 
-        args3_addr = CLinker.findNative("args3").orElseThrow();
+        args3_addr = lookup.lookup("args3").orElseThrow();
         args3_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
         args3 = insertArguments(args3_v, 0, args3_addr);
 
-        args4_addr = CLinker.findNative("args4").orElseThrow();
+        args4_addr = lookup.lookup("args4").orElseThrow();
         args4_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE));
         args4 = insertArguments(args4_v, 0, args4_addr);
 
-        args5_addr = CLinker.findNative("args5").orElseThrow();
+        args5_addr = lookup.lookup("args5").orElseThrow();
         args5_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_LONG_LONG, C_DOUBLE, C_LONG_LONG, C_DOUBLE, C_LONG_LONG));
         args5 = insertArguments(args5_v, 0, args5_addr);
 
-        args10_addr = CLinker.findNative("args10").orElseThrow();
+        args10_addr = lookup.lookup("args10").orElseThrow();
         args10_v = abi.downcallHandle(
                 MethodType.methodType(void.class, long.class, double.class, long.class, double.class, long.class,
                                                   double.class, long.class, double.class, long.class, double.class),

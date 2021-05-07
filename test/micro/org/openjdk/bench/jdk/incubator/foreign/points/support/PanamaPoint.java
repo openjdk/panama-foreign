@@ -23,6 +23,7 @@
 package org.openjdk.bench.jdk.incubator.foreign.points.support;
 
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -51,13 +52,14 @@ public class PanamaPoint implements AutoCloseable {
     static {
         CLinker abi = CLinker.getInstance();
         System.loadLibrary("Point");
+        SymbolLookup lookup = SymbolLookup.loaderLookup(PanamaPoint.class.getClassLoader());
         MH_distance = abi.downcallHandle(
-            CLinker.findNative("distance").get(),
+            lookup.lookup("distance").get(),
             methodType(double.class, MemorySegment.class, MemorySegment.class),
             FunctionDescriptor.of(C_DOUBLE, LAYOUT, LAYOUT)
         );
         MH_distance_ptrs = abi.downcallHandle(
-                CLinker.findNative("distance_ptrs").get(),
+                lookup.lookup("distance_ptrs").get(),
             methodType(double.class, MemoryAddress.class, MemoryAddress.class),
             FunctionDescriptor.of(C_DOUBLE, C_POINTER, C_POINTER)
         );
