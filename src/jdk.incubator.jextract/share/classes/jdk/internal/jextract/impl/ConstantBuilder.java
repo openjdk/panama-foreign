@@ -108,15 +108,6 @@ public class ConstantBuilder extends ClassSourceBuilder {
         }
     }
 
-    void emitStaticInitializer() {
-        incrAlign();
-        indent();
-        append("static { ");
-        append(toplevel().headerClassName());
-        append(".init(); }\n");
-        decrAlign();
-    }
-
     static class Constant {
 
         enum Kind {

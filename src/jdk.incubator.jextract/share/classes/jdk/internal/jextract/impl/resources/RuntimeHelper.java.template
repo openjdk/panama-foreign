@@ -26,6 +26,10 @@ final class RuntimeHelper {
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
 
+    static {
+        ${LOADLIBRARIES}
+    }
+
     static <T> T requireNonNull(T obj, String symbolName) {
         if (obj == null) {
             throw new UnsatisfiedLinkError("unresolved symbol: " + symbolName);
