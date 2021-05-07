@@ -170,7 +170,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_INT
         );
         static final MethodHandle clang_index_isEntityObjCContainerKind$MH = RuntimeHelper.downcallHandle(
-            "clang_index_isEntityObjCContainerKind",
+            LIBRARIES, "clang_index_isEntityObjCContainerKind",
             "(I)I",
             constants$0.clang_index_isEntityObjCContainerKind$FUNC, false
         );
@@ -178,7 +178,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getObjCContainerDeclInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getObjCContainerDeclInfo",
+            LIBRARIES, "clang_index_getObjCContainerDeclInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_index_getObjCContainerDeclInfo$FUNC, false
         );
@@ -186,7 +186,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getObjCInterfaceDeclInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getObjCInterfaceDeclInfo",
+            LIBRARIES, "clang_index_getObjCInterfaceDeclInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_index_getObjCInterfaceDeclInfo$FUNC, false
         );
@@ -194,7 +194,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getObjCCategoryDeclInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getObjCCategoryDeclInfo",
+            LIBRARIES, "clang_index_getObjCCategoryDeclInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_index_getObjCCategoryDeclInfo$FUNC, false
         );
@@ -202,7 +202,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getObjCProtocolRefListInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getObjCProtocolRefListInfo",
+            LIBRARIES, "clang_index_getObjCProtocolRefListInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_index_getObjCProtocolRefListInfo$FUNC, false
         );
@@ -210,7 +210,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getObjCPropertyDeclInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getObjCPropertyDeclInfo",
+            LIBRARIES, "clang_index_getObjCPropertyDeclInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$0.clang_index_getObjCPropertyDeclInfo$FUNC, false
         );
@@ -288,7 +288,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getIBOutletCollectionAttrInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getIBOutletCollectionAttrInfo",
+            LIBRARIES, "clang_index_getIBOutletCollectionAttrInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$1.clang_index_getIBOutletCollectionAttrInfo$FUNC, false
         );
@@ -296,7 +296,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getCXXClassDeclInfo$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getCXXClassDeclInfo",
+            LIBRARIES, "clang_index_getCXXClassDeclInfo",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$1.clang_index_getCXXClassDeclInfo$FUNC, false
         );
@@ -304,7 +304,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getClientContainer$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getClientContainer",
+            LIBRARIES, "clang_index_getClientContainer",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$1.clang_index_getClientContainer$FUNC, false
         );
@@ -313,7 +313,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_setClientContainer$MH = RuntimeHelper.downcallHandle(
-            "clang_index_setClientContainer",
+            LIBRARIES, "clang_index_setClientContainer",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$1.clang_index_setClientContainer$FUNC, false
         );
@@ -321,7 +321,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_getClientEntity$MH = RuntimeHelper.downcallHandle(
-            "clang_index_getClientEntity",
+            LIBRARIES, "clang_index_getClientEntity",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$1.clang_index_getClientEntity$FUNC, false
         );
@@ -330,7 +330,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_index_setClientEntity$MH = RuntimeHelper.downcallHandle(
-            "clang_index_setClientEntity",
+            LIBRARIES, "clang_index_setClientEntity",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$1.clang_index_setClientEntity$FUNC, false
         );
@@ -426,7 +426,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_IndexAction_create$MH = RuntimeHelper.downcallHandle(
-            "clang_IndexAction_create",
+            LIBRARIES, "clang_IndexAction_create",
             "(Ljdk/incubator/foreign/MemoryAddress;)Ljdk/incubator/foreign/MemoryAddress;",
             constants$2.clang_IndexAction_create$FUNC, false
         );
@@ -434,7 +434,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_IndexAction_dispose$MH = RuntimeHelper.downcallHandle(
-            "clang_IndexAction_dispose",
+            LIBRARIES, "clang_IndexAction_dispose",
             "(Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$2.clang_IndexAction_dispose$FUNC, false
         );
@@ -453,7 +453,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_INT
         );
         static final MethodHandle clang_indexSourceFile$MH = RuntimeHelper.downcallHandle(
-            "clang_indexSourceFile",
+            LIBRARIES, "clang_indexSourceFile",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
             constants$2.clang_indexSourceFile$FUNC, false
         );
@@ -472,7 +472,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_INT
         );
         static final MethodHandle clang_indexSourceFileFullArgv$MH = RuntimeHelper.downcallHandle(
-            "clang_indexSourceFileFullArgv",
+            LIBRARIES, "clang_indexSourceFileFullArgv",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;ILjdk/incubator/foreign/MemoryAddress;I)I",
             constants$2.clang_indexSourceFileFullArgv$FUNC, false
         );
@@ -485,7 +485,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_indexTranslationUnit$MH = RuntimeHelper.downcallHandle(
-            "clang_indexTranslationUnit",
+            LIBRARIES, "clang_indexTranslationUnit",
             "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;IILjdk/incubator/foreign/MemoryAddress;)I",
             constants$2.clang_indexTranslationUnit$FUNC, false
         );
@@ -502,7 +502,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_indexLoc_getFileLocation$MH = RuntimeHelper.downcallHandle(
-            "clang_indexLoc_getFileLocation",
+            LIBRARIES, "clang_indexLoc_getFileLocation",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)V",
             constants$2.clang_indexLoc_getFileLocation$FUNC, false
         );
@@ -548,11 +548,9 @@ import static jdk.incubator.foreign.CLinker.*;
         return "clang";
     }
 
-    static {
-        RuntimeHelper.loadLibraries(new String[] { libName() });
-    }
-
-    public static void init() {}
+    static final LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {
+        libName()
+    });
 
     public static class constants$3 {
 
@@ -568,7 +566,7 @@ import static jdk.incubator.foreign.CLinker.*;
             )
         );
         static final MethodHandle clang_indexLoc_getCXSourceLocation$MH = RuntimeHelper.downcallHandle(
-            "clang_indexLoc_getCXSourceLocation",
+            LIBRARIES, "clang_indexLoc_getCXSourceLocation",
             "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
             constants$3.clang_indexLoc_getCXSourceLocation$FUNC, false
         );
@@ -582,7 +580,7 @@ import static jdk.incubator.foreign.CLinker.*;
             C_POINTER
         );
         static final MethodHandle clang_Type_visitFields$MH = RuntimeHelper.downcallHandle(
-            "clang_Type_visitFields",
+            LIBRARIES, "clang_Type_visitFields",
             "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemoryAddress;)I",
             constants$3.clang_Type_visitFields$FUNC, false
         );

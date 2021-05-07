@@ -189,7 +189,9 @@ abstract class ClassSourceBuilder extends JavaSourceBuilder {
             append("import java.lang.invoke.VarHandle;\n");
             append("import java.nio.ByteOrder;\n");
             append("import jdk.incubator.foreign.*;\n");
-            append("import static jdk.incubator.foreign.CLinker.*;\n");
+            append("import static ");
+            append(OutputFactory.C_LANG_CONSTANTS_HOLDER);
+            append(".*;\n");
         }
     }
 

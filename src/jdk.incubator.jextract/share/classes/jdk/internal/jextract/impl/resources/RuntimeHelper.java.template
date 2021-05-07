@@ -3,6 +3,7 @@
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -26,10 +27,6 @@ final class RuntimeHelper {
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
 
-    static {
-        ${LOADLIBRARIES}
-    }
-
     static <T> T requireNonNull(T obj, String symbolName) {
         if (obj == null) {
             throw new UnsatisfiedLinkError("unresolved symbol: " + symbolName);
@@ -39,12 +36,28 @@ final class RuntimeHelper {
 
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
-    static final MemorySegment lookupGlobalVariable(String name, MemoryLayout layout) {
-        return lookup(name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
+    static final LibraryLookup[] libraries(String... libNames) {
+        if (libNames.length == 0) {
+            return new LibraryLookup[] { LibraryLookup.ofDefault() };
+        } else {
+            return Arrays.stream(libNames)
+                 .map(libName -> {
+                      if (libName.indexOf(File.separatorChar) != -1) {
+                          return LibraryLookup.ofPath(Path.of(libName));
+                      } else {
+                          return LibraryLookup.ofLibrary(libName);
+                      }
+                 })
+                .toArray(LibraryLookup[]::new);
+        }
     }
 
-    static final MethodHandle downcallHandle(String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
-        return lookup(name).map(
+    static final MemorySegment lookupGlobalVariable(LibraryLookup[] LIBRARIES, String name, MemoryLayout layout) {
+        return lookup(LIBRARIES, name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
+    }
+
+    static final MethodHandle downcallHandle(LibraryLookup[] LIBRARIES, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
+        return lookup(LIBRARIES, name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
                     return variadic ?
@@ -81,8 +94,10 @@ final class RuntimeHelper {
     }
 
     // Internals only below this point
-    private static final Optional<MemoryAddress> lookup(String sym) {
-        return CLinker.findNative(sym);
+    private static final Optional<MemoryAddress> lookup(LibraryLookup[] LIBRARIES, String sym) {
+        return Stream.of(LIBRARIES)
+                .flatMap(l -> l.lookup(sym).stream())
+                .findFirst();
     }
 
     private static class VarargsInvoker {
