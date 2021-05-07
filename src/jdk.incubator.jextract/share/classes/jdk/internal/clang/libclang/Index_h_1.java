@@ -548,9 +548,11 @@ import static jdk.incubator.foreign.CLinker.*;
         return "clang";
     }
 
-    static final LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {
-        libName()
-    });
+    static {
+        System.loadLibrary(libName());
+    }
+
+    static final SymbolLookup LIBRARIES = SymbolLookup.loaderLookup(Index_h_1.class.getClassLoader());
 
     public static class constants$3 {
 

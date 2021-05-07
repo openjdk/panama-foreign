@@ -27,7 +27,6 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -51,7 +50,7 @@ public class LibClang {
             try {
                 CLinker linker = CLinker.getInstance();
                 String putenv = IS_WINDOWS ? "_putenv" : "putenv";
-                MethodHandle PUT_ENV = linker.downcallHandle(LibraryLookup.ofDefault().lookup(putenv).get(),
+                MethodHandle PUT_ENV = linker.downcallHandle(CLinker.systemLookup().lookup(putenv).get(),
                                 MethodType.methodType(int.class, MemoryAddress.class),
                                 FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
                 int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());

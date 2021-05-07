@@ -29,6 +29,7 @@ import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
 import javax.tools.JavaFileObject;
+import java.io.File;
 import java.lang.constant.ClassDesc;
 import java.util.*;
 import java.util.function.Consumer;
@@ -197,18 +198,24 @@ class ToplevelBuilder extends JavaSourceBuilder {
         private void emitLibraries(String[] libraryNames) {
             incrAlign();
             indent();
-            append("static final ");
-            append("LibraryLookup[] LIBRARIES = RuntimeHelper.libraries(new String[] {\n");
+            append("static {\n");
             incrAlign();
             for (String lib : libraryNames) {
+                String quotedLibName = quoteLibraryName(lib);
                 indent();
-                append('\"');
-                append(quoteLibraryName(lib));
-                append("\",\n");
+                if (quotedLibName.indexOf(File.separatorChar) != -1) {
+                    append("System.load(\"" + quotedLibName + "\");");
+                } else {
+                    append("System.loadLibrary(\"" + quotedLibName + "\");");
+                }
+                append("\n");
             }
             decrAlign();
             indent();
-            append("});\n\n");
+            append("}\n\n");
+            indent();
+            append("static final ");
+            append("SymbolLookup LIBRARIES = SymbolLookup.loaderLookup(" + className() + ".class.getClassLoader());");
             decrAlign();
         }
 
