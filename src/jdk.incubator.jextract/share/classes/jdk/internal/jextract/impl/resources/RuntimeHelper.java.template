@@ -39,13 +39,11 @@ final class RuntimeHelper {
 
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
-    static final void loadLibraries(String... libNames) {
-        for (String libName : libNames) {
-            if (libName.indexOf(File.separatorChar) != -1) {
-                System.load(libName);
-            } else {
-                System.loadLibrary(libName);
-            }
+    static final void loadLibrary(String libName) {
+        if (libName.indexOf(File.separatorChar) != -1) {
+            System.load(libName);
+        } else {
+            System.loadLibrary(libName);
         }
     }
 

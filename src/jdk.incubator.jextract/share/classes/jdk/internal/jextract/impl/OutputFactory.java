@@ -154,13 +154,11 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
     private String generateLoadLibraries() {
         StringBuilder buf = new StringBuilder();
-        buf.append("RuntimeHelper.loadLibraries(new String[] {");
         for (String lib : libraryNames) {
-            buf.append('\"');
+            buf.append("RuntimeHelper.loadLibrary(\"");
             buf.append(quoteLibraryName(lib));
-            buf.append("\",");
+            buf.append("\");\n");
         }
-        buf.append("});");
         return buf.toString();
     }
 
