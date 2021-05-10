@@ -3378,6 +3378,112 @@ RuntimeStub* SharedRuntime::make_native_invoker(address call_target,
   return stub;
 }
 
+struct ArgMove {
+  BasicType bt;
+  VMRegPair from;
+  VMRegPair to;
+
+  bool is_identity() const {
+      return from.first() == to.first() && from.second() == to.second();
+  }
+};
+
+static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const CallRegs& conv) {
+
+  VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
+
+  SharedRuntime::java_calling_convention(sig_bt, in_regs, num_args);
+
+  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
+
+  // Now figure out where the args must be stored and how much stack space they require.
+  conv.calling_convention(sig_bt, out_regs, num_args);
+
+  GrowableArray<int> arg_order(2 * num_args);
+
+  VMRegPair tmp_vmreg;
+  tmp_vmreg.set2(rbx->as_VMReg());
+
+  // Compute a valid move order, using tmp_vmreg to break any cycles
+  SharedRuntime::compute_move_order(sig_bt,
+                                    num_args, in_regs,
+                                    num_args, out_regs,
+                                    arg_order,
+                                    tmp_vmreg);
+
+  GrowableArray<ArgMove> arg_order_vmreg(num_args); // conservative
+
+#ifdef ASSERT
+  bool reg_destroyed[RegisterImpl::number_of_registers];
+  bool freg_destroyed[XMMRegisterImpl::number_of_registers];
+  for ( int r = 0 ; r < RegisterImpl::number_of_registers ; r++ ) {
+    reg_destroyed[r] = false;
+  }
+  for ( int f = 0 ; f < XMMRegisterImpl::number_of_registers ; f++ ) {
+    freg_destroyed[f] = false;
+  }
+#endif // ASSERT
+
+  for (int i = 0; i < arg_order.length(); i += 2) {
+    int in_arg  = arg_order.at(i);
+    int out_arg = arg_order.at(i + 1);
+
+    assert(in_arg != -1 || out_arg != -1, "");
+    BasicType arg_bt = (in_arg != -1 ? sig_bt[in_arg] : sig_bt[out_arg]);
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+      case T_FLOAT:
+        break; // process
+
+      case T_LONG:
+      case T_DOUBLE:
+        assert(in_arg  == -1 || (in_arg  + 1 < num_args && sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
+        assert(out_arg == -1 || (out_arg + 1 < num_args && sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
+        break; // process
+
+      case T_VOID:
+        continue; // skip
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+
+    ArgMove move;
+    move.bt   = arg_bt;
+    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
+    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
+
+    if(move.is_identity()) {
+      continue; // useless move
+    }
+
+#ifdef ASSERT
+    if (in_arg != -1) {
+      if (in_regs[in_arg].first()->is_Register()) {
+        assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
+      } else if (in_regs[in_arg].first()->is_XMMRegister()) {
+        assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
+      }
+    }
+    if (out_arg != -1) {
+      if (out_regs[out_arg].first()->is_Register()) {
+        reg_destroyed[out_regs[out_arg].first()->as_Register()->encoding()] = true;
+      } else if (out_regs[out_arg].first()->is_XMMRegister()) {
+        freg_destroyed[out_regs[out_arg].first()->as_XMMRegister()->encoding()] = true;
+      }
+    }
+#endif /* ASSERT */
+
+    arg_order_vmreg.push(move);
+  }
+
+  return arg_order_vmreg;
+}
+
 void NativeInvokerGenerator::generate() {
   assert(!(target_uses_register(r15_thread->as_VMReg()) || target_uses_register(rscratch1->as_VMReg())), "Register conflict");
 

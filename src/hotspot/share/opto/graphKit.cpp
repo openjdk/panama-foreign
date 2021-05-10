@@ -2637,7 +2637,9 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
     TypeTuple::make(TypeFunc::Parms + n_returns, ret_types)
   );
 
-  if (nep->need_transition()) {
+  Node* call = nullptr;
+  bool need_transition = nep->need_transition();
+  if (need_transition) {
     RuntimeStub* invoker = SharedRuntime::make_native_invoker(call_addr,
                                                               nep->shadow_space(),
                                                               arg_regs, ret_regs);
@@ -2647,29 +2649,26 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
     }
     C->add_native_invoker(invoker);
     call_addr = invoker->code_begin();
+    call = make_runtime_call(RC_NO_LEAF, new_call_type, call_addr, nep->name(), TypePtr::BOTTOM);
+  } else {
+    CallNativeNode* trivial_call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
+                              arg_regs,
+                              ret_regs,
+                              nep->shadow_space(),
+                              need_transition);
+
+    set_predefined_input_for_runtime_call(trivial_call);
+    set_predefined_output_for_runtime_call(call);
+    call = trivial_call;
   }
-  assert(call_addr != NULL, "sanity");
-
-  CallNativeNode* call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
-                                            arg_regs,
-                                            ret_regs,
-                                            nep->shadow_space(),
-                                            nep->need_transition());
-
-  if (call->_need_transition) {
-    add_safepoint_edges(call);
-  }
-
-  set_predefined_input_for_runtime_call(call);
+  assert(call != nullptr, "sanity");
 
   for (uint i = 0; i < n_filtered_args; i++) {
-    call->init_req(i + TypeFunc::Parms, argument_nodes[i]);
+    call->set_req(i + TypeFunc::Parms, argument_nodes[i]);
   }
 
   Node* c = gvn().transform(call);
   assert(c == call, "cannot disappear");
-
-  set_predefined_output_for_runtime_call(call);
 
   Node* ret;
   if (method() == NULL || method()->return_type()->basic_type() == T_VOID) {
