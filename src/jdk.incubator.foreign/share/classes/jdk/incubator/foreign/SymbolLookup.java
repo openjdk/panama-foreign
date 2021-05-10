@@ -57,7 +57,7 @@ public interface SymbolLookup {
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @return a symbol lookup suitable to find symbols in libraries loaded by given classloader.
+     * @return a symbol lookup suitable to find symbols in libraries loaded by the caller's classloader.
      */
     @CallerSensitive
     static SymbolLookup loaderLookup() {
