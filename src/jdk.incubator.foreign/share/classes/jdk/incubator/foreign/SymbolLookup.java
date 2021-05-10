@@ -44,7 +44,7 @@ public interface SymbolLookup {
      * Looks up a symbol with given name in this lookup.
      *
      * @param name the symbol name.
-     * @return the memory address associated with the library symbol (if any).
+     * @return the memory address associated with the symbol (if any).
      */
     Optional<MemoryAddress> lookup(String name);
 
