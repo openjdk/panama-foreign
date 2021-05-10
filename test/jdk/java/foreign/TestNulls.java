@@ -145,8 +145,8 @@ public class TestNulls {
         addDefaultMapping(Charset.class, Charset.defaultCharset());
         addDefaultMapping(Consumer.class, x -> {});
         addDefaultMapping(MethodType.class, MethodType.methodType(void.class));
-        addDefaultMapping(MemoryAddress.class, MemoryAddress.NULL);
-        addDefaultMapping(Addressable.class, MemoryAddress.NULL);
+        addDefaultMapping(MemoryAddress.class, MemoryAddress.ofLong(1));
+        addDefaultMapping(Addressable.class, MemoryAddress.ofLong(1));
         addDefaultMapping(MemoryLayout.class, MemoryLayouts.JAVA_INT);
         addDefaultMapping(ValueLayout.class, MemoryLayouts.JAVA_INT);
         addDefaultMapping(GroupLayout.class, MemoryLayout.structLayout(MemoryLayouts.JAVA_INT));
