@@ -32,7 +32,6 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
@@ -421,23 +420,9 @@ public class SharedUtils {
         return symbolAddr;
     }
 
-    // lazy init MH_ALLOC and MH_FREE handles
-    private static class AllocHolder {
-
-        static final LibraryLookup LOOKUP = LibraryLookup.ofDefault();
-
-        static final MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
-                        MethodType.methodType(MemoryAddress.class, long.class),
-                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
-
-        static final MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
-                        MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(C_POINTER));
-    }
-
     public static MemoryAddress allocateMemoryInternal(long size) {
         try {
-            return (MemoryAddress) AllocHolder.MH_MALLOC.invokeExact(size);
+            return (MemoryAddress) VMFunctions.MH_MALLOC.invokeExact(size);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
@@ -445,7 +430,7 @@ public class SharedUtils {
 
     public static void freeMemoryInternal(MemoryAddress addr) {
         try {
-            AllocHolder.MH_FREE.invokeExact(addr);
+            VMFunctions.MH_FREE.invokeExact(addr);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }

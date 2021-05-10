@@ -27,9 +27,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 JNIEXPORT jint JNICALL Java_org_openjdk_bench_jdk_incubator_foreign_StrLenTest_strlen(JNIEnv *const env, const jclass cls, const jstring text) {
     const char *str = (*env)->GetStringUTFChars(env, text, NULL);
     int len = (int)strlen(str);
     (*env)->ReleaseStringUTFChars(env, text, str);
     return len;
+}
+
+EXPORT int strlen_raw(const char *str) {
+    return (int)strlen(str);
+}
+
+EXPORT void* malloc_raw(size_t size) {
+    return malloc(size);
+}
+
+EXPORT void free_raw(void* ptr) {
+    free(ptr);
 }
