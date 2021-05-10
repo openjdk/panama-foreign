@@ -52,6 +52,7 @@ import java.lang.ref.Reference;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -409,6 +410,14 @@ public class SharedUtils {
         specializedHandle = tryFinally(specializedHandle, closer);
         specializedHandle = collectArguments(specializedHandle, allocatorPos, contextFactory);
         return specializedHandle;
+    }
+
+    public static MemoryAddress checkSymbol(Addressable symbol) {
+        Objects.requireNonNull(symbol);
+        MemoryAddress symbolAddr = symbol.address();
+        if (symbolAddr.equals(MemoryAddress.NULL))
+            throw new IllegalArgumentException("Symbol is NULL: " + symbolAddr);
+        return symbolAddr;
     }
 
     public static MemoryAddress allocateMemoryInternal(long size) {

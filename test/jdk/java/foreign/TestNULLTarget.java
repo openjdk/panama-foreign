@@ -23,55 +23,39 @@
 
 /*
  * @test
- * @requires os.arch=="amd64" | os.arch=="x86_64" | os.arch=="aarch64"
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign
  * @run testng/othervm
- *   --enable-native-access=ALL-UNNAMED
- *   TestVirtualCalls
+ *     --enable-native-access=ALL-UNNAMED
+ *     TestNULLTarget
  */
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import jdk.incubator.foreign.MemoryAddress;
-import org.testng.annotations.*;
+public class TestNULLTarget {
 
-import static jdk.incubator.foreign.CLinker.*;
-import static org.testng.Assert.assertEquals;
+    static final CLinker LINKER = CLinker.getInstance();
 
-public class TestVirtualCalls {
-
-    static final CLinker abi = CLinker.getInstance();
-
-    static final MethodHandle func;
-    static final MemoryAddress funcA;
-    static final MemoryAddress funcB;
-    static final MemoryAddress funcC;
-
-    static {
-        func = abi.downcallHandle(
-            MethodType.methodType(int.class),
-            FunctionDescriptor.of(C_INT));
-
-        System.loadLibrary("Virtual");
-        funcA = CLinker.findNative("funcA").get();
-        funcB = CLinker.findNative("funcB").get();
-        funcC = CLinker.findNative("funcC").get();
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNULLLinking() {
+        LINKER.downcallHandle(
+                MemoryAddress.NULL,
+                MethodType.methodType(void.class),
+                FunctionDescriptor.ofVoid());
     }
 
-    @Test
-    public void testVirtualCalls() throws Throwable {
-        assertEquals((int) func.invokeExact((Addressable) funcA), 1);
-        assertEquals((int) func.invokeExact((Addressable) funcB), 2);
-        assertEquals((int) func.invokeExact((Addressable) funcC), 3);
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNULLVirtual() throws Throwable {
+        MethodHandle mh = LINKER.downcallHandle(
+                MethodType.methodType(void.class),
+                FunctionDescriptor.ofVoid());
+        mh.invokeExact((Addressable) MemoryAddress.NULL);
     }
-
-    @Test(expectedExceptions = NullPointerException.class)
-    public void testNullTarget() throws Throwable {
-        int x = (int) func.invokeExact((Addressable) null);
-    }
-
 }
