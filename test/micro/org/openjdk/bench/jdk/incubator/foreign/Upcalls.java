@@ -126,7 +126,7 @@ public class Upcalls {
 
     static MethodHandle linkFunc(String name, MethodType baseType, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
-            SymbolLookup.loaderLookup(Upcalls.class.getClassLoader()).lookup(name).orElseThrow(),
+            SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
             baseType.insertParameterTypes(baseType.parameterCount(), MemoryAddress.class),
             baseDesc.withAppendedArgumentLayouts(C_POINTER)
         );

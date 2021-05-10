@@ -58,7 +58,7 @@ public class TestVirtualCalls {
             FunctionDescriptor.of(C_INT));
 
         System.loadLibrary("Virtual");
-        SymbolLookup lookup = SymbolLookup.loaderLookup(TestVirtualCalls.class.getClassLoader());
+        SymbolLookup lookup = SymbolLookup.loaderLookup();
         funcA = lookup.lookup("funcA").get();
         funcB = lookup.lookup("funcB").get();
         funcC = lookup.lookup("funcC").get();

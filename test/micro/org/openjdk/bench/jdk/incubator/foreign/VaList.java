@@ -62,7 +62,7 @@ public class VaList {
     static final MethodHandle MH_vaList;
 
     static {
-        SymbolLookup lookup = SymbolLookup.loaderLookup(VaList.class.getClassLoader());
+        SymbolLookup lookup = SymbolLookup.loaderLookup();
         MH_ellipsis = linker.downcallHandle(lookup.lookup("ellipsis").get(),
                 MethodType.methodType(void.class, int.class, int.class, double.class, long.class),
                 FunctionDescriptor.ofVoid(C_INT, asVarArg(C_INT), asVarArg(C_DOUBLE), asVarArg(C_LONG_LONG)));

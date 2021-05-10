@@ -92,7 +92,7 @@ public class CallOverheadHelper {
         System.loadLibrary("CallOverheadJNI");
 
         System.loadLibrary("CallOverhead");
-        SymbolLookup lookup = SymbolLookup.loaderLookup(CallOverheadHelper.class.getClassLoader());
+        SymbolLookup lookup = SymbolLookup.loaderLookup();
         {
             func_addr = lookup.lookup("func").orElseThrow();
             MethodType mt = MethodType.methodType(void.class);
