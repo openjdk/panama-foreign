@@ -173,10 +173,7 @@ public class ProgrammableInvoker {
     }
 
     private static long unboxTargetAddress(Addressable addr) {
-        MemoryAddress ma = addr.address();
-        if (ma.equals(MemoryAddress.NULL)) {
-            throw new IllegalArgumentException("Target address is NULL: " + ma);
-        }
+        MemoryAddress ma = SharedUtils.checkSymbol(addr);
         return ma.toRawLongValue();
     }
 

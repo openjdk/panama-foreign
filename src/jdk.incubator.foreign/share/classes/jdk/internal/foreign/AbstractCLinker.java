@@ -28,9 +28,9 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -41,25 +41,17 @@ import java.util.Objects;
 
 public abstract class AbstractCLinker implements CLinker {
 
-    private static void checkSymbol(Addressable symbol) {
-        MemoryAddress symbolAddr = symbol.address();
-        if (symbolAddr.equals(MemoryAddress.NULL))
-            throw new IllegalArgumentException("Symbol is NULL: " + symbolAddr);
-    }
-
     @CallerSensitive
     public final MethodHandle downcallHandle(Addressable symbol, MethodType type, FunctionDescriptor function) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(symbol);
-        checkSymbol(symbol);
+        SharedUtils.checkSymbol(symbol);
         return MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
     }
 
     @CallerSensitive
     public final MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(symbol);
-        checkSymbol(symbol);
+        SharedUtils.checkSymbol(symbol);
         Objects.requireNonNull(allocator);
         MethodHandle downcall = MethodHandles.insertArguments(downcallHandle(type, function), 0, symbol);
         if (type.returnType().equals(MemorySegment.class)) {

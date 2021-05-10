@@ -70,4 +70,9 @@ public class TestVirtualCalls {
         assertEquals((int) func.invokeExact((Addressable) funcC), 3);
     }
 
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testNullTarget() throws Throwable {
+        int x = (int) func.invokeExact((Addressable) null);
+    }
+
 }
