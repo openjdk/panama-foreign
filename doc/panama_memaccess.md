@@ -1,9 +1,6 @@
 ## State of foreign memory support
 
-**March 2021**
-
-* Reorganize the document, starting from simpler use cases to more advanced ones
-* Reorganized section on shared segments and confinement into a brand new section on deterministic deallocation
+**May 2021**
 
 **Maurizio Cimadamore**
 
@@ -16,15 +13,15 @@ Memory segments are abstractions which can be used to model contiguous memory re
 For instance, the following snippet allocates 100 bytes off-heap:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(100);
+MemorySegment segment = MemorySegment.allocateNative(100, ResourceScope.newImplicitScope());
 ```
 
-The above code allocates a 100-bytes long memory segment. The segment memory will not be *freed* as long as the segment instance is deemed *reachable*. In other words, the above factory creates a segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory. Of course, the memory access API also supports deterministic memory release; we will cover that in a later section of this document.
+The above code allocates a 100-bytes long memory segment. The lifecycle of a memory segment is controlled by an abstraction called `ResourceScope`. In this example, the segment memory will not be *freed* as long as the segment instance is deemed *reachable*, as specified by the `newImplicitScope()` parameter. In other words, the above factory creates a segment whose behavior closely matches that of a `ByteBuffer` allocated with the `allocateDirect` factory. Of course, the memory access API also supports deterministic memory release; we will cover that in a later section of this document.
 
 Memory segments support *slicing* — that is, given a segment, it is possible to create a new segment whose spatial bounds are stricter than that of the original segment:
 
 ```java
-MemorySegment segment = MemorySement.allocateNative(10);
+MemorySegment segment = MemorySement.allocateNative(10, ResourceScope.newImplicitScope());
 MemorySegment slice = segment.asSlice(4, 4);
 ```
 
@@ -34,7 +31,7 @@ The Foreign Memory Access API provides ready-made static accessors in the `Memor
 
 ```java
 record Point(int x, int y);
-MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2);
+MemorySegment segment = MemorySement.allocateNative(10 * 4 * 2, ResourceScope.newImplicitScope());
 Point[] values = new Point[10];
 for (int i = 0 ; i < values.length ; i++) {
     int x = MemoryAccess.getIntAtIndex(segment, i * 2);
@@ -64,8 +61,8 @@ Creating buffer views out of existing segment is a crucial tool enabling interop
 Expressing byte offsets (as in the example above) can lead to code that is hard to read, and very fragile — as memory layout invariants are captured, implicitly, in the constants used to scale offsets. To address this issue, we add a *memory layout* API which allows clients to define memory layouts *programmatically*. For instance, the layout of the array used in the above example can be expressed using the following code <a href="#1"><sup>1</sup></a>:
 
 ```java
-MemoryLayout points = MemoryLayout.ofSequence(10,
-    MemoryLayout.ofStruct(
+MemoryLayout points = MemoryLayout.sequenceLayout(10,
+    MemoryLayout.structLayout(
         MemoryLayouts.JAVA_INT.withName("x"),
         MemoryLayouts.JAVA_INT.withName("y")
     )
@@ -83,7 +80,7 @@ To specify which nested layout element should be used for the offset calculation
 One of the things that can be derived from a layout is a so called *memory access var handle*. A memory access var handle is a special kind of var handle which takes a memory segment access coordinate, together with a byte offset — the offset, relative to the segment's base address at which the dereference operation should occur. With memory access var handles we can rewrite our example above as follows:
 
 ```java
-MemorySegment segment = MemorySegment.allocateNative(points);
+MemorySegment segment = MemorySegment.allocateNative(points, ResourceScope.newImplicitScope());
 VarHandle xHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("x"));
 VarHandle yHandle = points.varHandle(PathElement.sequenceElement(), PathElement.groupElement("y"));
 Point[] values = new Point[10];
@@ -109,19 +106,21 @@ In addition to spatial bounds, memory segments also feature temporal bounds as w
 Memory segments support deterministic deallocation, through an abstraction called `ResourceScope`. A resource scope models the lifecycle associated with one or more resources (in this document, by resources we mean mostly memory segments); a resource scope has a state: it starts off in the *alive* state, which means that all the resources it manages can be safely accessed - and, at the user request, it can be *closed*. After a resource scope is closed, access to resources managed by that scope is no longer allowed. Resource scope support the `AutoCloseable` interface, which means that user can use resource scopes with the *try-with-resources* construct, as demonstrated in the following code:
 
 ```java
-try (ResourceScope scope = ResourceScope.ofConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     MemorySegment mapped = MemorySegment.map(Path.of("someFile"), 0, 100000, MapMode.READ_WRITE, scope);    
 } // segment is unmapped here
 ```
 
 Here, we create a new *confined* resource scope, which is then used when creating a mapped segment; this means that the lifecycle of the `mapped` segment will be tied to that of the resource scope, and that accessing the segment (e.g. dereference) *after* `scope` has been closed will not be possible.
 
-As this example alludes to, resource scopes can come in many flavors: they can be *confined* (where access is restricted to the thread which created the scope), *shared* <a href="#3"><sup>3</sup></a> (where access can occur in any thread) and can be optionally associated with a `Cleaner` object, which would take care of performing implicit deallocation, in case the resource scope becomes *unreachable* and the `close` method has not been called by the user. In fact, all the memory segments we have seen previously were associated with the so called *default* scope: a shared scope which does not support deterministic deallocation (e.g. calling `close` will fail), and whose resources are managed by a `Cleaner`.
+As this example alludes to, resource scopes can come in many flavors: they can be *confined* (where access is restricted to the thread which created the scope), *shared* <a href="#3"><sup>3</sup></a> (where access can occur in any thread) and can be optionally associated with a `Cleaner` object, which would take care of performing implicit deallocation, in case the resource scope becomes *unreachable* and the `close` method has not been called by the user.
+
+Some resource scopes do *not* support deterministic deallocation. Such scopes are called *implicit* scopes. Calling `close` on an implicit scope will fail; instead, resources associated with implicit scopes are *always* managed by a `Cleaner`. A new implicit scope can be obtained using the `ResourceScope::newImplicitScope` factory (which has been used in many examples throughout this document).
 
 Resource scopes are very handy when managing the lifecycle of multiple resources:
 
 ```java
-try (ResourceScope scope = ResourceScope.ofConfined()) {
+try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     MemorySegment segment1 = MemorySegment.allocateNative(100, scope);
     MemorySegment segment2 = MemorySegment.allocateNative(100, scope);
     ...
@@ -142,16 +141,19 @@ void writePoint(MemorySegment segment, int x, int y) {
 
 If the segment is associated with a confined scope, no problem arises: the thread that created the segment is the same thread that performs the dereference - as such, when `writePoint` is called, the segment's scope is either alive (and will remain so for the duration of the call), or already closed (in which case some exception will be thrown, and no value will be written).
 
-But, if the segment is associated with a shared scope, there is a new problem we are faced with: the segment might be closed (concurrently) in between the two accesses! This means that, the method ends up writing only one value instead of two; in other words, the behavior of the method is no longer atomic. Note that this cannot happen in the case where the scope is shared but associated with the *default scope* - as that scope does not support explicit deallocation.
+But, if the segment is associated with a shared scope, there is a new problem we are faced with: the segment might be closed (concurrently) in between the two accesses! This means that, the method ends up writing only one value instead of two; in other words, the behavior of the method is no longer atomic. Note that this cannot happen in the case where the scope is shared but associated with an *implicit scope* - as implicit scopes do not support explicit deallocation.
 
 To avoid this problem, clients can acquire a so called resource scope *handle*. A resource scope handle effectively prevents a scope to be closed, until said handle is released by the application. Let's illustrate how that works in practice:
 
 ```java
 void writePointSafe(MemorySegment segment, int x, int y) {
-    try (var handle = segment.scope().acquire()) {
+    var handle = segment.scope().acquire();
+    try {
         MemoryAccess.setIntAtIndex(segment, 0, x);
         MemoryAccess.setIntAtIndex(segment, 1, y);
-    } // handle released here
+    } finally {
+        segment.scope().release(handle);   
+    }
 }
 ```
 
@@ -162,11 +164,12 @@ A resource scope handle acts as a more restricted version <a href="#4"><sup>4</s
 The contents of a memory segment can be processed in *parallel* (e.g. using a framework such as Fork/Join) — by obtaining a `Spliterator` instance out of a memory segment. For instance to sum all the 32 bit values of a memory segment in parallel, we can use the following code:
 
 ```java
-SequenceLayout seq = MemoryLayout.ofSequence(1_000_000, MemoryLayouts.JAVA_INT);
-MemorySegment segment = MemorySegment.allocateNative(seq);
-SequenceLayout seq_bulk = seq.reshape(-1, 100);
+SequenceLayout seq = MemoryLayout.sequenceLayout(1_000_000, MemoryLayouts.JAVA_INT);
+SequenceLayout bulk_element = MemoryLayout.sequenceLayout(100, MemoryLayouts.JAVA_INT);
 
-int sum = StreamSupport.stream(MemorySegment.spliterator(segment, seq_bulk), true)
+try (ResourceScope scope = ResourceScope.newSharedScope()) {
+    MemorySegment segment = MemorySegment.allocateNative(seq);
+    int sum = segment.elements(bulk_element).parallel()
                        .mapToInt(slice -> {
                            int res = 0;
                            for (int i = 0; i < 100 ; i++) {
@@ -174,15 +177,16 @@ int sum = StreamSupport.stream(MemorySegment.spliterator(segment, seq_bulk), tru
                            }
                            return res;
                        }).sum();
+}
 ```
 
-The `MemorySegment::spliterator` takes a segment, a *sequence* layout and returns a spliterator instance which splits the segment into chunks which corresponds to the elements in the provided sequence layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use the layout API to derive a *bulk* sequence layout. The bulk layout is a sequence layout which has the same size of the original layouts, but where the elements are arranged into groups of 100 elements — which should make it more amenable to parallel processing.
+The `MemorySegment::elements` method takes an element layout and returns a new stream. The stream is built on top of a spliterator instance (see `MemorySegment::spliterator`) which splits the segment into chunks which corresponds to the elements in the provided layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use a *bulk* element layout. The bulk element layout is a sequence layout contains a group of 100 elements — which should make it more amenable to parallel processing.
 
-Once we have the spliterator, we can use it to construct a parallel stream and sum the contents of the segment in parallel. Since the segment operated upon by the spliterator is shared, the segment can be accessed from multiple threads concurrently; the spliterator API ensures that the access occurs in a regular fashion: a slice is created from the original segment, and given to a thread to perform some computation — thus ensuring that no two threads can ever operate concurrently on the same memory region.
+Since the segment operated upon by the spliterator is associated with a shared scope, the segment can be accessed from multiple threads concurrently; the spliterator API ensures that the access occurs in a disjoint fashion: a slice is created from the original segment, and given to a thread to perform some computation — thus ensuring that no two threads can ever operate concurrently on the same memory region.
 
 ### Combining memory access handles
 
-We have seen in the previous sections how memory access var handle dramatically simplify user code when structured access is involved. While deriving memory access var handles from layout is the most convenient option, the Foreign Memory Access API also allows to create such memory access var handles in a standalone fashion, as demonstrated in the following code:
+We have seen in the previous sections how memory access var handles dramatically simplify user code when structured access is involved. While deriving memory access var handles from layout is the most convenient option, the Foreign Memory Access API also allows to create such memory access var handles in a standalone fashion, as demonstrated in the following code:
 
 ```java
 VarHandle intHandle = MemoryHandles.varHandle(int.class, ByteOrder.nativeOrder())    
@@ -222,9 +226,9 @@ Memory segments provide a similar capability - that is, given an address (which 
 For instance, assuming we have an address pointing at some externally managed memory block, we can construct an *unsafe* segment, as follows:
 
 ```java
-try (ResourceScope scope = ResourceScope.ofShared()) {
+try (ResourceScope scope = ResourceScope.newSharedScope()) {
     MemoryAddress addr = MemoryAddress.ofLong(someLongAddr);
-    var unsafeSegment = addr.asSegmentRestricted(10, scope);
+    var unsafeSegment = addr.asSegment(10, scope);
     ...
 }
 ```
@@ -233,11 +237,11 @@ The above code creates a shared scope and then, inside the *try-with-resources* 
 
 Of course, segments created this way are completely *unsafe*. There is no way for the runtime to verify that the provided address indeed points to a valid memory location, or that the size of the memory region pointed to by `addr` is indeed 10 bytes. Similarly, there are no guarantees that the underlying memory region associated with `addr` will not be deallocated *prior* to the call to `ResourceScope::close`.
 
-For these reasons, creating unsafe segments is a *restricted* operation in the Foreign Memory Access API. Restricted operations can only be performed if the running application has set a read-only runtime property — `foreign.restricted=permit`. Any attempt to call restricted operations without said runtime property will fail with a runtime exception.
-
-We plan, in the future, to make access to restricted operations more integrated with the module system; that is, certain modules might *require* restricted native access; when an application which depends on said modules is executed, the user might need to provide *permissions* to said modules to perform restricted native operations, or the runtime will refuse to build the application's module graph.
+For these reasons, creating unsafe segments is a *restricted* operation in the Foreign Memory Access API. Restricted operations can only be performed from selected modules. To grant a given module `M`  the permission to execute restricted methods, the option `--enable-native-access=M` must be specified on the command line. Multiple module names can be specified in a comma-separated list, where the special name `ALL-UNNAMED` is used to enable restricted access for all code on the class path. Any attempt to call restricted operations from a module not listed in the above flag will fail with a runtime exception.
 
 * <a id="1"/>(<sup>1</sup>):<small> In general, deriving a complete layout from a C `struct` declaration is no trivial matter, and it's one of those areas where tooling can help greatly.</small>
 * <a id="2"/>(<sup>2</sup>):<small> Clients can enforce stricter type checking when interacting with `VarHandle` instances, by obtaining an *exact* var handle, using the `VarHandle::withInvokeExactBehavior` method.</small>
 * <a id="3"/>(<sup>3</sup>):<small> Shared segments rely on VM thread-local handshakes (JEP [312](https://openjdk.java.net/jeps/312)) to implement lock-free, safe, shared memory access; that is, when it comes to memory access, there should no difference in performance between a shared segment and a confined segment. On the other hand, `MemorySegment::close` might be slower on shared segments than on confined ones.</small>
+
 * <a id="4"/>(<sup>4</sup>):<small> The main difference between reference counting and the mechanism proposed here is that reference counting is *symmetric* - meaning that any client is able to both increment and decrement the reference count at will. The resource scope handle mechanism is *asymmetric*, since only the client acquiring a handle has the capability to release that handle. This avoids situation where a client might be tempted to e.g. decrement the reference count multiple times in order to perform some task which would otherwise be forbidden. </small>
+
