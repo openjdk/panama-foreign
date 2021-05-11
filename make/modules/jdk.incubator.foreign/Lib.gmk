@@ -29,12 +29,9 @@ ifeq ($(call isTargetOs, linux), true)
 
 $(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
     NAME := syslookup, \
-    OPTIMIZATION := HIGH, \
-    DISABLED_WARNINGS_gcc := sign-compare pointer-arith, \
-    DISABLED_WARNINGS_clang := sign-compare pointer-arith format-nonliteral, \
     CFLAGS := $(CFLAGS_JDKLIB), \
     CXXFLAGS := $(CXXFLAGS_JDKLIB), \
-    LDFLAGS := -Wl$(COMMA)--no-as-needed -lc -lm $(LDFLAGS_JDKLIB) $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LDFLAGS := -Wl$(COMMA)--no-as-needed -lc -lm -ldl $(LDFLAGS_JDKLIB) $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS := $(LIBCXX), \
 ))
 
@@ -42,9 +39,6 @@ else ifeq ($(call isTargetOs, windows), false)
 
 $(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
     NAME := syslookup, \
-    OPTIMIZATION := HIGH, \
-    DISABLED_WARNINGS_gcc := sign-compare pointer-arith, \
-    DISABLED_WARNINGS_clang := sign-compare pointer-arith format-nonliteral, \
     CFLAGS := $(CFLAGS_JDKLIB), \
     CXXFLAGS := $(CXXFLAGS_JDKLIB), \
     LDFLAGS := $(LDFLAGS_JDKLIB) $(call SET_SHARED_LIBRARY_ORIGIN), \
