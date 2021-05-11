@@ -84,6 +84,7 @@ public class TestNulls {
             ValueLayout.class,
             GroupLayout.class,
             Addressable.class,
+            SymbolLookup.class,
             MemoryAccess.class,
             MemoryLayouts.class,
             MemoryHandles.class,
@@ -159,6 +160,8 @@ public class TestNulls {
         addDefaultMapping(SegmentAllocator.class, (size, align) -> null);
         addDefaultMapping(Supplier.class, () -> null);
         addDefaultMapping(ResourceScope.Handle.class, ResourceScope.globalScope().acquire());
+        addDefaultMapping(ClassLoader.class, TestNulls.class.getClassLoader());
+        addDefaultMapping(SymbolLookup.class, CLinker.systemLookup());
     }
 
     static class VaListHelper {

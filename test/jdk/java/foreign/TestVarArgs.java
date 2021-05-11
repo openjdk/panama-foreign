@@ -34,6 +34,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -63,7 +64,10 @@ public class TestVarArgs {
     static {
         System.loadLibrary("VarArgs");
     }
-    static final MemoryAddress varargsAddr = CLinker.findNative("varargs").get();
+
+    static final MemoryAddress varargsAddr =
+            SymbolLookup.loaderLookup()
+                    .lookup("varargs").get();
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;
 

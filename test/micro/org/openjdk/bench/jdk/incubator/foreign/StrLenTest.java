@@ -78,17 +78,17 @@ public class StrLenTest {
 
     static {
         CLinker abi = CLinker.getInstance();
-        STRLEN = abi.downcallHandle(CLinker.findNative("strlen_raw").get(),
+        STRLEN = abi.downcallHandle(CLinker.systemLookup().lookup("strlen").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER));
-        STRLEN_TRIVIAL = abi.downcallHandle(CLinker.findNative("strlen_raw").get(),
+        STRLEN_TRIVIAL = abi.downcallHandle(CLinker.systemLookup().lookup("strlen").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
-        MALLOC_TRIVIAL = abi.downcallHandle(CLinker.findNative("malloc_raw").get(),
+        MALLOC_TRIVIAL = abi.downcallHandle(CLinker.systemLookup().lookup("malloc").get(),
                 MethodType.methodType(MemoryAddress.class, long.class),
                 FunctionDescriptor.of(C_POINTER, C_LONG_LONG).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
 
-        FREE_TRIVIAL = abi.downcallHandle(CLinker.findNative("free_raw").get(),
+        FREE_TRIVIAL = abi.downcallHandle(CLinker.systemLookup().lookup("free").get(),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(C_POINTER).withAttribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME, true));
     }

@@ -29,6 +29,7 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -49,6 +50,8 @@ public class SafeFunctionAccessTest {
             CLinker.C_INT, CLinker.C_INT
     );
 
+    static SymbolLookup lookup = SymbolLookup.loaderLookup();
+
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedStruct() throws Throwable {
         MemorySegment segment;
@@ -57,7 +60,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                CLinker.findNative("struct_func").get(),
+                lookup.lookup("struct_func").get(),
                 MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
@@ -72,7 +75,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(address.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                CLinker.findNative("addr_func").get(),
+                lookup.lookup("addr_func").get(),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(CLinker.C_POINTER));
 

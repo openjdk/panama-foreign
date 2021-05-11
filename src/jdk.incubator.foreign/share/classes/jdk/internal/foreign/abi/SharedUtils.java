@@ -412,6 +412,20 @@ public class SharedUtils {
         return specializedHandle;
     }
 
+    // lazy init MH_ALLOC and MH_FREE handles
+    private static class AllocHolder {
+
+        private static final CLinker linker = getSystemLinker();
+
+        static final MethodHandle MH_MALLOC = linker.downcallHandle(CLinker.systemLookup().lookup("malloc").get(),
+                        MethodType.methodType(MemoryAddress.class, long.class),
+                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
+
+        static final MethodHandle MH_FREE = linker.downcallHandle(CLinker.systemLookup().lookup("free").get(),
+                        MethodType.methodType(void.class, MemoryAddress.class),
+                FunctionDescriptor.ofVoid(C_POINTER));
+    }
+
     public static MemoryAddress checkSymbol(Addressable symbol) {
         Objects.requireNonNull(symbol);
         MemoryAddress symbolAddr = symbol.address();
@@ -422,7 +436,7 @@ public class SharedUtils {
 
     public static MemoryAddress allocateMemoryInternal(long size) {
         try {
-            return (MemoryAddress) VMFunctions.MH_MALLOC.invokeExact(size);
+            return (MemoryAddress) AllocHolder.MH_MALLOC.invokeExact(size);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
@@ -430,7 +444,7 @@ public class SharedUtils {
 
     public static void freeMemoryInternal(MemoryAddress addr) {
         try {
-            VMFunctions.MH_FREE.invokeExact(addr);
+            AllocHolder.MH_FREE.invokeExact(addr);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
