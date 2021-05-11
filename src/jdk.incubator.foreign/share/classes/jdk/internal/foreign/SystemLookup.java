@@ -40,10 +40,14 @@ public class SystemLookup implements SymbolLookup {
 
     final static SystemLookup INSTANCE = new SystemLookup();
 
+    /*
+     * On POSIX systems, dlsym will allow us to lookup symbol in library dependencies; the same trick doesn't work
+     * on Windows. For this reason, on Windows we do not generate any side-library, and load msvcrt.dll directly instead.
+     */
     final NativeLibrary syslookup = switch (CABI.current()) {
         case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("syslookup");
         case Win64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
-                .loadLibrary(Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toString());
+                .loadLibrary(null, Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toFile());
     };
 
     @Override

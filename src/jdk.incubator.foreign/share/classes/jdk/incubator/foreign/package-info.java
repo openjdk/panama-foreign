@@ -97,7 +97,7 @@ try (ResourceScope scope = ResourceScope.ofConfined()) {
  *
  * <h2>Foreign function access</h2>
  * The key abstractions introduced to support foreign function access are {@link jdk.incubator.foreign.SymbolLookup} and {@link jdk.incubator.foreign.CLinker}.
- * The former is used to load foreign libraries, as well as to lookup symbols inside said libraries; the latter
+ * The former is used to lookup symbols inside native libraries; the latter
  * provides linking capabilities which allow to model foreign functions as {@link java.lang.invoke.MethodHandle} instances,
  * so that clients can perform foreign function calls directly in Java, without the need for intermediate layers of native
  * code (as it's the case with the <a href="{@docRoot}/../specs/jni/index.html">Java Native Interface (JNI)</a>).

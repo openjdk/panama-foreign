@@ -39,7 +39,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
 ))
 
 else ifeq ($(call isTargetOs, windows), false)
-  
+
 $(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
     NAME := syslookup, \
     OPTIMIZATION := HIGH, \

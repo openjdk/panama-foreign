@@ -58,7 +58,7 @@ public class TestVirtualCalls {
             FunctionDescriptor.of(C_INT));
 
         System.loadLibrary("Virtual");
-        SymbolLookup lookup = SymbolLookup.loaderLookup(TestVirtualCalls.class.getClassLoader());
+        SymbolLookup lookup = SymbolLookup.loaderLookup();
         funcA = lookup.lookup("funcA").get();
         funcB = lookup.lookup("funcB").get();
         funcC = lookup.lookup("funcC").get();
@@ -69,6 +69,11 @@ public class TestVirtualCalls {
         assertEquals((int) func.invokeExact((Addressable) funcA), 1);
         assertEquals((int) func.invokeExact((Addressable) funcB), 2);
         assertEquals((int) func.invokeExact((Addressable) funcC), 3);
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void testNullTarget() throws Throwable {
+        int x = (int) func.invokeExact((Addressable) null);
     }
 
 }

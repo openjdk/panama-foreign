@@ -52,7 +52,7 @@ public class PanamaPoint implements AutoCloseable {
     static {
         CLinker abi = CLinker.getInstance();
         System.loadLibrary("Point");
-        SymbolLookup lookup = SymbolLookup.loaderLookup(PanamaPoint.class.getClassLoader());
+        SymbolLookup lookup = SymbolLookup.loaderLookup();
         MH_distance = abi.downcallHandle(
             lookup.lookup("distance").get(),
             methodType(double.class, MemorySegment.class, MemorySegment.class),

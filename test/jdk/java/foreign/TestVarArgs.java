@@ -66,7 +66,7 @@ public class TestVarArgs {
     }
 
     static final MemoryAddress varargsAddr =
-            SymbolLookup.loaderLookup(TestVarArgs.class.getClassLoader())
+            SymbolLookup.loaderLookup()
                     .lookup("varargs").get();
 
     static final int WRITEBACK_BYTES_PER_ARG = 8;

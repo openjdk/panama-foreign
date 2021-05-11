@@ -57,7 +57,7 @@ public class TestIntrinsics {
         System.loadLibrary("Intrinsics");
     }
 
-    static SymbolLookup lookup = SymbolLookup.loaderLookup(TestIntrinsics.class.getClassLoader());
+    static SymbolLookup lookup = SymbolLookup.loaderLookup();
 
     private interface RunnableX {
         void run() throws Throwable;

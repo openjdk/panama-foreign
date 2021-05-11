@@ -65,7 +65,7 @@ public class TestUpcall extends CallGeneratorHelper {
     }
     static CLinker abi = CLinker.getInstance();
 
-    static SymbolLookup lookup = SymbolLookup.loaderLookup(TestUpcall.class.getClassLoader());
+    static SymbolLookup lookup = SymbolLookup.loaderLookup();
 
     static MethodHandle DUMMY;
     static MethodHandle PASS_AND_SAVE;

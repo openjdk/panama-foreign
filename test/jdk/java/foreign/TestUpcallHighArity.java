@@ -67,7 +67,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
     static {
         try {
             System.loadLibrary("TestUpcallHighArity");
-            SymbolLookup lookup = SymbolLookup.loaderLookup(TestUpcallHighArity.class.getClassLoader());
+            SymbolLookup lookup = SymbolLookup.loaderLookup();
             MH_do_upcall = LINKER.downcallHandle(
                 lookup.lookup("do_upcall").get(),
                 MethodType.methodType(void.class, MemoryAddress.class,

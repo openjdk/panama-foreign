@@ -73,7 +73,7 @@ public class TestStackWalk {
     static {
         try {
             System.loadLibrary("StackWalk");
-            SymbolLookup lookup = SymbolLookup.loaderLookup(TestStackWalk.class.getClassLoader());
+            SymbolLookup lookup = SymbolLookup.loaderLookup();
             MH_foo = linker.downcallHandle(
                     lookup.lookup("foo").get(),
                     MethodType.methodType(void.class, MemoryAddress.class),
