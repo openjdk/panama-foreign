@@ -48,14 +48,12 @@ public class LibClang {
             //this is an hack - needed because clang_toggleCrashRecovery only takes effect _after_ the
             //first call to createIndex.
             try {
-                Index_h.init();
-                if (!IS_WINDOWS) {
-                    CLinker linker = CLinker.getInstance();
-                    MethodHandle PUT_ENV = linker.downcallHandle(CLinker.findNative("putenv").get(),
+                CLinker linker = CLinker.getInstance();
+                String putenv = IS_WINDOWS ? "_putenv" : "putenv";
+                MethodHandle PUT_ENV = linker.downcallHandle(CLinker.systemLookup().lookup(putenv).get(),
                                 MethodType.methodType(int.class, MemoryAddress.class),
                                 FunctionDescriptor.of(CLinker.C_INT, CLinker.C_POINTER));
-                    int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
-                }
+                int res = (int) PUT_ENV.invokeExact(disableCrashRecovery.address());
             } catch (Throwable ex) {
                 throw new ExceptionInInitializerError(ex);
             }

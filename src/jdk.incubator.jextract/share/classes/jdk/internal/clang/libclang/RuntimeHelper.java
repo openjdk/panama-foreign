@@ -35,6 +35,8 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.incubator.foreign.SymbolLookup;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -62,22 +64,12 @@ final class RuntimeHelper {
 
     private final static SegmentAllocator THROWING_ALLOCATOR = (x, y) -> { throw new AssertionError("should not reach here"); };
 
-    static final void loadLibraries(String... libNames) {
-        for (String libName : libNames) {
-            if (libName.indexOf(File.separatorChar) != -1) {
-                System.load(libName);
-            } else {
-                System.loadLibrary(libName);
-            }
-        }
+    static final MemorySegment lookupGlobalVariable(SymbolLookup LOOKUP, String name, MemoryLayout layout) {
+        return LOOKUP.lookup(name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
     }
 
-    static final MemorySegment lookupGlobalVariable(String name, MemoryLayout layout) {
-        return lookup(name).map(s -> s.address().asSegment(layout.byteSize(), ResourceScope.newImplicitScope())).orElse(null);
-    }
-
-    static final MethodHandle downcallHandle(String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
-        return lookup(name).map(
+    static final MethodHandle downcallHandle(SymbolLookup LOOKUP, String name, String desc, FunctionDescriptor fdesc, boolean variadic) {
+        return LOOKUP.lookup(name).map(
                 addr -> {
                     MethodType mt = MethodType.fromMethodDescriptorString(desc, LOADER);
                     return variadic ?
@@ -118,9 +110,6 @@ final class RuntimeHelper {
     }
 
     // Internals only below this point
-    private static final Optional<MemoryAddress> lookup(String sym) {
-        return CLinker.findNative(sym);
-    }
 
     private static class VarargsInvoker {
         private static final MethodHandle INVOKE_MH;

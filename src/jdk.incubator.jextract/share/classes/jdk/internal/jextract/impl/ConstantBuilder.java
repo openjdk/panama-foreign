@@ -195,7 +195,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         incrAlign();
         indent();
         if (!virtual) {
-            append("\"" + nativeName + "\"");
+            append(toplevel().headerClassName() + ".LIBRARIES, \"" + nativeName + "\"");
             append(",\n");
             indent();
         }
@@ -391,7 +391,8 @@ public class ConstantBuilder extends ClassSourceBuilder {
         append("MemorySegment ");
         append(fieldName);
         append(" = ");
-        append("RuntimeHelper.lookupGlobalVariable(\"");
+        append("RuntimeHelper.lookupGlobalVariable(");
+        append(toplevel().headerClassName() + ".LIBRARIES, \"");
         append(nativeName);
         append("\", ");
         append(layoutConstant.accessExpression());
