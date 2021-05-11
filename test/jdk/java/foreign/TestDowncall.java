@@ -35,6 +35,7 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 
@@ -56,10 +57,12 @@ public class TestDowncall extends CallGeneratorHelper {
         System.loadLibrary("TestDowncall");
     }
 
+    static SymbolLookup lookup = SymbolLookup.loaderLookup();
+
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncall(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        MemoryAddress addr = CLinker.findNative(fName).get();
+        MemoryAddress addr = lookup.lookup(fName).get();
         MethodType mt = methodType(ret, paramTypes, fields);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);
@@ -86,7 +89,7 @@ public class TestDowncall extends CallGeneratorHelper {
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testDowncallNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         List<Consumer<Object>> checks = new ArrayList<>();
-        MemoryAddress addr = CLinker.findNative(fName).get();
+        MemoryAddress addr = lookup.lookup(fName).get();
         MethodType mt = methodType(ret, paramTypes, fields);
         FunctionDescriptor descriptor = function(ret, paramTypes, fields);
         Object[] args = makeArgs(paramTypes, fields, checks);

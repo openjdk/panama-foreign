@@ -26,6 +26,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -125,7 +126,7 @@ public class Upcalls {
 
     static MethodHandle linkFunc(String name, MethodType baseType, FunctionDescriptor baseDesc) {
         return abi.downcallHandle(
-            CLinker.findNative(name).orElseThrow(),
+            SymbolLookup.loaderLookup().lookup(name).orElseThrow(),
             baseType.insertParameterTypes(baseType.parameterCount(), MemoryAddress.class),
             baseDesc.withAppendedArgumentLayouts(C_POINTER)
         );
