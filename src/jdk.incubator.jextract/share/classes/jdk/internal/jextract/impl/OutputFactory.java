@@ -122,8 +122,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         this.includeHelper = includeHelper;
     }
 
-    static final String C_LANG_CONSTANTS_HOLDER = "jdk.incubator.foreign.CLinker";
-
     JavaFileObject[] generate(Declaration.Scoped decl) {
         //generate all decls
         decl.members().forEach(this::generateDecl);
@@ -147,8 +145,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     private String getRuntimeHelperSource() throws URISyntaxException, IOException {
         URL runtimeHelper = OutputFactory.class.getResource("resources/RuntimeHelper.java.template");
         return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
-                        String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())))
-                                .replace("${C_LANG}", C_LANG_CONSTANTS_HOLDER);
+                        String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())));
     }
 
     private void generateDecl(Declaration tree) {
