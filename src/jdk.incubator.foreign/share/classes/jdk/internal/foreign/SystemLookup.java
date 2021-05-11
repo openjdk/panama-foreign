@@ -30,6 +30,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.internal.loader.NativeLibraries;
 import jdk.internal.loader.NativeLibrary;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,8 +47,16 @@ public class SystemLookup implements SymbolLookup {
      */
     final NativeLibrary syslookup = switch (CABI.current()) {
         case SysV, AArch64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false).loadLibrary("syslookup");
-        case Win64 -> NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
-                .loadLibrary(null, Path.of(System.getenv("SystemRoot"), "System32", "msvcrt.dll").toFile());
+        case Win64 -> {
+            Path system32 = Path.of(System.getenv("SystemRoot"), "System32");
+            Path ucrtbase = system32.resolve("ucrtbase.dll");
+            Path msvcrt = system32.resolve("msvcrt.dll");
+
+            Path stdLib = Files.exists(ucrtbase) ? ucrtbase : msvcrt;
+
+            yield NativeLibraries.rawNativeLibraries(SystemLookup.class, false)
+                    .loadLibrary(null, stdLib.toFile());
+        }
     };
 
     @Override
