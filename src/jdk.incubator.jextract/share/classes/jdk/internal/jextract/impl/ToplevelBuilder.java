@@ -215,7 +215,7 @@ class ToplevelBuilder extends JavaSourceBuilder {
             append("}\n\n");
             indent();
             append("static final ");
-            append("SymbolLookup LIBRARIES = SymbolLookup.loaderLookup(" + className() + ".class.getClassLoader());");
+            append("SymbolLookup LIBRARIES = RuntimeHelper.lookup();");
             decrAlign();
         }
 

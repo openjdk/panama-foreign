@@ -552,7 +552,7 @@ import static jdk.incubator.foreign.CLinker.*;
         System.loadLibrary(libName());
     }
 
-    static final SymbolLookup LIBRARIES = SymbolLookup.loaderLookup(Index_h_1.class.getClassLoader());
+    static final SymbolLookup LIBRARIES = SymbolLookup.loaderLookup();
 
     public static class constants$3 {
 
