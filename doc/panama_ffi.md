@@ -260,8 +260,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     MemorySegment comparFunc = CLinker.getInstance().upcallStub(
         comparHandle,
     	FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER),
-        scope
-	);
+        scope);
     MemorySegment array = SegmentAllocator.ofScope(scope).allocateArray(new int[] { 0, 9, 3, 4, 6, 5, 1, 8, 2, 7 }));
     qsort.invokeExact(array.address(), 10L, 4L, comparFunc);
     int[] sorted = array.toIntArray(); // [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
