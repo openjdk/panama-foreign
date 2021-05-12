@@ -143,7 +143,7 @@ If the segment is associated with a confined scope, no problem arises: the threa
 
 But, if the segment is associated with a shared scope, there is a new problem we are faced with: the segment might be closed (concurrently) in between the two accesses! This means that, the method ends up writing only one value instead of two; in other words, the behavior of the method is no longer atomic. Note that this cannot happen in the case where the scope is shared but associated with an *implicit scope* - as implicit scopes do not support explicit deallocation.
 
-To avoid this problem, clients can acquire a so called resource scope *handle*. A resource scope handle effectively prevents a scope to be closed, until said handle is released by the application. Let's illustrate how that works in practice:
+To avoid this problem, clients can acquire a so called resource scope *handle*. A resource scope handle effectively prevents a scope from being closed, until said handle is released by the application. Let's illustrate how that works in practice:
 
 ```java
 void writePointSafe(MemorySegment segment, int x, int y) {
@@ -180,7 +180,7 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
 }
 ```
 
-The `MemorySegment::elements` method takes an element layout and returns a new stream. The stream is built on top of a spliterator instance (see `MemorySegment::spliterator`) which splits the segment into chunks which corresponds to the elements in the provided layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use a *bulk* element layout. The bulk element layout is a sequence layout contains a group of 100 elements — which should make it more amenable to parallel processing.
+The `MemorySegment::elements` method takes an element layout and returns a new stream. The stream is built on top of a spliterator instance (see `MemorySegment::spliterator`) which splits the segment into chunks which corresponds to the elements in the provided layout. Here, we want to sum elements in an array which contains a million of elements; now, doing a parallel sum where each computation processes *exactly* one element would be inefficient, so instead we use a *bulk* element layout. The bulk element layout is a sequence layout containing a group of 100 elements — which should make it more amenable to parallel processing.
 
 Since the segment operated upon by the spliterator is associated with a shared scope, the segment can be accessed from multiple threads concurrently; the spliterator API ensures that the access occurs in a disjoint fashion: a slice is created from the original segment, and given to a thread to perform some computation — thus ensuring that no two threads can ever operate concurrently on the same memory region.
 
