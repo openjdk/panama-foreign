@@ -47,16 +47,16 @@ Of course, since accessing the entire native heap is inherently *unsafe*, access
 Idiomatic C code implicitly relies on stack allocation to allow for concise variable declarations; consider this example:
 
 ```c
-int arr[] = { 1, 2, 3, 4, 5 };
+int arr[] = { 0, 1, 2, 3, 4 };
 ```
 
-Here the function `foo` takes an output parameter, a pointer to an `int` variable. This idiom can be implemented as follows, using the Foreign Memory Access API:
+A variable initializer such as the one above can be implemented as follows, using the Foreign Memory Access API:
 
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-    MemorySegment arr = MemorySegment.allocateNative(C_INT, scope);
-    for (int i = 1 ; i <= 5 ; i++) {
-        MemoryAccess.setInt(arr, i);
+    MemorySegment arr = MemorySegment.allocateNative(MemoryLayout.sequenceLayout(5, JAVA_INT), scope);
+    for (int i = 0 ; i <= 5 ; i++) {
+        MemoryAccess.setIntAtIndex(arr, i);
     }
 }
 ```
@@ -71,11 +71,11 @@ To address these problems, Panama provides a `SegmentAllocator` abstraction, a f
 
 ```java
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-    MemorySegment arr = SegmentAllocator.ofScope(scope).allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+    MemorySegment arr = SegmentAllocator.ofScope(scope).allocateArray(JAVA_INT, new int[] { 0, 1, 2, 3, 4 });
 } // 'arr' is released here
 ```
 
-The above code obtains a  *scoped allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 1, 2, 3, 4, 5}`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The scoped allocator makes sure that all segments allocated with it are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
+The above code obtains a  *scoped allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 0, 1, 2, 3, 4}`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The scoped allocator makes sure that all segments allocated with it are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
 
 Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
 
@@ -83,7 +83,7 @@ Custom segment allocators are also critical to achieve optimal allocation perfor
 try (ResourceScope scope = ResourceScope.newConfinedScope()) {
     SegmentAllocator allocator = SegmentAllocator.arenaAllocator(scope);
     for (int i = 0 ; i < 100 ; i++) {
-        allocator.allocateArray(C_INT, new int[] { 1, 2, 3, 4, 5 });
+        allocator.allocateArray(JAVA_INT, new int[] { 0, 1, 2, 3, 4 });
     }
     ...
 } // all memory allocated is released here

@@ -168,7 +168,7 @@ SequenceLayout seq = MemoryLayout.sequenceLayout(1_000_000, MemoryLayouts.JAVA_I
 SequenceLayout bulk_element = MemoryLayout.sequenceLayout(100, MemoryLayouts.JAVA_INT);
 
 try (ResourceScope scope = ResourceScope.newSharedScope()) {
-    MemorySegment segment = MemorySegment.allocateNative(seq);
+    MemorySegment segment = MemorySegment.allocateNative(seq, scope);
     int sum = segment.elements(bulk_element).parallel()
                        .mapToInt(slice -> {
                            int res = 0;
