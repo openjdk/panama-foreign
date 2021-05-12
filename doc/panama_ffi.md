@@ -75,7 +75,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 } // 'arr' is released here
 ```
 
-The above code obtains a  *scoped allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 0, 1, 2, 3, 4}`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The scoped allocator makes sure that all segments allocated with it are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
+The above code obtains a  *scoped allocator* (an allocator built on top of `MemorySegment::allocateNative`), and then uses this allocator to create a native array which is initialized to the values `{ 0, 1, 2, 3, 4 }`.  The array initialization is more efficient, compared to the previous snippet, as the Java array is copied *in bulk* into the memory region associated with the newly allocated memory segment. The scoped allocator makes sure that all segments allocated with it are no longer usable after the scope associated with the allocator has been closed. This makes it easier to manage multiple resources which share the same lifecycle.
 
 Custom segment allocators are also critical to achieve optimal allocation performance; for this reason, a number of predefined allocators are available via factories in the `SegmentAllocator` interface. For instance, it is possible to create an arena-based allocator, as follows:
 
