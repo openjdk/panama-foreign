@@ -4,7 +4,7 @@
 
 **Maurizio Cimadamore**
 
-In this document we explore the main concepts behind Panama's foreign function support; as we shall see, the central abstraction in the foreign function support is the so called *foreign linker*, an abstraction that allows clients to construct *native* method handles — that is, method handles whose invocation targets a native function defined in some native library. As we shall see, Panama foreign function support is completely expressed in terms of Java code and no intermediate native code is required.
+In this document we explore the main concepts behind Panama's foreign function support; as we shall see, the central abstraction in the foreign function support is the so called *foreign linker*, an abstraction that allows clients to construct *native* method handles — that is, method handles whose invocation targets a native function defined in some native library. In other words, Panama foreign function support is completely expressed in terms of Java code and no intermediate native code is required.
 
 ### Native addresses
 
@@ -89,7 +89,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 } // all memory allocated is released here
 ```
 
-The above code creates a confined scope; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing scope. The allocator will allocate slabs of memory, of a specific size, and respond to allocation request by returning different slices of the pre-allocated slab. If a slab does not have sufficient space to accommodate a new allocation request, a new one will be allocated. If the scope associated with the arena allocator is closed, all memory associated with the segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
+The above code creates a confined scope; inside the *try-with-resources*, a new unbounded arena allocation is created, associated with the existing scope. The allocator will allocate slabs of memory, of a specific size, and respond to allocation requests by returning different slices of the pre-allocated slab. If a slab does not have sufficient space to accommodate a new allocation request, a new one will be allocated. If the scope associated with the arena allocator is closed, all memory associated with the segments created by the allocator (see the body of the `for` loop) will be deallocated at once. This idiom combines the advantages of deterministic deallocation (provided by the Memory Access API) with a more flexible and scalable allocation scheme, and can be very useful when writing large applications.
 
 For these reasons, all the methods in the Foreign Linker API which *produce* memory segments (see `CLinker::toCString`), allow an optional allocator to be provided by user code — this is key in ensuring that an application using the Foreign Linker API achieves optimal allocation performances, especially in non-trivial use cases.
 
@@ -139,7 +139,7 @@ Another similarity between `downcallHandle` and `upcallStub` is that they both a
 | ------------- | ---------------- |
 | `C_BOOL`      | `byte`           |
 | `C_CHAR`      | `byte`           |
-| `C_SHORT`     | `short`          |
+| `C_SHORT`     | `short`, `char`  |
 | `C_INT`       | `int`            |
 | `C_LONG`      | `long`           |
 | `C_LONGLONG`  | `long`           |
