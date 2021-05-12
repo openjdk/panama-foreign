@@ -167,7 +167,7 @@ In order to do that, we have to:
 * select a Java signature we want to *overlay* on the native function — this will be the signature that clients of the native method handles will interact with
 * create a *downcall* native method handle with the above information, using the standard C foreign linker
 
-Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#Appendix:-full-source-code)):
+Here's an example of how we might want to do that (a full listing of all the examples in this and subsequent sections will be provided in the [appendix](#aappendix-full-source-code)):
 
 ```java
 MethodHandle strlen = CLinker.getInstance().downcallHandle(
