@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -154,27 +155,45 @@ public class StdLibTest {
 
     static class StdLibHelper {
 
-        final static MethodHandle strcat = abi.downcallHandle(CLinker.systemLookup().lookup("strcat").get(),
+        final static SymbolLookup LOOKUP;
+
+        static {
+            System.loadLibrary("StdLib");
+            SymbolLookup stdLibLookup = SymbolLookup.loaderLookup();
+            MemorySegment funcs = stdLibLookup.lookup("funcs").get()
+                    .asSegment(C_POINTER.byteSize() * 3, ResourceScope.newImplicitScope());
+
+            SymbolLookup fallbackLookup = name -> switch (name) {
+                    case "printf" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 0));
+                    case "vprintf" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 1));
+                    case "gmtime" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 2));
+                    default -> Optional.empty();
+                };
+
+            LOOKUP = name -> CLinker.systemLookup().lookup(name).or(() -> fallbackLookup.lookup(name));
+        }
+
+        final static MethodHandle strcat = abi.downcallHandle(LOOKUP.lookup("strcat").get(),
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
 
-        final static MethodHandle strcmp = abi.downcallHandle(CLinker.systemLookup().lookup("strcmp").get(),
+        final static MethodHandle strcmp = abi.downcallHandle(LOOKUP.lookup("strcmp").get(),
                 MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
-        final static MethodHandle puts = abi.downcallHandle(CLinker.systemLookup().lookup("puts").get(),
+        final static MethodHandle puts = abi.downcallHandle(LOOKUP.lookup("puts").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER));
 
-        final static MethodHandle strlen = abi.downcallHandle(CLinker.systemLookup().lookup("strlen").get(),
+        final static MethodHandle strlen = abi.downcallHandle(LOOKUP.lookup("strlen").get(),
                 MethodType.methodType(int.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER));
 
-        final static MethodHandle gmtime = abi.downcallHandle(CLinker.systemLookup().lookup("gmtime").get(),
+        final static MethodHandle gmtime = abi.downcallHandle(LOOKUP.lookup("gmtime").get(),
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_POINTER, C_POINTER));
 
-        final static MethodHandle qsort = abi.downcallHandle(CLinker.systemLookup().lookup("qsort").get(),
+        final static MethodHandle qsort = abi.downcallHandle(LOOKUP.lookup("qsort").get(),
                 MethodType.methodType(void.class, MemoryAddress.class, long.class, long.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG, C_LONG_LONG, C_POINTER));
 
@@ -182,15 +201,15 @@ public class StdLibTest {
 
         final static MethodHandle qsortCompar;
 
-        final static MethodHandle rand = abi.downcallHandle(CLinker.systemLookup().lookup("rand").get(),
+        final static MethodHandle rand = abi.downcallHandle(LOOKUP.lookup("rand").get(),
                 MethodType.methodType(int.class),
                 FunctionDescriptor.of(C_INT));
 
-        final static MethodHandle vprintf = abi.downcallHandle(CLinker.systemLookup().lookup("vprintf").get(),
+        final static MethodHandle vprintf = abi.downcallHandle(LOOKUP.lookup("vprintf").get(),
                 MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
 
-        final static MemoryAddress printfAddr = CLinker.systemLookup().lookup("printf").get();
+        final static MemoryAddress printfAddr = LOOKUP.lookup("printf").get();
 
         final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
