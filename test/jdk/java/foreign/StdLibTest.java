@@ -49,6 +49,7 @@ import jdk.incubator.foreign.*;
 
 import static jdk.incubator.foreign.MemoryAccess.*;
 
+import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.CLinker.*;
@@ -122,6 +123,42 @@ public class StdLibTest {
         fail("All values are the same! " + val);
     }
 
+    @Test(dataProvider = "printfArgs")
+    void test_printf(List<PrintfArg> args) throws Throwable {
+        if (NativeTestHelper.IS_WINDOWS)
+            throw new SkipException("printf not available on Windows");
+
+        String formatArgs = args.stream()
+                .map(a -> a.format)
+                .collect(Collectors.joining(","));
+
+        String formatString = "hello(" + formatArgs + ")\n";
+
+        String expected = String.format(formatString, args.stream()
+                .map(a -> a.javaValue).toArray());
+
+        int found = stdLibHelper.printf(formatString, args);
+        assertEquals(found, expected.length());
+    }
+
+    @Test(dataProvider = "printfArgs")
+    void test_vprintf(List<PrintfArg> args) throws Throwable {
+        if (NativeTestHelper.IS_WINDOWS)
+            throw new SkipException("printf not available on Windows");
+        
+        String formatArgs = args.stream()
+                .map(a -> a.format)
+                .collect(Collectors.joining(","));
+
+        String formatString = "hello(" + formatArgs + ")\n";
+
+        String expected = String.format(formatString, args.stream()
+                .map(a -> a.javaValue).toArray());
+
+        int found = stdLibHelper.vprintf(formatString, args);
+        assertEquals(found, expected.length());
+    }
+
     static class StdLibHelper {
 
         final static MethodHandle strcat = abi.downcallHandle(CLinker.systemLookup().lookup("strcat").get(),
@@ -156,6 +193,16 @@ public class StdLibTest {
         final static MethodHandle rand = abi.downcallHandle(CLinker.systemLookup().lookup("rand").get(),
                 MethodType.methodType(int.class),
                 FunctionDescriptor.of(C_INT));
+
+        final static MethodHandle vprintf = CLinker.systemLookup().lookup("vprintf").map(sym ->
+                abi.downcallHandle(sym,
+                MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
+                FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST)))
+                .orElse(null);
+
+        final static MemoryAddress printfAddr = CLinker.systemLookup().lookup("printf").orElse(null);
+
+        final static FunctionDescriptor printfBase = FunctionDescriptor.of(C_INT, C_POINTER);
 
         static {
             try {
@@ -275,6 +322,34 @@ public class StdLibTest {
         int rand() throws Throwable {
             return (int)rand.invokeExact();
         }
+
+        int printf(String format, List<PrintfArg> args) throws Throwable {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                MemorySegment formatStr = toCString(format, scope);
+                return (int)specializedPrintf(args).invokeExact(formatStr.address(),
+                        args.stream().map(a -> a.nativeValue(scope)).toArray());
+            }
+        }
+
+        int vprintf(String format, List<PrintfArg> args) throws Throwable {
+            try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+                MemorySegment formatStr = toCString(format, scope);
+                VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
+                return (int)vprintf.invokeExact(formatStr.address(), vaList);
+            }
+        }
+
+        private MethodHandle specializedPrintf(List<PrintfArg> args) {
+            //method type
+            MethodType mt = MethodType.methodType(int.class, MemoryAddress.class);
+            FunctionDescriptor fd = printfBase;
+            for (PrintfArg arg : args) {
+                mt = mt.appendParameterTypes(arg.carrier);
+                fd = fd.withAppendedArgumentLayouts(arg.layout);
+            }
+            MethodHandle mh = abi.downcallHandle(printfAddr, mt, fd);
+            return mh.asSpreader(1, Object[].class, args.size());
+        }
     }
 
     /*** data providers ***/
@@ -316,6 +391,58 @@ public class StdLibTest {
             instants[i] = new Object[] { instant };
         }
         return instants;
+    }
+
+    @DataProvider
+    public static Object[][] printfArgs() {
+        ArrayList<List<PrintfArg>> res = new ArrayList<>();
+        List<List<PrintfArg>> perms = new ArrayList<>(perms(0, PrintfArg.values()));
+        for (int i = 0 ; i < 100 ; i++) {
+            Collections.shuffle(perms);
+            res.addAll(perms);
+        }
+        return res.stream()
+                .map(l -> new Object[] { l })
+                .toArray(Object[][]::new);
+    }
+
+    enum PrintfArg implements BiConsumer<VaList.Builder, ResourceScope> {
+
+        INTEGRAL(int.class, asVarArg(C_INT), "%d", scope -> 42, 42, VaList.Builder::vargFromInt),
+        STRING(MemoryAddress.class, asVarArg(C_POINTER), "%s", scope -> toCString("str", scope).address(), "str", VaList.Builder::vargFromAddress),
+        CHAR(byte.class, asVarArg(C_CHAR), "%c", scope -> (byte) 'h', 'h', (builder, layout, value) -> builder.vargFromInt(C_INT, (int)value)),
+        DOUBLE(double.class, asVarArg(C_DOUBLE), "%.4f", scope ->1.2345d, 1.2345d, VaList.Builder::vargFromDouble);
+
+        final Class<?> carrier;
+        final ValueLayout layout;
+        final String format;
+        final Function<ResourceScope, ?> nativeValueFactory;
+        final Object javaValue;
+        @SuppressWarnings("rawtypes")
+        final VaListBuilderCall builderCall;
+
+        <Z> PrintfArg(Class<?> carrier, ValueLayout layout, String format, Function<ResourceScope, Z> nativeValueFactory, Object javaValue, VaListBuilderCall<Z> builderCall) {
+            this.carrier = carrier;
+            this.layout = layout;
+            this.format = format;
+            this.nativeValueFactory = nativeValueFactory;
+            this.javaValue = javaValue;
+            this.builderCall = builderCall;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void accept(VaList.Builder builder, ResourceScope scope) {
+            builderCall.build(builder, layout, nativeValueFactory.apply(scope));
+        }
+
+        interface VaListBuilderCall<V> {
+            void build(VaList.Builder builder, ValueLayout layout, V value);
+        }
+
+        public Object nativeValue(ResourceScope scope) {
+            return nativeValueFactory.apply(scope);
+        }
     }
 
     static <Z> Set<List<Z>> perms(int count, Z[] arr) {
