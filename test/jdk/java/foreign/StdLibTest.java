@@ -50,7 +50,6 @@ import jdk.incubator.foreign.*;
 
 import static jdk.incubator.foreign.MemoryAccess.*;
 
-import org.testng.SkipException;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.CLinker.*;

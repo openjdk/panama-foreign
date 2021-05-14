@@ -30,8 +30,6 @@ import jdk.incubator.foreign.SegmentAllocator;
 
 public class NativeTestHelper {
 
-    public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
-
     static CLinker.TypeKind kind(MemoryLayout layout) {
         return (CLinker.TypeKind)layout.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
                 () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
