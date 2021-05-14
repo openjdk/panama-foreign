@@ -158,31 +158,18 @@ public class StdLibTest {
 
         final static SymbolLookup LOOKUP;
 
-        private static final int F_PRINTF = 0;
-        private static final int F_VPRINTF = 1;
-        private static final int F_GMTIME = 2;
-
         static {
             System.loadLibrary("StdLib");
             SymbolLookup stdLibLookup = SymbolLookup.loaderLookup();
-            MethodHandle MH_get_ptr = abi.downcallHandle(stdLibLookup.lookup("get_ptr").get(),
-                MethodType.methodType(MemoryAddress.class, int.class),
-                FunctionDescriptor.of(C_POINTER, C_INT));
+            MemorySegment funcs = stdLibLookup.lookup("funcs").get()
+                    .asSegment(C_POINTER.byteSize() * 3, ResourceScope.newImplicitScope());
 
-            SymbolLookup fallbackLookup = name -> {
-                MemoryAddress ma;
-                try {
-                    ma = (MemoryAddress) MH_get_ptr.invokeExact((int) switch (name) {
-                        case "printf" -> F_PRINTF;
-                        case "vprintf" -> F_VPRINTF;
-                        case "gmtime" -> F_GMTIME;
-                        default -> -1;
-                    });
-                } catch (Throwable throwable) {
-                    throw new RuntimeException(throwable);
-                }
-                return ma == MemoryAddress.NULL ? Optional.empty() : Optional.of(ma);
-            };
+            SymbolLookup fallbackLookup = name -> switch (name) {
+                    case "printf" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 0));
+                    case "vprintf" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 1));
+                    case "gmtime" -> Optional.of(MemoryAccess.getAddressAtIndex(funcs, 2));
+                    default -> Optional.empty();
+                };
 
             LOOKUP = name -> CLinker.systemLookup().lookup(name).or(() -> fallbackLookup.lookup(name));
         }

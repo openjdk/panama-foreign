@@ -31,17 +31,9 @@
 #define EXPORT
 #endif
 
-enum Func {
-  F_PRINTF = 0,
-  F_VPRINTF = 1,
-  F_GMTIME = 2
+// Forces generation of inline code on Windows
+EXPORT void* funcs[] = {
+    &printf,
+    &vprintf,
+    &gmtime
 };
-
-EXPORT void* get_ptr(int func) {
-    switch(func) {
-        case F_PRINTF:  return &printf;
-        case F_VPRINTF: return &vprintf;
-        case F_GMTIME:  return &gmtime;
-    }
-    return NULL;
-}
