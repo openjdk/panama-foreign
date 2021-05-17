@@ -40,7 +40,6 @@ public abstract class ArenaAllocator implements SegmentAllocator {
     public static class UnboundedArenaAllocator extends ArenaAllocator {
 
         private static final long DEFAULT_BLOCK_SIZE = 4 * 1024;
-        private static final long DEFAULT_MAX_ALLOC_SIZE = DEFAULT_BLOCK_SIZE / 2;
 
         public UnboundedArenaAllocator(ResourceScope scope) {
             super(MemorySegment.allocateNative(DEFAULT_BLOCK_SIZE, 1, scope));
@@ -58,7 +57,8 @@ public abstract class ArenaAllocator implements SegmentAllocator {
             if (slice != null) {
                 return slice;
             } else {
-                if (Utils.alignUp(bytesSize, bytesAlignment) > DEFAULT_MAX_ALLOC_SIZE) {
+                long maxPossibleAllocationSize = bytesSize + bytesAlignment - 1;
+                if (maxPossibleAllocationSize > DEFAULT_BLOCK_SIZE) {
                     // too big
                     return newSegment(bytesSize, bytesAlignment);
                 } else {
