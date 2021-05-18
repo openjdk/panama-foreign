@@ -30,8 +30,8 @@ import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.internal.clang.libclang.CXType;
 import jdk.internal.clang.libclang.Index_h;
-
 
 public final class Type {
     private final MemorySegment type;
@@ -63,17 +63,6 @@ public final class Type {
     public CallingConvention getCallingConvention() {
         int v = getCallingConvention0();
         return CallingConvention.valueOf(v);
-    }
-
-    /**
-     * Retrieve the ref-qualifier kind of a function or method.
-     *
-     * The ref-qualifier is returned for C++ functions or methods. For other types
-     * or non-C++ declarations, CXRefQualifier_None is returned.
-     */
-    public RefQualifierKind getRefQualifier() {
-        int refKind = Index_h.clang_Type_getCXXRefQualifier(type);
-        return RefQualifierKind.valueOf(refKind);
     }
 
     public boolean isPointer() {
@@ -156,34 +145,6 @@ public final class Type {
         return Index_h.clang_isVolatileQualifiedType(type) != 0;
     }
 
-    /**
-     * Return true if the Type is a POD (plain old data) type, and false
-     * otherwise.
-     */
-    public boolean isPODType() {
-        return Index_h.clang_isPODType(type) != 0;
-    }
-
-    // Template support
-    /**
-     * Returns the number of template arguments for given template
-     * specialization, or -1 if type \c T is not a template specialization.
-     */
-    public int numberOfTemplateArgs() {
-        return Index_h.clang_Type_getNumTemplateArguments(type);
-    }
-
-    /**
-     * Returns the type template argument of a template class specialization
-     * at given index.
-     *
-     * This function only returns template type arguments and does not handle
-     * template template arguments or variadic packs.
-     */
-    public Type templateArgAsType(int idx) {
-        return new Type(Index_h.clang_Type_getTemplateArgumentAsType(ResourceScope.newImplicitScope(), type, idx));
-    }
-
     public String spelling() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             return LibClang.CXStrToString(Index_h.clang_getTypeSpelling(scope, type));
@@ -191,7 +152,7 @@ public final class Type {
     }
 
     public int kind0() {
-        return Index_h.CXType.kind$get(type);
+        return CXType.kind$get(type);
     }
 
     private long size0() {

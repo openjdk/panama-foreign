@@ -31,8 +31,9 @@ import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.SegmentAllocator;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.clang.libclang.NativeScope;
 
 import java.lang.invoke.VarHandle;
 import java.nio.file.Path;
@@ -83,13 +84,14 @@ public class Index implements AutoCloseable {
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
     throws ParsingFailedException {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
             MemorySegment src = CLinker.toCString(file, scope);
-            MemorySegment cargs = scope.allocateArray(CLinker.C_POINTER, args.length);
+            MemorySegment cargs = args.length == 0? null : allocator.allocateArray(CLinker.C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
                 MemoryAccess.setAddressAtIndex(cargs, i, CLinker.toCString(args[i], scope));
             }
-            MemorySegment outAddress = scope.allocate(CLinker.C_POINTER);
+            MemorySegment outAddress = allocator.allocate(CLinker.C_POINTER);
             ErrorCode code = ErrorCode.valueOf(Index_h.clang_parseTranslationUnit2(
                     ptr,
                     src,
