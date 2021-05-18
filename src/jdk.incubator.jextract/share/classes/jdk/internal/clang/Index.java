@@ -83,11 +83,11 @@ public class Index implements AutoCloseable {
             MemoryHandles.asAddressVarHandle(CLinker.C_POINTER.varHandle(long.class));
 
     public TranslationUnit parseTU(String file, Consumer<Diagnostic> dh, int options, String... args)
-    throws ParsingFailedException {
+            throws ParsingFailedException {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
             MemorySegment src = CLinker.toCString(file, scope);
-            MemorySegment cargs = args.length == 0? null : allocator.allocateArray(CLinker.C_POINTER, args.length);
+            MemorySegment cargs = args.length == 0 ? null : allocator.allocateArray(CLinker.C_POINTER, args.length);
             for (int i = 0 ; i < args.length ; i++) {
                 MemoryAccess.setAddressAtIndex(cargs, i, CLinker.toCString(args[i], scope));
             }

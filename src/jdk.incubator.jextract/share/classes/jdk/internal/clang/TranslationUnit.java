@@ -82,9 +82,9 @@ public class TranslationUnit implements AutoCloseable {
         }
     }
 
-    static long FILENAME_OFFSET = CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Filename")) / 8;
-    static long CONTENTS_OFFSET = CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Contents")) / 8;
-    static long LENGTH_OFFSET = CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Length")) / 8;
+    static long FILENAME_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Filename"));
+    static long CONTENTS_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Contents"));
+    static long LENGTH_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Length"));
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
