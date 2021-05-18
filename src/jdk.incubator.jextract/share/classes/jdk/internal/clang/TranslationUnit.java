@@ -33,8 +33,9 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.internal.clang.libclang.CXToken;
 import jdk.internal.clang.libclang.Index_h;
-import jdk.internal.clang.libclang.NativeScope;
+import jdk.internal.clang.libclang.CXUnsavedFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -81,17 +82,18 @@ public class TranslationUnit implements AutoCloseable {
         }
     }
 
-    static long FILENAME_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Filename")) / 8;
-    static long CONTENTS_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Contents")) / 8;
-    static long LENGTH_OFFSET = Index_h.CXUnsavedFile.$LAYOUT().bitOffset(MemoryLayout.PathElement.groupElement("Length")) / 8;
+    static long FILENAME_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Filename"));
+    static long CONTENTS_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Contents"));
+    static long LENGTH_OFFSET = CXUnsavedFile.$LAYOUT().byteOffset(MemoryLayout.PathElement.groupElement("Length"));
 
     public void reparse(Index.UnsavedFile... inMemoryFiles) {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
             MemorySegment files = inMemoryFiles.length == 0 ?
                     null :
-                    scope.allocateArray(Index_h.CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
+                    allocator.allocateArray(CXUnsavedFile.$LAYOUT(), inMemoryFiles.length);
             for (int i = 0; i < inMemoryFiles.length; i++) {
-                MemorySegment start = files.asSlice(i * Index_h.CXUnsavedFile.$LAYOUT().byteSize());
+                MemorySegment start = files.asSlice(i * CXUnsavedFile.$LAYOUT().byteSize());
                 MemoryAccess.setAddress(start.asSlice(FILENAME_OFFSET), CLinker.toCString(inMemoryFiles[i].file, scope));
                 MemoryAccess.setAddress(start.asSlice(CONTENTS_OFFSET), CLinker.toCString(inMemoryFiles[i].contents, scope));
                 MemoryAccess.setLong(start.asSlice(LENGTH_OFFSET), inMemoryFiles[i].contents.length());
@@ -162,8 +164,8 @@ public class TranslationUnit implements AutoCloseable {
         }
 
         public MemorySegment getTokenSegment(int idx) {
-            MemoryAddress p = ar.addOffset(idx * Index_h.CXToken.$LAYOUT().byteSize());
-            return p.asSegment(Index_h.CXToken.$LAYOUT().byteSize(), ResourceScope.newImplicitScope());
+            MemoryAddress p = ar.addOffset(idx * CXToken.$LAYOUT().byteSize());
+            return p.asSegment(CXToken.$LAYOUT().byteSize(), ResourceScope.newImplicitScope());
         }
 
         public Token getToken(int index) {

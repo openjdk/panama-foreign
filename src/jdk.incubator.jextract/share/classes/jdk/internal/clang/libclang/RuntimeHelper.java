@@ -21,7 +21,6 @@
  *   Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  *  or visit www.oracle.com if you need additional information or have any
  *  questions.
- *
  */
 
 package jdk.internal.clang.libclang;
@@ -30,13 +29,12 @@ package jdk.internal.clang.libclang;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
-import jdk.incubator.foreign.SymbolLookup;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -54,6 +52,12 @@ final class RuntimeHelper {
     private final static CLinker LINKER = CLinker.getInstance();
     private final static ClassLoader LOADER = RuntimeHelper.class.getClassLoader();
     private final static MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
+
+    static SymbolLookup lookup() {
+        SymbolLookup loaderLookup = SymbolLookup.loaderLookup();
+        SymbolLookup systemLookup = CLinker.systemLookup();
+        return name -> loaderLookup.lookup(name).or(() -> systemLookup.lookup(name));
+    }
 
     static <T> T requireNonNull(T obj, String symbolName) {
         if (obj == null) {
@@ -88,10 +92,6 @@ final class RuntimeHelper {
 
     static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc) {
         return upcallStub(fi, z, fdesc, mtypeDesc, ResourceScope.newImplicitScope());
-    }
-
-    static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, NativeScope scope) {
-        return upcallStub(fi, z, fdesc, mtypeDesc, scope.scope());
     }
 
     static final <Z> MemoryAddress upcallStub(Class<Z> fi, Z z, FunctionDescriptor fdesc, String mtypeDesc, ResourceScope scope) {

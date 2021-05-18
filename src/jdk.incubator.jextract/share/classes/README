@@ -5,5 +5,5 @@ Manual modifications:
 
 * GNU/CP copyright header added
 * Generated C_LONG layouts are replaced with C_LONGLONG for portability
-* Index_h_1.libName was manually added to handle platform dependency of
+* Index_h.libName was manually added to handle platform dependency of
 libclang shared library. 
