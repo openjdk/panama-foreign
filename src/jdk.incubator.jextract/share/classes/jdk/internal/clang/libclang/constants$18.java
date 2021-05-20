@@ -34,6 +34,14 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$18 {
 
+    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+        C_POINTER
+    );
+    static final MethodHandle clang_EvalResult_getAsUnsigned$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_EvalResult_getAsUnsigned",
+        "(Ljdk/incubator/foreign/MemoryAddress;)J",
+        constants$18.clang_EvalResult_getAsUnsigned$FUNC, false
+    );
     static final FunctionDescriptor clang_EvalResult_getAsDouble$FUNC = FunctionDescriptor.of(C_DOUBLE,
         C_POINTER
     );

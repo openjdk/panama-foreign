@@ -83,6 +83,15 @@ public class JextractToolProviderTest extends JextractToolRunner {
             .checkContainsOutput("cannot combine with previous 'short' declaration specifier");
     }
 
+    // @bug 8267504: jextract should report unsupported language and exit rather
+    // than generating partial nonworking code
+    @Test
+    public void testUnsupportedLanguage() {
+        run("-C-xc++", getInputFilePath("unsupported_lang.h").toString())
+            .checkFailure(RUNTIME_ERROR)
+            .checkContainsOutput("Unsupported language: C++");
+    }
+
     @Test
     public void testOutputClass() {
         Path helloOutput = getOutputFilePath("hellogen");

@@ -31,10 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 import static java.util.stream.Collectors.toMap;
-import static jdk.internal.clang.libclang.Index_h.CXSaveError_InvalidTU;
-import static jdk.internal.clang.libclang.Index_h.CXSaveError_None;
-import static jdk.internal.clang.libclang.Index_h.CXSaveError_TranslationErrors;
-import static jdk.internal.clang.libclang.Index_h.CXSaveError_Unknown;
+import static jdk.internal.clang.libclang.Index_h.*;
 
 public enum SaveError {
     None(CXSaveError_None()),

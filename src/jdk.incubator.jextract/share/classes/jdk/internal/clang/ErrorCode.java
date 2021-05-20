@@ -31,11 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 import static java.util.stream.Collectors.toMap;
-import static jdk.internal.clang.libclang.Index_h.CXError_ASTReadError;
-import static jdk.internal.clang.libclang.Index_h.CXError_Crashed;
-import static jdk.internal.clang.libclang.Index_h.CXError_Failure;
-import static jdk.internal.clang.libclang.Index_h.CXError_InvalidArguments;
-import static jdk.internal.clang.libclang.Index_h.CXError_Success;
+import static jdk.internal.clang.libclang.Index_h.*;
 
 public enum ErrorCode {
     Success(CXError_Success()),

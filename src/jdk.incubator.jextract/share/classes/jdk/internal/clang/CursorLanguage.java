@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ *  Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  *  This code is free software; you can redistribute it and/or modify it
@@ -23,53 +23,43 @@
  *  questions.
  *
  */
-
 package jdk.internal.clang;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 
-/**
- * Describes the kind of a template argument.
- */
-public enum TemplateArgumentKind {
-    Null(0),
-    Type(1),
-    Declaration(2),
-    NullPtr(3),
-    Integral(4),
-    Template(5),
-    TemplateExpansion(6),
-    Expression(7),
-    Pack(8),
-    /* Indicates an error case, preventing the kind from being deduced. */
-    Invalid(9);
+import static java.util.stream.Collectors.toMap;
+import static jdk.internal.clang.libclang.Index_h.*;
 
-    private final int value;
+public enum CursorLanguage {
+    Invalid(CXLanguage_Invalid(), "Invalid"),
+    C(CXLanguage_C(), "C"),
+    ObjC(CXLanguage_ObjC(), "Objective C"),
+    CPlusPlus(CXLanguage_CPlusPlus(), "C++");
 
-    TemplateArgumentKind(int value) {
-        this.value = value;
+    private final int code;
+    private final String name;
+
+    CursorLanguage(int code, String name) {
+        this.code = code;
+        this.name = name;
     }
 
-    public int value() {
-        return value;
+    public int code() {
+        return code;
     }
 
-    private final static Map<Integer, TemplateArgumentKind> lookup;
-
-    static {
-        lookup = new HashMap<>();
-        for (TemplateArgumentKind e: TemplateArgumentKind.values()) {
-            lookup.put(e.value(), e);
-        }
+    @Override
+    public String toString() {
+        return name;
     }
 
-    public final static TemplateArgumentKind valueOf(int value) {
-        TemplateArgumentKind x = lookup.get(value);
-        if (null == x) {
-            throw new NoSuchElementException("Invalid TemplateArgumentKind kind value: " + value);
-        }
-        return x;
+    private static final Map<Integer, CursorLanguage> lookup = Arrays.stream(values())
+            .collect(toMap(CursorLanguage::code, Function.identity()));
+
+    public static CursorLanguage valueOf(int code) {
+        return lookup.computeIfAbsent(code, k -> { throw new NoSuchElementException("No CursorLanguage with code: " + k); });
     }
 }

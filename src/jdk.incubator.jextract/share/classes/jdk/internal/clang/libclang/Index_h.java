@@ -1455,11 +1455,34 @@ public class Index_h  {
             throw new AssertionError("should not reach here", ex$);
         }
     }
+    public static int CXLanguage_Invalid() {
+        return (int)0L;
+    }
+    public static int CXLanguage_C() {
+        return (int)1L;
+    }
+    public static int CXLanguage_ObjC() {
+        return (int)2L;
+    }
+    public static int CXLanguage_CPlusPlus() {
+        return (int)3L;
+    }
+    public static MethodHandle clang_getCursorLanguage$MH() {
+        return RuntimeHelper.requireNonNull(constants$6.clang_getCursorLanguage$MH,"clang_getCursorLanguage");
+    }
+    public static int clang_getCursorLanguage ( MemorySegment cursor) {
+        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_getCursorLanguage$MH, "clang_getCursorLanguage");
+        try {
+            return (int)mh$.invokeExact(cursor);
+        } catch (Throwable ex$) {
+            throw new AssertionError("should not reach here", ex$);
+        }
+    }
     public static MethodHandle clang_Cursor_getTranslationUnit$MH() {
-        return RuntimeHelper.requireNonNull(constants$6.clang_Cursor_getTranslationUnit$MH,"clang_Cursor_getTranslationUnit");
+        return RuntimeHelper.requireNonNull(constants$7.clang_Cursor_getTranslationUnit$MH,"clang_Cursor_getTranslationUnit");
     }
     public static MemoryAddress clang_Cursor_getTranslationUnit ( MemorySegment x0) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$6.clang_Cursor_getTranslationUnit$MH, "clang_Cursor_getTranslationUnit");
+        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_Cursor_getTranslationUnit$MH, "clang_Cursor_getTranslationUnit");
         try {
             return (jdk.incubator.foreign.MemoryAddress)mh$.invokeExact(x0);
         } catch (Throwable ex$) {
@@ -1848,6 +1871,66 @@ public class Index_h  {
     public static int CXType_ExtVector() {
         return (int)176L;
     }
+    public static int CXCallingConv_Default() {
+        return (int)0L;
+    }
+    public static int CXCallingConv_C() {
+        return (int)1L;
+    }
+    public static int CXCallingConv_X86StdCall() {
+        return (int)2L;
+    }
+    public static int CXCallingConv_X86FastCall() {
+        return (int)3L;
+    }
+    public static int CXCallingConv_X86ThisCall() {
+        return (int)4L;
+    }
+    public static int CXCallingConv_X86Pascal() {
+        return (int)5L;
+    }
+    public static int CXCallingConv_AAPCS() {
+        return (int)6L;
+    }
+    public static int CXCallingConv_AAPCS_VFP() {
+        return (int)7L;
+    }
+    public static int CXCallingConv_X86RegCall() {
+        return (int)8L;
+    }
+    public static int CXCallingConv_IntelOclBicc() {
+        return (int)9L;
+    }
+    public static int CXCallingConv_Win64() {
+        return (int)10L;
+    }
+    public static int CXCallingConv_X86_64Win64() {
+        return (int)10L;
+    }
+    public static int CXCallingConv_X86_64SysV() {
+        return (int)11L;
+    }
+    public static int CXCallingConv_X86VectorCall() {
+        return (int)12L;
+    }
+    public static int CXCallingConv_Swift() {
+        return (int)13L;
+    }
+    public static int CXCallingConv_PreserveMost() {
+        return (int)14L;
+    }
+    public static int CXCallingConv_PreserveAll() {
+        return (int)15L;
+    }
+    public static int CXCallingConv_AArch64VectorCall() {
+        return (int)16L;
+    }
+    public static int CXCallingConv_Invalid() {
+        return (int)100L;
+    }
+    public static int CXCallingConv_Unexposed() {
+        return (int)200L;
+    }
     public static MethodHandle clang_getCursorType$MH() {
         return RuntimeHelper.requireNonNull(constants$7.clang_getCursorType$MH,"clang_getCursorType");
     }
@@ -1891,10 +1974,10 @@ public class Index_h  {
         return clang_getTypedefDeclUnderlyingType(SegmentAllocator.ofScope(scope), C);
     }
     public static MethodHandle clang_getEnumDeclIntegerType$MH() {
-        return RuntimeHelper.requireNonNull(constants$7.clang_getEnumDeclIntegerType$MH,"clang_getEnumDeclIntegerType");
+        return RuntimeHelper.requireNonNull(constants$8.clang_getEnumDeclIntegerType$MH,"clang_getEnumDeclIntegerType");
     }
     public static MemorySegment clang_getEnumDeclIntegerType ( SegmentAllocator allocator,  MemorySegment C) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$7.clang_getEnumDeclIntegerType$MH, "clang_getEnumDeclIntegerType");
+        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_getEnumDeclIntegerType$MH, "clang_getEnumDeclIntegerType");
         try {
             return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, C);
         } catch (Throwable ex$) {
@@ -1963,10 +2046,10 @@ public class Index_h  {
         return clang_Cursor_getArgument(SegmentAllocator.ofScope(scope), C, i);
     }
     public static MethodHandle clang_equalTypes$MH() {
-        return RuntimeHelper.requireNonNull(constants$8.clang_equalTypes$MH,"clang_equalTypes");
+        return RuntimeHelper.requireNonNull(constants$9.clang_equalTypes$MH,"clang_equalTypes");
     }
     public static int clang_equalTypes ( MemorySegment A,  MemorySegment B) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$8.clang_equalTypes$MH, "clang_equalTypes");
+        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_equalTypes$MH, "clang_equalTypes");
         try {
             return (int)mh$.invokeExact(A, B);
         } catch (Throwable ex$) {
@@ -2035,10 +2118,10 @@ public class Index_h  {
         return clang_getTypedefName(SegmentAllocator.ofScope(scope), CT);
     }
     public static MethodHandle clang_getPointeeType$MH() {
-        return RuntimeHelper.requireNonNull(constants$9.clang_getPointeeType$MH,"clang_getPointeeType");
+        return RuntimeHelper.requireNonNull(constants$10.clang_getPointeeType$MH,"clang_getPointeeType");
     }
     public static MemorySegment clang_getPointeeType ( SegmentAllocator allocator,  MemorySegment T) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$9.clang_getPointeeType$MH, "clang_getPointeeType");
+        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_getPointeeType$MH, "clang_getPointeeType");
         try {
             return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, T);
         } catch (Throwable ex$) {
@@ -2113,10 +2196,10 @@ public class Index_h  {
         }
     }
     public static MethodHandle clang_getArgType$MH() {
-        return RuntimeHelper.requireNonNull(constants$10.clang_getArgType$MH,"clang_getArgType");
+        return RuntimeHelper.requireNonNull(constants$11.clang_getArgType$MH,"clang_getArgType");
     }
     public static MemorySegment clang_getArgType ( SegmentAllocator allocator,  MemorySegment T,  int i) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$10.clang_getArgType$MH, "clang_getArgType");
+        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_getArgType$MH, "clang_getArgType");
         try {
             return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, T, i);
         } catch (Throwable ex$) {
@@ -2191,10 +2274,10 @@ public class Index_h  {
         return clang_getArrayElementType(SegmentAllocator.ofScope(scope), T);
     }
     public static MethodHandle clang_getArraySize$MH() {
-        return RuntimeHelper.requireNonNull(constants$11.clang_getArraySize$MH,"clang_getArraySize");
+        return RuntimeHelper.requireNonNull(constants$12.clang_getArraySize$MH,"clang_getArraySize");
     }
     public static long clang_getArraySize ( MemorySegment T) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$11.clang_getArraySize$MH, "clang_getArraySize");
+        var mh$ = RuntimeHelper.requireNonNull(constants$12.clang_getArraySize$MH, "clang_getArraySize");
         try {
             return (long)mh$.invokeExact(T);
         } catch (Throwable ex$) {
@@ -2427,10 +2510,10 @@ public class Index_h  {
         }
     }
     public static MethodHandle clang_PrintingPolicy_setProperty$MH() {
-        return RuntimeHelper.requireNonNull(constants$13.clang_PrintingPolicy_setProperty$MH,"clang_PrintingPolicy_setProperty");
+        return RuntimeHelper.requireNonNull(constants$14.clang_PrintingPolicy_setProperty$MH,"clang_PrintingPolicy_setProperty");
     }
     public static void clang_PrintingPolicy_setProperty ( Addressable Policy,  int Property,  int Value) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$13.clang_PrintingPolicy_setProperty$MH, "clang_PrintingPolicy_setProperty");
+        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_PrintingPolicy_setProperty$MH, "clang_PrintingPolicy_setProperty");
         try {
             mh$.invokeExact(Policy.address(), Property, Value);
         } catch (Throwable ex$) {
@@ -2502,10 +2585,10 @@ public class Index_h  {
         return clang_getCursorReferenced(SegmentAllocator.ofScope(scope), x1);
     }
     public static MethodHandle clang_getCursorDefinition$MH() {
-        return RuntimeHelper.requireNonNull(constants$14.clang_getCursorDefinition$MH,"clang_getCursorDefinition");
+        return RuntimeHelper.requireNonNull(constants$15.clang_getCursorDefinition$MH,"clang_getCursorDefinition");
     }
     public static MemorySegment clang_getCursorDefinition ( SegmentAllocator allocator,  MemorySegment x1) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$14.clang_getCursorDefinition$MH, "clang_getCursorDefinition");
+        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_getCursorDefinition$MH, "clang_getCursorDefinition");
         try {
             return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, x1);
         } catch (Throwable ex$) {
@@ -2592,10 +2675,10 @@ public class Index_h  {
         return clang_getTokenSpelling(SegmentAllocator.ofScope(scope), x1.address(), x2);
     }
     public static MethodHandle clang_getTokenLocation$MH() {
-        return RuntimeHelper.requireNonNull(constants$15.clang_getTokenLocation$MH,"clang_getTokenLocation");
+        return RuntimeHelper.requireNonNull(constants$16.clang_getTokenLocation$MH,"clang_getTokenLocation");
     }
     public static MemorySegment clang_getTokenLocation ( SegmentAllocator allocator,  Addressable x1,  MemorySegment x2) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$15.clang_getTokenLocation$MH, "clang_getTokenLocation");
+        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_getTokenLocation$MH, "clang_getTokenLocation");
         try {
             return (jdk.incubator.foreign.MemorySegment)mh$.invokeExact(allocator, x1.address(), x2);
         } catch (Throwable ex$) {
@@ -2670,10 +2753,10 @@ public class Index_h  {
         return clang_getClangVersion(SegmentAllocator.ofScope(scope));
     }
     public static MethodHandle clang_toggleCrashRecovery$MH() {
-        return RuntimeHelper.requireNonNull(constants$16.clang_toggleCrashRecovery$MH,"clang_toggleCrashRecovery");
+        return RuntimeHelper.requireNonNull(constants$17.clang_toggleCrashRecovery$MH,"clang_toggleCrashRecovery");
     }
     public static void clang_toggleCrashRecovery ( int isEnabled) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$16.clang_toggleCrashRecovery$MH, "clang_toggleCrashRecovery");
+        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_toggleCrashRecovery$MH, "clang_toggleCrashRecovery");
         try {
             mh$.invokeExact(isEnabled);
         } catch (Throwable ex$) {
@@ -2736,10 +2819,10 @@ public class Index_h  {
         }
     }
     public static MethodHandle clang_EvalResult_getAsUnsigned$MH() {
-        return RuntimeHelper.requireNonNull(constants$17.clang_EvalResult_getAsUnsigned$MH,"clang_EvalResult_getAsUnsigned");
+        return RuntimeHelper.requireNonNull(constants$18.clang_EvalResult_getAsUnsigned$MH,"clang_EvalResult_getAsUnsigned");
     }
     public static long clang_EvalResult_getAsUnsigned ( Addressable E) {
-        var mh$ = RuntimeHelper.requireNonNull(constants$17.clang_EvalResult_getAsUnsigned$MH, "clang_EvalResult_getAsUnsigned");
+        var mh$ = RuntimeHelper.requireNonNull(constants$18.clang_EvalResult_getAsUnsigned$MH, "clang_EvalResult_getAsUnsigned");
         try {
             return (long)mh$.invokeExact(E.address());
         } catch (Throwable ex$) {

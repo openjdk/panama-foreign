@@ -34,6 +34,18 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$7 {
 
+    static final FunctionDescriptor clang_Cursor_getTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_Cursor_getTranslationUnit$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_Cursor_getTranslationUnit",
+        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
+        constants$7.clang_Cursor_getTranslationUnit$FUNC, false
+    );
     static final FunctionDescriptor clang_getCursorLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
         MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
         C_INT.withName("int_data"),
@@ -113,22 +125,6 @@ class constants$7 {
         Index_h.LIBRARIES, "clang_getTypedefDeclUnderlyingType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         constants$7.clang_getTypedefDeclUnderlyingType$FUNC, false
-    );
-    static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-    ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
-        )
-    );
-    static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getEnumDeclIntegerType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
-        constants$7.clang_getEnumDeclIntegerType$FUNC, false
     );
 }
 

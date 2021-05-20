@@ -34,6 +34,16 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$14 {
 
+    static final FunctionDescriptor clang_PrintingPolicy_setProperty$FUNC = FunctionDescriptor.ofVoid(
+        C_POINTER,
+        C_INT,
+        C_INT
+    );
+    static final MethodHandle clang_PrintingPolicy_setProperty$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_PrintingPolicy_setProperty",
+        "(Ljdk/incubator/foreign/MemoryAddress;II)V",
+        constants$14.clang_PrintingPolicy_setProperty$FUNC, false
+    );
     static final FunctionDescriptor clang_getCursorPrintingPolicy$FUNC = FunctionDescriptor.of(C_POINTER,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -102,22 +112,6 @@ class constants$14 {
         Index_h.LIBRARIES, "clang_getCursorReferenced",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         constants$14.clang_getCursorReferenced$FUNC, false
-    );
-    static final FunctionDescriptor clang_getCursorDefinition$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        C_INT.withName("xdata"),
-        MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
-    ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
-        )
-    );
-    static final MethodHandle clang_getCursorDefinition$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getCursorDefinition",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
-        constants$14.clang_getCursorDefinition$FUNC, false
     );
 }
 

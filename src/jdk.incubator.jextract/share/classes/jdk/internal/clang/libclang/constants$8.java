@@ -34,6 +34,22 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$8 {
 
+    static final FunctionDescriptor clang_getEnumDeclIntegerType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+        C_INT.withName("kind"),
+        MemoryLayout.paddingLayout(32),
+        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+    ),
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_getEnumDeclIntegerType$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getEnumDeclIntegerType",
+        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        constants$8.clang_getEnumDeclIntegerType$FUNC, false
+    );
     static final FunctionDescriptor clang_getEnumConstantDeclValue$FUNC = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -98,23 +114,6 @@ class constants$8 {
         Index_h.LIBRARIES, "clang_Cursor_getArgument",
         "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
         constants$8.clang_Cursor_getArgument$FUNC, false
-    );
-    static final FunctionDescriptor clang_equalTypes$FUNC = FunctionDescriptor.of(C_INT,
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-        ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-        )
-    );
-    static final MethodHandle clang_equalTypes$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_equalTypes",
-        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
-        constants$8.clang_equalTypes$FUNC, false
     );
 }
 

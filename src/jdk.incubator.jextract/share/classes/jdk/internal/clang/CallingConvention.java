@@ -28,23 +28,24 @@ package jdk.internal.clang;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import static jdk.internal.clang.libclang.Index_h.*;
 
 public enum CallingConvention {
 
-    Default(0),
-    C(1),
-    X86StdCall(2),
-    X86FastCall(3),
-    X86ThisCall(4),
-    X86Pascal(5),
-    AAPCS(6),
-    AAPCS_VFP(7),
-    PnaclCall(8),
-    IntelOclBicc(9),
-    X86_64Win64(10),
-    X86_64SysV(11),
-    Invalid(100),
-    Unexposed(200);
+    Default(CXCallingConv_Default()),
+    C(CXCallingConv_C()),
+    X86StdCall(CXCallingConv_X86StdCall()),
+    X86FastCall(CXCallingConv_X86FastCall()),
+    X86ThisCall(CXCallingConv_X86ThisCall()),
+    X86Pascal(CXCallingConv_X86Pascal()),
+    AAPCS(CXCallingConv_AAPCS()),
+    AAPCS_VFP(CXCallingConv_AAPCS_VFP()),
+    PnaclCall(CXCallingConv_X86RegCall()),
+    IntelOclBicc(CXCallingConv_IntelOclBicc()),
+    X86_64Win64(CXCallingConv_X86_64Win64()),
+    X86_64SysV(CXCallingConv_X86_64SysV()),
+    Invalid(CXCallingConv_Invalid()),
+    Unexposed(CXCallingConv_Unexposed());
 
     private final int value;
 

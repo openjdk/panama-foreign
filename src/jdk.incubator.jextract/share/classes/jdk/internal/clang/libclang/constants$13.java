@@ -106,16 +106,6 @@ class constants$13 {
         "(Ljdk/incubator/foreign/MemoryAddress;I)I",
         constants$13.clang_PrintingPolicy_getProperty$FUNC, false
     );
-    static final FunctionDescriptor clang_PrintingPolicy_setProperty$FUNC = FunctionDescriptor.ofVoid(
-        C_POINTER,
-        C_INT,
-        C_INT
-    );
-    static final MethodHandle clang_PrintingPolicy_setProperty$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_PrintingPolicy_setProperty",
-        "(Ljdk/incubator/foreign/MemoryAddress;II)V",
-        constants$13.clang_PrintingPolicy_setProperty$FUNC, false
-    );
 }
 
 

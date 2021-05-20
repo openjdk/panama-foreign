@@ -38,31 +38,31 @@ public class Diagnostic {
      * A diagnostic that has been suppressed, e.g., by a command-line
      * option.
      */
-    public static final int CXDiagnostic_Ignored = 0;
+    public static final int CXDiagnostic_Ignored = Index_h.CXDiagnostic_Ignored();
 
     /**
      * This diagnostic is a note that should be attached to the
      * previous (non-note) diagnostic.
      */
-    public static final int CXDiagnostic_Note    = 1;
+    public static final int CXDiagnostic_Note    = Index_h.CXDiagnostic_Note();
 
     /**
      * This diagnostic indicates suspicious code that may not be
      * wrong.
      */
-    public static final int CXDiagnostic_Warning = 2;
+    public static final int CXDiagnostic_Warning = Index_h.CXDiagnostic_Warning();
 
     /**
      * This diagnostic indicates that the code is ill-formed.
      */
-    public static final int CXDiagnostic_Error   = 3;
+    public static final int CXDiagnostic_Error   = Index_h.CXDiagnostic_Error();
 
     /**
      * This diagnostic indicates that the code is ill-formed such
      * that future parser recovery is unlikely to produce useful
      * results.
      */
-    public static final int CXDiagnostic_Fatal   = 4;
+    public static final int CXDiagnostic_Fatal   = Index_h.CXDiagnostic_Fatal();
 
     Diagnostic(MemoryAddress ptr) {
         this.ptr = ptr;

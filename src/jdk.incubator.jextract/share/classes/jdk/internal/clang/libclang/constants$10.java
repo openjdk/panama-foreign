@@ -34,6 +34,22 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$10 {
 
+    static final FunctionDescriptor clang_getPointeeType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+        C_INT.withName("kind"),
+        MemoryLayout.paddingLayout(32),
+        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+    ),
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_getPointeeType$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getPointeeType",
+        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        constants$10.clang_getPointeeType$FUNC, false
+    );
     static final FunctionDescriptor clang_getTypeDeclaration$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
         C_INT.withName("kind"),
         C_INT.withName("xdata"),
@@ -101,23 +117,6 @@ class constants$10 {
         Index_h.LIBRARIES, "clang_getNumArgTypes",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
         constants$10.clang_getNumArgTypes$FUNC, false
-    );
-    static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-    ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-        ),
-        C_INT
-    );
-    static final MethodHandle clang_getArgType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getArgType",
-        "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
-        constants$10.clang_getArgType$FUNC, false
     );
 }
 
