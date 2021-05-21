@@ -34,6 +34,18 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$12 {
 
+    static final FunctionDescriptor clang_getArraySize$FUNC = FunctionDescriptor.of(C_LONG_LONG,
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_getArraySize$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getArraySize",
+        "(Ljdk/incubator/foreign/MemorySegment;)J",
+        constants$12.clang_getArraySize$FUNC, false
+    );
     static final FunctionDescriptor clang_Type_getSizeOf$FUNC = FunctionDescriptor.of(C_LONG_LONG,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -94,19 +106,6 @@ class constants$12 {
         Index_h.LIBRARIES, "clang_Cursor_isBitField",
         "(Ljdk/incubator/foreign/MemorySegment;)I",
         constants$12.clang_Cursor_isBitField$FUNC, false
-    );
-    static final FunctionDescriptor CXCursorVisitor$FUNC = FunctionDescriptor.of(C_INT,
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
-        ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            C_INT.withName("xdata"),
-            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
-        ),
-        C_POINTER
     );
 }
 

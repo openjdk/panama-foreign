@@ -169,6 +169,10 @@ public final class Cursor {
         return CursorKind.valueOf(kind);
     }
 
+    public CursorLanguage language() {
+        return CursorLanguage.valueOf(Index_h.clang_getCursorLanguage(cursor));
+    }
+
     public int kind0() {
         return kind;
     }

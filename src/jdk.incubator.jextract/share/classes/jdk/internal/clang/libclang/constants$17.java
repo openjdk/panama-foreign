@@ -34,6 +34,14 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$17 {
 
+    static final FunctionDescriptor clang_toggleCrashRecovery$FUNC = FunctionDescriptor.ofVoid(
+        C_INT
+    );
+    static final MethodHandle clang_toggleCrashRecovery$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_toggleCrashRecovery",
+        "(I)V",
+        constants$17.clang_toggleCrashRecovery$FUNC, false
+    );
     static final FunctionDescriptor clang_Cursor_Evaluate$FUNC = FunctionDescriptor.of(C_POINTER,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -77,14 +85,6 @@ class constants$17 {
         Index_h.LIBRARIES, "clang_EvalResult_isUnsignedInt",
         "(Ljdk/incubator/foreign/MemoryAddress;)I",
         constants$17.clang_EvalResult_isUnsignedInt$FUNC, false
-    );
-    static final FunctionDescriptor clang_EvalResult_getAsUnsigned$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-        C_POINTER
-    );
-    static final MethodHandle clang_EvalResult_getAsUnsigned$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_EvalResult_getAsUnsigned",
-        "(Ljdk/incubator/foreign/MemoryAddress;)J",
-        constants$17.clang_EvalResult_getAsUnsigned$FUNC, false
     );
 }
 

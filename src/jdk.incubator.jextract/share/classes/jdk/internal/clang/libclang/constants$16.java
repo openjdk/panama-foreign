@@ -34,6 +34,22 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$16 {
 
+    static final FunctionDescriptor clang_getTokenLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
+        C_INT.withName("int_data"),
+        MemoryLayout.paddingLayout(32)
+    ),
+        C_POINTER,
+        MemoryLayout.structLayout(
+            MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
+            C_POINTER.withName("ptr_data")
+        )
+    );
+    static final MethodHandle clang_getTokenLocation$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getTokenLocation",
+        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        constants$16.clang_getTokenLocation$FUNC, false
+    );
     static final FunctionDescriptor clang_getTokenExtent$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
         MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
         C_INT.withName("begin_int_data"),
@@ -96,14 +112,6 @@ class constants$16 {
         Index_h.LIBRARIES, "clang_getClangVersion",
         "()Ljdk/incubator/foreign/MemorySegment;",
         constants$16.clang_getClangVersion$FUNC, false
-    );
-    static final FunctionDescriptor clang_toggleCrashRecovery$FUNC = FunctionDescriptor.ofVoid(
-        C_INT
-    );
-    static final MethodHandle clang_toggleCrashRecovery$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_toggleCrashRecovery",
-        "(I)V",
-        constants$16.clang_toggleCrashRecovery$FUNC, false
     );
 }
 

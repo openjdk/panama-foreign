@@ -34,6 +34,22 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$15 {
 
+    static final FunctionDescriptor clang_getCursorDefinition$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+        C_INT.withName("kind"),
+        C_INT.withName("xdata"),
+        MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+    ),
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            C_INT.withName("xdata"),
+            MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_getCursorDefinition$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getCursorDefinition",
+        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
+        constants$15.clang_getCursorDefinition$FUNC, false
+    );
     static final FunctionDescriptor clang_isCursorDefinition$FUNC = FunctionDescriptor.of(C_INT,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -100,22 +116,6 @@ class constants$15 {
         Index_h.LIBRARIES, "clang_getTokenSpelling",
         "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         constants$15.clang_getTokenSpelling$FUNC, false
-    );
-    static final FunctionDescriptor clang_getTokenLocation$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("ptr_data"),
-        C_INT.withName("int_data"),
-        MemoryLayout.paddingLayout(32)
-    ),
-        C_POINTER,
-        MemoryLayout.structLayout(
-            MemoryLayout.sequenceLayout(4, C_INT).withName("int_data"),
-            C_POINTER.withName("ptr_data")
-        )
-    );
-    static final MethodHandle clang_getTokenLocation$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getTokenLocation",
-        "(Ljdk/incubator/foreign/MemoryAddress;Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
-        constants$15.clang_getTokenLocation$FUNC, false
     );
 }
 

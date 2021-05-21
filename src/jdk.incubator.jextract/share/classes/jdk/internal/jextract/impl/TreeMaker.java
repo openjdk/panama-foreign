@@ -44,6 +44,7 @@ import jdk.incubator.jextract.Position;
 import jdk.incubator.jextract.Type;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
+import jdk.internal.clang.CursorLanguage;
 import jdk.internal.clang.SourceLocation;
 
 class TreeMaker {
@@ -77,6 +78,10 @@ class TreeMaker {
 
     public Declaration createTree(Cursor c) {
         Objects.requireNonNull(c);
+        CursorLanguage lang = c.language();
+        if (lang != CursorLanguage.C && lang != CursorLanguage.Invalid) {
+            throw new RuntimeException("Unsupported language: " + c.language());
+        }
         var rv = (DeclarationImpl) createTreeInternal(c);
         return (rv == null) ? null : rv.withAttributes(collectAttributes(c));
     }

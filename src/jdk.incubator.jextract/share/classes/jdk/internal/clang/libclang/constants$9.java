@@ -34,6 +34,23 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$9 {
 
+    static final FunctionDescriptor clang_equalTypes$FUNC = FunctionDescriptor.of(C_INT,
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        ),
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        )
+    );
+    static final MethodHandle clang_equalTypes$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_equalTypes",
+        "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;)I",
+        constants$9.clang_equalTypes$FUNC, false
+    );
     static final FunctionDescriptor clang_getCanonicalType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
         C_INT.withName("kind"),
         MemoryLayout.paddingLayout(32),
@@ -101,22 +118,6 @@ class constants$9 {
         Index_h.LIBRARIES, "clang_getTypedefName",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         constants$9.clang_getTypedefName$FUNC, false
-    );
-    static final FunctionDescriptor clang_getPointeeType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
-        C_INT.withName("kind"),
-        MemoryLayout.paddingLayout(32),
-        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-    ),
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-        )
-    );
-    static final MethodHandle clang_getPointeeType$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getPointeeType",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
-        constants$9.clang_getPointeeType$FUNC, false
     );
 }
 

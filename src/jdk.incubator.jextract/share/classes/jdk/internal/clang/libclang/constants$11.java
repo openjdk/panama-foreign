@@ -34,6 +34,23 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 class constants$11 {
 
+    static final FunctionDescriptor clang_getArgType$FUNC = FunctionDescriptor.of(MemoryLayout.structLayout(
+        C_INT.withName("kind"),
+        MemoryLayout.paddingLayout(32),
+        MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+    ),
+        MemoryLayout.structLayout(
+            C_INT.withName("kind"),
+            MemoryLayout.paddingLayout(32),
+            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
+        ),
+        C_INT
+    );
+    static final MethodHandle clang_getArgType$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getArgType",
+        "(Ljdk/incubator/foreign/MemorySegment;I)Ljdk/incubator/foreign/MemorySegment;",
+        constants$11.clang_getArgType$FUNC, false
+    );
     static final FunctionDescriptor clang_isFunctionTypeVariadic$FUNC = FunctionDescriptor.of(C_INT,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
@@ -105,18 +122,6 @@ class constants$11 {
         Index_h.LIBRARIES, "clang_getArrayElementType",
         "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemorySegment;",
         constants$11.clang_getArrayElementType$FUNC, false
-    );
-    static final FunctionDescriptor clang_getArraySize$FUNC = FunctionDescriptor.of(C_LONG_LONG,
-        MemoryLayout.structLayout(
-            C_INT.withName("kind"),
-            MemoryLayout.paddingLayout(32),
-            MemoryLayout.sequenceLayout(2, C_POINTER).withName("data")
-        )
-    );
-    static final MethodHandle clang_getArraySize$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_getArraySize",
-        "(Ljdk/incubator/foreign/MemorySegment;)J",
-        constants$11.clang_getArraySize$FUNC, false
     );
 }
 

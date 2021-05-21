@@ -78,17 +78,17 @@ class constants$6 {
         "(I)I",
         constants$6.clang_isPreprocessing$FUNC, false
     );
-    static final FunctionDescriptor clang_Cursor_getTranslationUnit$FUNC = FunctionDescriptor.of(C_POINTER,
+    static final FunctionDescriptor clang_getCursorLanguage$FUNC = FunctionDescriptor.of(C_INT,
         MemoryLayout.structLayout(
             C_INT.withName("kind"),
             C_INT.withName("xdata"),
             MemoryLayout.sequenceLayout(3, C_POINTER).withName("data")
         )
     );
-    static final MethodHandle clang_Cursor_getTranslationUnit$MH = RuntimeHelper.downcallHandle(
-        Index_h.LIBRARIES, "clang_Cursor_getTranslationUnit",
-        "(Ljdk/incubator/foreign/MemorySegment;)Ljdk/incubator/foreign/MemoryAddress;",
-        constants$6.clang_Cursor_getTranslationUnit$FUNC, false
+    static final MethodHandle clang_getCursorLanguage$MH = RuntimeHelper.downcallHandle(
+        Index_h.LIBRARIES, "clang_getCursorLanguage",
+        "(Ljdk/incubator/foreign/MemorySegment;)I",
+        constants$6.clang_getCursorLanguage$FUNC, false
     );
 }
 
