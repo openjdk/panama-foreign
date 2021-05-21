@@ -78,7 +78,8 @@ class TreeMaker {
 
     public Declaration createTree(Cursor c) {
         Objects.requireNonNull(c);
-        if (c.language() != CursorLanguage.C) {
+        CursorLanguage lang = c.language();
+        if (lang != CursorLanguage.C && lang != CursorLanguage.Invalid) {
             throw new RuntimeException("Unsupported language: " + c.language());
         }
         var rv = (DeclarationImpl) createTreeInternal(c);
