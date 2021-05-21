@@ -1,624 +1,624 @@
-#### Extracted from: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
+###
 
---include-macro CXError_ASTReadError        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
---include-macro CXError_Crashed             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
---include-macro CXError_Failure             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
---include-macro CXError_InvalidArguments    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
---include-macro CXError_Success             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXErrorCode.h
+--include-macro CXError_ASTReadError
+--include-macro CXError_Crashed
+--include-macro CXError_Failure
+--include-macro CXError_InvalidArguments
+--include-macro CXError_Success
 
-#### Extracted from: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXString.h
+###
 
---include-function clang_disposeString    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXString.h
---include-function clang_getCString       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/CXString.h
+--include-function clang_disposeString
+--include-function clang_getCString
 
-#### Extracted from: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
+###
 
---include-typedef CXCursorVisitor                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-typedef CXIndex                                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-typedef CXToken                                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-typedef CXTranslationUnit                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-typedef CXType                                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-struct CXUnsavedFile                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_AAPCS                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_AAPCS_VFP                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_AArch64VectorCall                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_C                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_Default                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_IntelOclBicc                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_Invalid                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_PreserveAll                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_PreserveMost                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_Swift                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_Unexposed                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_Win64                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86FastCall                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86Pascal                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86RegCall                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86StdCall                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86ThisCall                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86VectorCall                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86_64SysV                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCallingConv_X86_64Win64                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXChildVisit_Break                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXChildVisit_Continue                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXChildVisit_Recurse                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_AddrLabelExpr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_AlignedAttr                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_AnnotateAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ArraySubscriptExpr                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_AsmLabelAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_AsmStmt                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_BinaryOperator                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_BlockExpr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_BreakStmt                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_BuiltinBitCastExpr                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CStyleCastExpr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CUDAConstantAttr                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CUDADeviceAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CUDAGlobalAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CUDAHostAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CUDASharedAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXAccessSpecifier                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXBaseSpecifier                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXBoolLiteralExpr                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXCatchStmt                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXConstCastExpr                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXDeleteExpr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXDynamicCastExpr                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXFinalAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXForRangeStmt                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXFunctionalCastExpr                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXMethod                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXNewExpr                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXNullPtrLiteralExpr                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXOverrideAttr                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXReinterpretCastExpr                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXStaticCastExpr                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXThisExpr                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXThrowExpr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXTryStmt                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CXXTypeidExpr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CallExpr                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CaseStmt                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CharacterLiteral                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ClassDecl                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ClassTemplate                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ClassTemplatePartialSpecialization                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CompoundAssignOperator                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CompoundLiteralExpr                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_CompoundStmt                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ConditionalOperator                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ConstAttr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_Constructor                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ContinueStmt                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ConvergentAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ConversionFunction                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DLLExport                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DLLImport                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DeclRefExpr                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DeclStmt                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DefaultStmt                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_Destructor                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_DoStmt                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_EnumConstantDecl                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_EnumDecl                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_BasicNoexcept            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_ComputedNoexcept         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_Dynamic                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_DynamicNone              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_MSAny                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_NoThrow                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_None                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_Unevaluated              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_Uninstantiated           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ExceptionSpecificationKind_Unparsed                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FieldDecl                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstAttr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstDecl                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstExpr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstExtraDecl                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstInvalid                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstPreprocessing                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstRef                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FirstStmt                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FixedPointLiteral                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FlagEnum                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FloatingLiteral                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ForStmt                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FriendDecl                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FunctionDecl                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_FunctionTemplate                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_GCCAsmStmt                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_GNUNullExpr                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_GenericSelectionExpr                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_GotoStmt                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IBActionAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IBOutletAttr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IBOutletCollectionAttr                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IfStmt                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ImaginaryLiteral                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_InclusionDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IndirectGotoStmt                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_InitListExpr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_IntegerLiteral                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_InvalidCode                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_InvalidFile                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LabelRef                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LabelStmt                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LambdaExpr                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastAttr                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastDecl                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastExpr                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastExtraDecl                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastInvalid                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastPreprocessing                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastRef                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LastStmt                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_LinkageSpec                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MSAsmStmt                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MacroDefinition                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MacroExpansion                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MacroInstantiation                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MemberRef                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_MemberRefExpr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ModuleImportDecl                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NSConsumed                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NSConsumesSelf                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NSReturnsAutoreleased                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NSReturnsNotRetained                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NSReturnsRetained                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_Namespace                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NamespaceAlias                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NamespaceRef                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NoDeclFound                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NoDuplicateAttr                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NonTypeTemplateParameter                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NotImplemented                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_NullStmt                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPArraySectionExpr                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPAtomicDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPBarrierDirective                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPCancelDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPCancellationPointDirective                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPCriticalDirective                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPDistributeDirective                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPDistributeParallelForDirective                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPDistributeParallelForSimdDirective               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPDistributeSimdDirective                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPFlushDirective                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPForDirective                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPForSimdDirective                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPMasterDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPMasterTaskLoopDirective                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPMasterTaskLoopSimdDirective                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPOrderedDirective                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelDirective                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelForDirective                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelForSimdDirective                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelMasterTaskLoopDirective                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelMasterTaskLoopSimdDirective              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPParallelSectionsDirective                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPSectionDirective                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPSectionsDirective                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPSimdDirective                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPSingleDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetDataDirective                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetDirective                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetEnterDataDirective                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetExitDataDirective                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetParallelDirective                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetParallelForDirective                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetParallelForSimdDirective                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetSimdDirective                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetTeamsDirective                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetTeamsDistributeDirective                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetTeamsDistributeParallelForDirective        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetTeamsDistributeParallelForSimdDirective    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetTeamsDistributeSimdDirective               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTargetUpdateDirective                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskDirective                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskLoopDirective                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskLoopSimdDirective                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskgroupDirective                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskwaitDirective                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTaskyieldDirective                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTeamsDirective                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTeamsDistributeDirective                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTeamsDistributeParallelForDirective              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTeamsDistributeParallelForSimdDirective          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OMPTeamsDistributeSimdDirective                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAtCatchStmt                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAtFinallyStmt                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAtSynchronizedStmt                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAtThrowStmt                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAtTryStmt                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAutoreleasePoolStmt                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCAvailabilityCheckExpr                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCBoolLiteralExpr                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCBoxable                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCBridgedCastExpr                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCCategoryDecl                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCCategoryImplDecl                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCClassMethodDecl                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCClassRef                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCDesignatedInitializer                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCDynamicDecl                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCEncodeExpr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCException                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCExplicitProtocolImpl                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCForCollectionStmt                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCImplementationDecl                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCIndependentClass                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCInstanceMethodDecl                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCInterfaceDecl                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCIvarDecl                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCMessageExpr                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCNSObject                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCPreciseLifetime                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCPropertyDecl                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCProtocolDecl                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCProtocolExpr                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCProtocolRef                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCRequiresSuper                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCReturnsInnerPointer                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCRootClass                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCRuntimeVisible                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCSelectorExpr                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCSelfExpr                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCStringLiteral                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCSubclassingRestricted                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCSuperClassRef                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ObjCSynthesizeDecl                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OverloadCandidate                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_OverloadedDeclRef                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_PackExpansionExpr                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_PackedAttr                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ParenExpr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ParmDecl                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_PreprocessingDirective                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_PureAttr                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_ReturnStmt                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SEHExceptStmt                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SEHFinallyStmt                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SEHLeaveStmt                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SEHTryStmt                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SizeOfPackExpr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_StaticAssert                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_StmtExpr                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_StringLiteral                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_StructDecl                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_SwitchStmt                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TemplateRef                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TemplateTemplateParameter                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TemplateTypeParameter                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TranslationUnit                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TypeAliasDecl                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TypeAliasTemplateDecl                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TypeRef                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_TypedefDecl                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnaryExpr                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnaryOperator                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnexposedAttr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnexposedDecl                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnexposedExpr                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnexposedStmt                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UnionDecl                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UsingDeclaration                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_UsingDirective                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_VarDecl                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_VariableRef                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_VisibilityAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_WarnUnusedAttr                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_WarnUnusedResultAttr                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXCursor_WhileStmt                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplayCategoryId                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplayCategoryName                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplayColumn                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplayOption                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplaySourceLocation                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_DisplaySourceRanges                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_Error                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_Fatal                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_Ignored                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_Note                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXDiagnostic_Warning                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXLanguage_C                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXLanguage_CPlusPlus                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXLanguage_Invalid                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXLanguage_ObjC                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_Alignof                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_AnonymousTagLocations                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_Bool                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_ConstantArraySizeAsWritten                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_ConstantsAsWritten                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_FullyQualifiedName                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_Half                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_IncludeNewlines                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_IncludeTagDefinition                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_Indentation                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_LastProperty                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_MSVCFormatting                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_MSWChar                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_PolishForDeclaration                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_Restrict                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressImplicitBase                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressInitializers                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressLifetimeQualifiers                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressScope                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressSpecifiers                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressStrongLifetime                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressTagKeyword                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressTemplateArgsInCXXConstructors       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_SuppressUnwrittenScope                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_TerseOutput                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_UnderscoreAlignof                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXPrintingPolicy_UseVoidForZeroParams                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXReparse_None                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXResult_Invalid                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXResult_Success                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXResult_VisitBreak                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXSaveError_InvalidTU                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXSaveError_None                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXSaveError_TranslationErrors                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXSaveError_Unknown                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXSaveTranslationUnit_None                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXToken_Comment                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXToken_Identifier                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXToken_Keyword                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXToken_Literal                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXToken_Punctuation                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_CXXChainedPCH                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_CacheCompletionResults                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_CreatePreambleOnFirstParse                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_DetailedPreprocessingRecord                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_ForSerialization                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_IgnoreNonErrorsFromIncludedFiles           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_IncludeAttributedTypes                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_IncludeBriefCommentsInCodeCompletion       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_Incomplete                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_KeepGoing                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_LimitSkipFunctionBodiesToPreamble          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_None                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_PrecompiledPreamble                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_RetainExcludedConditionalBlocks            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_SingleFileParse                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_SkipFunctionBodies                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTranslationUnit_VisitImplicitAttributes                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_Dependent                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_Incomplete                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_Invalid                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_InvalidFieldName                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_NotConstantSize                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeLayoutError_Undeduced                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeNullability_Invalid                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeNullability_NonNull                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeNullability_Nullable                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXTypeNullability_Unspecified                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Accum                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Attributed                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Auto                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_BlockPointer                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Bool                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Char16                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Char32                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Char_S                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Char_U                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Complex                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ConstantArray                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Dependent                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_DependentSizedArray                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Double                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Elaborated                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Enum                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ExtVector                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_FirstBuiltin                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Float                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Float128                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Float16                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_FunctionNoProto                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_FunctionProto                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Half                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_IncompleteArray                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Int                                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Int128                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Invalid                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_LValueReference                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_LastBuiltin                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Long                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_LongAccum                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_LongDouble                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_LongLong                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_MemberPointer                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_NullPtr                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLEvent                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dArrayRO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dArrayRW                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dArrayWO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dBufferRO                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dBufferRW                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dBufferWO                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dRO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dRW                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage1dWO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayDepthRO                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayDepthRW                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayDepthWO                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAADepthRO                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAADepthRW                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAADepthWO                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAARO                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAARW                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayMSAAWO                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayRO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayRW                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dArrayWO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dDepthRO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dDepthRW                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dDepthWO                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAADepthRO                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAADepthRW                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAADepthWO                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAARO                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAARW                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dMSAAWO                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dRO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dRW                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage2dWO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage3dRO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage3dRW                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLImage3dWO                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImeDualRefStreamin                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImePayload                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImeResult                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCImeSingleRefStreamin               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCMcePayload                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCMceResult                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCRefPayload                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCRefResult                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCSicPayload                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLIntelSubgroupAVCSicResult                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLQueue                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLReserveID                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_OCLSampler                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCClass                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCId                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCInterface                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCObject                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCObjectPointer                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCSel                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ObjCTypeParam                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Overload                                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Pipe                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Pointer                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_RValueReference                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Record                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_SChar                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Short                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ShortAccum                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Typedef                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UAccum                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UChar                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UInt                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UInt128                                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ULong                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ULongAccum                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_ULongLong                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UShort                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_UShortAccum                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Unexposed                                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_VariableArray                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Vector                                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_Void                                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-macro CXType_WChar                                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_Evaluate                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_getArgument                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_getMangling                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_getNumArguments                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_getTranslationUnit                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isAnonymous                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isAnonymousRecordDecl                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isBitField                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isMacroFunctionLike                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isNull                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Cursor_isVariadic                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_dispose                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getAsDouble                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getAsInt                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getAsLongLong                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getAsStr                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getAsUnsigned                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_getKind                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_EvalResult_isUnsignedInt                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Location_isFromMainFile                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Location_isInSystemHeader                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_PrintingPolicy_dispose                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_PrintingPolicy_getProperty                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_PrintingPolicy_setProperty                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Range_isNull                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Type_getOffsetOf                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_Type_getSizeOf                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_createIndex                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_defaultDiagnosticDisplayOptions                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_defaultReparseOptions                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_disposeDiagnostic                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_disposeIndex                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_disposeTokens                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_disposeTranslationUnit                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_equalCursors                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_equalLocations                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_equalTypes                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_formatDiagnostic                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getArgType                                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getArrayElementType                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getArraySize                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCanonicalType                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getChildDiagnostics                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getClangVersion                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorDefinition                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorDisplayName                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorExtent                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorKind                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorKindSpelling                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorLanguage                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorLocation                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorPrettyPrinted                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorPrintingPolicy                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorReferenced                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorResultType                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorSpelling                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorType                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getCursorUSR                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getDiagnostic                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getDiagnosticLocation                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getDiagnosticSeverity                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getDiagnosticSpelling                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getElementType                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getEnumConstantDeclUnsignedValue                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getEnumConstantDeclValue                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getEnumDeclIntegerType                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getExpansionLocation                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getFieldDeclBitWidth                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getFileLocation                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getFileName                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getFunctionTypeCallingConv                          # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getLocation                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getLocationForOffset                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getNullCursor                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getNullLocation                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getNumArgTypes                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getNumDiagnostics                                   # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getNumElements                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getPointeeType                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getRangeStart                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getRangeEnd                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getResultType                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getSpellingLocation                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTokenExtent                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTokenKind                                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTokenLocation                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTokenSpelling                                    # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTranslationUnitCursor                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypeDeclaration                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypeKindSpelling                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypePrettyPrinted                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypePrintingPolicy                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypeSpelling                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypedefDeclUnderlyingType                        # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_getTypedefName                                      # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isAttribute                                         # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isConstQualifiedType                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isCursorDefinition                                  # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isDeclaration                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isFunctionTypeVariadic                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isInvalid                                           # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isPreprocessing                                     # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_isVolatileQualifiedType                             # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_parseTranslationUnit                                # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_parseTranslationUnit2                               # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_reparseTranslationUnit                              # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_saveTranslationUnit                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_toggleCrashRecovery                                 # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_tokenize                                            # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
---include-function clang_visitChildren                                       # header: /Users/sundarajanathijegannathan/bin/llvm10/include/clang-c/Index.h
+--include-typedef CXCursorVisitor
+--include-typedef CXIndex
+--include-typedef CXToken
+--include-typedef CXTranslationUnit
+--include-typedef CXType
+--include-struct CXUnsavedFile
+--include-macro CXCallingConv_AAPCS
+--include-macro CXCallingConv_AAPCS_VFP
+--include-macro CXCallingConv_AArch64VectorCall
+--include-macro CXCallingConv_C
+--include-macro CXCallingConv_Default
+--include-macro CXCallingConv_IntelOclBicc
+--include-macro CXCallingConv_Invalid
+--include-macro CXCallingConv_PreserveAll
+--include-macro CXCallingConv_PreserveMost
+--include-macro CXCallingConv_Swift
+--include-macro CXCallingConv_Unexposed
+--include-macro CXCallingConv_Win64
+--include-macro CXCallingConv_X86FastCall
+--include-macro CXCallingConv_X86Pascal
+--include-macro CXCallingConv_X86RegCall
+--include-macro CXCallingConv_X86StdCall
+--include-macro CXCallingConv_X86ThisCall
+--include-macro CXCallingConv_X86VectorCall
+--include-macro CXCallingConv_X86_64SysV
+--include-macro CXCallingConv_X86_64Win64
+--include-macro CXChildVisit_Break
+--include-macro CXChildVisit_Continue
+--include-macro CXChildVisit_Recurse
+--include-macro CXCursor_AddrLabelExpr
+--include-macro CXCursor_AlignedAttr
+--include-macro CXCursor_AnnotateAttr
+--include-macro CXCursor_ArraySubscriptExpr
+--include-macro CXCursor_AsmLabelAttr
+--include-macro CXCursor_AsmStmt
+--include-macro CXCursor_BinaryOperator
+--include-macro CXCursor_BlockExpr
+--include-macro CXCursor_BreakStmt
+--include-macro CXCursor_BuiltinBitCastExpr
+--include-macro CXCursor_CStyleCastExpr
+--include-macro CXCursor_CUDAConstantAttr
+--include-macro CXCursor_CUDADeviceAttr
+--include-macro CXCursor_CUDAGlobalAttr
+--include-macro CXCursor_CUDAHostAttr
+--include-macro CXCursor_CUDASharedAttr
+--include-macro CXCursor_CXXAccessSpecifier
+--include-macro CXCursor_CXXBaseSpecifier
+--include-macro CXCursor_CXXBoolLiteralExpr
+--include-macro CXCursor_CXXCatchStmt
+--include-macro CXCursor_CXXConstCastExpr
+--include-macro CXCursor_CXXDeleteExpr
+--include-macro CXCursor_CXXDynamicCastExpr
+--include-macro CXCursor_CXXFinalAttr
+--include-macro CXCursor_CXXForRangeStmt
+--include-macro CXCursor_CXXFunctionalCastExpr
+--include-macro CXCursor_CXXMethod
+--include-macro CXCursor_CXXNewExpr
+--include-macro CXCursor_CXXNullPtrLiteralExpr
+--include-macro CXCursor_CXXOverrideAttr
+--include-macro CXCursor_CXXReinterpretCastExpr
+--include-macro CXCursor_CXXStaticCastExpr
+--include-macro CXCursor_CXXThisExpr
+--include-macro CXCursor_CXXThrowExpr
+--include-macro CXCursor_CXXTryStmt
+--include-macro CXCursor_CXXTypeidExpr
+--include-macro CXCursor_CallExpr
+--include-macro CXCursor_CaseStmt
+--include-macro CXCursor_CharacterLiteral
+--include-macro CXCursor_ClassDecl
+--include-macro CXCursor_ClassTemplate
+--include-macro CXCursor_ClassTemplatePartialSpecialization
+--include-macro CXCursor_CompoundAssignOperator
+--include-macro CXCursor_CompoundLiteralExpr
+--include-macro CXCursor_CompoundStmt
+--include-macro CXCursor_ConditionalOperator
+--include-macro CXCursor_ConstAttr
+--include-macro CXCursor_Constructor
+--include-macro CXCursor_ContinueStmt
+--include-macro CXCursor_ConvergentAttr
+--include-macro CXCursor_ConversionFunction
+--include-macro CXCursor_DLLExport
+--include-macro CXCursor_DLLImport
+--include-macro CXCursor_DeclRefExpr
+--include-macro CXCursor_DeclStmt
+--include-macro CXCursor_DefaultStmt
+--include-macro CXCursor_Destructor
+--include-macro CXCursor_DoStmt
+--include-macro CXCursor_EnumConstantDecl
+--include-macro CXCursor_EnumDecl
+--include-macro CXCursor_ExceptionSpecificationKind_BasicNoexcept
+--include-macro CXCursor_ExceptionSpecificationKind_ComputedNoexcept
+--include-macro CXCursor_ExceptionSpecificationKind_Dynamic
+--include-macro CXCursor_ExceptionSpecificationKind_DynamicNone
+--include-macro CXCursor_ExceptionSpecificationKind_MSAny
+--include-macro CXCursor_ExceptionSpecificationKind_NoThrow
+--include-macro CXCursor_ExceptionSpecificationKind_None
+--include-macro CXCursor_ExceptionSpecificationKind_Unevaluated
+--include-macro CXCursor_ExceptionSpecificationKind_Uninstantiated
+--include-macro CXCursor_ExceptionSpecificationKind_Unparsed
+--include-macro CXCursor_FieldDecl
+--include-macro CXCursor_FirstAttr
+--include-macro CXCursor_FirstDecl
+--include-macro CXCursor_FirstExpr
+--include-macro CXCursor_FirstExtraDecl
+--include-macro CXCursor_FirstInvalid
+--include-macro CXCursor_FirstPreprocessing
+--include-macro CXCursor_FirstRef
+--include-macro CXCursor_FirstStmt
+--include-macro CXCursor_FixedPointLiteral
+--include-macro CXCursor_FlagEnum
+--include-macro CXCursor_FloatingLiteral
+--include-macro CXCursor_ForStmt
+--include-macro CXCursor_FriendDecl
+--include-macro CXCursor_FunctionDecl
+--include-macro CXCursor_FunctionTemplate
+--include-macro CXCursor_GCCAsmStmt
+--include-macro CXCursor_GNUNullExpr
+--include-macro CXCursor_GenericSelectionExpr
+--include-macro CXCursor_GotoStmt
+--include-macro CXCursor_IBActionAttr
+--include-macro CXCursor_IBOutletAttr
+--include-macro CXCursor_IBOutletCollectionAttr
+--include-macro CXCursor_IfStmt
+--include-macro CXCursor_ImaginaryLiteral
+--include-macro CXCursor_InclusionDirective
+--include-macro CXCursor_IndirectGotoStmt
+--include-macro CXCursor_InitListExpr
+--include-macro CXCursor_IntegerLiteral
+--include-macro CXCursor_InvalidCode
+--include-macro CXCursor_InvalidFile
+--include-macro CXCursor_LabelRef
+--include-macro CXCursor_LabelStmt
+--include-macro CXCursor_LambdaExpr
+--include-macro CXCursor_LastAttr
+--include-macro CXCursor_LastDecl
+--include-macro CXCursor_LastExpr
+--include-macro CXCursor_LastExtraDecl
+--include-macro CXCursor_LastInvalid
+--include-macro CXCursor_LastPreprocessing
+--include-macro CXCursor_LastRef
+--include-macro CXCursor_LastStmt
+--include-macro CXCursor_LinkageSpec
+--include-macro CXCursor_MSAsmStmt
+--include-macro CXCursor_MacroDefinition
+--include-macro CXCursor_MacroExpansion
+--include-macro CXCursor_MacroInstantiation
+--include-macro CXCursor_MemberRef
+--include-macro CXCursor_MemberRefExpr
+--include-macro CXCursor_ModuleImportDecl
+--include-macro CXCursor_NSConsumed
+--include-macro CXCursor_NSConsumesSelf
+--include-macro CXCursor_NSReturnsAutoreleased
+--include-macro CXCursor_NSReturnsNotRetained
+--include-macro CXCursor_NSReturnsRetained
+--include-macro CXCursor_Namespace
+--include-macro CXCursor_NamespaceAlias
+--include-macro CXCursor_NamespaceRef
+--include-macro CXCursor_NoDeclFound
+--include-macro CXCursor_NoDuplicateAttr
+--include-macro CXCursor_NonTypeTemplateParameter
+--include-macro CXCursor_NotImplemented
+--include-macro CXCursor_NullStmt
+--include-macro CXCursor_OMPArraySectionExpr
+--include-macro CXCursor_OMPAtomicDirective
+--include-macro CXCursor_OMPBarrierDirective
+--include-macro CXCursor_OMPCancelDirective
+--include-macro CXCursor_OMPCancellationPointDirective
+--include-macro CXCursor_OMPCriticalDirective
+--include-macro CXCursor_OMPDistributeDirective
+--include-macro CXCursor_OMPDistributeParallelForDirective
+--include-macro CXCursor_OMPDistributeParallelForSimdDirective
+--include-macro CXCursor_OMPDistributeSimdDirective
+--include-macro CXCursor_OMPFlushDirective
+--include-macro CXCursor_OMPForDirective
+--include-macro CXCursor_OMPForSimdDirective
+--include-macro CXCursor_OMPMasterDirective
+--include-macro CXCursor_OMPMasterTaskLoopDirective
+--include-macro CXCursor_OMPMasterTaskLoopSimdDirective
+--include-macro CXCursor_OMPOrderedDirective
+--include-macro CXCursor_OMPParallelDirective
+--include-macro CXCursor_OMPParallelForDirective
+--include-macro CXCursor_OMPParallelForSimdDirective
+--include-macro CXCursor_OMPParallelMasterTaskLoopDirective
+--include-macro CXCursor_OMPParallelMasterTaskLoopSimdDirective
+--include-macro CXCursor_OMPParallelSectionsDirective
+--include-macro CXCursor_OMPSectionDirective
+--include-macro CXCursor_OMPSectionsDirective
+--include-macro CXCursor_OMPSimdDirective
+--include-macro CXCursor_OMPSingleDirective
+--include-macro CXCursor_OMPTargetDataDirective
+--include-macro CXCursor_OMPTargetDirective
+--include-macro CXCursor_OMPTargetEnterDataDirective
+--include-macro CXCursor_OMPTargetExitDataDirective
+--include-macro CXCursor_OMPTargetParallelDirective
+--include-macro CXCursor_OMPTargetParallelForDirective
+--include-macro CXCursor_OMPTargetParallelForSimdDirective
+--include-macro CXCursor_OMPTargetSimdDirective
+--include-macro CXCursor_OMPTargetTeamsDirective
+--include-macro CXCursor_OMPTargetTeamsDistributeDirective
+--include-macro CXCursor_OMPTargetTeamsDistributeParallelForDirective
+--include-macro CXCursor_OMPTargetTeamsDistributeParallelForSimdDirective
+--include-macro CXCursor_OMPTargetTeamsDistributeSimdDirective
+--include-macro CXCursor_OMPTargetUpdateDirective
+--include-macro CXCursor_OMPTaskDirective
+--include-macro CXCursor_OMPTaskLoopDirective
+--include-macro CXCursor_OMPTaskLoopSimdDirective
+--include-macro CXCursor_OMPTaskgroupDirective
+--include-macro CXCursor_OMPTaskwaitDirective
+--include-macro CXCursor_OMPTaskyieldDirective
+--include-macro CXCursor_OMPTeamsDirective
+--include-macro CXCursor_OMPTeamsDistributeDirective
+--include-macro CXCursor_OMPTeamsDistributeParallelForDirective
+--include-macro CXCursor_OMPTeamsDistributeParallelForSimdDirective
+--include-macro CXCursor_OMPTeamsDistributeSimdDirective
+--include-macro CXCursor_ObjCAtCatchStmt
+--include-macro CXCursor_ObjCAtFinallyStmt
+--include-macro CXCursor_ObjCAtSynchronizedStmt
+--include-macro CXCursor_ObjCAtThrowStmt
+--include-macro CXCursor_ObjCAtTryStmt
+--include-macro CXCursor_ObjCAutoreleasePoolStmt
+--include-macro CXCursor_ObjCAvailabilityCheckExpr
+--include-macro CXCursor_ObjCBoolLiteralExpr
+--include-macro CXCursor_ObjCBoxable
+--include-macro CXCursor_ObjCBridgedCastExpr
+--include-macro CXCursor_ObjCCategoryDecl
+--include-macro CXCursor_ObjCCategoryImplDecl
+--include-macro CXCursor_ObjCClassMethodDecl
+--include-macro CXCursor_ObjCClassRef
+--include-macro CXCursor_ObjCDesignatedInitializer
+--include-macro CXCursor_ObjCDynamicDecl
+--include-macro CXCursor_ObjCEncodeExpr
+--include-macro CXCursor_ObjCException
+--include-macro CXCursor_ObjCExplicitProtocolImpl
+--include-macro CXCursor_ObjCForCollectionStmt
+--include-macro CXCursor_ObjCImplementationDecl
+--include-macro CXCursor_ObjCIndependentClass
+--include-macro CXCursor_ObjCInstanceMethodDecl
+--include-macro CXCursor_ObjCInterfaceDecl
+--include-macro CXCursor_ObjCIvarDecl
+--include-macro CXCursor_ObjCMessageExpr
+--include-macro CXCursor_ObjCNSObject
+--include-macro CXCursor_ObjCPreciseLifetime
+--include-macro CXCursor_ObjCPropertyDecl
+--include-macro CXCursor_ObjCProtocolDecl
+--include-macro CXCursor_ObjCProtocolExpr
+--include-macro CXCursor_ObjCProtocolRef
+--include-macro CXCursor_ObjCRequiresSuper
+--include-macro CXCursor_ObjCReturnsInnerPointer
+--include-macro CXCursor_ObjCRootClass
+--include-macro CXCursor_ObjCRuntimeVisible
+--include-macro CXCursor_ObjCSelectorExpr
+--include-macro CXCursor_ObjCSelfExpr
+--include-macro CXCursor_ObjCStringLiteral
+--include-macro CXCursor_ObjCSubclassingRestricted
+--include-macro CXCursor_ObjCSuperClassRef
+--include-macro CXCursor_ObjCSynthesizeDecl
+--include-macro CXCursor_OverloadCandidate
+--include-macro CXCursor_OverloadedDeclRef
+--include-macro CXCursor_PackExpansionExpr
+--include-macro CXCursor_PackedAttr
+--include-macro CXCursor_ParenExpr
+--include-macro CXCursor_ParmDecl
+--include-macro CXCursor_PreprocessingDirective
+--include-macro CXCursor_PureAttr
+--include-macro CXCursor_ReturnStmt
+--include-macro CXCursor_SEHExceptStmt
+--include-macro CXCursor_SEHFinallyStmt
+--include-macro CXCursor_SEHLeaveStmt
+--include-macro CXCursor_SEHTryStmt
+--include-macro CXCursor_SizeOfPackExpr
+--include-macro CXCursor_StaticAssert
+--include-macro CXCursor_StmtExpr
+--include-macro CXCursor_StringLiteral
+--include-macro CXCursor_StructDecl
+--include-macro CXCursor_SwitchStmt
+--include-macro CXCursor_TemplateRef
+--include-macro CXCursor_TemplateTemplateParameter
+--include-macro CXCursor_TemplateTypeParameter
+--include-macro CXCursor_TranslationUnit
+--include-macro CXCursor_TypeAliasDecl
+--include-macro CXCursor_TypeAliasTemplateDecl
+--include-macro CXCursor_TypeRef
+--include-macro CXCursor_TypedefDecl
+--include-macro CXCursor_UnaryExpr
+--include-macro CXCursor_UnaryOperator
+--include-macro CXCursor_UnexposedAttr
+--include-macro CXCursor_UnexposedDecl
+--include-macro CXCursor_UnexposedExpr
+--include-macro CXCursor_UnexposedStmt
+--include-macro CXCursor_UnionDecl
+--include-macro CXCursor_UsingDeclaration
+--include-macro CXCursor_UsingDirective
+--include-macro CXCursor_VarDecl
+--include-macro CXCursor_VariableRef
+--include-macro CXCursor_VisibilityAttr
+--include-macro CXCursor_WarnUnusedAttr
+--include-macro CXCursor_WarnUnusedResultAttr
+--include-macro CXCursor_WhileStmt
+--include-macro CXDiagnostic_DisplayCategoryId
+--include-macro CXDiagnostic_DisplayCategoryName
+--include-macro CXDiagnostic_DisplayColumn
+--include-macro CXDiagnostic_DisplayOption
+--include-macro CXDiagnostic_DisplaySourceLocation
+--include-macro CXDiagnostic_DisplaySourceRanges
+--include-macro CXDiagnostic_Error
+--include-macro CXDiagnostic_Fatal
+--include-macro CXDiagnostic_Ignored
+--include-macro CXDiagnostic_Note
+--include-macro CXDiagnostic_Warning
+--include-macro CXLanguage_C
+--include-macro CXLanguage_CPlusPlus
+--include-macro CXLanguage_Invalid
+--include-macro CXLanguage_ObjC
+--include-macro CXPrintingPolicy_Alignof
+--include-macro CXPrintingPolicy_AnonymousTagLocations
+--include-macro CXPrintingPolicy_Bool
+--include-macro CXPrintingPolicy_ConstantArraySizeAsWritten
+--include-macro CXPrintingPolicy_ConstantsAsWritten
+--include-macro CXPrintingPolicy_FullyQualifiedName
+--include-macro CXPrintingPolicy_Half
+--include-macro CXPrintingPolicy_IncludeNewlines
+--include-macro CXPrintingPolicy_IncludeTagDefinition
+--include-macro CXPrintingPolicy_Indentation
+--include-macro CXPrintingPolicy_LastProperty
+--include-macro CXPrintingPolicy_MSVCFormatting
+--include-macro CXPrintingPolicy_MSWChar
+--include-macro CXPrintingPolicy_PolishForDeclaration
+--include-macro CXPrintingPolicy_Restrict
+--include-macro CXPrintingPolicy_SuppressImplicitBase
+--include-macro CXPrintingPolicy_SuppressInitializers
+--include-macro CXPrintingPolicy_SuppressLifetimeQualifiers
+--include-macro CXPrintingPolicy_SuppressScope
+--include-macro CXPrintingPolicy_SuppressSpecifiers
+--include-macro CXPrintingPolicy_SuppressStrongLifetime
+--include-macro CXPrintingPolicy_SuppressTagKeyword
+--include-macro CXPrintingPolicy_SuppressTemplateArgsInCXXConstructors
+--include-macro CXPrintingPolicy_SuppressUnwrittenScope
+--include-macro CXPrintingPolicy_TerseOutput
+--include-macro CXPrintingPolicy_UnderscoreAlignof
+--include-macro CXPrintingPolicy_UseVoidForZeroParams
+--include-macro CXReparse_None
+--include-macro CXResult_Invalid
+--include-macro CXResult_Success
+--include-macro CXResult_VisitBreak
+--include-macro CXSaveError_InvalidTU
+--include-macro CXSaveError_None
+--include-macro CXSaveError_TranslationErrors
+--include-macro CXSaveError_Unknown
+--include-macro CXSaveTranslationUnit_None
+--include-macro CXToken_Comment
+--include-macro CXToken_Identifier
+--include-macro CXToken_Keyword
+--include-macro CXToken_Literal
+--include-macro CXToken_Punctuation
+--include-macro CXTranslationUnit_CXXChainedPCH
+--include-macro CXTranslationUnit_CacheCompletionResults
+--include-macro CXTranslationUnit_CreatePreambleOnFirstParse
+--include-macro CXTranslationUnit_DetailedPreprocessingRecord
+--include-macro CXTranslationUnit_ForSerialization
+--include-macro CXTranslationUnit_IgnoreNonErrorsFromIncludedFiles
+--include-macro CXTranslationUnit_IncludeAttributedTypes
+--include-macro CXTranslationUnit_IncludeBriefCommentsInCodeCompletion
+--include-macro CXTranslationUnit_Incomplete
+--include-macro CXTranslationUnit_KeepGoing
+--include-macro CXTranslationUnit_LimitSkipFunctionBodiesToPreamble
+--include-macro CXTranslationUnit_None
+--include-macro CXTranslationUnit_PrecompiledPreamble
+--include-macro CXTranslationUnit_RetainExcludedConditionalBlocks
+--include-macro CXTranslationUnit_SingleFileParse
+--include-macro CXTranslationUnit_SkipFunctionBodies
+--include-macro CXTranslationUnit_VisitImplicitAttributes
+--include-macro CXTypeLayoutError_Dependent
+--include-macro CXTypeLayoutError_Incomplete
+--include-macro CXTypeLayoutError_Invalid
+--include-macro CXTypeLayoutError_InvalidFieldName
+--include-macro CXTypeLayoutError_NotConstantSize
+--include-macro CXTypeLayoutError_Undeduced
+--include-macro CXTypeNullability_Invalid
+--include-macro CXTypeNullability_NonNull
+--include-macro CXTypeNullability_Nullable
+--include-macro CXTypeNullability_Unspecified
+--include-macro CXType_Accum
+--include-macro CXType_Attributed
+--include-macro CXType_Auto
+--include-macro CXType_BlockPointer
+--include-macro CXType_Bool
+--include-macro CXType_Char16
+--include-macro CXType_Char32
+--include-macro CXType_Char_S
+--include-macro CXType_Char_U
+--include-macro CXType_Complex
+--include-macro CXType_ConstantArray
+--include-macro CXType_Dependent
+--include-macro CXType_DependentSizedArray
+--include-macro CXType_Double
+--include-macro CXType_Elaborated
+--include-macro CXType_Enum
+--include-macro CXType_ExtVector
+--include-macro CXType_FirstBuiltin
+--include-macro CXType_Float
+--include-macro CXType_Float128
+--include-macro CXType_Float16
+--include-macro CXType_FunctionNoProto
+--include-macro CXType_FunctionProto
+--include-macro CXType_Half
+--include-macro CXType_IncompleteArray
+--include-macro CXType_Int
+--include-macro CXType_Int128
+--include-macro CXType_Invalid
+--include-macro CXType_LValueReference
+--include-macro CXType_LastBuiltin
+--include-macro CXType_Long
+--include-macro CXType_LongAccum
+--include-macro CXType_LongDouble
+--include-macro CXType_LongLong
+--include-macro CXType_MemberPointer
+--include-macro CXType_NullPtr
+--include-macro CXType_OCLEvent
+--include-macro CXType_OCLImage1dArrayRO
+--include-macro CXType_OCLImage1dArrayRW
+--include-macro CXType_OCLImage1dArrayWO
+--include-macro CXType_OCLImage1dBufferRO
+--include-macro CXType_OCLImage1dBufferRW
+--include-macro CXType_OCLImage1dBufferWO
+--include-macro CXType_OCLImage1dRO
+--include-macro CXType_OCLImage1dRW
+--include-macro CXType_OCLImage1dWO
+--include-macro CXType_OCLImage2dArrayDepthRO
+--include-macro CXType_OCLImage2dArrayDepthRW
+--include-macro CXType_OCLImage2dArrayDepthWO
+--include-macro CXType_OCLImage2dArrayMSAADepthRO
+--include-macro CXType_OCLImage2dArrayMSAADepthRW
+--include-macro CXType_OCLImage2dArrayMSAADepthWO
+--include-macro CXType_OCLImage2dArrayMSAARO
+--include-macro CXType_OCLImage2dArrayMSAARW
+--include-macro CXType_OCLImage2dArrayMSAAWO
+--include-macro CXType_OCLImage2dArrayRO
+--include-macro CXType_OCLImage2dArrayRW
+--include-macro CXType_OCLImage2dArrayWO
+--include-macro CXType_OCLImage2dDepthRO
+--include-macro CXType_OCLImage2dDepthRW
+--include-macro CXType_OCLImage2dDepthWO
+--include-macro CXType_OCLImage2dMSAADepthRO
+--include-macro CXType_OCLImage2dMSAADepthRW
+--include-macro CXType_OCLImage2dMSAADepthWO
+--include-macro CXType_OCLImage2dMSAARO
+--include-macro CXType_OCLImage2dMSAARW
+--include-macro CXType_OCLImage2dMSAAWO
+--include-macro CXType_OCLImage2dRO
+--include-macro CXType_OCLImage2dRW
+--include-macro CXType_OCLImage2dWO
+--include-macro CXType_OCLImage3dRO
+--include-macro CXType_OCLImage3dRW
+--include-macro CXType_OCLImage3dWO
+--include-macro CXType_OCLIntelSubgroupAVCImeDualRefStreamin
+--include-macro CXType_OCLIntelSubgroupAVCImePayload
+--include-macro CXType_OCLIntelSubgroupAVCImeResult
+--include-macro CXType_OCLIntelSubgroupAVCImeResultDualRefStreamout
+--include-macro CXType_OCLIntelSubgroupAVCImeResultSingleRefStreamout
+--include-macro CXType_OCLIntelSubgroupAVCImeSingleRefStreamin
+--include-macro CXType_OCLIntelSubgroupAVCMcePayload
+--include-macro CXType_OCLIntelSubgroupAVCMceResult
+--include-macro CXType_OCLIntelSubgroupAVCRefPayload
+--include-macro CXType_OCLIntelSubgroupAVCRefResult
+--include-macro CXType_OCLIntelSubgroupAVCSicPayload
+--include-macro CXType_OCLIntelSubgroupAVCSicResult
+--include-macro CXType_OCLQueue
+--include-macro CXType_OCLReserveID
+--include-macro CXType_OCLSampler
+--include-macro CXType_ObjCClass
+--include-macro CXType_ObjCId
+--include-macro CXType_ObjCInterface
+--include-macro CXType_ObjCObject
+--include-macro CXType_ObjCObjectPointer
+--include-macro CXType_ObjCSel
+--include-macro CXType_ObjCTypeParam
+--include-macro CXType_Overload
+--include-macro CXType_Pipe
+--include-macro CXType_Pointer
+--include-macro CXType_RValueReference
+--include-macro CXType_Record
+--include-macro CXType_SChar
+--include-macro CXType_Short
+--include-macro CXType_ShortAccum
+--include-macro CXType_Typedef
+--include-macro CXType_UAccum
+--include-macro CXType_UChar
+--include-macro CXType_UInt
+--include-macro CXType_UInt128
+--include-macro CXType_ULong
+--include-macro CXType_ULongAccum
+--include-macro CXType_ULongLong
+--include-macro CXType_UShort
+--include-macro CXType_UShortAccum
+--include-macro CXType_Unexposed
+--include-macro CXType_VariableArray
+--include-macro CXType_Vector
+--include-macro CXType_Void
+--include-macro CXType_WChar
+--include-function clang_Cursor_Evaluate
+--include-function clang_Cursor_getArgument
+--include-function clang_Cursor_getMangling
+--include-function clang_Cursor_getNumArguments
+--include-function clang_Cursor_getTranslationUnit
+--include-function clang_Cursor_isAnonymous
+--include-function clang_Cursor_isAnonymousRecordDecl
+--include-function clang_Cursor_isBitField
+--include-function clang_Cursor_isMacroFunctionLike
+--include-function clang_Cursor_isNull
+--include-function clang_Cursor_isVariadic
+--include-function clang_EvalResult_dispose
+--include-function clang_EvalResult_getAsDouble
+--include-function clang_EvalResult_getAsInt
+--include-function clang_EvalResult_getAsLongLong
+--include-function clang_EvalResult_getAsStr
+--include-function clang_EvalResult_getAsUnsigned
+--include-function clang_EvalResult_getKind
+--include-function clang_EvalResult_isUnsignedInt
+--include-function clang_Location_isFromMainFile
+--include-function clang_Location_isInSystemHeader
+--include-function clang_PrintingPolicy_dispose
+--include-function clang_PrintingPolicy_getProperty
+--include-function clang_PrintingPolicy_setProperty
+--include-function clang_Range_isNull
+--include-function clang_Type_getOffsetOf
+--include-function clang_Type_getSizeOf
+--include-function clang_createIndex
+--include-function clang_defaultDiagnosticDisplayOptions
+--include-function clang_defaultReparseOptions
+--include-function clang_disposeDiagnostic
+--include-function clang_disposeIndex
+--include-function clang_disposeTokens
+--include-function clang_disposeTranslationUnit
+--include-function clang_equalCursors
+--include-function clang_equalLocations
+--include-function clang_equalTypes
+--include-function clang_formatDiagnostic
+--include-function clang_getArgType
+--include-function clang_getArrayElementType
+--include-function clang_getArraySize
+--include-function clang_getCanonicalType
+--include-function clang_getChildDiagnostics
+--include-function clang_getClangVersion
+--include-function clang_getCursorDefinition
+--include-function clang_getCursorDisplayName
+--include-function clang_getCursorExtent
+--include-function clang_getCursorKind
+--include-function clang_getCursorKindSpelling
+--include-function clang_getCursorLanguage
+--include-function clang_getCursorLocation
+--include-function clang_getCursorPrettyPrinted
+--include-function clang_getCursorPrintingPolicy
+--include-function clang_getCursorReferenced
+--include-function clang_getCursorResultType
+--include-function clang_getCursorSpelling
+--include-function clang_getCursorType
+--include-function clang_getCursorUSR
+--include-function clang_getDiagnostic
+--include-function clang_getDiagnosticLocation
+--include-function clang_getDiagnosticSeverity
+--include-function clang_getDiagnosticSpelling
+--include-function clang_getElementType
+--include-function clang_getEnumConstantDeclUnsignedValue
+--include-function clang_getEnumConstantDeclValue
+--include-function clang_getEnumDeclIntegerType
+--include-function clang_getExpansionLocation
+--include-function clang_getFieldDeclBitWidth
+--include-function clang_getFileLocation
+--include-function clang_getFileName
+--include-function clang_getFunctionTypeCallingConv
+--include-function clang_getLocation
+--include-function clang_getLocationForOffset
+--include-function clang_getNullCursor
+--include-function clang_getNullLocation
+--include-function clang_getNumArgTypes
+--include-function clang_getNumDiagnostics
+--include-function clang_getNumElements
+--include-function clang_getPointeeType
+--include-function clang_getRangeStart
+--include-function clang_getRangeEnd
+--include-function clang_getResultType
+--include-function clang_getSpellingLocation
+--include-function clang_getTokenExtent
+--include-function clang_getTokenKind
+--include-function clang_getTokenLocation
+--include-function clang_getTokenSpelling
+--include-function clang_getTranslationUnitCursor
+--include-function clang_getTypeDeclaration
+--include-function clang_getTypeKindSpelling
+--include-function clang_getTypePrettyPrinted
+--include-function clang_getTypePrintingPolicy
+--include-function clang_getTypeSpelling
+--include-function clang_getTypedefDeclUnderlyingType
+--include-function clang_getTypedefName
+--include-function clang_isAttribute
+--include-function clang_isConstQualifiedType
+--include-function clang_isCursorDefinition
+--include-function clang_isDeclaration
+--include-function clang_isFunctionTypeVariadic
+--include-function clang_isInvalid
+--include-function clang_isPreprocessing
+--include-function clang_isVolatileQualifiedType
+--include-function clang_parseTranslationUnit
+--include-function clang_parseTranslationUnit2
+--include-function clang_reparseTranslationUnit
+--include-function clang_saveTranslationUnit
+--include-function clang_toggleCrashRecovery
+--include-function clang_tokenize
+--include-function clang_visitChildren
