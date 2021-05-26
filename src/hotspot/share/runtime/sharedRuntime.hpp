@@ -512,6 +512,8 @@ class SharedRuntime: AllStatic {
 
 #ifdef COMPILER2
   static RuntimeStub* make_native_invoker(address call_target,
+                                          BasicType*,
+                                          int num_args,
                                           int shadow_space_bytes,
                                           const GrowableArray<VMReg>& input_registers,
                                           const GrowableArray<VMReg>& output_registers);

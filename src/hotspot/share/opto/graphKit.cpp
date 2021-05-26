@@ -2594,6 +2594,7 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   uint n_filtered_args = nargs - 4; // -fallback, -addr (2), -nep;
   ResourceMark rm;
   Node** argument_nodes = NEW_RESOURCE_ARRAY(Node*, n_filtered_args);
+  BasicType* argument_bts = NEW_RESOURCE_ARRAY(BasicType, n_filtered_args);
   const Type** arg_types = TypeTuple::fields(n_filtered_args);
   GrowableArray<VMReg> arg_regs(C->comp_arena(), n_filtered_args, n_filtered_args, VMRegImpl::Bad());
 
@@ -2609,6 +2610,7 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
         : argRegs[java_arg_read_pos++];
 
       argument_nodes[vm_arg_pos] = node;
+      argument_bts[vm_arg_pos] = type->basic_type();
       arg_types[TypeFunc::Parms + vm_arg_pos] = type;
       arg_regs.at_put(vm_arg_pos, reg);
     }
@@ -2637,10 +2639,12 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
     TypeTuple::make(TypeFunc::Parms + n_returns, ret_types)
   );
 
-  Node* call = nullptr;
+  CallNode* call = nullptr;
   bool need_transition = nep->need_transition();
   if (need_transition) {
     RuntimeStub* invoker = SharedRuntime::make_native_invoker(call_addr,
+                                                              argument_bts,
+                                                              n_filtered_args,
                                                               nep->shadow_space(),
                                                               arg_regs, ret_regs);
     if (invoker == NULL) {
@@ -2648,27 +2652,32 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
       return NULL;
     }
     C->add_native_invoker(invoker);
-    call_addr = invoker->code_begin();
-    call = make_runtime_call(RC_NO_LEAF, new_call_type, call_addr, nep->name(), TypePtr::BOTTOM);
+    //call = make_runtime_call(RC_NO_LEAF, new_call_type, call_addr, nep->name(), TypePtr::BOTTOM);
+    call = new CallStaticJavaNode(new_call_type, invoker->code_begin(), nep->name(), TypePtr::BOTTOM);
   } else {
-    CallNativeNode* trivial_call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
+    call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
                               arg_regs,
                               ret_regs,
                               nep->shadow_space(),
                               need_transition);
-
-    set_predefined_input_for_runtime_call(trivial_call);
-    set_predefined_output_for_runtime_call(call);
-    call = trivial_call;
   }
-  assert(call != nullptr, "sanity");
+
+  assert(call != nullptr, "'call' was not set");
+
+  if (need_transition) {
+    add_safepoint_edges(call);
+  }
+
+  set_predefined_input_for_runtime_call(call);
 
   for (uint i = 0; i < n_filtered_args; i++) {
-    call->set_req(i + TypeFunc::Parms, argument_nodes[i]);
+    call->init_req(i + TypeFunc::Parms, argument_nodes[i]);
   }
 
   Node* c = gvn().transform(call);
   assert(c == call, "cannot disappear");
+
+  set_predefined_output_for_runtime_call(call);
 
   Node* ret;
   if (method() == NULL || method()->return_type()->basic_type() == T_VOID) {

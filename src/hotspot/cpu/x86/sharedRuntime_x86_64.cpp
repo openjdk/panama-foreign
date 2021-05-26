@@ -32,6 +32,7 @@
 #include "code/icBuffer.hpp"
 #include "code/nativeInst.hpp"
 #include "code/vtableStubs.hpp"
+#include "compiler/disassembler.hpp"
 #include "compiler/oopMap.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/gcLocker.hpp"
@@ -39,6 +40,7 @@
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/compiledICHolder.hpp"
@@ -3244,6 +3246,8 @@ static const int native_invoker_code_size = MethodHandles::adapter_code_size;
 
 class NativeInvokerGenerator : public StubCodeGenerator {
   address _call_target;
+  BasicType* _signature;
+  int _num_args;
   int _shadow_space_bytes;
 
   const GrowableArray<VMReg>& _input_registers;
@@ -3255,11 +3259,15 @@ class NativeInvokerGenerator : public StubCodeGenerator {
 public:
   NativeInvokerGenerator(CodeBuffer* buffer,
                          address call_target,
+                         BasicType* signature,
+                         int num_args,
                          int shadow_space_bytes,
                          const GrowableArray<VMReg>& input_registers,
                          const GrowableArray<VMReg>& output_registers)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
      _call_target(call_target),
+     _signature(signature),
+     _num_args(num_args),
      _shadow_space_bytes(shadow_space_bytes),
      _input_registers(input_registers),
      _output_registers(output_registers),
@@ -3360,12 +3368,42 @@ bool target_uses_register(VMReg reg) {
 };
 
 RuntimeStub* SharedRuntime::make_native_invoker(address call_target,
+                                                BasicType* signature,
+                                                int num_args,
                                                 int shadow_space_bytes,
                                                 const GrowableArray<VMReg>& input_registers,
                                                 const GrowableArray<VMReg>& output_registers) {
+#ifdef ASSERT
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    ls.print_cr("Generating native invoker for %s (%d) {", "native_invoker", call_target);
+    ls.print("BasicType { ");
+    for (int i = 0; i < num_args; i++) {
+      ls.print("%s, ", type2name(signature[i]));
+    }
+    ls.print_cr("}");
+    ls.print_cr("shadow_space_bytes = %d", shadow_space_bytes);
+    ls.print("input_registers { ");
+    for (int i = 0; i < input_registers.length(); i++) {
+      VMReg reg = input_registers.at(i);
+      ls.print("%s (%d), ", reg->name(), reg->value());
+    }
+    ls.print_cr("}");
+      ls.print("output_registers { ");
+    for (int i = 0; i < output_registers.length(); i++) {
+      VMReg reg = output_registers.at(i);
+      ls.print("%s (%d), ", reg->name(), reg->value());
+    }
+    ls.print_cr("}");
+    ls.print_cr("}");
+  }
+#endif
+
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, call_target, shadow_space_bytes, input_registers, output_registers);
+  NativeInvokerGenerator g(&code, call_target, signature, num_args, shadow_space_bytes, input_registers, output_registers);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -3375,6 +3413,12 @@ RuntimeStub* SharedRuntime::make_native_invoker(address call_target,
                                   g.frame_complete(),
                                   g.framesize(),
                                   g.oop_maps(), false);
+
+  if (TraceNativeInvokers) {
+    stub->print_on(tty);
+    Disassembler::decode(stub, tty);
+  }
+
   return stub;
 }
 
@@ -3388,7 +3432,7 @@ struct ArgMove {
   }
 };
 
-static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const CallRegs& conv) {
+static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const GrowableArray<VMReg>& input_regs, int& out_arg_stk_slots) {
 
   VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
 
@@ -3396,8 +3440,42 @@ static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int nu
 
   VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
 
-  // Now figure out where the args must be stored and how much stack space they require.
-  conv.calling_convention(sig_bt, out_regs, num_args);
+  int src_pos = 0;
+  int stk_slots = 0;
+  for (int i = 0; i < num_args; i++) {
+    switch (sig_bt[i]) {
+      case T_BOOLEAN:
+      case T_CHAR:
+      case T_BYTE:
+      case T_SHORT:
+      case T_INT:
+      case T_FLOAT: {
+        VMReg reg = input_regs.at(src_pos++);
+        out_regs[i].set1(reg);
+        if (reg->is_stack())
+          stk_slots += 2;
+        break;
+      }
+      case T_LONG:
+      case T_DOUBLE: {
+        assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
+        VMReg reg = input_regs.at(src_pos);
+        out_regs[i].set2(reg);
+        src_pos += 2; // skip BAD as well
+        if (reg->is_stack())
+          stk_slots += 2;
+        break;
+      }
+      case T_VOID: // Halves of longs and doubles
+        assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE), "expecting half");
+        out_regs[i].set_bad();
+        break;
+      default:
+        ShouldNotReachHere();
+        break;
+    }
+  }
+  out_arg_stk_slots = stk_slots;
 
   GrowableArray<int> arg_order(2 * num_args);
 
@@ -3484,8 +3562,84 @@ static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int nu
   return arg_order_vmreg;
 }
 
+static const char* null_safe_string(const char* str) {
+  return str == nullptr ? "NULL" : str;
+}
+
+static void shuffle_arguments(MacroAssembler* masm, const GrowableArray<ArgMove>& arg_moves) {
+  for (int i = 0; i < arg_moves.length(); i++) {
+    ArgMove arg_mv = arg_moves.at(i);
+    BasicType arg_bt     = arg_mv.bt;
+    VMRegPair from_vmreg = arg_mv.from;
+    VMRegPair to_vmreg   = arg_mv.to;
+
+    assert(
+      !((from_vmreg.first()->is_Register() && to_vmreg.first()->is_XMMRegister())
+      || (from_vmreg.first()->is_XMMRegister() && to_vmreg.first()->is_Register())),
+       "move between gp and fp reg not supported");
+
+    __ block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+       SharedRuntime::move32_64(masm, from_vmreg, to_vmreg);
+       break;
+
+      case T_FLOAT:
+        SharedRuntime::float_move(masm, from_vmreg, to_vmreg);
+        break;
+
+      case T_DOUBLE:
+        SharedRuntime::double_move(masm, from_vmreg, to_vmreg);
+        break;
+
+      case T_LONG :
+        SharedRuntime::long_move(masm, from_vmreg, to_vmreg);
+        break;
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+  }
+}
+
 void NativeInvokerGenerator::generate() {
   assert(!(target_uses_register(r15_thread->as_VMReg()) || target_uses_register(rscratch1->as_VMReg())), "Register conflict");
+
+  // TODO stack arg slots
+  int out_arg_stk_slots = -1;
+  GrowableArray<ArgMove> arg_moves = compute_argument_shuffle(_signature, _num_args, _input_registers, out_arg_stk_slots);
+  assert(out_arg_stk_slots != -1, "out_arg_size_bytes was not set");
+
+#ifdef ASSERT
+  LogTarget(Trace, panama) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm;
+    LogStream ls(lt);
+    ls.print_cr("Argument shuffle for %s {", "native_invoker");
+    for (int i = 0; i < arg_moves.length(); i++) {
+      ArgMove arg_mv = arg_moves.at(i);
+      BasicType arg_bt     = arg_mv.bt;
+      VMRegPair from_vmreg = arg_mv.from;
+      VMRegPair to_vmreg   = arg_mv.to;
+
+      ls.print("Move a %s from (", null_safe_string(type2name(arg_bt)));
+      from_vmreg.first()->print_on(&ls);
+      ls.print(",");
+      from_vmreg.second()->print_on(&ls);
+      ls.print(") to (");
+      to_vmreg.first()->print_on(&ls);
+      ls.print(",");
+      to_vmreg.second()->print_on(&ls);
+      ls.print_cr(")");
+    }
+    ls.print_cr("Stack argument slots: %d", out_arg_stk_slots);
+    ls.print_cr("}");
+  }
+#endif
 
   enum layout {
     rbp_off,
@@ -3493,9 +3647,13 @@ void NativeInvokerGenerator::generate() {
     return_off,
     return_off2,
     framesize // inclusive of return address
+    // The following are also computed dynamically:
+    // shadow space
+    // spill area
+    // out arg area (e.g. for stack args)
   };
 
-  _framesize = align_up(framesize + ((_shadow_space_bytes + spill_size_in_bytes()) >> LogBytesPerInt), 4);
+  _framesize = align_up(framesize + ((_shadow_space_bytes + spill_size_in_bytes()) >> LogBytesPerInt) + out_arg_stk_slots, 4);
   assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
   _oop_maps  = new OopMapSet();
@@ -3512,15 +3670,24 @@ void NativeInvokerGenerator::generate() {
 
   address the_pc = __ pc();
 
+  __ block_comment("{ thread java2native");
   __ set_last_Java_frame(rsp, rbp, (address)the_pc);
   OopMap* map = new OopMap(_framesize, 0);
   _oop_maps->add_gc_map(the_pc - start, map);
 
   // State transition
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native);
+  __ block_comment("} thread java2native");
+
+  __ block_comment("{ argument shuffle");
+  shuffle_arguments(_masm, arg_moves);
+  __ block_comment("} argument shuffle");
 
   __ call(RuntimeAddress(_call_target));
 
+  // TODO handle sub-int returns
+
+  __ block_comment("{ thread native2java");
   __ restore_cpu_control_state_after_jni();
 
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
@@ -3550,6 +3717,7 @@ void NativeInvokerGenerator::generate() {
   __ bind(L_after_reguard);
 
   __ reset_last_Java_frame(r15_thread, true);
+  __ block_comment("} thread native2java");
 
   __ leave(); // required for proper stackwalking of RuntimeStub frame
   __ ret(0);

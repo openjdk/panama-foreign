@@ -98,7 +98,7 @@ public:
   // we don't try and get the VMReg number of a physical register that doesn't
   // have an expressible part. That would be pd specific code
   VMReg next() {
-    assert((is_reg() && value() < stack0->value() - 1) || is_stack(), "must be");
+    assert((is_reg() && value() < stack0->value() - 1) || is_stack(), "no next register for %s (%d)", this->name(), value());
     return (VMReg)(intptr_t)(value() + 1);
   }
   VMReg next(int i) {
