@@ -62,7 +62,7 @@ FloatRegister VMRegImpl::as_FloatRegister() {
   return ::as_FloatRegister(value() - ConcreteRegisterImpl::max_gpr);
 }
 
-VMReg VMRegImpl::vmStorageToVMReg(int type, int index) {
+VMReg VMRegImpl::vmStorageToVMReg(int type, int index, int stk_slot_offset) {
   ShouldNotCallThis();
   return VMRegImpl::Bad();
 }

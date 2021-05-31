@@ -64,19 +64,21 @@ public class NativeEntryPoint {
             throw new IllegalArgumentException("Multiple register return not supported");
         }
 
-        return new NativeEntryPoint(abi.shadowSpaceBytes(), encodeVMStorages(argMoves), encodeVMStorages(returnMoves),
+        return new NativeEntryPoint(abi.shadowSpaceBytes(),
+                encodeVMStorages(argMoves, abi.shadowSpaceBytes()),
+                encodeVMStorages(returnMoves, 16), // rbp and ret addr
                 needTransition, methodType, name);
     }
 
-    private static long[] encodeVMStorages(VMStorageProxy[] moves) {
+    private static long[] encodeVMStorages(VMStorageProxy[] moves, int stackSlotOffset) {
         long[] out = new long[moves.length];
         for (int i = 0; i < moves.length; i++) {
-            out[i] = vmStorageToVMReg(moves[i].type(), moves[i].index());
+            out[i] = vmStorageToVMReg(moves[i].type(), moves[i].index(), stackSlotOffset);
         }
         return out;
     }
 
-    private static native long vmStorageToVMReg(int type, int index);
+    private static native long vmStorageToVMReg(int type, int index, int stackSlotOffset);
 
     public MethodType type() {
         return methodType;

@@ -56,11 +56,11 @@ void VMRegImpl::set_regName() {
 #define VECTOR_TYPE 1
 #define STACK_TYPE 3
 
-VMReg VMRegImpl::vmStorageToVMReg(int type, int index) {
+VMReg VMRegImpl::vmStorageToVMReg(int type, int index, int stk_slot_offset) {
   switch(type) {
     case INTEGER_TYPE: return ::as_Register(index)->as_VMReg();
     case VECTOR_TYPE: return ::as_FloatRegister(index)->as_VMReg();
-    case STACK_TYPE: return VMRegImpl::stack2reg(index LP64_ONLY(* 2));
+    case STACK_TYPE: return VMRegImpl::stack2reg(stk_slot_offset + (index LP64_ONLY(* 2)));
   }
   return VMRegImpl::Bad();
 }

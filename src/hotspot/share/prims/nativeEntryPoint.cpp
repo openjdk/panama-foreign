@@ -26,15 +26,16 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "code/vmreg.hpp"
 
-JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index))
-  return VMRegImpl::vmStorageToVMReg(type, index)->value();
+JNI_LEAF(jlong, NEP_vmStorageToVMReg(JNIEnv* env, jclass _unused, jint type, jint index, jint stack_slot_offset_bytes))
+  int stack_slot_offset_slots = stack_slot_offset_bytes >> LogBytesPerInt;
+  return VMRegImpl::vmStorageToVMReg(type, index, stack_slot_offset_slots)->value();
 JNI_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod NEP_methods[] = {
-  {CC "vmStorageToVMReg", CC "(II)J", FN_PTR(NEP_vmStorageToVMReg)},
+  {CC "vmStorageToVMReg", CC "(III)J", FN_PTR(NEP_vmStorageToVMReg)},
 };
 
 JNI_ENTRY(void, JVM_RegisterNativeEntryPointMethods(JNIEnv *env, jclass NEP_class))

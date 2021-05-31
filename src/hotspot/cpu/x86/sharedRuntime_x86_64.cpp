@@ -3290,13 +3290,13 @@ public:
     if (reg->is_Register()) {
       return 8;
     } else if (reg->is_XMMRegister()) {
-      if (UseAVX >= 3) {
-        return 64;
-      } else if (UseAVX >= 1) {
-        return 32;
-      } else {
+      // if (UseAVX >= 3) {
+      //   return 64;
+      // } else if (UseAVX >= 1) {
+      //   return 32;
+      // } else {
         return 16;
-      }
+      // }
     } else {
       ShouldNotReachHere();
     }
@@ -3313,13 +3313,13 @@ public:
     if (reg->is_Register()) {
       __ movptr(Address(rsp, 0), reg->as_Register());
     } else if (reg->is_XMMRegister()) {
-      if (UseAVX >= 3) {
-        __ evmovdqul(Address(rsp, 0), reg->as_XMMRegister(), Assembler::AVX_512bit);
-      } else if (UseAVX >= 1) {
-        __ vmovdqu(Address(rsp, 0), reg->as_XMMRegister());
-      } else {
+      // if (UseAVX >= 3) {
+      //   __ evmovdqul(Address(rsp, 0), reg->as_XMMRegister(), Assembler::AVX_512bit);
+      // } else if (UseAVX >= 1) {
+      //   __ vmovdqu(Address(rsp, 0), reg->as_XMMRegister());
+      // } else {
         __ movdqu(Address(rsp, 0), reg->as_XMMRegister());
-      }
+      // }
     } else {
       ShouldNotReachHere();
     }
@@ -3335,13 +3335,13 @@ public:
     if (reg->is_Register()) {
       __ movptr(reg->as_Register(), Address(rsp, 0));
     } else if (reg->is_XMMRegister()) {
-      if (UseAVX >= 3) {
-        __ evmovdqul(reg->as_XMMRegister(), Address(rsp, 0), Assembler::AVX_512bit);
-      } else if (UseAVX >= 1) {
-        __ vmovdqu(reg->as_XMMRegister(), Address(rsp, 0));
-      } else {
+      // if (UseAVX >= 3) {
+      //   __ evmovdqul(reg->as_XMMRegister(), Address(rsp, 0), Assembler::AVX_512bit);
+      // } else if (UseAVX >= 1) {
+      //   __ vmovdqu(reg->as_XMMRegister(), Address(rsp, 0));
+      // } else {
         __ movdqu(reg->as_XMMRegister(), Address(rsp, 0));
-      }
+      // }
     } else {
       ShouldNotReachHere();
     }
@@ -3378,7 +3378,7 @@ RuntimeStub* SharedRuntime::make_native_invoker(address call_target,
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
-    ls.print_cr("Generating native invoker for %s (%d) {", "native_invoker", call_target);
+    ls.print_cr("Generating native invoker for %s (" INTPTR_FORMAT ") {", "native_invoker", (intptr_t) call_target);
     ls.print("BasicType { ");
     for (int i = 0; i < num_args; i++) {
       ls.print("%s, ", type2name(signature[i]));
@@ -3388,13 +3388,13 @@ RuntimeStub* SharedRuntime::make_native_invoker(address call_target,
     ls.print("input_registers { ");
     for (int i = 0; i < input_registers.length(); i++) {
       VMReg reg = input_registers.at(i);
-      ls.print("%s (%d), ", reg->name(), reg->value());
+      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
     }
     ls.print_cr("}");
       ls.print("output_registers { ");
     for (int i = 0; i < output_registers.length(); i++) {
       VMReg reg = output_registers.at(i);
-      ls.print("%s (%d), ", reg->name(), reg->value());
+      ls.print("%s (" INTPTR_FORMAT "), ", reg->name(), reg->value());
     }
     ls.print_cr("}");
     ls.print_cr("}");
@@ -3428,7 +3428,8 @@ struct ArgMove {
   VMRegPair to;
 
   bool is_identity() const {
-      return from.first() == to.first() && from.second() == to.second();
+      return (from.first() == to.first() && from.second() == to.second())
+        && !from.first()->is_stack(); // stack regs are interpreted differently
   }
 };
 
@@ -3566,17 +3567,23 @@ static const char* null_safe_string(const char* str) {
   return str == nullptr ? "NULL" : str;
 }
 
-static void shuffle_arguments(MacroAssembler* masm, const GrowableArray<ArgMove>& arg_moves) {
+static bool is_fp_to_gp_move(VMRegPair from, VMRegPair to) {
+  return from.first()->is_XMMRegister() && to.first()->is_Register();
+}
+
+static void shuffle_arguments(MacroAssembler* masm, const GrowableArray<ArgMove>& arg_moves, int shuffle_spave_offset) {
   for (int i = 0; i < arg_moves.length(); i++) {
     ArgMove arg_mv = arg_moves.at(i);
     BasicType arg_bt     = arg_mv.bt;
     VMRegPair from_vmreg = arg_mv.from;
     VMRegPair to_vmreg   = arg_mv.to;
 
-    assert(
-      !((from_vmreg.first()->is_Register() && to_vmreg.first()->is_XMMRegister())
-      || (from_vmreg.first()->is_XMMRegister() && to_vmreg.first()->is_Register())),
-       "move between gp and fp reg not supported");
+    // assert(
+    //   !((from_vmreg.first()->is_Register() && to_vmreg.first()->is_XMMRegister())
+    //   || (from_vmreg.first()->is_XMMRegister() && to_vmreg.first()->is_Register())),
+    //    "move between gp and fp reg not supported");
+
+    Address shuffle_space_addr(rsp, shuffle_spave_offset);
 
     __ block_comment(err_msg("bt=%s", null_safe_string(type2name(arg_bt))));
     switch (arg_bt) {
@@ -3589,11 +3596,21 @@ static void shuffle_arguments(MacroAssembler* masm, const GrowableArray<ArgMove>
        break;
 
       case T_FLOAT:
-        SharedRuntime::float_move(masm, from_vmreg, to_vmreg);
+        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
+          __ movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
+          __ movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        } else {
+          SharedRuntime::float_move(masm, from_vmreg, to_vmreg);
+        }
         break;
 
       case T_DOUBLE:
-        SharedRuntime::double_move(masm, from_vmreg, to_vmreg);
+        if (is_fp_to_gp_move(from_vmreg, to_vmreg)) { // Windows vararg call
+          __ movsd(shuffle_space_addr, from_vmreg.first()->as_XMMRegister());
+          __ movq(to_vmreg.first()->as_Register(), shuffle_space_addr);
+        } else {
+          SharedRuntime::double_move(masm, from_vmreg, to_vmreg);
+        }
         break;
 
       case T_LONG :
@@ -3646,14 +3663,27 @@ void NativeInvokerGenerator::generate() {
     rbp_off2,
     return_off,
     return_off2,
-    framesize // inclusive of return address
+    framesize_base // inclusive of return address
     // The following are also computed dynamically:
     // shadow space
     // spill area
     // out arg area (e.g. for stack args)
   };
 
-  _framesize = align_up(framesize + ((_shadow_space_bytes + spill_size_in_bytes()) >> LogBytesPerInt) + out_arg_stk_slots, 4);
+  // in bytes
+  int allocated_frame_size = 0;
+  allocated_frame_size += 16;
+  allocated_frame_size += out_arg_stk_slots << LogBytesPerInt;
+  allocated_frame_size += _shadow_space_bytes;
+
+  // spill area can be shared with the above, so we take the max of the 2
+  allocated_frame_size = spill_size_in_bytes() > allocated_frame_size ? spill_size_in_bytes() : allocated_frame_size;
+  // in bytes
+  const int shuffle_space_offset = _shadow_space_bytes + (out_arg_stk_slots << LogBytesPerInt);
+
+  allocated_frame_size = align_up(allocated_frame_size, 16);
+  // _framesize is in 32-bit stack slots:
+  _framesize += framesize_base + (allocated_frame_size >> LogBytesPerInt);
   assert(is_even(_framesize/2), "sp not 16-byte aligned");
 
   _oop_maps  = new OopMapSet();
@@ -3664,7 +3694,7 @@ void NativeInvokerGenerator::generate() {
   __ enter();
 
   // return address and rbp are already in place
-  __ subptr(rsp, (_framesize-4) << LogBytesPerInt); // prolog
+  __ subptr(rsp, allocated_frame_size); // prolog
 
   _frame_complete = __ pc() - start;
 
@@ -3680,7 +3710,7 @@ void NativeInvokerGenerator::generate() {
   __ block_comment("} thread java2native");
 
   __ block_comment("{ argument shuffle");
-  shuffle_arguments(_masm, arg_moves);
+  shuffle_arguments(_masm, arg_moves, shuffle_space_offset);
   __ block_comment("} argument shuffle");
 
   __ call(RuntimeAddress(_call_target));

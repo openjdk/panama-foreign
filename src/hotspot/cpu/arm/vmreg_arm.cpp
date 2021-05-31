@@ -50,7 +50,7 @@ void VMRegImpl::set_regName() {
   }
 }
 
-VMReg VMRegImpl::vmStorageToVMReg(int type, int index) {
+VMReg VMRegImpl::vmStorageToVMReg(int type, int index, int stk_slot_offset) {
   Unimplemented();
   return VMRegImpl::Bad();
 }

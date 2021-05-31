@@ -65,24 +65,45 @@ EXPORT int identity_va(int x, ...) {
     return x;
 }
 
-EXPORT int invoke_high_arity0(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT int invoke_high_arity0(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return x;
 }
-EXPORT double invoke_high_arity1(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT double invoke_high_arity1(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return d;
 }
-EXPORT long long invoke_high_arity2(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT long long invoke_high_arity2(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return l;
 }
-EXPORT float invoke_high_arity3(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT float invoke_high_arity3(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return f;
 }
-EXPORT char invoke_high_arity4(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT char invoke_high_arity4(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return c;
 }
-EXPORT short invoke_high_arity5(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT short invoke_high_arity5(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return s1;
 }
-EXPORT short invoke_high_arity6(int x, double d, long long l, float f, char c, short s1, short s2) {
+EXPORT short invoke_high_arity6(
+        long long a0, long long a1, long long a2, long long a3, long long a4, long long a5, long long a6, long long a7,
+        double a8, double a9, double a10, double a11, double a12, double a13, double a14, double a15,
+        int x, double d, long long l, float f, char c, short s1, short s2) {
     return s2;
 }
