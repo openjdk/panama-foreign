@@ -25,8 +25,6 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.SystemLookup;
@@ -39,11 +37,9 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
-import static sun.security.action.GetIntegerAction.privilegedGetProperty;
 
 /**
  * A C linker implements the C Application Binary Interface (ABI) calling conventions.
@@ -120,7 +116,7 @@ public interface CLinker {
      *
      * @see CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)
      */
-    int ERR_UNCAUGHT_EXCEPTION = privilegedGetProperty("jdk.incubator.foreign.uncaught_exception_code", 1);
+    int ERR_UNCAUGHT_EXCEPTION = 1;
 
     /**
      * Returns the C linker for the current platform.
@@ -236,9 +232,9 @@ public interface CLinker {
      * The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
      * <p>
-     * Any exceptions that occur during an upcall should be handled during the upcall. The target method handle
-     * should not throw any exceptions. If the target method handle does throw an exception, it will be handle by
-     * calling {@link System#exit System.exit(ERR_UNCAUGHT_EXCEPTION)}. (See {@link #ERR_UNCAUGHT_EXCEPTION})
+     * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
+     * it will be handle by calling {@link System#exit System.exit(ERR_UNCAUGHT_EXCEPTION)}.
+     * (See {@link #ERR_UNCAUGHT_EXCEPTION})
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash

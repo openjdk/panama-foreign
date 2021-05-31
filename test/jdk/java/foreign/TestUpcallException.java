@@ -36,11 +36,15 @@
 import jdk.test.lib.Utils;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.concurrent.ThreadLocalRandom;
 
+import static jdk.incubator.foreign.CLinker.ERR_UNCAUGHT_EXCEPTION;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class TestUpcallException {
 
@@ -57,10 +61,7 @@ public class TestUpcallException {
     }
 
     private void run(boolean useSpec) throws IOException, InterruptedException {
-        int exitCode = ThreadLocalRandom.current().nextInt();
-
         Process process = new ProcessBuilder()
-            .inheritIO()
             .command(
                 Paths.get(Utils.TEST_JDK)
                      .resolve("bin")
@@ -71,13 +72,24 @@ public class TestUpcallException {
                 "--enable-native-access=ALL-UNNAMED",
                 "-Djava.library.path=" + System.getProperty("java.library.path"),
                 "-Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=" + useSpec,
-                "-Djdk.incubator.foreign.uncaught_exception_code=" + exitCode,
                 "-cp", Utils.TEST_CLASS_PATH,
                 "ThrowingUpcall")
             .start();
 
         int result = process.waitFor();
-        assertEquals(result, exitCode);
+        assertEquals(result, ERR_UNCAUGHT_EXCEPTION);
+        assertOutputContains(process.getErrorStream(), "Testing upcall exceptions");
     }
 
+    private static void assertOutputContains(InputStream stream, String str) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(str)) {
+                    return;
+                }
+            }
+        }
+        fail("Did not find '" + str + "' in stream");
+    }
 }

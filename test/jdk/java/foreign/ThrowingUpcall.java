@@ -49,24 +49,23 @@ public class ThrowingUpcall {
 
         try {
             MH_throwException = MethodHandles.lookup().findStatic(ThrowingUpcall.class, "throwException",
-                    MethodType.methodType(void.class, Throwable.class));
+                    MethodType.methodType(void.class));
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
-    public static void throwException(Throwable t) throws Throwable {
-        throw t;
+    public static void throwException() throws Throwable {
+        throw new Throwable("Testing upcall exceptions");
     }
 
     public static void main(String[] args) throws Throwable {
-        test(new Throwable());
+        test();
     }
 
-    public static void test(Throwable throwable) throws Throwable {
-        MethodHandle target = MethodHandles.insertArguments(MH_throwException, 0, throwable);
+    public static void test() throws Throwable {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemoryAddress stub = CLinker.getInstance().upcallStub(target, FunctionDescriptor.ofVoid(), scope);
+            MemoryAddress stub = CLinker.getInstance().upcallStub(MH_throwException, FunctionDescriptor.ofVoid(), scope);
 
             downcall.invokeExact(stub); // should call System.exit(1);
         }
