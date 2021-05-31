@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
+import static sun.security.action.GetIntegerAction.privilegedGetProperty;
 
 /**
  * A C linker implements the C Application Binary Interface (ABI) calling conventions.
@@ -119,7 +120,7 @@ public interface CLinker {
      *
      * @see CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)
      */
-    int ERR_UNCAUGHT_EXCEPTION = Integer.getInteger("jdk.incubator.foreign.uncaught_exception_code", 1);
+    int ERR_UNCAUGHT_EXCEPTION = privilegedGetProperty("jdk.incubator.foreign.uncaught_exception_code", 1);
 
     /**
      * Returns the C linker for the current platform.
