@@ -115,6 +115,13 @@ import static jdk.internal.foreign.PlatformLayouts.*;
 public interface CLinker {
 
     /**
+     * The value returned by the process when the target of an upcall throws an exception.
+     *
+     * @see CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)
+     */
+    int ERR_UNCAUGHT_EXCEPTION = Integer.getInteger("jdk.incubator.foreign.uncaught_exception_code", 1);
+
+    /**
      * Returns the C linker for the current platform.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -224,8 +231,13 @@ public interface CLinker {
      * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned memory address is associated with the provided scope. When such scope is closed,
+     * <p>
+     * The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
+     * <p>
+     * Any exceptions that occur during an upcall should be handled during the upcall. The target method handle
+     * should not throw any exceptions. If the target method handle does throw an exception, it will be handle by
+     * calling {@link System#exit System.exit(ERR_UNCAUGHT_EXCEPTION)}. (See {@link #ERR_UNCAUGHT_EXCEPTION})
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash

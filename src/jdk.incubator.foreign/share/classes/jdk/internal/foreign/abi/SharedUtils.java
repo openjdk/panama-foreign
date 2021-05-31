@@ -365,7 +365,7 @@ public class SharedUtils {
     static void handleUncaughtException(Throwable t) {
         if (t != null) {
             t.printStackTrace();
-            System.exit(1);
+            System.exit(ERR_UNCAUGHT_EXCEPTION);
         }
     }
 

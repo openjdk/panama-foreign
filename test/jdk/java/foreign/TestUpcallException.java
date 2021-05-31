@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.testng.Assert.assertEquals;
 
@@ -56,20 +57,27 @@ public class TestUpcallException {
     }
 
     private void run(boolean useSpec) throws IOException, InterruptedException {
+        int exitCode = ThreadLocalRandom.current().nextInt();
+
         Process process = new ProcessBuilder()
+            .inheritIO()
             .command(
                 Paths.get(Utils.TEST_JDK)
                      .resolve("bin")
                      .resolve("java")
                      .toAbsolutePath()
                      .toString(),
+                "--add-modules", "jdk.incubator.foreign",
+                "--enable-native-access=ALL-UNNAMED",
+                "-Djava.library.path=" + System.getProperty("java.library.path"),
                 "-Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=" + useSpec,
+                "-Djdk.incubator.foreign.uncaught_exception_code=" + exitCode,
                 "-cp", Utils.TEST_CLASS_PATH,
                 "ThrowingUpcall")
             .start();
 
         int result = process.waitFor();
-        assertEquals(result, 1);
+        assertEquals(result, exitCode);
     }
 
 }
