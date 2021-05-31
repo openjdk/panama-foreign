@@ -79,6 +79,7 @@ public class SharedUtils {
     private static final MethodHandle MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR;
     private static final MethodHandle MH_CLOSE_CONTEXT;
     private static final MethodHandle MH_REACHBILITY_FENCE;
+    private static final MethodHandle MH_HANDLE_UNCAUGHT_EXCEPTION;
 
     static {
         try {
@@ -97,6 +98,8 @@ public class SharedUtils {
                     methodType(void.class));
             MH_REACHBILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
+            MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
+                    methodType(void.class, Throwable.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -359,6 +362,13 @@ public class SharedUtils {
         return MH_REACHBILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
+    static void handleUncaughtException(Throwable t) {
+        if (t != null) {
+            t.printStackTrace();
+            System.exit(1);
+        }
+    }
+
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
@@ -366,7 +376,11 @@ public class SharedUtils {
         MethodHandle closer;
         int insertPos;
         if (specializedHandle.type().returnType() == void.class) {
-            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            if (!upcall) {
+                closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            } else {
+                closer = MH_HANDLE_UNCAUGHT_EXCEPTION;
+            }
             insertPos = 1;
         } else {
             closer = identity(specializedHandle.type().returnType()); // (V) -> V
