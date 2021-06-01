@@ -112,13 +112,6 @@ import static jdk.internal.foreign.PlatformLayouts.*;
 public interface CLinker {
 
     /**
-     * The value returned by the process when the target of an upcall throws an exception.
-     *
-     * @see CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)
-     */
-    int ERR_UNCAUGHT_EXCEPTION = 1;
-
-    /**
      * Returns the C linker for the current platform.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
@@ -233,8 +226,7 @@ public interface CLinker {
      * the corresponding native stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
-     * it will be handle by calling {@link System#exit System.exit(ERR_UNCAUGHT_EXCEPTION)}.
-     * (See {@link #ERR_UNCAUGHT_EXCEPTION})
+     * the VM will exit with a non-zero exit code.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash

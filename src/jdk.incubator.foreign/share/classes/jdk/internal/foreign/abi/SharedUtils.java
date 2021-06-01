@@ -37,6 +37,8 @@ import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
@@ -71,6 +73,8 @@ import static java.lang.invoke.MethodType.methodType;
 import static jdk.incubator.foreign.CLinker.*;
 
 public class SharedUtils {
+
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
@@ -365,7 +369,7 @@ public class SharedUtils {
     static void handleUncaughtException(Throwable t) {
         if (t != null) {
             t.printStackTrace();
-            System.exit(ERR_UNCAUGHT_EXCEPTION);
+            JLA.exit(1);
         }
     }
 

@@ -41,10 +41,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.List;
 
-import static jdk.incubator.foreign.CLinker.ERR_UNCAUGHT_EXCEPTION;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertTrue;
 
 public class TestUpcallException {
 
@@ -73,23 +74,37 @@ public class TestUpcallException {
                 "-Djava.library.path=" + System.getProperty("java.library.path"),
                 "-Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=" + useSpec,
                 "-cp", Utils.TEST_CLASS_PATH,
+                // security manager to block normal System.exit
+                "-Djava.security.manager=allow",
                 "ThrowingUpcall")
             .start();
 
         int result = process.waitFor();
-        assertEquals(result, ERR_UNCAUGHT_EXCEPTION);
-        assertOutputContains(process.getErrorStream(), "Testing upcall exceptions");
+        assertNotEquals(result, 0);
+
+        List<String> outLines = linesFromStream(process.getInputStream());
+        outLines.forEach(System.out::println);
+        List<String> errLines = linesFromStream(process.getErrorStream());
+        errLines.forEach(System.err::println);
+
+        // Exception message would be found in stack trace
+        String shouldInclude = "Testing upcall exceptions";
+        assertTrue(linesContain(errLines, shouldInclude), "Did not find '" + shouldInclude + "' in stderr");
+
+        // If the VM crashes with an uncaught IllegalStateException from the security manager
+        // the crash log should include the exception message.
+        // Make sure that is _not_ the case.
+        String shouldNotInclude = "Can not use exitVM";
+        assertFalse(linesContain(outLines, shouldNotInclude), "Found '" + shouldNotInclude + "' in stdout");
     }
 
-    private static void assertOutputContains(InputStream stream, String str) throws IOException {
+    private boolean linesContain(List<String> errLines, String shouldInclude) {
+        return errLines.stream().anyMatch(line -> line.contains(shouldInclude));
+    }
+
+    private static List<String> linesFromStream(InputStream stream) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains(str)) {
-                    return;
-                }
-            }
+            return reader.lines().toList();
         }
-        fail("Did not find '" + str + "' in stream");
     }
 }

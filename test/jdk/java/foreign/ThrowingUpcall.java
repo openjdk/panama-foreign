@@ -30,6 +30,7 @@ import jdk.incubator.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.security.Permission;
 
 import static jdk.incubator.foreign.CLinker.C_POINTER;
 
@@ -39,6 +40,18 @@ public class ThrowingUpcall {
     private static final MethodHandle MH_throwException;
 
     static {
+        System.setSecurityManager(new SecurityManager() {
+            @Override
+            public void checkExit(int status) {
+                throw new IllegalStateException("Can not use exitVM");
+            }
+
+            @Override
+            public void checkPermission(Permission perm) {
+                // do nothing
+            }
+        });
+
         System.loadLibrary("TestUpcall");
         SymbolLookup lookup = SymbolLookup.loaderLookup();
         downcall = CLinker.getInstance().downcallHandle(
