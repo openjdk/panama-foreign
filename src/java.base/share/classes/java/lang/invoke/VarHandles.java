@@ -646,7 +646,7 @@ final class VarHandles {
             return new Class<?>[0];
         }
 
-        assert handle instanceof BoundMethodHandle : "Unecpexted handle type: " + handle;
+        assert handle instanceof BoundMethodHandle : "Unexpected handle type: " + handle;
         // unknown
         return null;
     }
