@@ -32,12 +32,14 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.LibraryLookup;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.JavaLangInvokeAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
@@ -51,8 +53,10 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -72,6 +76,9 @@ import static jdk.incubator.foreign.CLinker.*;
 
 public class SharedUtils {
 
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+    private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
+
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
@@ -79,6 +86,7 @@ public class SharedUtils {
     private static final MethodHandle MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR;
     private static final MethodHandle MH_CLOSE_CONTEXT;
     private static final MethodHandle MH_REACHBILITY_FENCE;
+    private static final MethodHandle MH_HANDLE_UNCAUGHT_EXCEPTION;
 
     static {
         try {
@@ -97,6 +105,8 @@ public class SharedUtils {
                     methodType(void.class));
             MH_REACHBILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
+            MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
+                    methodType(void.class, Throwable.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -359,6 +369,13 @@ public class SharedUtils {
         return MH_REACHBILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
+    static void handleUncaughtException(Throwable t) {
+        if (t != null) {
+            t.printStackTrace();
+            JLA.exit(1);
+        }
+    }
+
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
@@ -366,7 +383,11 @@ public class SharedUtils {
         MethodHandle closer;
         int insertPos;
         if (specializedHandle.type().returnType() == void.class) {
-            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            if (!upcall) {
+                closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            } else {
+                closer = MH_HANDLE_UNCAUGHT_EXCEPTION;
+            }
             insertPos = 1;
         } else {
             closer = identity(specializedHandle.type().returnType()); // (V) -> V
@@ -412,18 +433,33 @@ public class SharedUtils {
         return specializedHandle;
     }
 
+    public static void checkExceptions(MethodHandle target) {
+        Class<?>[] exceptions = JLIA.exceptionTypes(target);
+        if (exceptions != null && exceptions.length != 0) {
+            throw new IllegalArgumentException("Target handle may throw exceptions: " + Arrays.toString(exceptions));
+        }
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
-        static final LibraryLookup LOOKUP = LibraryLookup.ofDefault();
+        private static final CLinker linker = getSystemLinker();
 
-        static final MethodHandle MH_MALLOC = getSystemLinker().downcallHandle(LOOKUP.lookup("malloc").get(),
+        static final MethodHandle MH_MALLOC = linker.downcallHandle(CLinker.systemLookup().lookup("malloc").get(),
                         MethodType.methodType(MemoryAddress.class, long.class),
                 FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
 
-        static final MethodHandle MH_FREE = getSystemLinker().downcallHandle(LOOKUP.lookup("free").get(),
+        static final MethodHandle MH_FREE = linker.downcallHandle(CLinker.systemLookup().lookup("free").get(),
                         MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(C_POINTER));
+    }
+
+    public static MemoryAddress checkSymbol(Addressable symbol) {
+        Objects.requireNonNull(symbol);
+        MemoryAddress symbolAddr = symbol.address();
+        if (symbolAddr.equals(MemoryAddress.NULL))
+            throw new IllegalArgumentException("Symbol is NULL: " + symbolAddr);
+        return symbolAddr;
     }
 
     public static MemoryAddress allocateMemoryInternal(long size) {

@@ -28,6 +28,7 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.AbstractCLinker;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
+import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.aarch64.AArch64VaList;
 import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
@@ -130,6 +131,22 @@ public sealed interface CLinker permits AbstractCLinker {
     }
 
     /**
+     * Obtains a system lookup which is suitable to find symbols in the standard C libraries. The set of symbols
+     * available for lookup is unspecified, as it depends on the platform and on the operating system.
+     * <p>
+     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
+     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
+     * restricted methods, and use safe and supported functionalities, where possible.
+     * @return a system-specific library lookup which is suitable to find symbols in the standard C libraries.
+     */
+    @CallerSensitive
+    static SymbolLookup systemLookup() {
+        Reflection.ensureNativeAccess(Reflection.getCallerClass());
+        return SystemLookup.getInstance();
+    }
+
+    /**
      * Obtains a foreign method handle, with the given type and featuring the given function descriptor,
      * which can be used to call a target foreign function at the given address.
      * <p>
@@ -137,7 +154,7 @@ public sealed interface CLinker permits AbstractCLinker {
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
      * to allocate structs returned by-value.
      *
-     * @see LibraryLookup#lookup(String)
+     * @see SymbolLookup
      *
      * @param symbol   downcall symbol.
      * @param type     the method type.
@@ -154,14 +171,15 @@ public sealed interface CLinker permits AbstractCLinker {
      * If the provided method type's return type is {@code MemorySegment}, then the provided allocator will be used by
      * the linker runtime to allocate structs returned by-value.
      *
-     * @see LibraryLookup#lookup(String)
+     * @see SymbolLookup
      *
      * @param symbol    downcall symbol.
      * @param allocator the segment allocator.
      * @param type      the method type.
      * @param function  the function descriptor.
      * @return the downcall method handle.
-     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch.
+     * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch, or if the symbol
+     *                                  is {@link MemoryAddress#NULL}
      */
     MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
@@ -174,8 +192,12 @@ public sealed interface CLinker permits AbstractCLinker {
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features an
      * additional prefix parameter (inserted immediately after the address parameter), of type {@link SegmentAllocator}),
      * which will be used by the linker runtime to allocate structs returned by-value.
+     * <p>
+     * The returned method handle will throw an {@link IllegalArgumentException} if the target address passed to it is
+     * {@link MemoryAddress#NULL}, or a {@link NullPointerException} if the target address is {@code null}.
+     * <p>
      *
-     * @see LibraryLookup#lookup(String)
+     * @see SymbolLookup
      *
      * @param type     the method type.
      * @param function the function descriptor.
@@ -190,12 +212,16 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * <p>The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
+     * <p>
+     * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
+     * the VM will exit with a non-zero exit code.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
@@ -618,8 +644,7 @@ public sealed interface CLinker permits AbstractCLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@linkplain ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted method are unsafe, and, if used incorrectly, their use might crash
