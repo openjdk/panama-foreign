@@ -37,7 +37,7 @@ import static jdk.incubator.foreign.CLinker.C_POINTER;
 public class ThrowingUpcall {
 
     private static final MethodHandle downcall;
-    private static final MethodHandle MH_throwException;
+    public static final MethodHandle MH_throwException;
 
     static {
         System.setSecurityManager(new SecurityManager() {
@@ -77,10 +77,14 @@ public class ThrowingUpcall {
     }
 
     public static void test() throws Throwable {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemoryAddress stub = CLinker.getInstance().upcallStub(MH_throwException, FunctionDescriptor.ofVoid(), scope);
+        MethodHandle handle = MH_throwException;
+        MethodHandle invoker = MethodHandles.exactInvoker(MethodType.methodType(void.class));
+        handle = MethodHandles.insertArguments(invoker, 0, handle);
 
-            downcall.invokeExact(stub); // should call System.exit(1);
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MemoryAddress stub = CLinker.getInstance().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
+
+            downcall.invokeExact(stub); // should call Shutdown.exit(1);
         }
     }
 

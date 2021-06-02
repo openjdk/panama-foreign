@@ -33,6 +33,9 @@
  *   TestUpcallException
  */
 
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.test.lib.Utils;
 import org.testng.annotations.Test;
 
@@ -59,6 +62,14 @@ public class TestUpcallException {
     public void testExceptionSpecialized() throws IOException, InterruptedException {
         boolean useSpec = true;
         run(useSpec);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+          expectedExceptionsMessageRegExp = ".*Target handle may throw exceptions.*")
+    public void testEagerExceptionBlocked() {
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            CLinker.getInstance().upcallStub(ThrowingUpcall.MH_throwException, FunctionDescriptor.ofVoid(), scope);
+        }
     }
 
     private void run(boolean useSpec) throws IOException, InterruptedException {
