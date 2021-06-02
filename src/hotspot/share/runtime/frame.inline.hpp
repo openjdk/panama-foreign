@@ -25,10 +25,11 @@
 #ifndef SHARE_RUNTIME_FRAME_INLINE_HPP
 #define SHARE_RUNTIME_FRAME_INLINE_HPP
 
+#include "runtime/frame.hpp"
+
 #include "code/compiledMethod.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/method.hpp"
-#include "runtime/frame.hpp"
 #include "runtime/registerMap.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "utilities/macros.hpp"
@@ -52,8 +53,8 @@ inline bool frame::is_first_frame() const {
   return is_entry_frame() && entry_frame_is_first();
 }
 
-inline bool frame::is_panama_entry_frame() const {
-  return _cb != NULL && _cb->is_entry_blob();
+inline bool frame::is_optimized_entry_frame() const {
+  return _cb != NULL && _cb->is_optimized_entry_blob();
 }
 
 inline address frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {

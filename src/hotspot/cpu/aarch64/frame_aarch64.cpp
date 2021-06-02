@@ -359,12 +359,12 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   return fr;
 }
 
-JavaFrameAnchor* EntryBlob::jfa_for_frame(const frame& frame) const {
+JavaFrameAnchor* OptimizedEntryBlob::jfa_for_frame(const frame& frame) const {
   ShouldNotCallThis();
   return nullptr;
 }
 
-frame frame::sender_for_panama_entry_frame(RegisterMap* map) const {
+frame frame::sender_for_optimized_entry_frame(RegisterMap* map) const {
   ShouldNotCallThis();
   return {};
 }

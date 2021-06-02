@@ -37,8 +37,8 @@ JVM_ENTRY(static jboolean, UH_FreeUpcallStub0(JNIEnv *env, jobject _unused, jlon
   }
   //free global JNI handle
   jobject handle = NULL;
-  if (cb->is_entry_blob()) {
-    handle = ((EntryBlob*)cb)->receiver();
+  if (cb->is_optimized_entry_blob()) {
+    handle = ((OptimizedEntryBlob*)cb)->receiver();
   } else {
     jobject* handle_ptr = (jobject*)(void*)cb->content_begin();
     handle = *handle_ptr;

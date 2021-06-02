@@ -33,8 +33,6 @@ import jdk.internal.foreign.AbstractCLinker;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.foreign.abi.UpcallStubs;
-import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -74,9 +72,7 @@ public final class AArch64Linker extends AbstractCLinker {
     }
 
     @Override
-    @CallerSensitive
     public final MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
         MethodType llMt = SharedUtils.convertVaListCarriers(type, AArch64VaList.CARRIER);
@@ -90,9 +86,7 @@ public final class AArch64Linker extends AbstractCLinker {
     }
 
     @Override
-    @CallerSensitive
     public final MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);

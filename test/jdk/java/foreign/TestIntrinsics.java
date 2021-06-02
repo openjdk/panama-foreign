@@ -40,9 +40,9 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
-import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
+import jdk.incubator.foreign.SymbolLookup;
 import org.testng.annotations.*;
 
 import static java.lang.invoke.MethodType.methodType;

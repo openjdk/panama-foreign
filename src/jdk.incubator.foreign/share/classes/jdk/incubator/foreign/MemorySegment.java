@@ -85,7 +85,7 @@ import java.util.stream.Stream;
  * {@link MemorySegment#mapFile(Path, long, long, FileChannel.MapMode, ResourceScope)}. Such native memory segments are
  * called <em>mapped memory segments</em>; mapped memory segments are associated with an underlying file descriptor.
  * <p>
- * Contents of mapped memory segments can be {@link #force() persisted} and {@link #load() loaded} to and from the underlying file;
+ * Contents of mapped memory segments can be {@linkplain #force() persisted} and {@linkplain #load() loaded} to and from the underlying file;
  * these capabilities are suitable replacements for some of the functionality in the {@link java.nio.MappedByteBuffer} class.
  * Note that, while it is possible to map a segment into a byte buffer (see {@link MemorySegment#asByteBuffer()}),
  * and then call e.g. {@link java.nio.MappedByteBuffer#force()} that way, this can only be done when the source segment
@@ -98,7 +98,7 @@ import java.util.stream.Stream;
  *
  * <h2>Lifecycle and confinement</h2>
  *
- * Memory segments are associated to a resource scope (see {@link ResourceScope}), which can be accessed using
+ * Memory segments are associated with a resource scope (see {@link ResourceScope}), which can be accessed using
  * the {@link #scope()} method. As for all resources associated with a resource scope, a segment cannot be
  * accessed after its corresponding scope has been closed. For instance, the following code will result in an
  * exception:
@@ -109,9 +109,9 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 }
 MemoryAccess.getLong(segment); // already closed!
  * }</pre></blockquote>
- * Additionally, access to a memory segment in subject to the thread-confinement checks enforced by the owning scope; that is,
+ * Additionally, access to a memory segment is subject to the thread-confinement checks enforced by the owning scope; that is,
  * if the segment is associated with a shared scope, it can be accessed by multiple threads; if it is associated with a confined
- * scope, it can only be accessed by the thread which own the scope.
+ * scope, it can only be accessed by the thread which owns the scope.
  * <p>
  * Heap and buffer segments are always associated with a <em>global</em>, shared scope. This scope cannot be closed,
  * and can be considered as <em>always alive</em>.
@@ -132,7 +132,7 @@ MemorySegment roSegment = segment.asReadOnly();
  * To allow for interoperability with existing code, a byte buffer view can be obtained from a memory segment
  * (see {@link #asByteBuffer()}). This can be useful, for instance, for those clients that want to keep using the
  * {@link ByteBuffer} API, but need to operate on large memory segments. Byte buffers obtained in such a way support
- * the same spatial and temporal access restrictions associated to the memory segment from which they originated.
+ * the same spatial and temporal access restrictions associated with the memory segment from which they originated.
  *
  * <h2>Stream support</h2>
  *
@@ -152,13 +152,10 @@ try (ResourceScope scope = ResourceScope.newSharedScope()) {
 }
  * }</pre></blockquote>
  *
- * @apiNote In the future, if the Java language permits, {@link MemorySegment}
- * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
- *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface MemorySegment extends Addressable {
+public sealed interface MemorySegment extends Addressable permits AbstractMemorySegmentImpl {
 
     /**
      * The base memory address associated with this memory segment.
@@ -314,7 +311,7 @@ public interface MemorySegment extends Addressable {
      * Is this a native segment? Returns true if this segment is a native memory segment,
      * created using the {@link #allocateNative(long, ResourceScope)} (and related) factory, or a buffer segment
      * derived from a direct {@link java.nio.ByteBuffer} using the {@link #ofByteBuffer(ByteBuffer)} factory,
-     * or if this is a {@link #isMapped() mapped} segment.
+     * or if this is a {@linkplain #isMapped() mapped} segment.
      * @return {@code true} if this segment is native segment.
      */
     boolean isNative();
@@ -365,7 +362,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
      * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@link MemorySegment#mapFile mapped} to two segments.
+     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
      *
      * @param src the source segment.
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
@@ -379,8 +376,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
      * this segment and a given other segment. The offset is relative to the
-     * {@link #address() base address} of each segment and will be in the
-     * range of 0 (inclusive) up to the {@link #byteSize() size} (in bytes) of
+     * {@linkplain #address() base address} of each segment and will be in the
+     * range of 0 (inclusive) up to the {@linkplain #byteSize() size} (in bytes) of
      * the smaller memory segment (exclusive).
      * <p>
      * If the two segments share a common prefix then the returned offset is
@@ -583,7 +580,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * If the buffer is {@link ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
      * {@link ByteBuffer#isReadOnly() read-only}. The scope associated with this segment can either be the
-     * {@link ResourceScope#globalScope() global} resource scope, in case the buffer has been created independently,
+     * {@linkplain ResourceScope#globalScope() global} resource scope, in case the buffer has been created independently,
      * or to some other (possibly closeable) resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
@@ -597,7 +594,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated byte array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -608,7 +605,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -619,7 +616,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated short array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -630,7 +627,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated int array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -641,7 +638,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated float array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -652,7 +649,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated long array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -663,7 +660,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated double array.
-     * The returned segment's resource scope is set to the {@link ResourceScope#globalScope() global} resource scope.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
      * @return a new array memory segment.
@@ -674,7 +671,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout
-     * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
+     * and resource scope. A client is responsible make sure that the resource scope associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -688,6 +685,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param scope the segment scope.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if the specified layout has illegal size or alignment constraint.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     static MemorySegment allocateNative(MemoryLayout layout, ResourceScope scope) {
         Objects.requireNonNull(scope);
@@ -697,7 +696,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
-     * and resource scope. A client is responsible make sure that the resource scope associated to the returned segment is closed
+     * and resource scope. A client is responsible make sure that the resource scope associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
      * This is equivalent to the following code:
@@ -711,6 +710,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param scope the segment scope.
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     static MemorySegment allocateNative(long bytesSize, ResourceScope scope) {
         return allocateNative(bytesSize, 1, scope);
@@ -719,7 +720,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
      * (in bytes), alignment constraint (in bytes) and resource scope. A client is responsible make sure that the resource
-     * scope associated to the returned segment is closed when the segment is no longer in use.
+     * scope associated with the returned segment is closed when the segment is no longer in use.
      * Failure to do so will result in off-heap memory leaks.
      * <p>
      * The block of off-heap memory associated with the returned native memory segment is initialized to zero.
@@ -730,6 +731,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @return a new native memory segment.
      * @throws IllegalArgumentException if {@code bytesSize <= 0}, {@code alignmentBytes <= 0}, or if {@code alignmentBytes}
      * is not a power of 2.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     static MemorySegment allocateNative(long bytesSize, long alignmentBytes, ResourceScope scope) {
         Objects.requireNonNull(scope);
@@ -777,6 +780,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @return a new confined mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}, {@code bytesSize < 0}, or if {@code path} is not associated
      * with the default file system.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      * @throws UnsupportedOperationException if an unsupported map mode is specified.
      * @throws IOException if the specified path does not point to an existing file, or if some other I/O error occurs.
      * @throws  SecurityException If a security manager is installed and it denies an unspecified permission required by the implementation.
@@ -804,6 +809,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @return a memory segment whose base address is {@link MemoryAddress#NULL} and whose size is {@link Long#MAX_VALUE}.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static MemorySegment globalNativeSegment() {

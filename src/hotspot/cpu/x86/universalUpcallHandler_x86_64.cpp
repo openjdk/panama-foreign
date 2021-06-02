@@ -32,6 +32,7 @@
 #include "prims/universalUpcallHandler.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
+#include "runtime/stubRoutines.hpp"
 #include "utilities/formatBuffer.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -289,7 +290,7 @@ static const char* null_safe_string(const char* str) {
 
 #ifdef ASSERT
 static void print_arg_moves(const GrowableArray<ArgMove>& arg_moves, Method* entry) {
-  LogTarget(Trace, panama) lt;
+  LogTarget(Trace, foreign) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
@@ -418,6 +419,11 @@ static int compute_reg_save_area_size(const ABIDescriptor& abi) {
     }
   }
 
+#ifndef _WIN64
+  // for mxcsr
+  size += 8;
+#endif
+
   return size;
 }
 
@@ -436,11 +442,13 @@ static int compute_arg_save_area_size(const CallRegs& conv) {
   return result_size;
 }
 
+constexpr int MXCSR_MASK = 0xFFC0;  // Mask out any pending exceptions
+
 static void preserve_callee_saved_registers(MacroAssembler* _masm, const ABIDescriptor& abi, int reg_save_area_offset) {
   // 1. iterate all registers in the architecture
   //     - check if they are volatile or not for the given abi
   //     - if NOT, we need to save it here
-  // 2. save mxcsr (?)
+  // 2. save mxcsr on non-windows platforms
 
   int offset = reg_save_area_offset;
 
@@ -467,16 +475,30 @@ static void preserve_callee_saved_registers(MacroAssembler* _masm, const ABIDesc
       }
     }
   }
-  __ block_comment("} preserve_callee_saved_regs ");
 
-  // TODO mxcsr
+#ifndef _WIN64
+  {
+    const Address mxcsr_save(rsp, offset);
+    Label skip_ldmx;
+    __ stmxcsr(mxcsr_save);
+    __ movl(rax, mxcsr_save);
+    __ andl(rax, MXCSR_MASK);    // Only check control and mask bits
+    ExternalAddress mxcsr_std(StubRoutines::addr_mxcsr_std());
+    __ cmp32(rax, mxcsr_std);
+    __ jcc(Assembler::equal, skip_ldmx);
+    __ ldmxcsr(mxcsr_std);
+    __ bind(skip_ldmx);
+  }
+#endif
+
+  __ block_comment("} preserve_callee_saved_regs ");
 }
 
 static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescriptor& abi, int reg_save_area_offset) {
   // 1. iterate all registers in the architecture
   //     - check if they are volatile or not for the given abi
   //     - if NOT, we need to restore it here
-  // 2. restore mxcsr (?)
+  // 2. restore mxcsr on non-windows platforms
 
   int offset = reg_save_area_offset;
 
@@ -504,9 +526,12 @@ static void restore_callee_saved_registers(MacroAssembler* _masm, const ABIDescr
     }
   }
 
-  __ block_comment("} restore_callee_saved_regs ");
+#ifndef _WIN64
+  const Address mxcsr_save(rsp, offset);
+  __ ldmxcsr(mxcsr_save);
+#endif
 
-  // TODO mxcsr
+  __ block_comment("} restore_callee_saved_regs ");
 }
 
 static void shuffle_arguments(MacroAssembler* _masm, const GrowableArray<ArgMove>& arg_moves) {
@@ -804,15 +829,15 @@ address ProgrammableUpcallHandler::generate_optimized_upcall_stub(jobject receiv
 
 #ifndef PRODUCT
   stringStream ss;
-  ss.print("panama_upcall_stub_%s", entry->signature()->as_C_string());
+  ss.print("optimized_upcall_stub_%s", entry->signature()->as_C_string());
   const char* name = _masm->code_string(ss.as_string());
 #else // PRODUCT
-  const char* name = "panama_upcall_stub";
+  const char* name = "optimized_upcall_stub";
 #endif // PRODUCT
 
-  EntryBlob* blob = EntryBlob::create(name, &buffer, exception_handler_offset, receiver, jfa_offset);
+  OptimizedEntryBlob* blob = OptimizedEntryBlob::create(name, &buffer, exception_handler_offset, receiver, jfa_offset);
 
-  if (TracePanamaUpcallStubs) {
+  if (TraceOptimizedUpcallStubs) {
     blob->print_on(tty);
     Disassembler::decode(blob, tty);
   }

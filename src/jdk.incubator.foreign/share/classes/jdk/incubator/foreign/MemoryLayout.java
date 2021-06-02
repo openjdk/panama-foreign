@@ -191,17 +191,13 @@ long offset2 = (long) offsetHandle.invokeExact(2L); // 16
  *
  * Layouts can be optionally associated with one or more <em>attributes</em>. A layout attribute forms a <em>name/value</em>
  * pair, where the name is a {@link String} and the value is a {@link Constable}. The most common form of layout attribute
- * is the <em>layout name</em> (see {@link #LAYOUT_NAME}), a custom name that can be associated to memory layouts and that can be referred to when
+ * is the <em>layout name</em> (see {@link #LAYOUT_NAME}), a custom name that can be associated with memory layouts and that can be referred to when
  * constructing <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
- *
- * @apiNote In the future, if the Java language permits, {@link MemoryLayout}
- * may become a {@code sealed} interface, which would prohibit subclassing except by
- * explicitly permitted types.
  *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface MemoryLayout extends Constable {
+public sealed interface MemoryLayout extends Constable permits AbstractLayout, SequenceLayout, GroupLayout, PaddingLayout, ValueLayout {
 
     /**
      * Returns an {@link Optional} containing the nominal descriptor for this
@@ -267,7 +263,7 @@ public interface MemoryLayout extends Constable {
      * }</pre></blockquote>
      *
      * @param name the layout name.
-     * @return a new layout which is the same as this layout, except for the <em>name</em> associated to it.
+     * @return a new layout which is the same as this layout, except for the <em>name</em> associated with it.
      * @see MemoryLayout#name()
      */
     MemoryLayout withName(String name);
@@ -316,7 +312,7 @@ public interface MemoryLayout extends Constable {
      * Creates a new layout which features the desired alignment constraint.
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
-     * @return a new layout which is the same as this layout, except for the alignment constraint associated to it.
+     * @return a new layout which is the same as this layout, except for the alignment constraint associated with it.
      * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
@@ -497,7 +493,7 @@ public interface MemoryLayout extends Constable {
     }
 
     /**
-     * Creates a method handle which, given a memory segment, returns a {@link MemorySegment#asSlice(long,long) slice}
+     * Creates a method handle which, given a memory segment, returns a {@linkplain MemorySegment#asSlice(long,long) slice}
      * corresponding to the layout selected by a given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
@@ -605,14 +601,10 @@ public interface MemoryLayout extends Constable {
      * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
      * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
      *
-     * @apiNote In the future, if the Java language permits, {@link PathElement}
-     * may become a {@code sealed} interface, which would prohibit subclassing except by
-     * explicitly permitted types.
-     *
      * @implSpec
      * Implementations of this interface are immutable and thread-safe.
      */
-    interface PathElement {
+    sealed interface PathElement permits LayoutPath.PathElementImpl {
 
         /**
          * Returns a path element which selects a member layout with given name from a given group layout.
