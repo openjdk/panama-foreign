@@ -73,7 +73,7 @@ import java.util.Spliterator;
  * Resources associated with implicit scopes are released once the scope instance becomes
  * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * <p>
- * An important implicit resource scope is the so called {@link #globalScope() global scope}; the global scope is
+ * An important implicit resource scope is the so called {@linkplain #globalScope() global scope}; the global scope is
  * an implicit scope that is guaranteed to never become <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>.
  * As a results, the global scope will never attempt to release resources associated with it. Such resources must, where
  * needed, be managed independently by clients.
@@ -140,13 +140,10 @@ try {
  * clients can use e.g. {@link java.lang.ref.Reference#reachabilityFence(Object)} to make sure that resources associated
  * with implicit scopes are not released prematurely. That said, the above code snippet works (trivially) for implicit scopes too.
  *
- * @apiNote In the future, if the Java language permits, {@link ResourceScope}
- * may become a {@code sealed} interface, which would prohibit subclassing except by other explicitly permitted subtypes.
- *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface ResourceScope extends AutoCloseable {
+public sealed interface ResourceScope extends AutoCloseable permits ResourceScopeImpl {
     /**
      * Is this resource scope alive?
      * @return true, if this resource scope is alive.
@@ -183,9 +180,9 @@ public interface ResourceScope extends AutoCloseable {
      *     <li>this resource scope is not <em>alive</em>
      *     <li>this resource scope is confined, and this method is called from a thread other than the thread owning this resource scope</li>
      *     <li>this resource scope is shared and a resource associated with this scope is accessed while this method is called</li>
-     *     <li>one or more handles (see {@link #acquire()}) associated with this resource scope have not been closed</li>
+     *     <li>one or more handles (see {@link #acquire()}) associated with this resource scope have not been {@linkplain #release(Handle) released}</li>
      * </ul>
-     * @throws UnsupportedOperationException if this resource scope is {@link #isImplicit() implicit}.
+     * @throws UnsupportedOperationException if this resource scope is {@linkplain #isImplicit() implicit}.
      */
     void close();
 
@@ -198,9 +195,8 @@ public interface ResourceScope extends AutoCloseable {
     void addCloseAction(Runnable runnable);
 
     /**
-     * If this resource scope is explicit, this method acquires a new resource scope handle, associated with this
-     * resource scope; an explicit resource scope cannot be {@link #close() closed}
-     * until all the resource scope handles acquired from it have been {@link #release(Handle)} released}.
+     * Acquires a resource scope handle associated with this resource scope. An explicit resource scope cannot be
+     * {@linkplain #close() closed} until all the resource scope handles acquired from it have been {@linkplain #release(Handle)} released}.
      * @return a resource scope handle.
      */
     Handle acquire();
@@ -214,12 +210,12 @@ public interface ResourceScope extends AutoCloseable {
     void release(Handle handle);
 
     /**
-     * An abstraction modelling a resource scope handle. A resource scope handle is typically {@link #acquire() acquired} by clients
+     * An abstraction modelling a resource scope handle. A resource scope handle is typically {@linkplain #acquire() acquired} by clients
      * in order to prevent an explicit resource scope from being closed while executing a certain operation.
-     * Once obtained, resource scope handles can be {@link #release(Handle)} released}; an explicit resource scope can
+     * Once obtained, resource scope handles can be {@linkplain #release(Handle)} released}; an explicit resource scope can
      * be closed only <em>after</em> all the resource scope handles acquired from it have been released.
      */
-    interface Handle {
+    sealed interface Handle permits ResourceScopeImpl.HandleImpl {
 
         /**
          * Returns the resource scope associated with this handle.

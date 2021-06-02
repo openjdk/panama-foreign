@@ -41,6 +41,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

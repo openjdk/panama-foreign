@@ -58,7 +58,7 @@ struct CodeBlobType {
 //    AdapterBlob        : Used to hold C2I/I2C adapters
 //    VtableBlob         : Used for holding vtable chunks
 //    MethodHandlesAdapterBlob : Used to hold MethodHandles adapters
-//    EntryBlob          : Used for upcalls from native code
+//    OptimizedEntryBlob : Used for upcalls from native code
 //   RuntimeStub         : Call to VM runtime methods
 //   SingletonBlob       : Super-class for all blobs that exist in only one instance
 //    DeoptimizationBlob : Used for deoptimization
@@ -76,7 +76,7 @@ struct CodeBlobType {
 
 
 class CodeBlobLayout;
-class EntryBlob; // for as_entry_blob()
+class OptimizedEntryBlob; // for as_optimized_entry_blob()
 class JavaFrameAnchor; // for EntryBlob::jfa_for_frame
 
 class CodeBlob {
@@ -139,7 +139,7 @@ public:
   virtual bool is_vtable_blob() const                 { return false; }
   virtual bool is_method_handles_adapter_blob() const { return false; }
   virtual bool is_compiled() const                    { return false; }
-  virtual bool is_entry_blob() const                  { return false; }
+  virtual bool is_optimized_entry_blob() const                  { return false; }
 
   inline bool is_compiled_by_c1() const    { return _type == compiler_c1; };
   inline bool is_compiled_by_c2() const    { return _type == compiler_c2; };
@@ -153,7 +153,7 @@ public:
   CompiledMethod* as_compiled_method_or_null() { return is_compiled() ? (CompiledMethod*) this : NULL; }
   CompiledMethod* as_compiled_method()         { assert(is_compiled(), "must be compiled"); return (CompiledMethod*) this; }
   CodeBlob* as_codeblob_or_null() const        { return (CodeBlob*) this; }
-  EntryBlob* as_entry_blob() const             { assert(is_entry_blob(), "must be entry blob"); return (EntryBlob*) this; }
+  OptimizedEntryBlob* as_optimized_entry_blob() const             { assert(is_optimized_entry_blob(), "must be entry blob"); return (OptimizedEntryBlob*) this; }
 
   // Boundaries
   address header_begin() const        { return (address) this; }
@@ -384,7 +384,7 @@ class BufferBlob: public RuntimeBlob {
   friend class AdapterBlob;
   friend class VtableBlob;
   friend class MethodHandlesAdapterBlob;
-  friend class EntryBlob;
+  friend class OptimizedEntryBlob;
   friend class WhiteBox;
 
  private:
@@ -726,19 +726,19 @@ class SafepointBlob: public SingletonBlob {
 
 //----------------------------------------------------------------------------------------------------
 
-// For Panama upcall stubs
-class EntryBlob: public BufferBlob {
+// For optimized upcall stubs
+class OptimizedEntryBlob: public BufferBlob {
  private:
   intptr_t _exception_handler_offset;
   jobject _receiver;
   ByteSize _jfa_sp_offset;
 
-  EntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset,
+  OptimizedEntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset,
             jobject receiver, ByteSize jfa_sp_offset);
 
  public:
   // Creation
-  static EntryBlob* create(const char* name, CodeBuffer* cb,
+  static OptimizedEntryBlob* create(const char* name, CodeBuffer* cb,
                            intptr_t exception_handler_offset, jobject receiver,
                            ByteSize jfa_sp_offset);
 
@@ -750,7 +750,7 @@ class EntryBlob: public BufferBlob {
   JavaFrameAnchor* jfa_for_frame(const frame& frame) const;
 
   // Typing
-  virtual bool is_entry_blob() const override { return true; }
+  virtual bool is_optimized_entry_blob() const override { return true; }
 };
 
 #endif // SHARE_CODE_CODEBLOB_HPP

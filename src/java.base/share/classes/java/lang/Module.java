@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,8 +56,6 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.CDS;
-import jdk.internal.module.IllegalAccessLogger;
-import jdk.internal.module.IllegalNativeAccessChecker;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -111,8 +109,8 @@ public final class Module implements AnnotatedElement {
     // the module descriptor
     private final ModuleDescriptor descriptor;
 
-    // is this module a native module
-    private volatile boolean enableNativeAccess = false;
+    // true, if this module allows restricted native access
+    private volatile boolean enableNativeAccess;
 
     /**
      * Creates a new named Module. The resulting Module will be defined to the
@@ -139,9 +137,10 @@ public final class Module implements AnnotatedElement {
         defineModule0(this, isOpen, vs, loc, packages);
         if (loader == null || loader == ClassLoaders.platformClassLoader()) {
             // boot/builtin modules are always native
-            addEnableNativeAccess();
+            implAddEnableNativeAccess();
         }
     }
+
 
     /**
      * Create the unnamed Module for the given ClassLoader.
@@ -154,6 +153,7 @@ public final class Module implements AnnotatedElement {
         this.loader = loader;
         this.descriptor = null;
     }
+
 
     /**
      * Creates a named module but without defining the module to the VM.
@@ -204,6 +204,7 @@ public final class Module implements AnnotatedElement {
      *         If denied by the security manager
      */
     public ClassLoader getClassLoader() {
+        @SuppressWarnings("removal")
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -250,18 +251,28 @@ public final class Module implements AnnotatedElement {
         return null;
     }
 
-    boolean isEnableNativeAccess() {
-        if (enableNativeAccess) {
-            return true;
-        }
+    /**
+     * Update this module to allow access to restricted methods.
+     */
+    Module implAddEnableNativeAccess() {
+        enableNativeAccess = true;
+        return this;
+    }
 
-        // lazy init for unnamed modules
-        if (!isNamed() && IllegalNativeAccessChecker.enableNativeAccessAllUnnamedModules()) {
-            enableNativeAccess = true;
-            return true;
-        }
+    /**
+     * Update all unnamed modules to allow access to restricted methods.
+     */
+    static void implAddEnableNativeAccessAllUnnamed() {
+        ALL_UNNAMED_MODULE.enableNativeAccess = true;
+    }
 
-        return false;
+    /**
+     * Returns true if module m can access restricted methods.
+     */
+    boolean implIsEnableNativeAccess() {
+        return isNamed() ?
+                enableNativeAccess :
+                ALL_UNNAMED_MODULE.enableNativeAccess;
     }
 
     // --
@@ -426,11 +437,6 @@ public final class Module implements AnnotatedElement {
             }
             implAddReads(other, true);
         }
-        return this;
-    }
-
-    Module addEnableNativeAccess() {
-        enableNativeAccess = true;
         return this;
     }
 
@@ -926,27 +932,8 @@ public final class Module implements AnnotatedElement {
             return;
 
         // check if the package is already exported/open to other
-        if (implIsExportedOrOpen(pn, other, open)) {
-
-            // if the package is exported/open for illegal access then we need
-            // to record that it has also been exported/opened reflectively so
-            // that the IllegalAccessLogger doesn't emit a warning.
-            boolean needToAdd = false;
-            if (!other.isNamed()) {
-                IllegalAccessLogger l = IllegalAccessLogger.illegalAccessLogger();
-                if (l != null) {
-                    if (open) {
-                        needToAdd = l.isOpenForIllegalAccess(this, pn);
-                    } else {
-                        needToAdd = l.isExportedForIllegalAccess(this, pn);
-                    }
-                }
-            }
-            if (!needToAdd) {
-                // nothing to do
-                return;
-            }
-        }
+        if (implIsExportedOrOpen(pn, other, open))
+            return;
 
         // can only export a package in the module
         if (!descriptor.packages().contains(pn)) {
@@ -1485,6 +1472,7 @@ public final class Module implements AnnotatedElement {
     // cached class file with annotations
     private volatile Class<?> moduleInfoClass;
 
+    @SuppressWarnings("removal")
     private Class<?> moduleInfoClass() {
         Class<?> clazz = this.moduleInfoClass;
         if (clazz != null)

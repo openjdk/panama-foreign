@@ -25,10 +25,14 @@
  */
 package jdk.incubator.foreign;
 
+import jdk.internal.foreign.AbstractCLinker;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.SharedUtils;
+import jdk.internal.foreign.abi.aarch64.AArch64VaList;
+import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
+import jdk.internal.foreign.abi.x64.windows.WinVaList;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -102,14 +106,10 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  *
- * @apiNote In the future, if the Java language permits, {@link CLinker}
- * may become a {@code sealed} interface, which would prohibit subclassing except by
- * explicitly permitted types.
- *
  * @implSpec
  * Implementations of this interface are immutable, thread-safe and <a href="{@docRoot}/java.base/java/lang/doc-files/ValueBased.html">value-based</a>.
  */
-public interface CLinker {
+public sealed interface CLinker permits AbstractCLinker {
 
     /**
      * Returns the C linker for the current platform.
@@ -120,6 +120,9 @@ public interface CLinker {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @return a linker for this system.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static CLinker getInstance() {
@@ -150,11 +153,6 @@ public interface CLinker {
      * If the provided method type's return type is {@code MemorySegment}, then the resulting method handle features
      * an additional prefix parameter, of type {@link SegmentAllocator}, which will be used by the linker runtime
      * to allocate structs returned by-value.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @see SymbolLookup
      *
@@ -172,11 +170,6 @@ public interface CLinker {
      * <p>
      * If the provided method type's return type is {@code MemorySegment}, then the provided allocator will be used by
      * the linker runtime to allocate structs returned by-value.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @see SymbolLookup
      *
@@ -202,12 +195,7 @@ public interface CLinker {
      * <p>
      * The returned method handle will throw an {@link IllegalArgumentException} if the target address passed to it is
      * {@link MemoryAddress#NULL}, or a {@link NullPointerException} if the target address is {@code null}.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     **
+     *
      * @see SymbolLookup
      *
      * @param type     the method type.
@@ -221,17 +209,11 @@ public interface CLinker {
      * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>
-     * The returned memory address is associated with the provided scope. When such scope is closed,
+     * <p>The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
      * <p>
      * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
      * the VM will exit with a non-zero exit code.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted method are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
@@ -239,6 +221,8 @@ public interface CLinker {
      * @return the native stub segment.
      * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
      *         if it is determined that the target method handle can throw an exception.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
@@ -323,13 +307,15 @@ public interface CLinker {
      * @param str the Java string to be converted into a C string.
      * @param scope the resource scope to be associated with the returned segment.
      * @return a new native memory segment containing the converted C string.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     static MemorySegment toCString(String str, ResourceScope scope) {
         return toCString(str, SegmentAllocator.ofScope(scope));
     }
 
     /**
-     * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
+     * Converts a Java string into a null-terminated C string, using the given {@linkplain java.nio.charset.Charset charset},
      * storing the result into a new native memory segment native memory segment allocated using the provided allocator.
      * <p>
      * This method always replaces malformed-input and unmappable-character
@@ -350,7 +336,7 @@ public interface CLinker {
     }
 
     /**
-     * Converts a Java string into a null-terminated C string, using the given {@link java.nio.charset.Charset charset},
+     * Converts a Java string into a null-terminated C string, using the given {@linkplain java.nio.charset.Charset charset},
      * storing the result into a native memory segment associated with the provided resource scope.
      * <p>
      * This method always replaces malformed-input and unmappable-character
@@ -362,6 +348,8 @@ public interface CLinker {
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the C string.
      * @param scope the resource scope to be associated with the returned segment.
      * @return a new native memory segment containing the converted C string.
+     * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+     * than the thread owning {@code scope}.
      */
     static MemorySegment toCString(String str, Charset charset, ResourceScope scope) {
         return toCString(str, charset, SegmentAllocator.ofScope(scope));
@@ -383,6 +371,9 @@ public interface CLinker {
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static String toJavaString(MemoryAddress addr) {
@@ -392,7 +383,7 @@ public interface CLinker {
     }
 
     /**
-     * Converts a null-terminated C string stored at given address into a Java string, using the given {@link java.nio.charset.Charset charset}.
+     * Converts a null-terminated C string stored at given address into a Java string, using the given {@linkplain java.nio.charset.Charset charset}.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -408,6 +399,9 @@ public interface CLinker {
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the Java string.
      * @return a Java string with the contents of the null-terminated C string at given address.
      * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static String toJavaString(MemoryAddress addr, Charset charset) {
@@ -436,7 +430,7 @@ public interface CLinker {
     }
 
     /**
-     * Converts a null-terminated C string stored at given address into a Java string, using the given {@link java.nio.charset.Charset charset}.
+     * Converts a null-terminated C string stored at given address into a Java string, using the given {@linkplain java.nio.charset.Charset charset}.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -478,6 +472,9 @@ public interface CLinker {
      * @param size memory size to be allocated
      * @return addr memory address of the allocated memory
      * @throws OutOfMemoryError if malloc could not allocate the required amount of native memory.
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static MemoryAddress allocateMemory(long size) {
@@ -499,6 +496,9 @@ public interface CLinker {
      * restricted methods, and use safe and supported functionalities, where possible.
      *
      * @param addr memory address of the native memory to be freed
+     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static void freeMemory(MemoryAddress addr) {
@@ -522,13 +522,8 @@ public interface CLinker {
      *
      * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
      * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
-     *
-     * @apiNote In the future, if the Java language permits, {@link VaList}
-     * may become a {@code sealed} interface, which would prohibit subclassing except by
-     * explicitly permitted types.
-     *
      */
-    interface VaList extends Addressable {
+    sealed interface VaList extends Addressable permits WinVaList, SysVVaList, AArch64VaList, SharedUtils.EmptyVaList {
 
         /**
          * Reads the next value as an {@code int} and advances this va list's position.
@@ -599,6 +594,8 @@ public interface CLinker {
          * @throws IllegalStateException if the resource scope associated with this instance has been closed
          * (see {@link #scope()}).
          * @throws IllegalArgumentException if the given memory layout is not compatible with {@code MemorySegment}
+         * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+         * than the thread owning {@code scope}.
          */
         MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope);
 
@@ -646,8 +643,7 @@ public interface CLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@link ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted method are unsafe, and, if used incorrectly, their use might crash
@@ -656,6 +652,9 @@ public interface CLinker {
          *
          * @param address a memory address pointing to an existing C {@code va_list}.
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
+         * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+         * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+         * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
          */
         @CallerSensitive
         static VaList ofAddress(MemoryAddress address) {
@@ -675,6 +674,11 @@ public interface CLinker {
          * @param address a memory address pointing to an existing C {@code va_list}.
          * @param scope the resource scope to be associated with the returned {@code VaList} instance.
          * @return a new {@code VaList} instance backed by the C {@code va_list} at {@code address}.
+         * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+         * than the thread owning {@code scope}.
+         * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+         * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
+         * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
          */
         @CallerSensitive
         static VaList ofAddress(MemoryAddress address, ResourceScope scope) {
@@ -686,10 +690,10 @@ public interface CLinker {
 
         /**
          * Constructs a new {@code VaList} using a builder (see {@link Builder}), associated with a given
-         * {@link ResourceScope resource scope}.
+         * {@linkplain ResourceScope resource scope}.
          * <p>
          * If this method needs to allocate native memory, such memory will be managed by the given
-         * {@link ResourceScope resource scope}, and will be released when the resource scope is {@link ResourceScope#close closed}.
+         * {@linkplain ResourceScope resource scope}, and will be released when the resource scope is {@linkplain ResourceScope#close closed}.
          * <p>
          * Note that when there are no elements added to the created va list,
          * this method will return the same as {@link #empty()}.
@@ -698,6 +702,8 @@ public interface CLinker {
          *                of the underlying C {@code va_list}.
          * @param scope the scope to be used for the valist allocation.
          * @return a new {@code VaList} instance backed by a fresh C {@code va_list}.
+         * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
+         * than the thread owning {@code scope}.
          */
         static VaList make(Consumer<Builder> actions, ResourceScope scope) {
             Objects.requireNonNull(actions);
@@ -721,13 +727,8 @@ public interface CLinker {
          *
          * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
          * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
-         *
-         * @apiNote In the future, if the Java language permits, {@link Builder}
-         * may become a {@code sealed} interface, which would prohibit subclassing except by
-         * explicitly permitted types.
-         *
          */
-        interface Builder {
+        sealed interface Builder permits WinVaList.Builder, SysVVaList.Builder, AArch64VaList.Builder {
 
             /**
              * Adds a native value represented as an {@code int} to the C {@code va_list} being constructed.
