@@ -195,7 +195,6 @@ public sealed interface CLinker permits AbstractCLinker {
      * <p>
      * The returned method handle will throw an {@link IllegalArgumentException} if the target address passed to it is
      * {@link MemoryAddress#NULL}, or a {@link NullPointerException} if the target address is {@code null}.
-     * <p>
      *
      * @see SymbolLookup
      *
