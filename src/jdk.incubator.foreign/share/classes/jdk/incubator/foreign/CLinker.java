@@ -25,8 +25,6 @@
  */
 package jdk.incubator.foreign;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.SystemLookup;
@@ -39,7 +37,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nio.charset.Charset;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static jdk.internal.foreign.PlatformLayouts.*;
@@ -224,8 +221,12 @@ public interface CLinker {
      * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned memory address is associated with the provided scope. When such scope is closed,
+     * <p>
+     * The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
+     * <p>
+     * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
+     * the VM will exit with a non-zero exit code.
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
      * Restricted method are unsafe, and, if used incorrectly, their use might crash
@@ -236,7 +237,8 @@ public interface CLinker {
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      */
     MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 

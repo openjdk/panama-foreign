@@ -107,6 +107,7 @@ public final class SysVx64Linker extends AbstractCLinker {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
+        SharedUtils.checkExceptions(target);
         target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (ResourceScopeImpl) scope);
     }
