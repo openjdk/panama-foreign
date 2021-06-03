@@ -52,11 +52,6 @@ public class JextractToolProviderTest extends JextractToolRunner {
         run("-?").checkSuccess();
     }
 
-    @Test
-    public void testVersion() {
-        run("--version").checkSuccess();
-    }
-
     // error for non-existent header file
     @Test
     public void testNonExistentHeader() {
