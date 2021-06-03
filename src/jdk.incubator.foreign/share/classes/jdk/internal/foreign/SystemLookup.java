@@ -35,10 +35,8 @@ import jdk.internal.loader.NativeLibrary;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import static jdk.incubator.foreign.CLinker.C_POINTER;
@@ -76,7 +74,7 @@ public class SystemLookup implements SymbolLookup {
             MemorySegment funcs = fallbackLibLookup.lookup("funcs").orElseThrow()
                 .asSegment(C_POINTER.byteSize() * numSymbols, ResourceScope.newImplicitScope());
 
-            SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.BY_NAME.get(name))
+            SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
                 .map(symbol -> MemoryAccess.getAddressAtIndex(funcs, symbol.ordinal()));
 
             final SymbolLookup finalLookup = lookup;
@@ -169,12 +167,11 @@ public class SystemLookup implements SymbolLookup {
         gmtime
         ;
 
-        private static final Map<String, WindowsFallbackSymbols> BY_NAME;
-
-        static {
-            BY_NAME = new ConcurrentHashMap<>();
-            for (var symbol : values()) {
-                BY_NAME.put(symbol.name(), symbol);
+        static WindowsFallbackSymbols valueOfOrNull(String name) {
+            try {
+                return valueOf(name);
+            } catch (IllegalArgumentException e) {
+                return null;
             }
         }
     }
