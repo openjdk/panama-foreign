@@ -335,15 +335,6 @@ public final class JextractTool {
 
         @Override
         public int run(PrintWriter out, PrintWriter err, String... args) {
-            // defensive check to throw security exception early.
-            // Note that the successful run of jextract under security
-            // manager would require far more permissions like loading
-            // library (clang), file system access etc.
-            if (System.getSecurityManager() != null) {
-                System.getSecurityManager().
-                    checkPermission(new RuntimePermission("jextract"));
-            }
-
             JextractTool instance = new JextractTool(out, err);
             return instance.run(args);
         }
