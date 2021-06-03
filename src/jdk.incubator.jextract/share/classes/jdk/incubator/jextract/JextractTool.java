@@ -142,6 +142,11 @@ public final class JextractTool {
         return exitCode;
     }
 
+    private int printVersion() {
+        err.println(System.getProperty("java.version"));
+        return 0;
+    }
+
     private void printOptionError(Throwable throwable) {
         printOptionError(throwable.getMessage());
         if (DEBUG) {
@@ -184,6 +189,7 @@ public final class JextractTool {
         parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
         parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
         parser.accepts("header-class-name", format("help.header-class-name")).withRequiredArg();
+        parser.accepts("version", format("help.version"));
         parser.nonOptions(format("help.non.option"));
 
         OptionSet optionSet;
@@ -196,6 +202,10 @@ public final class JextractTool {
 
         if (optionSet.has("h")) {
             return printHelp(parser, SUCCESS);
+        }
+
+        if (optionSet.has("version")) {
+            return printVersion();
         }
 
         if (optionSet.nonOptionArguments().size() != 1) {
