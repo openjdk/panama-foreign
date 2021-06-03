@@ -142,6 +142,7 @@ public final class JextractTool {
         return exitCode;
     }
 
+
     private void printOptionError(Throwable throwable) {
         printOptionError(throwable.getMessage());
         if (DEBUG) {
