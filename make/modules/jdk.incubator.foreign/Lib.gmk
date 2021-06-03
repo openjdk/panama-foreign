@@ -45,6 +45,15 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
     LIBS := $(LIBCXX), \
 ))
 
+else # windows
+
+$(eval $(call SetupJdkLibrary, BUILD_LIBCSTDLIB, \
+    NAME := WinFallbackLookup, \
+    CFLAGS := $(CFLAGS_JDKLIB), \
+    CXXFLAGS := $(CXXFLAGS_JDKLIB), \
+    LDFLAGS := $(LDFLAGS_JDKLIB) $(call SET_SHARED_LIBRARY_ORIGIN), \
+    LIBS := $(LIBCXX), \
+))
 
 endif
 
