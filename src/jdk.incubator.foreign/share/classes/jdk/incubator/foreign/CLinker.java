@@ -182,8 +182,6 @@ public sealed interface CLinker permits AbstractCLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch, or if the symbol
      *                                  is {@link MemoryAddress#NULL}
-     *
-     * @see SymbolLookup
      */
     MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
@@ -215,12 +213,16 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * <p>The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
+     * <p>
+     * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
+     * the VM will exit with a non-zero exit code.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
@@ -643,8 +645,7 @@ public sealed interface CLinker permits AbstractCLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@linkplain ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash

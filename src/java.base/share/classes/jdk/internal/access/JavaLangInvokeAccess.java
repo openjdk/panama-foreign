@@ -139,4 +139,11 @@ public interface JavaLangInvokeAccess {
      * @param mh the method handle
      */
     void ensureCustomized(MethodHandle mh);
+
+    /**
+     * A best-effort method that tries to find any exceptions thrown by the given method handle.
+     * @param handle the handle to check
+     * @return an array of exceptions, or {@code null}.
+     */
+    Class<?>[] exceptionTypes(MethodHandle handle);
 }

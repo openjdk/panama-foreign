@@ -45,7 +45,6 @@ else ifeq ($(call isTargetOs, windows), false)
       LIBS := $(LIBCXX), \
   ))
 
-
 endif
 
 TARGETS += $(BUILD_SYSLOOKUPLIB)
