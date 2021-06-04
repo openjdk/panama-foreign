@@ -65,7 +65,7 @@ public class TestVarArgs {
         System.loadLibrary("VarArgs");
     }
 
-    static final MemoryAddress varargsAddr =
+    static final MemoryAddress VARARGS_ADDR =
             SymbolLookup.loaderLookup()
                     .lookup("varargs").get();
 
@@ -101,7 +101,7 @@ public class TestVarArgs {
 
             MethodType mt = MethodType.methodType(void.class, carriers);
 
-            MethodHandle downcallHandle = abi.downcallHandle(varargsAddr, mt, desc);
+            MethodHandle downcallHandle = abi.downcallHandle(VARARGS_ADDR, mt, desc);
 
             List<Object> argValues = new ArrayList<>();
             argValues.add(callInfoPtr); // call info
