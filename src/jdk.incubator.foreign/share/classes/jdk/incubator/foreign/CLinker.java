@@ -182,6 +182,8 @@ public sealed interface CLinker permits AbstractCLinker {
      * @return the downcall method handle.
      * @throws IllegalArgumentException in the case of a method type and function descriptor mismatch, or if the symbol
      *                                  is {@link MemoryAddress#NULL}
+     *
+     * @see SymbolLookup
      */
     MethodHandle downcallHandle(Addressable symbol, SegmentAllocator allocator, MethodType type, FunctionDescriptor function);
 
