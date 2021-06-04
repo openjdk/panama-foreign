@@ -71,7 +71,7 @@ public class VaListTest extends NativeTestHelper {
         System.loadLibrary("VaList");
     }
 
-    static SymbolLookup lookup = SymbolLookup.loaderLookup();
+    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
     private static final MethodHandle MH_sumInts = link("sumInts",
             MethodType.methodType(int.class, int.class, VaList.class),
@@ -99,7 +99,7 @@ public class VaListTest extends NativeTestHelper {
             FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_VA_LIST));
 
     private static MethodHandle link(String symbol, MethodType mt, FunctionDescriptor fd) {
-        return abi.downcallHandle(lookup.lookup(symbol).get(), mt, fd);
+        return abi.downcallHandle(LOOKUP.lookup(symbol).get(), mt, fd);
     }
 
     private static MethodHandle linkVaListCB(String symbol) {
