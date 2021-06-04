@@ -155,7 +155,7 @@ public class StdLibTest {
 
     static class StdLibHelper {
 
-        final static SymbolLookup LOOKUP = CLinker.systemLookup();
+        static final SymbolLookup LOOKUP = CLinker.systemLookup();
 
         final static MethodHandle strcat = abi.downcallHandle(LOOKUP.lookup("strcat").get(),
                 MethodType.methodType(MemoryAddress.class, MemoryAddress.class, MemoryAddress.class),

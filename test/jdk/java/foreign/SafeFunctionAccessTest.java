@@ -50,7 +50,7 @@ public class SafeFunctionAccessTest {
             CLinker.C_INT, CLinker.C_INT
     );
 
-    static SymbolLookup lookup = SymbolLookup.loaderLookup();
+    static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testClosedStruct() throws Throwable {
@@ -60,7 +60,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(segment.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                lookup.lookup("struct_func").get(),
+                LOOKUP.lookup("struct_func").get(),
                 MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
@@ -75,7 +75,7 @@ public class SafeFunctionAccessTest {
         }
         assertFalse(address.scope().isAlive());
         MethodHandle handle = CLinker.getInstance().downcallHandle(
-                lookup.lookup("addr_func").get(),
+                LOOKUP.lookup("addr_func").get(),
                 MethodType.methodType(void.class, MemoryAddress.class),
                 FunctionDescriptor.ofVoid(CLinker.C_POINTER));
 
