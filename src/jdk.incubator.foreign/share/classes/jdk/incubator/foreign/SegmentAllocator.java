@@ -299,11 +299,7 @@ public interface SegmentAllocator {
         Objects.requireNonNull(elementLayout);
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
         MemorySegment addr = allocate(MemoryLayout.sequenceLayout(Array.getLength(array), elementLayout));
-        if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
-            addr.copyFrom(heapSegmentFactory.apply(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
-        }
+        addr.copyFrom(heapSegmentFactory.apply(array), elementLayout.withOrder(ByteOrder.nativeOrder()), elementLayout);
         return addr;
     }
 

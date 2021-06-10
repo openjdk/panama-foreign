@@ -27,13 +27,15 @@
  * @run testng TestCopyFrom
  */
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -42,23 +44,94 @@ import static org.testng.Assert.*;
 
 public class TestCopyFrom {
 
-    final static VarHandle BYTE_HANDLE = MemoryLayouts.JAVA_BYTE.varHandle(byte.class);
-
     @Test(dataProvider = "slices")
-    public void testCopy(SegmentSlice s1, SegmentSlice s2) {
-        int size = Math.min(s1.size(), s2.size());
+    public void testByteCopy(SegmentSlice s1, SegmentSlice s2) {
+        int size = Math.min(s1.byteSize(), s2.byteSize());
         //prepare source and target segments
         for (int i = 0 ; i < size ; i++) {
-            BYTE_HANDLE.set(s2.segment.asSlice(i), (byte)0);
+            Type.BYTE.set(s2, i, 0);
         }
         for (int i = 0 ; i < size ; i++) {
-            BYTE_HANDLE.set(s1.segment.asSlice(i), (byte) i);
+            Type.BYTE.set(s1, i, i);
         }
         //perform copy
         s2.segment.copyFrom(s1.segment.asSlice(0, size));
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
-            assertEquals((byte)i, BYTE_HANDLE.get(s2.segment.asSlice(i)));
+            Type.BYTE.check(s2, i, i);
+        }
+    }
+
+    @Test(dataProvider = "slices")
+    public void testElementCopy(SegmentSlice s1, SegmentSlice s2) {
+        if (s1.type.carrier != s2.type.carrier) return;
+        int size = Math.min(s1.elementSize(), s2.elementSize());
+        //prepare source and target segments
+        for (int i = 0 ; i < size ; i++) {
+            s2.set(i, 0);
+        }
+        for (int i = 0 ; i < size ; i++) {
+            s1.set(i, i);
+        }
+        //perform copy
+        s2.segment.copyFrom(s1.segment.asSlice(0, size * s1.type.size()), s1.type.layout, s2.type.layout);
+        //check that copy actually worked
+        for (int i = 0; i < size; i++) {
+            s2.check(i, i);
+        }
+    }
+
+    interface Getter<X> {
+        X get(MemorySegment segment, long index, ByteOrder order);
+    }
+
+    interface Setter<X> {
+        void set(MemorySegment segment, long index, ByteOrder order, X val);
+    }
+
+    enum Type {
+        // Byte
+        BYTE(byte.class, MemoryLayouts.JAVA_BYTE, (s, i, o) -> MemoryAccess.getByteAtOffset(s, i), (s, i, o, v) -> MemoryAccess.setByteAtOffset(s, i, v), i -> (byte)i),
+        //LE
+        SHORT_LE(short.class, MemoryLayouts.BITS_16_LE, MemoryAccess::getShortAtOffset, MemoryAccess::setShortAtOffset, i -> (short)i),
+        CHAR_LE(char.class, MemoryLayouts.BITS_16_LE, MemoryAccess::getCharAtOffset, MemoryAccess::setCharAtOffset, i -> (char)i),
+        INT_LE(int.class, MemoryLayouts.BITS_32_LE, MemoryAccess::getIntAtOffset, MemoryAccess::setIntAtOffset, i -> i),
+        FLOAT_LE(float.class, MemoryLayouts.BITS_32_LE, MemoryAccess::getFloatAtOffset, MemoryAccess::setFloatAtOffset, i -> (float)i),
+        LONG_LE(long.class, MemoryLayouts.BITS_64_LE, MemoryAccess::getLongAtOffset, MemoryAccess::setLongAtOffset, i -> (long)i),
+        DOUBLE_LE(double.class, MemoryLayouts.BITS_64_LE, MemoryAccess::getDoubleAtOffset, MemoryAccess::setDoubleAtOffset, i -> (double)i),
+        //BE
+        SHORT_BE(short.class, MemoryLayouts.BITS_16_BE, MemoryAccess::getShortAtOffset, MemoryAccess::setShortAtOffset, i -> (short)i),
+        CHAR_BE(char.class, MemoryLayouts.BITS_16_BE, MemoryAccess::getCharAtOffset, MemoryAccess::setCharAtOffset, i -> (char)i),
+        INT_BE(int.class, MemoryLayouts.BITS_32_BE, MemoryAccess::getIntAtOffset, MemoryAccess::setIntAtOffset, i -> i),
+        FLOAT_BE(float.class, MemoryLayouts.BITS_32_BE, MemoryAccess::getFloatAtOffset, MemoryAccess::setFloatAtOffset, i -> (float)i),
+        LONG_BE(long.class, MemoryLayouts.BITS_64_BE, MemoryAccess::getLongAtOffset, MemoryAccess::setLongAtOffset, i -> (long)i),
+        DOUBLE_BE(double.class, MemoryLayouts.BITS_64_BE, MemoryAccess::getDoubleAtOffset, MemoryAccess::setDoubleAtOffset, i -> (double)i);
+
+        final ValueLayout layout;
+        final Getter<Object> getter;
+        final Setter<Object> setter;
+        final IntFunction<Object> valueConverter;
+        final Class<?> carrier;
+
+        @SuppressWarnings("unchecked")
+        <Z> Type(Class<Z> carrier, ValueLayout layout, Getter<Z> getter, Setter<Z> setter, IntFunction<Z> valueConverter) {
+            this.carrier = carrier;
+            this.layout = layout;
+            this.getter = (Getter<Object>)getter;
+            this.setter = (Setter<Object>)setter;
+            this.valueConverter = (IntFunction<Object>)valueConverter;
+        }
+
+        int size() {
+            return (int)layout.byteSize();
+        }
+
+        void set(SegmentSlice slice, int index, int val) {
+            setter.set(slice.segment, index * size(), layout.order(), valueConverter.apply(val));
+        }
+
+        void check(SegmentSlice slice, int index, int val) {
+            assertEquals(getter.get(slice.segment, index * size(), layout.order()), valueConverter.apply(val));
         }
     }
 
@@ -80,33 +153,53 @@ public class TestCopyFrom {
         }
 
         final Kind kind;
+        final Type type;
         final int first;
         final int last;
         final MemorySegment segment;
 
-        public SegmentSlice(Kind kind, int first, int last, MemorySegment segment) {
+        public SegmentSlice(Kind kind, Type type, int first, int last, MemorySegment segment) {
             this.kind = kind;
+            this.type = type;
             this.first = first;
             this.last = last;
             this.segment = segment;
         }
 
-        int size() {
+        void set(int index, int val) {
+            type.set(this, index, val);
+        }
+
+        void check(int index, int val) {
+            type.check(this, index, val);
+        }
+
+        int byteSize() {
             return last - first + 1;
+        }
+
+        int elementSize() {
+            return byteSize() / type.size();
+        }
+
+        @Override
+        public String toString() {
+            return String.format("SegmentSlice{%s, %d, %d}", type, first, last);
         }
     }
 
     @DataProvider(name = "slices")
-    static Object[][] slices() {
-        int[] sizes = { 16, 8, 4, 2, 1 };
+    static Object[][] elementSlices() {
         List<SegmentSlice> slices = new ArrayList<>();
         for (SegmentSlice.Kind kind : SegmentSlice.Kind.values()) {
             MemorySegment segment = kind.makeSegment(16);
             //compute all slices
-            for (int size : sizes) {
-                for (int index = 0 ; index < 16 ; index += size) {
-                    MemorySegment slice = segment.asSlice(index, size);
-                    slices.add(new SegmentSlice(kind, index, index + size - 1, slice));
+            for (Type type : Type.values()) {
+                for (int index = 0; index < 16; index += type.size()) {
+                    MemorySegment first = segment.asSlice(0, index);
+                    slices.add(new SegmentSlice(kind, type, 0, index - 1, first));
+                    MemorySegment second = segment.asSlice(index);
+                    slices.add(new SegmentSlice(kind, type, index, 15, second));
                 }
             }
         }
