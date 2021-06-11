@@ -30,7 +30,8 @@ import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.foreign.PlatformLayouts;
 import jdk.internal.foreign.SystemLookup;
 import jdk.internal.foreign.abi.SharedUtils;
-import jdk.internal.foreign.abi.aarch64.AArch64VaList;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64VaList;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64VaList;
 import jdk.internal.foreign.abi.x64.sysv.SysVVaList;
 import jdk.internal.foreign.abi.x64.windows.WinVaList;
 import jdk.internal.reflect.CallerSensitive;
@@ -213,8 +214,15 @@ public sealed interface CLinker permits AbstractCLinker {
      * Allocates a native stub with given scope which can be passed to other foreign functions (as a function pointer);
      * calling such a function pointer from native code will result in the execution of the provided method handle.
      *
-     * <p>The returned memory address is associated with the provided scope. When such scope is closed,
+     * <p>
+     * The returned memory address is associated with the provided scope. When such scope is closed,
      * the corresponding native stub will be deallocated.
+     * <p>
+     * The target method handle should not throw any exceptions. If the target method handle does throw an exception,
+     * the VM will exit with a non-zero exit code. To avoid the VM aborting due to an uncaught exception, clients
+     * could wrap all code in the target method handle in a try/catch block that catches any {@link Throwable}, for
+     * instance by using the {@link java.lang.invoke.MethodHandles#catchException(MethodHandle, Class, MethodHandle)}
+     * method handle combinator, and handle exceptions as desired in the corresponding catch block.
      *
      * @param target   the target method handle.
      * @param function the function descriptor.
@@ -523,7 +531,7 @@ public sealed interface CLinker permits AbstractCLinker {
      * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
      * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
      */
-    sealed interface VaList extends Addressable permits WinVaList, SysVVaList, AArch64VaList, SharedUtils.EmptyVaList {
+    sealed interface VaList extends Addressable permits WinVaList, SysVVaList, LinuxAArch64VaList, MacOsAArch64VaList, SharedUtils.EmptyVaList {
 
         /**
          * Reads the next value as an {@code int} and advances this va list's position.
@@ -729,7 +737,7 @@ public sealed interface CLinker permits AbstractCLinker {
          * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
          * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
          */
-        sealed interface Builder permits WinVaList.Builder, SysVVaList.Builder, AArch64VaList.Builder {
+        sealed interface Builder permits WinVaList.Builder, SysVVaList.Builder, LinuxAArch64VaList.Builder, MacOsAArch64VaList.Builder {
 
             /**
              * Adds a native value represented as an {@code int} to the C {@code va_list} being constructed.

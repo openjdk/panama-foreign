@@ -37,10 +37,13 @@ import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
@@ -72,6 +75,8 @@ import static jdk.incubator.foreign.CLinker.*;
 
 public class SharedUtils {
 
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
     private static final MethodHandle MH_BUFFER_COPY;
@@ -79,6 +84,7 @@ public class SharedUtils {
     private static final MethodHandle MH_MAKE_CONTEXT_BOUNDED_ALLOCATOR;
     private static final MethodHandle MH_CLOSE_CONTEXT;
     private static final MethodHandle MH_REACHBILITY_FENCE;
+    private static final MethodHandle MH_HANDLE_UNCAUGHT_EXCEPTION;
 
     static {
         try {
@@ -97,6 +103,8 @@ public class SharedUtils {
                     methodType(void.class));
             MH_REACHBILITY_FENCE = lookup.findStatic(Reference.class, "reachabilityFence",
                     methodType(void.class, Object.class));
+            MH_HANDLE_UNCAUGHT_EXCEPTION = lookup.findStatic(SharedUtils.class, "handleUncaughtException",
+                    methodType(void.class, Throwable.class));
         } catch (ReflectiveOperationException e) {
             throw new BootstrapMethodError(e);
         }
@@ -269,7 +277,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.getInstance();
             case SysV -> SysVx64Linker.getInstance();
-            case AArch64 -> AArch64Linker.getInstance();
+            case LinuxAArch64 -> LinuxAArch64Linker.getInstance();
+            case MacOsAArch64 -> MacOsAArch64Linker.getInstance();
         };
     }
 
@@ -359,6 +368,13 @@ public class SharedUtils {
         return MH_REACHBILITY_FENCE.asType(MethodType.methodType(void.class, type));
     }
 
+    static void handleUncaughtException(Throwable t) {
+        if (t != null) {
+            t.printStackTrace();
+            JLA.exit(1);
+        }
+    }
+
     static MethodHandle wrapWithAllocator(MethodHandle specializedHandle,
                                           int allocatorPos, long bufferCopySize,
                                           boolean upcall) {
@@ -366,7 +382,11 @@ public class SharedUtils {
         MethodHandle closer;
         int insertPos;
         if (specializedHandle.type().returnType() == void.class) {
-            closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            if (!upcall) {
+                closer = empty(methodType(void.class, Throwable.class)); // (Throwable) -> void
+            } else {
+                closer = MH_HANDLE_UNCAUGHT_EXCEPTION;
+            }
             insertPos = 1;
         } else {
             closer = identity(specializedHandle.type().returnType()); // (V) -> V
@@ -454,7 +474,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaList(actions, scope);
             case SysV -> SysVx64Linker.newVaList(actions, scope);
-            case AArch64 -> AArch64Linker.newVaList(actions, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, scope);
         };
     }
 
@@ -468,7 +489,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
             case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
-            case AArch64 -> AArch64Linker.newVaListOfAddress(ma, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, scope);
         };
     }
 
@@ -476,7 +498,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.emptyVaList();
             case SysV -> SysVx64Linker.emptyVaList();
-            case AArch64 -> AArch64Linker.emptyVaList();
+            case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
+            case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
         };
     }
 
