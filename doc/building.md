@@ -517,6 +517,11 @@ Hotspot.
 Use `--with-libffi=<path>` if `configure` does not properly locate your libffi
 files.
 
+### libfontconfig
+
+* To install on an apt-based Linux, try running `sudo apt-get install
+    libfontconfig1-dev`.
+
 ## Build Tools Requirements
 
 ### Autoconf
