@@ -49,7 +49,7 @@ import java.util.Objects;
  * shared scopes use a more sophisticated synchronization mechanism, which guarantees that no concurrent
  * access is possible when a scope is being closed (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  */
-public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
+public abstract non-sealed class ResourceScopeImpl implements ResourceScope, ScopedMemoryAccess.Scope, SegmentAllocator {
 
     final ResourceList resourceList;
 
@@ -83,12 +83,11 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     }
 
     void addInternal(ResourceList.ResourceCleanup resource) {
-        ResourceScope.Handle handle = acquire();
         try {
-            // avoid close vs. add races
+            checkValidStateSlow();
             resourceList.add(resource);
-        } finally {
-            release(handle);
+        } catch (ScopedMemoryAccess.Scope.ScopedAccessError err) {
+            throw new IllegalStateException("Already closed");
         }
     }
 
@@ -152,7 +151,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
     /**
      * Internal interface used to implement resource scope handles.
      */
-    interface HandleImpl extends ResourceScope.Handle, ScopedMemoryAccess.Scope.Handle {
+    public non-sealed interface HandleImpl extends ResourceScope.Handle, ScopedMemoryAccess.Scope.Handle {
 
         @Override
         ResourceScopeImpl scope();
@@ -265,7 +264,7 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
      * except that the operation which adds new resources to the global scope does nothing: as the scope can never
      * become not-alive, there is nothing to track.
      */
-    public static ResourceScopeImpl GLOBAL = new ImplicitScopeImpl( null) {
+    public static final ResourceScopeImpl GLOBAL = new ImplicitScopeImpl( null) {
         @Override
         void addInternal(ResourceList.ResourceCleanup resource) {
             // do nothing
@@ -283,25 +282,18 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
 
         abstract void add(ResourceCleanup cleanup);
 
-        final void cleanup() {
-            // We don't need to worry about add vs. close races here; adding a new cleanup action is done
-            // under acquire, which prevents scope from being closed. Additionally, close vs. close races are impossible
-            // (because MemoryScope::justClose ensures that only one thread can win the race to close the scope).
-            // In other words, this is effectively single-threaded code.
-            if (fst != ResourceCleanup.CLOSED_LIST) {
-                ResourceCleanup current = fst;
-                fst = ResourceCleanup.CLOSED_LIST;
-                while (current != null) {
-                    current.cleanup();
-                    current = current.next;
-                }
-            } else {
-                throw new IllegalStateException("Attempt to cleanup an already closed resource list");
-            }
-        }
+        abstract void cleanup();
 
         public final void run() {
             cleanup(); // cleaner interop
+        }
+
+        static void cleanup(ResourceCleanup first) {
+            ResourceCleanup current = first;
+            while (current != null) {
+                current.cleanup();
+                current = current.next;
+            }
         }
 
         public static abstract class ResourceCleanup {
@@ -325,5 +317,6 @@ public abstract class ResourceScopeImpl implements ResourceScope, ScopedMemoryAc
                 };
             }
         }
+
     }
 }

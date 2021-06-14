@@ -33,7 +33,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * A symbol lookup. Exposes a lookup operation for searching symbols, see {@link SymbolLookup#lookup(String)}.
+ * A symbol lookup. Exposes a lookup operation for searching symbol addresses by name, see {@link SymbolLookup#lookup(String)}.
+ * A symbol lookup can be used to lookup a symbol in a loaded library. Clients can obtain a {@linkplain #loaderLookup() loader lookup},
+ * which can be used to search symbols in libraries loaded by the current classloader (e.g. using {@link System#load(String)},
+ * or {@link System#loadLibrary(String)}).
+ * Alternatively, clients can obtain a {@linkplain CLinker#systemLookup() platform-dependent lookup}, to search symbols
+ * in the standard C library.
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
@@ -53,7 +58,7 @@ public interface SymbolLookup {
      * (that is, libraries loaded using {@link System#loadLibrary} or {@link System#load}).
      * <p>
      * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted method are unsafe, and, if used incorrectly, their use might crash
+     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
