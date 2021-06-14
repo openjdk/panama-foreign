@@ -60,7 +60,7 @@ import sun.hotspot.WhiteBox;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static jdk.incubator.foreign.CLinker.C_POINTER;
-import static org.testng.Assert.assertTrue;
+import static jdk.test.lib.Asserts.assertTrue;
 
 public class TestAsyncStackWalk {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
