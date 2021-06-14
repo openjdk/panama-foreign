@@ -455,6 +455,14 @@ public class SharedUtils {
     }
 
     public static MemoryAddress checkSymbol(Addressable symbol) {
+        return checkAddressable(symbol, "Symbol is NULL");
+    }
+
+    public static MemoryAddress checkAddress(MemoryAddress address) {
+        return checkAddressable(address, "Address is NULL");
+    }
+
+    private static MemoryAddress checkAddressable(Addressable symbol, String msg) {
         Objects.requireNonNull(symbol);
         MemoryAddress symbolAddr = symbol.address();
         if (symbolAddr.equals(MemoryAddress.NULL))
