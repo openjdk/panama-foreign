@@ -66,11 +66,6 @@ public class TestNULLAddress {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNULLtoJavaStringCharset() {
-        CLinker.toJavaString(MemoryAddress.NULL, Charset.defaultCharset());
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLfreeMemory() {
         CLinker.freeMemory(MemoryAddress.NULL);
     }
