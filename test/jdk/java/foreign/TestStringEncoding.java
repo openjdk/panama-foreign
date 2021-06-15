@@ -57,7 +57,7 @@ public class TestStringEncoding {
             { "12345",                 6 },
             { "yen \u00A5",            7 }, // in UTF-8 2 bytes: 0xC2 0xA5
             { "snowman \u26C4",       12 }, // in UTF-8 three bytes: 0xE2 0x9B 0x84
-            { "rainbow \uD83C\uDF08", 13 }  // int UTF-8 four bytes: 0xF0 0x9F 0x8C 0x88
+            { "rainbow \uD83C\uDF08", 13 }  // in UTF-8 four bytes: 0xF0 0x9F 0x8C 0x88
         };
     }
 }
