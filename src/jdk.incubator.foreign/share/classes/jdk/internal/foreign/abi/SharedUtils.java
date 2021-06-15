@@ -38,6 +38,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -53,6 +54,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,6 +78,7 @@ import static jdk.incubator.foreign.CLinker.*;
 public class SharedUtils {
 
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+    private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
@@ -432,6 +435,13 @@ public class SharedUtils {
         return specializedHandle;
     }
 
+    public static void checkExceptions(MethodHandle target) {
+        Class<?>[] exceptions = JLIA.exceptionTypes(target);
+        if (exceptions != null && exceptions.length != 0) {
+            throw new IllegalArgumentException("Target handle may throw exceptions: " + Arrays.toString(exceptions));
+        }
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
@@ -447,6 +457,14 @@ public class SharedUtils {
     }
 
     public static MemoryAddress checkSymbol(Addressable symbol) {
+        return checkAddressable(symbol, "Symbol is NULL");
+    }
+
+    public static MemoryAddress checkAddress(MemoryAddress address) {
+        return checkAddressable(address, "Address is NULL");
+    }
+
+    private static MemoryAddress checkAddressable(Addressable symbol, String msg) {
         Objects.requireNonNull(symbol);
         MemoryAddress symbolAddr = symbol.address();
         if (symbolAddr.equals(MemoryAddress.NULL))

@@ -228,7 +228,8 @@ public sealed interface CLinker permits AbstractCLinker {
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
@@ -378,7 +379,8 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
+     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform,
+     * or if {@code addr == MemoryAddress.NULL}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
@@ -386,7 +388,7 @@ public sealed interface CLinker permits AbstractCLinker {
     @CallerSensitive
     static String toJavaString(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(addr);
+        SharedUtils.checkAddress(addr);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), Charset.defaultCharset());
     }
 
@@ -406,7 +408,8 @@ public sealed interface CLinker permits AbstractCLinker {
      * @param addr the address at which the string is stored.
      * @param charset The {@link java.nio.charset.Charset} to be used to compute the contents of the Java string.
      * @return a Java string with the contents of the null-terminated C string at given address.
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
+     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform,
+     * or if {@code addr == MemoryAddress.NULL}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
@@ -414,7 +417,7 @@ public sealed interface CLinker permits AbstractCLinker {
     @CallerSensitive
     static String toJavaString(MemoryAddress addr, Charset charset) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(addr);
+        SharedUtils.checkAddress(addr);
         Objects.requireNonNull(charset);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue(), charset);
     }
@@ -505,13 +508,14 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * @param addr memory address of the native memory to be freed
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * @throws IllegalArgumentException if {@code addr == MemoryAddress.NULL}.
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static void freeMemory(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(addr);
+        SharedUtils.checkAddress(addr);
         SharedUtils.freeMemoryInternal(addr);
     }
 
@@ -651,8 +655,7 @@ public sealed interface CLinker permits AbstractCLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@linkplain ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
