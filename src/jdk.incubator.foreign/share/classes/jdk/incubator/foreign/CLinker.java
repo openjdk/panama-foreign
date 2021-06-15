@@ -334,7 +334,8 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * @param addr the address at which the string is stored.
      * @return a Java string with the contents of the null-terminated C string at given address.
-     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform.
+     * @throws IllegalArgumentException if the size of the native string is greater than the largest string supported by the platform,
+     * or if {@code addr == MemoryAddress.NULL}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
@@ -342,7 +343,7 @@ public sealed interface CLinker permits AbstractCLinker {
     @CallerSensitive
     static String toJavaString(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(addr);
+        SharedUtils.checkAddress(addr);
         return SharedUtils.toJavaStringInternal(NativeMemorySegmentImpl.EVERYTHING, addr.toRawLongValue());
     }
 
@@ -412,13 +413,14 @@ public sealed interface CLinker permits AbstractCLinker {
      *
      * @param addr memory address of the native memory to be freed
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
+     * @throws IllegalArgumentException if {@code addr == MemoryAddress.NULL}.
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
     static void freeMemory(MemoryAddress addr) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        Objects.requireNonNull(addr);
+        SharedUtils.checkAddress(addr);
         SharedUtils.freeMemoryInternal(addr);
     }
 
