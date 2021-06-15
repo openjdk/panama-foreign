@@ -98,7 +98,8 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         public static MemorySegment fromArray(byte[] arr) {
             Objects.requireNonNull(arr);
             long byteSize = (long)arr.length * Unsafe.ARRAY_BYTE_INDEX_SCALE;
-            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
+            // a byte array is always wrapped by a "small" segment
+            return new OfByte(Unsafe.ARRAY_BYTE_BASE_OFFSET, arr, byteSize, SMALL);
         }
     }
 
