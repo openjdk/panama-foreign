@@ -43,7 +43,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
@@ -279,7 +280,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.getInstance();
             case SysV -> SysVx64Linker.getInstance();
-            case AArch64 -> AArch64Linker.getInstance();
+            case LinuxAArch64 -> LinuxAArch64Linker.getInstance();
+            case MacOsAArch64 -> MacOsAArch64Linker.getInstance();
         };
     }
 
@@ -490,7 +492,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaList(actions, scope);
             case SysV -> SysVx64Linker.newVaList(actions, scope);
-            case AArch64 -> AArch64Linker.newVaList(actions, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, scope);
         };
     }
 
@@ -504,7 +507,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
             case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
-            case AArch64 -> AArch64Linker.newVaListOfAddress(ma, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, scope);
         };
     }
 
@@ -512,7 +516,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.emptyVaList();
             case SysV -> SysVx64Linker.emptyVaList();
-            case AArch64 -> AArch64Linker.emptyVaList();
+            case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
+            case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
         };
     }
 
