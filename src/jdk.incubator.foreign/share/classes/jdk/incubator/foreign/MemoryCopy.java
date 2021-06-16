@@ -99,7 +99,7 @@ public final class MemoryCopy {
     MemorySegment dstSegmentSlice = MemorySegment.ofArray(dstArray).asSlice(dstIndexBytes, dstCopyLengthBytes);
     dstSegmentSlice.copyFrom(srcSegmentSlice);
   }
-  
+
   //CHAR
   /**
    * Copies from a source char array, starting at a source index in chars and extending for a given length in chars,
