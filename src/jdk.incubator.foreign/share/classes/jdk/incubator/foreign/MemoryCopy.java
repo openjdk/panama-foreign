@@ -25,13 +25,10 @@ package jdk.incubator.foreign;
 
 import java.nio.ByteOrder;
 import java.util.Objects;
-
-//import jdk.incubator.foreign.MemoryLayouts;
-import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * This class provides convenient copy methods for moving data between primitive arrays and MemorySegments.
+ * This class provides convenient methods for copying data between primitive arrays and MemorySegments.
  *
  * <p>If the source (destination) segment is actually a view of the destination (source) array,
  * and if the copy region of the source overlaps with the copy region of the destination,
@@ -52,6 +49,15 @@ import jdk.internal.vm.annotation.ForceInline;
  */
 @SuppressWarnings({"checkstyle:FinalLocalVariable", "CheckStyle"})
 public final class MemoryCopy {
+  private static final ByteOrder nativeByteOrder = ByteOrder.nativeOrder();
+  private static final ByteOrder nonNativeByteOrder = nativeByteOrder == ByteOrder.LITTLE_ENDIAN
+          ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+  private static final ValueLayout arrLayout16N = MemoryLayout.valueLayout(16, nativeByteOrder);
+  private static final ValueLayout segLayout16NN = MemoryLayout.valueLayout(16, nonNativeByteOrder);
+  private static final ValueLayout arrLayout32N = MemoryLayout.valueLayout(32, nativeByteOrder);
+  private static final ValueLayout segLayout32NN = MemoryLayout.valueLayout(32, nonNativeByteOrder);
+  private static final ValueLayout arrLayout64N = MemoryLayout.valueLayout(64, nativeByteOrder);
+  private static final ValueLayout segLayout64NN = MemoryLayout.valueLayout(64, nonNativeByteOrder);
 
   private MemoryCopy() { /* singleton */ }
 
@@ -133,8 +139,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexChars * 2L, srcCopyLengthChars * 2L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthChars * 2L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_CHAR, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout16N, segLayout16NN);
+    }
   }
 
   /**
@@ -175,8 +184,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthChars * 2L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexChars * 2L, dstCopyLengthChars * 2L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_CHAR, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout16NN, arrLayout16N);
+    }
   }
 
   //DOUBLE
@@ -218,8 +230,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexDoubles * 8L, srcCopyLengthDoubles * 8L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthDoubles * 8L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_DOUBLE, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout64N, segLayout64NN);
+    }
   }
 
   /**
@@ -260,8 +275,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthDoubles * 8L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexDoubles * 8L, dstCopyLengthDoubles * 8L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_DOUBLE, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout64NN, arrLayout64N);
+    }
   }
 
   //FLOAT
@@ -303,8 +321,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexFloats * 4L, srcCopyLengthFloats * 4L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthFloats * 4L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_FLOAT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout32N, segLayout32NN);
+    }
   }
 
   /**
@@ -345,8 +366,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthFloats * 4L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexFloats * 4L, dstCopyLengthFloats * 4L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_FLOAT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout32NN, arrLayout32N);
+    }
   }
 
   //INT
@@ -388,8 +412,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexInts * 4L, srcCopyLengthInts * 4L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthInts * 4L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_INT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout32N, segLayout32NN);
+    }
   }
 
   /**
@@ -430,8 +457,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthInts * 4L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexInts * 4L, dstCopyLengthInts * 4L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_INT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout32NN, arrLayout32N);
+    }
   }
 
   //LONG
@@ -473,8 +503,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexLongs * 8L, srcCopyLengthLongs * 8L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthLongs * 8L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_LONG, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout64N, segLayout64NN);
+    }
   }
 
   /**
@@ -515,8 +548,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthLongs * 8L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexLongs * 8L, dstCopyLengthLongs * 8L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_LONG, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout64NN, arrLayout64N);
+    }
   }
 
   //SHORT
@@ -558,8 +594,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice =
             MemorySegment.ofArray(srcArray).asSlice(srcIndexShorts * 2L, srcCopyLengthShorts * 2L);
     MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthShorts * 2L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_SHORT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, arrLayout16N, segLayout16NN);
+    }
   }
 
   /**
@@ -600,7 +639,11 @@ public final class MemoryCopy {
     MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthShorts * 2L);
     MemorySegment dstSegmentSlice =
             MemorySegment.ofArray(dstArray).asSlice(dstIndexShorts * 2L, dstCopyLengthShorts * 2L);
-    //dstSegmentSlice.copyFrom(srcSegmentSlice, MemoryLayouts.JAVA_SHORT, order);
-    dstSegmentSlice.copyFrom(srcSegmentSlice);
+    if (order == nativeByteOrder) {
+      dstSegmentSlice.copyFrom(srcSegmentSlice);
+    } else {
+      dstSegmentSlice.copyFrom(srcSegmentSlice, segLayout16NN, arrLayout16N);
+    }
   }
+
 }

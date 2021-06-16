@@ -21,10 +21,14 @@
  *  questions.
  */
 
+import static org.testng.Assert.assertEquals;
+
+import java.nio.ByteOrder;
 import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryCopy;
 import jdk.incubator.foreign.MemorySegment;
+
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
 /**
  * These tests exercise the MemoryCopy copyFromArray(...) and copyToArray(...).
@@ -35,72 +39,42 @@ import static org.testng.Assert.*;
  * and if the copy region of the source overlaps with the copy region of the destination,
  * the copy of the overlapping region is performed as if the data in the overlapping region
  * were first copied into a temporary segment before being copied to the destination.</p>
- *
- * <p>Note: non-native byte order tests are not included here.</p>
  */
-@SuppressWarnings({"ConstantConditions"})
+@SuppressWarnings({"checkstyle:FinalLocalVariable", "CheckStyle"})
 public class TestMemoryCopy {
+  private static final ByteOrder nativeByteOrder = ByteOrder.nativeOrder();
+  private static final ByteOrder nonNativeByteOrder = nativeByteOrder == ByteOrder.LITTLE_ENDIAN
+          ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+  private static final boolean up = true;
+  private static final boolean down = false;
 
   //BYTE ARRAY
   @Test
   public void checkByteArrSelfCopy() {
-    checkByteArr(true);
-    checkByteArr(false);
+    checkByteArr(up);
+    checkByteArr(down);
   }
 
-  private void checkByteArr(boolean up) {
+  private void checkByteArr(boolean direction) {
     int segLengthBytes = 32;
     int segOffsetBytes = 8;
     int bytesPerElement = 1; // f(array type)
     int arrIndex = segOffsetBytes / bytesPerElement;
-    MemorySegment base = buildSegment(0, segLengthBytes, 0, up);
-    MemorySegment truth = buildSegment(0, segLengthBytes, segOffsetBytes, up);
+    MemorySegment base = srcByteSegment(0, segLengthBytes);
+    MemorySegment truth = truthSegment1Byte(base, 8, direction);
     //CopyFrom
     byte[] srcArr = base.toByteArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
+    int srcIndex = direction ? 0 : arrIndex;
     int srcCopyLen = srcArr.length - arrIndex;
     MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
     MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
     assertEquals(truth.mismatch(dstSeg), -1);
     //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
     byte[] dstArr = base.toByteArray(); // f(array type)
     MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
-    MemorySegment result = MemorySegment.ofArray(dstArr);
-    assertEquals(truth.mismatch(result), -1);
-  }
-
-  //INT ARRAY
-  @Test
-  public void checkIntArrSelfCopy() {
-    checkIntArr(true);
-    checkIntArr(false);
-  }
-
-  private void checkIntArr(boolean up) {
-    int segLengthBytes = 32;
-    int segOffsetBytes = 8;
-    int bytesPerElement = 4;  // f(array type)
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    MemorySegment base = buildSegment(0, segLengthBytes, 0, up);
-    MemorySegment truth = buildSegment(0, segLengthBytes, segOffsetBytes, up);
-    //CopyFrom
-    int[] srcArr = base.toIntArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
-    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
-    assertEquals(truth.mismatch(dstSeg), -1);
-    //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
-    int[] dstArr = base.toIntArray(); // f(array type)
-    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
+    int dstIndex = direction ? arrIndex : 0;
     int dstCopyLen = dstArr.length - arrIndex;
     MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
     MemorySegment result = MemorySegment.ofArray(dstArr);
@@ -110,132 +84,35 @@ public class TestMemoryCopy {
   //CHAR ARRAY
   @Test
   public void checkCharArrSelfCopy() {
-    checkCharArr(true);
-    checkCharArr(false);
+    checkCharArr(up, true);
+    checkCharArr(down, true);
+    checkCharArr(up, false);
+    checkCharArr(down, false);
   }
 
-  private void checkCharArr(boolean up) {
+  private void checkCharArr(boolean direction, boolean swap) {
     int segLengthBytes = 32;
     int segOffsetBytes = 8;
     int bytesPerElement = 2;  // f(array type)
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    MemorySegment base = buildSegment(0, segLengthBytes, 0, up);
-    MemorySegment truth = buildSegment(0, segLengthBytes, segOffsetBytes, up);
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    MemorySegment base = srcByteSegment(0, segLengthBytes);
+    MemorySegment truth = truthSegment2Bytes(base, indexShifts, direction, swap);
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
     //CopyFrom
     char[] srcArr = base.toCharArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
     MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
     assertEquals(truth.mismatch(dstSeg), -1);
     //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
     char[] dstArr = base.toCharArray(); // f(array type)
     MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
-    MemorySegment result = MemorySegment.ofArray(dstArr);
-    assertEquals(truth.mismatch(result), -1);
-  }
-
-  //SHORT ARRAY
-  @Test
-  public void checkShortArrSelfCopy() {
-    checkShortArr(true);
-    checkShortArr(false);
-  }
-
-  private void checkShortArr(boolean up) {
-    int segLengthBytes = 32;
-    int segOffsetBytes = 8;
-    int bytesPerElement = 2;  // f(array type)
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    MemorySegment base = buildSegment(0, segLengthBytes, 0, up);
-    MemorySegment truth = buildSegment(0, segLengthBytes, segOffsetBytes, up);
-    //CopyFrom
-    short[] srcArr = base.toShortArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
-    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
-    assertEquals(truth.mismatch(dstSeg), -1);
-    //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
-    short[] dstArr = base.toShortArray(); // f(array type)
-    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
-    MemorySegment result = MemorySegment.ofArray(dstArr);
-    assertEquals(truth.mismatch(result), -1);
-  }
-
-  //LONG ARRAY
-  @Test
-  public void checkLongArrSelfCopy() {
-    checkLongArr(true);
-    checkLongArr(false);
-  }
-
-  private void checkLongArr(boolean up) {
-    int segLengthBytes = 32;
-    int segOffsetBytes = 8;
-    int bytesPerElement = 8;  // f(array type)
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    MemorySegment base = buildSegment(0, segLengthBytes, 0, up);
-    MemorySegment truth = buildSegment(0, segLengthBytes, segOffsetBytes, up);
-    //CopyFrom
-    long[] srcArr = base.toLongArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
-    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
-    assertEquals(truth.mismatch(dstSeg), -1);
-    //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
-    long[] dstArr = base.toLongArray(); // f(array type)
-    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
-    MemorySegment result = MemorySegment.ofArray(dstArr);
-    assertEquals(truth.mismatch(result), -1);
-  }
-
-  //FlOAT ARRAY
-  @Test
-  public void checkFloatArrSelfCopy() {
-    checkFloatArr(true);
-    checkFloatArr(false);
-  }
-
-  private void checkFloatArr(boolean up) {
-    int segLengthBytes = 32;
-    int segOffsetBytes = 8;
-    int bytesPerElement = 4;
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    int arrLength = segLengthBytes / segOffsetBytes; //this is done differently
-    MemorySegment base = buildFloatSegment((float)Math.PI, arrLength, 0, up);
-    MemorySegment truth = buildFloatSegment((float)Math.PI, arrLength, arrIndex, up);
-    //CopyFrom
-    float[] srcArr = base.toFloatArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
-    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
-    assertEquals(truth.mismatch(dstSeg), -1);
-    //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
-    float[] dstArr = base.toFloatArray(); // f(array type)
-    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
     MemorySegment result = MemorySegment.ofArray(dstArr);
     assertEquals(truth.mismatch(result), -1);
   }
@@ -243,127 +120,346 @@ public class TestMemoryCopy {
   //DOUBLE ARRAY
   @Test
   public void checkDoubleArrSelfCopy() {
-    checkDoubleArr(true);
-    checkDoubleArr(false);
+    checkDoubleArr(up,true);
+    checkDoubleArr(down, true);
+    checkDoubleArr(up,false);
+    checkDoubleArr(down, false);
   }
 
-  private void checkDoubleArr(boolean up) {
+  private void checkDoubleArr(boolean direction, boolean swap) {
     int segLengthBytes = 32;
     int segOffsetBytes = 8;
     int bytesPerElement = 8; // f(array type)
-    int arrIndex = segOffsetBytes / bytesPerElement;
-    int arrLength = segLengthBytes / segOffsetBytes; //this is done differently
-    MemorySegment base = buildDoubleSegment(Math.PI, arrLength, 0, up); // f(array type)
-    MemorySegment truth = buildDoubleSegment(Math.PI, arrLength, arrIndex, up); // f(array type)
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    int arrLength = segLengthBytes / bytesPerElement; //this is done differently
+    MemorySegment base = srcDoubleSegment(Math.PI, arrLength); // f(array type)
+    MemorySegment truth = truthSegment8Bytes(base, indexShifts, direction, swap); // f(array type)
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
     //CopyFrom
     double[] srcArr = base.toDoubleArray(); // f(array type)
-    int srcIndex = up ? 0 : arrIndex;
-    int srcCopyLen = srcArr.length - arrIndex;
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
     MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
-    long dstOffsetBytes = up ? segOffsetBytes : 0;
-    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
     assertEquals(truth.mismatch(dstSeg), -1);
     //CopyTo
-    long srcOffsetBytes = up ? 0 : segOffsetBytes;
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
     double[] dstArr = base.toDoubleArray(); // f(array type)
     MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
-    int dstIndex = up ? arrIndex : 0;
-    int dstCopyLen = dstArr.length - arrIndex;
-    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
     MemorySegment result = MemorySegment.ofArray(dstArr);
     assertEquals(truth.mismatch(result), -1);
   }
 
-  /**
-   * Builds base segment for integral tests, a sequence of positive byte values.
-   * @param startValue a value
-   * @param segLengthBytes less than 128
-   * @param segOffsetBytes less than segLengthBytes
-   * @param up if true shift up, else down
-   * @return a MemorySegment
-   */
-  @SuppressWarnings({"SameParameterValue", "ManualArrayCopy"})
-  private MemorySegment buildSegment(int startValue, int segLengthBytes, int segOffsetBytes, boolean up) {
-    byte[] arr = new byte[segLengthBytes];
-    for (int i = 0; i < segLengthBytes; i++) { arr[i] = (byte)(i + startValue); }
-    if (segOffsetBytes == 0) { return MemorySegment.ofArray(arr); }
-    if (up) {
-      for (int i = segLengthBytes - 1; i >= segOffsetBytes; i--) { arr[i] = arr[i - segOffsetBytes]; }
-    } else { //down
-      for (int i = segOffsetBytes; i < segLengthBytes; i++) { arr[i - segOffsetBytes] = arr[i]; }
-    }
+  //FlOAT ARRAY
+  @Test
+  public void checkFloatArrSelfCopy() {
+    checkFloatArr(up, true);
+    checkFloatArr(down, true);
+    checkFloatArr(up, false);
+    checkFloatArr(down, false);
+  }
+
+  private void checkFloatArr(boolean direction, boolean swap) {
+    int segLengthBytes = 32;
+    int segOffsetBytes = 8;
+    int bytesPerElement = 4;
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    int arrLength = segLengthBytes / bytesPerElement; //this is done differently
+    MemorySegment base = srcFloatSegment((float)Math.PI, arrLength); // f(array type)
+    MemorySegment truth = truthSegment4Bytes(base, indexShifts, direction, swap); // f(array type)
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
+    //CopyFrom
+    float[] srcArr = base.toFloatArray(); // f(array type)
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
+    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+    assertEquals(truth.mismatch(dstSeg), -1);
+    //CopyTo
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
+    float[] dstArr = base.toFloatArray(); // f(array type)
+    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    MemorySegment result = MemorySegment.ofArray(dstArr);
+    assertEquals(truth.mismatch(result), -1);
+  }
+
+  //INT ARRAY
+  @Test
+  public void checkIntArrSelfCopy() {
+    checkIntArr(up, true);
+    checkIntArr(down, true);
+    checkIntArr(up, false);
+    checkIntArr(down, false);
+  }
+
+  private void checkIntArr(boolean direction, boolean swap) {
+    int segLengthBytes = 32;
+    int segOffsetBytes = 8;
+    int bytesPerElement = 4;  // f(array type)
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    MemorySegment base = srcByteSegment(0, segLengthBytes);
+    MemorySegment truth = truthSegment4Bytes(base, indexShifts, direction, swap);
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
+    //CopyFrom
+    int[] srcArr = base.toIntArray(); // f(array type)
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
+    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+    assertEquals(truth.mismatch(dstSeg), -1);
+    //CopyTo
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
+    int[] dstArr = base.toIntArray(); // f(array type)
+    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    MemorySegment result = MemorySegment.ofArray(dstArr);
+    assertEquals(truth.mismatch(result), -1);
+  }
+
+  //LONG ARRAY
+  @Test
+  public void checkLongArrSelfCopy() {
+    checkLongArr(up, true);
+    checkLongArr(down, true);
+    checkLongArr(up, false);
+    checkLongArr(down, false);
+  }
+
+  private void checkLongArr(boolean direction, boolean swap) {
+    int segLengthBytes = 32;
+    int segOffsetBytes = 8;
+    int bytesPerElement = 8;  // f(array type)
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    MemorySegment base = srcByteSegment(0, segLengthBytes);
+    MemorySegment truth = truthSegment8Bytes(base, indexShifts, direction, swap);
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
+    //CopyFrom
+    long[] srcArr = base.toLongArray(); // f(array type)
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
+    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+    assertEquals(truth.mismatch(dstSeg), -1);
+    //CopyTo
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
+    long[] dstArr = base.toLongArray(); // f(array type)
+    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    MemorySegment result = MemorySegment.ofArray(dstArr);
+    assertEquals(truth.mismatch(result), -1);
+  }
+
+  //SHORT ARRAY
+  @Test
+  public void checkShortArrSelfCopy() {
+    checkShortArr(up, true);
+    checkShortArr(down, true);
+    checkShortArr(up, false);
+    checkShortArr(down, false);
+  }
+
+  private void checkShortArr(boolean direction, boolean swap) {
+    int segLengthBytes = 32;
+    int segOffsetBytes = 8;
+    int bytesPerElement = 2;  // f(array type)
+    int indexShifts = segOffsetBytes / bytesPerElement;
+    MemorySegment base = srcByteSegment(0, segLengthBytes);
+    MemorySegment truth = truthSegment2Bytes(base, indexShifts, direction, swap);
+    ByteOrder bo = swap ? nonNativeByteOrder : nativeByteOrder;
+    //CopyFrom
+    short[] srcArr = base.toShortArray(); // f(array type)
+    int srcIndex = direction ? 0 : indexShifts;
+    int srcCopyLen = srcArr.length - indexShifts;
+    MemorySegment dstSeg = MemorySegment.ofArray(srcArr);
+    long dstOffsetBytes = direction ? segOffsetBytes : 0;
+    MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+    assertEquals(truth.mismatch(dstSeg), -1);
+    //CopyTo
+    long srcOffsetBytes = direction ? 0 : segOffsetBytes;
+    short[] dstArr = base.toShortArray(); // f(array type)
+    MemorySegment srcSeg = MemorySegment.ofArray(dstArr);
+    int dstIndex = direction ? indexShifts : 0;
+    int dstCopyLen = dstArr.length - indexShifts;
+    MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    MemorySegment result = MemorySegment.ofArray(dstArr);
+    assertEquals(truth.mismatch(result), -1);
+  }
+
+  /* ************** */
+
+  public static MemorySegment srcByteSegment(int startValue, int length) {
+    byte[] arr = new byte[length];
+    for (int i = 0; i < length; i++) { arr[i] = (byte) (startValue + i); }
     return MemorySegment.ofArray(arr);
   }
 
-  /**
-   * Builds base segment for float tests, a sequence of values.
-   * @param startValue a value
-   * @param arrLengthFloats less than 128
-   * @param arrIndexFloats less than arrLengthFloats
-   * @param up if true shift up, else down
-   * @return a MemorySegment
-   */
-  @SuppressWarnings({"SameParameterValue", "ManualArrayCopy"})
-  private MemorySegment buildFloatSegment(float startValue, int arrLengthFloats, int arrIndexFloats, boolean up) {
-    float[] arr = new float[arrLengthFloats];
-    for (int i = 0; i < arrLengthFloats; i++) { arr[i] = i + startValue; }
-    if (up) {
-      for (int i = arrLengthFloats - 1; i >= arrIndexFloats; i--) { arr[i] = arr[i - arrIndexFloats]; }
-    } else { //down
-      for (int i = arrIndexFloats; i < arrLengthFloats; i++) { arr[i - arrIndexFloats] = arr[i]; }
-    }
+  public static MemorySegment srcFloatSegment(float startValue, int length) {
+    float[] arr = new float[length];
+    for (int i = 0; i < length; i++) { arr[i] = startValue + i; }
     return MemorySegment.ofArray(arr);
   }
 
-  /**
-   * Builds base segment for double tests, a sequence of values.
-   * @param startValue a value
-   * @param arrLengthDoubles less than 128
-   * @param arrIndexDoubles less than arrLengthDoubles
-   * @param up if true shift up, else down
-   * @return a MemorySegment
-   */
-  @SuppressWarnings({"SameParameterValue", "ManualArrayCopy"})
-  private MemorySegment buildDoubleSegment(double startValue, int arrLengthDoubles, int arrIndexDoubles, boolean up) {
-    double[] arr = new double[arrLengthDoubles];
-    for (int i = 0; i < arrLengthDoubles; i++) { arr[i] = i + startValue; }
-    if (up) {
-      for (int i = arrLengthDoubles - 1; i >= arrIndexDoubles; i--) { arr[i] = arr[i - arrIndexDoubles]; }
-    } else { //down
-      for (int i = arrIndexDoubles; i < arrLengthDoubles; i++) { arr[i - arrIndexDoubles] = arr[i]; }
-    }
+  public static MemorySegment srcDoubleSegment(double startValue, int length) {
+    double[] arr = new double[length];
+    for (int i = 0; i < length; i++) { arr[i] = startValue + i; }
     return MemorySegment.ofArray(arr);
   }
 
-  //@Test //visual debug check only
-  @SuppressWarnings("unused")
-  private void checkBuildFloatSegment() {
-    MemorySegment seg = buildFloatSegment((float)Math.PI, 8, 2, false);
-    float[] arr = seg.toFloatArray();
-    for (float v : arr) {
-      println(v);
+  /* ************** */
+
+  /**
+   * Builds a truth segment of multibyte primitives with a byte-length of 1.
+   * @param srcSeg The source segment prior to any copy-shifts
+   * @param indexShifts the number of copy-shifts either up or down in index units
+   * @param up if true copy up, else down.
+   * @return the truth segment
+   */
+  public static MemorySegment truthSegment1Byte(MemorySegment srcSeg, int indexShifts, boolean up) {
+    MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
+    int indexLength = (int) dstSeg.byteSize();
+    if (up) {
+      for (int i = indexLength - 1; i >= indexShifts; i--) {
+        byte v = MemoryAccess.getByteAtOffset(dstSeg, i - indexShifts);
+        MemoryAccess.setByteAtOffset(dstSeg, i, v);
+      }
+    } else { //down
+      for (int i = indexShifts; i < indexLength; i++) {
+        byte v = MemoryAccess.getByteAtOffset(dstSeg, i);
+        MemoryAccess.setByteAtOffset(dstSeg, i - indexShifts, v);
+      }
     }
+    return dstSeg;
   }
 
-  //@Test //visual debug check only
-  @SuppressWarnings("unused")
-  private void checkBuildDoubleSegment() {
-    MemorySegment seg = buildDoubleSegment(Math.PI, 4, 1, false);
-    double[] arr = seg.toDoubleArray();
-    for (double v : arr) {
-      println(v);
+  /**
+   * Builds a truth segment of multibyte primitives with a byte-length of 2.
+   * @param srcSeg The source segment prior to any copy-shifts
+   * @param indexShifts the number of copy-shifts either up or down in index units
+   * @param up if true, copy up, else down.
+   * @param swap if true, swap the bytes
+   * @return the truth segment
+   */
+  public static MemorySegment truthSegment2Bytes(MemorySegment srcSeg, int indexShifts, boolean up, boolean swap) {
+    MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
+    int indexLength = (int) dstSeg.byteSize() / 2;
+    if (up) {
+      if (swap) {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          char v = MemoryAccess.getCharAtIndex(dstSeg, i - indexShifts, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setCharAtIndex(dstSeg, i, v);
+        }
+      } else {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          char v = MemoryAccess.getCharAtIndex(dstSeg, i - indexShifts);
+          MemoryAccess.setCharAtIndex(dstSeg, i, v);
+        }
+      }
+    } else { //down
+      if (swap) {
+        for (int i = indexShifts; i < indexLength; i++) {
+          char v = MemoryAccess.getCharAtIndex(dstSeg, i, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setCharAtIndex(dstSeg, i - indexShifts, v);
+        }
+      } else {
+        for (int i = indexShifts; i < indexLength; i++) {
+          char v = MemoryAccess.getCharAtIndex(dstSeg, i);
+          MemoryAccess.setCharAtIndex(dstSeg, i - indexShifts, v);
+        }
+      }
     }
+    return dstSeg;
   }
 
-  //@Test //visual debug check only
-  @SuppressWarnings("unused")
-  private void printSegment(MemorySegment seg) {
-    int len = (int) seg.byteSize();
-    for (int i = 0; i < len; i++) {
-      println(i + "\t" + MemoryAccess.getByteAtOffset(seg, i));
+  /**
+   * Builds a truth segment of multibyte primitives with a byte-length of 4.
+   * @param srcSeg The source segment prior to any copy-shifts
+   * @param indexShifts the number of copy-shifts either up or down in index units
+   * @param up if true copy up, else down.
+   * @param swap if true, swap the bytes
+   * @return the truth segment
+   */
+  public static MemorySegment truthSegment4Bytes(MemorySegment srcSeg, int indexShifts, boolean up, boolean swap) {
+    MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
+    int indexLength = (int) dstSeg.byteSize() / 4;
+    if (up) {
+      if (swap) {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          int v = MemoryAccess.getIntAtIndex(dstSeg, i - indexShifts, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setIntAtIndex(dstSeg, i, v);
+        }
+      } else {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          int v = MemoryAccess.getIntAtIndex(dstSeg, i - indexShifts);
+          MemoryAccess.setIntAtIndex(dstSeg, i, v);
+        }
+      }
+    } else { //down
+      if (swap) {
+        for (int i = indexShifts; i < indexLength; i++) {
+          int v = MemoryAccess.getIntAtIndex(dstSeg, i, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setIntAtIndex(dstSeg, i - indexShifts, v);
+        }
+      } else {
+        for (int i = indexShifts; i < indexLength; i++) {
+          int v = MemoryAccess.getIntAtIndex(dstSeg, i);
+          MemoryAccess.setIntAtIndex(dstSeg, i - indexShifts, v);
+        }
+      }
     }
+    return dstSeg;
   }
 
-  @SuppressWarnings("unused") //used for debug
-  private static void println(Object o) { System.out.println(o.toString()); }
+  /**
+   * Builds a truth segment of multibyte primitives with a byte-length of 8.
+   * @param srcSeg The source segment prior to any copy-shifts
+   * @param indexShifts the number of copy-shifts either up or down in index units
+   * @param up if true copy up, else down.
+   * @param swap if true, swap the bytes
+   * @return the truth segment
+   */
+  public static MemorySegment truthSegment8Bytes(MemorySegment srcSeg, int indexShifts, boolean up, boolean swap) {
+    MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
+    int indexLength = (int) dstSeg.byteSize() / 8;
+    if (up) {
+      if (swap) {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          long v = MemoryAccess.getLongAtIndex(dstSeg, i - indexShifts, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setLongAtIndex(dstSeg, i, v);
+        }
+      } else {
+        for (int i = indexLength - 1; i >= indexShifts; i--) {
+          long v = MemoryAccess.getLongAtIndex(dstSeg, i - indexShifts);
+          MemoryAccess.setLongAtIndex(dstSeg, i, v);
+        }
+      }
+    } else { //down
+      if (swap) {
+        for (int i = indexShifts; i < indexLength; i++) {
+          long v = MemoryAccess.getLongAtIndex(dstSeg, i, ByteOrder.BIG_ENDIAN);
+          MemoryAccess.setLongAtIndex(dstSeg, i - indexShifts, v);
+        }
+      } else {
+        for (int i = indexShifts; i < indexLength; i++) {
+          long v = MemoryAccess.getLongAtIndex(dstSeg, i);
+          MemoryAccess.setLongAtIndex(dstSeg, i - indexShifts, v);
+        }
+      }
+    }
+    return dstSeg;
+  }
+
 }
