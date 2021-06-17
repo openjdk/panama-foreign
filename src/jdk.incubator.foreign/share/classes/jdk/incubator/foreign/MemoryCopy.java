@@ -47,15 +47,15 @@ import jdk.internal.vm.annotation.ForceInline;
  * to be thrown.</p>
  */
 public final class MemoryCopy {
-    private static final ByteOrder nativeByteOrder = ByteOrder.nativeOrder();
-    private static final ByteOrder nonNativeByteOrder = nativeByteOrder == ByteOrder.LITTLE_ENDIAN
+    private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
+    private static final ByteOrder NON_NATIVE_ORDER = NATIVE_ORDER == ByteOrder.LITTLE_ENDIAN
             ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
-    private static final ValueLayout arrLayout16N = MemoryLayout.valueLayout(16, nativeByteOrder);
-    private static final ValueLayout arrLayout16NN = MemoryLayout.valueLayout(16, nonNativeByteOrder);
-    private static final ValueLayout arrLayout32N = MemoryLayout.valueLayout(32, nativeByteOrder);
-    private static final ValueLayout arrLayout32NN = MemoryLayout.valueLayout(32, nonNativeByteOrder);
-    private static final ValueLayout arrLayout64N = MemoryLayout.valueLayout(64, nativeByteOrder);
-    private static final ValueLayout arrLayout64NN = MemoryLayout.valueLayout(64, nonNativeByteOrder);
+    private static final ValueLayout ARR_LAYOUT_16_N = MemoryLayout.valueLayout(16, NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_16_NN = MemoryLayout.valueLayout(16, NON_NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_32_N = MemoryLayout.valueLayout(32, NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_32_NN = MemoryLayout.valueLayout(32, NON_NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_64_N = MemoryLayout.valueLayout(64, NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_64_NN = MemoryLayout.valueLayout(64, NON_NATIVE_ORDER);
 
     private MemoryCopy() { /* singleton */ }
 
@@ -135,7 +135,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexChars * 2L, srcCopyLengthChars * 2L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthChars * 2L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout16N : arrLayout16NN, srcSegmentSlice, arrLayout16N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN, srcSegmentSlice, ARR_LAYOUT_16_N);
     }
 
     /**
@@ -174,7 +174,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthChars * 2L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexChars * 2L, dstCopyLengthChars * 2L);
-        dstSegmentSlice.copyFrom(arrLayout16N, srcSegmentSlice, order == nativeByteOrder ? arrLayout16N : arrLayout16NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_16_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN);
     }
 
     //SHORT
@@ -214,7 +214,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexShorts * 2L, srcCopyLengthShorts * 2L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthShorts * 2L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout16N : arrLayout16NN, srcSegmentSlice, arrLayout16N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN, srcSegmentSlice, ARR_LAYOUT_16_N);
     }
 
     /**
@@ -253,7 +253,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthShorts * 2L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexShorts * 2L, dstCopyLengthShorts * 2L);
-        dstSegmentSlice.copyFrom(arrLayout16N, srcSegmentSlice, order == nativeByteOrder ? arrLayout16N : arrLayout16NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_16_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN);
     }
 
     //INT
@@ -293,7 +293,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexInts * 4L, srcCopyLengthInts * 4L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthInts * 4L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout32N : arrLayout32NN, srcSegmentSlice, arrLayout32N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN, srcSegmentSlice, ARR_LAYOUT_32_N);
     }
 
     /**
@@ -332,7 +332,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthInts * 4L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexInts * 4L, dstCopyLengthInts * 4L);
-        dstSegmentSlice.copyFrom(arrLayout32N, srcSegmentSlice, order == nativeByteOrder ? arrLayout32N : arrLayout32NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_32_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN);
     }
 
     //FLOAT
@@ -372,7 +372,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexFloats * 4L, srcCopyLengthFloats * 4L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthFloats * 4L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout32N : arrLayout32NN, srcSegmentSlice, arrLayout32N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN, srcSegmentSlice, ARR_LAYOUT_32_N);
     }
 
     /**
@@ -411,7 +411,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthFloats * 4L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexFloats * 4L, dstCopyLengthFloats * 4L);
-        dstSegmentSlice.copyFrom(arrLayout32N, srcSegmentSlice, order == nativeByteOrder ? arrLayout32N : arrLayout32NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_32_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN);
     }
 
     //LONG
@@ -451,7 +451,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexLongs * 8L, srcCopyLengthLongs * 8L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthLongs * 8L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout64N : arrLayout64NN, srcSegmentSlice, arrLayout64N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN, srcSegmentSlice, ARR_LAYOUT_64_N);
     }
 
     /**
@@ -490,7 +490,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthLongs * 8L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexLongs * 8L, dstCopyLengthLongs * 8L);
-        dstSegmentSlice.copyFrom(arrLayout64N, srcSegmentSlice, order == nativeByteOrder ? arrLayout64N : arrLayout64NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_64_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN);
     }
 
     //DOUBLE
@@ -530,7 +530,7 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice =
                 MemorySegment.ofArray(srcArray).asSlice(srcIndexDoubles * 8L, srcCopyLengthDoubles * 8L);
         MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthDoubles * 8L);
-        dstSegmentSlice.copyFrom(order == nativeByteOrder ? arrLayout64N : arrLayout64NN, srcSegmentSlice, arrLayout64N);
+        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN, srcSegmentSlice, ARR_LAYOUT_64_N);
     }
 
     /**
@@ -569,6 +569,6 @@ public final class MemoryCopy {
         MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthDoubles * 8L);
         MemorySegment dstSegmentSlice =
                 MemorySegment.ofArray(dstArray).asSlice(dstIndexDoubles * 8L, dstCopyLengthDoubles * 8L);
-        dstSegmentSlice.copyFrom(arrLayout64N, srcSegmentSlice, order == nativeByteOrder ? arrLayout64N : arrLayout64NN);
+        dstSegmentSlice.copyFrom(ARR_LAYOUT_64_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN);
     }
 }
