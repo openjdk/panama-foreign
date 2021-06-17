@@ -74,7 +74,7 @@ public class TestCopyFrom {
             s1.set(i, i);
         }
         //perform copy
-        s2.segment.copyFrom(s1.segment.asSlice(0, size * s1.type.size()), s1.type.layout, s2.type.layout);
+        s2.segment.copyFrom(s2.type.layout, s1.segment.asSlice(0, size * s1.type.size()), s1.type.layout);
         //check that copy actually worked
         for (int i = 0; i < size; i++) {
             s2.check(i, i);

@@ -36,7 +36,6 @@ import jdk.internal.vm.annotation.ForceInline;
 import sun.security.action.GetPropertyAction;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -151,7 +150,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
                 base(), min(), size);
     }
 
-    public void copyFrom(MemorySegment src, ValueLayout srcElementLayout, ValueLayout dstElementLayout) {
+    public void copyFrom(ValueLayout dstElementLayout, MemorySegment src, ValueLayout srcElementLayout) {
         if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
             throw new IllegalArgumentException("Source and destination layouts must have same sizes");
         }

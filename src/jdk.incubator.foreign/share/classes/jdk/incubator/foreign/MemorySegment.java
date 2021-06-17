@@ -399,7 +399,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * If {@code srcElementLayout.byteSize() == 1}, or if {@code srcElementLayout.order() == dstElementLayout.order()}, calling
      * this method must be equivalent to calling {@link #copyFrom(MemorySegment)} with the same source segment.
      *
+     * @param dstElementLayout the element layout associated with this segment.
      * @param src the source segment.
+     * @param srcElementLayout the element layout associated with the source segment.
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
      * @throws IllegalArgumentException if the element layouts have different sizes, if the source segment size is not
      * a multiple of the source element layout size, if the source segment is incompatible with the alignment constraints
@@ -410,7 +412,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * scopes.
      * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
-    void copyFrom(MemorySegment src, ValueLayout srcElementLayout, ValueLayout dstElementLayout);
+    void copyFrom(ValueLayout dstElementLayout, MemorySegment src, ValueLayout srcElementLayout);
 
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
