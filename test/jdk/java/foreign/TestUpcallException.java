@@ -64,14 +64,6 @@ public class TestUpcallException {
         run(useSpec);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = ".*Target handle may throw exceptions.*")
-    public void testEagerExceptionBlocked() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            CLinker.getInstance().upcallStub(ThrowingUpcall.MH_throwException, FunctionDescriptor.ofVoid(), scope);
-        }
-    }
-
     private void run(boolean useSpec) throws IOException, InterruptedException {
         Process process = new ProcessBuilder()
             .command(
@@ -85,8 +77,6 @@ public class TestUpcallException {
                 "-Djava.library.path=" + System.getProperty("java.library.path"),
                 "-Djdk.internal.foreign.ProgrammableUpcallHandler.USE_SPEC=" + useSpec,
                 "-cp", Utils.TEST_CLASS_PATH,
-                // security manager to block normal System.exit
-                "-Djava.security.manager=allow",
                 "ThrowingUpcall")
             .start();
 
@@ -101,12 +91,6 @@ public class TestUpcallException {
         // Exception message would be found in stack trace
         String shouldInclude = "Testing upcall exceptions";
         assertTrue(linesContain(errLines, shouldInclude), "Did not find '" + shouldInclude + "' in stderr");
-
-        // If the VM crashes with an uncaught IllegalStateException from the security manager
-        // the crash log should include the exception message.
-        // Make sure that is _not_ the case.
-        String shouldNotInclude = "Can not use exitVM";
-        assertFalse(linesContain(outLines, shouldNotInclude), "Found '" + shouldNotInclude + "' in stdout");
     }
 
     private boolean linesContain(List<String> errLines, String shouldInclude) {

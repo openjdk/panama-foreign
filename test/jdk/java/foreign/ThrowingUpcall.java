@@ -40,18 +40,6 @@ public class ThrowingUpcall {
     public static final MethodHandle MH_throwException;
 
     static {
-        System.setSecurityManager(new SecurityManager() {
-            @Override
-            public void checkExit(int status) {
-                throw new IllegalStateException("Can not use exitVM");
-            }
-
-            @Override
-            public void checkPermission(Permission perm) {
-                // do nothing
-            }
-        });
-
         System.loadLibrary("TestUpcall");
         SymbolLookup lookup = SymbolLookup.loaderLookup();
         downcall = CLinker.getInstance().downcallHandle(

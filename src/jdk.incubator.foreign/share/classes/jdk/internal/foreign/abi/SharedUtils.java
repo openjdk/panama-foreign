@@ -43,7 +43,8 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.aarch64.AArch64Linker;
+import jdk.internal.foreign.abi.aarch64.linux.LinuxAArch64Linker;
+import jdk.internal.foreign.abi.aarch64.macos.MacOsAArch64Linker;
 import jdk.internal.foreign.abi.x64.sysv.SysVx64Linker;
 import jdk.internal.foreign.abi.x64.windows.Windowsx64Linker;
 
@@ -53,6 +54,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -279,16 +281,17 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.getInstance();
             case SysV -> SysVx64Linker.getInstance();
-            case AArch64 -> AArch64Linker.getInstance();
+            case LinuxAArch64 -> LinuxAArch64Linker.getInstance();
+            case MacOsAArch64 -> MacOsAArch64Linker.getInstance();
         };
     }
 
-    public static String toJavaStringInternal(MemorySegment segment, long start, Charset charset) {
+    public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
         MemorySegment.ofArray(bytes)
                 .copyFrom(segment.asSlice(start, len));
-        return new String(bytes, charset);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static int strlen(MemorySegment segment, long start) {
@@ -455,6 +458,14 @@ public class SharedUtils {
     }
 
     public static MemoryAddress checkSymbol(Addressable symbol) {
+        return checkAddressable(symbol, "Symbol is NULL");
+    }
+
+    public static MemoryAddress checkAddress(MemoryAddress address) {
+        return checkAddressable(address, "Address is NULL");
+    }
+
+    private static MemoryAddress checkAddressable(Addressable symbol, String msg) {
         Objects.requireNonNull(symbol);
         MemoryAddress symbolAddr = symbol.address();
         if (symbolAddr.equals(MemoryAddress.NULL))
@@ -482,7 +493,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaList(actions, scope);
             case SysV -> SysVx64Linker.newVaList(actions, scope);
-            case AArch64 -> AArch64Linker.newVaList(actions, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaList(actions, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaList(actions, scope);
         };
     }
 
@@ -496,7 +508,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
             case SysV -> SysVx64Linker.newVaListOfAddress(ma, scope);
-            case AArch64 -> AArch64Linker.newVaListOfAddress(ma, scope);
+            case LinuxAArch64 -> LinuxAArch64Linker.newVaListOfAddress(ma, scope);
+            case MacOsAArch64 -> MacOsAArch64Linker.newVaListOfAddress(ma, scope);
         };
     }
 
@@ -504,7 +517,8 @@ public class SharedUtils {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.emptyVaList();
             case SysV -> SysVx64Linker.emptyVaList();
-            case AArch64 -> AArch64Linker.emptyVaList();
+            case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
+            case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
         };
     }
 
