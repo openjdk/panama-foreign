@@ -87,6 +87,28 @@ public class TestMemoryCopy {
         assertEquals(truth.mismatch(result), -1);
     }
 
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testUnalignedCopy(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        int indexShifts = SEG_OFFSET_BYTES / bytesPerElement;
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        ByteOrder bo = mode.swap ? NON_NATIVE_ORDER : NATIVE_ORDER;
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        int srcIndex = mode.direction ? 0 : indexShifts;
+        int srcCopyLen = helper.length(srcArr) - indexShifts;
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        long dstOffsetBytes = mode.direction ? (SEG_OFFSET_BYTES - 1) : 0;
+        helper.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+        //CopyTo
+        long srcOffsetBytes = mode.direction ? 0 : (SEG_OFFSET_BYTES - 1);
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr);
+        int dstIndex = mode.direction ? indexShifts : 0;
+        int dstCopyLen = helper.length(dstArr) - indexShifts;
+        helper.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    }
+
     /***** Utilities *****/
 
     public static MemorySegment srcSegment(int bytesLength) {

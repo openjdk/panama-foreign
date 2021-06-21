@@ -50,12 +50,12 @@ public final class MemoryCopy {
     private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
     private static final ByteOrder NON_NATIVE_ORDER = NATIVE_ORDER == ByteOrder.LITTLE_ENDIAN
             ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
-    private static final ValueLayout ARR_LAYOUT_16_N = MemoryLayout.valueLayout(16, NATIVE_ORDER);
-    private static final ValueLayout ARR_LAYOUT_16_NN = MemoryLayout.valueLayout(16, NON_NATIVE_ORDER);
-    private static final ValueLayout ARR_LAYOUT_32_N = MemoryLayout.valueLayout(32, NATIVE_ORDER);
-    private static final ValueLayout ARR_LAYOUT_32_NN = MemoryLayout.valueLayout(32, NON_NATIVE_ORDER);
-    private static final ValueLayout ARR_LAYOUT_64_N = MemoryLayout.valueLayout(64, NATIVE_ORDER);
-    private static final ValueLayout ARR_LAYOUT_64_NN = MemoryLayout.valueLayout(64, NON_NATIVE_ORDER);
+    private static final ValueLayout ARR_LAYOUT_16_N = MemoryLayout.valueLayout(16, NATIVE_ORDER).withBitAlignment(8);
+    private static final ValueLayout ARR_LAYOUT_16_NN = MemoryLayout.valueLayout(16, NON_NATIVE_ORDER).withBitAlignment(8);
+    private static final ValueLayout ARR_LAYOUT_32_N = MemoryLayout.valueLayout(32, NATIVE_ORDER).withBitAlignment(8);
+    private static final ValueLayout ARR_LAYOUT_32_NN = MemoryLayout.valueLayout(32, NON_NATIVE_ORDER).withBitAlignment(8);
+    private static final ValueLayout ARR_LAYOUT_64_N = MemoryLayout.valueLayout(64, NATIVE_ORDER).withBitAlignment(8);
+    private static final ValueLayout ARR_LAYOUT_64_NN = MemoryLayout.valueLayout(64, NON_NATIVE_ORDER).withBitAlignment(8);
 
     private MemoryCopy() { /* singleton */ }
 
