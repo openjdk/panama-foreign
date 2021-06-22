@@ -105,7 +105,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthBytes, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthBytes, true);
         Objects.checkFromIndexSize(dstIndexBytes, dstCopyLengthBytes, dstArray.length);
         scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
                 srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
@@ -196,7 +196,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthChars << 1, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthChars << 1, true);
         Objects.checkFromIndexSize(dstIndexChars, dstCopyLengthChars, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
@@ -293,7 +293,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthShorts << 1, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthShorts << 1, true);
         Objects.checkFromIndexSize(dstIndexShorts, dstCopyLengthShorts, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
@@ -390,7 +390,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthInts << 2, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthInts << 2, true);
         Objects.checkFromIndexSize(dstIndexInts, dstCopyLengthInts, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
@@ -487,7 +487,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthFloats << 2, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthFloats << 2, true);
         Objects.checkFromIndexSize(dstIndexFloats, dstCopyLengthFloats, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
@@ -584,7 +584,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthLongs << 3, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthLongs << 3, true);
         Objects.checkFromIndexSize(dstIndexLongs, dstCopyLengthLongs, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
@@ -681,7 +681,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthDoubles << 3, false);
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthDoubles << 3, true);
         Objects.checkFromIndexSize(dstIndexDoubles, dstCopyLengthDoubles, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
