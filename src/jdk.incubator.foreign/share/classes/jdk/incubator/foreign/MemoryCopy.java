@@ -25,6 +25,10 @@ package jdk.incubator.foreign;
 
 import java.nio.ByteOrder;
 import java.util.Objects;
+
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
@@ -47,15 +51,17 @@ import jdk.internal.vm.annotation.ForceInline;
  * to be thrown.</p>
  */
 public final class MemoryCopy {
-    private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
-    private static final ByteOrder NON_NATIVE_ORDER = NATIVE_ORDER == ByteOrder.LITTLE_ENDIAN
-            ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
-    private static final ValueLayout ARR_LAYOUT_16_N = MemoryLayout.valueLayout(16, NATIVE_ORDER).withBitAlignment(8);
-    private static final ValueLayout ARR_LAYOUT_16_NN = MemoryLayout.valueLayout(16, NON_NATIVE_ORDER).withBitAlignment(8);
-    private static final ValueLayout ARR_LAYOUT_32_N = MemoryLayout.valueLayout(32, NATIVE_ORDER).withBitAlignment(8);
-    private static final ValueLayout ARR_LAYOUT_32_NN = MemoryLayout.valueLayout(32, NON_NATIVE_ORDER).withBitAlignment(8);
-    private static final ValueLayout ARR_LAYOUT_64_N = MemoryLayout.valueLayout(64, NATIVE_ORDER).withBitAlignment(8);
-    private static final ValueLayout ARR_LAYOUT_64_NN = MemoryLayout.valueLayout(64, NON_NATIVE_ORDER).withBitAlignment(8);
+
+    private static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+
+    private static final int BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
+    private static final int CHAR_BASE = unsafe.arrayBaseOffset(char[].class);
+    private static final int SHORT_BASE = unsafe.arrayBaseOffset(short[].class);
+    private static final int INT_BASE = unsafe.arrayBaseOffset(int[].class);
+    private static final int FLOAT_BASE = unsafe.arrayBaseOffset(float[].class);
+    private static final int LONG_BASE = unsafe.arrayBaseOffset(long[].class);
+    private static final int DOUBLE_BASE = unsafe.arrayBaseOffset(double[].class);
 
     private MemoryCopy() { /* singleton */ }
 
@@ -73,10 +79,14 @@ public final class MemoryCopy {
     public static void copyFromArray(
             byte[] srcArray, int srcIndexBytes, int srcCopyLengthBytes,
             MemorySegment dstSegment, long dstOffsetBytes) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice = MemorySegment.ofArray(srcArray).asSlice(srcIndexBytes, srcCopyLengthBytes);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthBytes);
-        dstSegmentSlice.copyFrom(srcSegmentSlice);
+        Objects.checkFromIndexSize(srcIndexBytes, srcCopyLengthBytes, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthBytes, false);
+        scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                srcArray, BYTE_BASE + srcIndexBytes,
+                destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthBytes);
     }
 
     /**
@@ -93,9 +103,13 @@ public final class MemoryCopy {
             MemorySegment srcSegment, long srcOffsetBytes,
             byte[] dstArray, int dstIndexBytes, int dstCopyLengthBytes) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthBytes);
-        MemorySegment dstSegmentSlice = MemorySegment.ofArray(dstArray).asSlice(dstIndexBytes, dstCopyLengthBytes);
-        dstSegmentSlice.copyFrom(srcSegmentSlice);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthBytes, false);
+        Objects.checkFromIndexSize(dstIndexBytes, dstCopyLengthBytes, dstArray.length);
+        scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                dstArray, BYTE_BASE + dstIndexBytes, dstCopyLengthBytes);
     }
 
     //CHAR
@@ -131,11 +145,20 @@ public final class MemoryCopy {
             char[] srcArray, int srcIndexChars, int srcCopyLengthChars,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexChars * 2L, srcCopyLengthChars * 2L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthChars * 2L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN, srcSegmentSlice, ARR_LAYOUT_16_N);
+        Objects.checkFromIndexSize(srcIndexChars, srcCopyLengthChars, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthChars << 1, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, CHAR_BASE + (srcIndexChars << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthChars << 1);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, CHAR_BASE + (srcIndexChars << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthChars << 1, 2);
+        }
     }
 
     /**
@@ -171,10 +194,19 @@ public final class MemoryCopy {
             char[] dstArray, int dstIndexChars, int dstCopyLengthChars,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthChars * 2L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexChars * 2L, dstCopyLengthChars * 2L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_16_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthChars << 1, false);
+        Objects.checkFromIndexSize(dstIndexChars, dstCopyLengthChars, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, CHAR_BASE + (dstIndexChars << 1), dstCopyLengthChars << 1);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, CHAR_BASE + (dstIndexChars << 1), dstCopyLengthChars << 1, 2);
+        }
     }
 
     //SHORT
@@ -210,11 +242,20 @@ public final class MemoryCopy {
             short[] srcArray, int srcIndexShorts, int srcCopyLengthShorts,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexShorts * 2L, srcCopyLengthShorts * 2L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthShorts * 2L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN, srcSegmentSlice, ARR_LAYOUT_16_N);
+        Objects.checkFromIndexSize(srcIndexShorts, srcCopyLengthShorts, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthShorts << 1, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, SHORT_BASE + (srcIndexShorts << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthShorts << 1);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, SHORT_BASE + (srcIndexShorts << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthShorts << 1, 2);
+        }
     }
 
     /**
@@ -250,10 +291,19 @@ public final class MemoryCopy {
             short[] dstArray, int dstIndexShorts, int dstCopyLengthShorts,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthShorts * 2L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexShorts * 2L, dstCopyLengthShorts * 2L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_16_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_16_N : ARR_LAYOUT_16_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthShorts << 1, false);
+        Objects.checkFromIndexSize(dstIndexShorts, dstCopyLengthShorts, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, SHORT_BASE + (dstIndexShorts << 1), dstCopyLengthShorts << 1);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, SHORT_BASE + (dstIndexShorts << 1), dstCopyLengthShorts << 1, 2);
+        }
     }
 
     //INT
@@ -289,11 +339,20 @@ public final class MemoryCopy {
             int[] srcArray, int srcIndexInts, int srcCopyLengthInts,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexInts * 4L, srcCopyLengthInts * 4L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthInts * 4L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN, srcSegmentSlice, ARR_LAYOUT_32_N);
+        Objects.checkFromIndexSize(srcIndexInts, srcCopyLengthInts, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthInts << 2, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, INT_BASE + (srcIndexInts << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthInts << 2);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, INT_BASE + (srcIndexInts << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthInts << 2, 4);
+        }
     }
 
     /**
@@ -329,10 +388,19 @@ public final class MemoryCopy {
             int[] dstArray, int dstIndexInts, int dstCopyLengthInts,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthInts * 4L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexInts * 4L, dstCopyLengthInts * 4L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_32_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthInts << 2, false);
+        Objects.checkFromIndexSize(dstIndexInts, dstCopyLengthInts, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, INT_BASE + (dstIndexInts << 2), dstCopyLengthInts << 2);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, INT_BASE + (dstIndexInts << 2), dstCopyLengthInts << 2, 4);
+        }
     }
 
     //FLOAT
@@ -368,11 +436,20 @@ public final class MemoryCopy {
             float[] srcArray, int srcIndexFloats, int srcCopyLengthFloats,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexFloats * 4L, srcCopyLengthFloats * 4L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthFloats * 4L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN, srcSegmentSlice, ARR_LAYOUT_32_N);
+        Objects.checkFromIndexSize(srcIndexFloats, srcCopyLengthFloats, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthFloats << 2, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, FLOAT_BASE + (srcIndexFloats << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthFloats << 2);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, FLOAT_BASE + (srcIndexFloats << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthFloats << 2, 4);
+        }
     }
 
     /**
@@ -408,10 +485,19 @@ public final class MemoryCopy {
             float[] dstArray, int dstIndexFloats, int dstCopyLengthFloats,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthFloats * 4L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexFloats * 4L, dstCopyLengthFloats * 4L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_32_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_32_N : ARR_LAYOUT_32_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthFloats << 2, false);
+        Objects.checkFromIndexSize(dstIndexFloats, dstCopyLengthFloats, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, FLOAT_BASE + (dstIndexFloats << 2), dstCopyLengthFloats << 2);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, FLOAT_BASE + (dstIndexFloats << 2), dstCopyLengthFloats << 2, 4);
+        }
     }
 
     //LONG
@@ -447,11 +533,20 @@ public final class MemoryCopy {
             long[] srcArray, int srcIndexLongs, int srcCopyLengthLongs,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexLongs * 8L, srcCopyLengthLongs * 8L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthLongs * 8L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN, srcSegmentSlice, ARR_LAYOUT_64_N);
+        Objects.checkFromIndexSize(srcIndexLongs, srcCopyLengthLongs, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthLongs << 3, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, LONG_BASE + (srcIndexLongs << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthLongs << 3);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, LONG_BASE + (srcIndexLongs << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthLongs << 3, 8);
+        }
     }
 
     /**
@@ -487,10 +582,19 @@ public final class MemoryCopy {
             long[] dstArray, int dstIndexLongs, int dstCopyLengthLongs,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthLongs * 8L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexLongs * 8L, dstCopyLengthLongs * 8L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_64_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthLongs << 3, false);
+        Objects.checkFromIndexSize(dstIndexLongs, dstCopyLengthLongs, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, LONG_BASE + (dstIndexLongs << 3), dstCopyLengthLongs << 3);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, LONG_BASE + (dstIndexLongs << 3), dstCopyLengthLongs << 3, 8);
+        }
     }
 
     //DOUBLE
@@ -526,11 +630,20 @@ public final class MemoryCopy {
             double[] srcArray, int srcIndexDoubles, int srcCopyLengthDoubles,
             MemorySegment dstSegment, long dstOffsetBytes,
             ByteOrder order) {
+        Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        MemorySegment srcSegmentSlice =
-                MemorySegment.ofArray(srcArray).asSlice(srcIndexDoubles * 8L, srcCopyLengthDoubles * 8L);
-        MemorySegment dstSegmentSlice = dstSegment.asSlice(dstOffsetBytes, srcCopyLengthDoubles * 8L);
-        dstSegmentSlice.copyFrom(order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN, srcSegmentSlice, ARR_LAYOUT_64_N);
+        Objects.checkFromIndexSize(srcIndexDoubles, srcCopyLengthDoubles, srcArray.length);
+        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
+        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthDoubles << 3, false);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(null, destImpl.scope(),
+                    srcArray, DOUBLE_BASE + (srcIndexDoubles << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthDoubles << 3);
+        } else {
+            scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
+                    srcArray, DOUBLE_BASE + (srcIndexDoubles << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthDoubles << 3, 8);
+        }
     }
 
     /**
@@ -566,9 +679,18 @@ public final class MemoryCopy {
             double[] dstArray, int dstIndexDoubles, int dstCopyLengthDoubles,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
-        MemorySegment srcSegmentSlice = srcSegment.asSlice(srcOffsetBytes, dstCopyLengthDoubles * 8L);
-        MemorySegment dstSegmentSlice =
-                MemorySegment.ofArray(dstArray).asSlice(dstIndexDoubles * 8L, dstCopyLengthDoubles * 8L);
-        dstSegmentSlice.copyFrom(ARR_LAYOUT_64_N, srcSegmentSlice, order == NATIVE_ORDER ? ARR_LAYOUT_64_N : ARR_LAYOUT_64_NN);
+        Objects.requireNonNull(dstArray);
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
+        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthDoubles << 3, false);
+        Objects.checkFromIndexSize(dstIndexDoubles, dstCopyLengthDoubles, dstArray.length);
+        if (order == ByteOrder.nativeOrder()) {
+            scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, DOUBLE_BASE + (dstIndexDoubles << 3), dstCopyLengthDoubles << 3);
+        } else {
+            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
+                    dstArray, DOUBLE_BASE + (dstIndexDoubles << 3), dstCopyLengthDoubles << 3, 8);
+        }
     }
 }
