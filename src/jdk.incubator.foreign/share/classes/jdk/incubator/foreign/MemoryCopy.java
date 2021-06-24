@@ -147,6 +147,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexChars, srcCopyLengthChars, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthChars << 1, false);
@@ -195,6 +196,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthChars << 1, true);
         Objects.checkFromIndexSize(dstIndexChars, dstCopyLengthChars, dstArray.length);
@@ -244,6 +246,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexShorts, srcCopyLengthShorts, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthShorts << 1, false);
@@ -292,6 +295,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthShorts << 1, true);
         Objects.checkFromIndexSize(dstIndexShorts, dstCopyLengthShorts, dstArray.length);
@@ -341,6 +345,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexInts, srcCopyLengthInts, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthInts << 2, false);
@@ -389,6 +394,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthInts << 2, true);
         Objects.checkFromIndexSize(dstIndexInts, dstCopyLengthInts, dstArray.length);
@@ -438,6 +444,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexFloats, srcCopyLengthFloats, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthFloats << 2, false);
@@ -486,6 +493,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthFloats << 2, true);
         Objects.checkFromIndexSize(dstIndexFloats, dstCopyLengthFloats, dstArray.length);
@@ -535,6 +543,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexLongs, srcCopyLengthLongs, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthLongs << 3, false);
@@ -583,6 +592,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthLongs << 3, true);
         Objects.checkFromIndexSize(dstIndexLongs, dstCopyLengthLongs, dstArray.length);
@@ -632,6 +642,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
+        Objects.requireNonNull(order);
         Objects.checkFromIndexSize(srcIndexDoubles, srcCopyLengthDoubles, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffsetBytes, srcCopyLengthDoubles << 3, false);
@@ -680,6 +691,7 @@ public final class MemoryCopy {
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
+        Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthDoubles << 3, true);
         Objects.checkFromIndexSize(dstIndexDoubles, dstCopyLengthDoubles, dstArray.length);

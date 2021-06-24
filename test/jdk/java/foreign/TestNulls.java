@@ -93,7 +93,8 @@ public class TestNulls {
             CLinker.VaList.Builder.class,
             FunctionDescriptor.class,
             SegmentAllocator.class,
-            ResourceScope.class
+            ResourceScope.class,
+            MemoryCopy.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(

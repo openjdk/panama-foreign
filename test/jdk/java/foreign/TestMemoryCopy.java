@@ -27,11 +27,11 @@
  */
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import jdk.incubator.foreign.MemoryCopy;
@@ -79,7 +79,7 @@ public class TestMemoryCopy {
         //CopyTo
         long srcOffsetBytes = mode.direction ? 0 : SEG_OFFSET_BYTES;
         Object dstArr = helper.toArray(base);
-        MemorySegment srcSeg = helper.fromArray(dstArr);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         int dstIndex = mode.direction ? indexShifts : 0;
         int dstCopyLen = helper.length(dstArr) - indexShifts;
         helper.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
@@ -103,10 +103,130 @@ public class TestMemoryCopy {
         //CopyTo
         long srcOffsetBytes = mode.direction ? 0 : (SEG_OFFSET_BYTES - 1);
         Object dstArr = helper.toArray(base);
-        MemorySegment srcSeg = helper.fromArray(dstArr);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         int dstIndex = mode.direction ? indexShifts : 0;
         int dstCopyLen = helper.length(dstArr) - indexShifts;
         helper.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyOobLength(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copyFromArray(srcArr, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, dstSeg, 0, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copyToArray(srcSeg, 0, dstArr, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyNegativeIndices(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copyFromArray(srcArr, -1, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, 0, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copyToArray(srcSeg, 0, dstArr, -1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyNegativeOffsets(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copyFromArray(srcArr, 0, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, -1, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copyToArray(srcSeg, -1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyOobIndices(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copyFromArray(srcArr, helper.length(srcArr) + 1, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, 0, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copyToArray(srcSeg, 0, dstArr, helper.length(dstArr) + 1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyOobOffsets(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copyFromArray(srcArr, 0, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, SEG_LENGTH_BYTES + 1, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copyToArray(srcSeg, SEG_OFFSET_BYTES + 1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
     }
 
     /***** Utilities *****/
@@ -381,13 +501,6 @@ public class TestMemoryCopy {
                 return arr.length;
             }
         };
-    }
-
-    @DataProvider
-    Object[][] copyModes() {
-        return Arrays.stream(CopyMode.values())
-                .map(mode -> new Object[] { mode })
-                .toArray(Object[][]::new);
     }
 
     @DataProvider
