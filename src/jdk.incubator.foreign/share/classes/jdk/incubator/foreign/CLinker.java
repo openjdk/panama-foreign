@@ -229,7 +229,8 @@ public sealed interface CLinker permits AbstractCLinker {
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
@@ -564,8 +565,7 @@ public sealed interface CLinker permits AbstractCLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@linkplain ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
