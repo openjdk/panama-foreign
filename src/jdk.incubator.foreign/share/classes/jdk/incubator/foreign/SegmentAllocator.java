@@ -26,7 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
@@ -315,11 +314,7 @@ public interface SegmentAllocator {
         Objects.requireNonNull(elementLayout);
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
         MemorySegment addr = allocate(MemoryLayout.sequenceLayout(Array.getLength(array), elementLayout));
-        if (elementLayout.byteSize() == 1 || (elementLayout.order() == ByteOrder.nativeOrder())) {
-            addr.copyFrom(heapSegmentFactory.apply(array));
-        } else {
-            ((AbstractMemorySegmentImpl)addr).copyFromSwap(heapSegmentFactory.apply(array), elementLayout.byteSize());
-        }
+        addr.copyFrom(elementLayout, heapSegmentFactory.apply(array), elementLayout.withOrder(ByteOrder.nativeOrder()));
         return addr;
     }
 
