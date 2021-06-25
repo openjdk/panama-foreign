@@ -1591,11 +1591,6 @@ bool MethodData::profile_memory_access(const methodHandle& m, int bci) {
         return true;
       }
     }
-    if (inv.klass() == vmSymbols::jdk_incubator_foreign_MemoryCopy()) {
-      if (inv.name()->starts_with("copy")) {
-        return true;
-      }
-    }
   }
   return false;
 }
