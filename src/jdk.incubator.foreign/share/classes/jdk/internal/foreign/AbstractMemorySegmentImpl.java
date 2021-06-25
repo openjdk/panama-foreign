@@ -150,14 +150,30 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
                 base(), min(), size);
     }
 
-    public void copyFromSwap(MemorySegment src, long elemSize) {
-        AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)src;
-        long size = that.byteSize();
-        checkAccess(0, size, false);
-        that.checkAccess(0, size, true);
-        SCOPED_MEMORY_ACCESS.copySwapMemory(scope, that.scope,
-                        that.base(), that.min(),
-                        base(), min(), size, elemSize);
+    public void copyFrom(ValueLayout dstElementLayout, MemorySegment src, ValueLayout srcElementLayout) {
+        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
+            throw new IllegalArgumentException("Source and destination layouts must have same sizes");
+        }
+        if (((AbstractMemorySegmentImpl)src).min() % srcElementLayout.byteAlignment() != 0) {
+            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
+        }
+        if (min() % dstElementLayout.byteAlignment() != 0) {
+            throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
+        }
+        long size = src.byteSize();
+        if (size % srcElementLayout.byteSize() != 0) {
+            throw new IllegalArgumentException("Segment size is not a multiple of layout size");
+        }
+        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
+            copyFrom(src);
+        } else {
+            AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl) src;
+            checkAccess(0, size, false);
+            that.checkAccess(0, size, true);
+            SCOPED_MEMORY_ACCESS.copySwapMemory(scope, that.scope,
+                    that.base(), that.min(),
+                    base(), min(), size, srcElementLayout.byteSize());
+        }
     }
 
     @Override
