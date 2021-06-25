@@ -46,9 +46,14 @@ import jdk.internal.vm.annotation.ForceInline;
  * Additional overloads are provided (see {@link #copyFromArray(double[], int, int, MemorySegment, long)}),
  * so that clients can omit the byte order parameter.
  *
- * <p>Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more
- * {@code null} elements to a method in this class causes a {@link NullPointerException NullPointerException}
- * to be thrown.</p>
+ * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
+ * elements to a method in this class causes a {@link NullPointerException} to be thrown. Moreover,
+ * attempting to copy to/from a segment whose {@linkplain MemorySegment#scope() scope} has already been closed,
+ * or from a thread other than the thread owning the scope causes an {@link IllegalStateException} to be thrown.
+ * Finally, attempting to copy to/from a segment (of {@linkplain MemorySegment#address() base address} {@code B} and
+ * {@linkplain MemorySegment#byteSize() size} {@code S}) at addresses that are {@code < B}, or {@code >= B + S},
+ * causes an {@link IndexOutOfBoundsException} to be thrown; similarly, attempting to copy to/from an array
+ * (of length {@code L}) at indices that are {@code < 0}, or {@code >= L} causes an {@link IndexOutOfBoundsException} to be thrown.</p>
  */
 public final class MemoryCopy {
 
