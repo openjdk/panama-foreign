@@ -131,7 +131,7 @@ public non-sealed class WinVaList implements VaList {
                 default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
             };
         } else {
-            VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+            VarHandle reader = layout.varHandle(carrier);
             res = reader.get(segment);
         }
         segment = segment.asSlice(VA_SLOT_SIZE_BYTES);

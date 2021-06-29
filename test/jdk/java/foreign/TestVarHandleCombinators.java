@@ -131,7 +131,6 @@ public class TestVarHandleCombinators {
     public Object[][] createBadCarriers() {
         return new Object[][] {
                 { void.class },
-                { boolean.class },
                 { Object.class },
                 { int[].class },
                 { MemorySegment.class }

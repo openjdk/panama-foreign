@@ -311,6 +311,11 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     @Override
+    public final boolean[] toBooleanArray() {
+        return toArray(boolean[].class, 1, boolean[]::new, MemorySegment::ofArray);
+    }
+
+    @Override
     public final short[] toShortArray() {
         return toArray(short[].class, 2, short[]::new, MemorySegment::ofArray);
     }

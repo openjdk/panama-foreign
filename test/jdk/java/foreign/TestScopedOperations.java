@@ -151,6 +151,7 @@ public class TestScopedOperations {
         ScopedOperation.ofAllocator(a -> a.allocate(1, 1), "NativeAllocator::allocate/size/align");
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_BYTE), "NativeAllocator::allocate/layout");
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_BYTE, (byte) 0), "NativeAllocator::allocate/byte");
+        ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_BOOLEAN, false), "NativeAllocator::allocate/bool");
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_CHAR, (char) 0), "NativeAllocator::allocate/char");
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_SHORT, (short) 0), "NativeAllocator::allocate/short");
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_INT, 0), "NativeAllocator::allocate/int");
@@ -159,6 +160,7 @@ public class TestScopedOperations {
         ScopedOperation.ofAllocator(a -> a.allocate(MemoryLayouts.JAVA_DOUBLE, 0d), "NativeAllocator::allocate/double");
         ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_BYTE, 1L), "NativeAllocator::allocateArray/size");
         ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_BYTE, new byte[]{0}), "NativeAllocator::allocateArray/byte");
+        ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_BOOLEAN, new boolean[]{false}), "NativeAllocator::allocateArray/bool");
         ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_CHAR, new char[]{0}), "NativeAllocator::allocateArray/char");
         ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_SHORT, new short[]{0}), "NativeAllocator::allocateArray/short");
         ScopedOperation.ofAllocator(a -> a.allocateArray(MemoryLayouts.JAVA_INT, new int[]{0}), "NativeAllocator::allocateArray/int");

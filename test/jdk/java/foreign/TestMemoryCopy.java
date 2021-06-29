@@ -65,7 +65,7 @@ public class TestMemoryCopy {
     public void testSelfCopy(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
         int indexShifts = SEG_OFFSET_BYTES / bytesPerElement;
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         MemorySegment truth = truthSegment(base, helper, indexShifts, mode);
         ByteOrder bo = mode.swap ? NON_NATIVE_ORDER : NATIVE_ORDER;
         //CopyFrom
@@ -91,7 +91,7 @@ public class TestMemoryCopy {
     public void testUnalignedCopy(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
         int indexShifts = SEG_OFFSET_BYTES / bytesPerElement;
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         ByteOrder bo = mode.swap ? NON_NATIVE_ORDER : NATIVE_ORDER;
         //CopyFrom
         Object srcArr = helper.toArray(base);
@@ -112,7 +112,7 @@ public class TestMemoryCopy {
     @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyOobLength(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         //CopyFrom
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
@@ -136,7 +136,7 @@ public class TestMemoryCopy {
     @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyNegativeIndices(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         //CopyFrom
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
@@ -160,7 +160,7 @@ public class TestMemoryCopy {
     @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyNegativeOffsets(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         //CopyFrom
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
@@ -184,7 +184,7 @@ public class TestMemoryCopy {
     @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyOobIndices(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         //CopyFrom
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
@@ -208,7 +208,7 @@ public class TestMemoryCopy {
     @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyOobOffsets(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
-        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, helper.carrier);
         //CopyFrom
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
@@ -231,10 +231,14 @@ public class TestMemoryCopy {
 
     /***** Utilities *****/
 
-    public static MemorySegment srcSegment(int bytesLength) {
+    public static MemorySegment srcSegment(int bytesLength, Class<?> carrier) {
         byte[] arr = new byte[bytesLength];
         for (int i = 0; i < arr.length; i++) {
-            arr[i] = (byte)i;
+            if (carrier.componentType() == boolean.class) {
+                arr[i] = i > 0 ? (byte)1 : (byte)0;
+            } else {
+                arr[i] = (byte)i;
+            }
         }
         return MemorySegment.ofArray(arr);
     }
@@ -336,6 +340,33 @@ public class TestMemoryCopy {
 
             @Override
             int length(byte[] arr) {
+                return arr.length;
+            }
+        };
+
+        static final CopyHelper<boolean[]> BOOL = new CopyHelper<>(MemoryLayouts.JAVA_BOOLEAN, boolean[].class) {
+            @Override
+            void copyFromArray(boolean[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
+                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
+            }
+
+            @Override
+            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, boolean[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
+            }
+
+            @Override
+            boolean[] toArray(MemorySegment segment) {
+                return segment.toBooleanArray();
+            }
+
+            @Override
+            MemorySegment fromArray(boolean[] array) {
+                return MemorySegment.ofArray(array);
+            }
+
+            @Override
+            int length(boolean[] arr) {
                 return arr.length;
             }
         };
@@ -505,7 +536,7 @@ public class TestMemoryCopy {
 
     @DataProvider
     Object[][] copyModesAndHelpers() {
-        CopyHelper<?>[] helpers = { CopyHelper.BYTE, CopyHelper.CHAR, CopyHelper.SHORT, CopyHelper.INT,
+        CopyHelper<?>[] helpers = { CopyHelper.BYTE, CopyHelper.BOOL, CopyHelper.CHAR, CopyHelper.SHORT, CopyHelper.INT,
                                     CopyHelper.FLOAT, CopyHelper.LONG, CopyHelper.DOUBLE };
         List<Object[]> results = new ArrayList<>();
         for (CopyHelper<?> helper : helpers) {

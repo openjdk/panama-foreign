@@ -43,7 +43,7 @@ import java.util.Objects;
  * To obtain a memory access var handle, clients must start from one of the <em>leaf</em> methods
  * (see {@link MemoryHandles#varHandle(Class, ByteOrder)},
  * {@link MemoryHandles#varHandle(Class, long, ByteOrder)}). This determines the variable type
- * (all primitive types but {@code void} and {@code boolean} are supported), as well as the alignment constraint and the
+ * (all primitive types but {@code void}, as well as {@link MemoryAddress} are supported), as well as the alignment constraint and the
  * byte order associated with a memory access var handle. The resulting memory access var handle can then be combined in various ways
  * to emulate different addressing modes. The var handles created by this class feature a <em>mandatory</em> coordinate type
  * (of type {@link MemorySegment}), and one {@code long} coordinate type, which represents the offset, in bytes, relative
@@ -77,21 +77,21 @@ handle = MemoryHandles.insertCoordinates(handle, 1, 4); //(MemorySegment) -> int
  *     access modes {@code get} and {@code set} for {@code long} and
  *     {@code double} on 32-bit platforms.
  * <li>atomic update access modes for {@code int}, {@code long},
- *     {@code float} or {@code double}.
+ *     {@code float}, {@code double} or {@link MemoryAddress}.
  *     (Future major platform releases of the JDK may support additional
  *     types for certain currently unsupported access modes.)
- * <li>numeric atomic update access modes for {@code int} and {@code long}.
+ * <li>numeric atomic update access modes for {@code int}, {@code long} and {@link MemoryAddress}.
  *     (Future major platform releases of the JDK may support additional
  *     numeric types for certain currently unsupported access modes.)
- * <li>bitwise atomic update access modes for {@code int} and {@code long}.
+ * <li>bitwise atomic update access modes for {@code int}, {@code long} and {@link MemoryAddress}.
  *     (Future major platform releases of the JDK may support additional
  *     numeric types for certain currently unsupported access modes.)
  * </ul>
  *
- * If {@code T} is {@code float} or {@code double} then atomic
+ * If {@code T} is {@code float}, {@code double} or {@link MemoryAddress} then atomic
  * update access modes compare values using their bitwise representation
- * (see {@link Float#floatToRawIntBits} and
- * {@link Double#doubleToRawLongBits}, respectively).
+ * (see {@link Float#floatToRawIntBits},
+ * {@link Double#doubleToRawLongBits} and {@link MemoryAddress#toRawLongValue()}, respectively).
  * <p>
  * Alternatively, a memory access operation is <em>partially aligned</em> if it occurs at a memory address {@code A}
  * which is only compatible with the alignment constraint {@code B}; in such cases, access for anything other than the
@@ -166,8 +166,8 @@ public final class MemoryHandles {
      * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
      * which are common to all memory access var handles.
      *
-     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, and {@code double}.
+     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code boolean}, {@code short}, {@code char}, {@code int},
+     * {@code float}, {@code long}, {@code double} and {@link MemoryAddress}.
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
      * @throws IllegalArgumentException when an illegal carrier type is used
@@ -192,8 +192,8 @@ public final class MemoryHandles {
      * @apiNote the resulting var handle features certain <a href="#memaccess-mode">access mode restrictions</a>,
      * which are common to all memory access var handles.
      *
-     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code short}, {@code char}, {@code int},
-     * {@code float}, {@code long}, and {@code double}.
+     * @param carrier the carrier type. Valid carriers are {@code byte}, {@code boolean}, {@code short}, {@code char}, {@code int},
+     * {@code float}, {@code long}, {@code double} and {@link MemoryAddress}.
      * @param alignmentBytes the alignment constraint (in bytes). Must be a power of two.
      * @param byteOrder the required byte order.
      * @return the new memory access var handle.
@@ -209,7 +209,7 @@ public final class MemoryHandles {
             throw new IllegalArgumentException("Bad alignment: " + alignmentBytes);
         }
 
-        return Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(carrier, false, alignmentBytes - 1, byteOrder));
+        return Utils.makeMemoryAccessVarHandle(carrier, false, alignmentBytes - 1, byteOrder);
     }
 
     /**
@@ -522,14 +522,18 @@ public final class MemoryHandles {
     }
 
     private static void checkCarrier(Class<?> carrier) {
-        if (!carrier.isPrimitive() || carrier == void.class || carrier == boolean.class) {
+        if ((!carrier.isPrimitive() && carrier != MemoryAddress.class) || carrier == void.class) {
             throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
         }
     }
 
     private static long carrierSize(Class<?> carrier) {
-        long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-        return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
+        if (carrier == MemoryAddress.class) {
+            return MemoryLayouts.ADDRESS.byteSize();
+        } else {
+            long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
+            return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
+        }
     }
 
     private static void checkWidenable(Class<?> carrier) {

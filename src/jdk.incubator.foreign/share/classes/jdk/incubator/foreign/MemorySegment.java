@@ -561,6 +561,15 @@ for (long l = 0; l < segment.byteSize(); l++) {
     byte[] toByteArray();
 
     /**
+     * Copy the contents of this memory segment into a fresh boolean array.
+     * @return a fresh byte array copy of this memory segment.
+     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
+     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link boolean[]} instance,
+     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
+     */
+    boolean[] toBooleanArray();
+
+    /**
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
@@ -642,6 +651,17 @@ for (long l = 0; l < segment.byteSize(); l++) {
      */
     static MemorySegment ofArray(byte[] arr) {
         return HeapMemorySegmentImpl.OfByte.fromArray(arr);
+    }
+
+    /**
+     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated boolean array.
+     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
+     *
+     * @param arr the primitive array backing the array memory segment.
+     * @return a new array memory segment.
+     */
+    static MemorySegment ofArray(boolean[] arr) {
+        return HeapMemorySegmentImpl.OfBoolean.fromArray(arr);
     }
 
     /**

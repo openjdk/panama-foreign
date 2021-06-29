@@ -30,6 +30,7 @@
  */
 
 import jdk.incubator.foreign.GroupLayout;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
@@ -382,34 +383,42 @@ public class TestMemoryAccess {
         return new Object[][] {
                 //BE, RW
                 { ID, MemoryLayouts.BITS_8_BE, byte.class, MatrixChecker.BYTE },
+                { ID, MemoryLayouts.BITS_8_BE, boolean.class, MatrixChecker.BOOLEAN },
                 { ID, MemoryLayouts.BITS_16_BE, short.class, MatrixChecker.SHORT },
                 { ID, MemoryLayouts.BITS_16_BE, char.class, MatrixChecker.CHAR },
                 { ID, MemoryLayouts.BITS_32_BE, int.class, MatrixChecker.INT },
                 { ID, MemoryLayouts.BITS_64_BE, long.class, MatrixChecker.LONG },
+                { ID, MemoryLayouts.BITS_64_BE, MemoryAddress.class, MatrixChecker.ADDR },
                 { ID, MemoryLayouts.BITS_32_BE, float.class, MatrixChecker.FLOAT },
                 { ID, MemoryLayouts.BITS_64_BE, double.class, MatrixChecker.DOUBLE },
                 //BE, RO
                 { IMMUTABLE, MemoryLayouts.BITS_8_BE, byte.class, MatrixChecker.BYTE },
+                { IMMUTABLE, MemoryLayouts.BITS_8_BE, boolean.class, MatrixChecker.BOOLEAN },
                 { IMMUTABLE, MemoryLayouts.BITS_16_BE, short.class, MatrixChecker.SHORT },
                 { IMMUTABLE, MemoryLayouts.BITS_16_BE, char.class, MatrixChecker.CHAR },
                 { IMMUTABLE, MemoryLayouts.BITS_32_BE, int.class, MatrixChecker.INT },
                 { IMMUTABLE, MemoryLayouts.BITS_64_BE, long.class, MatrixChecker.LONG },
+                { IMMUTABLE, MemoryLayouts.BITS_64_BE, MemoryAddress.class, MatrixChecker.ADDR },
                 { IMMUTABLE, MemoryLayouts.BITS_32_BE, float.class, MatrixChecker.FLOAT },
                 { IMMUTABLE, MemoryLayouts.BITS_64_BE, double.class, MatrixChecker.DOUBLE },
                 //LE, RW
                 { ID, MemoryLayouts.BITS_8_LE, byte.class, MatrixChecker.BYTE },
+                { ID, MemoryLayouts.BITS_8_LE, boolean.class, MatrixChecker.BOOLEAN },
                 { ID, MemoryLayouts.BITS_16_LE, short.class, MatrixChecker.SHORT },
                 { ID, MemoryLayouts.BITS_16_LE, char.class, MatrixChecker.CHAR },
                 { ID, MemoryLayouts.BITS_32_LE, int.class, MatrixChecker.INT },
                 { ID, MemoryLayouts.BITS_64_LE, long.class, MatrixChecker.LONG },
+                { ID, MemoryLayouts.BITS_64_LE, MemoryAddress.class, MatrixChecker.ADDR },
                 { ID, MemoryLayouts.BITS_32_LE, float.class, MatrixChecker.FLOAT },
                 { ID, MemoryLayouts.BITS_64_LE, double.class, MatrixChecker.DOUBLE },
                 //LE, RO
                 { IMMUTABLE, MemoryLayouts.BITS_8_LE, byte.class, MatrixChecker.BYTE },
+                { IMMUTABLE, MemoryLayouts.BITS_8_LE, boolean.class, MatrixChecker.BOOLEAN },
                 { IMMUTABLE, MemoryLayouts.BITS_16_LE, short.class, MatrixChecker.SHORT },
                 { IMMUTABLE, MemoryLayouts.BITS_16_LE, char.class, MatrixChecker.CHAR },
                 { IMMUTABLE, MemoryLayouts.BITS_32_LE, int.class, MatrixChecker.INT },
                 { IMMUTABLE, MemoryLayouts.BITS_64_LE, long.class, MatrixChecker.LONG },
+                { IMMUTABLE, MemoryLayouts.BITS_64_LE, MemoryAddress.class, MatrixChecker.ADDR },
                 { IMMUTABLE, MemoryLayouts.BITS_32_LE, float.class, MatrixChecker.FLOAT },
                 { IMMUTABLE, MemoryLayouts.BITS_64_LE, double.class, MatrixChecker.DOUBLE },
         };
@@ -421,6 +430,11 @@ public class TestMemoryAccess {
         MatrixChecker BYTE = (handle, segment, r, c) -> {
             handle.set(segment, r, c, (byte)(r + c));
             assertEquals(r + c, (byte)handle.get(segment, r, c));
+        };
+
+        MatrixChecker BOOLEAN = (handle, segment, r, c) -> {
+            handle.set(segment, r, c, (r + c) != 0);
+            assertEquals((r + c) != 0, (boolean)handle.get(segment, r, c));
         };
 
         MatrixChecker SHORT = (handle, segment, r, c) -> {
@@ -443,6 +457,11 @@ public class TestMemoryAccess {
             assertEquals(r + c, (long)handle.get(segment, r, c));
         };
 
+        MatrixChecker ADDR = (handle, segment, r, c) -> {
+            handle.set(segment, r, c, MemoryAddress.ofLong(r + c));
+            assertEquals(MemoryAddress.ofLong(r + c), (MemoryAddress)handle.get(segment, r, c));
+        };
+
         MatrixChecker FLOAT = (handle, segment, r, c) -> {
             handle.set(segment, r, c, (float)(r + c));
             assertEquals((float)(r + c), (float)handle.get(segment, r, c));
@@ -458,7 +477,6 @@ public class TestMemoryAccess {
     public Object[][] createBadCarriers() {
         return new Object[][] {
                 { void.class },
-                { boolean.class },
                 { Object.class },
                 { int[].class }
         };
