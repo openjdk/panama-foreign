@@ -161,7 +161,7 @@ public final class Utils {
     }
 
     private static boolean byteToBoolean(byte b) {
-        return b != 0;
+        return (b&1) == 1;
     }
 
     private static byte booleanToByte(boolean b) {

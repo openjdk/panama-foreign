@@ -27,6 +27,7 @@ import java.nio.ByteOrder;
 import java.util.Objects;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -157,12 +158,11 @@ public final class MemoryCopy {
             boolean[] dstArray, int dstIndexBooleans, int dstCopyLengthBooleans) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthBooleans, true);
-        Objects.checkFromIndexSize(dstIndexBooleans, dstCopyLengthBooleans, dstArray.length);
-        scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                dstArray, BOOL_BASE + dstIndexBooleans, dstCopyLengthBooleans);
+        MemorySegment dstSegment = HeapMemorySegmentImpl.OfBoolean.fromArray(dstArray);
+        for (int i = 0 ; i < dstCopyLengthBooleans ; i++) {
+            MemoryAccess.setByteAtOffset(dstSegment, dstIndexBooleans + i,
+                    (byte)(MemoryAccess.getByteAtOffset(srcSegment, srcOffsetBytes + i) & 1));
+        }
     }
 
     //CHAR

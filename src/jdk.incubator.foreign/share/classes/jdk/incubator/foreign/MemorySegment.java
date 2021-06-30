@@ -654,17 +654,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated boolean array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(boolean[] arr) {
-        return HeapMemorySegmentImpl.OfBoolean.fromArray(arr);
-    }
-
-    /**
      * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
      * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *

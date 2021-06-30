@@ -26,6 +26,7 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
@@ -234,7 +235,7 @@ public interface SegmentAllocator {
      * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a boolean value.
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, boolean[] array) {
-        return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
+        return copyArrayWithSwapIfNeeded(array, elementLayout, HeapMemorySegmentImpl.OfBoolean::fromArray);
     }
 
     /**

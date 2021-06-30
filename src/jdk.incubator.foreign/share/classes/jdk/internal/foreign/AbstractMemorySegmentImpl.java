@@ -312,7 +312,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
 
     @Override
     public final boolean[] toBooleanArray() {
-        return toArray(boolean[].class, 1, boolean[]::new, MemorySegment::ofArray);
+        int size = checkArraySize(boolean[].class.getSimpleName(), 1);
+        boolean[] dst = new boolean[size];
+        MemoryCopy.copyToArray(this, 0, dst, 0, size);
+        return dst;
     }
 
     @Override

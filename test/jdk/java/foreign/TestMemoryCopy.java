@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @run testng TestMemoryCopy
  */
 
@@ -40,6 +41,7 @@ import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ValueLayout;
+import jdk.internal.foreign.HeapMemorySegmentImpl;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -235,7 +237,7 @@ public class TestMemoryCopy {
         byte[] arr = new byte[bytesLength];
         for (int i = 0; i < arr.length; i++) {
             if (carrier.componentType() == boolean.class) {
-                arr[i] = i > 0 ? (byte)1 : (byte)0;
+                arr[i] = (i&1) == 1 ? (byte)1 : (byte)0;
             } else {
                 arr[i] = (byte)i;
             }
@@ -362,7 +364,7 @@ public class TestMemoryCopy {
 
             @Override
             MemorySegment fromArray(boolean[] array) {
-                return MemorySegment.ofArray(array);
+                return HeapMemorySegmentImpl.OfBoolean.fromArray(array);
             }
 
             @Override
