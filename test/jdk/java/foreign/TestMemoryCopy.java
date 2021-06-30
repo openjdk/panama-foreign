@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryCopy;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayouts;
@@ -228,6 +229,17 @@ public class TestMemoryCopy {
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
+        }
+    }
+
+    @Test
+    public void testBoolCopy() {
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES, byte[].class);
+        boolean[] arr = new boolean[SEG_LENGTH_BYTES];
+        MemoryCopy.copyToArray(base, 0, arr, 0, SEG_LENGTH_BYTES);
+        MemorySegment arrWrapper = CopyHelper.BOOL.fromArray(arr);
+        for (int i = 0; i < SEG_LENGTH_BYTES; i++) {
+            assertEquals(MemoryAccess.getByteAtOffset(arrWrapper, i), i & 1);
         }
     }
 

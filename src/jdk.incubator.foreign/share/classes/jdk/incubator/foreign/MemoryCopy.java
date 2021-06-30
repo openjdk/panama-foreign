@@ -23,6 +23,7 @@
 
 package jdk.incubator.foreign;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 
@@ -158,10 +159,9 @@ public final class MemoryCopy {
             boolean[] dstArray, int dstIndexBooleans, int dstCopyLengthBooleans) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
-        MemorySegment dstSegment = HeapMemorySegmentImpl.OfBoolean.fromArray(dstArray);
         for (int i = 0 ; i < dstCopyLengthBooleans ; i++) {
-            MemoryAccess.setByteAtOffset(dstSegment, dstIndexBooleans + i,
-                    (byte)(MemoryAccess.getByteAtOffset(srcSegment, srcOffsetBytes + i) & 1));
+            dstArray[dstIndexBooleans + i] =
+                    (MemoryAccess.getByteAtOffset(srcSegment, srcOffsetBytes + i) & 1) == 1;
         }
     }
 
