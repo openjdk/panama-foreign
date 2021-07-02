@@ -63,7 +63,6 @@ public final class MemoryCopy {
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private static final int BYTE_BASE = unsafe.arrayBaseOffset(byte[].class);
-    private static final int BOOL_BASE = unsafe.arrayBaseOffset(boolean[].class);
     private static final int CHAR_BASE = unsafe.arrayBaseOffset(char[].class);
     private static final int SHORT_BASE = unsafe.arrayBaseOffset(short[].class);
     private static final int INT_BASE = unsafe.arrayBaseOffset(int[].class);

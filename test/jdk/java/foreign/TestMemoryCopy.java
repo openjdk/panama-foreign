@@ -241,9 +241,9 @@ public class TestMemoryCopy {
 
     public static MemorySegment truthSegment(MemorySegment srcSeg, CopyHelper<?> helper, int indexShifts, CopyMode mode) {
         VarHandle indexedHandleNO = MemoryLayout.sequenceLayout(helper.elementLayout.withOrder(NATIVE_ORDER))
-                .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
+                                                .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
         VarHandle indexedHandleNNO = MemoryLayout.sequenceLayout(helper.elementLayout.withOrder(NON_NATIVE_ORDER))
-                .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
+                                                 .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
         MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
         int indexLength = (int) dstSeg.byteSize() / (int)helper.elementLayout.byteSize();
         if (mode.direction) {
@@ -506,7 +506,7 @@ public class TestMemoryCopy {
     @DataProvider
     Object[][] copyModesAndHelpers() {
         CopyHelper<?>[] helpers = { CopyHelper.BYTE, CopyHelper.CHAR, CopyHelper.SHORT, CopyHelper.INT,
-                CopyHelper.FLOAT, CopyHelper.LONG, CopyHelper.DOUBLE };
+                                    CopyHelper.FLOAT, CopyHelper.LONG, CopyHelper.DOUBLE };
         List<Object[]> results = new ArrayList<>();
         for (CopyHelper<?> helper : helpers) {
             for (CopyMode mode : CopyMode.values()) {

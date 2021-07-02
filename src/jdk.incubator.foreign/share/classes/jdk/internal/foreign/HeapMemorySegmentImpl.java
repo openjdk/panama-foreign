@@ -102,29 +102,6 @@ public abstract class HeapMemorySegmentImpl<H> extends AbstractMemorySegmentImpl
         }
     }
 
-    public static class OfBoolean extends HeapMemorySegmentImpl<boolean[]> {
-
-        OfBoolean(long offset, boolean[] base, long length, int mask) {
-            super(offset, base, length, mask);
-        }
-
-        @Override
-        OfBoolean dup(long offset, long size, int mask, ResourceScopeImpl scope) {
-            return new OfBoolean(this.offset + offset, base, size, mask);
-        }
-
-        @Override
-        boolean[] base() {
-            return Objects.requireNonNull(base);
-        }
-
-        public static MemorySegment fromArray(boolean[] arr) {
-            Objects.requireNonNull(arr);
-            long byteSize = (long)arr.length * Unsafe.ARRAY_BOOLEAN_INDEX_SCALE;
-            return new OfBoolean(Unsafe.ARRAY_BOOLEAN_BASE_OFFSET, arr, byteSize, defaultAccessModes(byteSize));
-        }
-    }
-
     public static class OfChar extends HeapMemorySegmentImpl<char[]> {
 
         OfChar(long offset, char[] base, long length, int mask) {
