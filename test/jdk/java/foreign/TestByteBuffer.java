@@ -326,7 +326,7 @@ public class TestByteBuffer {
             segment.isLoaded();
         } catch(IOException e) {
             if (e.getMessage().equals("Function not implemented"))
-                throw new SkipException("No madvise on this platform");
+                throw new SkipException(e.getMessage(), e);
         }
     }
 
