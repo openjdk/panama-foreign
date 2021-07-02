@@ -120,51 +120,6 @@ public final class MemoryCopy {
                 dstArray, BYTE_BASE + dstIndexBytes, dstCopyLengthBytes);
     }
 
-    //BOOL
-    /**
-     * Copies a number of boolean elements from a source byte array to a destination segment,
-     * starting at a given array index, and a given segment offset (expressed in bytes).
-     * @param srcArray the source boolean array.
-     * @param srcIndexBooleans the starting index of the source boolean array.
-     * @param srcCopyLengthBooleans the number of boolean elements to be copied.
-     * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
-     */
-    @ForceInline
-    public static void copyFromArray(
-            boolean[] srcArray, int srcIndexBooleans, int srcCopyLengthBooleans,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        Objects.requireNonNull(srcArray);
-        Objects.requireNonNull(dstSegment);
-        Objects.checkFromIndexSize(srcIndexBooleans, srcCopyLengthBooleans, srcArray.length);
-        AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthBooleans, false);
-        scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                srcArray, BOOL_BASE + srcIndexBooleans,
-                destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthBooleans);
-    }
-
-    /**
-     * Copies a number of boolean elements from a source segment to a destination boolean array,
-     * starting at a given segment offset (expressed in bytes), and a given array index.
-     * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
-     * @param dstArray the destination boolean array.
-     * @param dstIndexBooleans the starting index of the destination boolean array.
-     * @param dstCopyLengthBooleans the number of boolean elements to be copied.
-     */
-    @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            boolean[] dstArray, int dstIndexBooleans, int dstCopyLengthBooleans) {
-        Objects.requireNonNull(srcSegment);
-        Objects.requireNonNull(dstArray);
-        for (int i = 0 ; i < dstCopyLengthBooleans ; i++) {
-            dstArray[dstIndexBooleans + i] =
-                    (MemoryAccess.getByteAtOffset(srcSegment, srcOffsetBytes + i) & 1) == 1;
-        }
-    }
-
     //CHAR
     /**
      * Copies a number of char elements from a source char array to a destination segment,

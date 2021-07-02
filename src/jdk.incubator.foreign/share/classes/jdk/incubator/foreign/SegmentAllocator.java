@@ -26,7 +26,6 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.ArenaAllocator;
-import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.ResourceScopeImpl;
 import jdk.internal.foreign.Utils;
 
@@ -74,22 +73,6 @@ public interface SegmentAllocator {
     default MemorySegment allocate(ValueLayout layout, byte value) {
         Objects.requireNonNull(layout);
         VarHandle handle = layout.varHandle(byte.class);
-        MemorySegment addr = allocate(layout);
-        handle.set(addr, value);
-        return addr;
-    }
-
-    /**
-     * Allocate a block of memory with given layout and initialize it with given boolean value.
-     * @implSpec the default implementation for this method calls {@code this.allocate(layout)}.
-     * @param layout the layout of the block of memory to be allocated.
-     * @param value the value to be set on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code layout.byteSize()} does not conform to the size of a boolean value.
-     */
-    default MemorySegment allocate(ValueLayout layout, boolean value) {
-        Objects.requireNonNull(layout);
-        VarHandle handle = layout.varHandle(boolean.class);
         MemorySegment addr = allocate(layout);
         handle.set(addr, value);
         return addr;
@@ -224,18 +207,6 @@ public interface SegmentAllocator {
      */
     default MemorySegment allocateArray(ValueLayout elementLayout, byte[] array) {
         return copyArrayWithSwapIfNeeded(array, elementLayout, MemorySegment::ofArray);
-    }
-
-    /**
-     * Allocate a block of memory with given layout and initialize it with given boolean array.
-     * @implSpec the default implementation for this method calls {@code this.allocateArray(layout, array.length)}.
-     * @param elementLayout the element layout of the array to be allocated.
-     * @param array the array to be copied on the newly allocated memory block.
-     * @return a segment for the newly allocated memory block.
-     * @throws IllegalArgumentException if {@code elementLayout.byteSize()} does not conform to the size of a boolean value.
-     */
-    default MemorySegment allocateArray(ValueLayout elementLayout, boolean[] array) {
-        return copyArrayWithSwapIfNeeded(array, elementLayout, HeapMemorySegmentImpl.OfBoolean::fromArray);
     }
 
     /**

@@ -561,15 +561,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     byte[] toByteArray();
 
     /**
-     * Copy the contents of this memory segment into a fresh boolean array.
-     * @return a fresh byte array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link boolean[]} instance,
-     * e.g. its size is greater than {@link Integer#MAX_VALUE}.
-     */
-    boolean[] toBooleanArray();
-
-    /**
      * Copy the contents of this memory segment into a fresh short array.
      * @return a fresh short array copy of this memory segment.
      * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from

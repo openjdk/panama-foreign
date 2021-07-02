@@ -150,9 +150,6 @@ public class TestSegmentAllocators {
                 { (byte)42, AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { true, AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_BE,
-                        (AllocationFunction<Boolean>) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(boolean.class) },
                 { (short)42, AllocationFactory.BOUNDED, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
@@ -179,9 +176,6 @@ public class TestSegmentAllocators {
                 { (byte)42, AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { true, AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_LE,
-                        (AllocationFunction<Boolean>) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(boolean.class) },
                 { (short)42, AllocationFactory.BOUNDED, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
@@ -208,9 +202,6 @@ public class TestSegmentAllocators {
                 { (byte)42, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<Byte>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { true, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_BE,
-                        (AllocationFunction<Boolean>) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(boolean.class) },
                 { (short)42, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<Short>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
@@ -237,9 +228,6 @@ public class TestSegmentAllocators {
                 { (byte)42, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<Byte>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(byte.class) },
-                { true, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_LE,
-                        (AllocationFunction<Boolean>) SegmentAllocator::allocate,
-                        (Function<MemoryLayout, VarHandle>)l -> l.varHandle(boolean.class) },
                 { (short)42, AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<Short>) SegmentAllocator::allocate,
                         (Function<MemoryLayout, VarHandle>)l -> l.varHandle(short.class) },
@@ -271,9 +259,6 @@ public class TestSegmentAllocators {
                 { AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<byte[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toByteArray },
-                { AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_LE,
-                        (AllocationFunction<boolean[]>) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toBooleanArray },
                 { AllocationFactory.BOUNDED, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<short[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toShortArray },
@@ -298,9 +283,6 @@ public class TestSegmentAllocators {
                 { AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<byte[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toByteArray },
-                { AllocationFactory.BOUNDED, MemoryLayouts.BITS_8_BE,
-                        (AllocationFunction<boolean[]>) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toBooleanArray },
                 { AllocationFactory.BOUNDED, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<short[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toShortArray },
@@ -324,9 +306,6 @@ public class TestSegmentAllocators {
                 { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_LE,
                         (AllocationFunction<byte[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toByteArray },
-                { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_LE,
-                        (AllocationFunction<boolean[]>) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toBooleanArray },
                 { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_16_LE,
                         (AllocationFunction<short[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toShortArray },
@@ -351,9 +330,6 @@ public class TestSegmentAllocators {
                 { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_BE,
                         (AllocationFunction<byte[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toByteArray },
-                { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_8_BE,
-                        (AllocationFunction<boolean[]>) SegmentAllocator::allocateArray,
-                        ToArrayHelper.toBooleanArray },
                 { AllocationFactory.UNBOUNDED, MemoryLayouts.BITS_16_BE,
                         (AllocationFunction<short[]>) SegmentAllocator::allocateArray,
                         ToArrayHelper.toShortArray },
@@ -416,20 +392,6 @@ public class TestSegmentAllocators {
                 ByteBuffer buffer = segment.asByteBuffer().order(layout.order());
                 byte[] found = new byte[buffer.limit()];
                 buffer.get(found);
-                return found;
-            }
-        };
-
-        ToArrayHelper<boolean[]> toBooleanArray = new ToArrayHelper<>() {
-            @Override
-            public boolean[] array() {
-                return new boolean[] { true, false, true, false, true, false, true, false, true, false };
-            }
-
-            @Override
-            public boolean[] toArray(MemorySegment segment, ValueLayout layout) {
-                boolean[] found = new boolean[(int)segment.byteSize()];
-                MemoryCopy.copyToArray(segment, 0, found, 0, found.length);
                 return found;
             }
         };
