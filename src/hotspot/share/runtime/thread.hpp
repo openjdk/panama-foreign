@@ -1126,6 +1126,8 @@ class JavaThread: public Thread {
   void set_requires_cross_modify_fence(bool val) PRODUCT_RETURN NOT_PRODUCT({ _requires_cross_modify_fence = val; })
 
  private:
+  DEBUG_ONLY(void verify_frame_info();)
+
   // Support for thread handshake operations
   HandshakeState _handshake;
  public:

@@ -23,13 +23,38 @@
  */
 
 /*
- * @test
+ * @test id=scope
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
  * @build NativeTestHelper CallGeneratorHelper TestUpcall
  *
  * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
  *   --enable-native-access=ALL-UNNAMED
+ *   -DUPCALL_TEST_TYPE=SCOPE
+ *   TestUpcall
+ */
+
+/*
+ * @test id=no_scope
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED
+ *   -DUPCALL_TEST_TYPE=NO_SCOPE
+ *   TestUpcall
+ */
+
+/*
+ * @test id=async
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @modules jdk.incubator.foreign/jdk.internal.foreign
+ * @build NativeTestHelper CallGeneratorHelper TestUpcall
+ *
+ * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
+ *   --enable-native-access=ALL-UNNAMED
+ *   -DUPCALL_TEST_TYPE=ASYNC
  *   TestUpcall
  */
 
@@ -41,7 +66,7 @@ import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 
 import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -49,7 +74,9 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -61,8 +88,17 @@ import static org.testng.Assert.assertEquals;
 
 public class TestUpcall extends CallGeneratorHelper {
 
+    private enum TestType {
+        SCOPE,
+        NO_SCOPE,
+        ASYNC
+    }
+
+    private static final TestType UPCALL_TEST_TYPE = TestType.valueOf(System.getProperty("UPCALL_TEST_TYPE"));
+
     static {
         System.loadLibrary("TestUpcall");
+        System.loadLibrary("AsyncInvokers");
     }
     static CLinker abi = CLinker.getInstance();
 
@@ -88,8 +124,15 @@ public class TestUpcall extends CallGeneratorHelper {
         dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
     }
 
+    private static void checkSelected(TestType type) {
+        if (UPCALL_TEST_TYPE != type)
+            throw new SkipException("Skipping tests that were not selected");
+    }
+
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcalls(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        checkSelected(TestType.SCOPE);
+
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
@@ -108,6 +151,8 @@ public class TestUpcall extends CallGeneratorHelper {
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsNoScope(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        checkSelected(TestType.NO_SCOPE);
+
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
@@ -123,6 +168,63 @@ public class TestUpcall extends CallGeneratorHelper {
         if (ret == Ret.NON_VOID) {
             returnChecks.forEach(c -> c.accept(res));
         }
+    }
+
+    @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
+    public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
+        checkSelected(TestType.ASYNC);
+
+        List<Consumer<Object>> returnChecks = new ArrayList<>();
+        List<Consumer<Object[]>> argChecks = new ArrayList<>();
+        MemoryAddress addr = LOOKUP.lookup(fName).get();
+        MethodType mtype = methodType(ret, paramTypes, fields);
+        try (NativeScope scope = new NativeScope()) {
+            FunctionDescriptor descriptor = function(ret, paramTypes, fields);
+            MethodHandle mh = abi.downcallHandle(addr, IMPLICIT_ALLOCATOR, mtype, descriptor);
+            Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
+
+            mh = mh.asSpreader(Object[].class, args.length);
+            mh = MethodHandles.insertArguments(mh, 0, (Object) args);
+            FunctionDescriptor callbackDesc = descriptor.returnLayout()
+                    .map(FunctionDescriptor::of)
+                    .orElse(FunctionDescriptor.ofVoid());
+            MemoryAddress callback = abi.upcallStub(mh, callbackDesc, scope.scope());
+
+            MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
+
+            Object res = invoker.type().returnType() == MemorySegment.class
+                    ? invoker.invoke(scope, callback)
+                    : invoker.invoke(callback);
+            argChecks.forEach(c -> c.accept(args));
+            if (ret == Ret.NON_VOID) {
+                returnChecks.forEach(c -> c.accept(res));
+            }
+        }
+    }
+
+    private static final Map<String, MethodHandle> INVOKERS = new HashMap<>();
+
+    private MethodHandle asyncInvoker(Ret ret, ParamType returnType, List<StructFieldType> fields) {
+        if (ret == Ret.VOID) {
+            String name = "call_async_V";
+            return INVOKERS.computeIfAbsent(name, symbol ->
+                abi.downcallHandle(
+                    LOOKUP.lookup(symbol).orElseThrow(),
+                    MethodType.methodType(void.class, MemoryAddress.class),
+                    FunctionDescriptor.ofVoid(C_POINTER)));
+        }
+
+        String name = "call_async_" + returnType.name().charAt(0)
+                + (returnType == ParamType.STRUCT ? "_" + sigCode(fields) : "");
+
+        return INVOKERS.computeIfAbsent(name, symbol -> {
+            MemoryAddress invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
+            MemoryLayout returnLayout = returnType.layout(fields);
+            MethodType type = MethodType.methodType(paramCarrier(returnLayout), MemoryAddress.class);
+            FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
+
+            return abi.downcallHandle(invokerSymbol, type, desc);
+        });
     }
 
     static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
