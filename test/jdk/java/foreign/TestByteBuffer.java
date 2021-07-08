@@ -324,6 +324,9 @@ public class TestByteBuffer {
             segment.isLoaded();
             segment.unload();
             segment.isLoaded();
+        } catch(IOException e) {
+            if (e.getMessage().equals("Function not implemented"))
+                throw new SkipException(e.getMessage(), e);
         }
     }
 
