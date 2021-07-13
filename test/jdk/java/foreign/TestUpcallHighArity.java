@@ -123,7 +123,7 @@ public class TestUpcallHighArity extends CallGeneratorHelper {
                 if (upcallType.parameterType(i) == MemorySegment.class) {
                     assertStructEquals((MemorySegment) capturedArgsArr[i], (MemorySegment) args[i + 1], argLayouts.get(i));
                 } else {
-                    assertEquals(capturedArgsArr[i], args[i + 1]);
+                    assertEquals(capturedArgsArr[i], args[i + 1], "For index " + i);
                 }
             }
         }
