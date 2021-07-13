@@ -258,10 +258,10 @@ public non-sealed class SysVVaList implements VaList {
                         boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
                         MemorySegment slice = value.asSlice(offset, copy);
                         if (isSSE) {
-                            slice.copyFrom(regSaveArea.asSlice(currentFPOffset(), copy));
+                            MemoryCopy.copy(regSaveArea, currentFPOffset(), slice, 0, copy);
                             currentFPOffset(currentFPOffset() + FP_SLOT_SIZE);
                         } else {
-                            slice.copyFrom(regSaveArea.asSlice(currentGPOffset(), copy));
+                            MemoryCopy.copy(regSaveArea, currentGPOffset(), slice, 0, copy);
                             currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
                         }
                         offset += copy;
@@ -397,10 +397,10 @@ public non-sealed class SysVVaList implements VaList {
                             boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
                             MemorySegment slice = valueSegment.asSlice(offset, copy);
                             if (isSSE) {
-                                reg_save_area.asSlice(currentFPOffset, copy).copyFrom(slice);
+                                MemoryCopy.copy(slice, 0, reg_save_area, currentFPOffset, copy);
                                 currentFPOffset += FP_SLOT_SIZE;
                             } else {
-                                reg_save_area.asSlice(currentGPOffset, copy).copyFrom(slice);
+                                MemoryCopy.copy(slice, 0, reg_save_area, currentGPOffset, copy);
                                 currentGPOffset += GP_SLOT_SIZE;
                             }
                             offset += copy;

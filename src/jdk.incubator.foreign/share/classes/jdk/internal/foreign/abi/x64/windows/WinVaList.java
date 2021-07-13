@@ -125,7 +125,7 @@ public non-sealed class WinVaList implements VaList {
                 }
                 case STRUCT_REGISTER -> {
                     MemorySegment struct = allocator.allocate(layout);
-                    struct.copyFrom(segment.asSlice(0L, layout.byteSize()));
+                    MemoryCopy.copy(segment, struct, layout.byteSize());
                     yield struct;
                 }
                 default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
@@ -235,8 +235,7 @@ public non-sealed class WinVaList implements VaList {
                             VH_address.set(cursor, copy.address());
                         }
                         case STRUCT_REGISTER -> {
-                            MemorySegment slice = cursor.asSlice(0, VA_SLOT_SIZE_BYTES);
-                            slice.copyFrom(msArg);
+                            MemoryCopy.copy(msArg, cursor, VA_SLOT_SIZE_BYTES);
                         }
                         default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
                     }

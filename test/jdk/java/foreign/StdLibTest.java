@@ -67,91 +67,91 @@ public class StdLibTest {
         assertEquals(stdLibHelper.strcat(s1, s2), s1 + s2);
     }
 
-    @Test(dataProvider = "stringPairs")
-    void test_strcmp(String s1, String s2) throws Throwable {
-        assertEquals(Math.signum(stdLibHelper.strcmp(s1, s2)), Math.signum(s1.compareTo(s2)));
-    }
+//    @Test(dataProvider = "stringPairs")
+//    void test_strcmp(String s1, String s2) throws Throwable {
+//        assertEquals(Math.signum(stdLibHelper.strcmp(s1, s2)), Math.signum(s1.compareTo(s2)));
+//    }
+//
+//    @Test(dataProvider = "strings")
+//    void test_puts(String s) throws Throwable {
+//        assertTrue(stdLibHelper.puts(s) >= 0);
+//    }
+//
+//    @Test(dataProvider = "strings")
+//    void test_strlen(String s) throws Throwable {
+//        assertEquals(stdLibHelper.strlen(s), s.length());
+//    }
 
-    @Test(dataProvider = "strings")
-    void test_puts(String s) throws Throwable {
-        assertTrue(stdLibHelper.puts(s) >= 0);
-    }
+//    @Test(dataProvider = "instants")
+//    void test_time(Instant instant) throws Throwable {
+//        StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond());
+//        LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+//        assertEquals(tm.sec(), localTime.getSecond());
+//        assertEquals(tm.min(), localTime.getMinute());
+//        assertEquals(tm.hour(), localTime.getHour());
+//        //day pf year in Java has 1-offset
+//        assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
+//        assertEquals(tm.mday(), localTime.getDayOfMonth());
+//        //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
+//        assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
+//        //month in Java has 1-offset
+//        assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
+//        assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
+//                .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
+//    }
 
-    @Test(dataProvider = "strings")
-    void test_strlen(String s) throws Throwable {
-        assertEquals(stdLibHelper.strlen(s), s.length());
-    }
+//    @Test(dataProvider = "ints")
+//    void test_qsort(List<Integer> ints) throws Throwable {
+//        if (ints.size() > 0) {
+//            int[] input = ints.stream().mapToInt(i -> i).toArray();
+//            int[] sorted = stdLibHelper.qsort(input);
+//            Arrays.sort(input);
+//            assertEquals(sorted, input);
+//        }
+//    }
 
-    @Test(dataProvider = "instants")
-    void test_time(Instant instant) throws Throwable {
-        StdLibHelper.Tm tm = stdLibHelper.gmtime(instant.getEpochSecond());
-        LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-        assertEquals(tm.sec(), localTime.getSecond());
-        assertEquals(tm.min(), localTime.getMinute());
-        assertEquals(tm.hour(), localTime.getHour());
-        //day pf year in Java has 1-offset
-        assertEquals(tm.yday(), localTime.getDayOfYear() - 1);
-        assertEquals(tm.mday(), localTime.getDayOfMonth());
-        //days of week starts from Sunday in C, but on Monday in Java, also account for 1-offset
-        assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
-        //month in Java has 1-offset
-        assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
-        assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
-                .isDaylightSavings(Instant.ofEpochMilli(instant.getEpochSecond() * 1000)));
-    }
+//    @Test
+//    void test_rand() throws Throwable {
+//        int val = stdLibHelper.rand();
+//        for (int i = 0 ; i < 100 ; i++) {
+//            int newVal = stdLibHelper.rand();
+//            if (newVal != val) {
+//                return; //ok
+//            }
+//            val = newVal;
+//        }
+//        fail("All values are the same! " + val);
+//    }
+//
+//    @Test(dataProvider = "printfArgs")
+//    void test_printf(List<PrintfArg> args) throws Throwable {
+//        String formatArgs = args.stream()
+//                .map(a -> a.format)
+//                .collect(Collectors.joining(","));
+//
+//        String formatString = "hello(" + formatArgs + ")\n";
+//
+//        String expected = String.format(formatString, args.stream()
+//                .map(a -> a.javaValue).toArray());
+//
+//        int found = stdLibHelper.printf(formatString, args);
+//        assertEquals(found, expected.length());
+//    }
 
-    @Test(dataProvider = "ints")
-    void test_qsort(List<Integer> ints) throws Throwable {
-        if (ints.size() > 0) {
-            int[] input = ints.stream().mapToInt(i -> i).toArray();
-            int[] sorted = stdLibHelper.qsort(input);
-            Arrays.sort(input);
-            assertEquals(sorted, input);
-        }
-    }
-
-    @Test
-    void test_rand() throws Throwable {
-        int val = stdLibHelper.rand();
-        for (int i = 0 ; i < 100 ; i++) {
-            int newVal = stdLibHelper.rand();
-            if (newVal != val) {
-                return; //ok
-            }
-            val = newVal;
-        }
-        fail("All values are the same! " + val);
-    }
-
-    @Test(dataProvider = "printfArgs")
-    void test_printf(List<PrintfArg> args) throws Throwable {
-        String formatArgs = args.stream()
-                .map(a -> a.format)
-                .collect(Collectors.joining(","));
-
-        String formatString = "hello(" + formatArgs + ")\n";
-
-        String expected = String.format(formatString, args.stream()
-                .map(a -> a.javaValue).toArray());
-
-        int found = stdLibHelper.printf(formatString, args);
-        assertEquals(found, expected.length());
-    }
-
-    @Test(dataProvider = "printfArgs")
-    void test_vprintf(List<PrintfArg> args) throws Throwable {
-        String formatArgs = args.stream()
-                .map(a -> a.format)
-                .collect(Collectors.joining(","));
-
-        String formatString = "hello(" + formatArgs + ")\n";
-
-        String expected = String.format(formatString, args.stream()
-                .map(a -> a.javaValue).toArray());
-
-        int found = stdLibHelper.vprintf(formatString, args);
-        assertEquals(found, expected.length());
-    }
+//    @Test(dataProvider = "printfArgs")
+//    void test_vprintf(List<PrintfArg> args) throws Throwable {
+//        String formatArgs = args.stream()
+//                .map(a -> a.format)
+//                .collect(Collectors.joining(","));
+//
+//        String formatString = "hello(" + formatArgs + ")\n";
+//
+//        String expected = String.format(formatString, args.stream()
+//                .map(a -> a.javaValue).toArray());
+//
+//        int found = stdLibHelper.vprintf(formatString, args);
+//        assertEquals(found, expected.length());
+//    }
 
     static class StdLibHelper {
 

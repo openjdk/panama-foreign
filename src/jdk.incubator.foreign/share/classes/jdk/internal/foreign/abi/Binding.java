@@ -25,6 +25,7 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryCopy;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -741,7 +742,7 @@ public abstract class Binding {
         private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
                                                     Context context) {
             MemorySegment copy = context.allocator().allocate(size, alignment);
-            copy.copyFrom(operand.asSlice(0, size));
+            MemoryCopy.copy(operand, copy, size);
             return copy;
         }
 

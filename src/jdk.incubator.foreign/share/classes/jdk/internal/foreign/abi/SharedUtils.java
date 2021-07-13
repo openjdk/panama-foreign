@@ -29,6 +29,7 @@ import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemoryCopy;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
@@ -289,8 +290,7 @@ public class SharedUtils {
     public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
-        MemorySegment.ofArray(bytes)
-                .copyFrom(segment.asSlice(start, len));
+        MemoryCopy.copy(segment, start, MemorySegment.ofArray(bytes), 0, len);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 

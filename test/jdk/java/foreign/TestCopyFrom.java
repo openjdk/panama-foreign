@@ -28,6 +28,7 @@
  */
 
 import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryCopy;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -55,7 +56,7 @@ public class TestCopyFrom {
             Type.BYTE.set(s1, i, i);
         }
         //perform copy
-        s2.segment.copyFrom(s1.segment.asSlice(0, size));
+        MemoryCopy.copy(s1.segment, 0, s2.segment, 0, size);
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
             Type.BYTE.check(s2, i, i);
@@ -74,7 +75,7 @@ public class TestCopyFrom {
             s1.set(i, i);
         }
         //perform copy
-        s2.segment.copyFrom(s2.type.layout, s1.segment.asSlice(0, size * s1.type.size()), s1.type.layout);
+        MemoryCopy.copy(s1.segment, s1.type.layout, 0, s2.segment, s2.type.layout, 0, size);
         //check that copy actually worked
         for (int i = 0; i < size; i++) {
             s2.check(i, i);
