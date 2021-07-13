@@ -522,34 +522,6 @@ public class SharedUtils {
         };
     }
 
-    public static MethodType convertVaListCarriers(MethodType mt, Class<?> carrier) {
-        Class<?>[] params = new Class<?>[mt.parameterCount()];
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pType = mt.parameterType(i);
-            params[i] = ((pType == VaList.class) ? carrier : pType);
-        }
-        return methodType(mt.returnType(), params);
-    }
-
-    public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i + 1, unboxer); // +1 for leading address
-            }
-        }
-        return handle;
-    }
-
-    public static MethodHandle boxVaLists(MethodHandle handle, MethodHandle boxer) {
-        MethodType type = handle.type();
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i, boxer);
-            }
-        }
-        return handle;
-    }
-
     static void checkType(Class<?> actualType, Class<?> expectedType) {
         if (expectedType != actualType) {
             throw new IllegalArgumentException(
