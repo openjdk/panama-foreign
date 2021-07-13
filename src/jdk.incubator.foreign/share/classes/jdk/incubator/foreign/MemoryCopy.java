@@ -737,6 +737,7 @@ public final class MemoryCopy {
      * @param srcElementLayout the element layout associated with the source segment.
      * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstSegment the destination segment.
+     * @param dstElementLayout the element layout associated with the destination segment.
      * @param dstOffset the starting offset, in bytes, of the destination segment.
      * @param elementCount the number of elements to be copied.
      * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
