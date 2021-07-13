@@ -74,7 +74,7 @@ public class TestMemoryCopy {
         int srcCopyLen = helper.length(srcArr) - indexShifts;
         MemorySegment dstSeg = helper.fromArray(srcArr);
         long dstOffsetBytes = mode.direction ? SEG_OFFSET_BYTES : 0;
-        helper.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+        helper.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
         assertEquals(truth.mismatch(dstSeg), -1);
         //CopyTo
         long srcOffsetBytes = mode.direction ? 0 : SEG_OFFSET_BYTES;
@@ -82,7 +82,7 @@ public class TestMemoryCopy {
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         int dstIndex = mode.direction ? indexShifts : 0;
         int dstCopyLen = helper.length(dstArr) - indexShifts;
-        helper.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+        helper.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
         MemorySegment result = helper.fromArray(dstArr);
         assertEquals(truth.mismatch(result), -1);
     }
@@ -99,14 +99,14 @@ public class TestMemoryCopy {
         int srcCopyLen = helper.length(srcArr) - indexShifts;
         MemorySegment dstSeg = helper.fromArray(srcArr);
         long dstOffsetBytes = mode.direction ? (SEG_OFFSET_BYTES - 1) : 0;
-        helper.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+        helper.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
         //CopyTo
         long srcOffsetBytes = mode.direction ? 0 : (SEG_OFFSET_BYTES - 1);
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         int dstIndex = mode.direction ? indexShifts : 0;
         int dstCopyLen = helper.length(dstArr) - indexShifts;
-        helper.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+        helper.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
     }
 
     @Test(dataProvider = "copyModesAndHelpers")
@@ -117,7 +117,7 @@ public class TestMemoryCopy {
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
         try {
-            helper.copyFromArray(srcArr, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, dstSeg, 0, ByteOrder.nativeOrder());
+            helper.copy(srcArr, 0, dstSeg, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -126,7 +126,7 @@ public class TestMemoryCopy {
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         try {
-            helper.copyToArray(srcSeg, 0, dstArr, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, ByteOrder.nativeOrder());
+            helper.copy(srcSeg, 0, dstArr, 0, (SEG_LENGTH_BYTES / bytesPerElement) * 2, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -141,7 +141,7 @@ public class TestMemoryCopy {
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
         try {
-            helper.copyFromArray(srcArr, -1, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, 0, ByteOrder.nativeOrder());
+            helper.copy(srcArr, -1, dstSeg, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -150,7 +150,7 @@ public class TestMemoryCopy {
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         try {
-            helper.copyToArray(srcSeg, 0, dstArr, -1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            helper.copy(srcSeg, 0, dstArr, -1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -165,7 +165,7 @@ public class TestMemoryCopy {
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
         try {
-            helper.copyFromArray(srcArr, 0, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, -1, ByteOrder.nativeOrder());
+            helper.copy(srcArr, 0, dstSeg, -1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -174,7 +174,7 @@ public class TestMemoryCopy {
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         try {
-            helper.copyToArray(srcSeg, -1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            helper.copy(srcSeg, -1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -189,7 +189,7 @@ public class TestMemoryCopy {
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
         try {
-            helper.copyFromArray(srcArr, helper.length(srcArr) + 1, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, 0, ByteOrder.nativeOrder());
+            helper.copy(srcArr, helper.length(srcArr) + 1, dstSeg, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -198,7 +198,7 @@ public class TestMemoryCopy {
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         try {
-            helper.copyToArray(srcSeg, 0, dstArr, helper.length(dstArr) + 1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            helper.copy(srcSeg, 0, dstArr, helper.length(dstArr) + 1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -213,7 +213,7 @@ public class TestMemoryCopy {
         Object srcArr = helper.toArray(base);
         MemorySegment dstSeg = helper.fromArray(srcArr);
         try {
-            helper.copyFromArray(srcArr, 0, SEG_LENGTH_BYTES / bytesPerElement, dstSeg, SEG_LENGTH_BYTES + 1, ByteOrder.nativeOrder());
+            helper.copy(srcArr, 0, dstSeg, SEG_LENGTH_BYTES + 1, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -222,7 +222,7 @@ public class TestMemoryCopy {
         Object dstArr = helper.toArray(base);
         MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
         try {
-            helper.copyToArray(srcSeg, SEG_OFFSET_BYTES + 1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            helper.copy(srcSeg, SEG_OFFSET_BYTES + 1, dstArr, 0, SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
             fail();
         } catch (IndexOutOfBoundsException ex) {
             //ok
@@ -299,8 +299,8 @@ public class TestMemoryCopy {
             this.carrier = carrier;
         }
 
-        abstract void copyFromArray(X srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo);
-        abstract void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, X dstArr, int dstIndex, int dstCopyLen, ByteOrder bo);
+        abstract void copy(X srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo);
+        abstract void copy(MemorySegment srcSeg, long srcOffsetBytes, X dstArr, int dstIndex, int dstCopyLen, ByteOrder bo);
         abstract X toArray(MemorySegment segment);
         abstract MemorySegment fromArray(X array);
         abstract int length(X arr);
@@ -315,13 +315,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<byte[]> BYTE = new CopyHelper<>(MemoryLayouts.JAVA_BYTE, byte[].class) {
             @Override
-            void copyFromArray(byte[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes);
+            void copy(byte[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, byte[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, byte[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen);
             }
 
             @Override
@@ -342,13 +342,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<char[]> CHAR = new CopyHelper<>(MemoryLayouts.JAVA_CHAR, char[].class) {
             @Override
-            void copyFromArray(char[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(char[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, char[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, char[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override
@@ -369,13 +369,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<short[]> SHORT = new CopyHelper<>(MemoryLayouts.JAVA_SHORT, short[].class) {
             @Override
-            void copyFromArray(short[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(short[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, short[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, short[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override
@@ -396,13 +396,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<int[]> INT = new CopyHelper<>(MemoryLayouts.JAVA_INT, int[].class) {
             @Override
-            void copyFromArray(int[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(int[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, int[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, int[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override
@@ -423,13 +423,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<float[]> FLOAT = new CopyHelper<>(MemoryLayouts.JAVA_FLOAT, float[].class) {
             @Override
-            void copyFromArray(float[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(float[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, float[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, float[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override
@@ -450,13 +450,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<long[]> LONG = new CopyHelper<>(MemoryLayouts.JAVA_LONG, long[].class) {
             @Override
-            void copyFromArray(long[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(long[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, long[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, long[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override
@@ -477,13 +477,13 @@ public class TestMemoryCopy {
 
         static final CopyHelper<double[]> DOUBLE = new CopyHelper<>(MemoryLayouts.JAVA_DOUBLE, double[].class) {
             @Override
-            void copyFromArray(double[] srcArr, int srcIndex, int srcCopyLen, MemorySegment dstSeg, long dstOffsetBytes, ByteOrder bo) {
-                MemoryCopy.copyFromArray(srcArr, srcIndex, srcCopyLen, dstSeg, dstOffsetBytes, bo);
+            void copy(double[] srcArr, int srcIndex, MemorySegment dstSeg, long dstOffsetBytes, int srcCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcArr, srcIndex, dstSeg, dstOffsetBytes, srcCopyLen, bo);
             }
 
             @Override
-            void copyToArray(MemorySegment srcSeg, long srcOffsetBytes, double[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
-                MemoryCopy.copyToArray(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
+            void copy(MemorySegment srcSeg, long srcOffsetBytes, double[] dstArr, int dstIndex, int dstCopyLen, ByteOrder bo) {
+                MemoryCopy.copy(srcSeg, srcOffsetBytes, dstArr, dstIndex, dstCopyLen, bo);
             }
 
             @Override

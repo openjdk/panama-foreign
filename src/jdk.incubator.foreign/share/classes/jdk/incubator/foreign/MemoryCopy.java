@@ -43,7 +43,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * Copy operations defined in this class accept a <em>byte order</em> parameter. If the specified byte order is different
  * from the <em>native</em> byte order, a byte swap operation is performed on each array elements
  * as they are copied from the source (destination) segment to the destination (source) array.
- * Additional overloads are provided (see {@link #copyFromArray(double[], int, int, MemorySegment, long)}),
+ * Additional overloads are provided (see {@link #copy(double[], int, MemorySegment, long, int)}),
  * so that clients can omit the byte order parameter.
  *
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
@@ -75,46 +75,45 @@ public final class MemoryCopy {
      * Copies a number of byte elements from a source byte array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source byte array.
-     * @param srcIndexBytes the starting index of the source byte array.
-     * @param srcCopyLengthBytes the number of byte elements to be copied.
+     * @param srcIndex the starting index of the source byte array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of byte elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            byte[] srcArray, int srcIndexBytes, int srcCopyLengthBytes,
-            MemorySegment dstSegment, long dstOffsetBytes) {
+    public static void copy(
+            byte[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
-        Objects.checkFromIndexSize(srcIndexBytes, srcCopyLengthBytes, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthBytes, false);
+        destImpl.checkAccess(dstOffset, elementCount, false);
         scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                srcArray, BYTE_BASE + srcIndexBytes,
-                destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthBytes);
+                srcArray, BYTE_BASE + srcIndex,
+                destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount);
     }
 
     /**
      * Copies a number of byte elements from a source segment to a destination byte array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination byte array.
-     * @param dstIndexBytes the starting index of the destination byte array.
-     * @param dstCopyLengthBytes the number of byte elements to be copied.
+     * @param dstIndex the starting index of the destination byte array.
+     * @param elementCount the number of byte elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            byte[] dstArray, int dstIndexBytes, int dstCopyLengthBytes) {
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            byte[] dstArray, int dstIndex, int elementCount) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthBytes, true);
-        Objects.checkFromIndexSize(dstIndexBytes, dstCopyLengthBytes, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                dstArray, BYTE_BASE + dstIndexBytes, dstCopyLengthBytes);
+                srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                dstArray, BYTE_BASE + dstIndex, elementCount);
     }
 
     //CHAR
@@ -122,48 +121,44 @@ public final class MemoryCopy {
      * Copies a number of char elements from a source char array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source char array.
-     * @param srcIndexChars the starting index of the source char array.
-     * @param srcCopyLengthChars the number of char elements to be copied.
+     * @param srcIndex the starting index of the source char array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of char elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            char[] srcArray, int srcIndexChars, int srcCopyLengthChars,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexChars, srcCopyLengthChars, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            char[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of char elements from a source char array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source char array.
-     * @param srcIndexChars the starting index of the source char array.
-     * @param srcCopyLengthChars the number of char elements to be copied.
+     * @param srcIndex the starting index of the source char array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of char elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            char[] srcArray, int srcIndexChars, int srcCopyLengthChars,
-            MemorySegment dstSegment, long dstOffsetBytes,
-            ByteOrder order) {
+    public static void copy(
+            char[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount, ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexChars, srcCopyLengthChars, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthChars << 1, false);
+        destImpl.checkAccess(dstOffset, elementCount << 1, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, CHAR_BASE + (srcIndexChars << 1),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthChars << 1);
+                    srcArray, CHAR_BASE + (srcIndex << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 1);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, CHAR_BASE + (srcIndexChars << 1),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthChars << 1, 2);
+                    srcArray, CHAR_BASE + (srcIndex << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 1, 2);
         }
     }
 
@@ -171,48 +166,47 @@ public final class MemoryCopy {
      * Copies a number of char elements from a source segment to a destination char array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination char array.
-     * @param dstIndexChars the starting index of the destination char array.
-     * @param dstCopyLengthChars the number of char elements to be copied.
+     * @param dstIndex the starting index of the destination char array.
+     * @param elementCount the number of char elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            char[] dstArray, int dstIndexChars, int dstCopyLengthChars) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexChars, dstCopyLengthChars, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            char[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of char elements from a source segment to a destination char array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination char array.
-     * @param dstIndexChars the starting index of the destination char array.
-     * @param dstCopyLengthChars the number of char elements to be copied.
+     * @param dstIndex the starting index of the destination char array.
+     * @param elementCount the number of char elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            char[] dstArray, int dstIndexChars, int dstCopyLengthChars,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            char[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthChars << 1, true);
-        Objects.checkFromIndexSize(dstIndexChars, dstCopyLengthChars, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 1, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, CHAR_BASE + (dstIndexChars << 1), dstCopyLengthChars << 1);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, CHAR_BASE + (dstIndex << 1), elementCount << 1);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, CHAR_BASE + (dstIndexChars << 1), dstCopyLengthChars << 1, 2);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, CHAR_BASE + (dstIndex << 1), elementCount << 1, 2);
         }
     }
 
@@ -221,48 +215,45 @@ public final class MemoryCopy {
      * Copies a number of short elements from a source short array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source short array.
-     * @param srcIndexShorts the starting index of the source short array.
-     * @param srcCopyLengthShorts the number of short elements to be copied.
+     * @param srcIndex the starting index of the source short array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of short elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            short[] srcArray, int srcIndexShorts, int srcCopyLengthShorts,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexShorts, srcCopyLengthShorts, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            short[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of short elements from a source short array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source short array.
-     * @param srcIndexShorts the starting index of the source short array.
-     * @param srcCopyLengthShorts the number of short elements to be copied.
+     * @param srcIndex the starting index of the source short array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of short elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            short[] srcArray, int srcIndexShorts, int srcCopyLengthShorts,
-            MemorySegment dstSegment, long dstOffsetBytes,
+    public static void copy(
+            short[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexShorts, srcCopyLengthShorts, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthShorts << 1, false);
+        destImpl.checkAccess(dstOffset, elementCount << 1, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, SHORT_BASE + (srcIndexShorts << 1),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthShorts << 1);
+                    srcArray, SHORT_BASE + (srcIndex << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 1);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, SHORT_BASE + (srcIndexShorts << 1),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthShorts << 1, 2);
+                    srcArray, SHORT_BASE + (srcIndex << 1),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 1, 2);
         }
     }
 
@@ -270,48 +261,48 @@ public final class MemoryCopy {
      * Copies a number of short elements from a source segment to a destination short array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination short array.
-     * @param dstIndexShorts the starting index of the destination short array.
-     * @param dstCopyLengthShorts the number of short elements to be copied.
+     * @param dstIndex the starting index of the destination short array.
+     * @param elementCount the number of short elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            short[] dstArray, int dstIndexShorts, int dstCopyLengthShorts) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexShorts, dstCopyLengthShorts, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            short[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of short elements from a source segment to a destination short array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination short array.
-     * @param dstIndexShorts the starting index of the destination short array.
-     * @param dstCopyLengthShorts the number of short elements to be copied.
+     * @param dstIndex the starting index of the destination short array.
+     * @param elementCount the number of short elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            short[] dstArray, int dstIndexShorts, int dstCopyLengthShorts,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            short[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthShorts << 1, true);
-        Objects.checkFromIndexSize(dstIndexShorts, dstCopyLengthShorts, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 1, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, SHORT_BASE + (dstIndexShorts << 1), dstCopyLengthShorts << 1);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, SHORT_BASE + (dstIndex << 1), elementCount << 1);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, SHORT_BASE + (dstIndexShorts << 1), dstCopyLengthShorts << 1, 2);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, SHORT_BASE + (dstIndex << 1), elementCount << 1, 2);
         }
     }
 
@@ -320,48 +311,45 @@ public final class MemoryCopy {
      * Copies a number of int elements from a source int array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source int array.
-     * @param srcIndexInts the starting index of the source int array.
-     * @param srcCopyLengthInts the number of int elements to be copied.
+     * @param srcIndex the starting index of the source int array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of int elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            int[] srcArray, int srcIndexInts, int srcCopyLengthInts,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexInts, srcCopyLengthInts, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            int[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of int elements from a source int array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source int array.
-     * @param srcIndexInts the starting index of the source int array.
-     * @param srcCopyLengthInts the number of int elements to be copied.
+     * @param srcIndex the starting index of the source int array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of int elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            int[] srcArray, int srcIndexInts, int srcCopyLengthInts,
-            MemorySegment dstSegment, long dstOffsetBytes,
+    public static void copy(
+            int[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexInts, srcCopyLengthInts, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthInts << 2, false);
+        destImpl.checkAccess(dstOffset, elementCount << 2, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, INT_BASE + (srcIndexInts << 2),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthInts << 2);
+                    srcArray, INT_BASE + (srcIndex << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 2);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, INT_BASE + (srcIndexInts << 2),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthInts << 2, 4);
+                    srcArray, INT_BASE + (srcIndex << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 2, 4);
         }
     }
 
@@ -369,48 +357,48 @@ public final class MemoryCopy {
      * Copies a number of int elements from a source segment to a destination int array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination int array.
-     * @param dstIndexInts the starting index of the destination int array.
-     * @param dstCopyLengthInts the number of int elements to be copied.
+     * @param dstIndex the starting index of the destination int array.
+     * @param elementCount the number of int elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            int[] dstArray, int dstIndexInts, int dstCopyLengthInts) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexInts, dstCopyLengthInts, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            int[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of int elements from a source segment to a destination int array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination int array.
-     * @param dstIndexInts the starting index of the destination int array.
-     * @param dstCopyLengthInts the number of int elements to be copied.
+     * @param dstIndex the starting index of the destination int array.
+     * @param elementCount the number of int elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            int[] dstArray, int dstIndexInts, int dstCopyLengthInts,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            int[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthInts << 2, true);
-        Objects.checkFromIndexSize(dstIndexInts, dstCopyLengthInts, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 2, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, INT_BASE + (dstIndexInts << 2), dstCopyLengthInts << 2);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, INT_BASE + (dstIndex << 2), elementCount << 2);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, INT_BASE + (dstIndexInts << 2), dstCopyLengthInts << 2, 4);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, INT_BASE + (dstIndex << 2), elementCount << 2, 4);
         }
     }
 
@@ -419,48 +407,45 @@ public final class MemoryCopy {
      * Copies a number of float elements from a source float array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source float array.
-     * @param srcIndexFloats the starting index of the source float array.
-     * @param srcCopyLengthFloats the number of float elements to be copied.
+     * @param srcIndex the starting index of the source float array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of float elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            float[] srcArray, int srcIndexFloats, int srcCopyLengthFloats,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexFloats, srcCopyLengthFloats, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            float[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of float elements from a source float array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source float array.
-     * @param srcIndexFloats the starting index of the source float array.
-     * @param srcCopyLengthFloats the number of float elements to be copied.
+     * @param srcIndex the starting index of the source float array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of float elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            float[] srcArray, int srcIndexFloats, int srcCopyLengthFloats,
-            MemorySegment dstSegment, long dstOffsetBytes,
+    public static void copy(
+            float[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexFloats, srcCopyLengthFloats, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthFloats << 2, false);
+        destImpl.checkAccess(dstOffset, elementCount << 2, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, FLOAT_BASE + (srcIndexFloats << 2),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthFloats << 2);
+                    srcArray, FLOAT_BASE + (srcIndex << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 2);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, FLOAT_BASE + (srcIndexFloats << 2),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthFloats << 2, 4);
+                    srcArray, FLOAT_BASE + (srcIndex << 2),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 2, 4);
         }
     }
 
@@ -468,48 +453,48 @@ public final class MemoryCopy {
      * Copies a number of float elements from a source segment to a destination float array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination float array.
-     * @param dstIndexFloats the starting index of the destination float array.
-     * @param dstCopyLengthFloats the number of float elements to be copied.
+     * @param dstIndex the starting index of the destination float array.
+     * @param elementCount the number of float elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            float[] dstArray, int dstIndexFloats, int dstCopyLengthFloats) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexFloats, dstCopyLengthFloats, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            float[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of float elements from a source segment to a destination float array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination float array.
-     * @param dstIndexFloats the starting index of the destination float array.
-     * @param dstCopyLengthFloats the number of float elements to be copied.
+     * @param dstIndex the starting index of the destination float array.
+     * @param elementCount the number of float elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      * different from the native order, a float swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            float[] dstArray, int dstIndexFloats, int dstCopyLengthFloats,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            float[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthFloats << 2, true);
-        Objects.checkFromIndexSize(dstIndexFloats, dstCopyLengthFloats, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 2, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, FLOAT_BASE + (dstIndexFloats << 2), dstCopyLengthFloats << 2);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, FLOAT_BASE + (dstIndex << 2), elementCount << 2);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, FLOAT_BASE + (dstIndexFloats << 2), dstCopyLengthFloats << 2, 4);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, FLOAT_BASE + (dstIndex << 2), elementCount << 2, 4);
         }
     }
 
@@ -518,48 +503,45 @@ public final class MemoryCopy {
      * Copies a number of long elements from a source long array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source long array.
-     * @param srcIndexLongs the starting index of the source long array.
-     * @param srcCopyLengthLongs the number of long elements to be copied.
+     * @param srcIndex the starting index of the source long array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of long elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            long[] srcArray, int srcIndexLongs, int srcCopyLengthLongs,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexLongs, srcCopyLengthLongs, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            long[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of long elements from a source long array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source long array.
-     * @param srcIndexLongs the starting index of the source long array.
-     * @param srcCopyLengthLongs the number of long elements to be copied.
+     * @param srcIndex the starting index of the source long array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of long elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            long[] srcArray, int srcIndexLongs, int srcCopyLengthLongs,
-            MemorySegment dstSegment, long dstOffsetBytes,
+    public static void copy(
+            long[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexLongs, srcCopyLengthLongs, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthLongs << 3, false);
+        destImpl.checkAccess(dstOffset, elementCount << 3, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, LONG_BASE + (srcIndexLongs << 3),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthLongs << 3);
+                    srcArray, LONG_BASE + (srcIndex << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 3);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, LONG_BASE + (srcIndexLongs << 3),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthLongs << 3, 8);
+                    srcArray, LONG_BASE + (srcIndex << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 3, 8);
         }
     }
 
@@ -567,48 +549,48 @@ public final class MemoryCopy {
      * Copies a number of long elements from a source segment to a destination long array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination long array.
-     * @param dstIndexLongs the starting index of the destination long array.
-     * @param dstCopyLengthLongs the number of long elements to be copied.
+     * @param dstIndex the starting index of the destination long array.
+     * @param elementCount the number of long elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            long[] dstArray, int dstIndexLongs, int dstCopyLengthLongs) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexLongs, dstCopyLengthLongs, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            long[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of long elements from a source segment to a destination long array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination long array.
-     * @param dstIndexLongs the starting index of the destination long array.
-     * @param dstCopyLengthLongs the number of long elements to be copied.
+     * @param dstIndex the starting index of the destination long array.
+     * @param elementCount the number of long elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            long[] dstArray, int dstIndexLongs, int dstCopyLengthLongs,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            long[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthLongs << 3, true);
-        Objects.checkFromIndexSize(dstIndexLongs, dstCopyLengthLongs, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 3, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, LONG_BASE + (dstIndexLongs << 3), dstCopyLengthLongs << 3);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, LONG_BASE + (dstIndex << 3), elementCount << 3);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, LONG_BASE + (dstIndexLongs << 3), dstCopyLengthLongs << 3, 8);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, LONG_BASE + (dstIndex << 3), elementCount << 3, 8);
         }
     }
 
@@ -617,48 +599,45 @@ public final class MemoryCopy {
      * Copies a number of double elements from a source double array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes).
      * @param srcArray the source double array.
-     * @param srcIndexDoubles the starting index of the source double array.
-     * @param srcCopyLengthDoubles the number of double elements to be copied.
+     * @param srcIndex the starting index of the source double array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of double elements to be copied.
      */
     @ForceInline
-    public static void copyFromArray(
-            double[] srcArray, int srcIndexDoubles, int srcCopyLengthDoubles,
-            MemorySegment dstSegment, long dstOffsetBytes) {
-        copyFromArray(srcArray, srcIndexDoubles, srcCopyLengthDoubles, dstSegment,dstOffsetBytes, ByteOrder.nativeOrder());
+    public static void copy(
+            double[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
+        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of double elements from a source double array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source double array.
-     * @param srcIndexDoubles the starting index of the source double array.
-     * @param srcCopyLengthDoubles the number of double elements to be copied.
+     * @param srcIndex the starting index of the source double array.
      * @param dstSegment the destination segment.
-     * @param dstOffsetBytes the starting offset, in bytes, of the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of double elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
-     * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyFromArray(
-            double[] srcArray, int srcIndexDoubles, int srcCopyLengthDoubles,
-            MemorySegment dstSegment, long dstOffsetBytes,
+    public static void copy(
+            double[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        Objects.checkFromIndexSize(srcIndexDoubles, srcCopyLengthDoubles, srcArray.length);
+        Objects.checkFromIndexSize(srcIndex, elementCount, srcArray.length);
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
-        destImpl.checkAccess(dstOffsetBytes, srcCopyLengthDoubles << 3, false);
+        destImpl.checkAccess(dstOffset, elementCount << 3, false);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(null, destImpl.scope(),
-                    srcArray, DOUBLE_BASE + (srcIndexDoubles << 3),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthDoubles << 3);
+                    srcArray, DOUBLE_BASE + (srcIndex << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 3);
         } else {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
-                    srcArray, DOUBLE_BASE + (srcIndexDoubles << 3),
-                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffsetBytes, srcCopyLengthDoubles << 3, 8);
+                    srcArray, DOUBLE_BASE + (srcIndex << 3),
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount << 3, 8);
         }
     }
 
@@ -666,48 +645,48 @@ public final class MemoryCopy {
      * Copies a number of double elements from a source segment to a destination double array,
      * starting at a given segment offset (expressed in bytes), and a given array index.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination double array.
-     * @param dstIndexDoubles the starting index of the destination double array.
-     * @param dstCopyLengthDoubles the number of double elements to be copied.
+     * @param dstIndex the starting index of the destination double array.
+     * @param elementCount the number of double elements to be copied.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            double[] dstArray, int dstIndexDoubles, int dstCopyLengthDoubles) {
-        copyToArray(srcSegment, srcOffsetBytes, dstArray, dstIndexDoubles, dstCopyLengthDoubles, ByteOrder.nativeOrder());
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            double[] dstArray, int dstIndex, int elementCount) {
+        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
      * Copies a number of double elements from a source segment to a destination double array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
-     * @param srcOffsetBytes the starting offset, in bytes, of the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
      * @param dstArray the destination double array.
-     * @param dstIndexDoubles the starting index of the destination double array.
-     * @param dstCopyLengthDoubles the number of double elements to be copied.
+     * @param dstIndex the starting index of the destination double array.
+     * @param elementCount the number of double elements to be copied.
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copyToArray(
-            MemorySegment srcSegment, long srcOffsetBytes,
-            double[] dstArray, int dstIndexDoubles, int dstCopyLengthDoubles,
+    public static void copy(
+            MemorySegment srcSegment, long srcOffset,
+            double[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        srcImpl.checkAccess(srcOffsetBytes, dstCopyLengthDoubles << 3, true);
-        Objects.checkFromIndexSize(dstIndexDoubles, dstCopyLengthDoubles, dstArray.length);
+        srcImpl.checkAccess(srcOffset, elementCount << 3, true);
+        Objects.checkFromIndexSize(dstIndex, elementCount, dstArray.length);
         if (order == ByteOrder.nativeOrder()) {
             scopedMemoryAccess.copyMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, DOUBLE_BASE + (dstIndexDoubles << 3), dstCopyLengthDoubles << 3);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, DOUBLE_BASE + (dstIndex << 3), elementCount << 3);
         } else {
             scopedMemoryAccess.copySwapMemory(srcImpl.scope(), null,
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffsetBytes,
-                    dstArray, DOUBLE_BASE + (dstIndexDoubles << 3), dstCopyLengthDoubles << 3, 8);
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstArray, DOUBLE_BASE + (dstIndex << 3), elementCount << 3, 8);
         }
     }
 }
