@@ -191,7 +191,7 @@ public class StdLibTest {
 
         final static MethodHandle vprintf = abi.downcallHandle(LOOKUP.lookup("vprintf").get(),
                 MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
-                FunctionDescriptor.of(C_INT, C_POINTER, C_VA_LIST));
+                FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
         final static MemoryAddress printfAddr = LOOKUP.lookup("printf").get();
 
@@ -328,7 +328,7 @@ public class StdLibTest {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment formatStr = toCString(format, scope);
                 VaList vaList = VaList.make(b -> args.forEach(a -> a.accept(b, scope)), scope);
-                return (int)vprintf.invokeExact(formatStr.address(), vaList);
+                return (int)vprintf.invokeExact(formatStr.address(), vaList.address());
             }
         }
 

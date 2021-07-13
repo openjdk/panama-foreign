@@ -86,7 +86,6 @@ public final class MacOsAArch64Linker extends AbstractCLinker {
             // not returning segment, just insert a throwing allocator
             handle = MethodHandles.insertArguments(handle, 1, SharedUtils.THROWING_ALLOCATOR);
         }
-        handle = SharedUtils.unboxVaLists(type, handle, MH_unboxVaList);
         return handle;
     }
 
@@ -95,7 +94,6 @@ public final class MacOsAArch64Linker extends AbstractCLinker {
         Objects.requireNonNull(scope);
         Objects.requireNonNull(target);
         Objects.requireNonNull(function);
-        target = SharedUtils.boxVaLists(target, MH_boxVaList);
         return UpcallStubs.upcallAddress(CallArranger.arrangeUpcall(target, target.type(), function), (ResourceScopeImpl) scope);
     }
 
