@@ -237,6 +237,10 @@ public sealed interface CLinker permits AbstractCLinker {
     MemoryAddress upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
+     * The layout for the {@code bool} C type
+     */
+    ValueLayout C_BOOL = pick(SysV.C_BOOL, Win64.C_BOOL, AArch64.C_BOOL);
+    /**
      * The layout for the {@code char} C type
      */
     ValueLayout C_CHAR = pick(SysV.C_CHAR, Win64.C_CHAR, AArch64.C_CHAR);
@@ -711,6 +715,10 @@ public sealed interface CLinker permits AbstractCLinker {
      * and {@link CLinker#upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}.
      */
     enum TypeKind {
+        /**
+         * A kind corresponding to the <em>integral</em> C {@code bool} type
+         */
+        BOOL(true),
         /**
          * A kind corresponding to the <em>integral</em> C {@code char} type
          */

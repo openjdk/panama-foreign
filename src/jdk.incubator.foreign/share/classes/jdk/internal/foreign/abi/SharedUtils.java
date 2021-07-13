@@ -652,6 +652,8 @@ public class SharedUtils {
             MemoryAccess.setFloat(ptr, (float) o);
         } else if (type == double.class) {
             MemoryAccess.setDouble(ptr, (double) o);
+        } else if (type == boolean.class) {
+            MemoryAccess.setBoolean(ptr, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }

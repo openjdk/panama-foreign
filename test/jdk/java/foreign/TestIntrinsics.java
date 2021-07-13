@@ -105,12 +105,13 @@ public class TestIntrinsics {
             tests.add(abi.downcallHandle(ma, mt, fd.withAttribute(TRIVIAL_ATTRIBUTE_NAME, true)), null);
         }
 
-        addIdentity.add("identity_char",   byte.class,   C_CHAR,   (byte) 10);
-        addIdentity.add("identity_short",  short.class,  C_SHORT, (short) 10);
-        addIdentity.add("identity_int",    int.class,    C_INT,           10);
-        addIdentity.add("identity_long",   long.class,   C_LONG_LONG,     10L);
-        addIdentity.add("identity_float",  float.class,  C_FLOAT,         10F);
-        addIdentity.add("identity_double", double.class, C_DOUBLE,        10D);
+        addIdentity.add("identity_bool",   boolean.class, C_BOOL,   true);
+        addIdentity.add("identity_char",   byte.class,    C_CHAR,   (byte) 10);
+        addIdentity.add("identity_short",  short.class,   C_SHORT, (short) 10);
+        addIdentity.add("identity_int",    int.class,     C_INT,           10);
+        addIdentity.add("identity_long",   long.class,    C_LONG_LONG,     10L);
+        addIdentity.add("identity_float",  float.class,   C_FLOAT,         10F);
+        addIdentity.add("identity_double", double.class,  C_DOUBLE,        10D);
 
         { // identity_va
             MemoryAddress ma = LOOKUP.lookup("identity_va").get();

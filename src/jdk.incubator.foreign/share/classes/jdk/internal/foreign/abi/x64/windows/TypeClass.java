@@ -50,7 +50,7 @@ enum TypeClass {
         // https://docs.microsoft.com/en-us/cpp/build/x64-calling-convention?view=vs-2019
 
         return switch (PlatformLayouts.getKind(type)) {
-            case CHAR, SHORT, INT, LONG, LONG_LONG -> INTEGER;
+            case BOOL, CHAR, SHORT, INT, LONG, LONG_LONG -> INTEGER;
             case POINTER -> POINTER;
             case FLOAT, DOUBLE -> {
                  if (type.attribute(VARARGS_ATTRIBUTE_NAME)

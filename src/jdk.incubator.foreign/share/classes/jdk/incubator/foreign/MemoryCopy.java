@@ -23,12 +23,10 @@
 
 package jdk.incubator.foreign;
 
-import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
-import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
