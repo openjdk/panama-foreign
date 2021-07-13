@@ -522,15 +522,6 @@ public class SharedUtils {
         };
     }
 
-    public static MethodType convertVaListCarriers(MethodType mt, Class<?> carrier) {
-        Class<?>[] params = new Class<?>[mt.parameterCount()];
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pType = mt.parameterType(i);
-            params[i] = ((pType == VaList.class) ? carrier : pType);
-        }
-        return methodType(mt.returnType(), params);
-    }
-
     static void checkType(Class<?> actualType, Class<?> expectedType) {
         if (expectedType != actualType) {
             throw new IllegalArgumentException(

@@ -54,21 +54,6 @@ public final class MacOsAArch64Linker extends AbstractCLinker {
 
     static final long ADDRESS_SIZE = 64; // bits
 
-    private static final MethodHandle MH_unboxVaList;
-    private static final MethodHandle MH_boxVaList;
-
-    static {
-        try {
-            MethodHandles.Lookup lookup = MethodHandles.lookup();
-            MH_unboxVaList = lookup.findVirtual(VaList.class, "address",
-                MethodType.methodType(MemoryAddress.class));
-            MH_boxVaList = MethodHandles.insertArguments(lookup.findStatic(MacOsAArch64Linker.class, "newVaListOfAddress",
-                MethodType.methodType(VaList.class, MemoryAddress.class, ResourceScope.class)), 1, ResourceScope.globalScope());
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
     public static MacOsAArch64Linker getInstance() {
         if (instance == null) {
             instance = new MacOsAArch64Linker();
@@ -80,8 +65,7 @@ public final class MacOsAArch64Linker extends AbstractCLinker {
     public final MethodHandle downcallHandle(MethodType type, FunctionDescriptor function) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(function);
-        MethodType llMt = SharedUtils.convertVaListCarriers(type, MacOsAArch64VaList.CARRIER);
-        MethodHandle handle = CallArranger.arrangeDowncall(llMt, function);
+        MethodHandle handle = CallArranger.arrangeDowncall(type, function);
         if (!type.returnType().equals(MemorySegment.class)) {
             // not returning segment, just insert a throwing allocator
             handle = MethodHandles.insertArguments(handle, 1, SharedUtils.THROWING_ALLOCATOR);

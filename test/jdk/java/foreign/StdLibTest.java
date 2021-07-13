@@ -190,7 +190,7 @@ public class StdLibTest {
                 FunctionDescriptor.of(C_INT));
 
         final static MethodHandle vprintf = abi.downcallHandle(LOOKUP.lookup("vprintf").get(),
-                MethodType.methodType(int.class, MemoryAddress.class, VaList.class),
+                MethodType.methodType(int.class, MemoryAddress.class, MemoryAddress.class),
                 FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER));
 
         final static MemoryAddress printfAddr = LOOKUP.lookup("printf").get();
