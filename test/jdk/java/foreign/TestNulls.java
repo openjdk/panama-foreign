@@ -106,7 +106,11 @@ public class TestNulls {
             "jdk.incubator.foreign.ValueLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.GroupLayout/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
             "jdk.incubator.foreign.MemoryHandles/insertCoordinates(java.lang.invoke.VarHandle,int,java.lang.Object[])/2/1",
-            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0"
+            "jdk.incubator.foreign.FunctionDescriptor/withAttribute(java.lang.String,java.lang.constant.Constable)/1/0",
+            "jdk.incubator.foreign.MemoryCopy/copy(jdk.incubator.foreign.MemorySegment,jdk.incubator.foreign.ValueLayout,long,java.lang.Object,int,int)/0/0",
+            "jdk.incubator.foreign.MemoryCopy/copy(jdk.incubator.foreign.MemorySegment,jdk.incubator.foreign.ValueLayout,long,java.lang.Object,int,int)/1/0",
+            "jdk.incubator.foreign.MemoryCopy/copy(java.lang.Object,int,jdk.incubator.foreign.MemorySegment,jdk.incubator.foreign.ValueLayout,long,int)/2/0",
+            "jdk.incubator.foreign.MemoryCopy/copy(java.lang.Object,int,jdk.incubator.foreign.MemorySegment,jdk.incubator.foreign.ValueLayout,long,int)/3/0"
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
