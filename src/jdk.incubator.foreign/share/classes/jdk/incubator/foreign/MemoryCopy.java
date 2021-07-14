@@ -63,7 +63,7 @@ public final class MemoryCopy {
 
     private static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
     private static final Unsafe unsafe = Unsafe.getUnsafe();
-    
+
     private final static ByteOrder NON_NATIVE_ORDER = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
             ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
 
@@ -80,7 +80,7 @@ public final class MemoryCopy {
     private final static ValueLayout JAVA_FLOAT_NNO = JAVA_FLOAT_NO.withOrder(NON_NATIVE_ORDER);
     private final static ValueLayout JAVA_LONG_NNO = JAVA_LONG_NO.withOrder(NON_NATIVE_ORDER);
     private final static ValueLayout JAVA_DOUBLE_NNO = JAVA_DOUBLE_NO.withOrder(NON_NATIVE_ORDER);
-    
+
     private static ValueLayout pick(ByteOrder order, ValueLayout nativeLayout, ValueLayout nonNativeLayout) {
         Objects.requireNonNull(order);
         return order == ByteOrder.nativeOrder() ?
@@ -659,7 +659,7 @@ public final class MemoryCopy {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(srcElementLayout);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;        
+        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
         Objects.checkFromIndexSize(dstIndex, elementCount, dstLength);
         if (srcOffset % srcElementLayout.byteAlignment() != 0) {
