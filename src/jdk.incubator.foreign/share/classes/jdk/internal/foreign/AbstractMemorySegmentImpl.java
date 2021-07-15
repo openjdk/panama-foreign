@@ -140,10 +140,6 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
         return this;
     }
 
-    public void copyFrom(MemorySegment src) {
-        MemorySegment.copy(src, this, src.byteSize());
-    }
-
     @Override
     public long mismatch(MemorySegment other) {
         AbstractMemorySegmentImpl that = (AbstractMemorySegmentImpl)Objects.requireNonNull(other);

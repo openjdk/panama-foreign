@@ -377,7 +377,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * scopes.
      * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
      */
-    void copyFrom(MemorySegment src);
+    default void copyFrom(MemorySegment src) {
+        MemorySegment.copy(src, this, src.byteSize());
+    }
 
     /**
      * Finds and returns the offset, in bytes, of the first mismatch between
