@@ -54,7 +54,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -290,7 +289,7 @@ public class SharedUtils {
     public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
-        MemoryCopy.copy(segment, start, MemorySegment.ofArray(bytes), 0, len);
+        MemoryCopy.copy(segment, start, bytes, 0, len);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 

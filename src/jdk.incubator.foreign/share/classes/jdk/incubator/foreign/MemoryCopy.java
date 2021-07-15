@@ -61,7 +61,7 @@ import jdk.internal.vm.annotation.ForceInline;
  */
 public final class MemoryCopy {
 
-    private static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
+    static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
     private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private final static ByteOrder NON_NATIVE_ORDER = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
@@ -541,116 +541,6 @@ public final class MemoryCopy {
                 Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE, dstArray.length);
     }
 
-    /**
-     * Copies a number of bytes from a source segment to a destination segment.
-     * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param dstSegment  the destination segment.
-     * @param bytes the number of bytes to be copied.
-     */
-    @ForceInline
-    public static void copy(MemorySegment srcSegment, MemorySegment dstSegment, long bytes) {
-        copy(srcSegment, 0, dstSegment, 0, bytes);
-    }
-
-    /**
-     * Copies a number of bytes from a source segment to a destination segment.
-     * starting at a given source and destination offsets (expressed in bytes).
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param bytes the number of bytes to be copied.
-     */
-    @ForceInline
-    public static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
-        copy(srcSegment, MemoryLayouts.JAVA_BYTE, srcOffset, dstSegment, MemoryLayouts.JAVA_BYTE, dstOffset, bytes);
-    }
-
-    /**
-     * Copies a number of elements (whose size is specified by the corresponding layout parameters) from a source segment
-     * to a destination segment, starting at a given source and destination offsets (expressed in bytes).
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param srcElementLayout the element layout associated with the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstElementLayout the element layout associated with the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param elementCount the number of elements to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
-     * with the alignment constraints in the source element layout, or if the destination offset is incompatible with the
-     * alignment constraints in the destination element layout.
-     */
-    @ForceInline
-    public static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
-                                        ValueLayout dstElementLayout, long dstOffset, long elementCount) {
-        Objects.requireNonNull(srcSegment);
-        Objects.requireNonNull(srcElementLayout);
-        Objects.requireNonNull(dstSegment);
-        Objects.requireNonNull(dstElementLayout);
-        AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
-        AbstractMemorySegmentImpl dstImpl = (AbstractMemorySegmentImpl)dstSegment;
-        if (srcElementLayout.byteSize() != dstElementLayout.byteSize()) {
-            throw new IllegalArgumentException("Source and destination layouts must have same sizes");
-        }
-        if (srcOffset % srcElementLayout.byteAlignment() != 0) {
-            throw new IllegalArgumentException("Source segment incompatible with alignment constraints");
-        }
-        if (dstOffset % dstElementLayout.byteAlignment() != 0) {
-            throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
-        }
-        long size = elementCount * srcElementLayout.byteSize();
-        if (size % srcElementLayout.byteSize() != 0) {
-            throw new IllegalArgumentException("Segment size is not a multiple of layout size");
-        }
-        srcImpl.checkAccess(srcOffset, size, true);
-        dstImpl.checkAccess(dstOffset, size, false);
-        if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            scopedMemoryAccess.copyMemory(srcImpl.scope(), dstImpl.scope(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
-        } else {
-            scopedMemoryAccess.copySwapMemory(srcImpl.scope(), dstImpl.scope(),
-                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
-                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
-        }
-    }
-
-    /**
-     * Copies a number of elements from a source segment to a destination array, starting at a given segment offset
-     * (expressed in bytes), and a given array index, and using the given source element layout.
-     * @param srcSegment the source segment.
-     * @param srcElementLayout the element layout associated with the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstArray the destination array.
-     * @param dstIndex the starting index of the destination array.
-     * @param elementCount the number of array elements to be copied.
-     * @throws IllegalArgumentException if {@code dstArray} is not an array, or if the source
-     * element layout has a size that does not match that of the array elements, or if its alignment constraints
-     * are incompatible with the source offset.
-     */
-    @ForceInline
-    public static void copy(
-            MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset,
-            Object dstArray, int dstIndex, int elementCount) {
-        Objects.requireNonNull(dstArray);
-        int length = Array.getLength(dstArray); // throws if not an array
-        copy(srcSegment, srcElementLayout, srcOffset, dstArray, dstIndex, elementCount,
-                unsafe.arrayBaseOffset(dstArray.getClass()), unsafe.arrayIndexScale(dstArray.getClass()), length);
-    }
-
     @ForceInline
     private static void copy(
             MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset,
@@ -677,29 +567,6 @@ public final class MemoryCopy {
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth, dstWidth);
         }
-    }
-
-    /**
-     * Copies a number of elements from a source array to a destination segment, starting at a given array index, and a
-     * given segment offset (expressed in bytes), using the given destination element layout.
-     * @param srcArray the source array.
-     * @param srcIndex the starting index of the source array.
-     * @param dstSegment the destination segment.
-     * @param dstElementLayout the element layout associated with the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param elementCount the number of array elements to be copied.
-     * @throws IllegalArgumentException if {@code srcArray} is not an array, or if the destination
-     * element layout has a size that does not match that of the array elements, or if its alignment constraints
-     * are incompatible with the destination offset.
-     */
-    @ForceInline
-    public static void copy(
-            Object srcArray, int srcIndex,
-            MemorySegment dstSegment, ValueLayout dstElementLayout, long dstOffset, int elementCount) {
-        Objects.requireNonNull(srcArray);
-        int length = Array.getLength(srcArray); // throws if not an array
-        copy(srcArray, srcIndex, dstSegment, dstElementLayout, dstOffset, elementCount,
-                unsafe.arrayBaseOffset(srcArray.getClass()), unsafe.arrayIndexScale(srcArray.getClass()), length);
     }
 
     @ForceInline

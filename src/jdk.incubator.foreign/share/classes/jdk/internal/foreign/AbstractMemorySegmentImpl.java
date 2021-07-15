@@ -141,7 +141,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     }
 
     public void copyFrom(MemorySegment src) {
-        MemoryCopy.copy(src, this, src.byteSize());
+        MemorySegment.copy(src, this, src.byteSize());
     }
 
     @Override
@@ -312,7 +312,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
         int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
         Z arr = arrayFactory.apply(size);
         MemorySegment arrSegment = segmentFactory.apply(arr);
-        MemoryCopy.copy(this, arrSegment, byteSize());
+        MemorySegment.copy(this, arrSegment, byteSize());
         return arr;
     }
 

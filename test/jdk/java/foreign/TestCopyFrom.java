@@ -56,7 +56,7 @@ public class TestCopyFrom {
             Type.BYTE.set(s1, i, i);
         }
         //perform copy
-        MemoryCopy.copy(s1.segment, 0, s2.segment, 0, size);
+        MemorySegment.copy(s1.segment, 0, s2.segment, 0, size);
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
             Type.BYTE.check(s2, i, i);
@@ -75,7 +75,7 @@ public class TestCopyFrom {
             s1.set(i, i);
         }
         //perform copy
-        MemoryCopy.copy(s1.segment, s1.type.layout, 0, s2.segment, s2.type.layout, 0, size);
+        MemorySegment.copy(s1.segment, s1.type.layout, 0, s2.segment, s2.type.layout, 0, size);
         //check that copy actually worked
         for (int i = 0; i < size; i++) {
             s2.check(i, i);
