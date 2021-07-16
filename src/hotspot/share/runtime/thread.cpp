@@ -446,6 +446,13 @@ bool Thread::is_JavaThread_protected(const JavaThread* p) {
     return true;
   }
 
+  // If the target hasn't been started yet then it is trivially
+  // "protected". We assume the caller is the thread that will do
+  // the starting.
+  if (p->osthread() == NULL || p->osthread()->get_state() <= INITIALIZED) {
+    return true;
+  }
+
   // Now make the simple checks based on who the caller is:
   Thread* current_thread = Thread::current();
   if (current_thread == p || Threads_lock->owner() == current_thread) {
@@ -2148,7 +2155,7 @@ const char* JavaThread::name() const  {
 }
 
 // Returns a non-NULL representation of this thread's name, or a suitable
-// descriptive string if there is no set name
+// descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
   oop thread_obj = threadObj();
@@ -2169,6 +2176,19 @@ const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
     name_str = Thread::name();
   }
   assert(name_str != NULL, "unexpected NULL thread name");
+  return name_str;
+}
+
+// Helper to extract the name from the thread oop for logging.
+const char* JavaThread::name_for(oop thread_obj) {
+  assert(thread_obj != NULL, "precondition");
+  oop name = java_lang_Thread::name(thread_obj);
+  const char* name_str;
+  if (name != NULL) {
+    name_str = java_lang_String::as_utf8_string(name);
+  } else {
+    name_str = "<un-named>";
+  }
   return name_str;
 }
 
@@ -3260,7 +3280,7 @@ void JavaThread::invoke_shutdown_hooks() {
   HandleMark hm(this);
 
   // We could get here with a pending exception, if so clear it now or
-  // it will cause MetaspaceShared::link_and_cleanup_shared_classes to
+  // it will cause MetaspaceShared::link_shared_classes to
   // fail for dynamic dump.
   if (this->has_pending_exception()) {
     this->clear_pending_exception();
@@ -3271,7 +3291,7 @@ void JavaThread::invoke_shutdown_hooks() {
   // Same operation is being done in JVM_BeforeHalt for handling the
   // case where the application calls System.exit().
   if (DynamicDumpSharedSpaces) {
-    DynamicArchive::prepare_for_dynamic_dumping_at_exit();
+    DynamicArchive::prepare_for_dynamic_dumping();
   }
 #endif
 
