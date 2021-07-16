@@ -44,14 +44,14 @@ extern struct JavaVM_ main_vm;
 // storage is destroyed (which happens when the native threads is terminated), we check if the
 // storage has an attached thread and, if so, we detach it from the VM.
 struct UpcallContext {
-    Thread* attachedThread;
- 
-    ~UpcallContext() {
-        if (attachedThread != NULL) {
-          JavaVM_ *vm = (JavaVM *)(&main_vm);
-          vm->functions->DetachCurrentThread(vm);
-        }
+  Thread* attachedThread;
+
+  ~UpcallContext() {
+    if (attachedThread != NULL) {
+      JavaVM_ *vm = (JavaVM *)(&main_vm);
+      vm->functions->DetachCurrentThread(vm);
     }
+  }
 };
 
 thread_local UpcallContext threadContext;
