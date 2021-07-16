@@ -74,10 +74,10 @@ public class Upcalls {
         System.loadLibrary("UpcallsJNI");
 
         String className = "org/openjdk/bench/jdk/incubator/foreign/Upcalls";
-        cb_blank_jni = makeCB(className, "blank", "()V");
-        cb_identity_jni = makeCB(className, "identity", "(I)I");
-        cb_args5_jni = makeCB(className, "args5", "(JDJDJ)V");
-        cb_args10_jni = makeCB(className, "args10", "(JDJDJDJDJD)V");
+        cb_blank_jni = JNICB.makeCB(className, "blank", "()V");
+        cb_identity_jni = JNICB.makeCB(className, "identity", "(I)I");
+        cb_args5_jni = JNICB.makeCB(className, "args5", "(JDJDJ)V");
+        cb_args10_jni = JNICB.makeCB(className, "args10", "(JDJDJDJDJD)V");
 
         try {
             System.loadLibrary("Upcalls");
@@ -144,7 +144,6 @@ public class Upcalls {
     static native void args5(long a0, double a1, long a2, double a3, long a4, long cb);
     static native void args10(long a0, double a1, long a2, double a3, long a4,
                               double a5, long a6, double a7, long a8, double a9, long cb);
-    static native long makeCB(String holder, String name, String signature);
 
     @Benchmark
     public void jni_blank() throws Throwable {
