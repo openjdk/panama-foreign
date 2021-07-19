@@ -16,7 +16,12 @@ The `jextract` tool provides some basic options in order to control how the extr
 * `-l <String>` - specify a library (name or full absolute path) which should be linked when the generated API is loaded
 * `-d <String>` - specify where to place generated files
 * `-t <String>`  specify the target package for the generated classes
-* `--filter <String>` - simple string-based filtering mechanism; only symbols from headers whose absolute path contains the specified string will be included in the generated API
+* --include-function <String> - name of function to include
+* --include-macro <String>    - name of constant macro to include
+* --include-struct <String>   - name of struct definition to include
+* --include-typedef <String>  - name of type definition to include
+* --include-union <String>    - name of union definition to include
+* --include-var <String>      - name of global variable to include
 * `--source` - generate java sources instead of classfiles
 
 The remainder of this documents shows some basic usage examples of the `jextract` tool.
@@ -86,7 +91,7 @@ public class HelloWorld {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign HelloWorld.java
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign HelloWorld.java
 
 ```
 
@@ -109,17 +114,20 @@ jextract \
 
 ```java
 
+import jdk.incubator.foreign.ResourceScope;
 import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 // import jextracted python 'header' class
 import static org.python.Python_h.*;
+import org.python.*;
 
 public class PythonMain {
     public static void main(String[] args) {
         String script = "print(sum([33, 55, 66])); print('Hello from Python!')\n";
 
         Py_Initialize();
-        try (var str = toCString(script)) {
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var str = toCString(script, scope);
             PyRun_SimpleStringFlags(str, NULL);
             Py_Finalize();
         }
@@ -132,7 +140,7 @@ public class PythonMain {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
     -Djava.library.path=/System/Library/Frameworks/Python.framework/Versions/2.7/lib \
     PythonMain.java
 
@@ -155,19 +163,25 @@ jextract \
 
 ```java
 
+import jdk.incubator.foreign.ResourceScope;
 import static org.unix.readline_h.*;
 import static jdk.incubator.foreign.CLinker.*;
+import org.unix.*;
 
 public class Readline {
     public static void main(String[] args) {
-        try (var str = toCString("name? ")) {
+       try (var scope = ResourceScope.newConfinedScope()) {
+            var url = toCString("name? ", scope);
+
             // call "readline" API
-            var p = readline(str);
+            var p = readline(url);
 
             // print char* as is
             System.out.println(p);
             // convert char* ptr from readline as Java String & print it
-            System.out.println("Hello, " + toJavaStringRestricted(p));
+            System.out.println("Hello, " + toJavaString(p));
+
+            freeMemory(p);
         }
     }
 }
@@ -177,7 +191,7 @@ public class Readline {
 ### Running the java code that uses readline
 
 ```
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/readline/lib/ Readline.java
 
 ```
@@ -199,9 +213,11 @@ jextract -t org.unix -lcurl \
 
 ```java
 
+import jdk.incubator.foreign.ResourceScope;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.jextract.curl_h.*;
 import static jdk.incubator.foreign.CLinker.*;
+import org.jextract.*;
 
 public class CurlMain {
    public static void main(String[] args) {
@@ -209,11 +225,12 @@ public class CurlMain {
        curl_global_init(CURL_GLOBAL_DEFAULT());
        var curl = curl_easy_init();
        if(!curl.equals(NULL)) {
-           try (var url = toCString(urlStr)) {
+           try (var scope = ResourceScope.newConfinedScope()) {
+               var url = toCString(urlStr, scope);
                curl_easy_setopt(curl, CURLOPT_URL(), url.address());
                int res = curl_easy_perform(curl);
                if (res != CURLE_OK()) {
-                   String error = toJavaStringRestricted(curl_easy_strerror(res));
+                   String error = toJavaString(curl_easy_strerror(res));
                    System.out.println("Curl error: " + error);
                    curl_easy_cleanup(curl);
                }
@@ -230,7 +247,7 @@ public class CurlMain {
 ```sh
 
 # run this shell script by passing a URL as first argument
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/lib CurlMain.java $*
 
 ```
@@ -273,7 +290,8 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import blas.*;
 import static blas.cblas_h.*;
 import static jdk.incubator.foreign.CLinker.*;
@@ -297,17 +315,18 @@ public class TestBlas {
         alpha = 1;
         beta = 0;
 
-        try (var scope = NativeScope.unboundedScope()) {
-            var a = scope.allocateArray(C_DOUBLE, new double[] {
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
+            var a = allocator.allocateArray(C_DOUBLE, new double[] {
                 1.0, 2.0, 3.0, 4.0,
                 1.0, 1.0, 1.0, 1.0,
                 3.0, 4.0, 5.0, 6.0,
                 5.0, 6.0, 7.0, 8.0
             });
-            var x = scope.allocateArray(C_DOUBLE, new double[] {
+            var x = allocator.allocateArray(C_DOUBLE, new double[] {
                 1.0, 2.0, 1.0, 1.0
             });
-            var y = scope.allocateArray(C_DOUBLE, n);
+            var y = allocator.allocateArray(C_DOUBLE, n);
 
             cblas_dgemv(Layout, transa, m, n, alpha, a, lda, x, incx, beta, y, incy);
             /* Print y */
@@ -317,6 +336,7 @@ public class TestBlas {
         }
     }
 }
+
 ```
 
 ### Compiling and running the above BLAS sample
@@ -341,7 +361,6 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 jextract \
    -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
    -l lapacke -t lapack \
-   --filter lapacke.h \
    /usr/local/opt/lapack/include/lapacke.h
 
 ```
@@ -353,7 +372,8 @@ jextract \
 import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import lapack.*;
 import static lapack.lapacke_h.*;
 import static jdk.incubator.foreign.CLinker.*;
@@ -362,11 +382,12 @@ public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
-        try (var scope = NativeScope.unboundedScope()) {
-            var A = scope.allocateArray(C_DOUBLE, new double[]{
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
+            var A = allocator.allocateArray(C_DOUBLE, new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
             });
-            var b = scope.allocateArray(C_DOUBLE, new double[]{
+            var b = allocator.allocateArray(C_DOUBLE, new double[]{
                     -10, 12, 14, 16, 18, -3, 14, 12, 16, 16
             });
             int info, m, n, lda, ldb, nrhs;
@@ -383,19 +404,19 @@ public class TestLapack {
             /* Print Right Rand Side */
             print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
             System.out.println();
-            
+
             /* Executable statements */
             //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
             /* Solve least squares problem*/
             info = LAPACKE_dgels(LAPACK_COL_MAJOR(), (byte)'N', m, n, nrhs, A, lda, b, ldb);
- 
+
             /* Print Solution */
             print_matrix_colmajor("Solution", n, nrhs, b, ldb );
             System.out.println();
             System.exit(info);
-        }   
-    }   
-    
+        }
+    }
+
     static void print_matrix_colmajor(String msg, int m, int n, MemorySegment mat, int ldm) {
         int i, j;
         System.out.printf("\n %s\n", msg);
@@ -413,7 +434,7 @@ public class TestLapack {
 
 ```sh
 
-java -Dforeign.restricted=permit \
+java --enable-native-access=ALL-UNNAMED \
     --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/local/opt/lapack/lib \
     TestLapack.java
@@ -428,7 +449,6 @@ java -Dforeign.restricted=permit \
 jextract \
   -t org.unix \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include \
-  --filter libproc.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libproc.h
 
 ```
@@ -439,7 +459,8 @@ jextract \
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import org.unix.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.unix.libproc_h.*;
@@ -448,17 +469,18 @@ public class LibprocMain {
     private static final int NAME_BUF_MAX = 256;
 
     public static void main(String[] args) {
-        try (var scope = NativeScope.unboundedScope()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
             // get the number of processes
             int numPids = proc_listallpids(NULL, 0);
             // allocate an array
-            var pids = scope.allocateArray(CLinker.C_INT, numPids);
+            var pids = allocator.allocateArray(CLinker.C_INT, numPids);
             // list all the pids into the native array
             proc_listallpids(pids, numPids);
             // convert native array to java array
             int[] jpids = pids.toIntArray();
             // buffer for process name
-            var nameBuf = scope.allocateArray(CLinker.C_CHAR, NAME_BUF_MAX);
+            var nameBuf = allocator.allocateArray(CLinker.C_CHAR, NAME_BUF_MAX);
             for (int i = 0; i < jpids.length; i++) {
                 int pid = jpids[i];
                 // get the process name
@@ -477,7 +499,7 @@ public class LibprocMain {
 
 ```sh
 
-java -Dforeign.restricted=permit \
+java --enable-native-access=ALL-UNNAMED \
     --add-modules jdk.incubator.foreign \
     -Djava.library.path=/usr/lib LibprocMain.java
 
@@ -510,10 +532,12 @@ jextract \
 ```java
 
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
 import static com.github.git2_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
+import com.github.*;
 
 public class GitClone {
     public static void main(String[] args) {
@@ -522,8 +546,9 @@ public class GitClone {
               System.exit(1);
           }
           git_libgit2_init();
-          try (var scope = NativeScope.unboundedScope()) {
-              var repo = scope.allocate(C_POINTER);
+          try (var scope = ResourceScope.newConfinedScope()) {
+              var allocator = SegmentAllocator.ofScope(scope);
+              var repo = allocator.allocate(C_POINTER);
               var url = toCString(args[0], scope);
               var path = toCString(args[1], scope);
               System.out.println(git_clone(repo, url, path, NULL));
@@ -540,7 +565,7 @@ public class GitClone {
 
 # file run.sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
     -Djava.library.path=${LIBGIT2_HOME}/build/ \
     GitClone.java $*
 ```
@@ -572,19 +597,22 @@ jextract \
 
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.NativeScope;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
+import org.sqlite.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.sqlite.sqlite3_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 
 public class SqliteMain {
    public static void main(String[] args) throws Exception {
-        try (var scope = NativeScope.unboundedScope()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
             // char** errMsgPtrPtr;
-            var errMsgPtrPtr = scope.allocate(C_POINTER);
+            var errMsgPtrPtr = allocator.allocate(C_POINTER);
 
             // sqlite3** dbPtrPtr;
-            var dbPtrPtr = scope.allocate(C_POINTER);
+            var dbPtrPtr = allocator.allocate(C_POINTER);
 
             int rc = sqlite3_open(toCString("employee.db",scope), dbPtrPtr);
             if (rc != 0) {
@@ -608,7 +636,7 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                System.err.println("SQL error: " + toJavaString(MemoryAccess.getAddress(errMsgPtrPtr)));
                 sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("employee table created");
@@ -625,7 +653,7 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                System.err.println("SQL error: " + toJavaString(MemoryAccess.getAddress(errMsgPtrPtr)));
                 sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("rows inserted");
@@ -636,11 +664,11 @@ public class SqliteMain {
             var callback = sqlite3_exec$callback.allocate((a, argc, argv, columnNames) -> {
                 System.out.println("Row num: " + rowNum[0]++);
                 System.out.println("numColumns = " + argc);
-                var argv_seg = argv.asSegmentRestricted(C_POINTER.byteSize() * argc);
-                var columnNames_seg = columnNames.asSegmentRestricted(C_POINTER.byteSize() * argc);
+                var argv_seg = argv.asSegment(C_POINTER.byteSize() * argc, scope);
+                var columnNames_seg = columnNames.asSegment(C_POINTER.byteSize() * argc, scope);
                 for (int i = 0; i < argc; i++) {
-                     String name = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(columnNames_seg, i));
-                     String value = toJavaStringRestricted(MemoryAccess.getAddressAtIndex(argv_seg, i));
+                     String name = toJavaString(MemoryAccess.getAddressAtIndex(columnNames_seg, i));
+                     String value = toJavaString(MemoryAccess.getAddressAtIndex(argv_seg, i));
                      System.out.printf("%s = %s\n", name, value);
                 }
                 return 0;
@@ -652,7 +680,7 @@ public class SqliteMain {
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
-                System.err.println("SQL error: " + toJavaStringRestricted(MemoryAccess.getAddress(errMsgPtrPtr)));
+                System.err.println("SQL error: " + toJavaString(MemoryAccess.getAddress(errMsgPtrPtr)));
                 sqlite3_free(MemoryAccess.getAddress(errMsgPtrPtr));
             } else {
                 System.out.println("done");
@@ -663,13 +691,14 @@ public class SqliteMain {
     }
 }
 
+
 ```
 
 ### Compiling and running the sqlite3 sample
 
 ```sh
 
-java -Dforeign.restricted=permit \
+java --enable-native-access=ALL-UNNAMED \
    --add-modules jdk.incubator.foreign \
    -Djava.library.path=/usr/lib SqliteMain.java
 
@@ -692,25 +721,27 @@ jextract -t opengl -lGL -l/System/Library/Frameworks/GLUT.framework/Versions/Cur
 ```java
 
 import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.ResourceScope;
+import jdk.incubator.foreign.SegmentAllocator;
+import opengl.*;
 import static jdk.incubator.foreign.CLinker.*;
-import jdk.incubator.foreign.NativeScope;
 import static opengl.glut_h.*;
 
 public class Teapot {
     private float rot = 0;
 
-    Teapot(NativeScope scope) {
+    Teapot(SegmentAllocator allocator) {
         // Reset Background
         glClearColor(0f, 0f, 0f, 0f);
         // Setup Lighting
         glShadeModel(GL_SMOOTH());
-        var pos = scope.allocateArray(C_FLOAT, new float[] {0.0f, 15.0f, -15.0f, 0});
+        var pos = allocator.allocateArray(C_FLOAT, new float[] {0.0f, 15.0f, -15.0f, 0});
         glLightfv(GL_LIGHT0(), GL_POSITION(), pos);
-        var spec = scope.allocateArray(C_FLOAT, new float[] {1, 1, 1, 0});
+        var spec = allocator.allocateArray(C_FLOAT, new float[] {1, 1, 1, 0});
         glLightfv(GL_LIGHT0(), GL_AMBIENT(), spec);
         glLightfv(GL_LIGHT0(), GL_DIFFUSE(), spec);
         glLightfv(GL_LIGHT0(), GL_SPECULAR(), spec);
-        var shini = scope.allocate(C_FLOAT, 113);
+        var shini = allocator.allocate(C_FLOAT, 113);
         glMaterialfv(GL_FRONT(), GL_SHININESS(), shini);
         glEnable(GL_LIGHTING());
         glEnable(GL_LIGHT0());
@@ -733,13 +764,14 @@ public class Teapot {
     }
 
     public static void main(String[] args) {
-        try (var scope = NativeScope.unboundedScope()) {
-            var argc = scope.allocate(C_INT, 0);
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
+            var argc = allocator.allocate(C_INT, 0);
             glutInit(argc, argc);
             glutInitDisplayMode(GLUT_DOUBLE() | GLUT_RGB() | GLUT_DEPTH());
             glutInitWindowSize(500, 500);
             glutCreateWindow(CLinker.toCString("Hello Panama!", scope));
-            var teapot = new Teapot(scope);
+            var teapot = new Teapot(allocator);
             var displayStub = glutDisplayFunc$func.allocate(teapot::display, scope);
             var idleStub = glutIdleFunc$func.allocate(teapot::onIdle, scope);
             glutDisplayFunc(displayStub);
@@ -755,7 +787,7 @@ public class Teapot {
 
 ```sh
 
-java -XstartOnFirstThread -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java -XstartOnFirstThread --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
     -Djava.library.path=.:/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries/ Teapot.java $*
 
 ```
@@ -837,41 +869,43 @@ import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAccess.*;
 import static jdk.incubator.foreign.MemoryAddress.*;
 import static org.tensorflow.c_api_h.*;
+import org.tensorflow.*;
 
 // simple program that loads saved model and prints basic info on operations in it
 
 public class TensorflowLoadSavedModel {
     public static void main(String... args) throws Exception {
-        System.out.println("TensorFlow C library version: " + toJavaStringRestricted(TF_Version()));
+        System.out.println("TensorFlow C library version: " + toJavaString(TF_Version()));
 
         if (args.length == 0) {
             System.err.println("java TensorflowLoadSavedModel <saved model dir>");
             System.exit(1);
         }
 
-        try (var scope = NativeScope.unboundedScope()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
             var graph = TF_NewGraph();
             var status = TF_NewStatus();
             var sessionOpts = TF_NewSessionOptions();
 
             var savedModelDir = toCString(args[0], scope);
-            var tags = scope.allocate(C_POINTER, toCString("serve", scope));
+            var tags = allocator.allocate(C_POINTER, toCString("serve", scope));
             var session = TF_LoadSessionFromSavedModel(sessionOpts, NULL, savedModelDir, tags, 1, graph, NULL, status);
 
             if (TF_GetCode(status) != TF_OK()) {
                 System.err.printf("cannot load session from saved model: %s\n",
-                    toJavaStringRestricted(TF_Message(status)));
+                    toJavaString(TF_Message(status)));
             } else {
                 System.err.println("load session from saved model works!");
             }
 
             // print operations
-            var size = scope.allocate(C_LONG_LONG);
+            var size = allocator.allocate(C_LONG_LONG);
             var operation = NULL;
             while (!(operation = TF_GraphNextOperation(graph, size)).equals(NULL)) {
                 System.out.printf("%s : %s\n",
-                    toJavaStringRestricted(TF_OperationName(operation)),
-                    toJavaStringRestricted(TF_OperationOpType(operation)));
+                    toJavaString(TF_OperationName(operation)),
+                    toJavaString(TF_OperationOpType(operation)));
             }
 
             TF_DeleteGraph(graph);
@@ -888,7 +922,7 @@ public class TensorflowLoadSavedModel {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign \
    TensorflowLoadSavedModel.java saved_mnist_model
 
 ```
@@ -913,11 +947,13 @@ jextract -t org.unix \
 import static org.unix.time_h.*;
 import static jdk.incubator.foreign.CLinker.*;
 import jdk.incubator.foreign.*;
+import org.unix.*;
 
 public class PanamaTime {
     public static void main(String[] args) {
-        try (NativeScope scope = NativeScope.unboundedScope()) {
-            var now = scope.allocate(C_LONG, System.currentTimeMillis() / 1000);
+        try (var scope = ResourceScope.newConfinedScope()) {
+            var allocator = SegmentAllocator.ofScope(scope);
+            var now = allocator.allocate(C_LONG, System.currentTimeMillis() / 1000);
             MemorySegment time = tm.allocate(scope);
             localtime_r(now, time);
             System.err.printf("Time = %d:%d\n", tm.tm_hour$get(time), tm.tm_min$get(time));
@@ -932,7 +968,7 @@ public class PanamaTime {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign PanamaTime.java
+java --enable-native-access=ALL-UNNAMED --add-modules jdk.incubator.foreign PanamaTime.java
 
 ```
 
@@ -961,10 +997,11 @@ import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
 import static jdk.incubator.foreign.MemoryAddress.NULL;
 import static org.llvm.clang.Index_h.*;
+import org.llvm.clang.*;
 
 public class ASTPrinter {
     private static String asJavaString(MemorySegment clangStr) {
-        String str = toJavaStringRestricted(clang_getCString(clangStr));
+        String str = toJavaString(clang_getCString(clangStr));
         clang_disposeString(clangStr);
         return str;
     }
@@ -975,24 +1012,24 @@ public class ASTPrinter {
             System.exit(1);
         }
 
-        try (var scope = NativeScope.unboundedScope()) {
+        try (var scope = ResourceScope.newConfinedScope()) {
             // parse the C header/source passed from the command line
             var index = clang_createIndex(0, 0);
             var tu = clang_parseTranslationUnit(index, toCString(args[0], scope),
                     NULL, 0, NULL, 0, CXTranslationUnit_None());
             // array trick to update within lambda
             var level = new int[1];
-            var visitor = new MemorySegment[1];
+            var visitor = new MemoryAddress[1];
 
             // clang Cursor visitor callback
-            visitor[0] = clang_visitChildren$visitor.allocate((cursor, parent, data) -> {
+            visitor[0] = CXCursorVisitor.allocate((cursor, parent, data) -> {
                 var kind = clang_getCursorKind(cursor);
-                var name = asJavaString(clang_getCursorSpelling(cursor));
-                var kindName = asJavaString(clang_getCursorKindSpelling(kind));
+                var name = asJavaString(clang_getCursorSpelling(scope, cursor));
+                var kindName = asJavaString(clang_getCursorKindSpelling(scope, kind));
                 System.out.printf("%s %s %s", " ".repeat(level[0]), kindName, name);
-                var type = clang_getCursorType(cursor);
+                var type = clang_getCursorType(scope, cursor);
                 if (CXType.kind$get(type) != CXType_Invalid()) {
-                    var typeName = asJavaString(clang_getTypeSpelling(type));
+                    var typeName = asJavaString(clang_getTypeSpelling(scope, type));
                     System.out.printf(" <%s>", typeName);
                 }
                 System.out.println();
@@ -1006,7 +1043,7 @@ public class ASTPrinter {
             });
 
             // get the AST root and visit it
-            var root = clang_getTranslationUnitCursor(tu);
+            var root = clang_getTranslationUnitCursor(scope, tu);
             clang_visitChildren(root, visitor[0], NULL);
 
             clang_disposeTranslationUnit(tu);
@@ -1021,7 +1058,9 @@ public class ASTPrinter {
 
 ```sh
 
-java -Dforeign.restricted=permit --add-modules jdk.incubator.foreign \
+java --enable-native-access=ALL-UNNAMED \
+    -Djava.library.path=${LIBCLANG_HOME}/lib \
+    --add-modules jdk.incubator.foreign \
     ASTPrinter.java $*
 
 ```
