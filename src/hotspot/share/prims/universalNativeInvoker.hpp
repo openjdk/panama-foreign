@@ -45,6 +45,12 @@ public:
 
   static void invoke_native(Stub stub, address buff, JavaThread* thread);
   static address generate_adapter(jobject abi, jobject layout);
+
+  static RuntimeStub* make_native_invoker(BasicType*,
+                                          int num_args,
+                                          int shadow_space_bytes,
+                                          const GrowableArray<VMReg>& input_registers,
+                                          const GrowableArray<VMReg>& output_registers);
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
