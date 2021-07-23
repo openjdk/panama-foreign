@@ -27,6 +27,7 @@
 #include "runtime/stubCodeGenerator.hpp"
 #include "prims/foreign_globals.hpp"
 
+class RuntimeStub;
 class ProgrammableInvoker: AllStatic {
 private:
   static constexpr CodeBuffer::csize_t native_invoker_size = 1024;
@@ -48,6 +49,7 @@ public:
 
   static RuntimeStub* make_native_invoker(BasicType*,
                                           int num_args,
+                                          BasicType ret_bt,
                                           int shadow_space_bytes,
                                           const GrowableArray<VMReg>& input_registers,
                                           const GrowableArray<VMReg>& output_registers);

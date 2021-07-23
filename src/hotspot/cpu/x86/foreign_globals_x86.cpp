@@ -25,6 +25,7 @@
 #include "runtime/jniHandles.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
+#include "oops/oopCast.inline.hpp"
 #include "prims/foreign_globals.hpp"
 #include "prims/foreign_globals.inline.hpp"
 
@@ -46,17 +47,17 @@ const ABIDescriptor ForeignGlobals::parse_abi_descriptor_impl(jobject jabi) cons
   oop abi_oop = JNIHandles::resolve_non_null(jabi);
   ABIDescriptor abi;
 
-  objArrayOop inputStorage = cast<objArrayOop>(abi_oop->obj_field(ABI.inputStorage_offset));
+  objArrayOop inputStorage = oop_cast<objArrayOop>(abi_oop->obj_field(ABI.inputStorage_offset));
   loadArray(inputStorage, INTEGER_TYPE, abi._integer_argument_registers, as_Register);
   loadArray(inputStorage, VECTOR_TYPE, abi._vector_argument_registers, as_XMMRegister);
 
-  objArrayOop outputStorage = cast<objArrayOop>(abi_oop->obj_field(ABI.outputStorage_offset));
+  objArrayOop outputStorage = oop_cast<objArrayOop>(abi_oop->obj_field(ABI.outputStorage_offset));
   loadArray(outputStorage, INTEGER_TYPE, abi._integer_return_registers, as_Register);
   loadArray(outputStorage, VECTOR_TYPE, abi._vector_return_registers, as_XMMRegister);
-  objArrayOop subarray = cast<objArrayOop>(outputStorage->obj_at(X87_TYPE));
+  objArrayOop subarray = oop_cast<objArrayOop>(outputStorage->obj_at(X87_TYPE));
   abi._X87_return_registers_noof = subarray->length();
 
-  objArrayOop volatileStorage = cast<objArrayOop>(abi_oop->obj_field(ABI.volatileStorage_offset));
+  objArrayOop volatileStorage = oop_cast<objArrayOop>(abi_oop->obj_field(ABI.volatileStorage_offset));
   loadArray(volatileStorage, INTEGER_TYPE, abi._integer_additional_volatile_registers, as_Register);
   loadArray(volatileStorage, VECTOR_TYPE, abi._vector_additional_volatile_registers, as_XMMRegister);
 
@@ -74,11 +75,11 @@ const BufferLayout ForeignGlobals::parse_buffer_layout_impl(jobject jlayout) con
   layout.stack_args = layout_oop->long_field(BL.stack_args_offset);
   layout.arguments_next_pc = layout_oop->long_field(BL.arguments_next_pc_offset);
 
-  typeArrayOop input_offsets = cast<typeArrayOop>(layout_oop->obj_field(BL.input_type_offsets_offset));
+  typeArrayOop input_offsets = oop_cast<typeArrayOop>(layout_oop->obj_field(BL.input_type_offsets_offset));
   layout.arguments_integer = (size_t) input_offsets->long_at(INTEGER_TYPE);
   layout.arguments_vector = (size_t) input_offsets->long_at(VECTOR_TYPE);
 
-  typeArrayOop output_offsets = cast<typeArrayOop>(layout_oop->obj_field(BL.output_type_offsets_offset));
+  typeArrayOop output_offsets = oop_cast<typeArrayOop>(layout_oop->obj_field(BL.output_type_offsets_offset));
   layout.returns_integer = (size_t) output_offsets->long_at(INTEGER_TYPE);
   layout.returns_vector = (size_t) output_offsets->long_at(VECTOR_TYPE);
   layout.returns_x87 = (size_t) output_offsets->long_at(X87_TYPE);
@@ -90,8 +91,8 @@ const BufferLayout ForeignGlobals::parse_buffer_layout_impl(jobject jlayout) con
 
 const CallRegs ForeignGlobals::parse_call_regs_impl(jobject jconv) const {
   oop conv_oop = JNIHandles::resolve_non_null(jconv);
-  objArrayOop arg_regs_oop = cast<objArrayOop>(conv_oop->obj_field(CallConvOffsets.arg_regs_offset));
-  objArrayOop ret_regs_oop = cast<objArrayOop>(conv_oop->obj_field(CallConvOffsets.ret_regs_offset));
+  objArrayOop arg_regs_oop = oop_cast<objArrayOop>(conv_oop->obj_field(CallConvOffsets.arg_regs_offset));
+  objArrayOop ret_regs_oop = oop_cast<objArrayOop>(conv_oop->obj_field(CallConvOffsets.ret_regs_offset));
 
   CallRegs result;
   result._args_length = arg_regs_oop->length();

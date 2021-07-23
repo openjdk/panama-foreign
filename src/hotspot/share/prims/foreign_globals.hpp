@@ -74,9 +74,6 @@ private:
 
   static const ForeignGlobals& instance();
 
-  template<typename R>
-  static R cast(oop theOop);
-
   template<typename T, typename Func>
   void loadArray(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) const;
 

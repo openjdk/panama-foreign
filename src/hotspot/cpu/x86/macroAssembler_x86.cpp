@@ -938,7 +938,8 @@ void MacroAssembler::long_move(VMRegPair src, VMRegPair dst) {
         mov(dst.first()->as_Register(), src.first()->as_Register());
       }
     } else {
-      assert(dst.is_single_reg(), "not a stack pair");
+      assert(dst.is_single_reg(), "not a stack pair: (%s, %s), (%s, %s)",
+       src.first()->name(), src.second()->name(), dst.first()->name(), dst.second()->name());
       movq(Address(rsp, reg2offset_out(dst.first())), src.first()->as_Register());
     }
   } else if (dst.is_single_phys_reg()) {

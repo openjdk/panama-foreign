@@ -29,6 +29,7 @@
 #include "memory/resourceArea.hpp"
 #include "prims/universalNativeInvoker.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/formatBuffer.hpp"
 
 #define __ _masm->
 
@@ -154,6 +155,7 @@ static const int native_invoker_code_size = 1024;
 class NativeInvokerGenerator : public StubCodeGenerator {
   BasicType* _signature;
   int _num_args;
+  BasicType _ret_bt;
   int _shadow_space_bytes;
 
   const GrowableArray<VMReg>& _input_registers;
@@ -166,12 +168,14 @@ public:
   NativeInvokerGenerator(CodeBuffer* buffer,
                          BasicType* signature,
                          int num_args,
+                         BasicType ret_bt,
                          int shadow_space_bytes,
                          const GrowableArray<VMReg>& input_registers,
                          const GrowableArray<VMReg>& output_registers)
    : StubCodeGenerator(buffer, PrintMethodHandleStubs),
      _signature(signature),
      _num_args(num_args),
+     _ret_bt(ret_bt),
      _shadow_space_bytes(shadow_space_bytes),
      _input_registers(input_registers),
      _output_registers(output_registers),
@@ -273,6 +277,7 @@ bool target_uses_register(VMReg reg) {
 
 RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
                                                       int num_args,
+                                                      BasicType ret_bt,
                                                       int shadow_space_bytes,
                                                       const GrowableArray<VMReg>& input_registers,
                                                       const GrowableArray<VMReg>& output_registers) {
@@ -306,7 +311,7 @@ RuntimeStub* ProgrammableInvoker::make_native_invoker(BasicType* signature,
 
   int locs_size  = 64;
   CodeBuffer code("nep_invoker_blob", native_invoker_code_size, locs_size);
-  NativeInvokerGenerator g(&code, signature, num_args, shadow_space_bytes, input_registers, output_registers);
+  NativeInvokerGenerator g(&code, signature, num_args, ret_bt, shadow_space_bytes, input_registers, output_registers);
   g.generate();
   code.log_section_sizes("nep_invoker_blob");
 
@@ -336,17 +341,19 @@ struct ArgMove {
   }
 };
 
-static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const GrowableArray<VMReg>& input_regs, int& out_arg_stk_slots) {
+static GrowableArray<ArgMove> compute_argument_shuffle(BasicType* sig_bt, int num_args, const GrowableArray<VMReg>& input_regs, int& out_arg_stk_slots, Register input_addr_reg) {
 
   VMRegPair* in_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
 
   SharedRuntime::java_calling_convention(sig_bt, in_regs, num_args);
 
   VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, num_args);
+  out_regs[0].set2(input_addr_reg->as_VMReg()); // address
+  out_regs[1].set_bad(); // upper half
 
   int src_pos = 0;
   int stk_slots = 0;
-  for (int i = 0; i < num_args; i++) {
+  for (int i = 2; i < num_args; i++) { // skip address (2)
     switch (sig_bt[i]) {
       case T_BOOLEAN:
       case T_CHAR:
@@ -531,7 +538,8 @@ void NativeInvokerGenerator::generate() {
 
   // TODO stack arg slots
   int out_arg_stk_slots = -1;
-  GrowableArray<ArgMove> arg_moves = compute_argument_shuffle(_signature, _num_args, _input_registers, out_arg_stk_slots);
+  Register input_addr_reg = rscratch1;
+  GrowableArray<ArgMove> arg_moves = compute_argument_shuffle(_signature, _num_args, _input_registers, out_arg_stk_slots, rscratch1);
   assert(out_arg_stk_slots != -1, "out_arg_size_bytes was not set");
 
 #ifdef ASSERT
@@ -616,9 +624,23 @@ void NativeInvokerGenerator::generate() {
   shuffle_arguments(_masm, arg_moves, shuffle_space_offset);
   __ block_comment("} argument shuffle");
 
-  __ call();
+  __ call(input_addr_reg);
 
-  // TODO handle sub-int returns
+    // Unpack native results.
+    switch (_ret_bt) {
+      case T_BOOLEAN: __ c2bool(rax);            break;
+      case T_CHAR   : __ movzwl(rax, rax);       break;
+      case T_BYTE   : __ sign_extend_byte (rax); break;
+      case T_SHORT  : __ sign_extend_short(rax); break;
+      case T_INT    : /* nothing to do */        break;
+      case T_DOUBLE :
+      case T_FLOAT  :
+        // Result is in xmm0 we'll save as needed
+        break;
+      case T_VOID: break;
+      case T_LONG: break;
+      default       : ShouldNotReachHere();
+    }
 
   __ block_comment("{ thread native2java");
   __ restore_cpu_control_state_after_jni();

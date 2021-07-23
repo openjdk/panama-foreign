@@ -135,14 +135,11 @@ public class ProgrammableInvoker {
         MethodType leafType = methodType(returnType, argMoveTypes);
         MethodType leafTypeWithAddress = leafType.insertParameterTypes(0, long.class);
 
-        MethodHandle handle = insertArguments(MH_INVOKE_MOVES.bindTo(this), 2, argMoves, retMoves);
-        MethodHandle collector = makeCollectorHandle(leafType);
-        handle = collectArguments(handle, 1, collector);
-        handle = handle.asType(leafTypeWithAddress);
+        MethodHandle handle;
 
         boolean isSimple = !(retMoves.length > 1);
-        //boolean usesStackArgs = stackArgsBytes != 0;
-        if (USE_INTRINSICS && isSimple) {
+        boolean usesStackArgs = stackArgsBytes != 0;
+        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
             NativeEntryPoint nep = NativeEntryPoint.make(
                 "native_call",
                 abi,
@@ -152,7 +149,12 @@ public class ProgrammableInvoker {
                 leafTypeWithAddress
             );
 
-            handle = JLIA.nativeMethodHandle(nep, handle);
+            handle = JLIA.nativeMethodHandle(nep);
+        } else {
+            handle = insertArguments(MH_INVOKE_MOVES.bindTo(this), 2, argMoves, retMoves);
+            MethodHandle collector = makeCollectorHandle(leafType);
+            handle = collectArguments(handle, 1, collector);
+            handle = handle.asType(leafTypeWithAddress);
         }
         handle = filterArguments(handle, 0, MH_ADDR_TO_LONG);
 

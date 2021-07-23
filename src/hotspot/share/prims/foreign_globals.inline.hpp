@@ -28,26 +28,11 @@
 
 #include "oops/oopsHierarchy.hpp"
 #include "oops/objArrayOop.hpp"
-
-template<typename T>
-static bool check_type(oop theOop) {
-  static_assert(sizeof(T) == 0, "No check_type specialization found for this type");
-  return false;
-}
-template<>
-inline bool check_type<objArrayOop>(oop theOop) { return theOop->is_objArray(); }
-template<>
-inline bool check_type<typeArrayOop>(oop theOop) { return theOop->is_typeArray(); }
-
-template<typename R>
-R ForeignGlobals::cast(oop theOop) {
-  assert(check_type<R>(theOop), "Invalid cast");
-  return (R) theOop;
-}
+#include "oops/oopCast.inline.hpp"
 
 template<typename T, typename Func>
 void ForeignGlobals::loadArray(objArrayOop jarray, int type_index, GrowableArray<T>& array, Func converter) const {
-  objArrayOop subarray = cast<objArrayOop>(jarray->obj_at(type_index));
+  objArrayOop subarray = oop_cast<objArrayOop>(jarray->obj_at(type_index));
   int subarray_length = subarray->length();
   for (int i = 0; i < subarray_length; i++) {
     oop storage = subarray->obj_at(i);

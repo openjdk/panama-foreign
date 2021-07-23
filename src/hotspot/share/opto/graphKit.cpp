@@ -2586,12 +2586,14 @@ Node* GraphKit::sign_extend_short(Node* in) {
 
 //-----------------------------make_native_call-------------------------------
 Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, uint nargs, ciNativeEntryPoint* nep) {
+  assert(!nep->need_transition(), "only trivial calls");
+
   // Select just the actual call args to pass on
-  // [MethodHandle fallback, long addr, HALF addr, ... args , NativeEntryPoint nep]
-  //                                             |          |
-  //                                             V          V
-  //                                             [ ... args ]
-  uint n_filtered_args = nargs - 4; // -fallback, -addr (2), -nep;
+  // [long addr, HALF addr, ... args , NativeEntryPoint nep]
+  //                      |          |
+  //                      V          V
+  //                      [ ... args ]
+  uint n_filtered_args = nargs - 3; // -addr (2), -nep;
   ResourceMark rm;
   Node** argument_nodes = NEW_RESOURCE_ARRAY(Node*, n_filtered_args);
   BasicType* argument_bts = NEW_RESOURCE_ARRAY(BasicType, n_filtered_args);
@@ -2602,7 +2604,7 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
   {
     for (uint vm_arg_pos = 0, java_arg_read_pos = 0;
         vm_arg_pos < n_filtered_args; vm_arg_pos++) {
-      uint vm_unfiltered_arg_pos = vm_arg_pos + 3; // +3 to skip fallback handle argument and addr (2 since long)
+      uint vm_unfiltered_arg_pos = vm_arg_pos + 2; // +2 to skip addr (2 since long)
       Node* node = argument(vm_unfiltered_arg_pos);
       const Type* type = call_type->domain()->field_at(TypeFunc::Parms + vm_unfiltered_arg_pos);
       VMReg reg = type == Type::HALF
@@ -2639,34 +2641,12 @@ Node* GraphKit::make_native_call(address call_addr, const TypeFunc* call_type, u
     TypeTuple::make(TypeFunc::Parms + n_returns, ret_types)
   );
 
-  CallNode* call = nullptr;
-  bool need_transition = nep->need_transition();
-  if (need_transition) {
-    RuntimeStub* invoker = SharedRuntime::make_native_invoker(call_addr,
-                                                              argument_bts,
-                                                              n_filtered_args,
-                                                              nep->shadow_space(),
-                                                              arg_regs, ret_regs);
-    if (invoker == NULL) {
-      C->record_failure("native invoker not implemented on this platform");
-      return NULL;
-    }
-    C->add_native_invoker(invoker);
-    //call = make_runtime_call(RC_NO_LEAF, new_call_type, call_addr, nep->name(), TypePtr::BOTTOM);
-    call = new CallStaticJavaNode(new_call_type, invoker->code_begin(), nep->name(), TypePtr::BOTTOM);
-  } else {
-    call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
-                              arg_regs,
-                              ret_regs,
-                              nep->shadow_space(),
-                              need_transition);
-  }
+  CallNode* call = new CallNativeNode(new_call_type, call_addr, nep->name(), TypePtr::BOTTOM,
+                            arg_regs,
+                            ret_regs,
+                            nep->shadow_space());
 
   assert(call != nullptr, "'call' was not set");
-
-  if (need_transition) {
-    add_safepoint_edges(call);
-  }
 
   set_predefined_input_for_runtime_call(call);
 
