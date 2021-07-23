@@ -1933,8 +1933,8 @@ void JavaThread::deoptimize_marked_methods() {
 void JavaThread::verify_frame_info() {
   assert((!has_last_Java_frame() && java_call_counter() == 0) ||
          (has_last_Java_frame() && java_call_counter() > 0),
-         "unexpected frame info: has_last_frame=%d, java_call_counter=%d",
-         has_last_Java_frame(), java_call_counter());
+         "unexpected frame info: has_last_frame=%s, java_call_counter=%d",
+         has_last_Java_frame() ? "true" : "false", java_call_counter());
 }
 #endif
 
