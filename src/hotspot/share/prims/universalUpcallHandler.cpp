@@ -51,30 +51,30 @@ void ProgrammableUpcallHandler::upcall_helper(JavaThread* thread, jobject rec, a
   JavaCalls::call_static(&result, upcall_method.klass, upcall_method.name, upcall_method.sig, &args, CATCH);
 }
 
-Thread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_detach) {
-  Thread* thread = Thread::current_or_null();
+JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_detach) {
+  JavaThread* thread = JavaThread::current_or_null();
   if (thread == nullptr) {
     JavaVM_ *vm = (JavaVM *)(&main_vm);
     JNIEnv* p_env = nullptr; // unused
     jint result = vm->functions->AttachCurrentThread(vm, (void**) &p_env, nullptr);
     guarantee(result == JNI_OK, "Could not attach thread for upcall. JNI error code: %d", result);
     *should_detach = true;
-    thread = Thread::current();
-    assert(!JavaThread::cast(thread)->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
+    thread = JavaThread::current();
+    assert(!thread->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
   } else {
     *should_detach = false;
   }
   return thread;
 }
 
-void ProgrammableUpcallHandler::detach_thread(Thread* thread) {
+void ProgrammableUpcallHandler::detach_current_thread() {
   JavaVM_ *vm = (JavaVM *)(&main_vm);
   vm->functions->DetachCurrentThread(vm);
 }
 
 // modelled after JavaCallWrapper::JavaCallWrapper
-Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* context) {
-  JavaThread* thread = JavaThread::cast(maybe_attach_and_get_thread(&context->should_detach));
+JavaThread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* context) {
+  JavaThread* thread = maybe_attach_and_get_thread(&context->should_detach);
   context->thread = thread;
 
   assert(thread->can_call_java(), "must be able to call Java");
@@ -83,13 +83,13 @@ Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* conte
   // since it can potentially block.
   context->new_handles = JNIHandleBlock::allocate_block(thread);
 
-  // After this, we are official in Java Code. This needs to be done before we change any of the thread local
+  // After this, we are officially in Java Code. This needs to be done before we change any of the thread local
   // info, since we cannot find oops before the new information is set up completely.
   ThreadStateTransition::transition_from_native(thread, _thread_in_Java);
 
   // Make sure that we handle asynchronous stops and suspends _before_ we clear all thread state
   // in OptimizedEntryBlob::FrameData. This way, we can decide if we need to do any pd actions
-  // to prepare for stop/suspend (flush register windows on sparcs, cache sp, or other state).
+  // to prepare for stop/suspend (cache sp, or other state).
   bool clear_pending_exception = true;
   if (thread->has_special_runtime_exit_condition()) {
     thread->handle_special_runtime_exit_condition();
@@ -111,10 +111,8 @@ Thread* ProgrammableUpcallHandler::on_entry(OptimizedEntryBlob::FrameData* conte
   debug_only(thread->inc_java_call_counter());
   thread->set_active_handles(context->new_handles);     // install new handle block and reset Java frame linkage
 
-  assert (thread->thread_state() != _thread_in_native, "cannot set native pc to NULL");
-
   // clear any pending exception in thread (native calls start with no exception pending)
-  if(clear_pending_exception) {
+  if (clear_pending_exception) {
     thread->clear_pending_exception();
   }
 
@@ -137,14 +135,8 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
 
   debug_only(thread->dec_java_call_counter());
 
-  // Old thread-local info. has been restored. We are not back in native code.
+  // Old thread-local info. has been restored. We are now back in native code.
   ThreadStateTransition::transition_from_java(thread, _thread_in_native);
-
-  // State has been restored now make the anchor frame visible for the profiler.
-  // Do this after the transition because this allows us to put an assert
-  // the Java->native transition which checks to see that stack is not walkable
-  // on sparc/ia64 which will catch violations of the reseting of last_Java_frame
-  // invariants (i.e. _flags always cleared on return to Java)
 
   thread->frame_anchor()->copy(&context->jfa);
 
@@ -155,21 +147,21 @@ void ProgrammableUpcallHandler::on_exit(OptimizedEntryBlob::FrameData* context) 
   assert(!thread->has_pending_exception(), "Upcall can not throw an exception");
 
   if (context->should_detach) {
-    detach_thread(thread);
+    detach_current_thread();
   }
 }
 
 void ProgrammableUpcallHandler::attach_thread_and_do_upcall(jobject rec, address buff) {
   bool should_detach = false;
-  Thread* thread = maybe_attach_and_get_thread(&should_detach);
+  JavaThread* thread = maybe_attach_and_get_thread(&should_detach);
 
   {
     MACOS_AARCH64_ONLY(ThreadWXEnable wx(WXWrite, thread));
-    upcall_helper(JavaThread::cast(thread), rec, buff);
+    upcall_helper(thread, rec, buff);
   }
 
   if (should_detach) {
-    detach_thread(thread);
+    detach_current_thread();
   }
 }
 
