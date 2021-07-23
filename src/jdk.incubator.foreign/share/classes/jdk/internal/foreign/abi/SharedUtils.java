@@ -38,6 +38,7 @@ import jdk.incubator.foreign.SequenceLayout;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.CABI;
 import jdk.internal.foreign.MemoryAddressImpl;
@@ -78,6 +79,7 @@ import static jdk.incubator.foreign.CLinker.*;
 public class SharedUtils {
 
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+    private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle MH_ALLOC_BUFFER;
     private static final MethodHandle MH_BASEADDRESS;
@@ -434,6 +436,13 @@ public class SharedUtils {
         return specializedHandle;
     }
 
+    public static void checkExceptions(MethodHandle target) {
+        Class<?>[] exceptions = JLIA.exceptionTypes(target);
+        if (exceptions != null && exceptions.length != 0) {
+            throw new IllegalArgumentException("Target handle may throw exceptions: " + Arrays.toString(exceptions));
+        }
+    }
+
     // lazy init MH_ALLOC and MH_FREE handles
     private static class AllocHolder {
 
@@ -511,34 +520,6 @@ public class SharedUtils {
             case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
             case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
         };
-    }
-
-    public static MethodType convertVaListCarriers(MethodType mt, Class<?> carrier) {
-        Class<?>[] params = new Class<?>[mt.parameterCount()];
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pType = mt.parameterType(i);
-            params[i] = ((pType == VaList.class) ? carrier : pType);
-        }
-        return methodType(mt.returnType(), params);
-    }
-
-    public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i + 1, unboxer); // +1 for leading address
-            }
-        }
-        return handle;
-    }
-
-    public static MethodHandle boxVaLists(MethodHandle handle, MethodHandle boxer) {
-        MethodType type = handle.type();
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i, boxer);
-            }
-        }
-        return handle;
     }
 
     static void checkType(Class<?> actualType, Class<?> expectedType) {

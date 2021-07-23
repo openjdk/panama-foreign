@@ -59,8 +59,8 @@ JavaThread* ProgrammableUpcallHandler::maybe_attach_and_get_thread(bool* should_
     jint result = vm->functions->AttachCurrentThread(vm, (void**) &p_env, nullptr);
     guarantee(result == JNI_OK, "Could not attach thread for upcall. JNI error code: %d", result);
     *should_detach = true;
-    thread = JavaThread::current();
-    assert(!thread->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
+    thread = Thread::current();
+    assert(!JavaThread::cast(thread)->has_last_Java_frame(), "newly-attached thread not expected to have last Java frame");
   } else {
     *should_detach = false;
   }
@@ -187,6 +187,7 @@ ProgrammableUpcallHandler::ProgrammableUpcallHandler() {
 }
 
 void ProgrammableUpcallHandler::handle_uncaught_exception(oop exception) {
+  ResourceMark rm;
   // Based on CATCH macro
   tty->print_cr("Uncaught exception:");
   exception->print();

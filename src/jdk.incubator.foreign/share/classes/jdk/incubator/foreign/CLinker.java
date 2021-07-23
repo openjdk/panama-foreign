@@ -87,7 +87,6 @@ import static jdk.internal.foreign.PlatformLayouts.*;
  *       the platform's address size (see {@link MemoryLayouts#ADDRESS}). For this purpose, the {@link CLinker#C_POINTER} layout
  *       constant can  be used;</li>
  *       <li>If {@code C} is {@code MemorySegment.class}, then {@code L} must be a {@code GroupLayout}</li>
- *       <li>If {@code C} is {@code VaList.class}, then {@code L} must be {@link CLinker#C_VA_LIST}</li>
  *     </ul>
  *     </li>
  * </ul>
@@ -229,7 +228,8 @@ public sealed interface CLinker permits AbstractCLinker {
      * @param function the function descriptor.
      * @param scope the upcall stub scope.
      * @return the native stub segment.
-     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch.
+     * @throws IllegalArgumentException if the target's method type and the function descriptor mismatch, or
+     *         if it is determined that the target method handle can throw an exception.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
      * than the thread owning {@code scope}.
      */
@@ -267,10 +267,6 @@ public sealed interface CLinker permits AbstractCLinker {
      * The {@code T*} native type.
      */
     ValueLayout C_POINTER = pick(SysV.C_POINTER, Win64.C_POINTER, AArch64.C_POINTER);
-    /**
-     * The layout for the {@code va_list} C type
-     */
-    MemoryLayout C_VA_LIST = pick(SysV.C_VA_LIST, Win64.C_VA_LIST, AArch64.C_VA_LIST);
 
     /**
      * Returns a memory layout that is suitable to use as the layout for variadic arguments in a specialized
@@ -431,7 +427,8 @@ public sealed interface CLinker permits AbstractCLinker {
     /**
      * An interface that models a C {@code va_list}.
      * <p>
-     * A va list is a stateful cursor used to iterate over a set of variadic arguments.
+     * A va list is a stateful cursor used to iterate over a set of variadic arguments. A va list can be passed
+     * {@linkplain #address() by reference} e.g. to a downcall method handle.
      * <p>
      * Per the C specification (see C standard 6.5.2.2 Function calls - item 6),
      * arguments to variadic calls are erased by way of 'default argument promotions',
@@ -564,8 +561,7 @@ public sealed interface CLinker permits AbstractCLinker {
         MemoryAddress address();
 
         /**
-         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list},
-         * backed by the {@linkplain ResourceScope#globalScope() global} resource scope.
+         * Constructs a new {@code VaList} instance out of a memory address pointing to an existing C {@code va_list}.
          * <p>
          * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
          * Restricted methods are unsafe, and, if used incorrectly, their use might crash
