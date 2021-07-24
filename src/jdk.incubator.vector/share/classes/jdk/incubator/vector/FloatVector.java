@@ -3143,6 +3143,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     final
     FloatVector fromByteArray0Template(byte[] a, int offset) {
+        Objects.requireNonNull(a);
         FloatSpecies vsp = vspecies();
         return VectorSupport.load(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3161,14 +3162,18 @@ public abstract class FloatVector extends AbstractVector<Float> {
     final
     FloatVector fromByteBuffer0Template(ByteBuffer bb, int offset) {
         FloatSpecies vsp = vspecies();
-        return ScopedMemoryAccess.loadFromByteBuffer(
-                vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
-                bb, offset, vsp,
-                (buf, off, s) -> {
-                    ByteBuffer wb = wrapper(buf, NATIVE_ENDIAN);
-                    return s.ldOp(wb, off,
-                            (wb_, o, i) -> wb_.getFloat(o + i * 4));
-                });
+        if (!bb.isDirect()) {
+          return fromByteArray0(bb.array(), offset);
+        } else {
+          return ScopedMemoryAccess.loadFromByteBuffer(
+                  vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+                  bb, offset, vsp,
+                  (buf, off, s) -> {
+                      ByteBuffer wb = wrapper(buf, NATIVE_ENDIAN);
+                      return s.ldOp(wb, off,
+                              (wb_, o, i) -> wb_.getFloat(o + i * 4));
+                  });
+        }
     }
 
     // Unchecked storing operations in native byte order.
@@ -3195,6 +3200,7 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     final
     void intoByteArray0Template(byte[] a, int offset) {
+        Objects.requireNonNull(a);
         FloatSpecies vsp = vspecies();
         VectorSupport.store(
             vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
@@ -3210,15 +3216,19 @@ public abstract class FloatVector extends AbstractVector<Float> {
     @ForceInline
     final
     void intoByteBuffer0(ByteBuffer bb, int offset) {
-        FloatSpecies vsp = vspecies();
-        ScopedMemoryAccess.storeIntoByteBuffer(
-                vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
-                this, bb, offset,
-                (buf, off, v) -> {
-                    ByteBuffer wb = wrapper(buf, NATIVE_ENDIAN);
-                    v.stOp(wb, off,
-                            (wb_, o, i, e) -> wb_.putFloat(o + i * 4, e));
-                });
+        if (!bb.isDirect()) {
+          intoByteArray0(bb.array(), offset);
+        } else {
+          FloatSpecies vsp = vspecies();
+          ScopedMemoryAccess.storeIntoByteBuffer(
+                  vsp.vectorType(), vsp.elementType(), vsp.laneCount(),
+                  this, bb, offset,
+                  (buf, off, v) -> {
+                      ByteBuffer wb = wrapper(buf, NATIVE_ENDIAN);
+                      v.stOp(wb, off,
+                              (wb_, o, i, e) -> wb_.putFloat(o + i * 4, e));
+                  });
+        }
     }
 
     // End of low-level memory operations.

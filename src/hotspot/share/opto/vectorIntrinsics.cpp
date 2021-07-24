@@ -760,8 +760,19 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   SafePointNode* old_map = clone_map();
 
   Node* addr = make_unsafe_address(base, offset, (is_mask ? T_BOOLEAN : elem_bt), true);
+  
+  // This check is repetition of some checks from inline_unsafe_access(), used to determine if barriers are needed
+  // Not full scope of checks is performed, we check only if access can be mixed
+  const Type *const base_type = gvn().type(base);
+
+  // Is off heap access (true implies can_access_non_heap = true)
+  const bool off_heap_access = TypePtr::NULL_PTR == base_type;
+
   // Can base be NULL? Otherwise, always on-heap access.
-  bool can_access_non_heap = TypePtr::NULL_PTR->higher_equal(gvn().type(base));
+  const bool can_access_non_heap = TypePtr::NULL_PTR->higher_equal(base_type);
+
+  // Not determined access base can and can not be null.
+  const bool mixed_access = !(off_heap_access == can_access_non_heap);
 
   const TypePtr *addr_type = gvn().type(addr)->isa_ptr();
   const TypeAryPtr* arr_type = addr_type->isa_aryptr();
@@ -823,7 +834,7 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
 
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
-  if (can_access_non_heap) {
+  if (mixed_access) {
     insert_mem_bar(Op_MemBarCPUOrder);
   }
 
@@ -870,7 +881,7 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
 
   old_map->destruct(&_gvn);
 
-  if (can_access_non_heap) {
+  if (mixed_access) {
     insert_mem_bar(Op_MemBarCPUOrder);
   }
 
