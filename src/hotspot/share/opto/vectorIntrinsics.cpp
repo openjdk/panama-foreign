@@ -760,7 +760,7 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   SafePointNode* old_map = clone_map();
 
   Node* addr = make_unsafe_address(base, offset, (is_mask ? T_BOOLEAN : elem_bt), true);
-  
+
   // This check is repetition of some checks from inline_unsafe_access(), used to determine if barriers are needed
   // Not full scope of checks is performed, we check only if access can be mixed
   const Type *const base_type = gvn().type(base);

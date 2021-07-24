@@ -406,10 +406,15 @@ public class ScopedMemoryAccess {
                 scope.checkValidState();
             }
 
-            return VectorSupport.load(vmClass, e, length,
-                    BufferAccess.bufferBase(bb), BufferAccess.bufferAddress(bb, offset),
-                    bb, offset, s,
-                    defaultImpl);
+            Object base = BufferAccess.bufferBase(bb);
+            if (base == null) {
+              return VectorSupport.load(vmClass, e, length,
+                      null, BufferAccess.bufferAddress(bb, offset),
+                      bb, offset, s,
+                      defaultImpl);
+            } else {
+              throw new IllegalStateException("Only off-heap segments are supported");
+            }
         } finally {
             Reference.reachabilityFence(scope);
         }
@@ -448,11 +453,17 @@ public class ScopedMemoryAccess {
                 scope.checkValidState();
             }
 
-            VectorSupport.store(vmClass, e, length,
-                    BufferAccess.bufferBase(bb), BufferAccess.bufferAddress(bb, offset),
-                    v,
-                    bb, offset,
-                    defaultImpl);
+            final Object base = BufferAccess.bufferBase(bb);
+
+            if (base == null) {
+              VectorSupport.store(vmClass, e, length,
+                                  null, BufferAccess.bufferAddress(bb, offset),
+                                  v,
+                                  bb, offset,
+                                  defaultImpl);
+            } else {
+              throw new IllegalStateException("Only off-heap segments are supported");
+            }
         } finally {
             Reference.reachabilityFence(scope);
         }
