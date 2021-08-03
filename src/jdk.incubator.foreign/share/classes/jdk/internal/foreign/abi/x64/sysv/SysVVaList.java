@@ -43,7 +43,6 @@ import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
-import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 
 // See https://software.intel.com/sites/default/files/article/402129/mpx-linux64-abi.pdf "3.5.7 Variable Argument Lists"
 public non-sealed class SysVVaList implements VaList {
@@ -238,7 +237,7 @@ public non-sealed class SysVVaList implements VaList {
                     yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
-                    VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
+                    VarHandle reader = layout.varHandle(carrier);
                     try (ResourceScope localScope = ResourceScope.newConfinedScope()) {
                         MemorySegment slice = stackPtr().asSegment(layout.byteSize(), localScope);
                         Object res = reader.get(slice);
@@ -269,7 +268,7 @@ public non-sealed class SysVVaList implements VaList {
                     yield value;
                 }
                 case POINTER, INTEGER -> {
-                    VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                    VarHandle reader = layout.varHandle(carrier);
                     Object res = reader.get(regSaveArea.asSlice(currentGPOffset()));
                     currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
                     yield res;
@@ -407,7 +406,7 @@ public non-sealed class SysVVaList implements VaList {
                         }
                     }
                     case POINTER, INTEGER -> {
-                        VarHandle writer = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                        VarHandle writer = layout.varHandle(carrier);
                         writer.set(reg_save_area.asSlice(currentGPOffset), value);
                         currentGPOffset += GP_SLOT_SIZE;
                     }

@@ -28,8 +28,6 @@ package jdk.internal.foreign;
 import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.internal.access.JavaLangInvokeAccess;
-import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 
 import jdk.incubator.foreign.GroupLayout;
@@ -56,8 +54,6 @@ import java.util.function.UnaryOperator;
  * given an address pointing to a segment associated with the root layout (see {@link #dereferenceHandle(Class)}).
  */
 public class LayoutPath {
-
-    private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
 
     private static final MethodHandle ADD_STRIDE;
     private static final MethodHandle MH_ADD_SCALED_OFFSET;
@@ -165,8 +161,8 @@ public class LayoutPath {
         perms.addFirst(0);
         expectedCoordinates.add(MemorySegment.class);
 
-        VarHandle handle = Utils.fixUpVarHandle(JLI.memoryAccessVarHandle(carrier, true, layout.byteAlignment() - 1,
-                ((ValueLayout)layout).order()));
+        VarHandle handle = Utils.makeMemoryAccessVarHandle(carrier, true, layout.byteAlignment() - 1,
+                ((ValueLayout)layout).order());
 
         for (int i = 0 ; i < strides.length ; i++) {
             expectedCoordinates.add(long.class);
@@ -226,15 +222,13 @@ public class LayoutPath {
         MemoryLayout newLayout = op.apply(layout);
         if (enclosing == null) {
             return newLayout;
-        } else if (enclosing.layout instanceof SequenceLayout) {
-            SequenceLayout seq = (SequenceLayout)enclosing.layout;
+        } else if (enclosing.layout instanceof SequenceLayout seq) {
             if (seq.elementCount().isPresent()) {
                 return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(seq.elementCount().getAsLong(), newLayout)));
             } else {
                 return enclosing.map(l -> dup(l, MemoryLayout.sequenceLayout(newLayout)));
             }
-        } else if (enclosing.layout instanceof GroupLayout) {
-            GroupLayout g = (GroupLayout)enclosing.layout;
+        } else if (enclosing.layout instanceof GroupLayout g) {
             List<MemoryLayout> newElements = new ArrayList<>(g.memberLayouts());
             //if we selected a layout in a group we must have a valid index
             newElements.set((int)elementIndex, newLayout);

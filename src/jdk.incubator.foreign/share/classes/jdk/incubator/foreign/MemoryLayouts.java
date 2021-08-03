@@ -114,6 +114,11 @@ public final class MemoryLayouts {
     public static final ValueLayout JAVA_BYTE = MemoryLayout.valueLayout(8, ByteOrder.nativeOrder());
 
     /**
+     * A value layout constant whose size is the same as that of a Java {@code boolean}, and byte order set to {@link ByteOrder#nativeOrder()}.
+     */
+    public static final ValueLayout JAVA_BOOLEAN = MemoryLayout.valueLayout(8, ByteOrder.nativeOrder());
+
+    /**
      * A value layout constant whose size is the same as that of a Java {@code char}, and byte order set to {@link ByteOrder#nativeOrder()}.
      */
     public static final ValueLayout JAVA_CHAR = MemoryLayout.valueLayout(16, ByteOrder.nativeOrder());

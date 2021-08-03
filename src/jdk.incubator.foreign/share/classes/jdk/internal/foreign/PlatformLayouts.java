@@ -50,6 +50,11 @@ public class PlatformLayouts {
         };
     }
 
+    private static ValueLayout ofBool(ByteOrder order, long bitSize) {
+        return MemoryLayout.valueLayout(bitSize, order)
+                .withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.BOOL);
+    }
+
     private static ValueLayout ofChar(ByteOrder order, long bitSize) {
         return MemoryLayout.valueLayout(bitSize, order)
                 .withAttribute(CLinker.TypeKind.ATTR_NAME, CLinker.TypeKind.CHAR);
@@ -102,6 +107,11 @@ public class PlatformLayouts {
         private SysV() {
             //just the one
         }
+
+        /**
+         * The {@code bool} native type.
+         */
+        public static final ValueLayout C_BOOL = ofBool(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code char} native type.
@@ -163,6 +173,11 @@ public class PlatformLayouts {
          * attribute value must be a boolean.
          */
         public static final String VARARGS_ATTRIBUTE_NAME = "abi/windows/varargs";
+
+        /**
+         * The {@code bool} native type.
+         */
+        public static final ValueLayout C_BOOL = ofBool(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code char} native type.
@@ -227,6 +242,11 @@ public class PlatformLayouts {
         private AArch64() {
             //just the one
         }
+
+        /**
+         * The {@code bool} native type.
+         */
+        public static final ValueLayout C_BOOL = ofBool(LITTLE_ENDIAN, 8);
 
         /**
          * The {@code char} native type.

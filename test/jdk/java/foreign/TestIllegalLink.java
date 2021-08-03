@@ -77,11 +77,6 @@ public class TestIllegalLink {
                 "Expected a ValueLayout"
             },
             {
-                MethodType.methodType(void.class, boolean.class),
-                FunctionDescriptor.ofVoid(MemoryLayouts.BITS_8_LE),
-                "Unsupported carrier"
-            },
-            {
                 MethodType.methodType(void.class, int.class),
                 FunctionDescriptor.ofVoid(MemoryLayouts.BITS_64_LE),
                 "Carrier size mismatch"
