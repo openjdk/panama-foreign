@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import jdk.incubator.foreign.*;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.misc.VM;
 import sun.invoke.util.Wrapper;
@@ -35,6 +36,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -49,6 +51,8 @@ public final class Utils {
         = Boolean.parseBoolean(privilegedGetProperty("jdk.internal.foreign.SHOULD_ADAPT_HANDLES", "true"));
 
     private static final MethodHandle SEGMENT_FILTER;
+    private static final MethodHandle BYTE_TO_BOOL;
+    private static final MethodHandle BOOL_TO_BYTE;
     public static final MethodHandle MH_bitsToBytesOrThrowForOffset;
 
     public static final Supplier<RuntimeException> bitsToBytesThrowOffset
@@ -59,6 +63,10 @@ public final class Utils {
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             SEGMENT_FILTER = lookup.findStatic(Utils.class, "filterSegment",
                     MethodType.methodType(MemorySegmentProxy.class, MemorySegment.class));
+            BYTE_TO_BOOL = lookup.findStatic(Utils.class, "byteToBoolean",
+                    MethodType.methodType(boolean.class, byte.class));
+            BOOL_TO_BYTE = lookup.findStatic(Utils.class, "booleanToByte",
+                    MethodType.methodType(byte.class, boolean.class));
             MH_bitsToBytesOrThrowForOffset = MethodHandles.insertArguments(
                 lookup.findStatic(Utils.class, "bitsToBytesOrThrow",
                     MethodType.methodType(long.class, long.class, Supplier.class)),
@@ -91,12 +99,32 @@ public final class Utils {
         }
     }
 
-    public static VarHandle fixUpVarHandle(VarHandle handle) {
+    public static VarHandle makeMemoryAccessVarHandle(Class<?> carrier, boolean skipAlignmentCheck, long alignmentMask, ByteOrder order) {
+        Class<?> baseCarrier = carrier;
+        if (carrier == MemoryAddress.class) {
+            baseCarrier = switch ((int)MemoryLayouts.ADDRESS.byteSize()) {
+                case 8 -> long.class;
+                case 4 -> int.class;
+                default -> throw new UnsupportedOperationException("Unsupported address layout");
+            };
+        } else if (carrier == boolean.class) {
+            baseCarrier = byte.class;
+        }
+
+        VarHandle handle = SharedSecrets.getJavaLangInvokeAccess().memoryAccessVarHandle(baseCarrier, skipAlignmentCheck, alignmentMask, order);
+
         // This adaptation is required, otherwise the memory access var handle will have type MemorySegmentProxy,
         // and not MemorySegment (which the user expects), which causes performance issues with asType() adaptations.
-        return SHOULD_ADAPT_HANDLES
+        handle = SHOULD_ADAPT_HANDLES
             ? MemoryHandles.filterCoordinates(handle, 0, SEGMENT_FILTER)
             : handle;
+        if (carrier == boolean.class) {
+            return MemoryHandles.filterValue(handle, BOOL_TO_BYTE, BYTE_TO_BOOL);
+        } else if (carrier == MemoryAddress.class) {
+            return MemoryHandles.asAddressVarHandle(handle);
+        } else {
+            return handle;
+        }
     }
 
     private static MemorySegmentProxy filterSegment(MemorySegment segment) {
@@ -105,14 +133,20 @@ public final class Utils {
 
     public static void checkPrimitiveCarrierCompat(Class<?> carrier, MemoryLayout layout) {
         checkLayoutType(layout, ValueLayout.class);
-        if (!isValidPrimitiveCarrier(carrier))
+        if (!isValidPrimitiveCarrier(carrier) && carrier != MemoryAddress.class)
             throw new IllegalArgumentException("Unsupported carrier: " + carrier);
-        if (Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize())
+        if (carrier == MemoryAddress.class && layout.byteSize() != MemoryLayouts.ADDRESS.byteSize()) {
+            throw new IllegalArgumentException("Address size mismatch: " + MemoryLayouts.ADDRESS.byteSize() + " != " + layout.bitSize());
+        }
+        if (carrier.isPrimitive() && Wrapper.forPrimitiveType(carrier).bitWidth() != layout.bitSize() &&
+                carrier != boolean.class && layout.byteSize() != 1) {
             throw new IllegalArgumentException("Carrier size mismatch: " + carrier + " != " + layout);
+        }
     }
 
     public static boolean isValidPrimitiveCarrier(Class<?> carrier) {
-        return carrier == byte.class
+        return carrier == boolean.class
+            || carrier == byte.class
             || carrier == short.class
             || carrier == char.class
             || carrier == int.class
@@ -124,5 +158,13 @@ public final class Utils {
     public static void checkLayoutType(MemoryLayout layout, Class<? extends MemoryLayout> layoutType) {
         if (!layoutType.isInstance(layout))
             throw new IllegalArgumentException("Expected a " + layoutType.getSimpleName() + ": " + layout);
+    }
+
+    private static boolean byteToBoolean(byte b) {
+        return b != 0;
+    }
+
+    private static byte booleanToByte(boolean b) {
+        return b ? (byte)1 : (byte)0;
     }
 }

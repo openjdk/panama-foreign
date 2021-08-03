@@ -109,6 +109,10 @@ public class TestMemoryAccessStatics {
                         MemoryAccess::getByte, MemoryAccess::setByte,
                         (bb) -> bb.get(0), (bb, v) -> bb.put(0, v))
                 },
+                {"bool", new Accessor<>(false,
+                        MemoryAccess::getBoolean, MemoryAccess::setBoolean,
+                        (bb) -> bb.get(0) != 0, (bb, v) -> bb.put(0, v ? (byte)1 : (byte)0))
+                },
                 {"char", new Accessor<>((char) 42,
                         MemoryAccess::getChar, MemoryAccess::setChar,
                         (bb) -> bb.order(NE).getChar(0), (bb, v) -> bb.order(NE).putChar(0, v))
@@ -177,6 +181,11 @@ public class TestMemoryAccessStatics {
                 {"byte/offset", new Accessor<>((byte) 42,
                         s -> MemoryAccess.getByteAtOffset(s, 4), (s, x) -> MemoryAccess.setByteAtOffset(s, 4, x),
                         (bb) -> bb.get(4), (bb, v) -> bb.put(4, v))
+                },
+                // bool, offset
+                {"bool", new Accessor<>(false,
+                        s -> MemoryAccess.getBooleanAtOffset(s, 4), (s, x) -> MemoryAccess.setBooleanAtOffset(s, 4, x),
+                        (bb) -> bb.get(4) != 0, (bb, v) -> bb.put(4, v ? (byte)1 : (byte)0))
                 },
                 // char, offset
                 {"char/offset", new Accessor<>((char) 42,

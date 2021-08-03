@@ -498,12 +498,6 @@ public class SharedUtils {
         };
     }
 
-    public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
-        return carrier == MemoryAddress.class
-            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
-            : layout.varHandle(carrier);
-    }
-
     public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
@@ -547,9 +541,7 @@ public class SharedUtils {
         }
 
         public VarHandle varHandle() {
-            return carrier == MemoryAddress.class
-                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
-                : layout.varHandle(carrier);
+            return layout.varHandle(carrier);
         }
     }
 
@@ -632,6 +624,8 @@ public class SharedUtils {
             MemoryAccess.setFloat(ptr, (float) o);
         } else if (type == double.class) {
             MemoryAccess.setDouble(ptr, (double) o);
+        } else if (type == boolean.class) {
+            MemoryAccess.setBoolean(ptr, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -652,6 +646,8 @@ public class SharedUtils {
             MemoryAccess.setFloat(ptr, (float) o);
         } else if (type == double.class) {
             MemoryAccess.setDouble(ptr, (double) o);
+        } else if (type == boolean.class) {
+            MemoryAccess.setBoolean(ptr, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -672,6 +668,8 @@ public class SharedUtils {
             return MemoryAccess.getFloat(ptr);
         } else if (type == double.class) {
             return MemoryAccess.getDouble(ptr);
+        } else if (type == boolean.class) {
+            return MemoryAccess.getBoolean(ptr);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
