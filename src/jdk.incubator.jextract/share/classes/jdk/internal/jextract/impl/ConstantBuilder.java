@@ -369,17 +369,7 @@ public class ConstantBuilder extends ClassSourceBuilder {
         } else {
             CLinker.TypeKind kind = (CLinker.TypeKind) vl.attribute(CLinker.TypeKind.ATTR_NAME).orElseThrow(
                     () -> new IllegalStateException("Unexpected value layout: could not determine ABI class"));
-            return switch (kind) {
-                case BOOL -> "C_BOOL";
-                case CHAR -> "C_CHAR";
-                case SHORT -> "C_SHORT";
-                case INT -> "C_INT";
-                case LONG -> "C_LONG";
-                case LONG_LONG -> "C_LONG_LONG";
-                case FLOAT -> "C_FLOAT";
-                case DOUBLE -> "C_DOUBLE";
-                case POINTER -> "C_POINTER";
-            };
+            return "C_" + kind.name();
         }
     }
 
