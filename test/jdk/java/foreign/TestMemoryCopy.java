@@ -182,6 +182,30 @@ public class TestMemoryCopy {
     }
 
     @Test(dataProvider = "copyModesAndHelpers")
+    public void testCopyNegativeLengths(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
+        int bytesPerElement = (int)helper.elementLayout.byteSize();
+        MemorySegment base = srcSegment(SEG_LENGTH_BYTES);
+        //CopyFrom
+        Object srcArr = helper.toArray(base);
+        MemorySegment dstSeg = helper.fromArray(srcArr);
+        try {
+            helper.copy(srcArr, 0, dstSeg, -1, -SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+        //CopyTo
+        Object dstArr = helper.toArray(base);
+        MemorySegment srcSeg = helper.fromArray(dstArr).asReadOnly();
+        try {
+            helper.copy(srcSeg, -1, dstArr, 0, -SEG_LENGTH_BYTES / bytesPerElement, ByteOrder.nativeOrder());
+            fail();
+        } catch (IndexOutOfBoundsException ex) {
+            //ok
+        }
+    }
+
+    @Test(dataProvider = "copyModesAndHelpers")
     public void testCopyOobIndices(CopyMode mode, CopyHelper<Object> helper, String helperDebugString) {
         int bytesPerElement = (int)helper.elementLayout.byteSize();
         MemorySegment base = srcSegment(SEG_LENGTH_BYTES);

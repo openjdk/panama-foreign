@@ -848,14 +848,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param srcSegment the source segment.
      * @param dstSegment the destination segment.
      * @param bytes the number of bytes to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
-     * with the alignment constraints in the source element layout, or if the destination offset is incompatible with the
-     * alignment constraints in the destination element layout.
      * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
      * with the destination segment have been already closed, or if access occurs from a thread other than the thread
      * owning either scopes.
      * @throws IndexOutOfBoundsException if {@code bytes > srcSegment.byteSize()} or if
-     * {@code bytes > dstSegment.byteSize()}.
+     * {@code bytes > dstSegment.byteSize()}, or if {@code bytes <= 0}.
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
@@ -886,14 +883,12 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param dstSegment the destination segment.
      * @param dstOffset the starting offset, in bytes, of the destination segment.
      * @param bytes the number of bytes to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
-     * with the alignment constraints in the source element layout, or if the destination offset is incompatible with the
-     * alignment constraints in the destination element layout.
      * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
      * with the destination segment have been already closed, or if access occurs from a thread other than the thread
      * owning either scopes.
      * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
-     * {@code dstOffset + bytes > dstSegment.byteSize()}.
+     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
+     * or {@code bytes} are {@code < 0}.
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
@@ -935,7 +930,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * owning either scopes.
      * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
      * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
-     * of the element layouts.
+     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
      * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
      */
     @ForceInline
@@ -957,9 +952,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
             throw new IllegalArgumentException("Target segment incompatible with alignment constraints");
         }
         long size = elementCount * srcElementLayout.byteSize();
-        if (size % srcElementLayout.byteSize() != 0) {
-            throw new IllegalArgumentException("Segment size is not a multiple of layout size");
-        }
         srcImpl.checkAccess(srcOffset, size, true);
         dstImpl.checkAccess(dstOffset, size, false);
         if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {

@@ -62,7 +62,6 @@ import jdk.internal.vm.annotation.ForceInline;
 public final class MemoryCopy {
 
     static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
-    private static final Unsafe unsafe = Unsafe.getUnsafe();
 
     private final static ByteOrder NON_NATIVE_ORDER = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
             ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN;
