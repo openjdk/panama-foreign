@@ -1381,6 +1381,7 @@ class JavaThread: public Thread {
   // Misc. operations
   const char* name() const;
   const char* type_name() const { return "JavaThread"; }
+  static const char* name_for(oop thread_obj);
 
   void print_on(outputStream* st, bool print_extended_info) const;
   void print_on(outputStream* st) const { print_on(st, false); }
@@ -1427,6 +1428,9 @@ class JavaThread: public Thread {
   static JavaThread* current() {
     return JavaThread::cast(Thread::current());
   }
+
+  // Returns the current thread as a JavaThread, or NULL if not attached
+  static inline JavaThread* current_or_null();
 
   // Casts
   static JavaThread* cast(Thread* t) {
@@ -1611,6 +1615,11 @@ public:
   // resource allocation failure.
   static void vm_exit_on_osthread_failure(JavaThread* thread);
 };
+
+inline JavaThread* JavaThread::current_or_null() {
+  Thread* current = Thread::current_or_null();
+  return current != nullptr ? JavaThread::cast(current) : nullptr;
+}
 
 // The active thread queue. It also keeps track of the current used
 // thread priorities.

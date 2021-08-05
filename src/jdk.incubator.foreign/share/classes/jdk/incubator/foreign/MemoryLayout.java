@@ -482,8 +482,8 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints,
      * or if one of the layouts traversed by the layout path has unspecified size.
-     * @throws IllegalArgumentException if the carrier does not represent a primitive type, if the carrier is {@code void},
-     * {@code boolean}, or if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}),
+     * @throws IllegalArgumentException if the carrier is {@code void}, or a non-primitive type other than {@link MemoryAddress},
+     * or if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}),
      * or if the selected value layout has a size that that does not match that of the specified carrier type.
      */
     default VarHandle varHandle(Class<?> carrier, PathElement... elements) {

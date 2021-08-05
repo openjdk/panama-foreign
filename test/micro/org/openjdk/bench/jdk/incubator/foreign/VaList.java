@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_INT;
 import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
-import static jdk.incubator.foreign.CLinker.C_VA_LIST;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static jdk.incubator.foreign.CLinker.asVarArg;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -68,7 +68,7 @@ public class VaList {
                 FunctionDescriptor.ofVoid(C_INT, asVarArg(C_INT), asVarArg(C_DOUBLE), asVarArg(C_LONG_LONG)));
         MH_vaList = linker.downcallHandle(lookup.lookup("vaList").get(),
                 MethodType.methodType(void.class, int.class, CLinker.VaList.class),
-                FunctionDescriptor.ofVoid(C_INT, C_VA_LIST));
+                FunctionDescriptor.ofVoid(C_INT, C_POINTER));
     }
 
     @Benchmark
@@ -85,7 +85,7 @@ public class VaList {
                             .vargFromDouble(C_DOUBLE, 2D)
                             .vargFromLong(C_LONG_LONG, 3L), scope);
             MH_vaList.invokeExact(3,
-                    vaList);
+                    vaList.address());
         }
     }
 }

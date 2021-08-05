@@ -344,7 +344,7 @@ public abstract class Binding {
     public abstract MethodHandle specialize(MethodHandle specializedHandle, int insertPos, int allocatorPos);
 
     private static void checkType(Class<?> type) {
-        if (!type.isPrimitive() || type == void.class || type == boolean.class)
+        if (!type.isPrimitive() || type == void.class)
             throw new IllegalArgumentException("Illegal type: " + type);
     }
 

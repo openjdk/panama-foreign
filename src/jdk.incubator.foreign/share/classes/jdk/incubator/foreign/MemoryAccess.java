@@ -66,6 +66,7 @@ public final class MemoryAccess {
     }
 
     private static final VarHandle byte_handle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
+    private static final VarHandle bool_handle = MemoryHandles.varHandle(boolean.class, ByteOrder.nativeOrder());
     private static final VarHandle char_LE_handle = unalignedHandle(MemoryLayouts.BITS_16_LE, char.class);
     private static final VarHandle short_LE_handle = unalignedHandle(MemoryLayouts.BITS_16_LE, short.class);
     private static final VarHandle int_LE_handle = unalignedHandle(MemoryLayouts.BITS_32_LE, int.class);
@@ -121,6 +122,32 @@ public final class MemoryAccess {
     public static void setByteAtOffset(MemorySegment segment, long offset, byte value) {
         Objects.requireNonNull(segment);
         byte_handle.set(segment, offset, value);
+    }
+
+    /**
+     * Reads a boolean from given segment and offset.
+     *
+     * @param segment the segment to be dereferenced.
+     * @param offset offset in bytes (relative to {@code segment}). The final address of this read operation can be expressed as {@code segment.address().addOffset(offset)}.
+     * @return a boolean value read from {@code segment}.
+     */
+    @ForceInline
+    public static boolean getBooleanAtOffset(MemorySegment segment, long offset) {
+        Objects.requireNonNull(segment);
+        return (boolean)bool_handle.get(segment, offset);
+    }
+
+    /**
+     * Writes a boolean at given segment and offset.
+     *
+     * @param segment the segment to be dereferenced.
+     * @param offset offset in bytes (relative to {@code segment}). The final address of this read operation can be expressed as {@code segment.address().addOffset(offset)}.
+     * @param value the boolean value to be written.
+     */
+    @ForceInline
+    public static void setBooleanAtOffset(MemorySegment segment, long offset, boolean value) {
+        Objects.requireNonNull(segment);
+        bool_handle.set(segment, offset, value);
     }
 
     /**
@@ -621,6 +648,37 @@ public final class MemoryAccess {
     @ForceInline
     public static void setByte(MemorySegment segment, byte value) {
         setByteAtOffset(segment, 0L, value);
+    }
+
+    /**
+     * Reads a boolean from given segment.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    boolean value = getBooleanAtOffset(segment, 0L);
+     * }</pre></blockquote>
+     *
+     * @param segment the segment to be dereferenced.
+     * @return a boolean value read from {@code segment}.
+     */
+    @ForceInline
+    public static boolean getBoolean(MemorySegment segment) {
+        return getBooleanAtOffset(segment, 0L);
+    }
+
+    /**
+     * Writes a boolean at given segment.
+     * <p>
+     * This is equivalent to the following code:
+     * <blockquote><pre>{@code
+    setBooleanAtOffset(segment, 0L, value);
+     * }</pre></blockquote>
+     * @param segment the segment to be dereferenced.
+     * @param value the boolean value to be written.
+     */
+    @ForceInline
+    public static void setBoolean(MemorySegment segment, boolean value) {
+        setBooleanAtOffset(segment, 0L, value);
     }
 
     /**

@@ -44,7 +44,6 @@ import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.internal.foreign.abi.SharedUtils.SimpleVaArg;
 import static jdk.internal.foreign.abi.SharedUtils.THROWING_ALLOCATOR;
 import static jdk.internal.foreign.abi.SharedUtils.checkCompatibleType;
-import static jdk.internal.foreign.abi.SharedUtils.vhPrimitiveOrAddress;
 import static jdk.internal.foreign.abi.aarch64.CallArranger.MAX_REGISTER_ARGUMENTS;
 
 /**
@@ -265,7 +264,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     yield seg;
                 }
                 case POINTER, INTEGER, FLOAT -> {
-                    VarHandle reader = vhPrimitiveOrAddress(carrier, layout);
+                    VarHandle reader = layout.varHandle(carrier);
                     MemorySegment slice = stackPtr().asSegment(layout.byteSize(), scope());
                     Object res = reader.get(slice);
                     postAlignStack(layout);
@@ -305,8 +304,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                 }
                 case STRUCT_REFERENCE -> {
                     // Struct is passed indirectly via a pointer in an integer register.
-                    VarHandle ptrReader
-                        = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class, AArch64.C_POINTER);
+                    VarHandle ptrReader = AArch64.C_POINTER.varHandle(MemoryAddress.class);
                     MemoryAddress ptr = (MemoryAddress) ptrReader.get(
                         gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
@@ -317,7 +315,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     yield seg;
                 }
                 case POINTER, INTEGER -> {
-                    VarHandle reader = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                    VarHandle reader = layout.varHandle(carrier);
                     Object res = reader.get(gpRegsArea.asSlice(currentGPOffset()));
                     consumeGPSlots(1);
                     yield res;
@@ -482,15 +480,13 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     case STRUCT_REFERENCE -> {
                         // Struct is passed indirectly via a pointer in an integer register.
                         MemorySegment valueSegment = (MemorySegment) value;
-                        VarHandle writer
-                            = SharedUtils.vhPrimitiveOrAddress(MemoryAddress.class,
-                                                               AArch64.C_POINTER);
+                        VarHandle writer = AArch64.C_POINTER.varHandle(MemoryAddress.class);
                         writer.set(gpRegs.asSlice(currentGPOffset),
                                    valueSegment.address());
                         currentGPOffset += GP_SLOT_SIZE;
                     }
                     case POINTER, INTEGER -> {
-                        VarHandle writer = SharedUtils.vhPrimitiveOrAddress(carrier, layout);
+                        VarHandle writer = layout.varHandle(carrier);
                         writer.set(gpRegs.asSlice(currentGPOffset), value);
                         currentGPOffset += GP_SLOT_SIZE;
                     }

@@ -497,12 +497,6 @@ public class SharedUtils {
         };
     }
 
-    public static VarHandle vhPrimitiveOrAddress(Class<?> carrier, MemoryLayout layout) {
-        return carrier == MemoryAddress.class
-            ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
-            : layout.varHandle(carrier);
-    }
-
     public static VaList newVaListOfAddress(MemoryAddress ma, ResourceScope scope) {
         return switch (CABI.current()) {
             case Win64 -> Windowsx64Linker.newVaListOfAddress(ma, scope);
@@ -519,34 +513,6 @@ public class SharedUtils {
             case LinuxAArch64 -> LinuxAArch64Linker.emptyVaList();
             case MacOsAArch64 -> MacOsAArch64Linker.emptyVaList();
         };
-    }
-
-    public static MethodType convertVaListCarriers(MethodType mt, Class<?> carrier) {
-        Class<?>[] params = new Class<?>[mt.parameterCount()];
-        for (int i = 0; i < params.length; i++) {
-            Class<?> pType = mt.parameterType(i);
-            params[i] = ((pType == VaList.class) ? carrier : pType);
-        }
-        return methodType(mt.returnType(), params);
-    }
-
-    public static MethodHandle unboxVaLists(MethodType type, MethodHandle handle, MethodHandle unboxer) {
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i + 1, unboxer); // +1 for leading address
-            }
-        }
-        return handle;
-    }
-
-    public static MethodHandle boxVaLists(MethodHandle handle, MethodHandle boxer) {
-        MethodType type = handle.type();
-        for (int i = 0; i < type.parameterCount(); i++) {
-            if (type.parameterType(i) == VaList.class) {
-               handle = filterArguments(handle, i, boxer);
-            }
-        }
-        return handle;
     }
 
     static void checkType(Class<?> actualType, Class<?> expectedType) {
@@ -574,9 +540,7 @@ public class SharedUtils {
         }
 
         public VarHandle varHandle() {
-            return carrier == MemoryAddress.class
-                ? MemoryHandles.asAddressVarHandle(layout.varHandle(primitiveCarrierForSize(layout.byteSize(), false)))
-                : layout.varHandle(carrier);
+            return layout.varHandle(carrier);
         }
     }
 
@@ -659,6 +623,8 @@ public class SharedUtils {
             MemoryAccess.setFloat(ptr, (float) o);
         } else if (type == double.class) {
             MemoryAccess.setDouble(ptr, (double) o);
+        } else if (type == boolean.class) {
+            MemoryAccess.setBoolean(ptr, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -679,6 +645,8 @@ public class SharedUtils {
             MemoryAccess.setFloat(ptr, (float) o);
         } else if (type == double.class) {
             MemoryAccess.setDouble(ptr, (double) o);
+        } else if (type == boolean.class) {
+            MemoryAccess.setBoolean(ptr, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -699,6 +667,8 @@ public class SharedUtils {
             return MemoryAccess.getFloat(ptr);
         } else if (type == double.class) {
             return MemoryAccess.getDouble(ptr);
+        } else if (type == boolean.class) {
+            return MemoryAccess.getBoolean(ptr);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
