@@ -368,7 +368,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * Calling this method is equivalent to the following code:
      * <blockquote><pre>{@code
-    MemorySegment.copy(src, 0, this, 0, src.byteSize());
+    MemorySegment.copy(src, this, src.byteSize());
      * }</pre></blockquote>
      * @param src the source segment.
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
