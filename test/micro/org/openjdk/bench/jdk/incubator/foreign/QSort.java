@@ -27,7 +27,7 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -125,7 +125,7 @@ public class QSort {
     }
 
     private static int getIntAbsolute(MemoryAddress addr) {
-        return MemorySegments.getInt(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
+        return MemoryAccess.readInt(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
     }
 
     static int panama_upcall_compar(MemoryAddress e0, MemoryAddress e1) {

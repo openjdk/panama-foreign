@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -150,7 +150,7 @@ public class TestHandshake {
         void doAccess() {
             int sum = 0;
             for (int i = 0; i < segment.byteSize(); i++) {
-                sum += MemorySegments.getByte(segment, i);
+                sum += MemoryAccess.readByte(segment, i);
             }
         }
     }
@@ -193,7 +193,7 @@ public class TestHandshake {
             super(id, segment);
             this.copy = MemorySegment.allocateNative(SEGMENT_SIZE, 1, segment.scope());
             copy.copyFrom(segment);
-            MemorySegments.setByte(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
+            MemoryAccess.writeByte(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
 
         @Override

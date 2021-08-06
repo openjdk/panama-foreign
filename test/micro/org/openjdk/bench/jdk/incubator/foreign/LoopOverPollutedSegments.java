@@ -24,7 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -79,14 +79,14 @@ public class LoopOverPollutedSegments {
         for (int rep = 0 ; rep < 5 ; rep++) {
             for (int i = 0; i < ELEM_SIZE; i++) {
                 unsafe.putInt(arr, Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * 4), i);
-                MemorySegments.setInt(nativeSegment, i * CARRIER_SIZE, i);
-                MemorySegments.setFloat(nativeSegment, i * CARRIER_SIZE, i);
+                MemoryAccess.writeInt(nativeSegment, i * CARRIER_SIZE, i);
+                MemoryAccess.writeFloat(nativeSegment, i * CARRIER_SIZE, i);
                 intHandle.set(nativeSegment, (long)i, i);
-                MemorySegments.setInt(heapSegmentBytes, i * CARRIER_SIZE, i);
-                MemorySegments.setFloat(heapSegmentBytes, i * CARRIER_SIZE, i);
+                MemoryAccess.writeInt(heapSegmentBytes, i * CARRIER_SIZE, i);
+                MemoryAccess.writeFloat(heapSegmentBytes, i * CARRIER_SIZE, i);
                 intHandle.set(heapSegmentBytes, (long)i, i);
-                MemorySegments.setInt(heapSegmentFloats, i * CARRIER_SIZE, i);
-                MemorySegments.setFloat(heapSegmentFloats, i * CARRIER_SIZE, i);
+                MemoryAccess.writeInt(heapSegmentFloats, i * CARRIER_SIZE, i);
+                MemoryAccess.writeFloat(heapSegmentFloats, i * CARRIER_SIZE, i);
                 intHandle.set(heapSegmentFloats, (long)i, i);
             }
         }
@@ -116,8 +116,8 @@ public class LoopOverPollutedSegments {
     public int native_segment_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemorySegments.setInt(nativeSegment, k * CARRIER_SIZE, k + 1);
-            int v = MemorySegments.getInt(nativeSegment, k * CARRIER_SIZE);
+            MemoryAccess.writeInt(nativeSegment, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.readInt(nativeSegment, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;
@@ -138,8 +138,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_ints_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemorySegments.setInt(heapSegmentBytes, k * CARRIER_SIZE, k + 1);
-            int v = MemorySegments.getInt(heapSegmentBytes, k * CARRIER_SIZE);
+            MemoryAccess.writeInt(heapSegmentBytes, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.readInt(heapSegmentBytes, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;
@@ -160,8 +160,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_floats_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemorySegments.setInt(heapSegmentFloats, k * CARRIER_SIZE, k + 1);
-            int v = MemorySegments.getInt(heapSegmentFloats, k * CARRIER_SIZE);
+            MemoryAccess.writeInt(heapSegmentFloats, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.readInt(heapSegmentFloats, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;

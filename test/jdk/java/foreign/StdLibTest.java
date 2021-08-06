@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -48,7 +47,7 @@ import java.util.stream.Stream;
 
 import jdk.incubator.foreign.*;
 
-import static jdk.incubator.foreign.MemorySegments.*;
+import static jdk.incubator.foreign.MemoryAccess.*;
 
 import org.testng.annotations.*;
 
@@ -213,9 +212,9 @@ public class StdLibTest {
                 MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
-                    setByte(buf, i, (byte)chars[(int)i]);
+                    writeByte(buf, i, (byte)chars[(int)i]);
                 }
-                setByte(buf, chars.length, (byte)'\0');
+                writeByte(buf, chars.length, (byte)'\0');
                 return toJavaString(((MemoryAddress)strcat.invokeExact(buf.address(), other.address())));
             }
         }
@@ -245,7 +244,7 @@ public class StdLibTest {
         Tm gmtime(long arg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment time = MemorySegment.allocateNative(8, scope);
-                setLong(time, 0, arg);
+                writeLong(time, 0, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
             }
         }
@@ -262,31 +261,31 @@ public class StdLibTest {
             }
 
             int sec() {
-                return getInt(base, 0);
+                return readInt(base, 0);
             }
             int min() {
-                return getInt(base, 4);
+                return readInt(base, 4);
             }
             int hour() {
-                return getInt(base, 8);
+                return readInt(base, 8);
             }
             int mday() {
-                return getInt(base, 12);
+                return readInt(base, 12);
             }
             int mon() {
-                return getInt(base, 16);
+                return readInt(base, 16);
             }
             int year() {
-                return getInt(base, 20);
+                return readInt(base, 20);
             }
             int wday() {
-                return getInt(base, 24);
+                return readInt(base, 24);
             }
             int yday() {
-                return getInt(base, 28);
+                return readInt(base, 28);
             }
             boolean isdst() {
-                byte b = getByte(base, 32);
+                byte b = readByte(base, 32);
                 return b != 0;
             }
         }
@@ -308,8 +307,8 @@ public class StdLibTest {
         }
 
         static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
-            return getInt(base, addr1.segmentOffset(base)) -
-                   getInt(base, addr2.segmentOffset(base));
+            return readInt(base, addr1.segmentOffset(base)) -
+                   readInt(base, addr2.segmentOffset(base));
         }
 
         int rand() throws Throwable {

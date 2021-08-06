@@ -93,7 +93,7 @@ public class TestNulls {
             FunctionDescriptor.class,
             SegmentAllocator.class,
             ResourceScope.class,
-            MemorySegments.class
+            MemoryAccess.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(

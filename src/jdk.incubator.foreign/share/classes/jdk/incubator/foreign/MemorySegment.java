@@ -927,11 +927,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
         srcImpl.checkAccess(srcOffset, size, true);
         dstImpl.checkAccess(dstOffset, size, false);
         if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            MemorySegments.scopedMemoryAccess.copyMemory(srcImpl.scope(), dstImpl.scope(),
+            MemoryAccess.scopedMemoryAccess.copyMemory(srcImpl.scope(), dstImpl.scope(),
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
         } else {
-            MemorySegments.scopedMemoryAccess.copySwapMemory(srcImpl.scope(), dstImpl.scope(),
+            MemoryAccess.scopedMemoryAccess.copySwapMemory(srcImpl.scope(), dstImpl.scope(),
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
         }

@@ -30,13 +30,10 @@ import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
@@ -107,81 +104,81 @@ public class TestMemoryAccessStatics {
 
                 // byte, offset
                 {"byte/offset", new Accessor<>((byte) 42,
-                        s -> MemorySegments.getByte(s, 4), (s, x) -> MemorySegments.setByte(s, 4, x),
+                        s -> MemoryAccess.readByte(s, 4), (s, x) -> MemoryAccess.writeByte(s, 4, x),
                         (bb) -> bb.get(4), (bb, v) -> bb.put(4, v))
                 },
                 // bool, offset
                 {"bool", new Accessor<>(false,
-                        s -> MemorySegments.getBoolean(s, 4), (s, x) -> MemorySegments.setBoolean(s, 4, x),
+                        s -> MemoryAccess.readBoolean(s, 4), (s, x) -> MemoryAccess.writeBoolean(s, 4, x),
                         (bb) -> bb.get(4) != 0, (bb, v) -> bb.put(4, v ? (byte)1 : (byte)0))
                 },
                 // char, offset
                 {"char/offset", new Accessor<>((char) 42,
-                        s -> MemorySegments.getChar(s, 4), (s, x) -> MemorySegments.setChar(s, 4, x),
+                        s -> MemoryAccess.readChar(s, 4), (s, x) -> MemoryAccess.writeChar(s, 4, x),
                         (bb) -> bb.order(NE).getChar(4), (bb, v) -> bb.order(NE).putChar(4, v))
                 },
                 {"char/offset/LE", new Accessor<>((char) 42,
-                        s -> MemorySegments.getChar(s, 4, LE), (s, x) -> MemorySegments.setChar(s, 4, LE, x),
+                        s -> MemoryAccess.readChar(s, 4, LE), (s, x) -> MemoryAccess.writeChar(s, 4, LE, x),
                         (bb) -> bb.order(LE).getChar(4), (bb, v) -> bb.order(LE).putChar(4, v))
                 },
                 {"char/offset/BE", new Accessor<>((char) 42,
-                        s -> MemorySegments.getChar(s, 4, BE), (s, x) -> MemorySegments.setChar(s, 4, BE, x),
+                        s -> MemoryAccess.readChar(s, 4, BE), (s, x) -> MemoryAccess.writeChar(s, 4, BE, x),
                         (bb) -> bb.order(BE).getChar(4), (bb, v) -> bb.order(BE).putChar(4, v))
                 },
                 // short, offset
                 {"short/offset", new Accessor<>((short) 42,
-                        s -> MemorySegments.getShort(s, 4), (s, x) -> MemorySegments.setShort(s, 4, x),
+                        s -> MemoryAccess.readShort(s, 4), (s, x) -> MemoryAccess.writeShort(s, 4, x),
                         (bb) -> bb.order(NE).getShort(4), (bb, v) -> bb.order(NE).putShort(4, v))
                 },
                 {"short/offset/LE", new Accessor<>((short) 42,
-                        s -> MemorySegments.getShort(s, 4, LE), (s, x) -> MemorySegments.setShort(s, 4, LE, x),
+                        s -> MemoryAccess.readShort(s, 4, LE), (s, x) -> MemoryAccess.writeShort(s, 4, LE, x),
                         (bb) -> bb.order(LE).getShort(4), (bb, v) -> bb.order(LE).putShort(4, v))
                 },
                 {"short/offset/BE", new Accessor<>((short) 42,
-                        s -> MemorySegments.getShort(s, 4, BE), (s, x) -> MemorySegments.setShort(s, 4, BE, x),
+                        s -> MemoryAccess.readShort(s, 4, BE), (s, x) -> MemoryAccess.writeShort(s, 4, BE, x),
                         (bb) -> bb.order(BE).getShort(4), (bb, v) -> bb.order(BE).putShort(4, v))
                 },
                 // int, offset
                 {"int/offset", new Accessor<>(42,
-                        s -> MemorySegments.getInt(s, 4), (s, x) -> MemorySegments.setInt(s, 4, x),
+                        s -> MemoryAccess.readInt(s, 4), (s, x) -> MemoryAccess.writeInt(s, 4, x),
                         (bb) -> bb.order(NE).getInt(4), (bb, v) -> bb.order(NE).putInt(4, v))
                 },
                 {"int/offset/LE", new Accessor<>(42,
-                        s -> MemorySegments.getInt(s, 4, LE), (s, x) -> MemorySegments.setInt(s, 4, LE, x),
+                        s -> MemoryAccess.readInt(s, 4, LE), (s, x) -> MemoryAccess.writeInt(s, 4, LE, x),
                         (bb) -> bb.order(LE).getInt(4), (bb, v) -> bb.order(LE).putInt(4, v))
                 },
                 {"int/offset/BE", new Accessor<>(42,
-                        s -> MemorySegments.getInt(s, 4, BE), (s, x) -> MemorySegments.setInt(s, 4, BE, x),
+                        s -> MemoryAccess.readInt(s, 4, BE), (s, x) -> MemoryAccess.writeInt(s, 4, BE, x),
                         (bb) -> bb.order(BE).getInt(4), (bb, v) -> bb.order(BE).putInt(4, v))
                 },
                 // float, offset
                 {"float/offset", new Accessor<>(42f,
-                        s -> MemorySegments.getFloat(s, 4), (s, x) -> MemorySegments.setFloat(s, 4, x),
+                        s -> MemoryAccess.readFloat(s, 4), (s, x) -> MemoryAccess.writeFloat(s, 4, x),
                         (bb) -> bb.order(NE).getFloat(4), (bb, v) -> bb.order(NE).putFloat(4, v))
                 },
                 {"float/offset/LE", new Accessor<>(42f,
-                        s -> MemorySegments.getFloat(s, 4, LE), (s, x) -> MemorySegments.setFloat(s, 4, LE, x),
+                        s -> MemoryAccess.readFloat(s, 4, LE), (s, x) -> MemoryAccess.writeFloat(s, 4, LE, x),
                         (bb) -> bb.order(LE).getFloat(4), (bb, v) -> bb.order(LE).putFloat(4, v))
                 },
                 {"float/offset/BE", new Accessor<>(42f,
-                        s -> MemorySegments.getFloat(s, 4, BE), (s, x) -> MemorySegments.setFloat(s, 4, BE, x),
+                        s -> MemoryAccess.readFloat(s, 4, BE), (s, x) -> MemoryAccess.writeFloat(s, 4, BE, x),
                         (bb) -> bb.order(BE).getFloat(4), (bb, v) -> bb.order(BE).putFloat(4, v))
                 },
                 // double, offset
                 {"double/offset", new Accessor<>(42d,
-                        s -> MemorySegments.getDouble(s, 4), (s, x) -> MemorySegments.setDouble(s, 4, x),
+                        s -> MemoryAccess.readDouble(s, 4), (s, x) -> MemoryAccess.writeDouble(s, 4, x),
                         (bb) -> bb.order(NE).getDouble(4), (bb, v) -> bb.order(NE).putDouble(4, v))
                 },
                 {"double/offset/LE", new Accessor<>(42d,
-                        s -> MemorySegments.getDouble(s, 4, LE), (s, x) -> MemorySegments.setDouble(s, 4, LE, x),
+                        s -> MemoryAccess.readDouble(s, 4, LE), (s, x) -> MemoryAccess.writeDouble(s, 4, LE, x),
                         (bb) -> bb.order(LE).getDouble(4), (bb, v) -> bb.order(LE).putDouble(4, v))
                 },
                 {"double/offset/BE", new Accessor<>(42d,
-                        s -> MemorySegments.getDouble(s, 4, BE), (s, x) -> MemorySegments.setDouble(s, 4, BE, x),
+                        s -> MemoryAccess.readDouble(s, 4, BE), (s, x) -> MemoryAccess.writeDouble(s, 4, BE, x),
                         (bb) -> bb.order(BE).getDouble(4), (bb, v) -> bb.order(BE).putDouble(4, v))
                 },
                 { "address/offset", new Accessor<>(MemoryAddress.ofLong(42),
-                        s -> MemorySegments.getAddress(s, 4), (s, x) -> MemorySegments.setAddress(s, 4, x),
+                        s -> MemoryAccess.readAddress(s, 4), (s, x) -> MemoryAccess.writeAddress(s, 4, x),
                         (bb) -> {
                             ByteBuffer nb = bb.order(NE);
                             long addr = MemoryLayouts.ADDRESS.byteSize() == 8 ?

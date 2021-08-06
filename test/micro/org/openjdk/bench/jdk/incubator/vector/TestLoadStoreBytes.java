@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.VectorOperators;
@@ -232,8 +232,8 @@ public class TestLoadStoreBytes {
   @CompilerControl(CompilerControl.Mode.PRINT)
   public void segmentImplicitScalar() {
     for (int i = 0; i < SPECIES.loopBound(srcArray.length); i++) {
-      var v = MemorySegments.getByte(srcSegmentImplicit, i);
-      MemorySegments.setByte(dstSegmentImplicit, i, v);
+      var v = MemoryAccess.readByte(srcSegmentImplicit, i);
+      MemoryAccess.writeByte(dstSegmentImplicit, i, v);
     }
   }
 

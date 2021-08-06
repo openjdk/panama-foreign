@@ -58,9 +58,7 @@ import java.util.stream.IntStream;
 import static jdk.incubator.foreign.CLinker.C_DOUBLE;
 import static jdk.incubator.foreign.CLinker.C_FLOAT;
 import static jdk.incubator.foreign.CLinker.C_INT;
-import static jdk.incubator.foreign.CLinker.C_LONG;
 import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
-import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static jdk.incubator.foreign.MemoryLayout.PathElement.groupElement;
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -223,7 +221,7 @@ public class VaListTest extends NativeTestHelper {
         Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
                 list -> {
                     MemoryAddress ma = list.vargAsAddress(layout);
-                    return MemorySegments.getInt(MemorySegment.globalNativeSegment(), ma.toRawLongValue());
+                    return MemoryAccess.readInt(MemorySegment.globalNativeSegment(), ma.toRawLongValue());
                 };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
@@ -241,7 +239,7 @@ public class VaListTest extends NativeTestHelper {
                                         ValueLayout pointerLayout) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT, scope);
-            MemorySegments.setInt(msInt, 0, 10);
+            MemoryAccess.writeInt(msInt, 0, 10);
             VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()));
             int x = getFromPointer.apply(vaList);
             assertEquals(x, 10);
@@ -490,12 +488,12 @@ public class VaListTest extends NativeTestHelper {
                     for (int i = 0; i < 16; i++) {
                         lSum += list.vargAsLong(longLayout);
                     }
-                    MemorySegments.setLong(longSum, 0, lSum);
+                    MemoryAccess.writeLong(longSum, 0, lSum);
                     double dSum = 0D;
                     for (int i = 0; i < 16; i++) {
                         dSum += list.vargAsDouble(doubleLayout);
                     }
-                    MemorySegments.setDouble(doubleSum, 0, dSum);
+                    MemoryAccess.writeDouble(doubleSum, 0, dSum);
                 };
         SumStackFunc sumStackNative = (longSum, doubleSum, list) -> {
             try {
@@ -521,8 +519,8 @@ public class VaListTest extends NativeTestHelper {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment longSum = MemorySegment.allocateNative(longLayout, scope);
             MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout, scope);
-            MemorySegments.setLong(longSum, 0, 0L);
-            MemorySegments.setDouble(doubleSum, 0, 0D);
+            MemoryAccess.writeLong(longSum, 0, 0L);
+            MemoryAccess.writeDouble(doubleSum, 0, 0D);
 
             VaList list = vaListFactory.apply(b -> {
                 for (long l = 1; l <= 16L; l++) {
@@ -539,8 +537,8 @@ public class VaListTest extends NativeTestHelper {
                 list.scope().close();
             }
 
-            long lSum = MemorySegments.getLong(longSum, 0);
-            double dSum = MemorySegments.getDouble(doubleSum, 0);
+            long lSum = MemoryAccess.readLong(longSum, 0);
+            double dSum = MemoryAccess.readDouble(doubleSum, 0);
 
             assertEquals(lSum, 136L);
             assertEquals(dSum, 136D);
@@ -752,7 +750,7 @@ public class VaListTest extends NativeTestHelper {
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
                     MemorySegment ms = intPtr.asSegment(C_INT.byteSize(), ResourceScope.globalScope());
-                    int x = MemorySegments.getInt(ms, 0);
+                    int x = MemoryAccess.readInt(ms, 0);
                     assertEquals(x, 10);
                 })},
                 { linkVaListCB("upcallDoubles"), VaListConsumer.mh(vaList -> {

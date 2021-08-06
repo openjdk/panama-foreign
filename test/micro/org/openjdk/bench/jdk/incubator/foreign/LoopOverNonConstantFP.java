@@ -23,7 +23,7 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -75,10 +75,10 @@ public class LoopOverNonConstantFP {
         segmentIn = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
         segmentOut = MemorySegment.allocateNative(ALLOC_SIZE, ResourceScope.newConfinedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
-            MemorySegments.setDouble(segmentIn, i * CARRIER_SIZE, i);
+            MemoryAccess.writeDouble(segmentIn, i * CARRIER_SIZE, i);
         }
         for (int i = 0; i < ELEM_SIZE; i++) {
-            MemorySegments.setDouble(segmentOut, i * CARRIER_SIZE, i);
+            MemoryAccess.writeDouble(segmentOut, i * CARRIER_SIZE, i);
         }
         byteBufferIn = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
         byteBufferOut = ByteBuffer.allocateDirect(ALLOC_SIZE).order(ByteOrder.nativeOrder());
@@ -112,9 +112,9 @@ public class LoopOverNonConstantFP {
     @Benchmark
     public void segment_loop() {
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            MemorySegments.setDouble(segmentOut, i * CARRIER_SIZE,
-                    MemorySegments.getDouble(segmentIn, i * CARRIER_SIZE) +
-                    MemorySegments.getDouble(segmentOut, i * CARRIER_SIZE));
+            MemoryAccess.writeDouble(segmentOut, i * CARRIER_SIZE,
+                    MemoryAccess.readDouble(segmentIn, i * CARRIER_SIZE) +
+                    MemoryAccess.readDouble(segmentOut, i * CARRIER_SIZE));
         }
     }
 

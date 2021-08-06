@@ -371,7 +371,7 @@ public sealed interface CLinker permits AbstractCLinker {
     private static void copy(MemorySegment addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
         addr.copyFrom(heapSegment);
-        MemorySegments.setByte(addr, bytes.length, (byte)0);
+        MemoryAccess.writeByte(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes, SegmentAllocator allocator) {

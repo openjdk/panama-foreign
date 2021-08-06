@@ -24,7 +24,7 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.MemorySegments;
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -81,11 +81,11 @@ public class LoopOverNonConstantHeap {
             MemorySegment intF = MemorySegment.ofArray(new float[ALLOC_SIZE]);
             MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.newConfinedScope(Cleaner.create()));
             for (int i = 0; i < ALLOC_SIZE; i++) {
-                MemorySegments.setByte(intB, i, (byte)i);
-                MemorySegments.setInt(intI, i * 4, i);
-                MemorySegments.setDouble(intD, i * 8, i);
-                MemorySegments.setFloat(intF, i * 4, i);
-                MemorySegments.setByte(s, i, (byte) i);
+                MemoryAccess.writeByte(intB, i, (byte)i);
+                MemoryAccess.writeInt(intI, i * 4, i);
+                MemoryAccess.writeDouble(intD, i * 8, i);
+                MemoryAccess.writeFloat(intF, i * 4, i);
+                MemoryAccess.writeByte(s, i, (byte) i);
             }
         }
 
@@ -137,7 +137,7 @@ public class LoopOverNonConstantHeap {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemorySegments.getInt(segment, i * CARRIER_SIZE);
+            res += MemoryAccess.readInt(segment, i * CARRIER_SIZE);
         }
         return res;
     }

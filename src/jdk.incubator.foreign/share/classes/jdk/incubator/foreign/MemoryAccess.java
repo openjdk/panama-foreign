@@ -35,9 +35,46 @@ import java.nio.ByteOrder;
 import java.util.Objects;
 
 /**
- * Hello
+ * This class defines convenient static methods which can be used to read/write Java values from/to memory segments.
+ * <p>
+ * Single values can be read and written using accessors like {@link #readInt(MemorySegment, long)}, and
+ * {@link #writeInt(MemorySegment, long, int)}. These accessors all accept the following parameters:
+ * <ul>
+ *     <li>the memory segment to be read (resp. written)</li>
+ *     <li>the offset, in bytes, at which the read (resp. write) operation should occur</li>
+ *     <li>the offset, in bytes, at which the read (resp. write) operation should occur</li>
+ *     <li>an optional {@linkplain ByteOrder byte order}</li>
+ * </ul>
+ * <p>
+ * Multiple values can be read and written in bulk from and to Java arrays, using accessors like {@link #writeInts(int[], int, MemorySegment, long, int)},
+ * and {@link #readInts(MemorySegment, long, int[], int, int)}. These accessors all accept the following parameters
+ * (source parameters are laid out before destination parameters, similarly to {@link System#arraycopy(Object, int, Object, int, int)}):
+ <ul>
+ *     <li>the memory segment to be read (resp. written)</li>
+ *     <li>the offset, in bytes, at which elements should be read (resp. written) from (resp. to) the segment</li>
+ *     <li>the Java array to be written (resp. read)</li>
+ *     <li>the array index at which elements should be written (resp. read) to (resp. from) the array</li>
+ *     <li>an optional {@linkplain ByteOrder byte order}</li>
+ * </ul>
+ * If the source (destination) segment is actually a view of the destination (source) array,
+ * and if the copy region of the source overlaps with the copy region of the destination,
+ * the copy of the overlapping region is performed as if the data in the overlapping region
+ * were first copied into a temporary segment before being copied to the destination.
+ * <p>
+ * Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
+ * elements to a method in this class causes a {@link NullPointerException} to be thrown. Moreover,
+ * attempting to dereference a segment whose {@linkplain MemorySegment#scope() scope} has already been closed,
+ * or from a thread other than the thread owning the scope causes an {@link IllegalStateException} to be thrown.
+ * Finally, attempting to dereference a segment (of {@linkplain MemorySegment#address() base address} {@code B} and
+ * {@linkplain MemorySegment#byteSize() size} {@code S}) at addresses that are {@code < B}, or {@code >= B + S},
+ * causes an {@link IndexOutOfBoundsException} to be thrown; similarly, attempting to copy to/from an array
+ * (of length {@code L}) at indices that are {@code < 0}, or {@code >= L} causes an {@link IndexOutOfBoundsException} to be thrown.</p>
  */
-public final class MemorySegments {
+public final class MemoryAccess {
+
+    private MemoryAccess() {
+        // just the one!
+    }
 
     static final ScopedMemoryAccess scopedMemoryAccess = ScopedMemoryAccess.getScopedMemoryAccess();
     private final static ByteOrder NON_NATIVE_ORDER = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN ?
@@ -54,10 +91,6 @@ public final class MemorySegments {
     private final static ValueLayout JAVA_LONG_NNO = JAVA_LONG_NO.withOrder(NON_NATIVE_ORDER);
     private final static ValueLayout JAVA_DOUBLE_NO = MemoryLayouts.JAVA_DOUBLE.withBitAlignment(8);
     private final static ValueLayout JAVA_DOUBLE_NNO = JAVA_DOUBLE_NO.withOrder(NON_NATIVE_ORDER);
-
-    private MemorySegments() {
-        // just the one!
-    }
 
     private static final VarHandle byte_handle = MemoryHandles.varHandle(byte.class, ByteOrder.nativeOrder());
     private static final VarHandle bool_handle = MemoryHandles.varHandle(boolean.class, ByteOrder.nativeOrder());
@@ -87,7 +120,7 @@ public final class MemorySegments {
      * @return a byte value read from {@code segment}.
      */
     @ForceInline
-    public static byte getByte(MemorySegment segment, long offset) {
+    public static byte readByte(MemorySegment segment, long offset) {
         Objects.requireNonNull(segment);
         return (byte)byte_handle.get(segment, offset);
     }
@@ -100,7 +133,7 @@ public final class MemorySegments {
      * @param value the byte value to be written.
      */
     @ForceInline
-    public static void setByte(MemorySegment segment, long offset, byte value) {
+    public static void writeByte(MemorySegment segment, long offset, byte value) {
         Objects.requireNonNull(segment);
         byte_handle.set(segment, offset, value);
     }
@@ -113,7 +146,7 @@ public final class MemorySegments {
      * @return a boolean value read from {@code segment}.
      */
     @ForceInline
-    public static boolean getBoolean(MemorySegment segment, long offset) {
+    public static boolean readBoolean(MemorySegment segment, long offset) {
         Objects.requireNonNull(segment);
         return (boolean)bool_handle.get(segment, offset);
     }
@@ -126,7 +159,7 @@ public final class MemorySegments {
      * @param value the boolean value to be written.
      */
     @ForceInline
-    public static void setBoolean(MemorySegment segment, long offset, boolean value) {
+    public static void writeBoolean(MemorySegment segment, long offset, boolean value) {
         Objects.requireNonNull(segment);
         bool_handle.set(segment, offset, value);
     }
@@ -143,8 +176,8 @@ public final class MemorySegments {
      * @return a char value read from {@code segment}.
      */
     @ForceInline
-    public static char getChar(MemorySegment segment, long offset) {
-        return getChar(segment, offset, ByteOrder.nativeOrder());
+    public static char readChar(MemorySegment segment, long offset) {
+        return readChar(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -159,8 +192,8 @@ public final class MemorySegments {
      * @param value the char value to be written.
      */
     @ForceInline
-    public static void setChar(MemorySegment segment, long offset, char value) {
-        setChar(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeChar(MemorySegment segment, long offset, char value) {
+        writeChar(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -175,8 +208,8 @@ public final class MemorySegments {
      * @return a short value read from {@code segment}.
      */
     @ForceInline
-    public static short getShort(MemorySegment segment, long offset) {
-        return getShort(segment, offset, ByteOrder.nativeOrder());
+    public static short readShort(MemorySegment segment, long offset) {
+        return readShort(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -191,8 +224,8 @@ public final class MemorySegments {
      * @param value the short value to be written.
      */
     @ForceInline
-    public static void setShort(MemorySegment segment, long offset, short value) {
-        setShort(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeShort(MemorySegment segment, long offset, short value) {
+        writeShort(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -207,8 +240,8 @@ public final class MemorySegments {
      * @return an int value read from {@code segment}.
      */
     @ForceInline
-    public static int getInt(MemorySegment segment, long offset) {
-        return getInt(segment, offset, ByteOrder.nativeOrder());
+    public static int readInt(MemorySegment segment, long offset) {
+        return readInt(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -223,8 +256,8 @@ public final class MemorySegments {
      * @param value the int value to be written.
      */
     @ForceInline
-    public static void setInt(MemorySegment segment, long offset, int value) {
-        setInt(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeInt(MemorySegment segment, long offset, int value) {
+        writeInt(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -239,8 +272,8 @@ public final class MemorySegments {
      * @return a float value read from {@code segment}.
      */
     @ForceInline
-    public static float getFloat(MemorySegment segment, long offset) {
-        return getFloat(segment, offset, ByteOrder.nativeOrder());
+    public static float readFloat(MemorySegment segment, long offset) {
+        return readFloat(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -255,8 +288,8 @@ public final class MemorySegments {
      * @param value the float value to be written.
      */
     @ForceInline
-    public static void setFloat(MemorySegment segment, long offset, float value) {
-        setFloat(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeFloat(MemorySegment segment, long offset, float value) {
+        writeFloat(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -271,8 +304,8 @@ public final class MemorySegments {
      * @return a long value read from {@code segment}.
      */
     @ForceInline
-    public static long getLong(MemorySegment segment, long offset) {
-        return getLong(segment, offset, ByteOrder.nativeOrder());
+    public static long readLong(MemorySegment segment, long offset) {
+        return readLong(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -287,8 +320,8 @@ public final class MemorySegments {
      * @param value the long value to be written.
      */
     @ForceInline
-    public static void setLong(MemorySegment segment, long offset, long value) {
-        setLong(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeLong(MemorySegment segment, long offset, long value) {
+        writeLong(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -303,8 +336,8 @@ public final class MemorySegments {
      * @return a double value read from {@code segment}.
      */
     @ForceInline
-    public static double getDouble(MemorySegment segment, long offset) {
-        return getDouble(segment, offset, ByteOrder.nativeOrder());
+    public static double readDouble(MemorySegment segment, long offset) {
+        return readDouble(segment, offset, ByteOrder.nativeOrder());
     }
 
     /**
@@ -319,8 +352,8 @@ public final class MemorySegments {
      * @param value the double value to be written.
      */
     @ForceInline
-    public static void setDouble(MemorySegment segment, long offset, double value) {
-        setDouble(segment, offset, ByteOrder.nativeOrder(), value);
+    public static void writeDouble(MemorySegment segment, long offset, double value) {
+        writeDouble(segment, offset, ByteOrder.nativeOrder(), value);
     }
 
     /**
@@ -336,7 +369,7 @@ public final class MemorySegments {
      * @return a memory address read from {@code segment}.
      */
     @ForceInline
-    public static MemoryAddress getAddress(MemorySegment segment, long offset) {
+    public static MemoryAddress readAddress(MemorySegment segment, long offset) {
         Objects.requireNonNull(segment);
         return (MemoryAddress)address_handle.get(segment, offset);
     }
@@ -354,7 +387,7 @@ public final class MemorySegments {
      * @param value the memory address to be written (expressed as an {@link Addressable} instance).
      */
     @ForceInline
-    public static void setAddress(MemorySegment segment, long offset, Addressable value) {
+    public static void writeAddress(MemorySegment segment, long offset, Addressable value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(value);
         address_handle.set(segment, offset, value.address());
@@ -374,7 +407,7 @@ public final class MemorySegments {
      * @return a char value read from {@code segment}.
      */
     @ForceInline
-    public static char getChar(MemorySegment segment, long offset, ByteOrder order) {
+    public static char readChar(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (char)((order == ByteOrder.BIG_ENDIAN) ? char_BE_handle : char_LE_handle).get(segment, offset);
@@ -394,7 +427,7 @@ public final class MemorySegments {
      * @param value the char value to be written.
      */
     @ForceInline
-    public static void setChar(MemorySegment segment, long offset, ByteOrder order, char value) {
+    public static void writeChar(MemorySegment segment, long offset, ByteOrder order, char value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? char_BE_handle : char_LE_handle).set(segment, offset, value);
@@ -414,7 +447,7 @@ public final class MemorySegments {
      * @return a short value read from {@code segment}.
      */
     @ForceInline
-    public static short getShort(MemorySegment segment, long offset, ByteOrder order) {
+    public static short readShort(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (short)((order == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).get(segment, offset);
@@ -434,7 +467,7 @@ public final class MemorySegments {
      * @param value the short value to be written.
      */
     @ForceInline
-    public static void setShort(MemorySegment segment, long offset, ByteOrder order, short value) {
+    public static void writeShort(MemorySegment segment, long offset, ByteOrder order, short value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? short_BE_handle : short_LE_handle).set(segment, offset, value);
@@ -454,7 +487,7 @@ public final class MemorySegments {
      * @return an int value read from {@code segment}.
      */
     @ForceInline
-    public static int getInt(MemorySegment segment, long offset, ByteOrder order) {
+    public static int readInt(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (int)((order == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).get(segment, offset);
@@ -474,7 +507,7 @@ public final class MemorySegments {
      * @param value the int value to be written.
      */
     @ForceInline
-    public static void setInt(MemorySegment segment, long offset, ByteOrder order, int value) {
+    public static void writeInt(MemorySegment segment, long offset, ByteOrder order, int value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? int_BE_handle : int_LE_handle).set(segment, offset, value);
@@ -494,7 +527,7 @@ public final class MemorySegments {
      * @return a float value read from {@code segment}.
      */
     @ForceInline
-    public static float getFloat(MemorySegment segment, long offset, ByteOrder order) {
+    public static float readFloat(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (float)((order == ByteOrder.BIG_ENDIAN) ? float_BE_handle : float_LE_handle).get(segment, offset);
@@ -514,7 +547,7 @@ public final class MemorySegments {
      * @param value the float value to be written.
      */
     @ForceInline
-    public static void setFloat(MemorySegment segment, long offset, ByteOrder order, float value) {
+    public static void writeFloat(MemorySegment segment, long offset, ByteOrder order, float value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? float_BE_handle : float_LE_handle).set(segment, offset, value);
@@ -534,7 +567,7 @@ public final class MemorySegments {
      * @return a long value read from {@code segment}.
      */
     @ForceInline
-    public static long getLong(MemorySegment segment, long offset, ByteOrder order) {
+    public static long readLong(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (long)((order == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle).get(segment, offset);
@@ -554,7 +587,7 @@ public final class MemorySegments {
      * @param value the long value to be written.
      */
     @ForceInline
-    public static void setLong(MemorySegment segment, long offset, ByteOrder order, long value) {
+    public static void writeLong(MemorySegment segment, long offset, ByteOrder order, long value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? long_BE_handle : long_LE_handle).set(segment, offset, value);
@@ -574,7 +607,7 @@ public final class MemorySegments {
      * @return a double value read from {@code segment}.
      */
     @ForceInline
-    public static double getDouble(MemorySegment segment, long offset, ByteOrder order) {
+    public static double readDouble(MemorySegment segment, long offset, ByteOrder order) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         return (double)((order == ByteOrder.BIG_ENDIAN) ? double_BE_handle : double_LE_handle).get(segment, offset);
@@ -594,7 +627,7 @@ public final class MemorySegments {
      * @param value the double value to be written.
      */
     @ForceInline
-    public static void setDouble(MemorySegment segment, long offset, ByteOrder order, double value) {
+    public static void writeDouble(MemorySegment segment, long offset, ByteOrder order, double value) {
         Objects.requireNonNull(segment);
         Objects.requireNonNull(order);
         ((order == ByteOrder.BIG_ENDIAN) ? double_BE_handle : double_LE_handle).set(segment, offset, value);
@@ -616,7 +649,7 @@ public final class MemorySegments {
      * @param elementCount the number of byte elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeBytes(
             byte[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
         copy(srcArray, srcIndex, dstSegment, MemoryLayouts.JAVA_BYTE, dstOffset, elementCount,
                 Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE, srcArray.length);
@@ -632,7 +665,7 @@ public final class MemorySegments {
      * @param elementCount the number of byte elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readBytes(
             MemorySegment srcSegment, long srcOffset,
             byte[] dstArray, int dstIndex, int elementCount) {
         copy(srcSegment, MemoryLayouts.JAVA_BYTE, srcOffset, dstArray, dstIndex, elementCount,
@@ -649,9 +682,9 @@ public final class MemorySegments {
      * @param elementCount the number of char elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeChars(
             char[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeChars(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -665,7 +698,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeChars(
             char[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount, ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_CHAR_NO, JAVA_CHAR_NNO), dstOffset, elementCount,
                 Unsafe.ARRAY_CHAR_BASE_OFFSET, Unsafe.ARRAY_CHAR_INDEX_SCALE, srcArray.length);
@@ -681,10 +714,10 @@ public final class MemorySegments {
      * @param elementCount the number of char elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readChars(
             MemorySegment srcSegment, long srcOffset,
             char[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readChars(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -698,7 +731,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void readChars(
             MemorySegment srcSegment, long srcOffset,
             char[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
@@ -716,9 +749,9 @@ public final class MemorySegments {
      * @param elementCount the number of short elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeShorts(
             short[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeShorts(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -732,7 +765,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeShorts(
             short[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_SHORT_NO, JAVA_SHORT_NNO), dstOffset, elementCount,
@@ -749,10 +782,10 @@ public final class MemorySegments {
      * @param elementCount the number of short elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readShorts(
             MemorySegment srcSegment, long srcOffset,
             short[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readShorts(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -767,7 +800,7 @@ public final class MemorySegments {
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copy(
+    public static void readShorts(
             MemorySegment srcSegment, long srcOffset,
             short[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
@@ -785,9 +818,9 @@ public final class MemorySegments {
      * @param elementCount the number of int elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeInts(
             int[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeInts(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -801,7 +834,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeInts(
             int[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_INT_NO, JAVA_INT_NNO), dstOffset, elementCount,
@@ -818,10 +851,10 @@ public final class MemorySegments {
      * @param elementCount the number of int elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readInts(
             MemorySegment srcSegment, long srcOffset,
             int[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readInts(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -836,7 +869,7 @@ public final class MemorySegments {
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copy(
+    public static void readInts(
             MemorySegment srcSegment, long srcOffset,
             int[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
@@ -854,9 +887,9 @@ public final class MemorySegments {
      * @param elementCount the number of float elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeFloats(
             float[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeFloats(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -870,7 +903,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeFloats(
             float[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_FLOAT_NO, JAVA_FLOAT_NNO), dstOffset, elementCount,
@@ -887,10 +920,10 @@ public final class MemorySegments {
      * @param elementCount the number of float elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readFloats(
             MemorySegment srcSegment, long srcOffset,
             float[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readFloats(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -905,7 +938,7 @@ public final class MemorySegments {
      * different from the native order, a float swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copy(
+    public static void readFloats(
             MemorySegment srcSegment, long srcOffset,
             float[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
@@ -923,9 +956,9 @@ public final class MemorySegments {
      * @param elementCount the number of long elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeLongs(
             long[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeLongs(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -939,7 +972,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeLongs(
             long[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_LONG_NO, JAVA_LONG_NNO), dstOffset, elementCount,
@@ -956,10 +989,10 @@ public final class MemorySegments {
      * @param elementCount the number of long elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readLongs(
             MemorySegment srcSegment, long srcOffset,
             long[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readLongs(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -974,7 +1007,7 @@ public final class MemorySegments {
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copy(
+    public static void readLongs(
             MemorySegment srcSegment, long srcOffset,
             long[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
@@ -992,9 +1025,9 @@ public final class MemorySegments {
      * @param elementCount the number of double elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void writeDoubles(
             double[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount) {
-        copy(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
+        writeDoubles(srcArray, srcIndex, dstSegment, dstOffset, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -1008,7 +1041,7 @@ public final class MemorySegments {
      * @param order the byte order to be used for the copy operation. If the specified byte order is
      */
     @ForceInline
-    public static void copy(
+    public static void writeDoubles(
             double[] srcArray, int srcIndex, MemorySegment dstSegment, long dstOffset, int elementCount,
             ByteOrder order) {
         copy(srcArray, srcIndex, dstSegment, pick(order, JAVA_DOUBLE_NO, JAVA_DOUBLE_NNO), dstOffset, elementCount,
@@ -1025,10 +1058,10 @@ public final class MemorySegments {
      * @param elementCount the number of double elements to be copied.
      */
     @ForceInline
-    public static void copy(
+    public static void readDoubles(
             MemorySegment srcSegment, long srcOffset,
             double[] dstArray, int dstIndex, int elementCount) {
-        copy(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
+        readDoubles(srcSegment, srcOffset, dstArray, dstIndex, elementCount, ByteOrder.nativeOrder());
     }
 
     /**
@@ -1043,7 +1076,7 @@ public final class MemorySegments {
      * different from the native order, a byte swap operation will be performed on each array element.
      */
     @ForceInline
-    public static void copy(
+    public static void readDoubles(
             MemorySegment srcSegment, long srcOffset,
             double[] dstArray, int dstIndex, int elementCount,
             ByteOrder order) {
