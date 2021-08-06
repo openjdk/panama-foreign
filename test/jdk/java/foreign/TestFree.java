@@ -48,7 +48,7 @@ public class TestFree {
         MemoryAddress addr = allocateMemory(str.length() + 1);
         MemorySegment seg = asArray(addr, C_CHAR, str.length() + 1);
         seg.copyFrom(MemorySegment.ofArray(str.getBytes()));
-        MemoryAccess.writeByte(seg, str.length(), (byte)0);
+        MemoryAccess.setByte(seg, str.length(), (byte)0);
         assertEquals(str, toJavaString(seg));
         freeMemory(addr);
     }

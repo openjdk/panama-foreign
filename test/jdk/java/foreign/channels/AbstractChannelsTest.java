@@ -76,7 +76,7 @@ public class AbstractChannelsTest {
     static ByteBuffer segmentBufferOfSize(ResourceScope scope, int size) {
         var segment = MemorySegment.allocateNative(size, 1, scope);
         for (int i = 0; i < size; i++) {
-            MemoryAccess.writeByte(segment, i, ((byte)RANDOM.nextInt()));
+            MemoryAccess.setByte(segment, i, ((byte)RANDOM.nextInt()));
         }
         return segment.asByteBuffer();
     }

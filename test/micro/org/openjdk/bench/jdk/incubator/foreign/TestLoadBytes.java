@@ -113,7 +113,7 @@ public class TestLoadBytes {
     public int segmentNativeScalar() {
         int size = 0;
         for (int i = 0; i < srcArray.length; i++) {
-            var v = MemoryAccess.readByte(srcSegmentImplicit, i);
+            var v = MemoryAccess.getByte(srcSegmentImplicit, i);
             size += v;
         }
         return size;
@@ -123,7 +123,7 @@ public class TestLoadBytes {
     public int segmentNativeScalarConst() {
         int size = 0;
         for (int i = 0; i < 1024; i++) {
-            var v = MemoryAccess.readByte(srcSegmentImplicit, i);
+            var v = MemoryAccess.getByte(srcSegmentImplicit, i);
             size += v;
         }
         return size;

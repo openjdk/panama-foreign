@@ -150,7 +150,7 @@ public class TestHandshake {
         void doAccess() {
             int sum = 0;
             for (int i = 0; i < segment.byteSize(); i++) {
-                sum += MemoryAccess.readByte(segment, i);
+                sum += MemoryAccess.getByte(segment, i);
             }
         }
     }
@@ -193,7 +193,7 @@ public class TestHandshake {
             super(id, segment);
             this.copy = MemorySegment.allocateNative(SEGMENT_SIZE, 1, segment.scope());
             copy.copyFrom(segment);
-            MemoryAccess.writeByte(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
+            MemoryAccess.setByte(copy, ThreadLocalRandom.current().nextInt(SEGMENT_SIZE), (byte)42);
         }
 
         @Override

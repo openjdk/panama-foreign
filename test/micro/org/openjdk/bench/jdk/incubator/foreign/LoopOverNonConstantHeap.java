@@ -81,11 +81,11 @@ public class LoopOverNonConstantHeap {
             MemorySegment intF = MemorySegment.ofArray(new float[ALLOC_SIZE]);
             MemorySegment s = MemorySegment.allocateNative(ALLOC_SIZE, 1, ResourceScope.newConfinedScope(Cleaner.create()));
             for (int i = 0; i < ALLOC_SIZE; i++) {
-                MemoryAccess.writeByte(intB, i, (byte)i);
-                MemoryAccess.writeInt(intI, i * 4, i);
-                MemoryAccess.writeDouble(intD, i * 8, i);
-                MemoryAccess.writeFloat(intF, i * 4, i);
-                MemoryAccess.writeByte(s, i, (byte) i);
+                MemoryAccess.setByte(intB, i, (byte)i);
+                MemoryAccess.setInt(intI, i * 4, i);
+                MemoryAccess.setDouble(intD, i * 8, i);
+                MemoryAccess.setFloat(intF, i * 4, i);
+                MemoryAccess.setByte(s, i, (byte) i);
             }
         }
 
@@ -137,7 +137,7 @@ public class LoopOverNonConstantHeap {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.readInt(segment, i * CARRIER_SIZE);
+            res += MemoryAccess.getInt(segment, i * CARRIER_SIZE);
         }
         return res;
     }

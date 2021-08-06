@@ -79,14 +79,14 @@ public class LoopOverPollutedSegments {
         for (int rep = 0 ; rep < 5 ; rep++) {
             for (int i = 0; i < ELEM_SIZE; i++) {
                 unsafe.putInt(arr, Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * 4), i);
-                MemoryAccess.writeInt(nativeSegment, i * CARRIER_SIZE, i);
-                MemoryAccess.writeFloat(nativeSegment, i * CARRIER_SIZE, i);
+                MemoryAccess.setInt(nativeSegment, i * CARRIER_SIZE, i);
+                MemoryAccess.setFloat(nativeSegment, i * CARRIER_SIZE, i);
                 intHandle.set(nativeSegment, (long)i, i);
-                MemoryAccess.writeInt(heapSegmentBytes, i * CARRIER_SIZE, i);
-                MemoryAccess.writeFloat(heapSegmentBytes, i * CARRIER_SIZE, i);
+                MemoryAccess.setInt(heapSegmentBytes, i * CARRIER_SIZE, i);
+                MemoryAccess.setFloat(heapSegmentBytes, i * CARRIER_SIZE, i);
                 intHandle.set(heapSegmentBytes, (long)i, i);
-                MemoryAccess.writeInt(heapSegmentFloats, i * CARRIER_SIZE, i);
-                MemoryAccess.writeFloat(heapSegmentFloats, i * CARRIER_SIZE, i);
+                MemoryAccess.setInt(heapSegmentFloats, i * CARRIER_SIZE, i);
+                MemoryAccess.setFloat(heapSegmentFloats, i * CARRIER_SIZE, i);
                 intHandle.set(heapSegmentFloats, (long)i, i);
             }
         }
@@ -116,8 +116,8 @@ public class LoopOverPollutedSegments {
     public int native_segment_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemoryAccess.writeInt(nativeSegment, k * CARRIER_SIZE, k + 1);
-            int v = MemoryAccess.readInt(nativeSegment, k * CARRIER_SIZE);
+            MemoryAccess.setInt(nativeSegment, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.getInt(nativeSegment, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;
@@ -138,8 +138,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_ints_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemoryAccess.writeInt(heapSegmentBytes, k * CARRIER_SIZE, k + 1);
-            int v = MemoryAccess.readInt(heapSegmentBytes, k * CARRIER_SIZE);
+            MemoryAccess.setInt(heapSegmentBytes, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.getInt(heapSegmentBytes, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;
@@ -160,8 +160,8 @@ public class LoopOverPollutedSegments {
     public int heap_segment_floats_static() {
         int sum = 0;
         for (int k = 0; k < ELEM_SIZE; k++) {
-            MemoryAccess.writeInt(heapSegmentFloats, k * CARRIER_SIZE, k + 1);
-            int v = MemoryAccess.readInt(heapSegmentFloats, k * CARRIER_SIZE);
+            MemoryAccess.setInt(heapSegmentFloats, k * CARRIER_SIZE, k + 1);
+            int v = MemoryAccess.getInt(heapSegmentFloats, k * CARRIER_SIZE);
             sum += v;
         }
         return sum;

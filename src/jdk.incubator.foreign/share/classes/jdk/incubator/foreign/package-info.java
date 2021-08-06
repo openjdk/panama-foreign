@@ -54,7 +54,7 @@ for (int i = 0 ; i < 10 ; i++) {
  * Here create a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
  * Inside a loop, we then initialize the contents of the memory segment using the
- * {@link jdk.incubator.foreign.MemoryAccess#writeInt(jdk.incubator.foreign.MemorySegment, long, int)} helper method;
+ * {@link jdk.incubator.foreign.MemoryAccess#setInt(jdk.incubator.foreign.MemorySegment, long, int)} helper method;
  * more specifically, if we view the memory segment as a set of 10 adjacent slots,
  * {@code s[i]}, where {@code 0 <= i < 10}, where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
  * so that {@code s[i] = i}, again where {@code 0 <= i < 10}.

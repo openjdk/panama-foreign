@@ -205,8 +205,8 @@ public class TestNative {
     public void testEverythingSegment() {
         MemoryAddress addr = allocate(4);
         MemorySegment everything = MemorySegment.globalNativeSegment();
-        MemoryAccess.writeInt(everything, addr.toRawLongValue(), 42);
-        assertEquals(MemoryAccess.readInt(everything, addr.toRawLongValue()), 42);
+        MemoryAccess.setInt(everything, addr.toRawLongValue(), 42);
+        assertEquals(MemoryAccess.getInt(everything, addr.toRawLongValue()), 42);
         free(addr);
     }
 

@@ -62,6 +62,6 @@ public class TestSymbolLookup {
     @Test
     public void testVariableSymbolLookup() {
         MemorySegment segment = LOOKUP.lookup("c").get().asSegment(MemoryLayouts.JAVA_INT.byteSize(), ResourceScope.globalScope());
-        assertEquals(MemoryAccess.readInt(segment, 0), 42);
+        assertEquals(MemoryAccess.getInt(segment, 0), 42);
     }
 }

@@ -91,21 +91,21 @@ public class TestCopyFrom {
 
     enum Type {
         // Byte
-        BYTE(byte.class, MemoryLayouts.JAVA_BYTE, (s, i, o) -> MemoryAccess.readByte(s, i), (s, i, o, v) -> MemoryAccess.writeByte(s, i, v), i -> (byte)i),
+        BYTE(byte.class, MemoryLayouts.JAVA_BYTE, (s, i, o) -> MemoryAccess.getByte(s, i), (s, i, o, v) -> MemoryAccess.setByte(s, i, v), i -> (byte)i),
         //LE
-        SHORT_LE(short.class, MemoryLayouts.BITS_16_LE, MemoryAccess::readShort, MemoryAccess::writeShort, i -> (short)i),
-        CHAR_LE(char.class, MemoryLayouts.BITS_16_LE, MemoryAccess::readChar, MemoryAccess::writeChar, i -> (char)i),
-        INT_LE(int.class, MemoryLayouts.BITS_32_LE, MemoryAccess::readInt, MemoryAccess::writeInt, i -> i),
-        FLOAT_LE(float.class, MemoryLayouts.BITS_32_LE, MemoryAccess::readFloat, MemoryAccess::writeFloat, i -> (float)i),
-        LONG_LE(long.class, MemoryLayouts.BITS_64_LE, MemoryAccess::readLong, MemoryAccess::writeLong, i -> (long)i),
-        DOUBLE_LE(double.class, MemoryLayouts.BITS_64_LE, MemoryAccess::readDouble, MemoryAccess::writeDouble, i -> (double)i),
+        SHORT_LE(short.class, MemoryLayouts.BITS_16_LE, MemoryAccess::getShort, MemoryAccess::setShort, i -> (short)i),
+        CHAR_LE(char.class, MemoryLayouts.BITS_16_LE, MemoryAccess::getChar, MemoryAccess::setChar, i -> (char)i),
+        INT_LE(int.class, MemoryLayouts.BITS_32_LE, MemoryAccess::getInt, MemoryAccess::setInt, i -> i),
+        FLOAT_LE(float.class, MemoryLayouts.BITS_32_LE, MemoryAccess::getFloat, MemoryAccess::setFloat, i -> (float)i),
+        LONG_LE(long.class, MemoryLayouts.BITS_64_LE, MemoryAccess::getLong, MemoryAccess::setLong, i -> (long)i),
+        DOUBLE_LE(double.class, MemoryLayouts.BITS_64_LE, MemoryAccess::getDouble, MemoryAccess::setDouble, i -> (double)i),
         //BE
-        SHORT_BE(short.class, MemoryLayouts.BITS_16_BE, MemoryAccess::readShort, MemoryAccess::writeShort, i -> (short)i),
-        CHAR_BE(char.class, MemoryLayouts.BITS_16_BE, MemoryAccess::readChar, MemoryAccess::writeChar, i -> (char)i),
-        INT_BE(int.class, MemoryLayouts.BITS_32_BE, MemoryAccess::readInt, MemoryAccess::writeInt, i -> i),
-        FLOAT_BE(float.class, MemoryLayouts.BITS_32_BE, MemoryAccess::readFloat, MemoryAccess::writeFloat, i -> (float)i),
-        LONG_BE(long.class, MemoryLayouts.BITS_64_BE, MemoryAccess::readLong, MemoryAccess::writeLong, i -> (long)i),
-        DOUBLE_BE(double.class, MemoryLayouts.BITS_64_BE, MemoryAccess::readDouble, MemoryAccess::writeDouble, i -> (double)i);
+        SHORT_BE(short.class, MemoryLayouts.BITS_16_BE, MemoryAccess::getShort, MemoryAccess::setShort, i -> (short)i),
+        CHAR_BE(char.class, MemoryLayouts.BITS_16_BE, MemoryAccess::getChar, MemoryAccess::setChar, i -> (char)i),
+        INT_BE(int.class, MemoryLayouts.BITS_32_BE, MemoryAccess::getInt, MemoryAccess::setInt, i -> i),
+        FLOAT_BE(float.class, MemoryLayouts.BITS_32_BE, MemoryAccess::getFloat, MemoryAccess::setFloat, i -> (float)i),
+        LONG_BE(long.class, MemoryLayouts.BITS_64_BE, MemoryAccess::getLong, MemoryAccess::setLong, i -> (long)i),
+        DOUBLE_BE(double.class, MemoryLayouts.BITS_64_BE, MemoryAccess::getDouble, MemoryAccess::setDouble, i -> (double)i);
 
         final ValueLayout layout;
         final Getter<Object> getter;

@@ -286,14 +286,14 @@ public class SharedUtils {
     public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
-        MemoryAccess.readBytes(segment, start, bytes, 0, len);
+        MemoryAccess.copy(segment, start, bytes, 0, len);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static int strlen(MemorySegment segment, long start) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset++) {
-            byte curr = MemoryAccess.readByte(segment, start + offset);
+            byte curr = MemoryAccess.getByte(segment, start + offset);
             if (curr == 0) {
                 return offset;
             }
@@ -607,21 +607,21 @@ public class SharedUtils {
     static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
-            MemoryAccess.writeLong(ptr, 0, (long) o);
+            MemoryAccess.setLong(ptr, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.writeLong(ptr, 0, (int) o);
+            MemoryAccess.setLong(ptr, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.writeLong(ptr, 0, (short) o);
+            MemoryAccess.setLong(ptr, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.writeLong(ptr, 0, (char) o);
+            MemoryAccess.setLong(ptr, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.writeLong(ptr, 0, (byte) o);
+            MemoryAccess.setLong(ptr, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.writeFloat(ptr, 0, (float) o);
+            MemoryAccess.setFloat(ptr, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.writeDouble(ptr, 0, (double) o);
+            MemoryAccess.setDouble(ptr, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.writeBoolean(ptr, 0, (boolean) o);
+            MemoryAccess.setBoolean(ptr, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -629,21 +629,21 @@ public class SharedUtils {
 
     static void write(MemorySegment ptr, Class<?> type, Object o) {
         if (type == long.class) {
-            MemoryAccess.writeLong(ptr, 0, (long) o);
+            MemoryAccess.setLong(ptr, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.writeInt(ptr, 0, (int) o);
+            MemoryAccess.setInt(ptr, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.writeShort(ptr, 0, (short) o);
+            MemoryAccess.setShort(ptr, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.writeChar(ptr, 0, (char) o);
+            MemoryAccess.setChar(ptr, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.writeByte(ptr, 0, (byte) o);
+            MemoryAccess.setByte(ptr, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.writeFloat(ptr, 0, (float) o);
+            MemoryAccess.setFloat(ptr, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.writeDouble(ptr, 0, (double) o);
+            MemoryAccess.setDouble(ptr, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.writeBoolean(ptr, 0, (boolean) o);
+            MemoryAccess.setBoolean(ptr, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -651,21 +651,21 @@ public class SharedUtils {
 
     static Object read(MemorySegment ptr, Class<?> type) {
         if (type == long.class) {
-            return MemoryAccess.readLong(ptr, 0);
+            return MemoryAccess.getLong(ptr, 0);
         } else if (type == int.class) {
-            return MemoryAccess.readInt(ptr, 0);
+            return MemoryAccess.getInt(ptr, 0);
         } else if (type == short.class) {
-            return MemoryAccess.readShort(ptr, 0);
+            return MemoryAccess.getShort(ptr, 0);
         } else if (type == char.class) {
-            return MemoryAccess.readChar(ptr, 0);
+            return MemoryAccess.getChar(ptr, 0);
         } else if (type == byte.class) {
-            return MemoryAccess.readByte(ptr, 0);
+            return MemoryAccess.getByte(ptr, 0);
         } else if (type == float.class) {
-            return MemoryAccess.readFloat(ptr, 0);
+            return MemoryAccess.getFloat(ptr, 0);
         } else if (type == double.class) {
-            return MemoryAccess.readDouble(ptr, 0);
+            return MemoryAccess.getDouble(ptr, 0);
         } else if (type == boolean.class) {
-            return MemoryAccess.readBoolean(ptr, 0);
+            return MemoryAccess.getBoolean(ptr, 0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }

@@ -107,14 +107,14 @@ public class TestSegments {
     public void testSmallSegmentMax() {
         long offset = (long)Integer.MAX_VALUE + (long)Integer.MAX_VALUE + 2L + 6L; // overflows to 6 when casted to int
         MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newImplicitScope());
-        MemoryAccess.readInt(memorySegment, offset);
+        MemoryAccess.getInt(memorySegment, offset);
     }
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testSmallSegmentMin() {
         long offset = ((long)Integer.MIN_VALUE * 2L) + 6L; // underflows to 6 when casted to int
         MemorySegment memorySegment = MemorySegment.allocateNative(10, ResourceScope.newImplicitScope());
-        MemoryAccess.readInt(memorySegment, offset);
+        MemoryAccess.getInt(memorySegment, offset);
     }
 
     @Test(dataProvider = "segmentFactories")

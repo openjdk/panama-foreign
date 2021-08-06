@@ -102,7 +102,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
             MemorySegment segment1 = MemorySegment.allocateNative(10, 1, scope);
             MemorySegment segment2 = MemorySegment.allocateNative(10, 1, scope);
             for (int i = 0; i < 10; i++) {
-                MemoryAccess.writeByte(segment1, i, (byte) i);
+                MemoryAccess.setByte(segment1, i, (byte) i);
             }
             ByteBuffer bb1 = segment1.asByteBuffer();
             ByteBuffer bb2 = segment2.asByteBuffer();
@@ -120,7 +120,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
             var segment1 = MemorySegment.ofArray(new byte[10]);
             var segment2 = MemorySegment.ofArray(new byte[10]);
             for (int i = 0; i < 10; i++) {
-                MemoryAccess.writeByte(segment1, i, (byte) i);
+                MemoryAccess.setByte(segment1, i, (byte) i);
             }
             ByteBuffer bb1 = segment1.asByteBuffer();
             ByteBuffer bb2 = segment2.asByteBuffer();

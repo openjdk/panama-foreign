@@ -155,7 +155,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
 
         long i = 0;
         if (length > 7) {
-            if (MemoryAccess.readByte(this, 0) != MemoryAccess.readByte(that, 0)) {
+            if (MemoryAccess.getByte(this, 0) != MemoryAccess.getByte(that, 0)) {
                 return 0;
             }
             i = vectorizedMismatchLargeForBytes(scope, that.scope,
@@ -170,7 +170,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
             i = length - remaining;
         }
         for (; i < length; i++) {
-            if (MemoryAccess.readByte(this, i) != MemoryAccess.readByte(that, i)) {
+            if (MemoryAccess.getByte(this, i) != MemoryAccess.getByte(that, i)) {
                 return i;
             }
         }

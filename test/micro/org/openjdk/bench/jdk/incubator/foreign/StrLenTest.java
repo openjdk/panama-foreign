@@ -149,7 +149,7 @@ public class StrLenTest {
         MemoryAddress address = CLinker.allocateMemory(len + 1);
         MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
-        MemoryAccess.writeByte(str, len, (byte)0);
+        MemoryAccess.setByte(str, len, (byte)0);
         return address;
     }
 
@@ -159,7 +159,7 @@ public class StrLenTest {
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
         MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
-        MemoryAccess.writeByte(str, len, (byte)0);
+        MemoryAccess.setByte(str, len, (byte)0);
         return address;
     }
 

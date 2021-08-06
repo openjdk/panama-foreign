@@ -125,7 +125,7 @@ public class QSort {
     }
 
     private static int getIntAbsolute(MemoryAddress addr) {
-        return MemoryAccess.readInt(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
+        return MemoryAccess.getInt(MemorySegment.globalNativeSegment(), addr.toRawLongValue());
     }
 
     static int panama_upcall_compar(MemoryAddress e0, MemoryAddress e1) {

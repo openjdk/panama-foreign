@@ -232,8 +232,8 @@ public class TestLoadStoreBytes {
   @CompilerControl(CompilerControl.Mode.PRINT)
   public void segmentImplicitScalar() {
     for (int i = 0; i < SPECIES.loopBound(srcArray.length); i++) {
-      var v = MemoryAccess.readByte(srcSegmentImplicit, i);
-      MemoryAccess.writeByte(dstSegmentImplicit, i, v);
+      var v = MemoryAccess.getByte(srcSegmentImplicit, i);
+      MemoryAccess.setByte(dstSegmentImplicit, i, v);
     }
   }
 

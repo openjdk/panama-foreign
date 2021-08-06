@@ -146,7 +146,7 @@ public class LoopOverNonConstantMapped {
     public int segment_loop_static() {
         int res = 0;
         for (int i = 0; i < ELEM_SIZE; i ++) {
-            res += MemoryAccess.readInt(segment, i * CARRIER_SIZE);
+            res += MemoryAccess.getInt(segment, i * CARRIER_SIZE);
         }
         return res;
     }

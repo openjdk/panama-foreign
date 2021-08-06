@@ -76,7 +76,7 @@ public class SystemLookup implements SymbolLookup {
                 .asSegment(C_POINTER.byteSize() * numSymbols, ResourceScope.newImplicitScope());
 
             SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemoryAccess.readAddress(funcs, symbol.ordinal() * MemoryLayouts.ADDRESS.byteSize()));
+                .map(symbol -> MemoryAccess.getAddress(funcs, symbol.ordinal() * MemoryLayouts.ADDRESS.byteSize()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.lookup(name));
