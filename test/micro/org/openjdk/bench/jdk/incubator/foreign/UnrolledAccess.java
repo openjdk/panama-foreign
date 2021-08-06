@@ -23,7 +23,7 @@
 
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import static jdk.incubator.foreign.MemoryAccess.*;
+import static jdk.incubator.foreign.MemorySegments.*;
 import jdk.incubator.foreign.*;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
@@ -101,10 +101,10 @@ public class UnrolledAccess {
         final MemorySegment os = state.outputSegment;
 
         for(int i = 0; i < SIZE; i+=4) {
-            setLongAtIndex(os, i,getLongAtIndex(is, i) + MemoryAccess.getLongAtIndex(os, i));
-            setLongAtIndex(os, i+1,getLongAtIndex(is, i+1) + getLongAtIndex(os, i+1));
-            setLongAtIndex(os, i+2,getLongAtIndex(is, i+2) + getLongAtIndex(os, i+2));
-            setLongAtIndex(os, i+3,getLongAtIndex(is, i+3) + getLongAtIndex(os, i+3));
+            setLong(os, i * 8,getLong(is, i * 8) + getLong(os, i * 8));
+            setLong(os, (i+1) * 8,getLong(is, (i+1) * 8) + getLong(os, (i+1) * 8));
+            setLong(os, (i+2) * 8,getLong(is, (i+2) * 8) + getLong(os, (i+2) * 8));
+            setLong(os, (i+3) * 8,getLong(is, (i+3)* 8) + getLong(os, (i+3) * 8));
         }
     }
 }

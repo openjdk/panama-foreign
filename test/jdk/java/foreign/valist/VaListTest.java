@@ -223,7 +223,7 @@ public class VaListTest extends NativeTestHelper {
         Function<MemoryLayout, Function<VaList, Integer>> getIntJavaFact = layout ->
                 list -> {
                     MemoryAddress ma = list.vargAsAddress(layout);
-                    return MemoryAccess.getIntAtOffset(MemorySegment.globalNativeSegment(), ma.toRawLongValue());
+                    return MemorySegments.getInt(MemorySegment.globalNativeSegment(), ma.toRawLongValue());
                 };
         Function<VaList, Integer> getIntNative = MethodHandleProxies.asInterfaceInstance(Function.class, MH_getInt);
         return new Object[][]{
@@ -241,7 +241,7 @@ public class VaListTest extends NativeTestHelper {
                                         ValueLayout pointerLayout) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment msInt = MemorySegment.allocateNative(JAVA_INT, scope);
-            MemoryAccess.setInt(msInt, 10);
+            MemorySegments.setInt(msInt, 0, 10);
             VaList vaList = vaListFactory.apply(b -> b.vargFromAddress(pointerLayout, msInt.address()));
             int x = getFromPointer.apply(vaList);
             assertEquals(x, 10);
@@ -490,12 +490,12 @@ public class VaListTest extends NativeTestHelper {
                     for (int i = 0; i < 16; i++) {
                         lSum += list.vargAsLong(longLayout);
                     }
-                    MemoryAccess.setLong(longSum, lSum);
+                    MemorySegments.setLong(longSum, 0, lSum);
                     double dSum = 0D;
                     for (int i = 0; i < 16; i++) {
                         dSum += list.vargAsDouble(doubleLayout);
                     }
-                    MemoryAccess.setDouble(doubleSum, dSum);
+                    MemorySegments.setDouble(doubleSum, 0, dSum);
                 };
         SumStackFunc sumStackNative = (longSum, doubleSum, list) -> {
             try {
@@ -521,8 +521,8 @@ public class VaListTest extends NativeTestHelper {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             MemorySegment longSum = MemorySegment.allocateNative(longLayout, scope);
             MemorySegment doubleSum = MemorySegment.allocateNative(doubleLayout, scope);
-            MemoryAccess.setLong(longSum, 0L);
-            MemoryAccess.setDouble(doubleSum, 0D);
+            MemorySegments.setLong(longSum, 0, 0L);
+            MemorySegments.setDouble(doubleSum, 0, 0D);
 
             VaList list = vaListFactory.apply(b -> {
                 for (long l = 1; l <= 16L; l++) {
@@ -539,8 +539,8 @@ public class VaListTest extends NativeTestHelper {
                 list.scope().close();
             }
 
-            long lSum = MemoryAccess.getLong(longSum);
-            double dSum = MemoryAccess.getDouble(doubleSum);
+            long lSum = MemorySegments.getLong(longSum, 0);
+            double dSum = MemorySegments.getDouble(doubleSum, 0);
 
             assertEquals(lSum, 136L);
             assertEquals(dSum, 136D);
@@ -752,7 +752,7 @@ public class VaListTest extends NativeTestHelper {
                 { linkVaListCB("upcallMemoryAddress"), VaListConsumer.mh(vaList -> {
                     MemoryAddress intPtr = vaList.vargAsAddress(C_POINTER);
                     MemorySegment ms = intPtr.asSegment(C_INT.byteSize(), ResourceScope.globalScope());
-                    int x = MemoryAccess.getInt(ms);
+                    int x = MemorySegments.getInt(ms, 0);
                     assertEquals(x, 10);
                 })},
                 { linkVaListCB("upcallDoubles"), VaListConsumer.mh(vaList -> {

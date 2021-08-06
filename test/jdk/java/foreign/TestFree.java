@@ -29,10 +29,10 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestFree
  */
 
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 
 import static jdk.incubator.foreign.CLinker.*;
@@ -48,7 +48,7 @@ public class TestFree {
         MemoryAddress addr = allocateMemory(str.length() + 1);
         MemorySegment seg = asArray(addr, C_CHAR, str.length() + 1);
         seg.copyFrom(MemorySegment.ofArray(str.getBytes()));
-        MemoryAccess.setByteAtOffset(seg, str.length(), (byte)0);
+        MemorySegments.setByte(seg, str.length(), (byte)0);
         assertEquals(str, toJavaString(seg));
         freeMemory(addr);
     }

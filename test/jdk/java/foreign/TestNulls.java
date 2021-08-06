@@ -85,7 +85,6 @@ public class TestNulls {
             GroupLayout.class,
             Addressable.class,
             SymbolLookup.class,
-            MemoryAccess.class,
             MemoryLayouts.class,
             MemoryHandles.class,
             CLinker.class,
@@ -94,7 +93,7 @@ public class TestNulls {
             FunctionDescriptor.class,
             SegmentAllocator.class,
             ResourceScope.class,
-            MemoryCopy.class
+            MemorySegments.class
     };
 
     static final Set<String> EXCLUDE_LIST = Set.of(

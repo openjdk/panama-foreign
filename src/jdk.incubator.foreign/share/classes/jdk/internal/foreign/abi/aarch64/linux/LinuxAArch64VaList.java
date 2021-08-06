@@ -279,8 +279,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     long offset = 0;
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
-                        MemorySegment slice = value.asSlice(offset, copy);
-                        MemorySegment.copy(gpRegsArea, currentGPOffset(), slice, 0, copy);
+                        value.copyFrom(offset, gpRegsArea, currentGPOffset(), copy);
                         consumeGPSlots(1);
                         offset += copy;
                     }
@@ -295,8 +294,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     for (MemoryLayout elem : group.memberLayouts()) {
                         assert elem.byteSize() <= 8;
                         final long copy = elem.byteSize();
-                        MemorySegment slice = value.asSlice(offset, copy);
-                        MemorySegment.copy(fpRegsArea, currentFPOffset(), slice, 0, copy);
+                        value.copyFrom(offset, gpRegsArea, currentFPOffset(), copy);
                         consumeFPSlots(1);
                         offset += copy;
                     }
@@ -456,8 +454,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         long offset = 0;
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
-                            MemorySegment slice = valueSegment.asSlice(offset, copy);
-                            MemorySegment.copy(slice, 0, gpRegs, currentGPOffset, copy);
+                            gpRegs.copyFrom(currentGPOffset, valueSegment, offset, copy);
                             currentGPOffset += GP_SLOT_SIZE;
                             offset += copy;
                         }
@@ -471,8 +468,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         for (MemoryLayout elem : group.memberLayouts()) {
                             assert elem.byteSize() <= 8;
                             final long copy = elem.byteSize();
-                            MemorySegment slice = valueSegment.asSlice(offset, copy);
-                            MemorySegment.copy(slice, 0, fpRegs, currentFPOffset, copy);
+                            gpRegs.copyFrom(currentFPOffset, valueSegment, offset, copy);
                             currentFPOffset += FP_SLOT_SIZE;
                             offset += copy;
                         }

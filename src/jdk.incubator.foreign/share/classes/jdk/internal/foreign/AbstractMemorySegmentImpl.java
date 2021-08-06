@@ -155,7 +155,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
 
         long i = 0;
         if (length > 7) {
-            if (MemoryAccess.getByte(this) != MemoryAccess.getByte(that)) {
+            if (MemorySegments.getByte(this, 0) != MemorySegments.getByte(that, 0)) {
                 return 0;
             }
             i = vectorizedMismatchLargeForBytes(scope, that.scope,
@@ -170,7 +170,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
             i = length - remaining;
         }
         for (; i < length; i++) {
-            if (MemoryAccess.getByteAtOffset(this, i) != MemoryAccess.getByteAtOffset(that, i)) {
+            if (MemorySegments.getByte(this, i) != MemorySegments.getByte(that, i)) {
                 return i;
             }
         }
@@ -307,8 +307,8 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     private <Z> Z toArray(Class<Z> arrayClass, int elemSize, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
         int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
         Z arr = arrayFactory.apply(size);
-        MemorySegment arrSegment = segmentFactory.apply(arr);
-        MemorySegment.copy(this, arrSegment, byteSize());
+        segmentFactory.apply(arr)
+                .copyFrom(0, this, 0, byteSize());
         return arr;
     }
 

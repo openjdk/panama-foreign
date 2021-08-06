@@ -740,9 +740,8 @@ public abstract class Binding {
 
         private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
                                                     Context context) {
-            MemorySegment copy = context.allocator().allocate(size, alignment);
-            MemorySegment.copy(operand, copy, size);
-            return copy;
+            return context.allocator().allocate(size, alignment)
+                            .copyFrom(0, operand, 0, size);
         }
 
         public long size() {

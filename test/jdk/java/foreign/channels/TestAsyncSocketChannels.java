@@ -48,8 +48,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import jdk.incubator.foreign.MemoryAccess;
+
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.*;
 import static java.lang.System.out;
@@ -162,7 +163,7 @@ public class TestAsyncSocketChannels extends AbstractChannelsTest {
             MemorySegment segment1 = MemorySegment.allocateNative(10, 1, scope);
             MemorySegment segment2 = MemorySegment.allocateNative(10, 1, scope);
             for (int i = 0; i < 10; i++) {
-                MemoryAccess.setByteAtOffset(segment1, i, (byte) i);
+                MemorySegments.setByte(segment1, i, (byte) i);
             }
             {   // Future variants
                 ByteBuffer bb1 = segment1.asByteBuffer();

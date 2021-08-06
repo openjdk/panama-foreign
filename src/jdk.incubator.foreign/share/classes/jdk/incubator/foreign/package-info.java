@@ -35,7 +35,7 @@
  * reside either inside or outside the Java heap (and can sometimes be expressed as an offset into a given segment).
  * A memory segment represents the main access coordinate of a memory access var handle, which can be obtained
  * using the combinator methods defined in the {@link jdk.incubator.foreign.MemoryHandles} class; a set of
- * common dereference operations is provided also by the {@link jdk.incubator.foreign.MemoryAccess} class, which can
+ * common dereference and copy operations is provided also by the {@link jdk.incubator.foreign.MemorySegments} class, which can
  * be useful for simple, non-structured access. Finally, the {@link jdk.incubator.foreign.MemoryLayout} class
  * hierarchy enables description of <em>memory layouts</em> and basic operations such as computing the size in bytes of a given
  * layout, obtain its alignment requirements, and so on. Memory layouts also provide an alternate, more abstract way, to produce
@@ -47,14 +47,14 @@
  * <pre>{@code
 MemorySegment segment = MemorySegment.allocateNative(10 * 4, ResourceScope.newImplicitScope());
 for (int i = 0 ; i < 10 ; i++) {
-   MemoryAccess.setIntAtIndex(segment, i, 42);
+   MemorySegments.setInt(segment, i * 4, 42);
 }
  * }</pre>
  *
  * Here create a <em>native</em> memory segment, that is, a memory segment backed by
  * off-heap memory; the size of the segment is 40 bytes, enough to store 10 values of the primitive type {@code int}.
  * Inside a loop, we then initialize the contents of the memory segment using the
- * {@link jdk.incubator.foreign.MemoryAccess#setIntAtIndex(jdk.incubator.foreign.MemorySegment, long, int)} helper method;
+ * {@link jdk.incubator.foreign.MemorySegments#setInt(jdk.incubator.foreign.MemorySegment, long, int)} helper method;
  * more specifically, if we view the memory segment as a set of 10 adjacent slots,
  * {@code s[i]}, where {@code 0 <= i < 10}, where the size of each slot is exactly 4 bytes, the initialization logic above will set each slot
  * so that {@code s[i] = i}, again where {@code 0 <= i < 10}.

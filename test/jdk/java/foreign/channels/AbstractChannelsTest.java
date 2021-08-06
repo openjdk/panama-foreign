@@ -29,8 +29,9 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import jdk.incubator.foreign.MemoryAccess;
+
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.test.lib.RandomFactory;
 import org.testng.annotations.*;
@@ -75,7 +76,7 @@ public class AbstractChannelsTest {
     static ByteBuffer segmentBufferOfSize(ResourceScope scope, int size) {
         var segment = MemorySegment.allocateNative(size, 1, scope);
         for (int i = 0; i < size; i++) {
-            MemoryAccess.setByteAtOffset(segment, i, ((byte)RANDOM.nextInt()));
+            MemorySegments.setByte(segment, i, ((byte)RANDOM.nextInt()));
         }
         return segment.asByteBuffer();
     }

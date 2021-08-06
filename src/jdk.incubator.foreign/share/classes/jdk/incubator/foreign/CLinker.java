@@ -40,7 +40,6 @@ import jdk.internal.reflect.Reflection;
 import java.lang.constant.Constable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -372,7 +371,7 @@ public sealed interface CLinker permits AbstractCLinker {
     private static void copy(MemorySegment addr, byte[] bytes) {
         var heapSegment = MemorySegment.ofArray(bytes);
         addr.copyFrom(heapSegment);
-        MemoryAccess.setByteAtOffset(addr, bytes.length, (byte)0);
+        MemorySegments.setByte(addr, bytes.length, (byte)0);
     }
 
     private static MemorySegment toCString(byte[] bytes, SegmentAllocator allocator) {

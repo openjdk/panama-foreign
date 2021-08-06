@@ -25,8 +25,9 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAccess;
+import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import jdk.incubator.foreign.MemoryAddress;
@@ -75,7 +76,7 @@ public class SystemLookup implements SymbolLookup {
                 .asSegment(C_POINTER.byteSize() * numSymbols, ResourceScope.newImplicitScope());
 
             SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemoryAccess.getAddressAtIndex(funcs, symbol.ordinal()));
+                .map(symbol -> MemorySegments.getAddress(funcs, symbol.ordinal() * MemoryLayouts.ADDRESS.byteSize()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.lookup(name));

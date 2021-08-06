@@ -30,12 +30,12 @@
  */
 
 import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
 import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SequenceLayout;
 import org.testng.annotations.DataProvider;
@@ -205,8 +205,8 @@ public class TestNative {
     public void testEverythingSegment() {
         MemoryAddress addr = allocate(4);
         MemorySegment everything = MemorySegment.globalNativeSegment();
-        MemoryAccess.setIntAtOffset(everything, addr.toRawLongValue(), 42);
-        assertEquals(MemoryAccess.getIntAtOffset(everything, addr.toRawLongValue()), 42);
+        MemorySegments.setInt(everything, addr.toRawLongValue(), 42);
+        assertEquals(MemorySegments.getInt(everything, addr.toRawLongValue()), 42);
         free(addr);
     }
 

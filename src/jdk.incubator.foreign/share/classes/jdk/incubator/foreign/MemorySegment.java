@@ -39,7 +39,6 @@ import jdk.internal.reflect.Reflection;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -368,7 +367,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * <p>
      * Calling this method is equivalent to the following code:
      * <blockquote><pre>{@code
-    MemorySegment.copy(src, this, src.byteSize());
+    MemorySegment.copyFrom(0, src, 0, src.byteSize());
      * }</pre></blockquote>
      * @param src the source segment.
      * @throws IndexOutOfBoundsException if {@code src.byteSize() > this.byteSize()}.
@@ -376,9 +375,87 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * with this segment have been already closed, or if access occurs from a thread other than the thread owning either
      * scopes.
      * @throws UnsupportedOperationException if this segment is read-only (see {@link #isReadOnly()}).
+     * @return this segment.
      */
-    default void copyFrom(MemorySegment src) {
-        MemorySegment.copy(src, this, src.byteSize());
+    default MemorySegment copyFrom(MemorySegment src) {
+        return copyFrom(0, src, 0, src.byteSize());
+    }
+
+    /**
+     * Performs a bulk copy from given source segment to this segment. More specifically, the bytes at offset
+     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into this
+     * segment at offsets {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * this segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
+     * <p>
+     * Calling this method is equivalent to the following code:
+     * <blockquote><pre>{@code
+    MemorySegment.copyFrom(MemoryLayouts.JAVA_BYTE, dstOffset, src, MemoryLayouts.JAVA_BYTE, srcOffset, src.byteSize());
+     * }</pre></blockquote>
+     * @param src the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param bytes the number of bytes to be copied.
+     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
+     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
+     * owning either scopes.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
+     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
+     * or {@code bytes} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     * @return this segment.
+     */
+    default MemorySegment copyFrom(long dstOffset, MemorySegment src, long srcOffset, long bytes) {
+        return copyFrom(MemoryLayouts.JAVA_BYTE, dstOffset, src, MemoryLayouts.JAVA_BYTE, srcOffset, bytes);
+    }
+
+    /**
+     * Performs a bulk copy from given source segment to this segment. More specifically, if {@code S} is the byte size
+     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
+     * in the source segment are copied into this segment at offsets {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
+     * whose layout is {@code srcElementLayout}, whereas the bytes in this segment are interpreted as a sequence of
+     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
+     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
+     * are swapped accordingly during the copy operation.
+     * <p>
+     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
+     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
+     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
+     * this segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
+     * <p>
+     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
+     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
+     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
+     * @param src the source segment.
+     * @param srcElementLayout the element layout associated with the source segment.
+     * @param srcOffset the starting offset, in bytes, of the source segment.
+     * @param dstElementLayout the element layout associated with the destination segment.
+     * @param dstOffset the starting offset, in bytes, of the destination segment.
+     * @param elementCount the number of elements to be copied.
+     * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
+     * with the alignment constraints in the source element layout, or if the destination offset is incompatible with the
+     * alignment constraints in the destination element layout.
+     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
+     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
+     * owning either scopes.
+     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
+     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
+     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
+     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
+     * @return this segment.
+     */
+    default MemorySegment copyFrom(ValueLayout dstElementLayout, long dstOffset, MemorySegment src, ValueLayout srcElementLayout, long srcOffset, long elementCount) {
+        MemorySegment.copy(src, srcElementLayout, srcOffset, this, dstElementLayout, dstOffset, elementCount);
+        return this;
     }
 
     /**
@@ -827,114 +904,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
         return NativeMemorySegmentImpl.EVERYTHING;
     }
 
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
-     * {@code 0} through {@code bytes - 1} in the source segment are copied into the destination
-     * segment at offset {@code 0} through {@code bytes - 1}.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code bytes - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * this segment at offset {@code dstOffset} through {@code bytes - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * <p>
-     * Calling this method is equivalent to the following code:
-     * <blockquote><pre>{@code
-    MemorySegment.copy(srcSegment, 0, dstSegment, 0, bytes);
-     * }</pre></blockquote>
-     * @param srcSegment the source segment.
-     * @param dstSegment the destination segment.
-     * @param bytes the number of bytes to be copied.
-     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
-     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
-     * owning either scopes.
-     * @throws IndexOutOfBoundsException if {@code bytes > srcSegment.byteSize()} or if
-     * {@code bytes > dstSegment.byteSize()}, or if {@code bytes <= 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
+    // primitive copy method
     @ForceInline
-    static void copy(MemorySegment srcSegment, MemorySegment dstSegment, long bytes) {
-        copy(srcSegment, 0, dstSegment, 0, bytes);
-    }
-
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
-     * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
-     * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * this segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * <p>
-     * Calling this method is equivalent to the following code:
-     * <blockquote><pre>{@code
-    MemorySegment.copy(srcSegment, MemoryLayouts.JAVA_BYTE, srcOffset, dstSegment, MemoryLayouts.JAVA_BYTE, dstOffset, bytes);
-     * }</pre></blockquote>
-     * @param srcSegment the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param bytes the number of bytes to be copied.
-     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
-     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
-     * owning either scopes.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + bytes > srcSegment.byteSize()} or if
-     * {@code dstOffset + bytes > dstSegment.byteSize()}, or if either {@code srcOffset}, {@code dstOffset}
-     * or {@code bytes} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment, long srcOffset, MemorySegment dstSegment, long dstOffset, long bytes) {
-        copy(srcSegment, MemoryLayouts.JAVA_BYTE, srcOffset, dstSegment, MemoryLayouts.JAVA_BYTE, dstOffset, bytes);
-    }
-
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, if {@code S} is the byte size
-     * of the element layouts, the bytes at offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1}
-     * in the source segment are copied into the destination segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The copy occurs in an element-wise fashion: the bytes in the source segment are interpreted as a sequence of elements
-     * whose layout is {@code srcElementLayout}, whereas the bytes in the destination segment are interpreted as a sequence of
-     * elements whose layout is {@code dstElementLayout}. Both element layouts must have same size {@code S}.
-     * If the byte order of the two element layouts differ, the bytes corresponding to each element to be copied
-     * are swapped accordingly during the copy operation.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code srcOffset + (elementCount * S) - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * this segment at offset {@code dstOffset} through {@code dstOffset + (elementCount * S) - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and this segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * @param srcSegment the source segment.
-     * @param srcElementLayout the element layout associated with the source segment.
-     * @param srcOffset the starting offset, in bytes, of the source segment.
-     * @param dstSegment the destination segment.
-     * @param dstElementLayout the element layout associated with the destination segment.
-     * @param dstOffset the starting offset, in bytes, of the destination segment.
-     * @param elementCount the number of elements to be copied.
-     * @throws IllegalArgumentException if the element layouts have different sizes, if the source offset is incompatible
-     * with the alignment constraints in the source element layout, or if the destination offset is incompatible with the
-     * alignment constraints in the destination element layout.
-     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
-     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
-     * owning either scopes.
-     * @throws IndexOutOfBoundsException if {@code srcOffset + (elementCount * S) > srcSegment.byteSize()} or if
-     * {@code dstOffset + (elementCount * S) > dstSegment.byteSize()}, where {@code S} is the byte size
-     * of the element layouts, or if either {@code srcOffset}, {@code dstOffset} or {@code elementCount} are {@code < 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
+    private static void copy(MemorySegment srcSegment, ValueLayout srcElementLayout, long srcOffset, MemorySegment dstSegment,
                      ValueLayout dstElementLayout, long dstOffset, long elementCount) {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(srcElementLayout);
@@ -955,11 +927,11 @@ for (long l = 0; l < segment.byteSize(); l++) {
         srcImpl.checkAccess(srcOffset, size, true);
         dstImpl.checkAccess(dstOffset, size, false);
         if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            MemoryCopy.scopedMemoryAccess.copyMemory(srcImpl.scope(), dstImpl.scope(),
+            MemorySegments.scopedMemoryAccess.copyMemory(srcImpl.scope(), dstImpl.scope(),
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
         } else {
-            MemoryCopy.scopedMemoryAccess.copySwapMemory(srcImpl.scope(), dstImpl.scope(),
+            MemorySegments.scopedMemoryAccess.copySwapMemory(srcImpl.scope(), dstImpl.scope(),
                     srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
         }

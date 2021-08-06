@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 
 import jdk.incubator.foreign.*;
 
-import static jdk.incubator.foreign.MemoryAccess.*;
+import static jdk.incubator.foreign.MemorySegments.*;
 
 import org.testng.annotations.*;
 
@@ -213,9 +213,9 @@ public class StdLibTest {
                 MemorySegment other = toCString(s2, scope);
                 char[] chars = s1.toCharArray();
                 for (long i = 0 ; i < chars.length ; i++) {
-                    setByteAtOffset(buf, i, (byte)chars[(int)i]);
+                    setByte(buf, i, (byte)chars[(int)i]);
                 }
-                setByteAtOffset(buf, chars.length, (byte)'\0');
+                setByte(buf, chars.length, (byte)'\0');
                 return toJavaString(((MemoryAddress)strcat.invokeExact(buf.address(), other.address())));
             }
         }
@@ -245,7 +245,7 @@ public class StdLibTest {
         Tm gmtime(long arg) throws Throwable {
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
                 MemorySegment time = MemorySegment.allocateNative(8, scope);
-                setLong(time, arg);
+                setLong(time, 0, arg);
                 return new Tm((MemoryAddress)gmtime.invokeExact(time.address()));
             }
         }
@@ -262,31 +262,31 @@ public class StdLibTest {
             }
 
             int sec() {
-                return getIntAtOffset(base, 0);
+                return getInt(base, 0);
             }
             int min() {
-                return getIntAtOffset(base, 4);
+                return getInt(base, 4);
             }
             int hour() {
-                return getIntAtOffset(base, 8);
+                return getInt(base, 8);
             }
             int mday() {
-                return getIntAtOffset(base, 12);
+                return getInt(base, 12);
             }
             int mon() {
-                return getIntAtOffset(base, 16);
+                return getInt(base, 16);
             }
             int year() {
-                return getIntAtOffset(base, 20);
+                return getInt(base, 20);
             }
             int wday() {
-                return getIntAtOffset(base, 24);
+                return getInt(base, 24);
             }
             int yday() {
-                return getIntAtOffset(base, 28);
+                return getInt(base, 28);
             }
             boolean isdst() {
-                byte b = getByteAtOffset(base, 32);
+                byte b = getByte(base, 32);
                 return b != 0;
             }
         }
@@ -308,8 +308,8 @@ public class StdLibTest {
         }
 
         static int qsortCompare(MemorySegment base, MemoryAddress addr1, MemoryAddress addr2) {
-            return getIntAtOffset(base, addr1.segmentOffset(base)) -
-                   getIntAtOffset(base, addr2.segmentOffset(base));
+            return getInt(base, addr1.segmentOffset(base)) -
+                   getInt(base, addr2.segmentOffset(base));
         }
 
         int rand() throws Throwable {

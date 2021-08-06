@@ -255,12 +255,11 @@ public non-sealed class SysVVaList implements VaList {
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
-                        MemorySegment slice = value.asSlice(offset, copy);
                         if (isSSE) {
-                            MemorySegment.copy(regSaveArea, currentFPOffset(), slice, 0, copy);
+                            value.copyFrom(offset, regSaveArea, currentFPOffset(), copy);
                             currentFPOffset(currentFPOffset() + FP_SLOT_SIZE);
                         } else {
-                            MemorySegment.copy(regSaveArea, currentGPOffset(), slice, 0, copy);
+                            value.copyFrom(offset, regSaveArea, currentGPOffset(), copy);
                             currentGPOffset(currentGPOffset() + GP_SLOT_SIZE);
                         }
                         offset += copy;
@@ -394,12 +393,11 @@ public non-sealed class SysVVaList implements VaList {
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             boolean isSSE = typeClass.classes.get(classIdx++) == ArgumentClassImpl.SSE;
-                            MemorySegment slice = valueSegment.asSlice(offset, copy);
                             if (isSSE) {
-                                MemorySegment.copy(slice, 0, reg_save_area, currentFPOffset, copy);
+                                reg_save_area.copyFrom(currentFPOffset, valueSegment, offset, copy);
                                 currentFPOffset += FP_SLOT_SIZE;
                             } else {
-                                MemorySegment.copy(slice, 0, reg_save_area, currentGPOffset, copy);
+                                reg_save_area.copyFrom(currentGPOffset, valueSegment, offset, copy);
                                 currentGPOffset += GP_SLOT_SIZE;
                             }
                             offset += copy;

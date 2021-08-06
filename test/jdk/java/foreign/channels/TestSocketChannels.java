@@ -40,8 +40,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import jdk.incubator.foreign.MemoryAccess;
+
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -101,7 +102,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
             MemorySegment segment1 = MemorySegment.allocateNative(10, 1, scope);
             MemorySegment segment2 = MemorySegment.allocateNative(10, 1, scope);
             for (int i = 0; i < 10; i++) {
-                MemoryAccess.setByteAtOffset(segment1, i, (byte) i);
+                MemorySegments.setByte(segment1, i, (byte) i);
             }
             ByteBuffer bb1 = segment1.asByteBuffer();
             ByteBuffer bb2 = segment2.asByteBuffer();
@@ -119,7 +120,7 @@ public class TestSocketChannels extends AbstractChannelsTest {
             var segment1 = MemorySegment.ofArray(new byte[10]);
             var segment2 = MemorySegment.ofArray(new byte[10]);
             for (int i = 0; i < 10; i++) {
-                MemoryAccess.setByteAtOffset(segment1, i, (byte) i);
+                MemorySegments.setByte(segment1, i, (byte) i);
             }
             ByteBuffer bb1 = segment1.asByteBuffer();
             ByteBuffer bb2 = segment2.asByteBuffer();

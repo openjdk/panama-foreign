@@ -27,9 +27,9 @@ package org.openjdk.bench.jdk.incubator.foreign;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -149,7 +149,7 @@ public class StrLenTest {
         MemoryAddress address = CLinker.allocateMemory(len + 1);
         MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
-        MemoryAccess.setByteAtOffset(str, len, (byte)0);
+        MemorySegments.setByte(str, len, (byte)0);
         return address;
     }
 
@@ -159,7 +159,7 @@ public class StrLenTest {
         MemoryAddress address = (MemoryAddress)MALLOC_TRIVIAL.invokeExact((long)len + 1);
         MemorySegment str = address.asSegment(len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
-        MemoryAccess.setByteAtOffset(str, len, (byte)0);
+        MemorySegments.setByte(str, len, (byte)0);
         return address;
     }
 

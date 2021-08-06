@@ -23,14 +23,9 @@
 
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.CLinker;
-import jdk.incubator.foreign.MemoryAccess;
-import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorSpecies;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.CompilerControl;
@@ -44,7 +39,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.AverageTime)
@@ -119,7 +113,7 @@ public class TestLoadBytes {
     public int segmentNativeScalar() {
         int size = 0;
         for (int i = 0; i < srcArray.length; i++) {
-            var v = MemoryAccess.getByteAtOffset(srcSegmentImplicit, i);
+            var v = MemorySegments.getByte(srcSegmentImplicit, i);
             size += v;
         }
         return size;
@@ -129,7 +123,7 @@ public class TestLoadBytes {
     public int segmentNativeScalarConst() {
         int size = 0;
         for (int i = 0; i < 1024; i++) {
-            var v = MemoryAccess.getByteAtOffset(srcSegmentImplicit, i);
+            var v = MemorySegments.getByte(srcSegmentImplicit, i);
             size += v;
         }
         return size;

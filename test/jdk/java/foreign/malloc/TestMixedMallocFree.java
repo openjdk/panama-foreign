@@ -29,9 +29,9 @@
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 import org.testng.annotations.Test;
@@ -60,8 +60,8 @@ public class TestMixedMallocFree {
     public void testMalloc() throws Throwable {
         MemoryAddress ma = (MemoryAddress) MH_my_malloc.invokeExact(4L);
         MemorySegment seg = ma.asSegment(4L, ResourceScope.newImplicitScope());
-        MemoryAccess.setInt(seg, 42);
-        assertEquals(MemoryAccess.getInt(seg), 42);
+        MemorySegments.setInt(seg, 0, 42);
+        assertEquals(MemorySegments.getInt(seg, 0), 42);
         // Test if this free crashes the VM, which might be the case if we load the wrong default library
         // and end up mixing two allocators together.
         CLinker.freeMemory(ma);

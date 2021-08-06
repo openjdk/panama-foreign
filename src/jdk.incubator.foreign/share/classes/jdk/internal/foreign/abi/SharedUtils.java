@@ -27,12 +27,10 @@ package jdk.internal.foreign.abi;
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryCopy;
-import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.MemorySegments;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
@@ -68,7 +66,6 @@ import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
-import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
@@ -289,14 +286,14 @@ public class SharedUtils {
     public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
-        MemoryCopy.copy(segment, start, bytes, 0, len);
+        MemorySegments.copy(segment, start, bytes, 0, len);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static int strlen(MemorySegment segment, long start) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset++) {
-            byte curr = MemoryAccess.getByteAtOffset(segment, start + offset);
+            byte curr = MemorySegments.getByte(segment, start + offset);
             if (curr == 0) {
                 return offset;
             }
@@ -610,21 +607,21 @@ public class SharedUtils {
     static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
-            MemoryAccess.setLong(ptr, (long) o);
+            MemorySegments.setLong(ptr, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.setLong(ptr, (int) o);
+            MemorySegments.setLong(ptr, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.setLong(ptr, (short) o);
+            MemorySegments.setLong(ptr, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.setLong(ptr, (char) o);
+            MemorySegments.setLong(ptr, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.setLong(ptr, (byte) o);
+            MemorySegments.setLong(ptr, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.setFloat(ptr, (float) o);
+            MemorySegments.setFloat(ptr, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.setDouble(ptr, (double) o);
+            MemorySegments.setDouble(ptr, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.setBoolean(ptr, (boolean) o);
+            MemorySegments.setBoolean(ptr, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -632,21 +629,21 @@ public class SharedUtils {
 
     static void write(MemorySegment ptr, Class<?> type, Object o) {
         if (type == long.class) {
-            MemoryAccess.setLong(ptr, (long) o);
+            MemorySegments.setLong(ptr, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.setInt(ptr, (int) o);
+            MemorySegments.setInt(ptr, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.setShort(ptr, (short) o);
+            MemorySegments.setShort(ptr, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.setChar(ptr, (char) o);
+            MemorySegments.setChar(ptr, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.setByte(ptr, (byte) o);
+            MemorySegments.setByte(ptr, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.setFloat(ptr, (float) o);
+            MemorySegments.setFloat(ptr, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.setDouble(ptr, (double) o);
+            MemorySegments.setDouble(ptr, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.setBoolean(ptr, (boolean) o);
+            MemorySegments.setBoolean(ptr, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -654,21 +651,21 @@ public class SharedUtils {
 
     static Object read(MemorySegment ptr, Class<?> type) {
         if (type == long.class) {
-            return MemoryAccess.getLong(ptr);
+            return MemorySegments.getLong(ptr, 0);
         } else if (type == int.class) {
-            return MemoryAccess.getInt(ptr);
+            return MemorySegments.getInt(ptr, 0);
         } else if (type == short.class) {
-            return MemoryAccess.getShort(ptr);
+            return MemorySegments.getShort(ptr, 0);
         } else if (type == char.class) {
-            return MemoryAccess.getChar(ptr);
+            return MemorySegments.getChar(ptr, 0);
         } else if (type == byte.class) {
-            return MemoryAccess.getByte(ptr);
+            return MemorySegments.getByte(ptr, 0);
         } else if (type == float.class) {
-            return MemoryAccess.getFloat(ptr);
+            return MemorySegments.getFloat(ptr, 0);
         } else if (type == double.class) {
-            return MemoryAccess.getDouble(ptr);
+            return MemorySegments.getDouble(ptr, 0);
         } else if (type == boolean.class) {
-            return MemoryAccess.getBoolean(ptr);
+            return MemorySegments.getBoolean(ptr, 0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
