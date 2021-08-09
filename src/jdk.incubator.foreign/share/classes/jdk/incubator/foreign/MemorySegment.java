@@ -730,39 +730,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
     /**
      * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
-     * {@code 0} through {@code bytes - 1} in the source segment are copied into the destination
-     * segment at offset {@code 0} through {@code bytes - 1}.
-     * <p>
-     * If the source segment overlaps with this segment, then the copying is performed as if the bytes at
-     * offset {@code srcOffset} through {@code bytes - 1} in the source segment were first copied into a
-     * temporary segment with size {@code bytes}, and then the contents of the temporary segment were copied into
-     * the destination segment at offset {@code dstOffset} through {@code bytes - 1}.
-     * <p>
-     * The result of a bulk copy is unspecified if, in the uncommon case, the source segment and the destination segment
-     * do not overlap, but refer to overlapping regions of the same backing storage using different addresses.
-     * For example, this may occur if the same file is {@linkplain MemorySegment#mapFile mapped} to two segments.
-     * <p>
-     * Calling this method is equivalent to the following code:
-     * <blockquote><pre>{@code
-    MemorySegment.copy(srcSegment, 0, dstSegment, 0, bytes);
-     * }</pre></blockquote>
-     * @param srcSegment the source segment.
-     * @param dstSegment the destination segment.
-     * @param bytes the number of bytes to be copied.
-     * @throws IllegalStateException if either the scope associated with the source segment or the scope associated
-     * with the destination segment have been already closed, or if access occurs from a thread other than the thread
-     * owning either scopes.
-     * @throws IndexOutOfBoundsException if {@code bytes > srcSegment.byteSize()} or if
-     * {@code bytes > dstSegment.byteSize()}, or if {@code bytes <= 0}.
-     * @throws UnsupportedOperationException if the destination segment is read-only (see {@link #isReadOnly()}).
-     */
-    @ForceInline
-    static void copy(MemorySegment srcSegment, MemorySegment dstSegment, long bytes) {
-        copy(srcSegment, 0, dstSegment, 0, bytes);
-    }
-
-    /**
-     * Performs a bulk copy from source segment to destination segment. More specifically, the bytes at offset
      * {@code srcOffset} through {@code srcOffset + bytes - 1} in the source segment are copied into the destination
      * segment at offset {@code dstOffset} through {@code dstOffset + bytes - 1}.
      * <p>

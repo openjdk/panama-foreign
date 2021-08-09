@@ -623,7 +623,7 @@ public final class MemoryAccess {
     }
 
     /**
-     * Copies a number of double elements from a source segment to a destination array,
+     * Copies a number of elements from a source segment to a destination array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
      * @param srcOffset the starting offset, in bytes, of the source segment.
@@ -641,7 +641,7 @@ public final class MemoryAccess {
     }
 
     /**
-     * Copies a number of double elements from a source segment to a destination array,
+     * Copies a number of elements from a source segment to a destination array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given byte order.
      * @param srcSegment the source segment.
      * @param srcOffset the starting offset, in bytes, of the source segment.
@@ -677,7 +677,7 @@ public final class MemoryAccess {
     }
 
     /**
-     * Copies a number of double elements from a source array to a destination segment,
+     * Copies a number of elements from a source array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source array.
      * @param srcIndex the starting index of the source array.
@@ -695,7 +695,7 @@ public final class MemoryAccess {
     }
 
     /**
-     * Copies a number of double elements from a source array to a destination segment,
+     * Copies a number of elements from a source array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given byte order.
      * @param srcArray the source array.
      * @param srcIndex the starting index of the source array.
