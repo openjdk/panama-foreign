@@ -548,80 +548,34 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated byte array.
+     * Creates a new array memory segment that models the memory associated with a given heap-allocated array.
      * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
      *
      * @param arr the primitive array backing the array memory segment.
+     * @throws  IllegalArgumentException if {@code arr} is not an array, or if it is an array but whose type is not supported.
+     * Supported array types are {@code byte[]}, {@code char[]},{@code short[]},{@code int[]},{@code float[]},{@code long[]} and {@code double[]}.
      * @return a new array memory segment.
      */
-    static MemorySegment ofArray(byte[] arr) {
-        return HeapMemorySegmentImpl.OfByte.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated char array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(char[] arr) {
-        return HeapMemorySegmentImpl.OfChar.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated short array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(short[] arr) {
-        return HeapMemorySegmentImpl.OfShort.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated int array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(int[] arr) {
-        return HeapMemorySegmentImpl.OfInt.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated float array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(float[] arr) {
-        return HeapMemorySegmentImpl.OfFloat.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated long array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(long[] arr) {
-        return HeapMemorySegmentImpl.OfLong.fromArray(arr);
-    }
-
-    /**
-     * Creates a new confined array memory segment that models the memory associated with a given heap-allocated double array.
-     * The returned segment's resource scope is set to the {@linkplain ResourceScope#globalScope() global} resource scope.
-     *
-     * @param arr the primitive array backing the array memory segment.
-     * @return a new array memory segment.
-     */
-    static MemorySegment ofArray(double[] arr) {
-        return HeapMemorySegmentImpl.OfDouble.fromArray(arr);
+    @ForceInline
+    static MemorySegment ofArray(Object arr) {
+        Objects.requireNonNull(arr);
+        if (arr.getClass().equals(byte[].class)) {
+            return HeapMemorySegmentImpl.OfByte.fromArray((byte[])arr);
+        } else if (arr.getClass().equals(char[].class)) {
+            return HeapMemorySegmentImpl.OfChar.fromArray((char[])arr);
+        } else if (arr.getClass().equals(short[].class)) {
+            return HeapMemorySegmentImpl.OfShort.fromArray((short[]) arr);
+        } else if (arr.getClass().equals(int[].class)) {
+            return HeapMemorySegmentImpl.OfInt.fromArray((int[]) arr);
+        } else if (arr.getClass().equals(float[].class)) {
+            return HeapMemorySegmentImpl.OfFloat.fromArray((float[]) arr);
+        } else if (arr.getClass().equals(long[].class)) {
+            return HeapMemorySegmentImpl.OfLong.fromArray((long[]) arr);
+        } else if (arr.getClass().equals(double[].class)) {
+            return HeapMemorySegmentImpl.OfDouble.fromArray((double[]) arr);
+        } else {
+            throw new IllegalArgumentException("Bad carrier");
+        }
     }
 
     /**

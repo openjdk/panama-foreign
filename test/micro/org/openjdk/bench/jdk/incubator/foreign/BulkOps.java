@@ -24,9 +24,11 @@
 
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
@@ -37,6 +39,7 @@ import sun.misc.Unsafe;
 
 import jdk.incubator.foreign.MemorySegment;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
@@ -120,6 +123,19 @@ public class BulkOps {
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void segment_copy() {
         segment.copyFrom(bytesSegment);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void segment_copy_static() {
+        MemoryAccess.copy(bytes, 0, segment, 0, bytes.length);
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void segment_copy_static_dontinline() {
+        MemoryAccess.copy(bytes, 0, segment, 0, bytes.length);
     }
 
     @Benchmark

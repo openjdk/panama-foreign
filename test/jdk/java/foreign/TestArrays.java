@@ -91,10 +91,10 @@ public class TestArrays {
         }
     }
 
-    static <Z> void checkBytes(MemorySegment base, SequenceLayout layout, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> arrayWrapper, BiFunction<MemorySegment, Long, Object> handleGetter) {
+    static <Z> void checkBytes(MemorySegment base, SequenceLayout layout, IntFunction<Z> arrayFactory, BiFunction<MemorySegment, Long, Object> handleGetter) {
         int nelems = (int)layout.elementCount().getAsLong();
         Z arr = arrayFactory.apply(nelems);
-        arrayWrapper.apply(arr).copyFrom(base);
+        MemorySegment.ofArray(arr).copyFrom(base);
         for (int i = 0; i < nelems; i++) {
             Object found = handleGetter.apply(base, (long) i);
             Object expected = java.lang.reflect.Array.get(arr, i);
@@ -142,19 +142,19 @@ public class TestArrays {
                 (base) -> initBytes(base, doubles, (addr, pos) -> doubleHandle.set(addr, pos, (double)(long)pos));
 
         Consumer<MemorySegment> byteChecker =
-                (base) -> checkBytes(base, bytes, byte[]::new, MemorySegment::ofArray, (addr, pos) -> (byte)byteHandle.get(addr, pos));
+                (base) -> checkBytes(base, bytes, byte[]::new, (addr, pos) -> (byte)byteHandle.get(addr, pos));
         Consumer<MemorySegment> shortChecker =
-                (base) -> checkBytes(base, shorts, short[]::new, MemorySegment::ofArray, (addr, pos) -> (short)shortHandle.get(addr, pos));
+                (base) -> checkBytes(base, shorts, short[]::new, (addr, pos) -> (short)shortHandle.get(addr, pos));
         Consumer<MemorySegment> charChecker =
-                (base) -> checkBytes(base, chars, char[]::new, MemorySegment::ofArray, (addr, pos) -> (char)charHandle.get(addr, pos));
+                (base) -> checkBytes(base, chars, char[]::new, (addr, pos) -> (char)charHandle.get(addr, pos));
         Consumer<MemorySegment> intChecker =
-                (base) -> checkBytes(base, ints, int[]::new, MemorySegment::ofArray, (addr, pos) -> (int)intHandle.get(addr, pos));
+                (base) -> checkBytes(base, ints, int[]::new, (addr, pos) -> (int)intHandle.get(addr, pos));
         Consumer<MemorySegment> floatChecker =
-                (base) -> checkBytes(base, floats, float[]::new, MemorySegment::ofArray, (addr, pos) -> (float)floatHandle.get(addr, pos));
+                (base) -> checkBytes(base, floats, float[]::new, (addr, pos) -> (float)floatHandle.get(addr, pos));
         Consumer<MemorySegment> longChecker =
-                (base) -> checkBytes(base, longs, long[]::new, MemorySegment::ofArray, (addr, pos) -> (long)longHandle.get(addr, pos));
+                (base) -> checkBytes(base, longs, long[]::new, (addr, pos) -> (long)longHandle.get(addr, pos));
         Consumer<MemorySegment> doubleChecker =
-                (base) -> checkBytes(base, doubles, double[]::new, MemorySegment::ofArray, (addr, pos) -> (double)doubleHandle.get(addr, pos));
+                (base) -> checkBytes(base, doubles, double[]::new, (addr, pos) -> (double)doubleHandle.get(addr, pos));
 
         return new Object[][]{
                 {byteInitializer, byteChecker, bytes},
