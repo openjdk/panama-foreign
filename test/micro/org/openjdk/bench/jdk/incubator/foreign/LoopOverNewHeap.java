@@ -88,7 +88,7 @@ public class LoopOverNewHeap {
             unsafe.putInt(elems, Unsafe.ARRAY_INT_BASE_OFFSET + (i * CARRIER_SIZE) , i);
         }
     }
-    
+
 
     @Benchmark
     public void segment_loop() {
