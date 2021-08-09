@@ -529,60 +529,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
     byte[] toByteArray();
 
     /**
-     * Copy the contents of this memory segment into a fresh short array.
-     * @return a fresh short array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link short[]} instance,
-     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}
-     */
-    short[] toShortArray();
-
-    /**
-     * Copy the contents of this memory segment into a fresh char array.
-     * @return a fresh char array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link char[]} instance,
-     * e.g. because {@code byteSize() % 2 != 0}, or {@code byteSize() / 2 > Integer#MAX_VALUE}.
-     */
-    char[] toCharArray();
-
-    /**
-     * Copy the contents of this memory segment into a fresh int array.
-     * @return a fresh int array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link int[]} instance,
-     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
-     */
-    int[] toIntArray();
-
-    /**
-     * Copy the contents of this memory segment into a fresh float array.
-     * @return a fresh float array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link float[]} instance,
-     * e.g. because {@code byteSize() % 4 != 0}, or {@code byteSize() / 4 > Integer#MAX_VALUE}.
-     */
-    float[] toFloatArray();
-
-    /**
-     * Copy the contents of this memory segment into a fresh long array.
-     * @return a fresh long array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link long[]} instance,
-     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
-     */
-    long[] toLongArray();
-
-    /**
-     * Copy the contents of this memory segment into a fresh double array.
-     * @return a fresh double array copy of this memory segment.
-     * @throws IllegalStateException if the scope associated with this segment has been closed, or if access occurs from
-     * a thread other than the thread owning that scope, or if this segment's contents cannot be copied into a {@link double[]} instance,
-     * e.g. because {@code byteSize() % 8 != 0}, or {@code byteSize() / 8 > Integer#MAX_VALUE}.
-     */
-    double[] toDoubleArray();
-
-    /**
      * Creates a new confined buffer memory segment that models the memory associated with the given byte
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).

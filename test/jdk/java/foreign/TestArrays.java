@@ -27,6 +27,7 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED TestArrays
  */
 
+import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
@@ -40,6 +41,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import org.testng.annotations.*;
 
@@ -89,9 +91,10 @@ public class TestArrays {
         }
     }
 
-    static void checkBytes(MemorySegment base, SequenceLayout layout, Function<MemorySegment, Object> arrayFactory, BiFunction<MemorySegment, Long, Object> handleGetter) {
+    static <Z> void checkBytes(MemorySegment base, SequenceLayout layout, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> arrayWrapper, BiFunction<MemorySegment, Long, Object> handleGetter) {
         int nelems = (int)layout.elementCount().getAsLong();
-        Object arr = arrayFactory.apply(base);
+        Z arr = arrayFactory.apply(nelems);
+        arrayWrapper.apply(arr).copyFrom(base);
         for (int i = 0; i < nelems; i++) {
             Object found = handleGetter.apply(base, (long) i);
             Object expected = java.lang.reflect.Array.get(arr, i);
@@ -107,31 +110,18 @@ public class TestArrays {
         checker.accept(segment);
     }
 
-    @Test(dataProvider = "elemLayouts",
-            expectedExceptions = IllegalStateException.class)
-    public void testTooBigForArray(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemoryLayout seq = MemoryLayout.sequenceLayout((Integer.MAX_VALUE * layout.byteSize()) + 1, layout);
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testTooBigForArray() {
         //do not really allocate here, as it's way too much memory
-        MemorySegment segment = MemoryAddress.NULL.asSegment(seq.byteSize(), ResourceScope.globalScope());
-        arrayFactory.apply(segment);
+        MemorySegment segment = MemoryAddress.NULL.asSegment((long)Integer.MAX_VALUE + 1, ResourceScope.globalScope());
+        segment.toByteArray();
     }
 
-    @Test(dataProvider = "elemLayouts",
-            expectedExceptions = IllegalStateException.class)
-    public void testBadSize(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        if (layout.byteSize() == 1) throw new IllegalStateException(); //make it fail
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemorySegment segment = MemorySegment.allocateNative(layout.byteSize() + 1, layout.byteSize(), scope);
-            arrayFactory.apply(segment);
-        }
-    }
-
-    @Test(dataProvider = "elemLayouts",
-            expectedExceptions = IllegalStateException.class)
-    public void testArrayFromClosedSegment(MemoryLayout layout, Function<MemorySegment, Object> arrayFactory) {
-        MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newConfinedScope());
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testArrayFromClosedSegment() {
+        MemorySegment segment = MemorySegment.allocateNative(10, ResourceScope.newConfinedScope());
         segment.scope().close();
-        arrayFactory.apply(segment);
+        segment.toByteArray();
     }
 
     @DataProvider(name = "arrays")
@@ -152,19 +142,19 @@ public class TestArrays {
                 (base) -> initBytes(base, doubles, (addr, pos) -> doubleHandle.set(addr, pos, (double)(long)pos));
 
         Consumer<MemorySegment> byteChecker =
-                (base) -> checkBytes(base, bytes, MemorySegment::toByteArray, (addr, pos) -> (byte)byteHandle.get(addr, pos));
+                (base) -> checkBytes(base, bytes, byte[]::new, MemorySegment::ofArray, (addr, pos) -> (byte)byteHandle.get(addr, pos));
         Consumer<MemorySegment> shortChecker =
-                (base) -> checkBytes(base, shorts, MemorySegment::toShortArray, (addr, pos) -> (short)shortHandle.get(addr, pos));
+                (base) -> checkBytes(base, shorts, short[]::new, MemorySegment::ofArray, (addr, pos) -> (short)shortHandle.get(addr, pos));
         Consumer<MemorySegment> charChecker =
-                (base) -> checkBytes(base, chars, MemorySegment::toCharArray, (addr, pos) -> (char)charHandle.get(addr, pos));
+                (base) -> checkBytes(base, chars, char[]::new, MemorySegment::ofArray, (addr, pos) -> (char)charHandle.get(addr, pos));
         Consumer<MemorySegment> intChecker =
-                (base) -> checkBytes(base, ints, MemorySegment::toIntArray, (addr, pos) -> (int)intHandle.get(addr, pos));
+                (base) -> checkBytes(base, ints, int[]::new, MemorySegment::ofArray, (addr, pos) -> (int)intHandle.get(addr, pos));
         Consumer<MemorySegment> floatChecker =
-                (base) -> checkBytes(base, floats, MemorySegment::toFloatArray, (addr, pos) -> (float)floatHandle.get(addr, pos));
+                (base) -> checkBytes(base, floats, float[]::new, MemorySegment::ofArray, (addr, pos) -> (float)floatHandle.get(addr, pos));
         Consumer<MemorySegment> longChecker =
-                (base) -> checkBytes(base, longs, MemorySegment::toLongArray, (addr, pos) -> (long)longHandle.get(addr, pos));
+                (base) -> checkBytes(base, longs, long[]::new, MemorySegment::ofArray, (addr, pos) -> (long)longHandle.get(addr, pos));
         Consumer<MemorySegment> doubleChecker =
-                (base) -> checkBytes(base, doubles, MemorySegment::toDoubleArray, (addr, pos) -> (double)doubleHandle.get(addr, pos));
+                (base) -> checkBytes(base, doubles, double[]::new, MemorySegment::ofArray, (addr, pos) -> (double)doubleHandle.get(addr, pos));
 
         return new Object[][]{
                 {byteInitializer, byteChecker, bytes},
@@ -174,19 +164,6 @@ public class TestArrays {
                 {floatInitializer, floatChecker, floats},
                 {longInitializer, longChecker, longs},
                 {doubleInitializer, doubleChecker, doubles}
-        };
-    }
-
-    @DataProvider(name = "elemLayouts")
-    public Object[][] elemLayouts() {
-        return new Object[][] {
-                { MemoryLayouts.JAVA_BYTE, (Function<MemorySegment, Object>) MemorySegment::toByteArray },
-                { MemoryLayouts.JAVA_SHORT, (Function<MemorySegment, Object>) MemorySegment::toShortArray },
-                { MemoryLayouts.JAVA_CHAR, (Function<MemorySegment, Object>) MemorySegment::toCharArray },
-                { MemoryLayouts.JAVA_INT, (Function<MemorySegment, Object>) MemorySegment::toIntArray },
-                { MemoryLayouts.JAVA_FLOAT, (Function<MemorySegment, Object>) MemorySegment::toFloatArray },
-                { MemoryLayouts.JAVA_LONG, (Function<MemorySegment, Object>) MemorySegment::toLongArray },
-                { MemoryLayouts.JAVA_DOUBLE, (Function<MemorySegment, Object>) MemorySegment::toDoubleArray }
         };
     }
 }

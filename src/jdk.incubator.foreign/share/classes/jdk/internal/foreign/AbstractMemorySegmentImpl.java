@@ -271,43 +271,9 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
 
     @Override
     public final byte[] toByteArray() {
-        return toArray(byte[].class, 1, byte[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final short[] toShortArray() {
-        return toArray(short[].class, 2, short[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final char[] toCharArray() {
-        return toArray(char[].class, 2, char[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final int[] toIntArray() {
-        return toArray(int[].class, 4, int[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final float[] toFloatArray() {
-        return toArray(float[].class, 4, float[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final long[] toLongArray() {
-        return toArray(long[].class, 8, long[]::new, MemorySegment::ofArray);
-    }
-
-    @Override
-    public final double[] toDoubleArray() {
-        return toArray(double[].class, 8, double[]::new, MemorySegment::ofArray);
-    }
-
-    private <Z> Z toArray(Class<Z> arrayClass, int elemSize, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
-        int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
-        Z arr = arrayFactory.apply(size);
-        segmentFactory.apply(arr).copyFrom(this);
+        int size = checkArraySize(byte[].class.getSimpleName(), 1);
+        byte[] arr = new byte[(int)byteSize()];
+        MemoryAccess.copy(this, 0, arr, 0, size);
         return arr;
     }
 

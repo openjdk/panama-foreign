@@ -123,12 +123,6 @@ public class TestScopedOperations {
         ScopedOperation.ofScope(SegmentAllocator::arenaAllocator, "SegmentAllocator::arenaAllocator");
         // segment operations
         ScopedOperation.ofSegment(MemorySegment::toByteArray, "MemorySegment::toByteArray");
-        ScopedOperation.ofSegment(MemorySegment::toCharArray, "MemorySegment::toCharArray");
-        ScopedOperation.ofSegment(MemorySegment::toShortArray, "MemorySegment::toShortArray");
-        ScopedOperation.ofSegment(MemorySegment::toIntArray, "MemorySegment::toIntArray");
-        ScopedOperation.ofSegment(MemorySegment::toFloatArray, "MemorySegment::toFloatArray");
-        ScopedOperation.ofSegment(MemorySegment::toLongArray, "MemorySegment::toLongArray");
-        ScopedOperation.ofSegment(MemorySegment::toDoubleArray, "MemorySegment::toDoubleArray");
         ScopedOperation.ofSegment(MemorySegment::address, "MemorySegment::address");
         ScopedOperation.ofSegment(s -> MemoryLayout.sequenceLayout(s.byteSize(), MemoryLayouts.JAVA_BYTE), "MemorySegment::spliterator");
         ScopedOperation.ofSegment(s -> s.copyFrom(s), "MemorySegment::copyFrom");

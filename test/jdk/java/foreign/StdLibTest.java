@@ -103,9 +103,8 @@ public class StdLibTest {
     void test_qsort(List<Integer> ints) throws Throwable {
         if (ints.size() > 0) {
             int[] input = ints.stream().mapToInt(i -> i).toArray();
-            int[] sorted = stdLibHelper.qsort(input);
-            Arrays.sort(input);
-            assertEquals(sorted, input);
+            stdLibHelper.qsort(input);
+            assertEquals(input, ints.stream().mapToInt(i -> i).sorted().toArray());
         }
     }
 
@@ -290,19 +289,19 @@ public class StdLibTest {
             }
         }
 
-        int[] qsort(int[] arr) throws Throwable {
+        void qsort(int[] arr) throws Throwable {
             //init native array
             try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-                SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
-                MemorySegment nativeArr = allocator.allocateArray(C_INT, arr);
+                MemorySegment nativeArr = MemorySegment.allocateNative(arr.length * C_INT.byteSize(), scope);
+                //copy into native array
+                MemoryAccess.copy(arr, 0, nativeArr, 0, arr.length);
 
                 //call qsort
                 MemoryAddress qsortUpcallStub = abi.upcallStub(qsortCompar.bindTo(nativeArr), qsortComparFunction, scope);
 
                 qsort.invokeExact(nativeArr.address(), (long)arr.length, C_INT.byteSize(), qsortUpcallStub);
-
-                //convert back to Java array
-                return nativeArr.toIntArray();
+                //copy back into Java array
+                MemoryAccess.copy(nativeArr, 0, arr, 0, arr.length);
             }
         }
 

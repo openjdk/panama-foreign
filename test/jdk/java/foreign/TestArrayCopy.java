@@ -268,7 +268,9 @@ public class TestArrayCopy {
                                                 .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
         VarHandle indexedHandleNNO = MemoryLayout.sequenceLayout(helper.elementLayout.withOrder(NON_NATIVE_ORDER))
                                                  .varHandle(helper.carrier.componentType(), MemoryLayout.PathElement.sequenceElement());
-        MemorySegment dstSeg = MemorySegment.ofArray(srcSeg.toByteArray());
+        byte[] bytes = new byte[(int)srcSeg.byteSize()];
+        MemoryAccess.copy(srcSeg, 0, bytes, 0, bytes.length);
+        MemorySegment dstSeg = MemorySegment.ofArray(bytes);
         int indexLength = (int) dstSeg.byteSize() / (int)helper.elementLayout.byteSize();
         if (mode.direction) {
             if (mode.swap) {
@@ -350,7 +352,9 @@ public class TestArrayCopy {
 
             @Override
             byte[] toArray(MemorySegment segment) {
-                return segment.toByteArray();
+                byte[] bytes = new byte[(int)segment.byteSize()];
+                copy(segment, 0, bytes, 0, bytes.length, ByteOrder.nativeOrder());
+                return bytes;
             }
 
             @Override
@@ -377,7 +381,9 @@ public class TestArrayCopy {
 
             @Override
             char[] toArray(MemorySegment segment) {
-                return segment.toCharArray();
+                char[] chars = new char[(int)(segment.byteSize() / 2)];
+                copy(segment, 0, chars, 0, chars.length, ByteOrder.nativeOrder());
+                return chars;
             }
 
             @Override
@@ -404,7 +410,9 @@ public class TestArrayCopy {
 
             @Override
             short[] toArray(MemorySegment segment) {
-                return segment.toShortArray();
+                short[] shorts = new short[(int)(segment.byteSize() / 2)];
+                copy(segment, 0, shorts, 0, shorts.length, ByteOrder.nativeOrder());
+                return shorts;
             }
 
             @Override
@@ -431,7 +439,9 @@ public class TestArrayCopy {
 
             @Override
             int[] toArray(MemorySegment segment) {
-                return segment.toIntArray();
+                int[] ints = new int[(int)(segment.byteSize() / 4)];
+                copy(segment, 0, ints, 0, ints.length, ByteOrder.nativeOrder());
+                return ints;
             }
 
             @Override
@@ -458,7 +468,9 @@ public class TestArrayCopy {
 
             @Override
             float[] toArray(MemorySegment segment) {
-                return segment.toFloatArray();
+                float[] floats = new float[(int)(segment.byteSize() / 4)];
+                copy(segment, 0, floats, 0, floats.length, ByteOrder.nativeOrder());
+                return floats;
             }
 
             @Override
@@ -485,7 +497,9 @@ public class TestArrayCopy {
 
             @Override
             long[] toArray(MemorySegment segment) {
-                return segment.toLongArray();
+                long[] longs = new long[(int)(segment.byteSize() / 8)];
+                copy(segment, 0, longs, 0, longs.length, ByteOrder.nativeOrder());
+                return longs;
             }
 
             @Override
@@ -512,7 +526,9 @@ public class TestArrayCopy {
 
             @Override
             double[] toArray(MemorySegment segment) {
-                return segment.toDoubleArray();
+                double[] doubles = new double[(int)(segment.byteSize() / 8)];
+                copy(segment, 0, doubles, 0, doubles.length, ByteOrder.nativeOrder());
+                return doubles;
             }
 
             @Override
