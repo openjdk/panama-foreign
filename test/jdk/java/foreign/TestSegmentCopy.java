@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @run testng TestCopyFrom
+ * @run testng TestSegmentCopy
  */
 
 import jdk.incubator.foreign.MemoryLayouts;
@@ -42,7 +42,7 @@ import java.util.function.IntFunction;
 
 import static org.testng.Assert.*;
 
-public class TestCopyFrom {
+public class TestSegmentCopy {
 
     @Test(dataProvider = "slices")
     public void testByteCopy(SegmentSlice s1, SegmentSlice s2) {
@@ -55,7 +55,7 @@ public class TestCopyFrom {
             Type.BYTE.set(s1, i, i);
         }
         //perform copy
-        s2.segment.copyFrom(0, s1.segment, 0, size);
+        MemorySegment.copy(s1.segment, s2.segment, size);
         //check that copy actually worked
         for (int i = 0 ; i < size ; i++) {
             Type.BYTE.check(s2, i, i);
@@ -74,7 +74,7 @@ public class TestCopyFrom {
             s1.set(i, i);
         }
         //perform copy
-        s2.segment.copyFrom(s2.type.layout, 0, s1.segment, s1.type.layout, 0, size);
+        MemorySegment.copy(s1.segment, s1.type.layout, 0, s2.segment, s2.type.layout, 0, size);
         //check that copy actually worked
         for (int i = 0; i < size; i++) {
             s2.check(i, i);

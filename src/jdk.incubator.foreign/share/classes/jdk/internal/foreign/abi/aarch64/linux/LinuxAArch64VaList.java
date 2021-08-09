@@ -279,7 +279,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     long offset = 0;
                     while (offset < layout.byteSize()) {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
-                        value.copyFrom(offset, gpRegsArea, currentGPOffset(), copy);
+                        MemorySegment.copy(gpRegsArea, currentGPOffset(), value, offset, copy);
                         consumeGPSlots(1);
                         offset += copy;
                     }
@@ -294,7 +294,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                     for (MemoryLayout elem : group.memberLayouts()) {
                         assert elem.byteSize() <= 8;
                         final long copy = elem.byteSize();
-                        value.copyFrom(offset, gpRegsArea, currentFPOffset(), copy);
+                        MemorySegment.copy(gpRegsArea, currentFPOffset(), value, offset, copy);
                         consumeFPSlots(1);
                         offset += copy;
                     }
@@ -454,7 +454,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         long offset = 0;
                         while (offset < layout.byteSize()) {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
-                            gpRegs.copyFrom(currentGPOffset, valueSegment, offset, copy);
+                            MemorySegment.copy(valueSegment, offset, gpRegs, currentGPOffset, copy);
                             currentGPOffset += GP_SLOT_SIZE;
                             offset += copy;
                         }
@@ -468,7 +468,7 @@ public non-sealed class LinuxAArch64VaList implements VaList {
                         for (MemoryLayout elem : group.memberLayouts()) {
                             assert elem.byteSize() <= 8;
                             final long copy = elem.byteSize();
-                            gpRegs.copyFrom(currentFPOffset, valueSegment, offset, copy);
+                            MemorySegment.copy(valueSegment, offset, gpRegs, currentFPOffset, copy);
                             currentFPOffset += FP_SLOT_SIZE;
                             offset += copy;
                         }

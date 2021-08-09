@@ -116,7 +116,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
                 }
                 case STRUCT_REGISTER, STRUCT_HFA -> {
                     MemorySegment struct = allocator.allocate(layout)
-                            .copyFrom(0, segment, 0, layout.byteSize());
+                            .copyFrom(segment.asSlice(0, layout.byteSize()));
                     segment = segment.asSlice(alignUp(layout.byteSize(), VA_SLOT_SIZE_BYTES));
                     yield struct;
                 }
@@ -238,7 +238,7 @@ public non-sealed class MacOsAArch64VaList implements VaList {
                             cursor = cursor.asSlice(VA_SLOT_SIZE_BYTES);
                         }
                         case STRUCT_REGISTER, STRUCT_HFA ->
-                            cursor.copyFrom(0, msArg, 0, arg.layout.byteSize())
+                            cursor.copyFrom(msArg.asSlice(0, arg.layout.byteSize()))
                                     .asSlice(alignUp(arg.layout.byteSize(), VA_SLOT_SIZE_BYTES));
                         default -> throw new IllegalStateException("Unexpected TypeClass: " + typeClass);
                     }

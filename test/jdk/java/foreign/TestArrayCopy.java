@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @run testng TestMemoryCopy
+ * @run testng TestArrayCopy
  */
 
 import static org.testng.Assert.assertEquals;
@@ -53,7 +53,7 @@ import org.testng.annotations.Test;
  * the copy of the overlapping region is performed as if the data in the overlapping region
  * were first copied into a temporary segment before being copied to the destination.</p>
  */
-public class TestMemoryCopy {
+public class TestArrayCopy {
     private static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
     private static final ByteOrder NON_NATIVE_ORDER = NATIVE_ORDER == ByteOrder.LITTLE_ENDIAN
             ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;

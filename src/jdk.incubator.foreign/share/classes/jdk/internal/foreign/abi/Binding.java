@@ -741,7 +741,7 @@ public abstract class Binding {
         private static MemorySegment copyBuffer(MemorySegment operand, long size, long alignment,
                                                     Context context) {
             return context.allocator().allocate(size, alignment)
-                            .copyFrom(0, operand, 0, size);
+                            .copyFrom(operand.asSlice(0, size));
         }
 
         public long size() {

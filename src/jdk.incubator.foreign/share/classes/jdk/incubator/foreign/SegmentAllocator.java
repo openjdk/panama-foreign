@@ -314,8 +314,9 @@ public interface SegmentAllocator {
         Objects.requireNonNull(elementLayout);
         Utils.checkPrimitiveCarrierCompat(array.getClass().componentType(), elementLayout);
         int size = Array.getLength(array);
-        MemorySegment addr = allocate(MemoryLayout.sequenceLayout(size, elementLayout)).copyFrom(elementLayout, 0,
-                heapSegmentFactory.apply(array), elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
+        MemorySegment addr = allocate(MemoryLayout.sequenceLayout(size, elementLayout));
+        MemorySegment.copy(heapSegmentFactory.apply(array), elementLayout, 0,
+                addr, elementLayout.withOrder(ByteOrder.nativeOrder()), 0, size);
         return addr;
     }
 

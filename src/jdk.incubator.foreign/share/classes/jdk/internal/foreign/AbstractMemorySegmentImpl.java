@@ -307,8 +307,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl extends MemorySegment
     private <Z> Z toArray(Class<Z> arrayClass, int elemSize, IntFunction<Z> arrayFactory, Function<Z, MemorySegment> segmentFactory) {
         int size = checkArraySize(arrayClass.getSimpleName(), elemSize);
         Z arr = arrayFactory.apply(size);
-        segmentFactory.apply(arr)
-                .copyFrom(0, this, 0, byteSize());
+        segmentFactory.apply(arr).copyFrom(this);
         return arr;
     }
 
