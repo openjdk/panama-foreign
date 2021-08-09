@@ -69,7 +69,7 @@ import java.util.stream.Stream;
  * in this way are called <em>native memory segments</em>.
  * <p>
  * It is also possible to obtain a memory segment backed by an existing heap-allocated Java array,
- * using one of the provided factory methods (e.g. {@link MemorySegment#ofArray(int[])}). Memory segments obtained
+ * using one of the provided factory methods (e.g. {@link MemorySegment#ofArray(Object)}). Memory segments obtained
  * in this way are called <em>array memory segments</em>.
  * <p>
  * It is possible to obtain a memory segment backed by an existing Java byte buffer (see {@link ByteBuffer}),
