@@ -28,7 +28,10 @@ package jdk.incubator.foreign;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.DontInline;
 import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.vm.annotation.Stable;
+import sun.invoke.util.Wrapper;
 
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Array;
@@ -660,8 +663,9 @@ public final class MemoryAccess {
         Objects.requireNonNull(srcSegment);
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(order);
-        int dstBase = UNSAFE.arrayBaseOffset(dstArray.getClass());
-        int dstWidth = UNSAFE.arrayIndexScale(dstArray.getClass());
+        long baseAndScale = getBaseAndScale(dstArray.getClass());
+        int dstBase = (int)baseAndScale;
+        int dstWidth = (int)(baseAndScale >> 32);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
         srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
         Objects.checkFromIndexSize(dstIndex, elementCount, Array.getLength(dstArray));
@@ -714,8 +718,9 @@ public final class MemoryAccess {
         Objects.requireNonNull(srcArray);
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(order);
-        int srcBase = UNSAFE.arrayBaseOffset(srcArray.getClass());
-        int srcWidth = UNSAFE.arrayIndexScale(srcArray.getClass());
+        long baseAndScale = getBaseAndScale(srcArray.getClass());
+        int srcBase = (int)baseAndScale;
+        int srcWidth = (int)(baseAndScale >> 32);
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
         AbstractMemorySegmentImpl destImpl = (AbstractMemorySegmentImpl)dstSegment;
         destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
@@ -727,6 +732,26 @@ public final class MemoryAccess {
             scopedMemoryAccess.copySwapMemory(null, destImpl.scope(),
                     srcArray, srcBase + (srcIndex * srcWidth),
                     destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
+        }
+    }
+
+    static long getBaseAndScale(Class<?> arrayType) {
+        if (arrayType.equals(byte[].class)) {
+            return (long)Unsafe.ARRAY_BYTE_BASE_OFFSET | ((long)Unsafe.ARRAY_BYTE_INDEX_SCALE << 32);
+        } else if (arrayType.equals(char[].class)) {
+            return (long)Unsafe.ARRAY_CHAR_BASE_OFFSET | ((long)Unsafe.ARRAY_CHAR_INDEX_SCALE << 32);
+        } else if (arrayType.equals(short[].class)) {
+            return (long)Unsafe.ARRAY_SHORT_BASE_OFFSET | ((long)Unsafe.ARRAY_SHORT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(int[].class)) {
+            return (long)Unsafe.ARRAY_INT_BASE_OFFSET | ((long)Unsafe.ARRAY_INT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(float[].class)) {
+            return (long)Unsafe.ARRAY_FLOAT_BASE_OFFSET | ((long)Unsafe.ARRAY_FLOAT_INDEX_SCALE << 32);
+        } else if (arrayType.equals(long[].class)) {
+            return (long)Unsafe.ARRAY_LONG_BASE_OFFSET | ((long)Unsafe.ARRAY_LONG_INDEX_SCALE << 32);
+        } else if (arrayType.equals(double[].class)) {
+            return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
+        } else {
+            throw new IllegalStateException();
         }
     }
 }
