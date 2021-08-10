@@ -143,6 +143,19 @@ public class BulkOps {
 
     @Benchmark
     @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void segment_copy_static_small() {
+        MemoryAccess.copy(bytes, 0, segment, 0, 10);
+    }
+
+    @Benchmark
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
+    public void segment_copy_static_small_dontinline() {
+        MemoryAccess.copy(bytes, 0, segment, 0, 10);
+    }
+
+    @Benchmark
+    @OutputTimeUnit(TimeUnit.NANOSECONDS)
     public void unsafe_copy_small() {
         unsafe.copyMemory(bytes, UNSAFE_INT_OFFSET, null, unsafe_addr, 10 * CARRIER_SIZE);
     }
