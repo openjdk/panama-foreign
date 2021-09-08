@@ -368,6 +368,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 if (funcIntfName != null) {
                     addFunctionTypedef(Type.typedef(tree.name(), tree.type()), funcIntfName);
                 }
+            } else if (((TypeImpl)type).isPointer()) {
+                toplevelBuilder.addTypedef(tree.name(), null, type);
             }
         }
         return null;

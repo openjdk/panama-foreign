@@ -336,6 +336,11 @@ public abstract class TypeImpl implements Type {
         }
     }
 
+    public boolean isPointer() { 
+        return this instanceof Type.Delegated delegated &&
+                delegated.kind() == Type.Delegated.Kind.POINTER;
+    }
+
     @Override
     public String toString() {
         return PrettyPrinter.type(this);

@@ -239,6 +239,16 @@ abstract class HeaderFileBuilder extends ClassSourceBuilder {
         }
     }
 
+    void emitPointerTypedef(String name) {
+        incrAlign();
+        indent();
+        append(MEMBER_MODS);
+        append(" ValueLayout ");
+        append(uniqueNestedClassName(name));
+        append(" = C_POINTER;\n");
+        decrAlign();
+    }
+
     private boolean primitiveKindSupported(Type.Primitive.Kind kind) {
         return switch(kind) {
             case Short, Int, Long, LongLong, Float, Double, Char -> true;
