@@ -336,7 +336,7 @@ public abstract class TypeImpl implements Type {
         }
     }
 
-    public boolean isPointer() { 
+    public boolean isPointer() {
         return this instanceof Type.Delegated delegated &&
                 delegated.kind() == Type.Delegated.Kind.POINTER;
     }
