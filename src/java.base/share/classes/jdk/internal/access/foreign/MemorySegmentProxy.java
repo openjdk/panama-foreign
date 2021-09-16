@@ -27,6 +27,7 @@
 package jdk.internal.access.foreign;
 
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.vm.annotation.ForceInline;
 
 /**
  * This abstract class is required to allow implementations of the {@code MemorySegment} interface (which is defined inside

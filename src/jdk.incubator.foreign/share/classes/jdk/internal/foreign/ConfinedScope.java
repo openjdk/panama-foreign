@@ -44,7 +44,7 @@ final class ConfinedScope extends ResourceScopeImpl {
     private final Thread owner;
 
     public ConfinedScope(Thread owner, Cleaner cleaner) {
-        super(cleaner, new ConfinedResourceList());
+        super(new ConfinedResourceList(), cleaner);
         this.owner = owner;
     }
 
@@ -64,10 +64,16 @@ final class ConfinedScope extends ResourceScopeImpl {
     }
 
     @Override
-    public HandleImpl acquire() {
+    @ForceInline
+    public void acquire0() {
         checkValidState();
         lockCount++;
-        return new ConfinedHandle();
+    }
+
+    @Override
+    @ForceInline
+    public void release0() {
+        lockCount--;
     }
 
     void justClose() {
@@ -106,27 +112,6 @@ final class ConfinedScope extends ResourceScopeImpl {
                 cleanup(prev);
             } else {
                 throw new IllegalStateException("Attempt to cleanup an already closed resource list");
-            }
-        }
-    }
-
-    /**
-     * A confined resource scope handle; no races are possible here.
-     */
-    final class ConfinedHandle implements HandleImpl {
-        boolean released = false;
-
-        @Override
-        public ResourceScopeImpl scope() {
-            return ConfinedScope.this;
-        }
-
-        @Override
-        public void release() {
-            checkValidState(); // thread check
-            if (!released) {
-                released = true;
-                lockCount--;
             }
         }
     }

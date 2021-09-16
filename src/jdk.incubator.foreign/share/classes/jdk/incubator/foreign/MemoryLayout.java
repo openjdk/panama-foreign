@@ -34,7 +34,6 @@ import java.lang.constant.DynamicConstantDesc;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,11 +45,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A memory layout can be used to describe the contents of a memory segment in a <em>language neutral</em> fashion.
+ * A memory layout can be used to describe the contents of a memory segment.
  * There are two leaves in the layout hierarchy, <em>value layouts</em>, which are used to represent values of given size and kind (see
  * {@link ValueLayout}) and <em>padding layouts</em> which are used, as the name suggests, to represent a portion of a memory
  * segment whose contents should be ignored, and which are primarily present for alignment reasons (see {@link MemoryLayout#paddingLayout(long)}).
- * Some common value layout constants are defined in the {@link MemoryLayouts} class.
+ * Some common value layout constants are defined in the {@link ValueLayout} class.
  * <p>
  * More complex layouts can be derived from simpler ones: a <em>sequence layout</em> denotes a repetition of one or more
  * element layout (see {@link SequenceLayout}); a <em>group layout</em> denotes an aggregation of (typically) heterogeneous
@@ -70,9 +69,9 @@ import java.util.stream.Stream;
  * <blockquote><pre>{@code
 SequenceLayout taggedValues = MemoryLayout.sequenceLayout(5,
     MemoryLayout.structLayout(
-        MemoryLayout.valueLayout(8, ByteOrder.nativeOrder()).withName("kind"),
+        ValueLayout.JAVA_BYTE.withName("kind"),
         MemoryLayout.paddingLayout(24),
-        MemoryLayout.valueLayout(32, ByteOrder.nativeOrder()).withName("value")
+        ValueLayout.JAVA_INT.withName("value")
     )
 ).withName("TaggedValues");
  * }</pre></blockquote>
@@ -122,11 +121,11 @@ SequenceLayout taggedValues = MemoryLayout.sequenceLayout(5,
  * at a layout nested within the root layout - this is the layout <em>selected</em> by the layout path.
  * Layout paths are typically expressed as a sequence of one or more {@link PathElement} instances.
  * <p>
- * Layout paths are for example useful in order to obtain offsets of arbitrarily nested layouts inside another layout
- * (see {@link MemoryLayout#bitOffset(PathElement...)}), to quickly obtain a memory access handle corresponding to the selected
- * layout (see {@link MemoryLayout#varHandle(Class, PathElement...)}), to select an arbitrarily nested layout inside
- * another layout (see {@link MemoryLayout#select(PathElement...)}, or to transform a nested layout element inside
- * another layout (see {@link MemoryLayout#map(UnaryOperator, PathElement...)}).
+ * Layout paths are for example useful in order to obtain {@linkplain MemoryLayout#bitOffset(PathElement...) offsets} of
+ * arbitrarily nested layouts inside another layout, to quickly obtain a {@linkplain #varHandle(PathElement...) memory access handle}
+ * corresponding to the selected layout, to {@linkplain #select(PathElement...) select} an arbitrarily nested layout inside
+ * another layout, or to {@link #map(UnaryOperator, PathElement...) transform} a nested layout element inside
+ * another layout.
  * <p>
  * Such <em>layout paths</em> can be constructed programmatically using the methods in this class.
  * For instance, given the {@code taggedValues} layout instance constructed as above, we can obtain the offset,
@@ -152,7 +151,7 @@ MemoryLayout taggedValuesWithHole = taggedValues.map(l -> MemoryLayout.paddingLa
  * <blockquote><pre>{@code
 MemoryLayout taggedValuesWithHole = MemoryLayout.sequenceLayout(5,
     MemoryLayout.structLayout(
-        MemoryLayout.valueLayout(8, ByteOrder.nativeOrder()).withName("kind"),
+        ValueLayout.JAVA_BYTE.withName("kind"),
         MemoryLayout.paddingLayout(32),
         MemoryLayout.paddingLayout(32)
 ));
@@ -164,8 +163,7 @@ MemoryLayout taggedValuesWithHole = MemoryLayout.sequenceLayout(5,
  * This is important when obtaining memory access var handle from layouts, as in the following code:
  *
  * <blockquote><pre>{@code
-VarHandle valueHandle = taggedValues.varHandle(int.class,
-                                               PathElement.sequenceElement(),
+VarHandle valueHandle = taggedValues.varHandle(PathElement.sequenceElement(),
                                                PathElement.groupElement("value"));
  * }</pre></blockquote>
  *
@@ -189,9 +187,7 @@ long offset2 = (long) offsetHandle.invokeExact(2L); // 16
  *
  * <h2>Layout attributes</h2>
  *
- * Layouts can be optionally associated with one or more <em>attributes</em>. A layout attribute forms a <em>name/value</em>
- * pair, where the name is a {@link String} and the value is a {@link Constable}. The most common form of layout attribute
- * is the <em>layout name</em> (see {@link #LAYOUT_NAME}), a custom name that can be associated with memory layouts and that can be referred to when
+ * Layouts can be optionally associated with a <em>name</em>. A layout name can be referred to when
  * constructing <a href="MemoryLayout.html#layout-paths"><em>layout paths</em></a>.
  *
  * @implSpec
@@ -236,10 +232,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * @throws UnsupportedOperationException if the layout is, or contains, a sequence layout with unspecified size (see {@link SequenceLayout}),
      * or if {@code bitSize()} is not a multiple of 8.
      */
-    default long byteSize() {
-        return Utils.bitsToBytesOrThrow(bitSize(),
-                () -> new UnsupportedOperationException("Cannot compute byte size; bit size is not a multiple of 8"));
-    }
+    long byteSize();
 
     /**
      * Return the <em>name</em> (if any) associated with this layout.
@@ -313,35 +306,9 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * @param bitAlignment the layout alignment constraint, expressed in bits.
      * @return a new layout which is the same as this layout, except for the alignment constraint associated with it.
-     * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than than 8.
+     * @throws IllegalArgumentException if {@code bitAlignment} is not a power of two, or if it's less than 8.
      */
     MemoryLayout withBitAlignment(long bitAlignment);
-
-    /**
-     * Returns the attribute with the given name (if it exists).
-     *
-     * @param name the attribute name
-     * @return the attribute with the given name (if it exists).
-     */
-    Optional<Constable> attribute(String name);
-
-    /**
-     * Returns a new memory layout which features the same attributes as this layout, plus the newly specified attribute.
-     * If this layout already contains an attribute with the same name, the existing attribute value is overwritten in the returned
-     * layout.
-     *
-     * @param name the attribute name.
-     * @param value the attribute value.
-     * @return a new memory layout which features the same attributes as this layout, plus the newly specified attribute.
-     */
-    MemoryLayout withAttribute(String name, Constable value);
-
-    /**
-     * Returns a stream of the attribute names associated with this layout.
-     *
-     * @return a stream of the attribute names associated with this layout.
-     */
-    Stream<String> attributes();
 
     /**
      * Computes the offset, in bits, of the layout selected by a given layout path, where the path is considered rooted in this
@@ -366,7 +333,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * by a given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
-     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()},
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
      * where the order of the parameters corresponds to the order of the path elements.
      * The returned method handle can be used to compute a layout offset similar to {@link #bitOffset(PathElement...)},
      * but where some sequence indices are specified only when invoking the method handle.
@@ -417,7 +384,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * by a given layout path, where the path is considered rooted in this layout.
      *
      * <p>The returned method handle has a return type of {@code long}, and features as many {@code long}
-     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()},
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
      * where the order of the parameters corresponds to the order of the path elements.
      * The returned method handle can be used to compute a layout offset similar to {@link #byteOffset(PathElement...)},
      * but where some sequence indices are specified only when invoking the method handle.
@@ -477,18 +444,14 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * unspecified sequence access component contained in this layout path. Moreover, the resulting var handle
      * features certain <a href="MemoryHandles.html#memaccess-mode">access mode restrictions</a>, which are common to all memory access var handles.
      *
-     * @param carrier the var handle carrier type.
      * @param elements the layout path elements.
      * @return a var handle which can be used to dereference memory at the (possibly nested) layout selected by the layout path in {@code elements}.
      * @throws UnsupportedOperationException if the layout path has one or more elements with incompatible alignment constraints,
      * or if one of the layouts traversed by the layout path has unspecified size.
-     * @throws IllegalArgumentException if the carrier is {@code void}, or a non-primitive type other than {@link MemoryAddress},
-     * or if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}),
-     * or if the selected value layout has a size that that does not match that of the specified carrier type.
+     * @throws IllegalArgumentException if the layout path in {@code elements} does not select a value layout (see {@link ValueLayout}).
      */
-    default VarHandle varHandle(Class<?> carrier, PathElement... elements) {
-        Objects.requireNonNull(carrier);
-        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), path -> path.dereferenceHandle(carrier),
+    default VarHandle varHandle(PathElement... elements) {
+        return computePathOp(LayoutPath.rootPath(this, MemoryLayout::bitSize), path -> path.dereferenceHandle(),
                 Set.of(), elements);
     }
 
@@ -498,7 +461,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      *
      * <p>The returned method handle has a return type of {@code MemorySegment}, features a {@code MemorySegment}
      * parameter as leading parameter representing the segment to be sliced, and features as many trailing {@code long}
-     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()},
+     * parameter types as there are free dimensions in the provided layout path (see {@link PathElement#sequenceElement()}),
      * where the order of the parameters corresponds to the order of the path elements.
      * The returned method handle can be used to create a slice similar to using {@link MemorySegment#asSlice(long, long)},
      * but where the offset argument is dynamically compute based on indices specified when invoking the method handle.
@@ -515,7 +478,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
      * and {@code s_0}, {@code s_1}, ... {@code s_n} are <em>static</em> stride constants which are derived from
      * the layout path.
      *
-     * <p>After the offset is computed, the returned segment is create as if by calling:
+     * <p>After the offset is computed, the returned segment is created as if by calling:
      * <blockquote><pre>{@code
     segment.asSlice(offset, layout.byteSize());
      * }</pre></blockquote>
@@ -612,7 +575,7 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
          * that is combined with such element.
          *
          * @implSpec in case multiple group elements with a matching name exist, the path element returned by this
-         * method will select the first one; that is, the group element with lowest offset from current path is selected.
+         * method will select the first one; that is, the group element with the lowest offset from current path is selected.
          *
          * @param name the name of the group element to be selected.
          * @return a path element which selects the group element with given name.
@@ -728,20 +691,6 @@ E * (S + I * F)
     }
 
     /**
-     * Create a value layout of given byte order and size.
-     *
-     * @param size the value layout size.
-     * @param order the value layout's byte order.
-     * @return a new value layout.
-     * @throws IllegalArgumentException if {@code size <= 0}.
-     */
-    static ValueLayout valueLayout(long size, ByteOrder order) {
-        Objects.requireNonNull(order);
-        AbstractLayout.checkSize(size);
-        return new ValueLayout(order, size);
-    }
-
-    /**
      * Create a new sequence layout with given element layout and element count.
      *
      * @param elementCount the sequence element count.
@@ -792,9 +741,4 @@ E * (S + I * F)
                         .map(Objects::requireNonNull)
                         .collect(Collectors.toList()));
     }
-
-    /**
-     * Attribute name used to specify the <em>name</em> property of a memory layout (see {@link #name()} and {@link #withName(String)}).
-     */
-    String LAYOUT_NAME = "layout/name";
 }

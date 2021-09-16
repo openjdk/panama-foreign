@@ -118,13 +118,13 @@ public class ResourceScopeClose {
 
     @Benchmark
     public MemorySegment implicit_close() {
-        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
     }
 
     @Benchmark
     public MemorySegment implicit_close_systemgc() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
-        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        return MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
     }
 
     // keep

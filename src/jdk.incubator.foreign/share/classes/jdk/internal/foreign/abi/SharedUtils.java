@@ -25,17 +25,16 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryHandles;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.SequenceLayout;
-import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.VaList;
 import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.JavaLangInvokeAccess;
@@ -53,7 +52,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Reference;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -68,13 +66,20 @@ import static java.lang.invoke.MethodHandles.constant;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.dropReturn;
 import static java.lang.invoke.MethodHandles.empty;
-import static java.lang.invoke.MethodHandles.filterArguments;
 import static java.lang.invoke.MethodHandles.identity;
 import static java.lang.invoke.MethodHandles.insertArguments;
 import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodHandles.tryFinally;
 import static java.lang.invoke.MethodType.methodType;
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
+import static jdk.incubator.foreign.ValueLayout.JAVA_BOOLEAN;
+import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
+import static jdk.incubator.foreign.ValueLayout.JAVA_CHAR;
+import static jdk.incubator.foreign.ValueLayout.JAVA_DOUBLE;
+import static jdk.incubator.foreign.ValueLayout.JAVA_FLOAT;
+import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
+import static jdk.incubator.foreign.ValueLayout.JAVA_LONG;
+import static jdk.incubator.foreign.ValueLayout.JAVA_SHORT;
 
 public class SharedUtils {
 
@@ -227,34 +232,6 @@ public class SharedUtils {
         return dest;
     }
 
-    public static void checkCompatibleType(Class<?> carrier, MemoryLayout layout, long addressSize) {
-        if (carrier.isPrimitive()) {
-            Utils.checkPrimitiveCarrierCompat(carrier, layout);
-        } else if (carrier == MemoryAddress.class) {
-            Utils.checkLayoutType(layout, ValueLayout.class);
-            if (layout.bitSize() != addressSize)
-                throw new IllegalArgumentException("Address size mismatch: " + addressSize + " != " + layout.bitSize());
-        } else if (carrier == MemorySegment.class) {
-            Utils.checkLayoutType(layout, GroupLayout.class);
-        } else {
-            throw new IllegalArgumentException("Unsupported carrier: " + carrier);
-        }
-    }
-
-    public static void checkFunctionTypes(MethodType mt, FunctionDescriptor cDesc, long addressSize) {
-        if (mt.returnType() == void.class != cDesc.returnLayout().isEmpty())
-            throw new IllegalArgumentException("Return type mismatch: " + mt + " != " + cDesc);
-        List<MemoryLayout> argLayouts = cDesc.argumentLayouts();
-        if (mt.parameterCount() != argLayouts.size())
-            throw new IllegalArgumentException("Arity mismatch: " + mt + " != " + cDesc);
-
-        int paramCount = mt.parameterCount();
-        for (int i = 0; i < paramCount; i++) {
-            checkCompatibleType(mt.parameterType(i), argLayouts.get(i), addressSize);
-        }
-        cDesc.returnLayout().ifPresent(rl -> checkCompatibleType(mt.returnType(), rl, addressSize));
-    }
-
     public static Class<?> primitiveCarrierForSize(long size, boolean useFloat) {
         if (useFloat) {
             if (size == 4) {
@@ -289,15 +266,14 @@ public class SharedUtils {
     public static String toJavaStringInternal(MemorySegment segment, long start) {
         int len = strlen(segment, start);
         byte[] bytes = new byte[len];
-        MemorySegment.ofArray(bytes)
-                .copyFrom(segment.asSlice(start, len));
+        MemorySegment.copy(segment, JAVA_BYTE, start, bytes, 0, len);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static int strlen(MemorySegment segment, long start) {
         // iterate until overflow (String can only hold a byte[], whose length can be expressed as an int)
         for (int offset = 0; offset >= 0; offset++) {
-            byte curr = MemoryAccess.getByteAtOffset(segment, start + offset);
+            byte curr = segment.get(JAVA_BYTE, start + offset);
             if (curr == 0) {
                 return offset;
             }
@@ -448,29 +424,25 @@ public class SharedUtils {
 
         private static final CLinker SYS_LINKER = getSystemLinker();
 
-        static final MethodHandle MH_MALLOC = SYS_LINKER.downcallHandle(CLinker.systemLookup().lookup("malloc").get(),
-                        MethodType.methodType(MemoryAddress.class, long.class),
-                FunctionDescriptor.of(C_POINTER, C_LONG_LONG));
+        static final MethodHandle MH_MALLOC = SYS_LINKER.downcallHandle(CLinker.systemCLinker().lookup("malloc").get(),
+                FunctionDescriptor.of(ADDRESS, JAVA_LONG));
 
-        static final MethodHandle MH_FREE = SYS_LINKER.downcallHandle(CLinker.systemLookup().lookup("free").get(),
-                        MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(C_POINTER));
+        static final MethodHandle MH_FREE = SYS_LINKER.downcallHandle(CLinker.systemCLinker().lookup("free").get(),
+                FunctionDescriptor.ofVoid(ADDRESS));
     }
 
-    public static MemoryAddress checkSymbol(Addressable symbol) {
-        return checkAddressable(symbol, "Symbol is NULL");
+    public static void checkSymbol(Addressable symbol) {
+        checkAddressable(symbol, "Symbol is NULL");
     }
 
-    public static MemoryAddress checkAddress(MemoryAddress address) {
-        return checkAddressable(address, "Address is NULL");
+    public static void checkAddress(MemoryAddress address) {
+        checkAddressable(address, "Address is NULL");
     }
 
-    private static MemoryAddress checkAddressable(Addressable symbol, String msg) {
+    private static void checkAddressable(Addressable symbol, String msg) {
         Objects.requireNonNull(symbol);
-        MemoryAddress symbolAddr = symbol.address();
-        if (symbolAddr.equals(MemoryAddress.NULL))
-            throw new IllegalArgumentException("Symbol is NULL: " + symbolAddr);
-        return symbolAddr;
+        if (symbol.address().toRawLongValue() == 0)
+            throw new IllegalArgumentException("Symbol is NULL: " + symbol);
     }
 
     public static MemoryAddress allocateMemoryInternal(long size) {
@@ -483,7 +455,7 @@ public class SharedUtils {
 
     public static void freeMemoryInternal(MemoryAddress addr) {
         try {
-            AllocHolder.MH_FREE.invokeExact(addr);
+            AllocHolder.MH_FREE.invokeExact((Addressable)addr);
         } catch (Throwable th) {
             throw new RuntimeException(th);
         }
@@ -524,9 +496,12 @@ public class SharedUtils {
     }
 
     public static boolean isTrivial(FunctionDescriptor cDesc) {
-        return cDesc.attribute(FunctionDescriptor.TRIVIAL_ATTRIBUTE_NAME)
-                .map(Boolean.class::cast)
-                .orElse(false);
+        return false; // FIXME: use system property?
+    }
+
+    public static boolean isVarargsIndex(FunctionDescriptor descriptor, int argIndex) {
+        int firstPos = descriptor.firstVariadicArgumentIndex();
+        return firstPos != -1 && argIndex >= firstPos;
     }
 
     public static class SimpleVaArg {
@@ -541,7 +516,7 @@ public class SharedUtils {
         }
 
         public VarHandle varHandle() {
-            return layout.varHandle(carrier);
+            return layout.varHandle();
         }
     }
 
@@ -558,32 +533,27 @@ public class SharedUtils {
         }
 
         @Override
-        public int vargAsInt(MemoryLayout layout) {
+        public int nextVarg(ValueLayout.OfInt layout) {
             throw uoe();
         }
 
         @Override
-        public long vargAsLong(MemoryLayout layout) {
+        public long nextVarg(ValueLayout.OfLong layout) {
             throw uoe();
         }
 
         @Override
-        public double vargAsDouble(MemoryLayout layout) {
+        public double nextVarg(ValueLayout.OfDouble layout) {
             throw uoe();
         }
 
         @Override
-        public MemoryAddress vargAsAddress(MemoryLayout layout) {
+        public MemoryAddress nextVarg(ValueLayout.OfAddress layout) {
             throw uoe();
         }
 
         @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout, SegmentAllocator allocator) {
-            throw uoe();
-        }
-
-        @Override
-        public MemorySegment vargAsSegment(MemoryLayout layout, ResourceScope scope) {
+        public MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator) {
             throw uoe();
         }
 
@@ -611,21 +581,21 @@ public class SharedUtils {
     static void writeOverSized(MemorySegment ptr, Class<?> type, Object o) {
         // use VH_LONG for integers to zero out the whole register in the process
         if (type == long.class) {
-            MemoryAccess.setLong(ptr, (long) o);
+            ptr.set(JAVA_LONG, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.setLong(ptr, (int) o);
+            ptr.set(JAVA_LONG, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.setLong(ptr, (short) o);
+            ptr.set(JAVA_LONG, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.setLong(ptr, (char) o);
+            ptr.set(JAVA_LONG, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.setLong(ptr, (byte) o);
+            ptr.set(JAVA_LONG, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.setFloat(ptr, (float) o);
+            ptr.set(JAVA_FLOAT, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.setDouble(ptr, (double) o);
+            ptr.set(JAVA_DOUBLE, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.setBoolean(ptr, (boolean) o);
+            ptr.set(JAVA_BOOLEAN, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -633,21 +603,21 @@ public class SharedUtils {
 
     static void write(MemorySegment ptr, Class<?> type, Object o) {
         if (type == long.class) {
-            MemoryAccess.setLong(ptr, (long) o);
+            ptr.set(JAVA_LONG, 0, (long) o);
         } else if (type == int.class) {
-            MemoryAccess.setInt(ptr, (int) o);
+            ptr.set(JAVA_INT, 0, (int) o);
         } else if (type == short.class) {
-            MemoryAccess.setShort(ptr, (short) o);
+            ptr.set(JAVA_SHORT, 0, (short) o);
         } else if (type == char.class) {
-            MemoryAccess.setChar(ptr, (char) o);
+            ptr.set(JAVA_CHAR, 0, (char) o);
         } else if (type == byte.class) {
-            MemoryAccess.setByte(ptr, (byte) o);
+            ptr.set(JAVA_BYTE, 0, (byte) o);
         } else if (type == float.class) {
-            MemoryAccess.setFloat(ptr, (float) o);
+            ptr.set(JAVA_FLOAT, 0, (float) o);
         } else if (type == double.class) {
-            MemoryAccess.setDouble(ptr, (double) o);
+            ptr.set(JAVA_DOUBLE, 0, (double) o);
         } else if (type == boolean.class) {
-            MemoryAccess.setBoolean(ptr, (boolean) o);
+            ptr.set(JAVA_BOOLEAN, 0, (boolean) o);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
         }
@@ -655,23 +625,43 @@ public class SharedUtils {
 
     static Object read(MemorySegment ptr, Class<?> type) {
         if (type == long.class) {
-            return MemoryAccess.getLong(ptr);
+            return ptr.get(JAVA_LONG, 0);
         } else if (type == int.class) {
-            return MemoryAccess.getInt(ptr);
+            return ptr.get(JAVA_INT, 0);
         } else if (type == short.class) {
-            return MemoryAccess.getShort(ptr);
+            return ptr.get(JAVA_SHORT, 0);
         } else if (type == char.class) {
-            return MemoryAccess.getChar(ptr);
+            return ptr.get(JAVA_CHAR, 0);
         } else if (type == byte.class) {
-            return MemoryAccess.getByte(ptr);
+            return ptr.get(JAVA_BYTE, 0);
         } else if (type == float.class) {
-            return MemoryAccess.getFloat(ptr);
+            return ptr.get(JAVA_FLOAT, 0);
         } else if (type == double.class) {
-            return MemoryAccess.getDouble(ptr);
+            return ptr.get(JAVA_DOUBLE, 0);
         } else if (type == boolean.class) {
-            return MemoryAccess.getBoolean(ptr);
+            return ptr.get(JAVA_BOOLEAN, 0);
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + type);
+        }
+    }
+
+    public static MethodType inferMethodType(FunctionDescriptor descriptor, boolean upcall) {
+        MethodType type = MethodType.methodType(descriptor.returnLayout().isPresent() ?
+                carrierFor(descriptor.returnLayout().get(), upcall) : void.class);
+        for (MemoryLayout argLayout : descriptor.argumentLayouts()) {
+            type = type.appendParameterTypes(carrierFor(argLayout, !upcall));
+        }
+        return type;
+    }
+
+    static Class<?> carrierFor(MemoryLayout layout, boolean forArg) {
+        if (layout instanceof ValueLayout valueLayout) {
+            return (forArg && valueLayout.carrier().equals(MemoryAddress.class)) ?
+                    Addressable.class : valueLayout.carrier();
+        } else if (layout instanceof GroupLayout) {
+            return MemorySegment.class;
+        } else {
+            throw new IllegalArgumentException("Unsupported layout: " + layout);
         }
     }
 }

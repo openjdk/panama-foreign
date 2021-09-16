@@ -26,6 +26,7 @@ package jdk.incubator.foreign;
 
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.SystemLookup;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
@@ -34,11 +35,11 @@ import java.util.Optional;
 
 /**
  * A symbol lookup. Exposes a lookup operation for searching symbol addresses by name, see {@link SymbolLookup#lookup(String)}.
- * A symbol lookup can be used to lookup a symbol in a loaded library. Clients can obtain a {@linkplain #loaderLookup() loader lookup},
+ * A symbol lookup can be used to look up a symbol in a loaded library. Clients can obtain a {@linkplain #loaderLookup() loader lookup},
  * which can be used to search symbols in libraries loaded by the current classloader (e.g. using {@link System#load(String)},
  * or {@link System#loadLibrary(String)}).
- * Alternatively, clients can obtain a {@linkplain CLinker#systemLookup() platform-dependent lookup}, to search symbols
- * in the standard C library.
+ * Alternatively, clients can search symbols in the standard C library using a {@link CLinker}, which conveniently
+ * implements this interface.
  * <p> Unless otherwise specified, passing a {@code null} argument, or an array argument containing one or more {@code null}
  * elements to a method in this class causes a {@link NullPointerException NullPointerException} to be thrown. </p>
  */
@@ -49,7 +50,7 @@ public interface SymbolLookup {
      * Looks up a symbol with given name in this lookup.
      *
      * @param name the symbol name.
-     * @return the memory address associated with the symbol (if any).
+     * @return the symbol (if any).
      */
     Optional<MemoryAddress> lookup(String name);
 
