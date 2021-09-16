@@ -32,6 +32,9 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
+import static jdk.internal.clang.libclang.CLayouts.C_LONG_LONG;
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+
 public class CXUnsavedFile {
 
     static final MemoryLayout $struct$LAYOUT = MemoryLayout.structLayout(
@@ -42,7 +45,7 @@ public class CXUnsavedFile {
     public static MemoryLayout $LAYOUT() {
         return CXUnsavedFile.$struct$LAYOUT;
     }
-    static final VarHandle Filename$VH = MemoryHandles.asAddressVarHandle($struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Filename")));
+    static final VarHandle Filename$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("Filename"));
     public static VarHandle Filename$VH() {
         return CXUnsavedFile.Filename$VH;
     }
@@ -58,7 +61,7 @@ public class CXUnsavedFile {
     public static void Filename$set(MemorySegment seg, long index, MemoryAddress x) {
         CXUnsavedFile.Filename$VH.set(seg.asSlice(index*sizeof()), x);
     }
-    static final VarHandle Contents$VH = MemoryHandles.asAddressVarHandle($struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Contents")));
+    static final VarHandle Contents$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("Contents"));
     public static VarHandle Contents$VH() {
         return CXUnsavedFile.Contents$VH;
     }
@@ -74,7 +77,7 @@ public class CXUnsavedFile {
     public static void Contents$set(MemorySegment seg, long index, MemoryAddress x) {
         CXUnsavedFile.Contents$VH.set(seg.asSlice(index*sizeof()), x);
     }
-    static final VarHandle Length$VH = $struct$LAYOUT.varHandle(long.class, MemoryLayout.PathElement.groupElement("Length"));
+    static final VarHandle Length$VH = $struct$LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("Length"));
     public static VarHandle Length$VH() {
         return CXUnsavedFile.Length$VH;
     }
@@ -92,12 +95,8 @@ public class CXUnsavedFile {
     }
     public static long sizeof() { return $LAYOUT().byteSize(); }
     public static MemorySegment allocate(SegmentAllocator allocator) { return allocator.allocate($LAYOUT()); }
-    public static MemorySegment allocate(ResourceScope scope) { return allocate(SegmentAllocator.ofScope(scope)); }
     public static MemorySegment allocateArray(int len, SegmentAllocator allocator) {
         return allocator.allocate(MemoryLayout.sequenceLayout(len, $LAYOUT()));
-    }
-    public static MemorySegment allocateArray(int len, ResourceScope scope) {
-        return allocateArray(len, SegmentAllocator.ofScope(scope));
     }
     public static MemorySegment ofAddress(MemoryAddress addr, ResourceScope scope) { return RuntimeHelper.asArray(addr, $LAYOUT(), 1, scope); }
 }

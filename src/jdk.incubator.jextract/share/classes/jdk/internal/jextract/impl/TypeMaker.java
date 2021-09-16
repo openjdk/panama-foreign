@@ -27,6 +27,7 @@
 package jdk.internal.jextract.impl;
 
 
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -34,10 +35,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import jdk.incubator.jextract.Type.Delegated;
 import jdk.incubator.jextract.Type.Primitive;
+import jdk.internal.clang.Cursor;
 
 class TypeMaker {
 
@@ -188,10 +192,6 @@ class TypeMaker {
             }
             case Enum:
             case Record: {
-                if (treeMaker == null) {
-                    // Macro evaluation, type is meaningless as this can only be pointer and we only care value
-                    return Type.void_();
-                }
                 return Type.declared((Declaration.Scoped) treeMaker.createTree(t.getDeclarationCursor()));
             }
             case BlockPointer:
@@ -254,4 +254,14 @@ class TypeMaker {
             return t;
         }
     };
+
+    public static Primitive.Kind valueLayoutForSize(long size) {
+        return switch ((int) size) {
+            case 8 -> Primitive.Kind.Char;
+            case 16 -> Primitive.Kind.Short;
+            case 32 -> Primitive.Kind.Int;
+            case 64 -> Primitive.Kind.LongLong;
+            default -> throw new IllegalStateException("Cannot infer container layout");
+        };
+    }
 }

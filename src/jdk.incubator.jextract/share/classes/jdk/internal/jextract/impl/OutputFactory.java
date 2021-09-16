@@ -33,6 +33,7 @@ import jdk.internal.jextract.impl.JavaSourceBuilder.VarInfo;
 import jdk.internal.jextract.impl.JavaSourceBuilder.FunctionInfo;
 
 import javax.tools.JavaFileObject;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.constant.ClassDesc;
@@ -111,8 +112,8 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
     public static JavaFileObject[] generateWrapped(Declaration.Scoped decl, String headerName,
                 String pkgName, IncludeHelper includeHelper, List<String> libraryNames) {
         String clsName = Utils.javaSafeIdentifier(headerName.replace(".h", "_h"), true);
-        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(pkgName, clsName, libraryNames.toArray(new String[0]));
-        return new OutputFactory(pkgName, toplevelBuilder, includeHelper).generate(decl);
+        ToplevelBuilder toplevelBuilder = new ToplevelBuilder(pkgName, clsName);
+        return new OutputFactory(pkgName, toplevelBuilder, includeHelper).generate(decl, libraryNames.toArray(new String[0]));
     }
 
     private OutputFactory(String pkgName, ToplevelBuilder toplevelBuilder, IncludeHelper includeHelper) {
@@ -122,7 +123,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         this.includeHelper = includeHelper;
     }
 
-    JavaFileObject[] generate(Declaration.Scoped decl) {
+    JavaFileObject[] generate(Declaration.Scoped decl, String[] libs) {
         //generate all decls
         decl.members().forEach(this::generateDecl);
         // check if unresolved typedefs can be resolved now!
@@ -133,7 +134,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
         try {
             List<JavaFileObject> files = new ArrayList<>(toplevelBuilder.toFiles());
-            files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource()));
+            files.add(jfoFromString(pkgName,"RuntimeHelper", getRuntimeHelperSource(libs)));
             return files.toArray(new JavaFileObject[0]);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -142,10 +143,24 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
         }
     }
 
-    private String getRuntimeHelperSource() throws URISyntaxException, IOException {
+    private String getRuntimeHelperSource(String[] libraries) throws URISyntaxException, IOException {
         URL runtimeHelper = OutputFactory.class.getResource("resources/RuntimeHelper.java.template");
-        return (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
+        String template = (pkgName.isEmpty()? "" : "package " + pkgName + ";\n") +
                         String.join("\n", Files.readAllLines(Paths.get(runtimeHelper.toURI())));
+        List<String> loadLibrariesStr = new ArrayList<>();
+        for (String lib : libraries) {
+            String quotedLibName = quoteLibraryName(lib);
+            if (quotedLibName.indexOf(File.separatorChar) != -1) {
+                loadLibrariesStr.add("System.load(\"" + quotedLibName + "\");");
+            } else {
+                loadLibrariesStr.add("System.loadLibrary(\"" + quotedLibName + "\");");
+            }
+        }
+        return template.replace("#LOAD_LIBRARIES#", loadLibrariesStr.stream().collect(Collectors.joining(" ")));
+    }
+
+    private String quoteLibraryName(String lib) {
+        return lib.replace("\\", "\\\\"); // double up slashes
     }
 
     private void generateDecl(Declaration tree) {
@@ -209,43 +224,6 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
                 currentBuilder = structBuilder.classEnd();
             }
         }
-        return null;
-    }
-
-    private static MemoryLayout isUnsupported(MemoryLayout layout) {
-        if (layout instanceof ValueLayout) {
-            if (UnsupportedLayouts.isUnsupported(layout)) {
-                return layout;
-            }
-        } else if (layout instanceof GroupLayout) {
-            GroupLayout gl = (GroupLayout)layout;
-            for (MemoryLayout ml : gl.memberLayouts()) {
-                MemoryLayout ul = isUnsupported(ml);
-                if (ul != null) {
-                    return ul;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static MemoryLayout isUnsupported(FunctionDescriptor desc) {
-        MemoryLayout resultLayout = desc.returnLayout().orElse(null);
-        if (resultLayout != null) {
-            MemoryLayout ul = isUnsupported(resultLayout);
-            if (ul != null) {
-                return ul;
-            }
-        }
-
-        for (MemoryLayout argLayout : desc.argumentLayouts()) {
-            MemoryLayout ul = isUnsupported(argLayout);
-            if (ul != null) {
-                return ul;
-            }
-        }
-
         return null;
     }
 
@@ -389,7 +367,7 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
 
         Type type = tree.type();
 
-        if (type instanceof Type.Declared && ((Type.Declared) type).tree().name().isEmpty()) {
+        if (type instanceof Type.Declared) {
             // anon type - let's generate something
             ((Type.Declared) type).tree().accept(this, tree);
         }
@@ -399,12 +377,12 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return null;
         }
 
-        MemoryLayout ul = isUnsupported(layout);
-        if (ul != null) {
+        String unsupportedType = UnsupportedLayouts.firstUnsupportedType(type);
+        if (unsupportedType != null) {
             String name = parent != null? parent.name() + "." : "";
             name += fieldName;
             warn("skipping " + name + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(ul));
+                    unsupportedType);
             return null;
         }
 
@@ -468,10 +446,10 @@ public class OutputFactory implements Declaration.Visitor<Void, Declaration> {
             return Optional.empty();
         }
 
-        MemoryLayout unsupportedLayout = isUnsupported(descriptor);
-        if (unsupportedLayout != null) {
+        String unsupportedType = UnsupportedLayouts.firstUnsupportedType(funcPtr);
+        if (unsupportedType != null) {
             warn("skipping " + nativeName + " because of unsupported type usage: " +
-                    UnsupportedLayouts.getUnsupportedTypeName(unsupportedLayout));
+                    unsupportedType);
             return Optional.empty();
         }
 

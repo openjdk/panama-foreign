@@ -51,8 +51,8 @@ public class UniondeclTest extends JextractToolRunner {
             GroupLayout intOrFloatLayout = (GroupLayout)findLayout(intOrFloatCls);
             assertNotNull(intOrFloatLayout);
             assertTrue(intOrFloatLayout.isUnion());
-            checkField(intOrFloatLayout, "i",  CLinker.C_INT);
-            checkField(intOrFloatLayout, "f", CLinker.C_FLOAT);
+            checkField(intOrFloatLayout, "i",  C_INT);
+            checkField(intOrFloatLayout, "f", C_FLOAT);
         } finally {
             deleteDir(uniondeclOutput);
         }

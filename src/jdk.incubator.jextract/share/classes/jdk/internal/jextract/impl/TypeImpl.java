@@ -31,11 +31,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
+
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 
+import static jdk.internal.clang.libclang.CLayouts.C_POINTER;
+
 public abstract class TypeImpl implements Type {
+
+    public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
     @Override
     public boolean isErroneous() {
@@ -345,4 +351,92 @@ public abstract class TypeImpl implements Type {
     public String toString() {
         return PrettyPrinter.type(this);
     }
+
+    // Utilities to fetch layouts/descriptor from types
+
+    public static Optional<MemoryLayout> getLayout(jdk.incubator.jextract.Type t) {
+        try {
+            return Optional.of(getLayoutInternal(t));
+        } catch (Throwable ex) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<FunctionDescriptor> getDescriptor(Function t) {
+        try {
+            MemoryLayout[] args = t.argumentTypes().stream()
+                    .map(TypeImpl::getLayoutInternal)
+                    .toArray(MemoryLayout[]::new);
+            Type retType = t.returnType();
+            if (isVoidType(retType)) {
+                return Optional.of(FunctionDescriptor.ofVoid(args));
+            } else {
+                return Optional.of(FunctionDescriptor.of(getLayoutInternal(retType), args));
+            }
+        } catch (Throwable ex) {
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isVoidType(jdk.incubator.jextract.Type type) {
+        if (type instanceof jdk.incubator.jextract.Type.Primitive) {
+            jdk.incubator.jextract.Type.Primitive pt = (jdk.incubator.jextract.Type.Primitive)type;
+            return pt.kind() == jdk.incubator.jextract.Type.Primitive.Kind.Void;
+        } else if (type instanceof jdk.incubator.jextract.Type.Delegated) {
+            jdk.incubator.jextract.Type.Delegated dt = (jdk.incubator.jextract.Type.Delegated)type;
+            return dt.kind() == jdk.incubator.jextract.Type.Delegated.Kind.TYPEDEF? isVoidType(dt.type()) : false;
+        }
+        return false;
+    }
+
+    public static MemoryLayout getLayoutInternal(jdk.incubator.jextract.Type t) {
+        return t.accept(layoutMaker, null);
+    }
+
+    private static jdk.incubator.jextract.Type.Visitor<MemoryLayout, Void> layoutMaker = new jdk.incubator.jextract.Type.Visitor<>() {
+        @Override
+        public MemoryLayout visitPrimitive(jdk.incubator.jextract.Type.Primitive t, Void _ignored) {
+            return t.kind().layout().orElseThrow(UnsupportedOperationException::new);
+        }
+
+        @Override
+        public MemoryLayout visitDelegated(jdk.incubator.jextract.Type.Delegated t, Void _ignored) {
+            if (t.kind() == jdk.incubator.jextract.Type.Delegated.Kind.POINTER) {
+                return C_POINTER;
+            } else {
+                return t.type().accept(this, null);
+            }
+        }
+
+        @Override
+        public MemoryLayout visitFunction(jdk.incubator.jextract.Type.Function t, Void _ignored) {
+            /*
+             * // pointer to function declared as function like this
+             *
+             * typedef void CB(int);
+             * void func(CB cb);
+             */
+            return C_POINTER;
+        }
+
+        @Override
+        public MemoryLayout visitDeclared(jdk.incubator.jextract.Type.Declared t, Void _ignored) {
+            return t.tree().layout().orElseThrow(UnsupportedOperationException::new);
+        }
+
+        @Override
+        public MemoryLayout visitArray(jdk.incubator.jextract.Type.Array t, Void _ignored) {
+            MemoryLayout elem = t.elementType().accept(this, null);
+            if (t.elementCount().isPresent()) {
+                return MemoryLayout.sequenceLayout(t.elementCount().getAsLong(), elem);
+            } else {
+                return MemoryLayout.sequenceLayout(elem);
+            }
+        }
+
+        @Override
+        public MemoryLayout visitType(jdk.incubator.jextract.Type t, Void _ignored) {
+            throw new UnsupportedOperationException();
+        }
+    };
 }

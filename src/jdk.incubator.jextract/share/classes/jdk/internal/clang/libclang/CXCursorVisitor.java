@@ -35,10 +35,10 @@ import static jdk.incubator.foreign.CLinker.*;
 public interface CXCursorVisitor {
 
     int apply(jdk.incubator.foreign.MemorySegment x0, jdk.incubator.foreign.MemorySegment x1, jdk.incubator.foreign.MemoryAddress x2);
-    static MemoryAddress allocate(CXCursorVisitor fi) {
+    static Addressable allocate(CXCursorVisitor fi) {
         return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$13.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I");
     }
-    static MemoryAddress allocate(CXCursorVisitor fi, ResourceScope scope) {
+    static Addressable allocate(CXCursorVisitor fi, ResourceScope scope) {
         return RuntimeHelper.upcallStub(CXCursorVisitor.class, fi, constants$13.CXCursorVisitor$FUNC, "(Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemorySegment;Ljdk/incubator/foreign/MemoryAddress;)I", scope);
     }
     static CXCursorVisitor ofAddress(MemoryAddress addr) {

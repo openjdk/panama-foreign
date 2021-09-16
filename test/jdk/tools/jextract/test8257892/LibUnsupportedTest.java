@@ -22,10 +22,10 @@
  */
 
 import java.lang.reflect.Method;
-import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemoryLayout.PathElement;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import org.testng.annotations.Test;
 
@@ -67,7 +67,7 @@ public class LibUnsupportedTest {
     @Test
     public void testGetFoo() {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            var seg = getFoo().asSegment(Foo.sizeof(), scope);
+            var seg = MemorySegment.ofAddressNative(getFoo(), Foo.sizeof(), scope);
             Foo.i$set(seg, 42);
             Foo.c$set(seg, (byte)'j');
             assertEquals(Foo.i$get(seg), 42);
@@ -82,8 +82,8 @@ public class LibUnsupportedTest {
     @Test
     public void testFieldTypes() {
         GroupLayout g = (GroupLayout)Foo.$LAYOUT();
-        checkField(g, "i", CLinker.C_INT);
-        checkField(g, "c", CLinker.C_CHAR);
+        checkField(g, "i", C_INT);
+        checkField(g, "c", C_CHAR);
     }
 
     @Test

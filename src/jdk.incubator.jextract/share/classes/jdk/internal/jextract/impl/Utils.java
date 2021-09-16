@@ -26,6 +26,9 @@
 
 package jdk.internal.jextract.impl;
 
+import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.VaList;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
@@ -211,10 +214,6 @@ class Utils {
         return sb.toString();
     }
 
-    static String getName(Type type) {
-        return LayoutUtils.getName(type);
-    }
-
     static Stream<Cursor> flattenableChildren(Cursor c) {
         return c.children()
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
@@ -328,5 +327,29 @@ class Utils {
      */
     private static boolean isPrintableAscii(char ch) {
         return ch >= ' ' && ch <= '~';
+    }
+
+    public static String layoutToConstant(ValueLayout vl) {
+        if (vl.carrier() == boolean.class) {
+            return "JAVA_BOOLEAN";
+        } else if (vl.carrier() == char.class) {
+            return "JAVA_CHAR";
+        } else if (vl.carrier() == byte.class) {
+            return "JAVA_BYTE";
+        } else if (vl.carrier() == short.class) {
+            return "JAVA_SHORT";
+        } else if (vl.carrier() == int.class) {
+            return "JAVA_INT";
+        } else if (vl.carrier() == float.class) {
+            return "JAVA_FLOAT";
+        } else if (vl.carrier() == long.class) {
+            return "JAVA_LONG";
+        } else if (vl.carrier() == double.class) {
+            return "JAVA_DOUBLE";
+        } else if (vl.carrier() == MemoryAddress.class) {
+            return "ADDRESS";
+        } else {
+            return "MemoryLayout.paddingLayout(" + vl.bitSize() +  ")";
+        }
     }
 }

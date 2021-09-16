@@ -37,12 +37,12 @@ public class SourceRange {
     }
 
     public SourceLocation getBegin() {
-        MemorySegment loc = Index_h.clang_getRangeStart(ResourceScope.newImplicitScope(), range);
+        MemorySegment loc = Index_h.clang_getRangeStart(ResourceScope.newConfinedScope(), range);
         return new SourceLocation(loc);
     }
 
     public SourceLocation getEnd() {
-        MemorySegment loc = Index_h.clang_getRangeEnd(ResourceScope.newImplicitScope(), range);
+        MemorySegment loc = Index_h.clang_getRangeEnd(ResourceScope.newConfinedScope(), range);
         return new SourceLocation(loc);
     }
 }

@@ -106,16 +106,16 @@ public class RepeatedDeclsTest extends JextractToolRunner {
         MemoryLayout pointLayout = findLayout(pointCls);
         assertNotNull(pointLayout);
         assertTrue(((GroupLayout)pointLayout).isStruct());
-        checkField(pointLayout, "i", CLinker.C_INT);
-        checkField(pointLayout, "j", CLinker.C_INT);
+        checkField(pointLayout, "i", C_INT);
+        checkField(pointLayout, "j", C_INT);
     }
 
     private void checkPoint3D(Class<?> point3DCls) {
         MemoryLayout point3DLayout = findLayout(point3DCls);
         assertNotNull(point3DLayout);
         assertTrue(((GroupLayout)point3DLayout).isStruct());
-        checkField(point3DLayout, "i", CLinker.C_INT);
-        checkField(point3DLayout, "j", CLinker.C_INT);
-        checkField(point3DLayout, "k", CLinker.C_INT);
+        checkField(point3DLayout, "i", C_INT);
+        checkField(point3DLayout, "j", C_INT);
+        checkField(point3DLayout, "k", C_INT);
     }
 }

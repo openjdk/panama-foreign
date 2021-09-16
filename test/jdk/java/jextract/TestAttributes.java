@@ -34,7 +34,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.jextract.Declaration;
 import jdk.incubator.jextract.Type;
 import org.testng.annotations.Test;

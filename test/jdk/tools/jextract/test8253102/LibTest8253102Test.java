@@ -57,7 +57,7 @@ public class LibTest8253102Test {
             MemorySegment seg = Point.ofAddress(addr, scope);
             assertEquals(Point.x$get(seg), 14);
             assertEquals(Point.y$get(seg), 99);
-            CLinker.freeMemory(addr);
+            addr.freeMemory();
         }
     }
 }

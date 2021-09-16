@@ -26,6 +26,7 @@
 
 package jdk.internal.clang;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
@@ -110,19 +111,19 @@ public final class Cursor {
     }
 
     public Type type() {
-        return new Type(Index_h.clang_getCursorType(ResourceScope.newImplicitScope(), cursor));
+        return new Type(Index_h.clang_getCursorType(ResourceScope.newConfinedScope(), cursor));
     }
 
     public Type getEnumDeclIntegerType() {
-        return new Type(Index_h.clang_getEnumDeclIntegerType(ResourceScope.newImplicitScope(), cursor));
+        return new Type(Index_h.clang_getEnumDeclIntegerType(ResourceScope.newConfinedScope(), cursor));
     }
 
     public Cursor getDefinition() {
-        return new Cursor(Index_h.clang_getCursorDefinition(ResourceScope.newImplicitScope(), cursor));
+        return new Cursor(Index_h.clang_getCursorDefinition(ResourceScope.newConfinedScope(), cursor));
     }
 
     public SourceLocation getSourceLocation() {
-        MemorySegment loc = Index_h.clang_getCursorLocation(ResourceScope.newImplicitScope(), cursor);
+        MemorySegment loc = Index_h.clang_getCursorLocation(ResourceScope.newConfinedScope(), cursor);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
             if (Index_h.clang_equalLocations(loc, Index_h.clang_getNullLocation(scope)) != 0) {
                 return null;
@@ -132,7 +133,7 @@ public final class Cursor {
     }
 
     public SourceRange getExtent() {
-        MemorySegment range = Index_h.clang_getCursorExtent(ResourceScope.newImplicitScope(), cursor);
+        MemorySegment range = Index_h.clang_getCursorExtent(ResourceScope.newConfinedScope(), cursor);
         if (Index_h.clang_Range_isNull(range) != 0) {
             return null;
         }
@@ -144,7 +145,7 @@ public final class Cursor {
     }
 
     public Cursor getArgument(int idx) {
-        return new Cursor(Index_h.clang_Cursor_getArgument(ResourceScope.newImplicitScope(), cursor, idx));
+        return new Cursor(Index_h.clang_Cursor_getArgument(ResourceScope.newConfinedScope(), cursor, idx));
     }
 
     // C long long, 64-bit
@@ -181,13 +182,13 @@ public final class Cursor {
      * For a cursor that is a reference, retrieve a cursor representing the entity that it references.
      */
     public Cursor getCursorReferenced() {
-        return new Cursor(Index_h.clang_getCursorReferenced(ResourceScope.newImplicitScope(), cursor));
+        return new Cursor(Index_h.clang_getCursorReferenced(ResourceScope.newConfinedScope(), cursor));
     }
 
     private static class CursorChildren {
         private static final ArrayList<Cursor> children = new ArrayList<>();
-        private static final MemoryAddress callback = CXCursorVisitor.allocate((c, p, d) -> {
-            MemorySegment copy = MemorySegment.allocateNative(c.byteSize(), ResourceScope.newImplicitScope());
+        private static final Addressable callback = CXCursorVisitor.allocate((c, p, d) -> {
+            MemorySegment copy = MemorySegment.allocateNative(c.byteSize(), ResourceScope.newConfinedScope());
             copy.copyFrom(c);
             Cursor cursor = new Cursor(copy);
             children.add(cursor);

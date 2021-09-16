@@ -32,6 +32,8 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import jdk.incubator.foreign.*;
 import static jdk.incubator.foreign.CLinker.*;
+import static jdk.internal.clang.libclang.CLayouts.*;
+
 class constants$1 {
 
     static final FunctionDescriptor clang_equalLocations$FUNC = FunctionDescriptor.of(C_INT,

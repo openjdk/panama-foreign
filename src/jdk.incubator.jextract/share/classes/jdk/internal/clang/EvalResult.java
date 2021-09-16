@@ -28,6 +28,7 @@ package jdk.internal.clang;
 
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.MemoryAddress;
+import jdk.incubator.foreign.MemorySegment;
 import jdk.internal.clang.libclang.Index_h;
 
 public class EvalResult implements AutoCloseable {
@@ -91,7 +92,7 @@ public class EvalResult implements AutoCloseable {
 
     private String getAsString0() {
         MemoryAddress value = Index_h.clang_EvalResult_getAsStr(ptr);
-        return CLinker.toJavaString(value);
+        return value.getUtf8String(0);
     }
 
     public String getAsString() {

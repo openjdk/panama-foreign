@@ -404,14 +404,13 @@ public interface Declaration {
     /**
      * Creates a new bitfields group declaration with given name and layout.
      * @param pos the bitfields group declaration position.
-     * @param name the bitfields group declaration name.
      * @param layout the bitfields group declaration layout.
      * @param bitfields the bitfields group member declarations.
      * @return a new bitfields group declaration with given name and layout.
      */
-    static Declaration.Scoped bitfields(Position pos, String name, MemoryLayout layout, Declaration.Variable... bitfields) {
+    static Declaration.Scoped bitfields(Position pos, MemoryLayout layout, Declaration.Variable... bitfields) {
         List<Declaration> declList = Stream.of(bitfields).collect(Collectors.toList());
-        return new DeclarationImpl.ScopedImpl(Declaration.Scoped.Kind.BITFIELDS, layout, declList, name, pos);
+        return new DeclarationImpl.ScopedImpl(Declaration.Scoped.Kind.BITFIELDS, layout, declList, "", pos);
     }
 
     /**

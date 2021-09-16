@@ -28,7 +28,7 @@ package jdk.internal.jextract.impl;
 
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryLayout;
-import jdk.incubator.foreign.ValueLayout;
+import jdk.incubator.jextract.Declaration;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 
@@ -42,19 +42,38 @@ final class StructLayoutComputer extends RecordLayoutComputer {
     private long offset;
     private long actualSize = 0L;
     // List to collect bitfield fields to process later, may be null
+    private List<Declaration> bitfieldDecls;
     private List<MemoryLayout> bitfieldLayouts;
 
-    StructLayoutComputer(long offsetInParent, Type parent, Type type) {
-        super(parent, type);
+    StructLayoutComputer(TypeMaker typeMaker, long offsetInParent, Type parent, Type type) {
+        super(typeMaker, parent, type);
         this.offset = offsetInParent;
     }
 
     @Override
-    void addFieldLayout(MemoryLayout MemoryLayout) {
-        if (bitfieldLayouts != null) {
-            bitfieldLayouts.add(MemoryLayout);
+    void addField(Declaration declaration) {
+        if (bitfieldDecls != null) {
+            bitfieldDecls.add(declaration);
+            MemoryLayout layout = null;
+            if (declaration instanceof Declaration.Scoped scoped) {
+                layout = scoped.layout().orElse(null);
+            } else if (declaration instanceof Declaration.Variable var) {
+                layout = var.layout().orElse(null);
+            }
+            if (layout != null) {
+                bitfieldLayouts.add(declaration.name().isEmpty() ? layout : layout.withName(declaration.name()));
+            }
         } else {
-            fieldLayouts.add(MemoryLayout);
+            super.addField(declaration);
+        }
+    }
+
+    @Override
+    void addPadding(long bits) {
+        if (bitfieldDecls != null) {
+            bitfieldLayouts.add(MemoryLayout.paddingLayout(bits));
+        } else {
+            super.addPadding(bits);
         }
     }
 
@@ -65,7 +84,8 @@ final class StructLayoutComputer extends RecordLayoutComputer {
          * Initialize bitfieldLayouts list to collect this and subsequent
          * bitfield layouts.
          */
-        if (bitfieldLayouts == null) {
+        if (bitfieldDecls == null) {
+            bitfieldDecls = new ArrayList<>();
             bitfieldLayouts = new ArrayList<>();
         }
     }
@@ -75,7 +95,7 @@ final class StructLayoutComputer extends RecordLayoutComputer {
         boolean isBitfield = c.isBitField();
         long expectedOffset = offsetOf(parent, c);
         if (expectedOffset > offset) {
-            addFieldLayout(MemoryLayout.paddingLayout(expectedOffset - offset));
+            addPadding(expectedOffset - offset);
             actualSize += (expectedOffset - offset);
             offset = expectedOffset;
         }
@@ -96,18 +116,18 @@ final class StructLayoutComputer extends RecordLayoutComputer {
             handleBitfields();
         }
 
-        addFieldLayout(offset, parent, c);
+        addField(offset, parent, c);
         long size = fieldSize(c);
         offset += size;
         actualSize += size;
     }
 
     @Override
-    MemoryLayout finishLayout() {
+    jdk.incubator.jextract.Type.Declared finishRecord(String anonName) {
         // pad at the end, if any
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
-            addFieldLayout(MemoryLayout.paddingLayout(expectedSize - actualSize));
+            addPadding(expectedSize - actualSize);
         }
 
         /*
@@ -123,16 +143,23 @@ final class StructLayoutComputer extends RecordLayoutComputer {
 
         MemoryLayout[] fields = fieldLayouts.toArray(new MemoryLayout[0]);
         GroupLayout g = MemoryLayout.structLayout(fields);
-        String name = LayoutUtils.getName(cursor);
-        return name.isEmpty() ?
-                g : g.withName(name);
+        if (!cursor.spelling().isEmpty()) {
+            g = g.withName(cursor.spelling());
+        } else if (anonName != null) {
+            g = g.withName(anonName);
+        }
+        return jdk.incubator.jextract.Type.declared(Declaration.struct(new TreeMaker.CursorPosition(cursor), cursor.spelling(), g, fieldDecls.stream().toArray(Declaration[]::new)));
     }
 
     // process bitfields if any and clear bitfield layouts
     private void handleBitfields() {
-        if (bitfieldLayouts != null) {
-            fieldLayouts.add(bitfield(bitfieldLayouts));
-            bitfieldLayouts = null;
+        if (bitfieldDecls != null) {
+            List<MemoryLayout> prevBitfieldLayouts = bitfieldLayouts;
+            List<Declaration> prevBitfieldDecls = bitfieldDecls;
+            bitfieldDecls = null;
+            if (!prevBitfieldDecls.isEmpty()) {
+                addField(bitfield(prevBitfieldLayouts, prevBitfieldDecls.toArray(new Declaration.Variable[0])));
+            }
         }
     }
 }
