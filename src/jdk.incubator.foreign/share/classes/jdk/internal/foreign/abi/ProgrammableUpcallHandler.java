@@ -25,14 +25,14 @@
 
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
-import jdk.incubator.foreign.SegmentAllocator;
-import jdk.internal.access.JavaLangInvokeAccess;
-import jdk.internal.access.SharedSecrets;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.ResourceScopeImpl;
 import sun.security.action.GetPropertyAction;
 
 import java.lang.invoke.MethodHandle;
@@ -68,7 +68,7 @@ public class ProgrammableUpcallHandler {
     private static final boolean USE_INTRINSICS = Boolean.parseBoolean(
         GetPropertyAction.privilegedGetProperty("jdk.internal.foreign.ProgrammableUpcallHandler.USE_INTRINSICS", "true"));
 
-    private static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
+    private static final VarHandle VH_LONG = ValueLayout.JAVA_LONG.varHandle();
 
     private static final MethodHandle MH_invokeMoves;
     private static final MethodHandle MH_invokeInterpBindings;
@@ -87,7 +87,7 @@ public class ProgrammableUpcallHandler {
         }
     }
 
-    public static UpcallHandler make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence) {
+    public static CLinker.UpcallStub make(ABIDescriptor abi, MethodHandle target, CallingSequence callingSequence, ResourceScope scope) {
         Binding.VMLoad[] argMoves = argMoveBindings(callingSequence);
         Binding.VMStore[] retMoves = retMoveBindings(callingSequence);
 
@@ -133,7 +133,7 @@ public class ProgrammableUpcallHandler {
             MethodHandle invokeMoves = insertArguments(MH_invokeMoves, 1, doBindingsErased, argMoves, retMoves, abi, layout);
             entryPoint = allocateUpcallStub(invokeMoves, abi, layout);
         }
-        return () -> entryPoint;
+        return new UpcallStubs.UpcallStubImpl(entryPoint, callingSequence.functionDesc(), target, scope);
     }
 
     private static void checkPrimitive(MethodType type) {

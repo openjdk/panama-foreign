@@ -52,9 +52,7 @@ public class TestResourceScope {
     public void testConfined(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newConfinedScope(cleaner) :
-                ResourceScope.newConfinedScope();
+        ResourceScope scope = ResourceScope.newConfinedScope(cleaner);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addCloseAction(() -> acc.addAndGet(delta));
@@ -77,9 +75,7 @@ public class TestResourceScope {
     public void testSharedSingleThread(Supplier<Cleaner> cleanerSupplier) {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newSharedScope(cleaner) :
-                ResourceScope.newSharedScope();
+        ResourceScope scope = ResourceScope.newSharedScope(cleaner);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
             scope.addCloseAction(() -> acc.addAndGet(delta));
@@ -103,9 +99,7 @@ public class TestResourceScope {
         AtomicInteger acc = new AtomicInteger();
         Cleaner cleaner = cleanerSupplier.get();
         List<Thread> threads = new ArrayList<>();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newSharedScope(cleaner) :
-                ResourceScope.newSharedScope();
+        ResourceScope scope = ResourceScope.newSharedScope(cleaner);
         AtomicReference<ResourceScope> scopeRef = new AtomicReference<>(scope);
         for (int i = 0 ; i < N_THREADS ; i++) {
             int delta = i;
@@ -157,15 +151,14 @@ public class TestResourceScope {
         }
     }
 
-    @Test(dataProvider = "cleaners")
-    public void testLockSingleThread(Supplier<Cleaner> cleanerSupplier) {
-        Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newConfinedScope(cleaner) :
-                ResourceScope.newConfinedScope();
-        List<ResourceScope.Handle> handles = new ArrayList<>();
+    @Test
+    public void testLockSingleThread() {
+        ResourceScope scope = ResourceScope.newConfinedScope();
+        List<ResourceScope> handles = new ArrayList<>();
         for (int i = 0 ; i < N_THREADS ; i++) {
-            handles.add(scope.acquire());
+            ResourceScope handle = ResourceScope.newConfinedScope();
+            handle.keepAlive(scope);
+            handles.add(handle);
         }
 
         while (true) {
@@ -175,31 +168,24 @@ public class TestResourceScope {
                 break;
             } catch (IllegalStateException ex) {
                 assertTrue(handles.size() > 0);
-                ResourceScope.Handle handle = handles.remove(0);
-                scope.release(handle);
-                scope.release(handle); // make sure it's idempotent
-                scope.release(handle); // make sure it's idempotent
+                ResourceScope handle = handles.remove(0);
+                handle.close();
             }
         }
     }
 
-    @Test(dataProvider = "cleaners")
-    public void testLockSharedMultiThread(Supplier<Cleaner> cleanerSupplier) {
-        Cleaner cleaner = cleanerSupplier.get();
-        ResourceScope scope = cleaner != null ?
-                ResourceScope.newSharedScope(cleaner) :
-                ResourceScope.newSharedScope();
+    @Test
+    public void testLockSharedMultiThread() {
+        ResourceScope scope = ResourceScope.newSharedScope();
         AtomicInteger lockCount = new AtomicInteger();
         for (int i = 0 ; i < N_THREADS ; i++) {
             new Thread(() -> {
-                try {
-                    ResourceScope.Handle handle = scope.acquire(); // this can throw if segment has been closed
+                try (ResourceScope handle = ResourceScope.newConfinedScope()) {
+                    handle.keepAlive(scope);
                     lockCount.incrementAndGet();
                     waitSomeTime();
                     lockCount.decrementAndGet();
-                    scope.release(handle); // cannot throw (acquired segments cannot be closed)
-                    scope.release(handle); // cannot throw (idempotent)
-                    scope.release(handle); // cannot throw (idempotent)
+                    handle.close();
                 } catch (IllegalStateException ex) {
                     // might be already closed - do nothing
                 }
@@ -230,13 +216,12 @@ public class TestResourceScope {
     @Test
     public void testCloseConfinedLock() {
         ResourceScope scope = ResourceScope.newConfinedScope();
-        ResourceScope.Handle handle = scope.acquire();
+        ResourceScope handle = ResourceScope.newConfinedScope();
+        handle.keepAlive(scope);
         AtomicReference<Throwable> failure = new AtomicReference<>();
         Thread t = new Thread(() -> {
             try {
-                scope.release(handle);
-                scope.release(handle); // make sure it's idempotent
-                scope.release(handle); // make sure it's idempotent
+                handle.close();
             } catch (Throwable ex) {
                 failure.set(ex);
             }
@@ -255,24 +240,22 @@ public class TestResourceScope {
     public void testScopeHandles(Supplier<ResourceScope> scopeFactory) {
         ResourceScope scope = scopeFactory.get();
         acquireRecursive(scope, 5);
-        if (!scope.isImplicit()) {
+        if (scope != ResourceScope.globalScope()) {
             scope.close();
         }
     }
 
     private void acquireRecursive(ResourceScope scope, int acquireCount) {
-        ResourceScope.Handle handle = scope.acquire();
-        assertEquals(handle.scope(), scope);
-        if (acquireCount > 0) {
-            // recursive acquire
-            acquireRecursive(scope, acquireCount - 1);
+        try (ResourceScope handle = ResourceScope.newConfinedScope()) {
+            handle.keepAlive(scope);
+            if (acquireCount > 0) {
+                // recursive acquire
+                acquireRecursive(scope, acquireCount - 1);
+            }
+            if (scope != ResourceScope.globalScope()) {
+                assertThrows(IllegalStateException.class, scope::close);
+            }
         }
-        if (!scope.isImplicit()) {
-            assertThrows(IllegalStateException.class, scope::close);
-        }
-        scope.release(handle);
-        scope.release(handle); // make sure it's idempotent
-        scope.release(handle); // make sure it's idempotent
     }
 
     private void waitSomeTime() {
@@ -305,7 +288,6 @@ public class TestResourceScope {
         return new Object[][] {
                 { (Supplier<ResourceScope>)ResourceScope::newConfinedScope },
                 { (Supplier<ResourceScope>)ResourceScope::newSharedScope },
-                { (Supplier<ResourceScope>)ResourceScope::newImplicitScope },
                 { (Supplier<ResourceScope>)ResourceScope::globalScope }
         };
     }

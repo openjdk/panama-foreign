@@ -22,6 +22,7 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -56,11 +57,6 @@ public class CallOverheadConstant {
     }
 
     @Benchmark
-    public void panama_blank_trivial() throws Throwable {
-        func_trivial.invokeExact();
-    }
-
-    @Benchmark
     public int jni_identity() throws Throwable {
         return identity(10);
     }
@@ -71,18 +67,18 @@ public class CallOverheadConstant {
     }
 
     @Benchmark
-    public int panama_identity_trivial() throws Throwable {
-        return (int) identity_trivial.invokeExact(10);
-    }
-
-    @Benchmark
     public MemorySegment panama_identity_struct() throws Throwable {
         return (MemorySegment) identity_struct.invokeExact(recycling_allocator, point);
     }
 
     @Benchmark
     public MemoryAddress panama_identity_memory_address() throws Throwable {
-        return (MemoryAddress) identity_memory_address.invokeExact(MemoryAddress.NULL);
+        return (MemoryAddress) identity_memory_address.invokeExact((Addressable)MemoryAddress.NULL);
+    }
+
+    @Benchmark
+    public MemoryAddress panama_identity_memory_address_non_exact() throws Throwable {
+        return (MemoryAddress) identity_memory_address.invoke(MemoryAddress.NULL);
     }
 
     @Benchmark

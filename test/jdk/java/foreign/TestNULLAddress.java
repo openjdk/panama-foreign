@@ -37,36 +37,32 @@ import jdk.incubator.foreign.MemoryAddress;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-import java.nio.charset.Charset;
 
 public class TestNULLAddress {
 
-    static final CLinker LINKER = CLinker.getInstance();
+    static final CLinker LINKER = CLinker.systemCLinker();
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLLinking() {
         LINKER.downcallHandle(
                 MemoryAddress.NULL,
-                MethodType.methodType(void.class),
                 FunctionDescriptor.ofVoid());
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLVirtual() throws Throwable {
         MethodHandle mh = LINKER.downcallHandle(
-                MethodType.methodType(void.class),
                 FunctionDescriptor.ofVoid());
         mh.invokeExact((Addressable) MemoryAddress.NULL);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLtoJavaString() {
-        CLinker.toJavaString(MemoryAddress.NULL);
+        MemoryAddress.NULL.getUtf8String(0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNULLfreeMemory() {
-        CLinker.freeMemory(MemoryAddress.NULL);
+        MemoryAddress.NULL.freeMemory();
     }
 }

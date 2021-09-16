@@ -22,6 +22,9 @@
  *
  */
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryLayout;
@@ -30,6 +33,8 @@ import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
 import jdk.incubator.foreign.ValueLayout;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +50,7 @@ import static org.testng.Assert.*;
 
 public class CallGeneratorHelper extends NativeTestHelper {
 
-    static SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
+    static SegmentAllocator CONFINED_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newSharedScope());
 
     static final int SAMPLE_FACTOR = Integer.parseInt((String)System.getProperties().getOrDefault("generator.sample.factor", "-1"));
 
@@ -58,7 +63,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
         GroupLayout g = (GroupLayout) layout;
         for (MemoryLayout field : g.memberLayouts()) {
             if (field instanceof ValueLayout) {
-                VarHandle vh = g.varHandle(vhCarrier(field), MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
+                VarHandle vh = g.varHandle(MemoryLayout.PathElement.groupElement(field.name().orElseThrow()));
                 assertEquals(vh.get(actual), vh.get(expected));
             }
         }
@@ -370,11 +375,11 @@ public class CallGeneratorHelper extends NativeTestHelper {
     @SuppressWarnings("unchecked")
     static Object makeArg(MemoryLayout layout, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (layout instanceof GroupLayout) {
-            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newImplicitScope());
+            MemorySegment segment = MemorySegment.allocateNative(layout, ResourceScope.newSharedScope());
             initStruct(segment, (GroupLayout)layout, checks, check);
             return segment;
         } else if (isPointer(layout)) {
-            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.newImplicitScope());
+            MemorySegment segment = MemorySegment.allocateNative(1, ResourceScope.newSharedScope());
             if (check) {
                 checks.add(o -> {
                     try {
@@ -410,12 +415,9 @@ public class CallGeneratorHelper extends NativeTestHelper {
     static void initStruct(MemorySegment str, GroupLayout g, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         for (MemoryLayout l : g.memberLayouts()) {
             if (l.isPadding()) continue;
-            VarHandle accessor = g.varHandle(structFieldCarrier(l), MemoryLayout.PathElement.groupElement(l.name().get()));
+            VarHandle accessor = g.varHandle(MemoryLayout.PathElement.groupElement(l.name().get()));
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(l, fieldsCheck, check);
-            if (isPointer(l)) {
-                value = ((MemoryAddress)value).toRawLongValue();
-            }
             //set value
             accessor.set(str, value);
             //add check
@@ -424,11 +426,7 @@ public class CallGeneratorHelper extends NativeTestHelper {
                 checks.add(o -> {
                     MemorySegment actual = (MemorySegment)o;
                     try {
-                        if (isPointer(l)) {
-                            fieldsCheck.get(0).accept(MemoryAddress.ofLong((long)accessor.get(actual)));
-                        } else {
-                            fieldsCheck.get(0).accept(accessor.get(actual));
-                        }
+                        fieldsCheck.get(0).accept(accessor.get(actual));
                     } catch (Throwable ex) {
                         throw new IllegalStateException(ex);
                     }
@@ -437,37 +435,23 @@ public class CallGeneratorHelper extends NativeTestHelper {
         }
     }
 
-    static Class<?> structFieldCarrier(MemoryLayout layout) {
-        if (isPointer(layout)) {
-            return long.class;
-        } else if (layout instanceof ValueLayout) {
-            if (isIntegral(layout)) {
-                return int.class;
-            } else if (layout.bitSize() == 32) {
-                return float.class;
-            } else {
-                return double.class;
-            }
+    static Class<?> carrier(MemoryLayout layout, boolean param) {
+        if (layout instanceof GroupLayout) {
+            return MemorySegment.class;
+        } if (isPointer(layout)) {
+            return param ? Addressable.class : MemoryAddress.class;
+        } else if (layout instanceof ValueLayout valueLayout) {
+            return valueLayout.carrier();
         } else {
             throw new IllegalStateException("Unexpected layout: " + layout);
         }
     }
 
-    static Class<?> paramCarrier(MemoryLayout layout) {
-        if (layout instanceof GroupLayout) {
-            return MemorySegment.class;
-        } if (isPointer(layout)) {
-            return MemoryAddress.class;
-        } else if (layout instanceof ValueLayout) {
-            if (isIntegral(layout)) {
-                return int.class;
-            } else if (layout.bitSize() == 32) {
-                return float.class;
-            } else {
-                return double.class;
-            }
-        } else {
-            throw new IllegalStateException("Unexpected layout: " + layout);
+    MethodHandle downcallHandle(CLinker abi, Addressable addr, SegmentAllocator allocator, FunctionDescriptor descriptor) {
+        MethodHandle mh = abi.downcallHandle(addr, descriptor);
+        if (descriptor.returnLayout().isPresent() && descriptor.returnLayout().get() instanceof GroupLayout) {
+            mh = mh.bindTo(allocator);
         }
+        return mh;
     }
 }

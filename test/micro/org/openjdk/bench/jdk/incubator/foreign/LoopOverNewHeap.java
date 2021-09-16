@@ -22,66 +22,91 @@
  */
 package org.openjdk.bench.jdk.incubator.foreign;
 
-import jdk.incubator.foreign.MemoryHandles;
+import jdk.incubator.foreign.MemoryLayout;
 import jdk.incubator.foreign.MemorySegment;
-import jdk.incubator.foreign.ResourceScope;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.CompilerControl;
 import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
+import sun.misc.Unsafe;
 
 import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.concurrent.TimeUnit;
 
+import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
 import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @State(org.openjdk.jmh.annotations.Scope.Thread)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Fork(value = 3, jvmArgsAppend = { "--add-modules", "jdk.incubator.foreign" })
-public class VarHandleExact {
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Fork(value = 3, jvmArgsAppend = { "--add-modules=jdk.incubator.foreign" })
+public class LoopOverNewHeap {
 
-    static final VarHandle exact;
-    static final VarHandle generic;
+    static final Unsafe unsafe = Utils.unsafe;
 
-    static {
-        generic = MemoryHandles.varHandle(JAVA_INT);
-        exact = generic.withInvokeExactBehavior();
-    }
+    static final int ELEM_SIZE = 1_000_000;
+    static final int CARRIER_SIZE = (int)JAVA_INT.byteSize();
 
-    MemorySegment data;
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
+
+    @Param(value = {"false", "true"})
+    boolean polluteProfile;
 
     @Setup
     public void setup() {
-        data = MemorySegment.allocateNative(JAVA_INT, ResourceScope.newConfinedScope());
-    }
-
-    @TearDown
-    public void tearDown() {
-        data.scope().close();
-    }
-
-    @Benchmark
-    public void exact_exactInvocation() {
-        exact.set(data, (long) 0, 42);
+        if (polluteProfile) {
+            for (int i = 0 ; i < 10000 ; i++) {
+                MemorySegment intB = MemorySegment.ofArray(new byte[ELEM_SIZE]);
+                MemorySegment intI = MemorySegment.ofArray(new int[ELEM_SIZE]);
+                MemorySegment intD = MemorySegment.ofArray(new double[ELEM_SIZE]);
+                MemorySegment intF = MemorySegment.ofArray(new float[ELEM_SIZE]);
+            }
+        }
     }
 
     @Benchmark
-    public void generic_genericInvocation() {
-        generic.set(data, 0, 42);
+    public void unsafe_loop() {
+        int[] elems = new int[ELEM_SIZE];
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            unsafe.putInt(elems, Unsafe.ARRAY_INT_BASE_OFFSET + (i * CARRIER_SIZE) , i);
+        }
+    }
+
+
+    @Benchmark
+    public void segment_loop() {
+        MemorySegment segment = MemorySegment.ofArray(new int[ELEM_SIZE]);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
+        }
+    }
+
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    @Benchmark
+    public void segment_loop_dontinline() {
+        MemorySegment segment = MemorySegment.ofArray(new int[ELEM_SIZE]);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            VH_int.set(segment, (long) i, i);
+        }
     }
 
     @Benchmark
-    public void generic_exactInvocation() {
-        generic.set(data, (long) 0, 42);
+    public void buffer_loop() {
+        IntBuffer buffer = IntBuffer.wrap(new int[ELEM_SIZE]);
+        for (int i = 0; i < ELEM_SIZE; i++) {
+            buffer.put(i , i);
+        }
     }
+
 }

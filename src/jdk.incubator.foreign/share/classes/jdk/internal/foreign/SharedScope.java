@@ -27,6 +27,7 @@ package jdk.internal.foreign;
 
 import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.misc.ScopedMemoryAccess;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -65,7 +66,7 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     SharedScope(Cleaner cleaner) {
-        super(cleaner, new SharedResourceList());
+        super(new SharedResourceList(), cleaner);
     }
 
     @Override
@@ -81,7 +82,8 @@ class SharedScope extends ResourceScopeImpl {
     }
 
     @Override
-    public HandleImpl acquire() {
+    @ForceInline
+    public void acquire0() {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
@@ -93,7 +95,19 @@ class SharedScope extends ResourceScopeImpl {
                 throw new IllegalStateException("Segment acquire limit exceeded");
             }
         } while (!STATE.compareAndSet(this, value, value + 1));
-        return new SharedHandle();
+    }
+
+    @Override
+    @ForceInline
+    public void release0() {
+        int value;
+        do {
+            value = (int) STATE.getVolatile(jdk.internal.foreign.SharedScope.this);
+            if (value <= ALIVE) {
+                //cannot get here - we can't close segment twice
+                throw new IllegalStateException("Already closed");
+            }
+        } while (!STATE.compareAndSet(jdk.internal.foreign.SharedScope.this, value, value - 1));
     }
 
     void justClose() {
@@ -164,32 +178,6 @@ class SharedScope extends ResourceScopeImpl {
                 cleanup(prev);
             } else {
                 throw new IllegalStateException("Attempt to cleanup an already closed resource list");
-            }
-        }
-    }
-
-    /**
-     * A shared resource scope handle; this implementation has to handle close vs. close races.
-     */
-    class SharedHandle implements HandleImpl {
-        final AtomicBoolean released = new AtomicBoolean(false);
-
-        @Override
-        public ResourceScopeImpl scope() {
-            return SharedScope.this;
-        }
-
-        @Override
-        public void release() {
-            if (released.compareAndSet(false, true)) {
-                int value;
-                do {
-                    value = (int) STATE.getVolatile(jdk.internal.foreign.SharedScope.this);
-                    if (value <= ALIVE) {
-                        //cannot get here - we can't close segment twice
-                        throw new IllegalStateException("Already closed");
-                    }
-                } while (!STATE.compareAndSet(jdk.internal.foreign.SharedScope.this, value, value - 1));
             }
         }
     }

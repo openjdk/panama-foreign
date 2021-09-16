@@ -23,30 +23,6 @@
  */
 
 /*
- * @test id=scope
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
- *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
- *   -DUPCALL_TEST_TYPE=SCOPE
- *   TestUpcall
- */
-
-/*
- * @test id=no_scope
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
- * @modules jdk.incubator.foreign/jdk.internal.foreign
- * @build NativeTestHelper CallGeneratorHelper TestUpcall
- *
- * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies
- *   --enable-native-access=ALL-UNNAMED -Dgenerator.sample.factor=17
- *   -DUPCALL_TEST_TYPE=NO_SCOPE
- *   TestUpcall
- */
-
-/*
  * @test id=async
  * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
  * @modules jdk.incubator.foreign/jdk.internal.foreign
@@ -58,6 +34,7 @@
  *   TestUpcall
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.SymbolLookup;
@@ -82,7 +59,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.invoke.MethodHandles.insertArguments;
-import static jdk.incubator.foreign.CLinker.C_POINTER;
 import static org.testng.Assert.assertEquals;
 
 
@@ -100,7 +76,7 @@ public class TestUpcall extends CallGeneratorHelper {
         System.loadLibrary("TestUpcall");
         System.loadLibrary("AsyncInvokers");
     }
-    static CLinker abi = CLinker.getInstance();
+    static CLinker abi = CLinker.systemCLinker();
 
     static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
 
@@ -117,16 +93,16 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
-    static MemoryAddress dummyStub;
+    static CLinker.UpcallStub dummyStub;
 
     @BeforeClass
     void setup() {
-        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newImplicitScope());
+        dummyStub = abi.upcallStub(DUMMY, FunctionDescriptor.ofVoid(), ResourceScope.newSharedScope());
     }
 
     private static void checkSelected(TestType type) {
         if (UPCALL_TEST_TYPE != type)
-            throw new SkipException("Skipping tests that were not selected");
+            return;//throw new SkipException("Skipping tests that were not selected");
     }
 
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
@@ -136,9 +112,8 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
-        MethodType mtype = methodType(ret, paramTypes, fields);
         try (NativeScope scope = new NativeScope()) {
-            MethodHandle mh = abi.downcallHandle(addr, scope, mtype, function(ret, paramTypes, fields));
+            MethodHandle mh = downcallHandle(abi, addr, scope, function(ret, paramTypes, fields));
             Object[] args = makeArgs(scope.scope(), ret, paramTypes, fields, returnChecks, argChecks);
             Object[] callArgs = args;
             Object res = mh.invokeWithArguments(callArgs);
@@ -156,9 +131,8 @@ public class TestUpcall extends CallGeneratorHelper {
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
-        MethodType mtype = methodType(ret, paramTypes, fields);
-        MethodHandle mh = abi.downcallHandle(addr, IMPLICIT_ALLOCATOR, mtype, function(ret, paramTypes, fields));
-        Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
+        MethodHandle mh = downcallHandle(abi, addr, CONFINED_ALLOCATOR, function(ret, paramTypes, fields));
+        Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
         Object[] callArgs = args;
         Object res = mh.invokeWithArguments(callArgs);
         argChecks.forEach(c -> c.accept(args));
@@ -167,25 +141,24 @@ public class TestUpcall extends CallGeneratorHelper {
         }
     }
 
+
     @Test(dataProvider="functions", dataProviderClass=CallGeneratorHelper.class)
     public void testUpcallsAsync(int count, String fName, Ret ret, List<ParamType> paramTypes, List<StructFieldType> fields) throws Throwable {
         checkSelected(TestType.ASYNC);
-
         List<Consumer<Object>> returnChecks = new ArrayList<>();
         List<Consumer<Object[]>> argChecks = new ArrayList<>();
         MemoryAddress addr = LOOKUP.lookup(fName).get();
-        MethodType mtype = methodType(ret, paramTypes, fields);
         try (NativeScope scope = new NativeScope()) {
             FunctionDescriptor descriptor = function(ret, paramTypes, fields);
-            MethodHandle mh = abi.downcallHandle(addr, IMPLICIT_ALLOCATOR, mtype, descriptor);
-            Object[] args = makeArgs(ResourceScope.newImplicitScope(), ret, paramTypes, fields, returnChecks, argChecks);
+            MethodHandle mh = reverse(downcallHandle(abi, addr, CONFINED_ALLOCATOR, descriptor));
+            Object[] args = makeArgs(ResourceScope.newSharedScope(), ret, paramTypes, fields, returnChecks, argChecks);
 
             mh = mh.asSpreader(Object[].class, args.length);
             mh = MethodHandles.insertArguments(mh, 0, (Object) args);
             FunctionDescriptor callbackDesc = descriptor.returnLayout()
                     .map(FunctionDescriptor::of)
                     .orElse(FunctionDescriptor.ofVoid());
-            MemoryAddress callback = abi.upcallStub(mh, callbackDesc, scope.scope());
+            CLinker.UpcallStub callback = abi.upcallStub(mh, callbackDesc, scope.scope());
 
             MethodHandle invoker = asyncInvoker(ret, ret == Ret.VOID ? null : paramTypes.get(0), fields);
 
@@ -207,8 +180,7 @@ public class TestUpcall extends CallGeneratorHelper {
             return INVOKERS.computeIfAbsent(name, symbol ->
                 abi.downcallHandle(
                     LOOKUP.lookup(symbol).orElseThrow(),
-                    MethodType.methodType(void.class, MemoryAddress.class),
-                    FunctionDescriptor.ofVoid(C_POINTER)));
+                        FunctionDescriptor.ofVoid(C_POINTER)));
         }
 
         String name = "call_async_" + returnType.name().charAt(0)
@@ -217,21 +189,10 @@ public class TestUpcall extends CallGeneratorHelper {
         return INVOKERS.computeIfAbsent(name, symbol -> {
             MemoryAddress invokerSymbol = LOOKUP.lookup(symbol).orElseThrow();
             MemoryLayout returnLayout = returnType.layout(fields);
-            MethodType type = MethodType.methodType(paramCarrier(returnLayout), MemoryAddress.class);
             FunctionDescriptor desc = FunctionDescriptor.of(returnLayout, C_POINTER);
 
-            return abi.downcallHandle(invokerSymbol, type, desc);
+            return abi.downcallHandle(invokerSymbol, desc);
         });
-    }
-
-    static MethodType methodType(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
-        MethodType mt = ret == Ret.VOID ?
-                MethodType.methodType(void.class) : MethodType.methodType(paramCarrier(params.get(0).layout(fields)));
-        for (ParamType p : params) {
-            mt = mt.appendParameterTypes(paramCarrier(p.layout(fields)));
-        }
-        mt = mt.appendParameterTypes(MemoryAddress.class); //the callback
-        return mt;
     }
 
     static FunctionDescriptor function(Ret ret, List<ParamType> params, List<StructFieldType> fields) {
@@ -253,9 +214,9 @@ public class TestUpcall extends CallGeneratorHelper {
     }
 
     @SuppressWarnings("unchecked")
-    static MemoryAddress makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
+    static CLinker.UpcallStub makeCallback(ResourceScope scope, Ret ret, List<ParamType> params, List<StructFieldType> fields, List<Consumer<Object>> checks, List<Consumer<Object[]>> argChecks) {
         if (params.isEmpty()) {
-            return dummyStub.address();
+            return dummyStub;
         }
 
         AtomicReference<Object[]> box = new AtomicReference<>();
@@ -265,7 +226,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0; i < params.size(); i++) {
             ParamType pt = params.get(i);
             MemoryLayout layout = pt.layout(fields);
-            Class<?> carrier = paramCarrier(layout);
+            Class<?> carrier = carrier(layout, false);
             mh = mh.asType(mh.type().changeParameterType(i, carrier));
 
             final int finalI = i;
@@ -278,7 +239,7 @@ public class TestUpcall extends CallGeneratorHelper {
 
         ParamType firstParam = params.get(0);
         MemoryLayout firstlayout = firstParam.layout(fields);
-        Class<?> firstCarrier = paramCarrier(firstlayout);
+        Class<?> firstCarrier = carrier(firstlayout, true);
 
         if (firstCarrier == MemorySegment.class) {
             checks.add(o -> assertStructEquals((MemorySegment) box.get()[0], (MemorySegment) o, firstlayout));
@@ -299,7 +260,7 @@ public class TestUpcall extends CallGeneratorHelper {
         for (int i = 0; i < o.length; i++) {
             if (o[i] instanceof MemorySegment) {
                 MemorySegment ms = (MemorySegment) o[i];
-                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newImplicitScope());
+                MemorySegment copy = MemorySegment.allocateNative(ms.byteSize(), ResourceScope.newSharedScope());
                 copy.copyFrom(ms);
                 o[i] = copy;
             }
@@ -310,5 +271,18 @@ public class TestUpcall extends CallGeneratorHelper {
 
     static void dummy() {
         //do nothing
+    }
+
+    static MethodHandle reverse(MethodHandle handle) {
+        MethodType type = handle.type();
+        if (type.returnType().equals(MemoryAddress.class)) {
+            type = type.changeReturnType(Addressable.class);
+        }
+        for (int i = 0 ; i < type.parameterCount() ; i++) {
+            if (type.parameterType(i).equals(Addressable.class)) {
+                type.changeParameterType(i, MemoryAddress.class);
+            }
+        }
+        return handle.asType(type);
     }
 }

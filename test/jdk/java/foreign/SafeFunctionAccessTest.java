@@ -36,18 +36,17 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
-public class SafeFunctionAccessTest {
+public class SafeFunctionAccessTest extends NativeTestHelper {
     static {
         System.loadLibrary("SafeAccess");
     }
 
     static MemoryLayout POINT = MemoryLayout.structLayout(
-            CLinker.C_INT, CLinker.C_INT
+            C_INT, C_INT
     );
 
     static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
@@ -59,26 +58,10 @@ public class SafeFunctionAccessTest {
             segment = MemorySegment.allocateNative(POINT, scope);
         }
         assertFalse(segment.scope().isAlive());
-        MethodHandle handle = CLinker.getInstance().downcallHandle(
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 LOOKUP.lookup("struct_func").get(),
-                MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
         handle.invokeExact(segment);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testClosedPointer() throws Throwable {
-        MemoryAddress address;
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            address = MemorySegment.allocateNative(POINT, scope).address();
-        }
-        assertFalse(address.scope().isAlive());
-        MethodHandle handle = CLinker.getInstance().downcallHandle(
-                LOOKUP.lookup("addr_func").get(),
-                MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(CLinker.C_POINTER));
-
-        handle.invokeExact(address);
     }
 }

@@ -43,11 +43,9 @@ import java.nio.ByteBuffer;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, null, ResourceScopeImpl.GLOBAL);
+    public static final MemorySegment EVERYTHING = makeNativeSegmentUnchecked(MemoryAddress.NULL, Long.MAX_VALUE, ResourceScopeImpl.GLOBAL);
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
-
-    public static final SegmentAllocator IMPLICIT_ALLOCATOR = (size, align) -> MemorySegment.allocateNative(size, align, ResourceScope.newImplicitScope());
 
     // The maximum alignment supported by malloc - typically 16 on
     // 64-bit platforms and 8 on 32-bit platforms.
@@ -61,6 +59,13 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     NativeMemorySegmentImpl(long min, long length, int mask, ResourceScopeImpl scope) {
         super(length, mask, scope);
         this.min = min;
+    }
+
+    @ForceInline
+    @Override
+    public MemoryAddress address() {
+        checkValidState();
+        return MemoryAddress.ofLong(unsafeGetOffset());
     }
 
     @Override
@@ -123,12 +128,9 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Runnable cleanupAction, ResourceScopeImpl scope) {
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, ResourceScopeImpl scope) {
         scope.checkValidStateSlow();
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, defaultAccessModes(bytesSize), scope);
-        if (cleanupAction != null) {
-            scope.addCloseAction(cleanupAction);
-        }
         return segment;
     }
 }
