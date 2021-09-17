@@ -651,14 +651,14 @@ for (long l = 0; l < segment.byteSize(); l++) {
 
 
     /**
-     * Creates a new confined buffer memory segment that models the memory associated with the given byte
+     * Creates a new buffer memory segment that models the memory associated with the given byte
      * buffer. The segment starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
      * If the buffer is {@link ByteBuffer#isReadOnly() read-only}, the resulting segment will also be
      * {@link ByteBuffer#isReadOnly() read-only}. The scope associated with this segment can either be the
      * {@linkplain ResourceScope#globalScope() global} resource scope, in case the buffer has been created independently,
-     * or to some other (possibly closeable) resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
+     * or some other resource scope, in case the buffer has been obtained using {@link #asByteBuffer()}.
      * <p>
      * The resulting memory segment keeps a reference to the backing buffer, keeping it <em>reachable</em>.
      *
@@ -788,7 +788,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given layout
+     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given layout
      * and resource scope. A client is responsible make sure that the resource scope associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
@@ -813,7 +813,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
+     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given size (in bytes)
      * and resource scope. A client is responsible make sure that the resource scope associated with the returned segment is closed
      * when the segment is no longer in use. Failure to do so will result in off-heap memory leaks.
      * <p>
@@ -836,7 +836,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Creates a new confined native memory segment that models a newly allocated block of off-heap memory with given size
+     * Creates a new native memory segment that models a newly allocated block of off-heap memory with given size
      * (in bytes), alignment constraint (in bytes) and resource scope. A client is responsible make sure that the resource
      * scope associated with the returned segment is closed when the segment is no longer in use.
      * Failure to do so will result in off-heap memory leaks.
@@ -895,7 +895,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param mapMode a file mapping mode, see {@link FileChannel#map(FileChannel.MapMode, long, long)}; the mapping mode
      *                might affect the behavior of the returned memory mapped segment (see {@link #force()}).
      * @param scope the segment scope.
-     * @return a new confined mapped memory segment.
+     * @return a new mapped memory segment.
      * @throws IllegalArgumentException if {@code bytesOffset < 0}, {@code bytesSize < 0}, or if {@code path} is not associated
      * with the default file system.
      * @throws IllegalStateException if {@code scope} has been already closed, or if access occurs from a thread other
