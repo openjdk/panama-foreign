@@ -40,7 +40,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jdk.incubator.foreign.ValueLayout;
 import org.testng.annotations.*;
 
 import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
@@ -59,11 +58,11 @@ public class TestArrays {
     );
 
     static SequenceLayout chars = MemoryLayout.sequenceLayout(100,
-            ValueLayout.JAVA_CHAR
+            JAVA_CHAR
     );
 
     static SequenceLayout shorts = MemoryLayout.sequenceLayout(100,
-            ValueLayout.JAVA_SHORT
+            JAVA_SHORT
     );
 
     static SequenceLayout ints = MemoryLayout.sequenceLayout(100,
@@ -188,8 +187,8 @@ public class TestArrays {
     public Object[][] elemLayouts() {
         return new Object[][] {
                 { JAVA_BYTE, (Function<MemorySegment, Object>)s -> s.toArray(JAVA_BYTE)},
-                { ValueLayout.JAVA_SHORT, (Function<MemorySegment, Object>) s -> s.toArray(JAVA_SHORT)},
-                { ValueLayout.JAVA_CHAR, (Function<MemorySegment, Object>) s -> s.toArray(JAVA_CHAR)},
+                { JAVA_SHORT, (Function<MemorySegment, Object>) s -> s.toArray(JAVA_SHORT)},
+                { JAVA_CHAR, (Function<MemorySegment, Object>) s -> s.toArray(JAVA_CHAR)},
                 { JAVA_INT, (Function<MemorySegment, Object>)s -> s.toArray(JAVA_INT)},
                 { JAVA_FLOAT, (Function<MemorySegment, Object>)s -> s.toArray(JAVA_FLOAT)},
                 { JAVA_LONG, (Function<MemorySegment, Object>)s -> s.toArray(JAVA_LONG)},

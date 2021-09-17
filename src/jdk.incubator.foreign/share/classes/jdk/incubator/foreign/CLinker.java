@@ -42,8 +42,8 @@ import java.util.Optional;
  * A C linker implements the C Application Binary Interface (ABI) calling conventions.
  * Instances of this interface can be used to link foreign functions in native libraries that
  * follow the JVM's target platform C ABI. A C linker provides two main capabilities: first, it allows Java code
- * to <em>link</em> foreign functions into a so called <em>downcall method handle</em>; secondly, it allows to
- * generate an <em>upcalls stub</em>  which can be used to call Java method handle from a native function.
+ * to <em>link</em> foreign functions into a so called <em>downcall method handle</em>; secondly, it allows
+ * native code to call Java method handles via the generation of <em>upcall stubs</em>.
  * <p>
  * On unsupported platforms this class will fail to initialize with an {@link ExceptionInInitializerError}.
  * <p>

@@ -63,7 +63,7 @@ import java.util.Spliterator;
  *
  * Resource scopes are also closed automatically once the scope instance becomes
  * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. This can be useful to allow for predictable,
- * deterministic resource deallocation, while still prevent accidental native memory leaks. In case a managed resource scope
+ * deterministic resource deallocation, while still preventing accidental native memory leaks. In case a managed resource scope
  * is closed explicitly, no further action will be taken when the scope becomes unreachable; that is, cleanup actions
  * (see {@link #addCloseAction(Runnable)}) associated with a resource scope, whether managed or not, are called <em>exactly once</em>.
  * <p>

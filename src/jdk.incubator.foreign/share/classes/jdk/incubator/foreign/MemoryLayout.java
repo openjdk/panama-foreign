@@ -236,11 +236,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Return the <em>name</em> (if any) associated with this layout.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    attribute(LAYOUT_NAME).map(String.class::cast);
-     * }</pre></blockquote>
      *
      * @return the layout <em>name</em> (if any).
      * @see MemoryLayout#withName(String)
@@ -249,11 +244,6 @@ public sealed interface MemoryLayout extends Constable permits AbstractLayout, S
 
     /**
      * Creates a new layout which features the desired layout <em>name</em>.
-     * <p>
-     * This is equivalent to the following code:
-     * <blockquote><pre>{@code
-    withAttribute(LAYOUT_NAME, name);
-     * }</pre></blockquote>
      *
      * @param name the layout name.
      * @return a new layout which is the same as this layout, except for the <em>name</em> associated with it.

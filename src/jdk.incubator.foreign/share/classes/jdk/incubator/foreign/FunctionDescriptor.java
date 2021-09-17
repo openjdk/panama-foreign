@@ -209,7 +209,7 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
                     ConstantDescs.BSM_INVOKE, "function", AbstractLayout.CD_FUNCTION_DESC, constants.toArray(new ConstantDesc[0])));
     }
 
-    final static class VariadicFunction extends FunctionDescriptor {
+    static final class VariadicFunction extends FunctionDescriptor {
 
         private final int firstVariadicIndex;
 

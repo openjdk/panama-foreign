@@ -83,7 +83,7 @@ try (ResourceScope scope = ResourceScope.newConfinedScope()) {
  * which is used to <em>bind</em> the life-cycle of the segment created immediately afterwards. Note the use of the
  * <em>try-with-resources</em> construct: this idiom ensures that all the memory resources associated with the segment will be released
  * at the end of the block, according to the semantics described in Section {@jls 14.20.3} of <cite>The Java Language Specification</cite>.
- * Since a resource scope act as a {@link jdk.incubator.foreign.SegmentAllocator segment allocators}, we can also
+ * Since a resource scope acts as a {@link jdk.incubator.foreign.SegmentAllocator segment allocators}, we can also
  * allocate the native memory segment more directly, through the scope.
  *
  * <h3><a id="safety"></a>Safety</h3>
