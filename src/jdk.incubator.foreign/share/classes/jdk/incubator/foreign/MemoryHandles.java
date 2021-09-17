@@ -209,7 +209,7 @@ public final class MemoryHandles {
      * @return the adapted var handle.
      * @throws IllegalArgumentException if the carrier type of {@code target}
      * is not one of {@code byte}, {@code short}, or {@code int}; if {@code
-     * adaptedType} is not one of {@code int}, or {@code long}; if the bitwidth
+     * adaptedType} is not one of {@code int}, or {@code long}; if the bit width
      * of the {@code adaptedType} is not greater than that of the {@code target}
      * carrier type.
      *
@@ -437,28 +437,6 @@ public final class MemoryHandles {
      */
     public static VarHandle dropCoordinates(VarHandle target, int pos, Class<?>... valueTypes) {
         return JLI.dropCoordinates(target, pos, valueTypes);
-    }
-
-    private static void checkAddressFirstCoordinate(VarHandle handle) {
-        if (handle.coordinateTypes().size() < 1 ||
-                handle.coordinateTypes().get(0) != MemorySegment.class) {
-            throw new IllegalArgumentException("Expected var handle with leading coordinate of type MemorySegment");
-        }
-    }
-
-    private static void checkCarrier(Class<?> carrier) {
-        if ((!carrier.isPrimitive() && carrier != MemoryAddress.class) || carrier == void.class) {
-            throw new IllegalArgumentException("Illegal carrier: " + carrier.getSimpleName());
-        }
-    }
-
-    private static long carrierSize(Class<?> carrier) {
-        if (carrier == MemoryAddress.class) {
-            return ValueLayout.ADDRESS.byteSize();
-        } else {
-            long bitsAlignment = Math.max(8, Wrapper.forPrimitiveType(carrier).bitWidth());
-            return Utils.bitsToBytesOrThrow(bitsAlignment, IllegalStateException::new);
-        }
     }
 
     private static void checkWidenable(Class<?> carrier) {

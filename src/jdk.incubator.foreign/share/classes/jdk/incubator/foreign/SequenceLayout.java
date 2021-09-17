@@ -25,10 +25,8 @@
  */
 package jdk.incubator.foreign;
 
-import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -151,7 +149,7 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         if (elementCounts.length == 0) {
             throw new IllegalArgumentException();
         }
-        if (!elementCount().isPresent()) {
+        if (elementCount().isEmpty()) {
             throw new UnsupportedOperationException("Cannot reshape a sequence layout whose element count is unspecified");
         }
         SequenceLayout flat = flatten();
@@ -210,13 +208,12 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
      * flattened, does not have an element count.
      */
     public SequenceLayout flatten() {
-        if (!elementCount().isPresent()) {
+        if (elementCount().isEmpty()) {
             throw badUnboundSequenceLayout();
         }
         long count = elementCount().getAsLong();
         MemoryLayout elemLayout = elementLayout();
-        while (elemLayout instanceof SequenceLayout) {
-            SequenceLayout elemSeq = (SequenceLayout)elemLayout;
+        while (elemLayout instanceof SequenceLayout elemSeq) {
             count = count * elemSeq.elementCount().orElseThrow(this::badUnboundSequenceLayout);
             elemLayout = elemSeq.elementLayout();
         }
@@ -241,10 +238,9 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof SequenceLayout)) {
+        if (!(other instanceof SequenceLayout s)) {
             return false;
         }
-        SequenceLayout s = (SequenceLayout)other;
         return elemCount.equals(s.elemCount) && elementLayout.equals(s.elementLayout);
     }
 

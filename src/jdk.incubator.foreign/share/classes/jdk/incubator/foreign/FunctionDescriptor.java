@@ -178,10 +178,9 @@ public sealed class FunctionDescriptor implements Constable permits FunctionDesc
         if (this == other) {
             return true;
         }
-        if (!(other instanceof FunctionDescriptor)) {
+        if (!(other instanceof FunctionDescriptor f)) {
             return false;
         }
-        FunctionDescriptor f = (FunctionDescriptor) other;
         return Objects.equals(resLayout, f.resLayout) && Arrays.equals(argLayouts, f.argLayouts);
     }
 

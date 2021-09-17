@@ -30,7 +30,6 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
-import jdk.internal.access.foreign.MemorySegmentProxy;
 import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.HeapMemorySegmentImpl;
 import jdk.internal.foreign.MappedMemorySegmentImpl;
@@ -604,7 +603,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * or if the scope associated with this segment has been closed, or if access occurs from a thread other than the thread owning that scope.
      */
     default String getUtf8String(long offset) {
-        Objects.requireNonNull(this);
         return SharedUtils.toJavaStringInternal(this, offset);
     }
 
@@ -623,7 +621,6 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * or if the scope associated with this segment has been closed, or if access occurs from a thread other than the thread owning that scope.
      */
     default void setUtf8String(long offset, String str) {
-        Objects.requireNonNull(this);
         Utils.toCString(str.getBytes(StandardCharsets.UTF_8), SegmentAllocator.prefixAllocator(asSlice(offset)));
     }
 
