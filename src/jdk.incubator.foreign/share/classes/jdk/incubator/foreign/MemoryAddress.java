@@ -30,14 +30,13 @@ import jdk.internal.foreign.MemoryAddressImpl;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
-import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteOrder;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained in three ways:
  * <ul>
- *     <li>By calling {@link Addressable#address()} on an instance of type {@link Addressable} (e.g. a memory segmment);</li>
+ *     <li>By calling {@link Addressable#address()} on an instance of type {@link Addressable} (e.g. a memory segment);</li>
  *     <li>By invoking a {@linkplain CLinker#downcallHandle(FunctionDescriptor) downcall method handle} which returns a pointer;</li>
  *     <li>By reading an address from memory, e.g. via {@link MemorySegment#get(ValueLayout.OfAddress, long)}.</li>
  * </ul>

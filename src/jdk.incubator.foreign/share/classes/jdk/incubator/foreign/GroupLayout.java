@@ -25,14 +25,12 @@
  */
 package jdk.incubator.foreign;
 
-import java.lang.constant.Constable;
 import java.lang.constant.ConstantDesc;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
 import java.lang.constant.MethodHandleDesc;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -160,10 +158,9 @@ public final class GroupLayout extends AbstractLayout implements MemoryLayout {
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof GroupLayout)) {
+        if (!(other instanceof GroupLayout g)) {
             return false;
         }
-        GroupLayout g = (GroupLayout)other;
         return kind.equals(g.kind) && elements.equals(g.elements);
     }
 

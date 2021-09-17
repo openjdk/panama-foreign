@@ -25,10 +25,8 @@
  */
 package jdk.incubator.foreign;
 
-import java.lang.constant.Constable;
 import java.lang.constant.ConstantDescs;
 import java.lang.constant.DynamicConstantDesc;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -73,10 +71,9 @@ import java.util.OptionalLong;
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof PaddingLayout)) {
+        if (!(other instanceof PaddingLayout p)) {
             return false;
         }
-        PaddingLayout p = (PaddingLayout)other;
         return bitSize() == p.bitSize();
     }
 
