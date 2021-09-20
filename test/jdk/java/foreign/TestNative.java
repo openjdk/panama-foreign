@@ -57,7 +57,7 @@ import java.util.function.Function;
 import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.*;
 
-public class TestNative {
+public class TestNative extends NativeTestHelper {
 
     static SequenceLayout bytes = MemoryLayout.sequenceLayout(100,
             ValueLayout.JAVA_BYTE.withOrder(ByteOrder.nativeOrder())
@@ -143,14 +143,6 @@ public class TestNative {
 
     public static native long getCapacity(Buffer buffer);
 
-    public static MemoryAddress allocate(int size) {
-        return MemoryAddress.allocateMemory(size);
-    }
-
-    public static void free(MemoryAddress addr) {
-        addr.freeMemory();
-    }
-
     @Test(dataProvider="nativeAccessOps")
     public void testNativeAccess(Consumer<MemorySegment> checker, Consumer<MemorySegment> initializer, SequenceLayout seq) {
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
@@ -175,9 +167,9 @@ public class TestNative {
 
     @Test
     public void testDefaultAccessModes() {
-        MemoryAddress addr = allocate(12);
+        MemoryAddress addr = allocateMemory(12);
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.addCloseAction(() -> free(addr));
+            scope.addCloseAction(() -> freeMemory(addr));
             MemorySegment mallocSegment = MemorySegment.ofAddressNative(addr, 12, scope);
             assertFalse(mallocSegment.isReadOnly());
         }
@@ -185,10 +177,10 @@ public class TestNative {
 
     @Test
     public void testMallocSegment() {
-        MemoryAddress addr = allocate(12);
+        MemoryAddress addr = allocateMemory(12);
         MemorySegment mallocSegment = null;
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            scope.addCloseAction(() -> free(addr));
+            scope.addCloseAction(() -> freeMemory(addr));
             mallocSegment = MemorySegment.ofAddressNative(addr, 12, scope);
             assertEquals(mallocSegment.byteSize(), 12);
             //free here
@@ -198,10 +190,10 @@ public class TestNative {
 
     @Test
     public void testAddressAccess() {
-        MemoryAddress addr = allocate(4);
+        MemoryAddress addr = allocateMemory(4);
         addr.set(JAVA_INT, 0, 42);
         assertEquals(addr.get(JAVA_INT, 0), 42);
-        free(addr);
+        freeMemory(addr);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)

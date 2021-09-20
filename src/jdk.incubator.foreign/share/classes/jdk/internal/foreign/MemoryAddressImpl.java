@@ -97,19 +97,19 @@ public final class MemoryAddressImpl implements MemoryAddress {
     @Override
     @CallerSensitive
     @ForceInline
-    public void freeMemory() {
+    public String getUtf8String(long offset) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         SharedUtils.checkAddress(this);
-        SharedUtils.freeMemoryInternal(this);
+        return NativeMemorySegmentImpl.EVERYTHING.getUtf8String(toRawLongValue() + offset);
     }
 
     @Override
     @CallerSensitive
     @ForceInline
-    public String getUtf8String(long offset) {
+    public void setUtf8String(long offset, String str) {
         Reflection.ensureNativeAccess(Reflection.getCallerClass());
         SharedUtils.checkAddress(this);
-        return NativeMemorySegmentImpl.EVERYTHING.getUtf8String(toRawLongValue() + offset);
+        NativeMemorySegmentImpl.EVERYTHING.setUtf8String(toRawLongValue() + offset, str);
     }
 
     @Override

@@ -62,7 +62,7 @@ public class TestMixedMallocFree extends NativeTestHelper {
         assertEquals(seg.get(JAVA_INT, 0), 42);
         // Test if this free crashes the VM, which might be the case if we load the wrong default library
         // and end up mixing two allocators together.
-        ma.freeMemory();
+        freeMemory(ma);
     }
 
 }

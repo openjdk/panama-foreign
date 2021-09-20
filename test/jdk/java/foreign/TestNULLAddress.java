@@ -57,12 +57,12 @@ public class TestNULLAddress {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNULLtoJavaString() {
+    public void testNULLgetString() {
         MemoryAddress.NULL.getUtf8String(0);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNULLfreeMemory() {
-        MemoryAddress.NULL.freeMemory();
+    public void testNULLsetString() {
+        MemoryAddress.NULL.setUtf8String(0, "hello");
     }
 }

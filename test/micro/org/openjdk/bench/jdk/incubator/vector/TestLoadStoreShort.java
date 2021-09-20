@@ -119,8 +119,8 @@ public class TestLoadStoreShort {
     dstBufferSegmentImplicit = dstSegmentImplicit.asByteBuffer();
 
 
-    srcAddress = MemoryAddress.allocateMemory(size);
-    dstAddress = MemoryAddress.allocateMemory(size);
+    srcAddress = MemorySegment.allocateNative(size, implicitScope).address();
+    dstAddress = MemorySegment.allocateNative(size, implicitScope).address();
 
     this.longSize = longSize;
 
@@ -128,12 +128,6 @@ public class TestLoadStoreShort {
     b = new short[size];
     c = new short[size];
 
-  }
-
-  @TearDown
-  public void tearDown() {
-    srcAddress.freeMemory();
-    dstAddress.freeMemory();
   }
 
   @Benchmark

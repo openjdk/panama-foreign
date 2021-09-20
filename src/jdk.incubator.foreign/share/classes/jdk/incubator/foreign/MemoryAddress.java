@@ -27,11 +27,13 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
+import jdk.internal.foreign.Utils;
 import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained in three ways:
@@ -93,7 +95,7 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     MemoryAddress addOffset(long offset);
 
     /**
-     * Reads a UTF-8 encoded, null-terminated string from this address and offset with given layout.
+     * Reads a UTF-8 encoded, null-terminated string from this address and offset.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
@@ -117,20 +119,19 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     String getUtf8String(long offset);
 
     /**
-     * Frees the memory pointed to by this memory address.
+     * Writes a UTF-8 encoded, null-terminated string into this address at given offset.
      * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
+     * This method always replaces malformed-input and unmappable-character
+     * sequences with this charset's default replacement string.  The {@link
+     * java.nio.charset.CharsetDecoder} class should be used when more control
+     * over the decoding process is required.
+     * @param offset offset in bytes (relative to this address). The final address of this read operation can be expressed as {@code toRowLongValue() + offset}.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * @throws IllegalArgumentException if {@code addr == MemoryAddress.NULL}.
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
      */
     @CallerSensitive
-    void freeMemory();
+    void setUtf8String(long offset, String str);
 
     /**
      * Compares the specified object with this address for equality. Returns {@code true} if and only if the specified
@@ -163,32 +164,6 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
         return value == 0 ?
                 NULL :
                 new MemoryAddressImpl(value);
-    }
-
-    /**
-     * Allocates memory of given size using malloc.
-     * <p>
-     * This method is <a href="package-summary.html#restricted"><em>restricted</em></a>.
-     * Restricted methods are unsafe, and, if used incorrectly, their use might crash
-     * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
-     * restricted methods, and use safe and supported functionalities, where possible.
-     *
-     * @param size the size (expressed in bytes) of the memory region to be allocated.
-     * @return addr the memory address associated with the newly allocated memory region.
-     * @throws OutOfMemoryError if {@code malloc} could not allocate the required amount of native memory.
-     * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
-     * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
-     * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
-     */
-    @CallerSensitive
-    static MemoryAddress allocateMemory(long size) {
-        Reflection.ensureNativeAccess(Reflection.getCallerClass());
-        MemoryAddress addr = SharedUtils.allocateMemoryInternal(size);
-        if (addr.equals(NULL)) {
-            throw new OutOfMemoryError();
-        } else {
-            return addr;
-        }
     }
 
     /**
