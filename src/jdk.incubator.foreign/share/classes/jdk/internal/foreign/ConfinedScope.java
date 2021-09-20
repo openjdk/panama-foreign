@@ -67,6 +67,9 @@ final class ConfinedScope extends ResourceScopeImpl {
     @ForceInline
     public void acquire0() {
         checkValidState();
+        if (lockCount == MAX_FORKS) {
+            throw new IllegalStateException("Scope keep alive limit exceeded");
+        }
         lockCount++;
     }
 
@@ -81,7 +84,7 @@ final class ConfinedScope extends ResourceScopeImpl {
         if (lockCount == 0) {
             closed = true;
         } else {
-            throw new IllegalStateException("Scope is acquired by " + lockCount + " locks");
+            throw new IllegalStateException("Scope is kept alive by " + lockCount + " scopes");
         }
     }
 
