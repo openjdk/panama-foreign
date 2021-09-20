@@ -26,7 +26,11 @@
 package jdk.internal.invoke;
 
 import java.lang.invoke.MethodType;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class describes a native call, including arguments/return shuffle moves, PC entry point and
@@ -48,6 +52,10 @@ public class NativeEntryPoint {
     private final String name;
 
     private final long invoker;
+
+    private static final Map<CacheKey, Long> INVOKER_CACHE = new ConcurrentHashMap<>();
+    private record CacheKey(MethodType mt, int shadowSpaceBytes,
+                            List<VMStorageProxy> argMoves, List<VMStorageProxy> retMoves) {}
 
     private NativeEntryPoint(int shadowSpace, long[] argMoves, long[] returnMoves,
                      boolean needTransition, MethodType methodType, String name, long invoker) {
@@ -73,8 +81,10 @@ public class NativeEntryPoint {
         long[] encArgMoves = encodeVMStorages(argMoves, abi.shadowSpaceBytes());
         long[] encRetMoves = encodeVMStorages(returnMoves, 16); // rbp and ret addr
 
-        // TODO cache
-        long invoker = makeInvoker(methodType, shadowSpaceBytes, encArgMoves, encRetMoves);
+        CacheKey key = new CacheKey(methodType, abi.shadowSpaceBytes(),
+                Arrays.asList(argMoves), Arrays.asList(returnMoves));
+        long invoker = INVOKER_CACHE.computeIfAbsent(key, k ->
+            makeInvoker(methodType, shadowSpaceBytes, encArgMoves, encRetMoves));
 
         return new NativeEntryPoint(shadowSpaceBytes, encArgMoves, encRetMoves,
                 needTransition, methodType, name, invoker);
