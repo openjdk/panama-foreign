@@ -54,6 +54,8 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Sco
     final ResourceList resourceList;
     final Cleaner.Cleanable cleanable;
 
+    static final int MAX_FORKS = Integer.MAX_VALUE;
+
     @Override
     public void addCloseAction(Runnable runnable) {
         Objects.requireNonNull(runnable);

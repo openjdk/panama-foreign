@@ -186,6 +186,7 @@ public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator pe
     /**
      * Creates a temporal dependency between this scope and the target scope. As a result, the target scope cannot
      * be {@linkplain #close() closed} <em>before</em> this scope.
+     * @implNote A given scope can support up to {@link Integer#MAX_VALUE} pending keep alive requests.
      * @param target the scope that needs to be kept alive.
      * @throws IllegalArgumentException if {@code target == this}.
      * @throws IllegalStateException if this scope has been closed, or if access occurs from

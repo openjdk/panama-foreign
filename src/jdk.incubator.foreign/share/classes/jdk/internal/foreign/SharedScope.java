@@ -51,7 +51,6 @@ class SharedScope extends ResourceScopeImpl {
     private static final int ALIVE = 0;
     private static final int CLOSING = -1;
     private static final int CLOSED = -2;
-    private static final int MAX_FORKS = Integer.MAX_VALUE;
 
     private int state = ALIVE;
 
@@ -92,7 +91,7 @@ class SharedScope extends ResourceScopeImpl {
                 throw new IllegalStateException("Already closed");
             } else if (value == MAX_FORKS) {
                 //overflow
-                throw new IllegalStateException("Segment acquire limit exceeded");
+                throw new IllegalStateException("Scope keep alive limit exceeded");
             }
         } while (!STATE.compareAndSet(this, value, value + 1));
     }
@@ -115,7 +114,7 @@ class SharedScope extends ResourceScopeImpl {
         if (prevState < 0) {
             throw new IllegalStateException("Already closed");
         } else if (prevState != ALIVE) {
-            throw new IllegalStateException("Scope is acquired by " + prevState + " locks");
+            throw new IllegalStateException("Scope is kept alive by " + prevState + " scopes");
         }
         boolean success = SCOPED_MEMORY_ACCESS.closeScope(this);
         STATE.setVolatile(this, success ? CLOSED : ALIVE);
