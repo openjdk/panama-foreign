@@ -119,13 +119,14 @@ public sealed interface MemoryAddress extends Addressable permits MemoryAddressI
     String getUtf8String(long offset);
 
     /**
-     * Writes a UTF-8 encoded, null-terminated string into this address at given offset.
+     * Writes a UTF-8 encoded, null-terminated string to this address at given offset.
      * <p>
      * This method always replaces malformed-input and unmappable-character
      * sequences with this charset's default replacement string.  The {@link
      * java.nio.charset.CharsetDecoder} class should be used when more control
      * over the decoding process is required.
      * @param offset offset in bytes (relative to this address). The final address of this read operation can be expressed as {@code toRowLongValue() + offset}.
+     * @param str the Java string to be written at this address.
      * @throws IllegalCallerException if access to this method occurs from a module {@code M} and the command line option
      * {@code --enable-native-access} is either absent, or does not mention the module name {@code M}, or
      * {@code ALL-UNNAMED} in case {@code M} is an unnamed module.
