@@ -116,8 +116,8 @@ public class TestLoadStoreBytes {
     dstBufferSegmentImplicit = dstSegmentImplicit.asByteBuffer();
 
 
-    srcAddress = MemoryAddress.allocateMemory(size);
-    dstAddress = MemoryAddress.allocateMemory(size);
+    srcAddress = MemorySegment.allocateNative(size, implicitScope).address();
+    dstAddress = MemorySegment.allocateNative(size, implicitScope).address();
 
     a = new byte[size];
     b = new byte[size];

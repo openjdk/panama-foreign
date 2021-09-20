@@ -116,14 +116,14 @@ public class StrLenTest extends CLayouts {
     public int panama_strlen_unsafe() throws Throwable {
         MemoryAddress address = makeStringUnsafe(str);
         int res = (int) STRLEN.invokeExact((Addressable)address);
-        address.freeMemory();
+        freeMemory(address);
         return res;
     }
 
     static MemoryAddress makeStringUnsafe(String s) {
         byte[] bytes = s.getBytes();
         int len = bytes.length;
-        MemoryAddress address = MemoryAddress.allocateMemory(len + 1);
+        MemoryAddress address = allocateMemory(len + 1);
         MemorySegment str = MemorySegment.ofAddressNative(address, len + 1, ResourceScope.globalScope());
         str.copyFrom(MemorySegment.ofArray(bytes));
         str.set(JAVA_BYTE, len, (byte)0);

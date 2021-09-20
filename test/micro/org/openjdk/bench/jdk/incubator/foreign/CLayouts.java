@@ -1,6 +1,12 @@
 package org.openjdk.bench.jdk.incubator.foreign;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
+import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.ValueLayout;
+
+import java.lang.invoke.MethodHandle;
 
 public class CLayouts {
 
@@ -39,4 +45,28 @@ public class CLayouts {
      * The {@code T*} native type.
      */
     public static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS;
+
+    private static CLinker LINKER = CLinker.systemCLinker();
+
+    private static final MethodHandle FREE = LINKER.downcallHandle(
+            LINKER.lookup("free").get(), FunctionDescriptor.ofVoid(ValueLayout.ADDRESS));
+
+    private static final MethodHandle MALLOC = LINKER.downcallHandle(
+            LINKER.lookup("malloc").get(), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.JAVA_LONG));
+
+    public static void freeMemory(Addressable address) {
+        try {
+            FREE.invokeExact(address);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public static MemoryAddress allocateMemory(long size) {
+        try {
+            return (MemoryAddress)MALLOC.invokeExact(size);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
 }

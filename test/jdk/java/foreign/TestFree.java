@@ -43,11 +43,11 @@ public class TestFree extends NativeTestHelper {
 
     public void test() throws Throwable {
         String str = "hello world";
-        MemoryAddress addr = MemoryAddress.allocateMemory(str.length() + 1);
+        MemoryAddress addr = allocateMemory(str.length() + 1);
         MemorySegment seg = asArray(addr, C_CHAR, str.length() + 1);
         seg.copyFrom(MemorySegment.ofArray(str.getBytes()));
         seg.set(C_CHAR, str.length(), (byte)0);
         assertEquals(str, seg.getUtf8String(0));
-        addr.freeMemory();
+        freeMemory(addr);
     }
 }
