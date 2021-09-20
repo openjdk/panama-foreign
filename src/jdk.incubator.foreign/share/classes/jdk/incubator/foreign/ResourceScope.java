@@ -178,7 +178,8 @@ public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator pe
      * Add a custom cleanup action which will be executed when the resource scope is closed.
      * The order in which custom cleanup actions are invoked once the scope is closed is unspecified.
      * @param runnable the custom cleanup action to be associated with this scope.
-     * @throws IllegalStateException if this scope has already been closed.
+     * @throws IllegalStateException if this scope has been closed, or if access occurs from
+     * a thread other than the thread owning this scope.
      */
     void addCloseAction(Runnable runnable);
 
@@ -186,6 +187,9 @@ public sealed interface ResourceScope extends AutoCloseable, SegmentAllocator pe
      * Creates a temporal dependency between this scope and the target scope. As a result, the target scope cannot
      * be {@linkplain #close() closed} <em>before</em> this scope.
      * @param target the scope that needs to be kept alive.
+     * @throws IllegalArgumentException if {@code target == this}.
+     * @throws IllegalStateException if this scope has been closed, or if access occurs from
+     * a thread other than the thread owning this scope.
      */
     void keepAlive(ResourceScope target);
 

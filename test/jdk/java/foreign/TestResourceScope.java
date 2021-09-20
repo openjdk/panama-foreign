@@ -245,6 +245,12 @@ public class TestResourceScope {
         }
     }
 
+    @Test(dataProvider = "scopes", expectedExceptions = IllegalArgumentException.class)
+    public void testAcquireSelf(Supplier<ResourceScope> scopeSupplier) {
+        ResourceScope scope = scopeSupplier.get();
+        scope.keepAlive(scope);
+    }
+
     private void acquireRecursive(ResourceScope scope, int acquireCount) {
         try (ResourceScope handle = ResourceScope.newConfinedScope()) {
             handle.keepAlive(scope);
