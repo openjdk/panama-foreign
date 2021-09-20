@@ -27,13 +27,9 @@
 package jdk.incubator.foreign;
 
 import jdk.internal.foreign.MemoryAddressImpl;
-import jdk.internal.foreign.Utils;
-import jdk.internal.foreign.abi.SharedUtils;
 import jdk.internal.reflect.CallerSensitive;
-import jdk.internal.reflect.Reflection;
 
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A memory address models a reference into a memory location. Memory addresses are typically obtained in three ways:

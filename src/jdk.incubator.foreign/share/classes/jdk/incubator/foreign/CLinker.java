@@ -219,9 +219,9 @@ public sealed interface CLinker extends SymbolLookup permits Windowsx64Linker, S
     UpcallStub upcallStub(MethodHandle target, FunctionDescriptor function, ResourceScope scope);
 
     /**
-     * An upcall stub, created by {@link #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}, is a pointer to
-     * a stub of code which can be passed to native functions to call a given <em>target</em> Java method handle.
-     * An upcall stub can be passed by reference to other downcall method handles, as this interface extends {@link Addressable}.
+     * An upcall stub is a pointer to a stub of code which can be passed to native functions to call a given <em>target</em> Java method handle.
+     * Created by {@link #upcallStub(MethodHandle, FunctionDescriptor, ResourceScope)}, an upcall stub can be passed by
+     * reference to other downcall method handles, as this interface extends {@link Addressable}.
      * When no longer required, resources associated with an upcall stub can be {@link ResourceScope#close() released},
      * via its {@linkplain UpcallStub#scope() scope}.
      */

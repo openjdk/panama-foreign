@@ -107,6 +107,9 @@ public abstract non-sealed class ResourceScopeImpl implements ResourceScope, Sco
 
     @Override
     public void keepAlive(ResourceScope target) {
+        if (target == this) {
+            throw new IllegalArgumentException("Invalid target scope.");
+        }
         ResourceScopeImpl targetImpl = (ResourceScopeImpl)target;
         targetImpl.acquire0();
         addCloseAction(targetImpl::release0);
