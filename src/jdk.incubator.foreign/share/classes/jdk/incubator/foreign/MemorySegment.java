@@ -1290,7 +1290,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads a char from this segment and index with given layout.
+     * Reads a char from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1307,7 +1307,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes a char to this segment and index with given layout.
+     * Writes a char to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1323,7 +1323,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads a short from this segment and index with given layout.
+     * Reads a short from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1340,7 +1340,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes a short to this segment and index with given layout.
+     * Writes a short to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1356,7 +1356,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads an int from this segment and index with given layout.
+     * Reads an int from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1373,7 +1373,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes an int to this segment and index with given layout.
+     * Writes an int to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1389,7 +1389,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads a float from this segment and index with given layout.
+     * Reads a float from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1406,7 +1406,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes a float to this segment and index with given layout.
+     * Writes a float to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1422,7 +1422,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads a long from this segment and index with given layout.
+     * Reads a long from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1439,7 +1439,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes a long to this segment and index with given layout.
+     * Writes a long to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1455,7 +1455,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads a double from this segment and index with given layout.
+     * Reads a double from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1472,7 +1472,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes a double to this segment and index with given layout.
+     * Writes a double to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1488,7 +1488,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Reads an address from this segment and index with given layout.
+     * Reads an address from this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be read.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
@@ -1505,7 +1505,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     }
 
     /**
-     * Writes an address to this segment and index with given layout.
+     * Writes an address to this segment and index, scaled by given layout size.
      *
      * @param layout the layout of the memory region to be written.
      * @param index index (relative to this segment). For instance, if this segment is a {@link #isNative()} segment,
