@@ -1524,6 +1524,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copies a number of elements from a source segment to a destination array,
      * starting at a given segment offset (expressed in bytes), and a given array index, using the given source element layout.
+     * Supported array types are {@code byte[]}, {@code char[]},{@code short[]},{@code int[]},{@code float[]},{@code long[]} and {@code double[]}.
      * @param srcSegment the source segment.
      * @param srcLayout the source element layout. If the byte order associated with the layout is
      * different from the native order, a byte swap operation will be performed on each array element.
@@ -1531,8 +1532,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * @param dstArray the destination array.
      * @param dstIndex the starting index of the destination array.
      * @param elementCount the number of array elements to be copied.
-     * @throws  IllegalArgumentException if {@code dstArray} is not an array, or if it is an array but whose type is not supported.
-     * Supported array types are {@code byte[]}, {@code char[]},{@code short[]},{@code int[]},{@code float[]},{@code long[]} and {@code double[]}.
+     * @throws  IllegalArgumentException if {@code dstArray} is not an array, or if it is an array but whose type is not supported,
+     * or if the destination array component type does not match the carrier of the source element layout.
      */
     @ForceInline
     static void copy(
@@ -1542,6 +1543,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
         Objects.requireNonNull(dstArray);
         Objects.requireNonNull(srcLayout);
         long baseAndScale = getBaseAndScale(dstArray.getClass());
+        if (dstArray.getClass().componentType() != srcLayout.carrier()) {
+            throw new IllegalArgumentException("Incompatible value layout: " + srcLayout);
+        }
         int dstBase = (int)baseAndScale;
         int dstWidth = (int)(baseAndScale >> 32);
         AbstractMemorySegmentImpl srcImpl = (AbstractMemorySegmentImpl)srcSegment;
@@ -1561,6 +1565,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
     /**
      * Copies a number of elements from a source array to a destination segment,
      * starting at a given array index, and a given segment offset (expressed in bytes), using the given destination element layout.
+     * Supported array types are {@code byte[]}, {@code char[]},{@code short[]},{@code int[]},{@code float[]},{@code long[]} and {@code double[]}.
      * @param srcArray the source array.
      * @param srcIndex the starting index of the source array.
      * @param dstSegment the destination segment.
@@ -1568,8 +1573,8 @@ for (long l = 0; l < segment.byteSize(); l++) {
      * different from the native order, a byte swap operation will be performed on each array element.
      * @param dstOffset the starting offset, in bytes, of the destination segment.
      * @param elementCount the number of array elements to be copied.
-     * @throws  IllegalArgumentException if {@code srcArray} is not an array, or if it is an array but whose type is not supported.
-     * Supported array types are {@code byte[]}, {@code char[]},{@code short[]},{@code int[]},{@code float[]},{@code long[]} and {@code double[]}.
+     * @throws  IllegalArgumentException if {@code srcArray} is not an array, or if it is an array but whose type is not supported,
+     * or if the source array component type does not match the carrier of the destination element layout.
      */
     @ForceInline
     static void copy(
@@ -1579,6 +1584,9 @@ for (long l = 0; l < segment.byteSize(); l++) {
         Objects.requireNonNull(dstSegment);
         Objects.requireNonNull(dstLayout);
         long baseAndScale = getBaseAndScale(srcArray.getClass());
+        if (srcArray.getClass().componentType() != dstLayout.carrier()) {
+            throw new IllegalArgumentException("Incompatible value layout: " + dstLayout);
+        }
         int srcBase = (int)baseAndScale;
         int srcWidth = (int)(baseAndScale >> 32);
         Objects.checkFromIndexSize(srcIndex, elementCount, Array.getLength(srcArray));
@@ -1611,7 +1619,7 @@ for (long l = 0; l < segment.byteSize(); l++) {
         } else if (arrayType.equals(double[].class)) {
             return (long)Unsafe.ARRAY_DOUBLE_BASE_OFFSET | ((long)Unsafe.ARRAY_DOUBLE_INDEX_SCALE << 32);
         } else {
-            throw new IllegalStateException();
+            throw new IllegalArgumentException("Not a supported array class: " + arrayType.getSimpleName());
         }
     }
 }

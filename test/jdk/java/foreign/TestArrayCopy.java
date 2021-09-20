@@ -27,6 +27,7 @@
  */
 
 import static jdk.incubator.foreign.ValueLayout.JAVA_BYTE;
+import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -226,6 +227,30 @@ public class TestArrayCopy {
         } catch (IndexOutOfBoundsException ex) {
             //ok
         }
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNotAnArraySrc() {
+        MemorySegment segment = MemorySegment.ofArray(new int[] {1, 2, 3, 4});
+        MemorySegment.copy(segment, JAVA_BYTE, 0, new String[] { "hello" }, 0, 4);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNotAnArrayDst() {
+        MemorySegment segment = MemorySegment.ofArray(new int[] {1, 2, 3, 4});
+        MemorySegment.copy(new String[] { "hello" }, 0, segment, JAVA_BYTE, 0, 4);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCarrierMismatchSrc() {
+        MemorySegment segment = MemorySegment.ofArray(new int[] {1, 2, 3, 4});
+        MemorySegment.copy(segment, JAVA_INT, 0, new byte[] { 1, 2, 3, 4 }, 0, 4);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testCarrierMismatchDst() {
+        MemorySegment segment = MemorySegment.ofArray(new int[] {1, 2, 3, 4});
+        MemorySegment.copy(new byte[] { 1, 2, 3, 4 }, 0, segment, JAVA_INT, 0, 4);
     }
 
     /***** Utilities *****/
