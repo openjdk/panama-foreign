@@ -723,3 +723,7 @@ void NativeInvokerGenerator::generate() {
 
   __ flush();
 }
+
+bool ProgrammableInvoker::supports_native_invoker() {
+  return true;
+}

@@ -139,9 +139,9 @@ public class ProgrammableInvoker {
 
         boolean isSimple = !(retMoves.length > 1);
         boolean usesStackArgs = stackArgsBytes != 0;
-        if (USE_INTRINSICS && isSimple && !usesStackArgs) {
+        if (USE_INTRINSICS && isSimple && !usesStackArgs && supportsNativeInvoker()) {
             NativeEntryPoint nep = NativeEntryPoint.make(
-                "native_call",
+                "native_invoker_" + leafType.descriptorString(),
                 abi,
                 toStorageArray(argMoves),
                 toStorageArray(retMoves),
@@ -356,6 +356,7 @@ public class ProgrammableInvoker {
 
     static native void invokeNative(long adapterStub, long buff);
     static native long generateAdapter(ABIDescriptor abi, BufferLayout layout);
+    static native boolean supportsNativeInvoker();
 
     private static native void registerNatives();
     static {

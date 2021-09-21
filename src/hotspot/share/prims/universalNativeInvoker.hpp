@@ -53,6 +53,7 @@ public:
                                           int shadow_space_bytes,
                                           const GrowableArray<VMReg>& input_registers,
                                           const GrowableArray<VMReg>& output_registers);
+  static bool supports_native_invoker();
 };
 
 #endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
