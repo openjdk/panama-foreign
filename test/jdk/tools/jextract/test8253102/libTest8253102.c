@@ -29,3 +29,7 @@ EXPORT Point* make(int x, int y) {
     p->x = x; p->y = y;
     return p;
 }
+
+EXPORT void freePoint(struct Point* ptr) {
+    free(ptr);
+}

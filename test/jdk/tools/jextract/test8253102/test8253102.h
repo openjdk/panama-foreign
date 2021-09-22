@@ -38,6 +38,8 @@ typedef struct Point {
 
 EXPORT Point* make(int x, int y);
 
+EXPORT void freePoint(struct Point*);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
