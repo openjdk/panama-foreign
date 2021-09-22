@@ -66,6 +66,7 @@ public class UpcallStubs {
 
         @Override
         public MemoryAddress address() {
+            ((ResourceScopeImpl)scope).checkValidStateSlow();
             return MemoryAddress.ofLong(entry);
         }
     }

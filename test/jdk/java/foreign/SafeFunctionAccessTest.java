@@ -27,6 +27,7 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED SafeFunctionAccessTest
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.SymbolLookup;
@@ -36,8 +37,13 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
+import jdk.incubator.foreign.VaList;
 import org.testng.annotations.*;
+
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 import static org.testng.Assert.*;
 
 public class SafeFunctionAccessTest extends NativeTestHelper {
@@ -64,4 +70,35 @@ public class SafeFunctionAccessTest extends NativeTestHelper {
 
         handle.invokeExact(segment);
     }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testClosedVaList() throws Throwable {
+        VaList list;
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            list = VaList.make(b -> b.addVarg(C_INT, 42), scope);
+        }
+        assertFalse(list.scope().isAlive());
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func").get(),
+                FunctionDescriptor.ofVoid(C_POINTER));
+
+        handle.invokeExact((Addressable)list);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testClosedUpcall() throws Throwable {
+        CLinker.UpcallStub upcall;
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
+            upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
+        }
+        assertFalse(upcall.scope().isAlive());
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func").get(),
+                FunctionDescriptor.ofVoid(C_POINTER));
+
+        handle.invokeExact((Addressable)upcall);
+    }
+
+    static void dummy() { }
 }
