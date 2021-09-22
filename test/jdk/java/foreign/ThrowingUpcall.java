@@ -21,6 +21,7 @@
  * questions.
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
@@ -30,11 +31,8 @@ import jdk.incubator.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.security.Permission;
 
-import static jdk.incubator.foreign.CLinker.C_POINTER;
-
-public class ThrowingUpcall {
+public class ThrowingUpcall extends NativeTestHelper {
 
     private static final MethodHandle downcall;
     public static final MethodHandle MH_throwException;
@@ -42,10 +40,9 @@ public class ThrowingUpcall {
     static {
         System.loadLibrary("TestUpcall");
         SymbolLookup lookup = SymbolLookup.loaderLookup();
-        downcall = CLinker.getInstance().downcallHandle(
+        downcall = CLinker.systemCLinker().downcallHandle(
             lookup.lookup("f0_V__").orElseThrow(),
-            MethodType.methodType(void.class, MemoryAddress.class),
-            FunctionDescriptor.ofVoid(C_POINTER)
+                FunctionDescriptor.ofVoid(C_POINTER)
         );
 
         try {
@@ -70,9 +67,9 @@ public class ThrowingUpcall {
         handle = MethodHandles.insertArguments(invoker, 0, handle);
 
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            MemoryAddress stub = CLinker.getInstance().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
+            CLinker.UpcallStub stub = CLinker.systemCLinker().upcallStub(handle, FunctionDescriptor.ofVoid(), scope);
 
-            downcall.invokeExact(stub); // should call Shutdown.exit(1);
+            downcall.invoke(stub); // should call Shutdown.exit(1);
         }
     }
 

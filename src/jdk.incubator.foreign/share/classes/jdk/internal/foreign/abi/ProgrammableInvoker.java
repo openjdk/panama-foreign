@@ -25,11 +25,10 @@
 package jdk.internal.foreign.abi;
 
 import jdk.incubator.foreign.Addressable;
-import jdk.incubator.foreign.MemoryAddress;
-import jdk.incubator.foreign.MemoryLayouts;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SegmentAllocator;
+import jdk.incubator.foreign.ValueLayout;
 import jdk.internal.access.JavaLangInvokeAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.invoke.NativeEntryPoint;
@@ -70,7 +69,7 @@ public class ProgrammableInvoker {
 
     private static final JavaLangInvokeAccess JLIA = SharedSecrets.getJavaLangInvokeAccess();
 
-    private static final VarHandle VH_LONG = MemoryLayouts.JAVA_LONG.varHandle(long.class);
+    private static final VarHandle VH_LONG = ValueLayout.JAVA_LONG.varHandle();
 
     private static final MethodHandle MH_INVOKE_MOVES;
     private static final MethodHandle MH_INVOKE_INTERP_BINDINGS;
@@ -173,8 +172,8 @@ public class ProgrammableInvoker {
     }
 
     private static long unboxTargetAddress(Addressable addr) {
-        MemoryAddress ma = SharedUtils.checkSymbol(addr);
-        return ma.toRawLongValue();
+        SharedUtils.checkSymbol(addr);
+        return addr.address().toRawLongValue();
     }
 
     // Funnel from type to Object[]

@@ -44,7 +44,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
 import static jdk.incubator.foreign.MemoryLayout.PathElement.sequenceElement;
-import static jdk.incubator.foreign.MemoryLayouts.JAVA_INT;
+import static jdk.incubator.foreign.ValueLayout.JAVA_INT;
 
 @BenchmarkMode(Mode.AverageTime)
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
@@ -61,10 +61,10 @@ public class LoopOverNew {
     static final int ALLOC_SIZE = ELEM_SIZE * CARRIER_SIZE;
     static final MemoryLayout ALLOC_LAYOUT = MemoryLayout.sequenceLayout(ELEM_SIZE, JAVA_INT);
 
-    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(int.class, sequenceElement());
+    static final VarHandle VH_int = MemoryLayout.sequenceLayout(JAVA_INT).varHandle(sequenceElement());
 
     final ResourceScope scope = ResourceScope.newConfinedScope();
-    final SegmentAllocator recyclingAlloc = SegmentAllocator.ofSegment(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
+    final SegmentAllocator recyclingAlloc = SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(ALLOC_LAYOUT, scope));
 
     @TearDown
     public void tearDown() throws Throwable {
@@ -82,7 +82,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_confined() {
-        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+        try (ResourceScope scope = ResourceScope.newConfinedScope(null)) {
             MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
@@ -92,7 +92,7 @@ public class LoopOverNew {
 
     @Benchmark
     public void segment_loop_shared() {
-        try (ResourceScope scope = ResourceScope.newSharedScope()) {
+        try (ResourceScope scope = ResourceScope.newSharedScope(null)) {
             MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, scope);
             for (int i = 0; i < ELEM_SIZE; i++) {
                 VH_int.set(segment, (long) i, i);
@@ -138,7 +138,7 @@ public class LoopOverNew {
     @Benchmark
     public void segment_loop_implicit() {
         if (gcCount++ == 0) System.gc(); // GC when we overflow
-        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newImplicitScope());
+        MemorySegment segment = MemorySegment.allocateNative(ALLOC_SIZE, 4, ResourceScope.newConfinedScope());
         for (int i = 0; i < ELEM_SIZE; i++) {
             VH_int.set(segment, (long) i, i);
         }

@@ -25,7 +25,6 @@
 
 package jdk.internal.foreign;
 
-import jdk.incubator.foreign.MemoryAccess;
 import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
@@ -39,7 +38,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static jdk.incubator.foreign.CLinker.C_POINTER;
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 
 public class SystemLookup implements SymbolLookup {
 
@@ -71,11 +70,11 @@ public class SystemLookup implements SymbolLookup {
             SymbolLookup fallbackLibLookup = libLookup(libs -> libs.loadLibrary("WinFallbackLookup"));
 
             int numSymbols = WindowsFallbackSymbols.values().length;
-            MemorySegment funcs = fallbackLibLookup.lookup("funcs").orElseThrow()
-                .asSegment(C_POINTER.byteSize() * numSymbols, ResourceScope.newImplicitScope());
+            MemorySegment funcs = MemorySegment.ofAddressNative(fallbackLibLookup.lookup("funcs").orElseThrow(),
+                ADDRESS.byteSize() * numSymbols, ResourceScope.globalScope());
 
             SymbolLookup fallbackLookup = name -> Optional.ofNullable(WindowsFallbackSymbols.valueOfOrNull(name))
-                .map(symbol -> MemoryAccess.getAddressAtIndex(funcs, symbol.ordinal()));
+                .map(symbol -> funcs.getAtIndex(ADDRESS, symbol.ordinal()));
 
             final SymbolLookup finalLookup = lookup;
             lookup = name -> finalLookup.lookup(name).or(() -> fallbackLookup.lookup(name));

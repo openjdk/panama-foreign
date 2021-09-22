@@ -24,18 +24,17 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.incubator.foreign.Addressable;
+import jdk.incubator.foreign.CLinker;
+import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemorySegment;
+import jdk.incubator.foreign.ResourceScope;
 import jdk.internal.foreign.ResourceScopeImpl;
-import jdk.internal.foreign.NativeMemorySegmentImpl;
+
+import java.lang.invoke.MethodHandle;
 
 public class UpcallStubs {
-
-    public static MemoryAddress upcallAddress(UpcallHandler handler, ResourceScopeImpl scope) {
-        long stubAddress = handler.entryPoint();
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(stubAddress), 0,
-                () -> freeUpcallStub(stubAddress), scope).address();
-    }
 
     private static void freeUpcallStub(long stubAddress) {
         if (!freeUpcallStub0(stubAddress)) {
@@ -51,5 +50,24 @@ public class UpcallStubs {
     private static native void registerNatives();
     static {
         registerNatives();
+    }
+
+
+    // where
+    public record UpcallStubImpl(long entry, FunctionDescriptor descriptor, MethodHandle target, ResourceScope scope) implements CLinker.UpcallStub {
+        public UpcallStubImpl {
+            ((ResourceScopeImpl)scope).addOrCleanupIfFail(new ResourceScopeImpl.ResourceList.ResourceCleanup() {
+                @Override
+                public void cleanup() {
+                    freeUpcallStub(entry);
+                }
+            });
+        }
+
+        @Override
+        public MemoryAddress address() {
+            ((ResourceScopeImpl)scope).checkValidStateSlow();
+            return MemoryAddress.ofLong(entry);
+        }
     }
 }

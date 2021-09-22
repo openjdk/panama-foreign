@@ -27,6 +27,7 @@
  * @run testng/othervm --enable-native-access=ALL-UNNAMED SafeFunctionAccessTest
  */
 
+import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.SymbolLookup;
@@ -36,18 +37,22 @@ import jdk.incubator.foreign.MemorySegment;
 import jdk.incubator.foreign.ResourceScope;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+import jdk.incubator.foreign.VaList;
 import org.testng.annotations.*;
+
+import static jdk.incubator.foreign.ValueLayout.ADDRESS;
 import static org.testng.Assert.*;
 
-public class SafeFunctionAccessTest {
+public class SafeFunctionAccessTest extends NativeTestHelper {
     static {
         System.loadLibrary("SafeAccess");
     }
 
     static MemoryLayout POINT = MemoryLayout.structLayout(
-            CLinker.C_INT, CLinker.C_INT
+            C_INT, C_INT
     );
 
     static final SymbolLookup LOOKUP = SymbolLookup.loaderLookup();
@@ -59,26 +64,41 @@ public class SafeFunctionAccessTest {
             segment = MemorySegment.allocateNative(POINT, scope);
         }
         assertFalse(segment.scope().isAlive());
-        MethodHandle handle = CLinker.getInstance().downcallHandle(
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 LOOKUP.lookup("struct_func").get(),
-                MethodType.methodType(void.class, MemorySegment.class),
                 FunctionDescriptor.ofVoid(POINT));
 
         handle.invokeExact(segment);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
-    public void testClosedPointer() throws Throwable {
-        MemoryAddress address;
+    public void testClosedVaList() throws Throwable {
+        VaList list;
         try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-            address = MemorySegment.allocateNative(POINT, scope).address();
+            list = VaList.make(b -> b.addVarg(C_INT, 42), scope);
         }
-        assertFalse(address.scope().isAlive());
-        MethodHandle handle = CLinker.getInstance().downcallHandle(
+        assertFalse(list.scope().isAlive());
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
                 LOOKUP.lookup("addr_func").get(),
-                MethodType.methodType(void.class, MemoryAddress.class),
-                FunctionDescriptor.ofVoid(CLinker.C_POINTER));
+                FunctionDescriptor.ofVoid(C_POINTER));
 
-        handle.invokeExact(address);
+        handle.invokeExact((Addressable)list);
     }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testClosedUpcall() throws Throwable {
+        CLinker.UpcallStub upcall;
+        try (ResourceScope scope = ResourceScope.newConfinedScope()) {
+            MethodHandle dummy = MethodHandles.lookup().findStatic(SafeFunctionAccessTest.class, "dummy", MethodType.methodType(void.class));
+            upcall = CLinker.systemCLinker().upcallStub(dummy, FunctionDescriptor.ofVoid(), scope);
+        }
+        assertFalse(upcall.scope().isAlive());
+        MethodHandle handle = CLinker.systemCLinker().downcallHandle(
+                LOOKUP.lookup("addr_func").get(),
+                FunctionDescriptor.ofVoid(C_POINTER));
+
+        handle.invokeExact((Addressable)upcall);
+    }
+
+    static void dummy() { }
 }
