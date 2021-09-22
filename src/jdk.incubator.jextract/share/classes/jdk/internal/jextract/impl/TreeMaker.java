@@ -185,17 +185,6 @@ class TreeMaker {
         return Declaration.toplevel(toPos(c), filterNestedDeclarations(decls).toArray(new Declaration[0]));
     }
 
-//    if (treeMaker == null) {
-//        // Macro evaluation, type is meaningless as this can only be pointer and we only care value
-//        return Type.void_();
-//    }
-//    Cursor enumCursor = t.getDeclarationCursor();
-//    List<? extends Declaration> constants = enumCursor.children()
-//            .map(c -> Declaration.constant(new TreeMaker.CursorPosition(c), c.spelling(), c.getEnumConstantValue(), makeType(c.type())))
-//            .toList();
-//    MemoryLayout layout = valueLayoutForSize(t.size() * 8).layout().orElseThrow();
-//                return Type.declared(Declaration.enum_(new TreeMaker.CursorPosition(enumCursor), enumCursor.spelling(), layout, constants.toArray(new Declaration[0])));
-
     public Declaration.Scoped createRecord(Cursor c, Declaration.Scoped.Kind scopeKind, ScopedFactoryLayout factoryLayout, ScopedFactoryNoLayout factoryNoLayout) {
         Type.Declared t = (Type.Declared)RecordLayoutComputer.compute(typeMaker, 0, c.type(), c.type());
         List<Declaration> decls = filterNestedDeclarations(t.tree().members());
